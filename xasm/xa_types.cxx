@@ -1,0 +1,208 @@
+﻿#include "xa_types.h"
+
+namespace Engine
+{
+	namespace XA
+	{
+		namespace Encoder
+		{
+			void EncodeSize(Streaming::Stream * stream, const ObjectSize & size)
+			{
+				stream->Write(&size.num_bytes, 4);
+				stream->Write(&size.num_words, 4);
+			}
+			ObjectSize DecodeSize(Streaming::Stream * stream)
+			{
+				ObjectSize result;
+				stream->Read(&result.num_bytes, 4);
+				stream->Read(&result.num_words, 4);
+				return result;
+			}
+			void EncodeSpec(Streaming::Stream * stream, const ArgumentSpecification & spec)
+			{
+				uint sem = uint(spec.semantics);
+				EncodeSize(stream, spec.size);
+				stream->Write(&sem, 4);
+			}
+			ArgumentSpecification DecodeSpec(Streaming::Stream * stream)
+			{
+				ArgumentSpecification result;
+				uint sem;
+				result.size = DecodeSize(stream);
+				stream->Read(&sem, 4);
+				result.semantics = static_cast<ArgumentSemantics>(sem);
+				return result;
+			}
+			void EncodeString(Streaming::Stream * stream, const string & str)
+			{
+				int length = str.GetEncodedLength(Encoding::UTF8);
+				SafePointer<DataBlock> data = str.EncodeSequence(Encoding::UTF8, false);
+				stream->Write(&length, 4);
+				stream->WriteArray(data);
+			}
+			string DecodeString(Streaming::Stream * stream)
+			{
+				int length;
+				stream->Read(&length, 4);
+				SafePointer<DataBlock> data = stream->ReadBlock(length);
+				return string(data->GetBuffer(), length, Encoding::UTF8);
+			}
+			template<class V, class F> void EncodeVolume(Streaming::Stream * stream, const V & volume, F & f)
+			{
+				int length = 0;
+				for (auto & e : volume) length++;
+				stream->Write(&length, 4);
+				for (auto & e : volume) f(e);
+			}
+			template<class F> void DecodeVolume(Streaming::Stream * stream, F & f)
+			{
+				int length;
+				stream->Read(&length, 4);
+				for (int i = 0; i < length; i++) f();
+			}
+			void EncodeData(Streaming::Stream * stream, const DataBlock & data)
+			{
+				int length = data.Length();
+				stream->Write(&length, 4);
+				stream->Write(data.GetBuffer(), data.Length());
+			}
+			void DecodeData(Streaming::Stream * stream, DataBlock & data)
+			{
+				int length;
+				stream->Read(&length, 4);
+				data.SetLength(length);
+				stream->Read(data.GetBuffer(), length);
+			}
+			void EncodeLongData(Streaming::Stream * stream, const Array<uint32> & data)
+			{
+				int length = data.Length();
+				stream->Write(&length, 4);
+				stream->Write(data.GetBuffer(), data.Length() * 4);
+			}
+			void DecodeLongData(Streaming::Stream * stream, Array<uint32> & data)
+			{
+				int length;
+				stream->Read(&length, 4);
+				data.SetLength(length);
+				stream->Read(data.GetBuffer(), length * 4);
+			}
+			void EncodeFinalizer(Streaming::Stream * stream, const FinalizerReference & final)
+			{
+				stream->Write(&final.final.qword, 8);
+				EncodeVolume(stream, final.final_args, [stream](const ObjectReference & ref) {
+					stream->Write(&ref.qword, 8);
+				});
+			}
+			void DecodeFinalizer(Streaming::Stream * stream, FinalizerReference & final)
+			{
+				stream->Read(&final.final.qword, 8);
+				DecodeVolume(stream, [stream, f = &final]() {
+					ObjectReference ref;
+					stream->Read(&ref.qword, 8);
+					f->final_args << ref;
+				});
+			}
+			void EncodeTree(Streaming::Stream * stream, const ExpressionTree & tree)
+			{
+				stream->Write(&tree.self.qword, 8);
+				if (tree.self.ref_flags & ReferenceFlagInvoke) {
+					EncodeVolume(stream, tree.inputs, [stream](const ExpressionTree & st) {
+						EncodeTree(stream, st);
+					});
+					EncodeVolume(stream, tree.input_specs, [stream](const ArgumentSpecification & spec) {
+						EncodeSpec(stream, spec);
+					});
+					EncodeSpec(stream, tree.retval_spec);
+					EncodeFinalizer(stream, tree.retval_final);
+				}
+			}
+			void DecodeTree(Streaming::Stream * stream, ExpressionTree & tree)
+			{
+				stream->Read(&tree.self.qword, 8);
+				if (tree.self.ref_flags & ReferenceFlagInvoke) {
+					DecodeVolume(stream, [stream, t = &tree]() {
+						ExpressionTree st;
+						DecodeTree(stream, st);
+						t->inputs << st;
+					});
+					DecodeVolume(stream, [stream, t = &tree]() {
+						t->input_specs << DecodeSpec(stream);
+					});
+					tree.retval_spec = DecodeSpec(stream);
+					DecodeFinalizer(stream, tree.retval_final);
+				}
+			}
+		}
+		FinalizerReference::FinalizerReference(void) : final_args(1) {}
+		ExpressionTree::ExpressionTree(void) : inputs(1), input_specs(1) {}
+		Function::Function(void) : extrefs(0x20), data(0x100), inputs(0x10), instset(0x100) {}
+		void Function::Clear(void)
+		{
+			extrefs.Clear(); data.Clear(); retval.semantics = ArgumentSemantics::Unknown;
+			retval.size.num_bytes = retval.size.num_words = 0; inputs.Clear(); instset.Clear();
+		}
+		void Function::Save(Streaming::Stream * dest)
+		{
+			Encoder::EncodeVolume(dest, extrefs, [dest](const string & e) {
+				Encoder::EncodeString(dest, e);
+			});
+			Encoder::EncodeData(dest, data);
+			Encoder::EncodeSpec(dest, retval);
+			Encoder::EncodeVolume(dest, inputs, [dest](const ArgumentSpecification & spec) {
+				Encoder::EncodeSpec(dest, spec);
+			});
+			Encoder::EncodeVolume(dest, instset, [dest](const Statement & s) {
+				dest->Write(&s.opcode, 4);
+				Encoder::EncodeSize(dest, s.attachment);
+				Encoder::EncodeFinalizer(dest, s.attachment_final);
+				Encoder::EncodeTree(dest, s.tree);
+			});
+		}
+		void Function::Load(Streaming::Stream * src)
+		{
+			Clear();
+			Encoder::DecodeVolume(src, [src, this]() {
+				extrefs << Encoder::DecodeString(src);
+			});
+			Encoder::DecodeData(src, data);
+			retval = Encoder::DecodeSpec(src);
+			Encoder::DecodeVolume(src, [src, this]() {
+				inputs << Encoder::DecodeSpec(src);
+			});
+			Encoder::DecodeVolume(src, [src, this]() {
+				Statement stat;
+				src->Read(&stat.opcode, 4);
+				stat.attachment = Encoder::DecodeSize(src);
+				Encoder::DecodeFinalizer(src, stat.attachment_final);
+				Encoder::DecodeTree(src, stat.tree);
+			});
+		}
+		TranslatedFunction::TranslatedFunction(void) : data(0x1000), code(0x1000), code_reloc(0x100), data_reloc(0x100) {}
+		void TranslatedFunction::Clear(void) { data.Clear(); code.Clear(); extrefs.Clear(); data_reloc.Clear(); code_reloc.Clear(); }
+		void TranslatedFunction::Save(Streaming::Stream * dest)
+		{
+			Encoder::EncodeData(dest, data);
+			Encoder::EncodeData(dest, code);
+			Encoder::EncodeVolume(dest, extrefs, [dest](const Volumes::KeyValuePair< string, Array<uint32> > & e) {
+				Encoder::EncodeString(dest, e.key);
+				Encoder::EncodeLongData(dest, e.value);
+			});
+			Encoder::EncodeLongData(dest, data_reloc);
+			Encoder::EncodeLongData(dest, code_reloc);
+		}
+		void TranslatedFunction::Load(Streaming::Stream * src)
+		{
+			Clear();
+			Encoder::DecodeData(src, data);
+			Encoder::DecodeData(src, code);
+			Encoder::DecodeVolume(src, [src, this]() {
+				Array<uint32> reloc(1);
+				auto key = Encoder::DecodeString(src);
+				Encoder::DecodeLongData(src, reloc);
+				extrefs.Append(key, reloc);
+			});
+			Encoder::DecodeLongData(src, data_reloc);
+			Encoder::DecodeLongData(src, code_reloc);
+		}
+	}
+}
