@@ -51,7 +51,7 @@ namespace Engine
 					int frame_size_unused;
 					int first_local_no;
 					Array<_local_disposition> locals = Array<_local_disposition>(0x20);
-					bool shift_rsp;
+					bool shift_rsp, temporary;
 				};
 				struct _jump_reloc_struct {
 					uint machine_offset_at;
@@ -66,7 +66,7 @@ namespace Engine
 				Array<_jump_reloc_struct> _jump_reloc;
 				_argument_storage_spec _retval;
 				Array<_argument_storage_spec> _inputs;
-				int _scope_frame_base;
+				int _scope_frame_base, _current_instruction, _stack_oddity;
 				Volumes::Stack<_local_scope> _scopes;
 				Volumes::Stack<_local_disposition> _init_locals;
 
@@ -155,7 +155,7 @@ namespace Engine
 						_retval.bound_to = Reg::RCX;
 						_retval.rbp_offset = WordSize * 2;
 						_retval.indirect = true;
-						_scope_frame_base = -WordSize * 9;
+						_scope_frame_base = -WordSize * 10;
 						int no = 0;
 						for (auto & ia : _src.inputs) {
 							_argument_storage_spec iar;
@@ -216,8 +216,26 @@ namespace Engine
 						}
 					}
 				}
-				void _encode_open_scope(int of_size, int enf_base = 0)
+				void _encode_preserve(Reg reg, uint reg_in_use, bool cond_if)
 				{
+					if (cond_if && (reg_in_use & uint(reg))) {
+						encode_push(reg);
+						_stack_oddity += 8;
+					}
+				}
+				void _encode_restore(Reg reg, uint reg_in_use, bool cond_if)
+				{
+					if (cond_if && (reg_in_use & uint(reg))) {
+						encode_pop(reg);
+						_stack_oddity -= 8;
+					}
+				}
+				void _encode_open_scope(int of_size, bool temporary, int enf_base)
+				{
+					if (!enf_base) {
+						of_size = _word_align(TH::MakeSize(of_size, 0));
+						if (of_size & 0xF) of_size += WordSize;
+					}
 					auto prev = _scopes.GetLast();
 					_local_scope ls;
 					ls.frame_base = enf_base ? enf_base : (prev ? prev->GetValue().frame_base - of_size : _scope_frame_base - of_size);
@@ -225,18 +243,27 @@ namespace Engine
 					ls.frame_size_unused = of_size;
 					ls.first_local_no = prev ? prev->GetValue().first_local_no + prev->GetValue().locals.Length() : 0;
 					ls.shift_rsp = of_size && !enf_base;
+					ls.temporary = temporary;
 					_scopes.Push(ls);
 					if (ls.shift_rsp) encode_add(Reg::RSP, -of_size);
 				}
 				void _encode_finalize_scope(const _local_scope & scope, uint reg_in_use = 0)
 				{
-					if (reg_in_use & uint(Reg::RAX)) encode_push(Reg::RAX);
-					if (reg_in_use & uint(Reg::RCX)) encode_push(Reg::RCX);
-					if (reg_in_use & uint(Reg::RDX)) encode_push(Reg::RDX);
-					if (reg_in_use & uint(Reg::R8)) encode_push(Reg::R8);
-					if (reg_in_use & uint(Reg::R9)) encode_push(Reg::R9);
+					_encode_preserve(Reg::RAX, reg_in_use, true);
+					_encode_preserve(Reg::RCX, reg_in_use, true);
+					_encode_preserve(Reg::RDX, reg_in_use, true);
+					_encode_preserve(Reg::R8, reg_in_use, true);
+					_encode_preserve(Reg::R9, reg_in_use, true);
 					for (auto & l : scope.locals) if (l.finalizer.final.ref_class != ReferenceNull) {
+						bool skip = false;
+						for (auto & i : _init_locals) if (i.rbp_offset == l.rbp_offset) { skip = true; break; }
+						if (skip) continue;
 						if (_conv == CallingConvention::Windows) {
+							int stack_growth = max(1 + l.finalizer.final_args.Length(), 4) * 8;
+							if ((stack_growth + _stack_oddity) & 0xF) {
+								encode_add(Reg::RSP, -8);
+								stack_growth += 8;
+							}
 							for (int i = l.finalizer.final_args.Length() - 1; i >= 0; i--) {
 								auto & arg = l.finalizer.final_args[i];
 								if (i == 0) encode_put_addr_of(Reg::RDX, arg);
@@ -248,16 +275,16 @@ namespace Engine
 							encode_add(Reg::RSP, -32);
 							encode_put_addr_of(Reg::RAX, l.finalizer.final);
 							encode_call(Reg::RAX, false);
-							encode_add(Reg::RSP, 32 + 8 * max(l.finalizer.final_args.Length() - 3, 0));
+							encode_add(Reg::RSP, stack_growth);
 						} else if (_conv == CallingConvention::Unix) {
 							// TODO: IMPLEMENT ON UNIX
 						}
 					}
-					if (reg_in_use & uint(Reg::R9)) encode_pop(Reg::R9);
-					if (reg_in_use & uint(Reg::R8)) encode_pop(Reg::R8);
-					if (reg_in_use & uint(Reg::RDX)) encode_pop(Reg::RDX);
-					if (reg_in_use & uint(Reg::RCX)) encode_pop(Reg::RCX);
-					if (reg_in_use & uint(Reg::RAX)) encode_pop(Reg::RAX);
+					_encode_restore(Reg::R9, reg_in_use, true);
+					_encode_restore(Reg::R8, reg_in_use, true);
+					_encode_restore(Reg::RDX, reg_in_use, true);
+					_encode_restore(Reg::RCX, reg_in_use, true);
+					_encode_restore(Reg::RAX, reg_in_use, true);
 					if (scope.shift_rsp) encode_add(Reg::RSP, scope.frame_size);
 				}
 				void _encode_close_scope(uint reg_in_use = 0)
@@ -272,7 +299,7 @@ namespace Engine
 					else if (dest != Reg::RAX && src != Reg::RAX) ir = Reg::RAX;
 					else ir = Reg::RBX;
 					if (dest_indirect && src_indirect) {
-						if (reg_in_use & uint(ir)) encode_push(ir);
+						_encode_preserve(ir, reg_in_use, true);
 						int blt_ofs = 0;
 						while (blt_ofs < size) {
 							if (blt_ofs + 8 <= size) {
@@ -293,12 +320,12 @@ namespace Engine
 								blt_ofs++;
 							}
 						}
-						if (reg_in_use & uint(ir)) encode_pop(ir);
+						_encode_restore(ir, reg_in_use, true);
 					} else if (dest_indirect) {
 						if (size == 8) {
 							encode_mov_mem_reg(8, dest, src);
 						} else if (size == 7) {
-							if (reg_in_use & uint(ir)) encode_push(ir);
+							_encode_preserve(ir, reg_in_use, true);
 							encode_mov_reg_reg(8, ir, src);
 							encode_shr(ir, 48);
 							encode_mov_mem_reg(1, dest, 6, ir);
@@ -306,30 +333,30 @@ namespace Engine
 							encode_shr(ir, 32);
 							encode_mov_mem_reg(2, dest, 4, ir);
 							encode_mov_mem_reg(4, dest, src);
-							if (reg_in_use & uint(ir)) encode_pop(ir);
+							_encode_restore(ir, reg_in_use, true);
 						} else if (size == 6) {
-							if (reg_in_use & uint(ir)) encode_push(ir);
+							_encode_preserve(ir, reg_in_use, true);
 							encode_mov_reg_reg(8, ir, src);
 							encode_shr(ir, 32);
 							encode_mov_mem_reg(2, dest, 4, ir);
 							encode_mov_mem_reg(4, dest, src);
-							if (reg_in_use & uint(ir)) encode_pop(ir);
+							_encode_restore(ir, reg_in_use, true);
 						} else if (size == 5) {
-							if (reg_in_use & uint(ir)) encode_push(ir);
+							_encode_preserve(ir, reg_in_use, true);
 							encode_mov_reg_reg(8, ir, src);
 							encode_shr(ir, 32);
 							encode_mov_mem_reg(1, dest, 4, ir);
 							encode_mov_mem_reg(4, dest, src);
-							if (reg_in_use & uint(ir)) encode_pop(ir);
+							_encode_restore(ir, reg_in_use, true);
 						} else if (size == 4) {
 							encode_mov_mem_reg(4, dest, src);
 						} else if (size == 3) {
-							if (reg_in_use & uint(ir)) encode_push(ir);
+							_encode_preserve(ir, reg_in_use, true);
 							encode_mov_reg_reg(8, ir, src);
 							encode_shr(ir, 16);
 							encode_mov_mem_reg(1, dest, 2, ir);
 							encode_mov_mem_reg(2, dest, src);
-							if (reg_in_use & uint(ir)) encode_pop(ir);
+							_encode_restore(ir, reg_in_use, true);
 						} else if (size == 2) {
 							encode_mov_mem_reg(2, dest, src);
 						} else if (size == 1) {
@@ -387,7 +414,7 @@ namespace Engine
 						if (disp->reg != Reg::RAX) fsave << Reg::RAX;
 						if (disp->reg != Reg::RDX) fsave << Reg::RDX;
 					} else if (disp->reg == Reg::NO) fsave << Reg::RAX;
-					for (auto & r : fsave.Elements()) if (((reg_in_use & uint(r)) && !idle)) encode_push(r);
+					for (auto & r : fsave.Elements()) _encode_preserve(r, reg_in_use, !idle);
 					if (opcode == TransformVectorInverse || opcode == TransformVectorIsZero || opcode == TransformVectorNotZero || opcode == TransformIntegerUResize ||
 						opcode == TransformIntegerSResize || opcode == TransformIntegerInverse || opcode == TransformIntegerAbs) {
 						_encode_tree_node(node.inputs[0], idle, mem_load, &core, reg_in_use | uint(core.reg));
@@ -439,7 +466,7 @@ namespace Engine
 								encode_negative(size, core.reg);
 							} else if (opcode == TransformIntegerAbs) {
 								Reg sec = core.reg == Reg::RDX ? Reg::RCX : Reg::RDX;
-								if (reg_in_use & uint(sec)) encode_push(sec);
+								_encode_preserve(sec, reg_in_use, true);
 								encode_mov_reg_reg(size, sec, core.reg);
 								if (size == 1) encode_shift(size, shOp::sar, sec, 7);
 								else if (size == 2) encode_shift(size, shOp::sar, sec, 15);
@@ -447,7 +474,7 @@ namespace Engine
 								else if (size == 8) encode_shift(size, shOp::sar, sec, 63);
 								encode_operation(size, Op::xor, core.reg, sec);
 								encode_operation(size, Op::sub, core.reg, sec);
-								if (reg_in_use & uint(sec)) encode_pop(sec);
+								_encode_restore(sec, reg_in_use, true);
 							}
 						}
 					} else {
@@ -456,7 +483,7 @@ namespace Engine
 						modifier.flags = DispositionAny;
 						modifier.size = size;
 						modifier.reg = core.reg == Reg::RCX ? Reg::RDX : Reg::RCX;
-						if ((reg_in_use & uint(modifier.reg)) && !idle) encode_push(modifier.reg);
+						_encode_preserve(modifier.reg, reg_in_use, !idle);
 						_encode_tree_node(node.inputs[0], idle, mem_load, &core, reg_in_use | uint(core.reg) | uint(modifier.reg));
 						_encode_tree_node(node.inputs[1], idle, mem_load, &modifier, reg_in_use | uint(core.reg) | uint(modifier.reg));
 						if (!idle) {
@@ -587,10 +614,10 @@ namespace Engine
 								rreg = Reg::RDX;
 							} else throw InvalidArgumentException();
 						}
-						if ((reg_in_use & uint(modifier.reg)) && !idle) encode_pop(modifier.reg);
+						_encode_restore(modifier.reg, reg_in_use, !idle);
 					}
 					if (rreg != Reg::NO && rreg != disp->reg && !idle) encode_mov_reg_reg(size, disp->reg, rreg);
-					for (auto & r : fsave.InversedElements()) if (((reg_in_use & uint(r)) && !idle)) encode_pop(r);
+					for (auto & r : fsave.InversedElements()) _encode_restore(r, reg_in_use, !idle);
 					if (disp->flags & DispositionRegister) {
 						disp->flags = DispositionRegister;
 					} else if (disp->flags & DispositionPointer) {
@@ -616,11 +643,11 @@ namespace Engine
 						none.flags = DispositionDiscard;
 						none.size = 0;
 						if (!cond.size || cond.size > 8) throw InvalidArgumentException();
-						if (!idle && (reg_in_use & uint(cond.reg))) encode_push(cond.reg);
+						_encode_preserve(cond.reg, reg_in_use, !idle);
 						_encode_tree_node(node.inputs[0], idle, mem_load, &cond, reg_in_use | uint(cond.reg));
 						if (!idle) {
 							encode_test(cond.size, cond.reg, 0xFFFFFFFF);
-							if (reg_in_use & uint(cond.reg)) encode_pop(cond.reg);
+							_encode_restore(cond.reg, reg_in_use, true);
 							_dest.code << 0x0F; _dest.code << 0x84; // JZ
 							_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
 						}
@@ -629,7 +656,7 @@ namespace Engine
 							int local_mem_load = 0, ssoffs;
 							_encode_tree_node(node.inputs[1], true, &local_mem_load, &none, reg_in_use);
 							_allocate_temporary(TH::MakeSize(local_mem_load, 0), TH::MakeFinal(), &ssoffs);
-							_encode_open_scope(local_mem_load, ssoffs);
+							_encode_open_scope(local_mem_load, true, ssoffs);
 							_encode_tree_node(node.inputs[1], false, &local_mem_load, &none, reg_in_use);
 							_encode_close_scope(reg_in_use);
 							_dest.code << 0xE9; // JMP
@@ -641,7 +668,7 @@ namespace Engine
 							int local_mem_load = 0, ssoffs;
 							_encode_tree_node(node.inputs[2], true, &local_mem_load, &none, reg_in_use);
 							_allocate_temporary(TH::MakeSize(local_mem_load, 0), TH::MakeFinal(), &ssoffs);
-							_encode_open_scope(local_mem_load, ssoffs);
+							_encode_open_scope(local_mem_load, true, ssoffs);
 							_encode_tree_node(node.inputs[2], false, &local_mem_load, &none, reg_in_use);
 							_encode_close_scope(reg_in_use);
 							*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
@@ -652,7 +679,7 @@ namespace Engine
 					} else {
 						if (!node.inputs.Length()) throw InvalidArgumentException();
 						Reg local = disp->reg != Reg::NO ? disp->reg : Reg::RCX;
-						if (!idle && local != disp->reg && (reg_in_use & uint(local))) encode_push(local);
+						_encode_preserve(local, reg_in_use, local != disp->reg);
 						Array<int> put_offs(0x10);
 						uint min_size = 0;
 						uint rv_size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
@@ -670,7 +697,7 @@ namespace Engine
 								int local_mem_load = 0, ssoffs;
 								_encode_tree_node(n, true, &local_mem_load, &ld, reg_in_use | uint(local));
 								_allocate_temporary(TH::MakeSize(local_mem_load, 0), TH::MakeFinal(), &ssoffs);
-								_encode_open_scope(local_mem_load, ssoffs);
+								_encode_open_scope(local_mem_load, true, ssoffs);
 								_encode_tree_node(n, false, &local_mem_load, &ld, reg_in_use | uint(local));
 								_encode_close_scope(reg_in_use | uint(local));
 							} else _encode_tree_node(n, true, mem_load, &ld, reg_in_use | uint(local));
@@ -711,7 +738,7 @@ namespace Engine
 						} else if (disp->flags & DispositionDiscard) {
 							disp->flags = DispositionDiscard;
 						}
-						if (!idle && local != disp->reg && (reg_in_use & uint(local))) encode_pop(local);
+						_encode_restore(local, reg_in_use, local != disp->reg);
 					}
 				}
 				void _encode_general_call(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
@@ -727,12 +754,16 @@ namespace Engine
 						preserve_rax = disp->reg != Reg::RAX;
 						retval_byref = _needs_stack_storage(node.retval_spec);
 						retval_final = node.retval_final.final.ref_class != ReferenceNull;
-						if (!idle && (reg_in_use & uint(Reg::RAX)) && preserve_rax) encode_push(Reg::RAX);
-						if (!idle && (reg_in_use & uint(Reg::RCX))) encode_push(Reg::RCX);
-						if (!idle && (reg_in_use & uint(Reg::RDX))) encode_push(Reg::RDX);
-						if (!idle && (reg_in_use & uint(Reg::R8))) encode_push(Reg::R8);
-						if (!idle && (reg_in_use & uint(Reg::R9))) encode_push(Reg::R9);
-						int unpush = 4;
+						_encode_preserve(Reg::RAX, reg_in_use, !idle && preserve_rax);
+						_encode_preserve(Reg::RCX, reg_in_use, !idle);
+						_encode_preserve(Reg::RDX, reg_in_use, !idle);
+						_encode_preserve(Reg::R8, reg_in_use, !idle);
+						_encode_preserve(Reg::R9, reg_in_use, !idle);
+						int unpush = max(arg_no + (retval_byref ? 1 : 0), 4) * 8;
+						if ((_stack_oddity + unpush) & 0xF) if (!idle) {
+							encode_add(Reg::RSP, -8);
+							unpush += 8;
+						}
 						Volumes::Dictionary<Reg, Reg> remap;
 						for (int i = arg_no - 1; i >= 0; i--) {
 							auto & spec = node.input_specs[i + first_arg];
@@ -745,7 +776,9 @@ namespace Engine
 							ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
 							ld.flags = _needs_stack_storage(spec) ? DispositionPointer : DispositionRegister;
 							_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | uint(Reg::RCX) | uint(Reg::RDX) | uint(Reg::R8) | uint(Reg::R9));
-							if (io > 3) { if (!idle) encode_push(ld.reg); unpush++; } else if (!_needs_stack_storage(spec) && spec.semantics == ArgumentSemantics::FloatingPoint) {
+							if (io > 3) {
+								if (!idle) encode_push(ld.reg);
+							} else if (!_needs_stack_storage(spec) && spec.semantics == ArgumentSemantics::FloatingPoint) {
 								if (i == 3) remap.Append(Reg::R9, Reg::XMM3);
 								else if (i == 2) remap.Append(Reg::R8, Reg::XMM2);
 								else if (i == 1) remap.Append(Reg::RDX, Reg::XMM1);
@@ -773,13 +806,13 @@ namespace Engine
 						if (!idle) {
 							for (auto r : remap) encode_mov_xmm_reg(8, r.value, r.key);
 							encode_call(Reg::RAX, false);
-							encode_add(Reg::RSP, 8 * unpush);
+							encode_add(Reg::RSP, unpush);
 							if (!retval_byref && node.retval_spec.semantics == ArgumentSemantics::FloatingPoint) encode_mov_reg_xmm(8, Reg::RAX, Reg::XMM0);
 						}
-						if (!idle && (reg_in_use & uint(Reg::R9))) encode_pop(Reg::R9);
-						if (!idle && (reg_in_use & uint(Reg::R8))) encode_pop(Reg::R8);
-						if (!idle && (reg_in_use & uint(Reg::RDX))) encode_pop(Reg::RDX);
-						if (!idle && (reg_in_use & uint(Reg::RCX))) encode_pop(Reg::RCX);
+						_encode_restore(Reg::R9, reg_in_use, !idle);
+						_encode_restore(Reg::R8, reg_in_use, !idle);
+						_encode_restore(Reg::RDX, reg_in_use, !idle);
+						_encode_restore(Reg::RCX, reg_in_use, !idle);
 						if ((disp->flags & DispositionPointer) && retval_byref) {
 							if (!idle && disp->reg != Reg::RAX) encode_mov_reg_reg(8, disp->reg, Reg::RAX);
 							disp->flags = DispositionPointer;
@@ -805,7 +838,7 @@ namespace Engine
 							disp->flags = DispositionPointer;
 						} else if ((disp->flags & DispositionRegister) && retval_byref) {
 							if (!idle) {
-								if (!preserve_rax && (reg_in_use & uint(Reg::RCX))) encode_push(Reg::RCX);
+								_encode_preserve(Reg::RCX, reg_in_use, !preserve_rax);
 								Reg src = Reg::RAX;
 								if (disp->reg == Reg::RAX) {
 									src = Reg::RCX;
@@ -813,13 +846,13 @@ namespace Engine
 								}
 								uint size = _word_align(node.retval_spec.size);
 								_encode_blt(disp->reg, false, src, true, size, reg_in_use | uint(disp->reg) | uint(src));
-								if (!preserve_rax && (reg_in_use & uint(Reg::RCX))) encode_pop(Reg::RCX);
+								_encode_restore(Reg::RCX, reg_in_use, !preserve_rax);
 							}
 							disp->flags = DispositionRegister;
 						} else if (disp->flags & DispositionDiscard) {
 							disp->flags = DispositionDiscard;
 						}
-						if (!idle && (reg_in_use & uint(Reg::RAX)) && preserve_rax) encode_pop(Reg::RAX);
+						_encode_restore(Reg::RAX, reg_in_use, !idle && preserve_rax);
 					} else if (_conv == CallingConvention::Unix) {
 						// TODO: IMPLEMENT ON UNIX
 					}
@@ -881,7 +914,7 @@ namespace Engine
 									base.flags = DispositionPointer;
 									base.reg = Reg::RSI;
 									base.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
-									if (disp->reg != Reg::RSI && (reg_in_use & uint(base.reg)) && !idle) encode_push(base.reg);
+									_encode_preserve(base.reg, reg_in_use, !idle && disp->reg != Reg::RSI);
 									_encode_tree_node(node.inputs[0], idle, mem_load, &base, reg_in_use | uint(base.reg));
 									if (node.inputs[1].self.ref_class == ReferenceLiteral && (node.inputs.Length() == 2 || node.inputs[2].self.ref_class == ReferenceLiteral)) {
 										uint offset = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
@@ -891,9 +924,9 @@ namespace Engine
 									} else if (node.inputs[1].self.ref_class != ReferenceLiteral && (node.inputs.Length() == 2 || node.inputs[2].self.ref_class == ReferenceLiteral)) {
 										uint scale = 1;
 										if (node.inputs.Length() == 3) scale = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;
-										if (!idle && (reg_in_use & uint(Reg::RAX))) encode_push(Reg::RAX);
-										if (!idle && (reg_in_use & uint(Reg::RDX))) encode_push(Reg::RDX);
-										if (!idle && (reg_in_use & uint(Reg::RCX)) && scale > 1) encode_push(Reg::RCX);
+										_encode_preserve(Reg::RAX, reg_in_use, !idle);
+										_encode_preserve(Reg::RDX, reg_in_use, !idle);
+										_encode_preserve(Reg::RCX, reg_in_use, !idle && scale > 1);
 										if (scale) {
 											_internal_disposition offset;
 											offset.flags = DispositionRegister;
@@ -909,14 +942,14 @@ namespace Engine
 												encode_operation(8, Op::add, Reg::RSI, Reg::RAX);
 											}
 										}
-										if (!idle && (reg_in_use & uint(Reg::RCX)) && scale > 1) encode_pop(Reg::RCX);
-										if (!idle && (reg_in_use & uint(Reg::RDX))) encode_pop(Reg::RDX);
-										if (!idle && (reg_in_use & uint(Reg::RAX))) encode_pop(Reg::RAX);
+										_encode_restore(Reg::RCX, reg_in_use, !idle && scale > 1);
+										_encode_restore(Reg::RDX, reg_in_use, !idle);
+										_encode_restore(Reg::RAX, reg_in_use, !idle);
 									} else if (node.inputs.Length() == 3 && node.inputs[1].self.ref_class == ReferenceLiteral && node.inputs[2].self.ref_class != ReferenceLiteral) {
 										uint scale = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
-										if (!idle && (reg_in_use & uint(Reg::RAX))) encode_push(Reg::RAX);
-										if (!idle && (reg_in_use & uint(Reg::RDX))) encode_push(Reg::RDX);
-										if (!idle && (reg_in_use & uint(Reg::RCX)) && scale > 1) encode_push(Reg::RCX);
+										_encode_preserve(Reg::RAX, reg_in_use, !idle);
+										_encode_preserve(Reg::RDX, reg_in_use, !idle);
+										_encode_preserve(Reg::RCX, reg_in_use, !idle && scale > 1);
 										if (scale) {
 											_internal_disposition offset;
 											offset.flags = DispositionRegister;
@@ -932,13 +965,13 @@ namespace Engine
 												encode_operation(8, Op::add, Reg::RSI, Reg::RAX);
 											}
 										}
-										if (!idle && (reg_in_use & uint(Reg::RCX)) && scale > 1) encode_pop(Reg::RCX);
-										if (!idle && (reg_in_use & uint(Reg::RDX))) encode_pop(Reg::RDX);
-										if (!idle && (reg_in_use & uint(Reg::RAX))) encode_pop(Reg::RAX);
+										_encode_restore(Reg::RCX, reg_in_use, !idle && scale > 1);
+										_encode_restore(Reg::RDX, reg_in_use, !idle);
+										_encode_restore(Reg::RAX, reg_in_use, !idle);
 									} else {
-										if (!idle && (reg_in_use & uint(Reg::RAX))) encode_push(Reg::RAX);
-										if (!idle && (reg_in_use & uint(Reg::RDX))) encode_push(Reg::RDX);
-										if (!idle && (reg_in_use & uint(Reg::RCX))) encode_push(Reg::RCX);
+										_encode_preserve(Reg::RAX, reg_in_use, !idle);
+										_encode_preserve(Reg::RDX, reg_in_use, !idle);
+										_encode_preserve(Reg::RCX, reg_in_use, !idle);
 										_internal_disposition offset;
 										offset.flags = DispositionRegister;
 										offset.reg = Reg::RAX;
@@ -954,9 +987,9 @@ namespace Engine
 											encode_mul_div(8, mdOp::mul, Reg::RCX);
 											encode_operation(8, Op::add, Reg::RSI, Reg::RAX);
 										}
-										if (!idle && (reg_in_use & uint(Reg::RCX))) encode_pop(Reg::RCX);
-										if (!idle && (reg_in_use & uint(Reg::RDX))) encode_pop(Reg::RDX);
-										if (!idle && (reg_in_use & uint(Reg::RAX))) encode_pop(Reg::RAX);
+										_encode_restore(Reg::RCX, reg_in_use, !idle);
+										_encode_restore(Reg::RDX, reg_in_use, !idle);
+										_encode_restore(Reg::RAX, reg_in_use, !idle);
 									}
 									if (disp->flags & DispositionPointer) {
 										if (disp->reg != Reg::RSI && !idle) encode_mov_reg_reg(8, disp->reg, Reg::RSI);
@@ -966,17 +999,17 @@ namespace Engine
 											if (disp->reg != Reg::RSI) {
 												_encode_blt(disp->reg, false, Reg::RSI, true, disp->size, reg_in_use | uint(Reg::RSI));
 											} else {
-												if (reg_in_use & uint(Reg::RDI)) encode_push(Reg::RDI);
+												_encode_preserve(Reg::RDI, reg_in_use, true);
 												encode_mov_reg_reg(8, Reg::RDI, Reg::RSI);
 												_encode_blt(Reg::RSI, false, Reg::RDI, true, disp->size, reg_in_use | uint(Reg::RDI) | uint(Reg::RSI));
-												if (reg_in_use & uint(Reg::RDI)) encode_pop(Reg::RDI);
+												_encode_restore(Reg::RDI, reg_in_use, true);
 											}
 										}
 										disp->flags = DispositionRegister;
 									} else if (disp->flags & DispositionDiscard) {
 										disp->flags = DispositionDiscard;
 									}
-									if (disp->reg != Reg::RSI && (reg_in_use & uint(base.reg)) && !idle) encode_pop(base.reg);
+									_encode_restore(base.reg, reg_in_use, !idle && disp->reg != Reg::RSI);
 								} else if (node.self.index == TransformBlockTransfer) {
 									if (node.inputs.Length() != 2) throw InvalidArgumentException();
 									uint size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
@@ -990,8 +1023,8 @@ namespace Engine
 									src_d.reg = Reg::RBX;
 									if (src_d.reg == dest_d.reg) src_d.reg = Reg::RAX;
 									if (!idle) {
-										if ((reg_in_use & uint(dest_d.reg)) && (disp->reg == Reg::NO)) encode_push(dest_d.reg);
-										if (reg_in_use & uint(src_d.reg)) encode_push(src_d.reg);
+										_encode_preserve(dest_d.reg, reg_in_use, disp->reg == Reg::NO);
+										_encode_preserve(src_d.reg, reg_in_use, true);
 									}
 									_encode_tree_node(node.inputs[0], idle, mem_load, &dest_d, reg_in_use | uint(dest_d.reg) | uint(src_d.reg));
 									_encode_tree_node(node.inputs[1], idle, mem_load, &src_d, reg_in_use | uint(dest_d.reg) | uint(src_d.reg));
@@ -1008,8 +1041,8 @@ namespace Engine
 										if (disp->flags & DispositionAny) *disp = dest_d;
 									}
 									if (!idle) {
-										if (reg_in_use & uint(src_d.reg)) encode_pop(src_d.reg);
-										if ((reg_in_use & uint(dest_d.reg)) && (disp->reg == Reg::NO)) encode_pop(dest_d.reg);
+										_encode_restore(src_d.reg, reg_in_use, true);
+										_encode_restore(dest_d.reg, reg_in_use, disp->reg == Reg::NO);
 									}
 								} else if (node.self.index == TransformInvoke) {
 									_encode_general_call(node, idle, mem_load, disp, reg_in_use);
@@ -1040,6 +1073,35 @@ namespace Engine
 									} else if (disp->flags & DispositionDiscard) {
 										disp->flags = DispositionDiscard;
 									}
+								} else if (node.self.index == TransformBreakIf) {
+									if (node.inputs.Length() != 3) throw InvalidArgumentException();
+									_encode_tree_node(node.inputs[0], idle, mem_load, disp, reg_in_use);
+									_internal_disposition ld;
+									ld.flags = DispositionRegister;
+									ld.reg = Reg::RCX;
+									ld.size = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
+									_encode_preserve(ld.reg, reg_in_use, !idle);
+									_encode_tree_node(node.inputs[1], idle, mem_load, &ld, reg_in_use | uint(ld.reg));
+									if (!idle) {
+										encode_test(ld.size, ld.reg, 0xFFFFFFFF);
+										_dest.code << 0x0F; _dest.code << 0x84; // JZ
+										_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
+										int addr = _dest.code.Length();
+										auto scope = _scopes.GetLast();
+										while (scope && !scope->GetValue().shift_rsp) scope = scope->GetPrevious();
+										if (!scope) throw InvalidStateException();
+										encode_lea(Reg::RSP, Reg::RBP, scope->GetValue().frame_base);
+										encode_scope_unroll(_current_instruction, _current_instruction + 1 + int(node.input_specs[2].size.num_bytes));
+										_dest.code << 0xE9; // JMP
+										_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
+										_jump_reloc_struct rs;
+										rs.machine_offset_at = _dest.code.Length() - 4;
+										rs.machine_offset_relative_to = _dest.code.Length();
+										rs.xasm_offset_jump_to = _current_instruction + 1 + int(node.input_specs[2].size.num_bytes);
+										_jump_reloc << rs;
+										*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
+									}
+									_encode_restore(ld.reg, reg_in_use, !idle);
 								} else throw InvalidArgumentException();
 							} else if (node.self.index >= 0x010 && node.self.index < 0x013) {
 								_encode_logics(node, idle, mem_load, disp, reg_in_use);
@@ -1058,10 +1120,10 @@ namespace Engine
 							if (!idle) {
 								Reg ld = Reg::RAX;
 								if (ld == disp->reg) ld = Reg::R15;
-								if (reg_in_use & uint(ld)) encode_push(ld);
+								_encode_preserve(ld, reg_in_use, true);
 								encode_put_addr_of(ld, node.self);
 								_encode_blt(disp->reg, false, ld, true, disp->size, reg_in_use | uint(ld));
-								if (reg_in_use & uint(ld)) encode_pop(ld);
+								_encode_restore(ld, reg_in_use, true);
 							}
 						} else if (disp->flags & DispositionDiscard) {
 							disp->flags = DispositionDiscard;
@@ -1082,12 +1144,17 @@ namespace Engine
 						disp.size = 1;
 					}
 					_encode_tree_node(tree, true, &_temp_storage, &disp, uint(retval_copy));
-					_encode_open_scope(_temp_storage);
+					_encode_open_scope(_temp_storage, true, 0);
 					_encode_tree_node(tree, false, &_temp_storage, &disp, uint(retval_copy));
 					_encode_close_scope();
 				}
 			public:
-				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src) : _conv(conv), _dest(dest), _src(src), _org_inst_offsets(0x200), _jump_reloc(0x100), _inputs(0x20) { _org_inst_offsets.SetLength(_src.instset.Length()); }
+				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src) : _conv(conv), _dest(dest), _src(src), _org_inst_offsets(0x200), _jump_reloc(0x100), _inputs(0x20)
+				{
+					_current_instruction = -1;
+					_stack_oddity = 0;
+					_org_inst_offsets.SetLength(_src.instset.Length());
+				}
 				void encode_debugger_trap(void) { _dest.code << 0xCC; }
 				void encode_pure_ret(void) { _dest.code << 0xC3; }
 				void encode_mov_reg_reg(uint quant, Reg dest, Reg src)
@@ -1588,7 +1655,7 @@ namespace Engine
 						encode_push(Reg::R13);
 						encode_push(Reg::R14);
 						encode_push(Reg::R15);
-						if (_retval.bound_to != Reg::RCX) encode_push(Reg::RAX);
+						encode_push(Reg::RAX);
 						for (auto & i : _inputs) if (i.bound_to != Reg::NO) {
 							if (_is_xmm_register(i.bound_to)) {
 								encode_mov_reg_xmm(8, Reg::RAX, i.bound_to);
@@ -1602,8 +1669,8 @@ namespace Engine
 				void encode_function_epilogue(void)
 				{
 					if (_conv == CallingConvention::Windows) {
+						encode_pop(Reg::RAX);
 						if (_retval.bound_to != Reg::RCX) {
-							encode_pop(Reg::RAX);
 							if (_retval.bound_to == Reg::XMM0) {
 								auto quant = _src.retval.size.num_bytes + WordSize * _src.retval.size.num_words;
 								encode_mov_xmm_reg(quant, Reg::XMM0, Reg::RAX);
@@ -1626,10 +1693,14 @@ namespace Engine
 				}
 				void encode_scope_unroll(int inst_current, int inst_jump_to)
 				{
+					int current_level = 0;
+					int ref_level = 0;
+					auto current_scope = _scopes.GetLast();
+					while (current_scope && current_scope->GetValue().temporary) {
+						_encode_finalize_scope(current_scope->GetValue());
+						current_scope = current_scope->GetPrevious();
+					}
 					if (inst_jump_to > inst_current) {
-						int current_level = 0;
-						int ref_level = 0;
-						auto current_scope = _scopes.GetLast();
 						for (int i = inst_current + 1; i < inst_jump_to; i++) {
 							if (_src.instset[i].opcode == OpcodeOpenScope) {
 								current_level++;
@@ -1644,9 +1715,6 @@ namespace Engine
 							}
 						}
 					} else if (inst_jump_to < inst_current) {
-						int current_level = 0;
-						int ref_level = 0;
-						auto current_scope = _scopes.GetLast();
 						for (int i = inst_current - 1; i >= inst_jump_to; i--) {
 							if (_src.instset[i].opcode == OpcodeOpenScope) {
 								current_level--;
@@ -1665,6 +1733,7 @@ namespace Engine
 				void process_encoding(void)
 				{
 					for (int i = 0; i < _src.instset.Length(); i++) {
+						_current_instruction = i;
 						_org_inst_offsets[i] = _dest.code.Length();
 						auto & inst = _src.instset[i];
 						if (inst.opcode == OpcodeNOP) {
@@ -1684,7 +1753,7 @@ namespace Engine
 									if (future_scope_depth == current_scope_depth) required_size += _word_align(_src.instset[j].attachment);
 								}
 							}
-							_encode_open_scope(required_size);
+							_encode_open_scope(required_size, false, 0);
 						} else if (inst.opcode == OpcodeCloseScope) {
 							_encode_close_scope();
 						} else if (inst.opcode == OpcodeExpression) {
@@ -1755,13 +1824,14 @@ namespace Engine
 				virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept override
 				{
 					try {
+						dest.Clear();
 						dest.data = src.data;
 						EncoderContext ctx(_conv, dest, src);
 						ctx.encode_function_prologue();
 						ctx.process_encoding();
 						ctx.finalize_encoding();
 						return true;
-					} catch (...) { return false; }
+					} catch (...) { dest.Clear(); return false; }
 				}
 				virtual uint GetWordSize(void) noexcept override { return 8; }
 			};

@@ -175,6 +175,7 @@ namespace Engine
 				stat.attachment = Encoder::DecodeSize(src);
 				Encoder::DecodeFinalizer(src, stat.attachment_final);
 				Encoder::DecodeTree(src, stat.tree);
+				instset << stat;
 			});
 		}
 		TranslatedFunction::TranslatedFunction(void) : data(0x1000), code(0x1000), code_reloc(0x100), data_reloc(0x100) {}

@@ -3,6 +3,7 @@
 #include "xasm/xa_trans.h"
 #include "xasm/xa_type_helper.h"
 #include "xasm/xa_compiler.h"
+#include "xasm/xa_dasm.h"
 
 using namespace Engine;
 using namespace Engine::XA;
@@ -37,12 +38,19 @@ bool cond_check(void)
 	console.WriteLine(string(c));
 	return c == L'Y';
 }
-int64 read_integer(void)
+int64 read_integer(uint64 * error)
 {
 	try {
 		console.Write(L"Enter an integer: ");
 		return console.ReadLine().ToInt64();
-	} catch (...) { return 0; }
+	} catch (...) {
+		if (error) *error = 1;
+		return 0;
+	}
+}
+void print(const char * utf8)
+{
+	console.Write(string(utf8));
 }
 
 class my_res_t : public IReferenceResolver
@@ -52,6 +60,7 @@ public:
 	{
 		if (to == L"int_dtor") return reinterpret_cast<uintptr>(int_dtor);
 		else if (to == L"print_int") return reinterpret_cast<uintptr>(print_integer);
+		else if (to == L"print") return reinterpret_cast<uintptr>(print);
 		else if (to == L"read_bool") return reinterpret_cast<uintptr>(cond_check);
 		else if (to == L"read_int") return reinterpret_cast<uintptr>(read_integer);
 		else return 0;

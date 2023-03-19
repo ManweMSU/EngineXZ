@@ -102,9 +102,13 @@ namespace Engine
 			}
 			void ProcessSize(ObjectSize & size, bool linear_only = false)
 			{
+				int sign = 0;
+				if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"-") { _pos++; sign = !sign; }
+				if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"+") { _pos++; }
 				if (_text[_pos].Class == TokenClass::Constant && _text[_pos].ValueClass == TokenConstantClass::Numeric && _text[_pos].NumericClass() == NumericTokenClass::Integer) {
 					size.num_bytes = _text[_pos].AsInteger();
 					size.num_words = 0;
+					if (sign) size.num_bytes = -int(size.num_bytes);
 					_pos++;
 					if (_text[_pos].Class == TokenClass::Keyword && _text[_pos].Content == L"W" && !linear_only) {
 						ObjectSize si;
@@ -118,6 +122,7 @@ namespace Engine
 					ProcessSize(si, true);
 					size.num_bytes = 0;
 					size.num_words = si.num_bytes;
+					if (sign) size.num_words = -int(size.num_words);
 				} else throw CompilerException(CompilerStatus::AnotherTokenExpected, _pos);
 			}
 			void ProcessSpecification(ArgumentSpecification & spec)
@@ -180,6 +185,7 @@ namespace Engine
 					else if (i == L"BLT") ref.index = TransformBlockTransfer;
 					else if (i == L"CALL") ref.index = TransformInvoke;
 					else if (i == L"NEW") ref.index = TransformTemporary;
+					else if (i == L"BREAKIF") ref.index = TransformBreakIf;
 					// Logical
 					else if (i == L"ALL") ref.index = TransformLogicalAnd;
 					else if (i == L"ANY") ref.index = TransformLogicalOr;
@@ -332,14 +338,7 @@ namespace Engine
 						_pos++;
 					} else if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"@") {
 						_pos++;
-						int sign = 0;
-						if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"-") { _pos++; sign = !sign; }
-						if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"+") { _pos++; }
 						ProcessSize(statement.attachment);
-						if (sign) {
-							statement.attachment.num_bytes = -statement.attachment.num_bytes;
-							statement.attachment.num_words = -statement.attachment.num_words;
-						}
 					} else if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"#") {
 						_pos++;
 						ProcessFinalizer(statement.attachment_final);
