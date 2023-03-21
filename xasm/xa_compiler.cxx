@@ -134,6 +134,7 @@ namespace Engine
 					else if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"-") spec.semantics = ArgumentSemantics::Unclassified;
 					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"INT") spec.semantics = ArgumentSemantics::Integer;
 					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"FLOAT") spec.semantics = ArgumentSemantics::FloatingPoint;
+					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"OBJECT") spec.semantics = ArgumentSemantics::Object;
 					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"THIS") spec.semantics = ArgumentSemantics::This;
 					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"RTTI") spec.semantics = ArgumentSemantics::RTTI;
 					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"ERROR") spec.semantics = ArgumentSemantics::ErrorData;
@@ -229,6 +230,8 @@ namespace Engine
 					else if (i == L"S_DIV") ref.index = TransformIntegerSDiv;
 					else if (i == L"U_MOD") ref.index = TransformIntegerUMod;
 					else if (i == L"S_MOD") ref.index = TransformIntegerSMod;
+					// Else there is a failure
+					else throw CompilerException(CompilerStatus::UnknownInrinsic, _pos);
 					_pos++;
 				} else {
 					if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"[") {

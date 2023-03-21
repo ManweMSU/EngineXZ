@@ -72,6 +72,7 @@ namespace Engine
 				else if (spec.semantics == ArgumentSemantics::Unclassified) result << L"-";
 				else if (spec.semantics == ArgumentSemantics::Integer) result << L"INT";
 				else if (spec.semantics == ArgumentSemantics::FloatingPoint) result << L"FLOAT";
+				else if (spec.semantics == ArgumentSemantics::Object) result << L"OBJECT";
 				else if (spec.semantics == ArgumentSemantics::This) result << L"THIS";
 				else if (spec.semantics == ArgumentSemantics::RTTI) result << L"RTTI";
 				else if (spec.semantics == ArgumentSemantics::ErrorData) result << L"ERROR";

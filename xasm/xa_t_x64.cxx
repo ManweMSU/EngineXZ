@@ -30,6 +30,11 @@ namespace Engine
 
 			class EncoderContext
 			{
+				struct _argument_passage_info {
+					int index;		// 0, 1, ... - real arguments; -1 - retval
+					Reg reg;		// holder register; NO for stack storage;
+					bool indirect;	// pass-by-reference
+				};
 				struct _argument_storage_spec {
 					Reg bound_to;
 					int rbp_offset;
@@ -66,12 +71,12 @@ namespace Engine
 				Array<_jump_reloc_struct> _jump_reloc;
 				_argument_storage_spec _retval;
 				Array<_argument_storage_spec> _inputs;
-				int _scope_frame_base, _current_instruction, _stack_oddity;
+				int _scope_frame_base, _unroll_base, _current_instruction, _stack_oddity;
 				Volumes::Stack<_local_scope> _scopes;
 				Volumes::Stack<_local_disposition> _init_locals;
 
-				static bool _is_object_blob(const ArgumentSpecification & spec) { uint com_size = spec.size.num_bytes + spec.size.num_words * WordSize; return com_size > WordSize; }
 				static bool _is_xmm_register(Reg reg) { return uint(reg) & 0xFFFF0000; }
+				static bool _is_pass_by_reference(const ArgumentSpecification & spec) { return _word_align(spec.size) > 8 || spec.semantics == ArgumentSemantics::Object; }
 				static bool _needs_stack_storage(const ArgumentSpecification & spec)
 				{
 					if (_word_align(spec.size) > WordSize) return true;
@@ -120,6 +125,60 @@ namespace Engine
 				}
 				static uint8 _make_mod(uint8 reg_lo_3, uint8 mod, uint8 reg_mem_lo_3) { return (mod << 6) | (reg_lo_3 << 3) | reg_mem_lo_3; }
 				static uint32 _word_align(const ObjectSize & size) { uint full_size = size.num_bytes + WordSize * size.num_words; return (uint64(full_size) + 7) / 8 * 8; }
+				Array<_argument_passage_info> * _make_interface_layout(const ArgumentSpecification & output, const ArgumentSpecification * inputs, int in_cnt)
+				{
+					SafePointer< Array<_argument_passage_info> > result = new Array<_argument_passage_info>(0x40);
+					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This) {
+						_argument_passage_info info;
+						info.index = i;
+						info.reg = Reg::NO;
+						info.indirect = _is_pass_by_reference(inputs[i]);
+						result->Append(info);
+					}
+					if (_is_pass_by_reference(output)) {
+						_argument_passage_info info;
+						info.index = -1;
+						info.reg = Reg::NO;
+						info.indirect = true;
+						result->Append(info);
+					}
+					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics != ArgumentSemantics::This) {
+						_argument_passage_info info;
+						info.index = i;
+						info.reg = Reg::NO;
+						info.indirect = _is_pass_by_reference(inputs[i]);
+						result->Append(info);
+					}
+					int cmr = 0, cfr = 0;
+					Reg unix_mr[] = { Reg::RDI, Reg::RSI, Reg::RDX, Reg::RCX, Reg::R8, Reg::R9, Reg::NO };
+					Reg unix_fr[] = { Reg::XMM0, Reg::XMM1, Reg::XMM2, Reg::XMM3, Reg::XMM4, Reg::XMM5, Reg::XMM6, Reg::XMM7, Reg::NO };
+					for (int i = 0; i < result->Length(); i++) {
+						auto & info = result->ElementAt(i);
+						if (!info.indirect && inputs[i].semantics == ArgumentSemantics::FloatingPoint) {
+							if (_conv == CallingConvention::Windows) {
+								if (i == 0) info.reg = Reg::XMM0;
+								else if (i == 1) info.reg = Reg::XMM1;
+								else if (i == 2) info.reg = Reg::XMM2;
+								else if (i == 3) info.reg = Reg::XMM3;
+							} else if (_conv == CallingConvention::Unix) {
+								info.reg = unix_fr[cfr];
+								if (info.reg != Reg::NO) cfr++;
+							}
+						} else {
+							if (_conv == CallingConvention::Windows) {
+								if (i == 0) info.reg = Reg::RCX;
+								else if (i == 1) info.reg = Reg::RDX;
+								else if (i == 2) info.reg = Reg::R8;
+								else if (i == 3) info.reg = Reg::R9;
+							} else if (_conv == CallingConvention::Unix) {
+								info.reg = unix_mr[cmr];
+								if (info.reg != Reg::NO) cmr++;
+							}
+						}
+					}
+					result->Retain();
+					return result;
+				}
 				int _allocate_temporary(const ObjectSize & size, const FinalizerReference & final, int * rbp_offs = 0)
 				{
 					auto current_scope_ptr = _scopes.GetLast();
@@ -148,73 +207,6 @@ namespace Engine
 						if (!ent) return;
 					}
 					ent->Append(offset);
-				}
-				void _make_interface_layout(void)
-				{
-					if (_is_object_blob(_src.retval)) {
-						_retval.bound_to = Reg::RCX;
-						_retval.rbp_offset = WordSize * 2;
-						_retval.indirect = true;
-						_scope_frame_base = -WordSize * 10;
-						int no = 0;
-						for (auto & ia : _src.inputs) {
-							_argument_storage_spec iar;
-							iar.bound_to = Reg::NO;
-							iar.rbp_offset = WordSize * (no + 3);
-							iar.indirect = false;
-							if (_is_object_blob(ia)) {
-								iar.indirect = true;
-								if (no == 0) iar.bound_to = Reg::RDX;
-								else if (no == 1) iar.bound_to = Reg::R8;
-								else if (no == 2) iar.bound_to = Reg::R9;
-							} else {
-								if (ia.semantics == ArgumentSemantics::FloatingPoint) {
-									if (no == 0) iar.bound_to = Reg::XMM1;
-									else if (no == 1) iar.bound_to = Reg::XMM2;
-									else if (no == 2) iar.bound_to = Reg::XMM3;
-								} else {
-									if (no == 0) iar.bound_to = Reg::RDX;
-									else if (no == 1) iar.bound_to = Reg::R8;
-									else if (no == 2) iar.bound_to = Reg::R9;
-								}
-							}
-							_inputs << iar;
-							no++;
-						}
-					} else {
-						_retval.bound_to = _src.retval.semantics == ArgumentSemantics::FloatingPoint ? Reg::XMM0 : Reg::RAX;
-						_retval.rbp_offset = -WordSize * 10;
-						_retval.indirect = false;
-						_scope_frame_base = -WordSize * 10;
-						int no = 0;
-						for (auto & ia : _src.inputs) {
-							_argument_storage_spec iar;
-							iar.bound_to = Reg::NO;
-							iar.rbp_offset = WordSize * (no + 2);
-							iar.indirect = false;
-							if (_is_object_blob(ia)) {
-								iar.indirect = true;
-								if (no == 0) iar.bound_to = Reg::RCX;
-								else if (no == 1) iar.bound_to = Reg::RDX;
-								else if (no == 2) iar.bound_to = Reg::R8;
-								else if (no == 3) iar.bound_to = Reg::R9;
-							} else {
-								if (ia.semantics == ArgumentSemantics::FloatingPoint) {
-									if (no == 0) iar.bound_to = Reg::XMM0;
-									else if (no == 1) iar.bound_to = Reg::XMM1;
-									else if (no == 2) iar.bound_to = Reg::XMM2;
-									else if (no == 3) iar.bound_to = Reg::XMM3;
-								} else {
-									if (no == 0) iar.bound_to = Reg::RCX;
-									else if (no == 1) iar.bound_to = Reg::RDX;
-									else if (no == 2) iar.bound_to = Reg::R8;
-									else if (no == 3) iar.bound_to = Reg::R9;
-								}
-							}
-							_inputs << iar;
-							no++;
-						}
-					}
 				}
 				void _encode_preserve(Reg reg, uint reg_in_use, bool cond_if)
 				{
@@ -743,54 +735,58 @@ namespace Engine
 				}
 				void _encode_general_call(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
 				{
+					bool indirect, retval_byref, preserve_rax, retval_final;
+					int first_arg, arg_no;
+					if (node.self.ref_class == ReferenceTransform && node.self.index == TransformInvoke) {
+						indirect = true; first_arg = 1; arg_no = node.inputs.Length() - 1;
+					} else {
+						indirect = false; first_arg = 0; arg_no = node.inputs.Length();
+					}
+					preserve_rax = disp->reg != Reg::RAX;
+					retval_byref = _is_pass_by_reference(node.retval_spec);
+					retval_final = node.retval_final.final.ref_class != ReferenceNull;
+					SafePointer< Array<_argument_passage_info> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no);
 					if (_conv == CallingConvention::Windows) {
-						bool indirect, retval_byref, preserve_rax, retval_final;
-						int first_arg, arg_no;
-						if (node.self.ref_class == ReferenceTransform && node.self.index == TransformInvoke) {
-							indirect = true; first_arg = 1; arg_no = node.inputs.Length() - 1;
-						} else {
-							indirect = false; first_arg = 0; arg_no = node.inputs.Length();
-						}
-						preserve_rax = disp->reg != Reg::RAX;
-						retval_byref = _needs_stack_storage(node.retval_spec);
-						retval_final = node.retval_final.final.ref_class != ReferenceNull;
 						_encode_preserve(Reg::RAX, reg_in_use, !idle && preserve_rax);
 						_encode_preserve(Reg::RCX, reg_in_use, !idle);
 						_encode_preserve(Reg::RDX, reg_in_use, !idle);
 						_encode_preserve(Reg::R8, reg_in_use, !idle);
 						_encode_preserve(Reg::R9, reg_in_use, !idle);
-						int unpush = max(arg_no + (retval_byref ? 1 : 0), 4) * 8;
+						int unpush = max(layout->Length(), 4) * 8;
 						if ((_stack_oddity + unpush) & 0xF) if (!idle) {
 							encode_add(Reg::RSP, -8);
 							unpush += 8;
 						}
 						Volumes::Dictionary<Reg, Reg> remap;
-						for (int i = arg_no - 1; i >= 0; i--) {
-							auto & spec = node.input_specs[i + first_arg];
-							_internal_disposition ld;
-							int io = retval_byref ? i + 1 : i;
-							if (io == 0) ld.reg = Reg::RCX;
-							else if (io == 1) ld.reg = Reg::RDX;
-							else if (io == 2) ld.reg = Reg::R8;
-							else ld.reg = Reg::R9;
-							ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
-							ld.flags = _needs_stack_storage(spec) ? DispositionPointer : DispositionRegister;
-							_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | uint(Reg::RCX) | uint(Reg::RDX) | uint(Reg::R8) | uint(Reg::R9));
-							if (io > 3) {
-								if (!idle) encode_push(ld.reg);
-							} else if (!_needs_stack_storage(spec) && spec.semantics == ArgumentSemantics::FloatingPoint) {
-								if (i == 3) remap.Append(Reg::R9, Reg::XMM3);
-								else if (i == 2) remap.Append(Reg::R8, Reg::XMM2);
-								else if (i == 1) remap.Append(Reg::RDX, Reg::XMM1);
-								else if (i == 0) remap.Append(Reg::RCX, Reg::XMM0);
-							}
-						}
-						if (retval_byref) {
-							*mem_load += _word_align(node.retval_spec.size);
-							if (!idle) {
-								int offs;
-								_allocate_temporary(node.retval_spec.size, node.retval_final, &offs);
-								encode_lea(Reg::RCX, Reg::RBP, offs);
+						for (auto & info : *layout) {
+							if (info.index >= 0) {
+								auto & spec = node.input_specs[info.index + first_arg];
+								_internal_disposition ld;
+								ld.reg = info.reg == Reg::NO ? Reg::RAX : info.reg;
+								ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
+								ld.flags = info.indirect ? DispositionPointer : DispositionRegister;
+								if (ld.reg == Reg::XMM0) {
+									ld.reg = Reg::RCX;
+									remap.Append(Reg::RCX, Reg::XMM0);
+								} else if (ld.reg == Reg::XMM1) {
+									ld.reg = Reg::RDX;
+									remap.Append(Reg::RDX, Reg::XMM1);
+								} else if (ld.reg == Reg::XMM2) {
+									ld.reg = Reg::R8;
+									remap.Append(Reg::R8, Reg::XMM2);
+								} else if (ld.reg == Reg::XMM3) {
+									ld.reg = Reg::R9;
+									remap.Append(Reg::R9, Reg::XMM3);
+								}
+								_encode_tree_node(node.inputs[info.index + first_arg], idle, mem_load, &ld, reg_in_use | uint(Reg::RCX) | uint(Reg::RDX) | uint(Reg::R8) | uint(Reg::R9));
+								if (info.reg == Reg::NO && !idle) encode_push(ld.reg);
+							} else {
+								*mem_load += _word_align(node.retval_spec.size);
+								if (!idle) {
+									int offs;
+									_allocate_temporary(node.retval_spec.size, node.retval_final, &offs);
+									encode_lea(info.reg, Reg::RBP, offs);
+								}
 							}
 						}
 						if (!idle) encode_add(Reg::RSP, -32);
@@ -1642,8 +1638,11 @@ namespace Engine
 				}
 				void encode_function_prologue(void)
 				{
+					SafePointer< Array<_argument_passage_info> > api = _make_interface_layout(_src.retval, _src.inputs.GetBuffer(), _src.inputs.Length());
+					_inputs.SetLength(_src.inputs.Length());
 					if (_conv == CallingConvention::Windows) {
-						_make_interface_layout();
+						int align = WordSize * 9;
+						_unroll_base = -WordSize * 9;
 						encode_push(Reg::RBP);
 						encode_mov_reg_reg(8, Reg::RBP, Reg::RSP);
 						encode_push(Reg::RBX);
@@ -1655,22 +1654,64 @@ namespace Engine
 						encode_push(Reg::R13);
 						encode_push(Reg::R14);
 						encode_push(Reg::R15);
-						encode_push(Reg::RAX);
-						for (auto & i : _inputs) if (i.bound_to != Reg::NO) {
-							if (_is_xmm_register(i.bound_to)) {
-								encode_mov_reg_xmm(8, Reg::RAX, i.bound_to);
-								encode_mov_mem_reg(8, Reg::RBP, i.rbp_offset, Reg::RAX);
-							} else encode_mov_mem_reg(8, Reg::RBP, i.rbp_offset, i.bound_to);
+						_retval.rbp_offset = 0;
+						for (int i = 0; i < api->Length(); i++) {
+							auto & info = api->ElementAt(i);
+							if (info.index >= 0) {
+								_inputs[info.index].bound_to = info.reg;
+								_inputs[info.index].rbp_offset = WordSize * (2 + i);
+								_inputs[info.index].indirect = info.indirect;
+							} else {
+								_retval.bound_to = info.reg;
+								_retval.indirect = info.indirect;
+								_retval.rbp_offset = WordSize * (2 + i);
+							}
+							if (info.reg != Reg::NO) {
+								if (_is_xmm_register(info.reg)) {
+									encode_mov_reg_xmm(8, Reg::RAX, info.reg);
+									encode_mov_mem_reg(8, Reg::RBP, WordSize * (2 + i), Reg::RAX);
+								} else encode_mov_mem_reg(8, Reg::RBP, WordSize * (2 + i), info.reg);
+							}
 						}
+						if (!_retval.rbp_offset) {
+							_retval.bound_to = _src.retval.semantics == ArgumentSemantics::FloatingPoint ? Reg::XMM0 : Reg::RAX;
+							_retval.indirect = false;
+							_retval.rbp_offset = -align - WordSize;
+							align += WordSize;
+							_unroll_base -= WordSize;
+							encode_add(Reg::RSP, -WordSize);
+						}
+						if (align & 0xF) {
+							align += WordSize;
+							encode_add(Reg::RSP, -WordSize);
+						}
+						_scope_frame_base = -align;
 					} else if (_conv == CallingConvention::Unix) {
+						int align = WordSize * 7;
+						_unroll_base = -WordSize * 7;
+						encode_push(Reg::RBP);
+						encode_mov_reg_reg(8, Reg::RBP, Reg::RSP);
+						encode_push(Reg::RBX);
+						encode_push(Reg::R10);
+						encode_push(Reg::R11);
+						encode_push(Reg::R12);
+						encode_push(Reg::R13);
+						encode_push(Reg::R14);
+						encode_push(Reg::R15);
+
+						// UNALIGNED!
+
 						// TODO: IMPLEMENT FOR UNIX
+
+						_scope_frame_base = -align;
 					}
 				}
 				void encode_function_epilogue(void)
 				{
 					if (_conv == CallingConvention::Windows) {
-						encode_pop(Reg::RAX);
-						if (_retval.bound_to != Reg::RCX) {
+						if (_unroll_base != _scope_frame_base) encode_lea(Reg::RSP, Reg::RBP, _unroll_base);
+						if (!_is_pass_by_reference(_src.retval)) {
+							encode_pop(Reg::RAX);
 							if (_retval.bound_to == Reg::XMM0) {
 								auto quant = _src.retval.size.num_bytes + WordSize * _src.retval.size.num_words;
 								encode_mov_xmm_reg(quant, Reg::XMM0, Reg::RAX);
@@ -1688,7 +1729,18 @@ namespace Engine
 						encode_pop(Reg::RBP);
 						encode_pure_ret();
 					} else if (_conv == CallingConvention::Unix) {
+
 						// TODO: IMPLEMENT FOR UNIX
+
+						encode_pop(Reg::R15);
+						encode_pop(Reg::R14);
+						encode_pop(Reg::R13);
+						encode_pop(Reg::R12);
+						encode_pop(Reg::R11);
+						encode_pop(Reg::R10);
+						encode_pop(Reg::RBX);
+						encode_pop(Reg::RBP);
+						encode_pure_ret();
 					}
 				}
 				void encode_scope_unroll(int inst_current, int inst_jump_to)

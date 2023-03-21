@@ -12,6 +12,7 @@ namespace Engine
 			AnotherTokenExpected	= 0x0002,
 			DataSizeNotSupported	= 0x0003,
 			CallInputLengthMismatch	= 0x0004,
+			UnknownInrinsic			= 0x0005,
 			InternalError			= 0xFFFF,
 		};
 		struct CompilerStatusDesc

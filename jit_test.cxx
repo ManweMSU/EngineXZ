@@ -4,6 +4,7 @@
 #include "xasm/xa_type_helper.h"
 #include "xasm/xa_compiler.h"
 #include "xasm/xa_dasm.h"
+#include "xasm_tests/tests.h"
 
 using namespace Engine;
 using namespace Engine::XA;
@@ -70,6 +71,7 @@ public:
 int Main(void)
 {
 	#ifdef ENGINE_DEBUG
+	PerformTests(console);
 	SafePointer<Streaming::Stream> stream = new Streaming::FileStream(L"../../test.asm", Streaming::AccessRead, Streaming::OpenExisting);
 	#else
 	SafePointer<Streaming::Stream> stream = new Streaming::FileStream(L"test.asm", Streaming::AccessRead, Streaming::OpenExisting);

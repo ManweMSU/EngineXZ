@@ -12,9 +12,10 @@ namespace Engine
 			Unclassified	= 0x01,
 			Integer			= 0x02,
 			FloatingPoint	= 0x03,
-			This			= 0x04,
-			RTTI			= 0x05,
-			ErrorData		= 0x06,
+			Object			= 0x04,
+			This			= 0x05,
+			RTTI			= 0x06,
+			ErrorData		= 0x07,
 		};
 		enum ReferenceClass : uint8
 		{
