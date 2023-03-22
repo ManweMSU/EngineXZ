@@ -17,7 +17,7 @@ namespace Engine
 				XMM0 = 0x00010000, XMM1 = 0x00020000, XMM2 = 0x00040000, XMM3 = 0x00080000,
 				XMM4 = 0x00100000, XMM5 = 0x00200000, XMM6 = 0x00400000, XMM7 = 0x00800000,
 			};
-			enum class Op : uint8 { add = 0x02, sub = 0x2A, and = 0x22, or = 0x0A, xor = 0x32, cmp = 0x3A };
+			enum class Op : uint8 { add = 0x02, sub = 0x2A, _and = 0x22, _or = 0x0A, _xor = 0x32, cmp = 0x3A };
 			enum class mdOp : uint8 { mul = 0x4, div = 0x6, imul = 0x5, idiv = 0x7 };
 			enum class shOp : uint8 { shl, shr, sal, sar };
 
@@ -128,12 +128,14 @@ namespace Engine
 				Array<_argument_passage_info> * _make_interface_layout(const ArgumentSpecification & output, const ArgumentSpecification * inputs, int in_cnt)
 				{
 					SafePointer< Array<_argument_passage_info> > result = new Array<_argument_passage_info>(0x40);
-					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This) {
-						_argument_passage_info info;
-						info.index = i;
-						info.reg = Reg::NO;
-						info.indirect = _is_pass_by_reference(inputs[i]);
-						result->Append(info);
+					if (_conv == CallingConvention::Windows) {
+						for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This) {
+							_argument_passage_info info;
+							info.index = i;
+							info.reg = Reg::NO;
+							info.indirect = _is_pass_by_reference(inputs[i]);
+							result->Append(info);
+						}
 					}
 					if (_is_pass_by_reference(output)) {
 						_argument_passage_info info;
@@ -142,7 +144,7 @@ namespace Engine
 						info.indirect = true;
 						result->Append(info);
 					}
-					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics != ArgumentSemantics::This) {
+					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics != ArgumentSemantics::This || _conv == CallingConvention::Unix) {
 						_argument_passage_info info;
 						info.index = i;
 						info.reg = Reg::NO;
@@ -241,17 +243,32 @@ namespace Engine
 				}
 				void _encode_finalize_scope(const _local_scope & scope, uint reg_in_use = 0)
 				{
+					int max_arg_cnt = 0;
+					for (auto & l : scope.locals) if (l.finalizer.final.ref_class != ReferenceNull) {
+						int arg_cnt = l.finalizer.final_args.Length() + 1;
+						if (arg_cnt > max_arg_cnt) max_arg_cnt = arg_cnt;
+					}
 					_encode_preserve(Reg::RAX, reg_in_use, true);
-					_encode_preserve(Reg::RCX, reg_in_use, true);
-					_encode_preserve(Reg::RDX, reg_in_use, true);
-					_encode_preserve(Reg::R8, reg_in_use, true);
-					_encode_preserve(Reg::R9, reg_in_use, true);
+					if (_conv == CallingConvention::Windows) {
+						_encode_preserve(Reg::RCX, reg_in_use, max_arg_cnt > 0);
+						_encode_preserve(Reg::RDX, reg_in_use, max_arg_cnt > 1);
+						_encode_preserve(Reg::R8, reg_in_use, max_arg_cnt > 2);
+						_encode_preserve(Reg::R9, reg_in_use, max_arg_cnt > 3);
+					} else if (_conv == CallingConvention::Unix) {
+						_encode_preserve(Reg::RDI, reg_in_use, max_arg_cnt > 0);
+						_encode_preserve(Reg::RSI, reg_in_use, max_arg_cnt > 1);
+						_encode_preserve(Reg::RDX, reg_in_use, max_arg_cnt > 2);
+						_encode_preserve(Reg::RCX, reg_in_use, max_arg_cnt > 3);
+						_encode_preserve(Reg::R8, reg_in_use, max_arg_cnt > 4);
+						_encode_preserve(Reg::R9, reg_in_use, max_arg_cnt > 5);
+					}
 					for (auto & l : scope.locals) if (l.finalizer.final.ref_class != ReferenceNull) {
 						bool skip = false;
 						for (auto & i : _init_locals) if (i.rbp_offset == l.rbp_offset) { skip = true; break; }
 						if (skip) continue;
+						int stack_growth = 0;
 						if (_conv == CallingConvention::Windows) {
-							int stack_growth = max(1 + l.finalizer.final_args.Length(), 4) * 8;
+							stack_growth = max(1 + l.finalizer.final_args.Length(), 4) * 8;
 							if ((stack_growth + _stack_oddity) & 0xF) {
 								encode_add(Reg::RSP, -8);
 								stack_growth += 8;
@@ -265,17 +282,40 @@ namespace Engine
 							}
 							encode_lea(Reg::RCX, Reg::RBP, l.rbp_offset);
 							encode_add(Reg::RSP, -32);
-							encode_put_addr_of(Reg::RAX, l.finalizer.final);
-							encode_call(Reg::RAX, false);
-							encode_add(Reg::RSP, stack_growth);
 						} else if (_conv == CallingConvention::Unix) {
-							// TODO: IMPLEMENT ON UNIX
+							stack_growth = max(l.finalizer.final_args.Length() - 5, 0) * 8;
+							if ((stack_growth + _stack_oddity) & 0xF) {
+								encode_add(Reg::RSP, -8);
+								stack_growth += 8;
+							}
+							for (int i = l.finalizer.final_args.Length() - 1; i >= 0; i--) {
+								auto & arg = l.finalizer.final_args[i];
+								if (i == 0) encode_put_addr_of(Reg::RSI, arg);
+								else if (i == 1) encode_put_addr_of(Reg::RDX, arg);
+								else if (i == 2) encode_put_addr_of(Reg::RCX, arg);
+								else if (i == 3) encode_put_addr_of(Reg::R8, arg);
+								else if (i == 4) encode_put_addr_of(Reg::R9, arg);
+								else { encode_put_addr_of(Reg::RDI, arg); encode_push(Reg::RDI); }
+							}
+							encode_lea(Reg::RDI, Reg::RBP, l.rbp_offset);
 						}
+						encode_put_addr_of(Reg::RAX, l.finalizer.final);
+						encode_call(Reg::RAX, false);
+						if (stack_growth) encode_add(Reg::RSP, stack_growth);
 					}
-					_encode_restore(Reg::R9, reg_in_use, true);
-					_encode_restore(Reg::R8, reg_in_use, true);
-					_encode_restore(Reg::RDX, reg_in_use, true);
-					_encode_restore(Reg::RCX, reg_in_use, true);
+					if (_conv == CallingConvention::Windows) {
+						_encode_restore(Reg::R9, reg_in_use, max_arg_cnt > 3);
+						_encode_restore(Reg::R8, reg_in_use, max_arg_cnt > 2);
+						_encode_restore(Reg::RDX, reg_in_use, max_arg_cnt > 1);
+						_encode_restore(Reg::RCX, reg_in_use, max_arg_cnt > 0);
+					} else if (_conv == CallingConvention::Unix) {
+						_encode_restore(Reg::R9, reg_in_use, max_arg_cnt > 5);
+						_encode_restore(Reg::R8, reg_in_use, max_arg_cnt > 4);
+						_encode_restore(Reg::RCX, reg_in_use, max_arg_cnt > 3);
+						_encode_restore(Reg::RDX, reg_in_use, max_arg_cnt > 2);
+						_encode_restore(Reg::RSI, reg_in_use, max_arg_cnt > 1);
+						_encode_restore(Reg::RDI, reg_in_use, max_arg_cnt > 0);
+					}
 					_encode_restore(Reg::RAX, reg_in_use, true);
 					if (scope.shift_rsp) encode_add(Reg::RSP, scope.frame_size);
 				}
@@ -464,7 +504,7 @@ namespace Engine
 								else if (size == 2) encode_shift(size, shOp::sar, sec, 15);
 								else if (size == 4) encode_shift(size, shOp::sar, sec, 31);
 								else if (size == 8) encode_shift(size, shOp::sar, sec, 63);
-								encode_operation(size, Op::xor, core.reg, sec);
+								encode_operation(size, Op::_xor, core.reg, sec);
 								encode_operation(size, Op::sub, core.reg, sec);
 								_encode_restore(sec, reg_in_use, true);
 							}
@@ -512,18 +552,18 @@ namespace Engine
 								_dest.code << 0x74; // JZ
 								_dest.code << 0x00;
 								int addr2 = _dest.code.Length();
-								encode_operation(size, Op::xor, core.reg, core.reg);
+								encode_operation(size, Op::_xor, core.reg, core.reg);
 								_dest.code[addr - 1] = _dest.code.Length() - addr;
 								_dest.code[addr2 - 1] = _dest.code.Length() - addr2;
 							} else if (opcode == TransformVectorAnd) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::and, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::and, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, Op::_and, core.reg, modifier.reg, true);
+								else encode_operation(size, Op::_and, core.reg, modifier.reg);
 							} else if (opcode == TransformVectorOr) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::or, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::or, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, Op::_or, core.reg, modifier.reg, true);
+								else encode_operation(size, Op::_or, core.reg, modifier.reg);
 							} else if (opcode == TransformVectorXor) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::xor, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::xor, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, Op::_xor, core.reg, modifier.reg, true);
+								else encode_operation(size, Op::_xor, core.reg, modifier.reg);
 							} else if (opcode == TransformVectorShiftL || opcode == TransformVectorShiftR || opcode == TransformVectorShiftAL || opcode == TransformVectorShiftAR) {
 								if (modifier.flags & DispositionPointer) encode_mov_reg_mem(size, Reg::RCX, Reg::RCX);
 								int mask, max_shift;
@@ -566,7 +606,7 @@ namespace Engine
 								else if (opcode == TransformIntegerSG) jcc = 0x7F; // JG
 								_dest.code << jcc;
 								_dest.code << 5;
-								encode_operation(8, Op::xor, core.reg, core.reg);
+								encode_operation(8, Op::_xor, core.reg, core.reg);
 								_dest.code << 0xEB;
 								_dest.code << 10;
 								encode_mov_reg_const(8, core.reg, 1);
@@ -585,22 +625,22 @@ namespace Engine
 								else encode_mul_div(size, mdOp::imul, modifier.reg);
 								rreg = Reg::RAX;
 							} else if (opcode == TransformIntegerUDiv) {
-								encode_operation(size, Op::xor, Reg::RDX, Reg::RDX);
+								encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
 								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::div, modifier.reg, true);
 								else encode_mul_div(size, mdOp::mul, modifier.reg);
 								rreg = Reg::RAX;
 							} else if (opcode == TransformIntegerSDiv) {
-								encode_operation(size, Op::xor, Reg::RDX, Reg::RDX);
+								encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
 								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::idiv, modifier.reg, true);
 								else encode_mul_div(size, mdOp::imul, modifier.reg);
 								rreg = Reg::RAX;
 							} else if (opcode == TransformIntegerUMod) {
-								encode_operation(size, Op::xor, Reg::RDX, Reg::RDX);
+								encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
 								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::div, modifier.reg, true);
 								else encode_mul_div(size, mdOp::mul, modifier.reg);
 								rreg = Reg::RDX;
 							} else if (opcode == TransformIntegerSMod) {
-								encode_operation(size, Op::xor, Reg::RDX, Reg::RDX);
+								encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
 								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::idiv, modifier.reg, true);
 								else encode_mul_div(size, mdOp::imul, modifier.reg);
 								rreg = Reg::RDX;
@@ -758,7 +798,7 @@ namespace Engine
 							unpush += 8;
 						}
 						Volumes::Dictionary<Reg, Reg> remap;
-						for (auto & info : *layout) {
+						for (auto & info : layout->InversedElements()) {
 							if (info.index >= 0) {
 								auto & spec = node.input_specs[info.index + first_arg];
 								_internal_disposition ld;
@@ -809,49 +849,128 @@ namespace Engine
 						_encode_restore(Reg::R8, reg_in_use, !idle);
 						_encode_restore(Reg::RDX, reg_in_use, !idle);
 						_encode_restore(Reg::RCX, reg_in_use, !idle);
-						if ((disp->flags & DispositionPointer) && retval_byref) {
-							if (!idle && disp->reg != Reg::RAX) encode_mov_reg_reg(8, disp->reg, Reg::RAX);
-							disp->flags = DispositionPointer;
-						} else if ((disp->flags & DispositionRegister) && !retval_byref) {
-							if (retval_final) {
-								*mem_load += WordSize;
+					} else if (_conv == CallingConvention::Unix) {
+						Array<Reg> preserve_regs(0x10);
+						uint reg_used_mask = 0;
+						uint stack_usage = 0;
+						uint num_args_by_stack = 0;
+						uint num_args_by_xmm = 0;
+						preserve_regs << Reg::RBX;
+						for (auto & info : *layout) if (info.reg != Reg::NO && !_is_xmm_register(info.reg)) {
+							reg_used_mask |= uint(info.reg);
+							preserve_regs << info.reg;
+						} else {
+							stack_usage += WordSize;
+							if (info.reg == Reg::NO) num_args_by_stack++; else num_args_by_xmm++;
+						}
+						_encode_preserve(Reg::RAX, reg_in_use, !idle && preserve_rax);
+						for (auto & r : preserve_regs.Elements()) _encode_preserve(r, reg_in_use, !idle);
+						if ((_stack_oddity + stack_usage) & 0xF) stack_usage += WordSize;
+						if (!idle) {
+							if (stack_usage) encode_add(Reg::RSP, -int(stack_usage));
+							encode_mov_reg_reg(8, Reg::RBX, Reg::RSP);
+						}
+						uint stack_arg_index = 0, xmm_arg_index = 0;
+						for (auto & info : layout->InversedElements()) {
+							if (info.index >= 0) {
+								auto & spec = node.input_specs[info.index + first_arg];
+								_internal_disposition ld;
+								ld.reg = (info.reg == Reg::NO || _is_xmm_register(info.reg)) ? Reg::RAX : info.reg;
+								ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
+								ld.flags = info.indirect ? DispositionPointer : DispositionRegister;
+								_encode_tree_node(node.inputs[info.index + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask);
+								if (!idle) {
+									if (info.reg == Reg::NO) {
+										encode_mov_mem_reg(8, Reg::RBX, WordSize * (num_args_by_stack - stack_arg_index - 1), Reg::RAX);
+										stack_arg_index++;
+									} else if (_is_xmm_register(info.reg)) {
+										encode_mov_mem_reg(8, Reg::RBX, WordSize * (num_args_by_stack + xmm_arg_index), Reg::RAX);
+										xmm_arg_index++;
+									}
+								}
+							} else {
+								*mem_load += _word_align(node.retval_spec.size);
 								if (!idle) {
 									int offs;
-									_allocate_temporary(TH::MakeSize(0, 1), node.retval_final, &offs);
-									encode_mov_mem_reg(8, Reg::RBP, offs, Reg::RAX);
+									_allocate_temporary(node.retval_spec.size, node.retval_final, &offs);
+									encode_lea(info.reg, Reg::RBP, offs);
 								}
 							}
-							if (!idle && disp->reg != Reg::RAX) encode_mov_reg_reg(8, disp->reg, Reg::RAX);
-							disp->flags = DispositionRegister;
-						} else if ((disp->flags & DispositionPointer) && !retval_byref) {
+						}
+						if (indirect) {
+							_internal_disposition ld;
+							ld.flags = DispositionRegister;
+							ld.reg = Reg::RAX;
+							ld.size = 8;
+							_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | reg_used_mask);
+						} else {
+							if (!idle) encode_put_addr_of(Reg::RAX, node.self);
+						}
+						if (!idle && num_args_by_xmm) {
+							xmm_arg_index = 0;
+							encode_push(Reg::RAX);
+							for (auto & info : layout->InversedElements()) if (_is_xmm_register(info.reg)) {
+								encode_mov_reg_mem(8, Reg::RAX, Reg::RBX, WordSize * (num_args_by_stack + xmm_arg_index));
+								int index = num_args_by_xmm - xmm_arg_index - 1;
+								if (index == 0) encode_mov_xmm_reg(8, Reg::XMM0, Reg::RAX);
+								else if (index == 1) encode_mov_xmm_reg(8, Reg::XMM1, Reg::RAX);
+								else if (index == 2) encode_mov_xmm_reg(8, Reg::XMM2, Reg::RAX);
+								else if (index == 3) encode_mov_xmm_reg(8, Reg::XMM3, Reg::RAX);
+								else if (index == 4) encode_mov_xmm_reg(8, Reg::XMM4, Reg::RAX);
+								else if (index == 5) encode_mov_xmm_reg(8, Reg::XMM5, Reg::RAX);
+								else if (index == 6) encode_mov_xmm_reg(8, Reg::XMM6, Reg::RAX);
+								else encode_mov_xmm_reg(8, Reg::XMM7, Reg::RAX);
+								xmm_arg_index++;
+							}
+							encode_pop(Reg::RAX);
+						}
+						if (!idle) {
+							encode_call(Reg::RAX, false);
+							if (stack_usage) encode_add(Reg::RSP, int(stack_usage));
+							if (!retval_byref && node.retval_spec.semantics == ArgumentSemantics::FloatingPoint) encode_mov_reg_xmm(8, Reg::RAX, Reg::XMM0);
+						}
+						for (auto & r : preserve_regs.InversedElements()) _encode_restore(r, reg_in_use, !idle);
+					}
+					if ((disp->flags & DispositionPointer) && retval_byref) {
+						if (!idle && disp->reg != Reg::RAX) encode_mov_reg_reg(8, disp->reg, Reg::RAX);
+						disp->flags = DispositionPointer;
+					} else if ((disp->flags & DispositionRegister) && !retval_byref) {
+						if (retval_final) {
 							*mem_load += WordSize;
 							if (!idle) {
 								int offs;
 								_allocate_temporary(TH::MakeSize(0, 1), node.retval_final, &offs);
 								encode_mov_mem_reg(8, Reg::RBP, offs, Reg::RAX);
-								encode_lea(disp->reg, Reg::RBP, offs);
 							}
-							disp->flags = DispositionPointer;
-						} else if ((disp->flags & DispositionRegister) && retval_byref) {
-							if (!idle) {
-								_encode_preserve(Reg::RCX, reg_in_use, !preserve_rax);
-								Reg src = Reg::RAX;
-								if (disp->reg == Reg::RAX) {
-									src = Reg::RCX;
-									encode_mov_reg_reg(8, Reg::RCX, Reg::RAX);
-								}
-								uint size = _word_align(node.retval_spec.size);
-								_encode_blt(disp->reg, false, src, true, size, reg_in_use | uint(disp->reg) | uint(src));
-								_encode_restore(Reg::RCX, reg_in_use, !preserve_rax);
-							}
-							disp->flags = DispositionRegister;
-						} else if (disp->flags & DispositionDiscard) {
-							disp->flags = DispositionDiscard;
 						}
-						_encode_restore(Reg::RAX, reg_in_use, !idle && preserve_rax);
-					} else if (_conv == CallingConvention::Unix) {
-						// TODO: IMPLEMENT ON UNIX
+						if (!idle && disp->reg != Reg::RAX) encode_mov_reg_reg(8, disp->reg, Reg::RAX);
+						disp->flags = DispositionRegister;
+					} else if ((disp->flags & DispositionPointer) && !retval_byref) {
+						*mem_load += WordSize;
+						if (!idle) {
+							int offs;
+							_allocate_temporary(TH::MakeSize(0, 1), node.retval_final, &offs);
+							encode_mov_mem_reg(8, Reg::RBP, offs, Reg::RAX);
+							encode_lea(disp->reg, Reg::RBP, offs);
+						}
+						disp->flags = DispositionPointer;
+					} else if ((disp->flags & DispositionRegister) && retval_byref) {
+						if (!idle) {
+							_encode_preserve(Reg::RCX, reg_in_use, !preserve_rax);
+							Reg src = Reg::RAX;
+							if (disp->reg == Reg::RAX) {
+								src = Reg::RCX;
+								encode_mov_reg_reg(8, Reg::RCX, Reg::RAX);
+							}
+							uint size = _word_align(node.retval_spec.size);
+							_encode_blt(disp->reg, false, src, true, size, reg_in_use | uint(disp->reg) | uint(src));
+							_encode_restore(Reg::RCX, reg_in_use, !preserve_rax);
+						}
+						disp->flags = DispositionRegister;
+					} else if (disp->flags & DispositionDiscard) {
+						disp->flags = DispositionDiscard;
 					}
+					_encode_restore(Reg::RAX, reg_in_use, !idle && preserve_rax);
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
 				{
@@ -1698,11 +1817,37 @@ namespace Engine
 						encode_push(Reg::R13);
 						encode_push(Reg::R14);
 						encode_push(Reg::R15);
-
-						// UNALIGNED!
-
-						// TODO: IMPLEMENT FOR UNIX
-
+						if (!_is_pass_by_reference(_src.retval)) {
+							_retval.bound_to = _src.retval.semantics == ArgumentSemantics::FloatingPoint ? Reg::XMM0 : Reg::RAX;
+							_retval.indirect = false;
+							_retval.rbp_offset = -align - WordSize;
+							align += WordSize;
+							_unroll_base -= WordSize;
+							encode_add(Reg::RSP, -WordSize);
+						}
+						int stack_space_offset = 2 * WordSize;
+						for (auto & info : *api) {
+							_argument_storage_spec * spec;
+							if (info.index >= 0) spec = &_inputs[info.index];
+							else spec = &_retval;
+							spec->bound_to = info.reg;
+							spec->indirect = info.indirect;
+							if (info.reg == Reg::NO) {
+								spec->rbp_offset = stack_space_offset;
+								stack_space_offset += WordSize;
+							} else {
+								if (_is_xmm_register(info.reg)) {
+									encode_mov_reg_xmm(8, Reg::RAX, info.reg);
+									encode_push(Reg::RAX);
+								} else encode_push(info.reg);
+								spec->rbp_offset = -align - WordSize;
+								align += WordSize;
+							}	
+						}
+						if (align & 0xF) {
+							align += WordSize;
+							encode_add(Reg::RSP, -WordSize);
+						}
 						_scope_frame_base = -align;
 					}
 				}
@@ -1729,9 +1874,14 @@ namespace Engine
 						encode_pop(Reg::RBP);
 						encode_pure_ret();
 					} else if (_conv == CallingConvention::Unix) {
-
-						// TODO: IMPLEMENT FOR UNIX
-
+						if (_unroll_base != _scope_frame_base) encode_lea(Reg::RSP, Reg::RBP, _unroll_base);
+						if (!_is_pass_by_reference(_src.retval)) {
+							encode_pop(Reg::RAX);
+							if (_retval.bound_to == Reg::XMM0) {
+								auto quant = _src.retval.size.num_bytes + WordSize * _src.retval.size.num_words;
+								encode_mov_xmm_reg(quant, Reg::XMM0, Reg::RAX);
+							}
+						} else encode_mov_reg_mem(8, Reg::RAX, Reg::RBP, _retval.rbp_offset);
 						encode_pop(Reg::R15);
 						encode_pop(Reg::R14);
 						encode_pop(Reg::R13);

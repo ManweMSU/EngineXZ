@@ -47,14 +47,14 @@ namespace Engine
 				SafePointer<DataBlock> data = stream->ReadBlock(length);
 				return string(data->GetBuffer(), length, Encoding::UTF8);
 			}
-			template<class V, class F> void EncodeVolume(Streaming::Stream * stream, const V & volume, F & f)
+			template<class V, class F> void EncodeVolume(Streaming::Stream * stream, const V & volume, F f)
 			{
 				int length = 0;
 				for (auto & e : volume) length++;
 				stream->Write(&length, 4);
 				for (auto & e : volume) f(e);
 			}
-			template<class F> void DecodeVolume(Streaming::Stream * stream, F & f)
+			template<class F> void DecodeVolume(Streaming::Stream * stream, F f)
 			{
 				int length;
 				stream->Read(&length, 4);

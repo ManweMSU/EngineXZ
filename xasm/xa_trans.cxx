@@ -22,6 +22,45 @@ namespace Engine
 	}
 }
 #endif
+#ifdef ENGINE_MACOSX
+#include <libkern/OSCacheControl.h>
+#include <sys/mman.h>
+#include <pthread.h>
+
+namespace Engine
+{
+	namespace XA
+	{
+		class SystemAllocator : public IMemoryAllocator
+		{
+			Volumes::Dictionary<void *, uintptr> _allocs;
+		public:
+			SystemAllocator(void) {}
+			virtual ~SystemAllocator(void) override {}
+			virtual void * ExecutableAllocate(uintptr length) noexcept override
+			{
+				auto reg = mmap(0, length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE | MAP_JIT, -1, 0);
+				if (reg) try { _allocs.Append(reg, length); } catch (...) { munmap(reg, length); return 0; }
+				pthread_jit_write_protect_np(0);
+				return reg;
+			}
+			virtual void ExecutableFree(void * block) noexcept override
+			{
+				auto rec = _allocs.FindElementEquivalent(block);
+				if (rec) {
+					munmap(rec->GetValue().key, rec->GetValue().value);
+					_allocs.Remove(block);
+				}
+			}
+			virtual void FlushExecutionCache(const void * block, uintptr length) noexcept override
+			{
+				pthread_jit_write_protect_np(1);
+				sys_icache_invalidate(const_cast<void *>(block), length);
+			}
+		};
+	}
+}
+#endif
 
 namespace Engine
 {
