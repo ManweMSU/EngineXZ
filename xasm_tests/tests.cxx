@@ -30,10 +30,18 @@ namespace Engine
 		typedef double (* TestFloatFunc) (bool a, double b, double c);
 		typedef TestStruct (* TestBlobFunc) (int shift_by, TestStruct & input, char i);
 		typedef TestStruct (TestStruct:: * TestClassFunc) (TestStruct & input);
+		typedef double (* TestComplexFunc) (int ia, double fa, double fb, int ib, int ic, int id, int ie, int if_, int ig, double fc, int * rv);
+		typedef int (* TestCallFunc) (void);
 
 		class TestReferenceResolver : public IReferenceResolver
 		{
 			IO::Console & console;
+
+			static double _fp_add_mul(double a, double b, double c) noexcept { return a + b * c; }
+			static void _complex_call(int * rv, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) noexcept
+			{
+				*rv = i1 + (i2 * 10) + (i3 * 100) + (i4 * 1000) + (i5 * 10000) + (i6 * 100000) + (i7 * 1000000) + (i8 * 10000000);
+			}
 		public:
 			TestReferenceResolver(IO::Console & cns) : console(cns) {}
 			virtual uintptr ResolveReference(const string & to) noexcept override
@@ -43,6 +51,10 @@ namespace Engine
 					uintptr result;
 					MemoryCopy(&result, &test, sizeof(void *));
 					return result;
+				} else if (to == L"fp_add_mul") {
+					return reinterpret_cast<uintptr>(_fp_add_mul);
+				} else if (to == L"complex_call") {
+					return reinterpret_cast<uintptr>(_complex_call);
 				}
 				console.WriteLine(L"Nothing for link named \"" + to + L"\"");
 				return 0;
@@ -148,11 +160,11 @@ namespace Engine
 				console << L"No test_blob function found." << IO::LineFeedSequence;
 				return;
 			}
-			TestStruct s;
+			TestStruct s, obj;
 			s.a = 1;
 			s.b = 2;
 			s.c = 3;
-			auto obj = test_blob(10, s, -5);
+			obj = test_blob(10, s, -5);
 			if (obj.a != 12) {
 				console << L"test_blob: test #1 failed" << IO::LineFeedSequence;
 				return;
@@ -194,6 +206,33 @@ namespace Engine
 				return;
 			}
 			console << L"test_this: its OK" << IO::LineFeedSequence;
+			auto test_complex = exec->GetEntryPoint<TestComplexFunc>(L"test_complex");
+			if (!test_complex) {
+				console << L"No test_complex function found." << IO::LineFeedSequence;
+				return;
+			}
+			int rvi;
+			double rvf = test_complex(1, 22.0, 45.0, 2, 3, 4, 5, 6, 7, 3.0, &rvi);
+			if (rvi != 1234567) {
+				console << L"test_complex: test #1 failed" << IO::LineFeedSequence;
+				return;
+			}
+			if (rvf != 22.0 + 45.0 * 3.0) {
+				console << L"test_complex: test #2 failed" << IO::LineFeedSequence;
+				return;
+			}
+			console << L"test_complex: its OK" << IO::LineFeedSequence;
+			auto test_call = exec->GetEntryPoint<TestCallFunc>(L"test_call");
+			if (!test_call) {
+				console << L"No test_call function found." << IO::LineFeedSequence;
+				return;
+			}
+			auto test_call_result = test_call();
+			if (test_call_result != 87654321) {
+				console << L"test_call: test #1 failed" << IO::LineFeedSequence;
+				return;
+			}
+			console << L"test_call: its OK" << IO::LineFeedSequence;
 		}
 	}
 }

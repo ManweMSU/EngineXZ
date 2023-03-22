@@ -2032,6 +2032,8 @@ namespace Engine
 						ctx.encode_function_prologue();
 						ctx.process_encoding();
 						ctx.finalize_encoding();
+						ctx.encode_debugger_trap();
+						while (dest.code.Length() & 0xF) ctx.encode_debugger_trap();
 						return true;
 					} catch (...) { dest.Clear(); return false; }
 				}
