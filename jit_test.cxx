@@ -14,10 +14,14 @@ IO::Console console;
 
 typedef int64 (* func_main) (int64 a);
 
-void int_dtor(uint * self)
+class __unused_class
 {
-	console.WriteLine(FormatString(L"\"Destructing\" the int = %0", string(*self, HexadecimalBase, 8)));
-}
+public:
+	void int_dtor(void)
+	{
+		console.WriteLine(FormatString(L"\"Destructing\" the int = %0", string(*reinterpret_cast<uint *>(this), HexadecimalBase, 8)));
+	}
+};
 void print_integer(int64 p)
 {
 	console.WriteLine(FormatString(L"Printing an integer: %0", p));
@@ -59,8 +63,12 @@ class my_res_t : public IReferenceResolver
 public:
 	virtual uintptr ResolveReference(const string & to) noexcept override
 	{
-		if (to == L"int_dtor") return reinterpret_cast<uintptr>(int_dtor);
-		else if (to == L"print_int") return reinterpret_cast<uintptr>(print_integer);
+		if (to == L"int_dtor") {
+			auto ptr = &__unused_class::int_dtor;
+			uintptr addr;
+			MemoryCopy(&addr, &ptr, sizeof(void *));
+			return addr;
+		} else if (to == L"print_int") return reinterpret_cast<uintptr>(print_integer);
 		else if (to == L"print") return reinterpret_cast<uintptr>(print);
 		else if (to == L"read_bool") return reinterpret_cast<uintptr>(cond_check);
 		else if (to == L"read_int") return reinterpret_cast<uintptr>(read_integer);

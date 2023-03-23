@@ -5,7 +5,8 @@ namespace Engine
 {
 	namespace XA
 	{
-		namespace X64 {
+		namespace X64
+		{
 			constexpr int WordSize = 8;
 
 			enum class Reg : uint {
@@ -243,24 +244,19 @@ namespace Engine
 				}
 				void _encode_finalize_scope(const _local_scope & scope, uint reg_in_use = 0)
 				{
-					int max_arg_cnt = 0;
-					for (auto & l : scope.locals) if (l.finalizer.final.ref_class != ReferenceNull) {
-						int arg_cnt = l.finalizer.final_args.Length() + 1;
-						if (arg_cnt > max_arg_cnt) max_arg_cnt = arg_cnt;
-					}
 					_encode_preserve(Reg::RAX, reg_in_use, true);
 					if (_conv == CallingConvention::Windows) {
-						_encode_preserve(Reg::RCX, reg_in_use, max_arg_cnt > 0);
-						_encode_preserve(Reg::RDX, reg_in_use, max_arg_cnt > 1);
-						_encode_preserve(Reg::R8, reg_in_use, max_arg_cnt > 2);
-						_encode_preserve(Reg::R9, reg_in_use, max_arg_cnt > 3);
+						_encode_preserve(Reg::RCX, reg_in_use, true);
+						_encode_preserve(Reg::RDX, reg_in_use, true);
+						_encode_preserve(Reg::R8, reg_in_use, true);
+						_encode_preserve(Reg::R9, reg_in_use, true);
 					} else if (_conv == CallingConvention::Unix) {
-						_encode_preserve(Reg::RDI, reg_in_use, max_arg_cnt > 0);
-						_encode_preserve(Reg::RSI, reg_in_use, max_arg_cnt > 1);
-						_encode_preserve(Reg::RDX, reg_in_use, max_arg_cnt > 2);
-						_encode_preserve(Reg::RCX, reg_in_use, max_arg_cnt > 3);
-						_encode_preserve(Reg::R8, reg_in_use, max_arg_cnt > 4);
-						_encode_preserve(Reg::R9, reg_in_use, max_arg_cnt > 5);
+						_encode_preserve(Reg::RDI, reg_in_use, true);
+						_encode_preserve(Reg::RSI, reg_in_use, true);
+						_encode_preserve(Reg::RDX, reg_in_use, true);
+						_encode_preserve(Reg::RCX, reg_in_use, true);
+						_encode_preserve(Reg::R8, reg_in_use, true);
+						_encode_preserve(Reg::R9, reg_in_use, true);
 					}
 					for (auto & l : scope.locals) if (l.finalizer.final.ref_class != ReferenceNull) {
 						bool skip = false;
@@ -304,17 +300,17 @@ namespace Engine
 						if (stack_growth) encode_add(Reg::RSP, stack_growth);
 					}
 					if (_conv == CallingConvention::Windows) {
-						_encode_restore(Reg::R9, reg_in_use, max_arg_cnt > 3);
-						_encode_restore(Reg::R8, reg_in_use, max_arg_cnt > 2);
-						_encode_restore(Reg::RDX, reg_in_use, max_arg_cnt > 1);
-						_encode_restore(Reg::RCX, reg_in_use, max_arg_cnt > 0);
+						_encode_restore(Reg::R9, reg_in_use, true);
+						_encode_restore(Reg::R8, reg_in_use, true);
+						_encode_restore(Reg::RDX, reg_in_use, true);
+						_encode_restore(Reg::RCX, reg_in_use, true);
 					} else if (_conv == CallingConvention::Unix) {
-						_encode_restore(Reg::R9, reg_in_use, max_arg_cnt > 5);
-						_encode_restore(Reg::R8, reg_in_use, max_arg_cnt > 4);
-						_encode_restore(Reg::RCX, reg_in_use, max_arg_cnt > 3);
-						_encode_restore(Reg::RDX, reg_in_use, max_arg_cnt > 2);
-						_encode_restore(Reg::RSI, reg_in_use, max_arg_cnt > 1);
-						_encode_restore(Reg::RDI, reg_in_use, max_arg_cnt > 0);
+						_encode_restore(Reg::R9, reg_in_use, true);
+						_encode_restore(Reg::R8, reg_in_use, true);
+						_encode_restore(Reg::RCX, reg_in_use, true);
+						_encode_restore(Reg::RDX, reg_in_use, true);
+						_encode_restore(Reg::RSI, reg_in_use, true);
+						_encode_restore(Reg::RDI, reg_in_use, true);
 					}
 					_encode_restore(Reg::RAX, reg_in_use, true);
 					if (scope.shift_rsp) encode_add(Reg::RSP, scope.frame_size);
@@ -1485,14 +1481,14 @@ namespace Engine
 					uint rc = _regular_register_code(reg);
 					uint8 rex = _make_rex(false, false, false, rc & 0x08);
 					if (rex & 0x0F)  _dest.code << rex;
-					 _dest.code << (0x50 + (rc & 0x07));
+					_dest.code << (0x50 + (rc & 0x07));
 				}
 				void encode_pop(Reg reg)
 				{
 					uint rc = _regular_register_code(reg);
 					uint8 rex = _make_rex(false, false, false, rc & 0x08);
 					if (rex & 0x0F)  _dest.code << rex;
-					 _dest.code << (0x58 + (rc & 0x07));
+					_dest.code << (0x58 + (rc & 0x07));
 				}
 				void encode_operation(uint quant, Op op, Reg to, Reg value_ptr, bool indirect = false, int value_offset = 0)
 				{
