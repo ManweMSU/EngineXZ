@@ -621,25 +621,39 @@ namespace Engine
 								else encode_mul_div(size, mdOp::imul, modifier.reg);
 								rreg = Reg::RAX;
 							} else if (opcode == TransformIntegerUDiv) {
-								encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
+								if (size > 1) encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
+								else { encode_shl(Reg::RAX, 56); encode_shr(Reg::RAX, 56); }
 								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::div, modifier.reg, true);
-								else encode_mul_div(size, mdOp::mul, modifier.reg);
+								else encode_mul_div(size, mdOp::div, modifier.reg);
 								rreg = Reg::RAX;
 							} else if (opcode == TransformIntegerSDiv) {
-								encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
+								if (size > 1) {
+									encode_mov_reg_reg(size, Reg::RDX, Reg::RAX);
+									encode_shift(size, shOp::sar, Reg::RDX, 63);
+								} else { _dest.code << 0x66; _dest.code << 0x98; }
 								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::idiv, modifier.reg, true);
-								else encode_mul_div(size, mdOp::imul, modifier.reg);
+								else encode_mul_div(size, mdOp::idiv, modifier.reg);
 								rreg = Reg::RAX;
 							} else if (opcode == TransformIntegerUMod) {
-								encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
+								if (size > 1) encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
+								else { encode_shl(Reg::RAX, 56); encode_shr(Reg::RAX, 56); }
 								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::div, modifier.reg, true);
-								else encode_mul_div(size, mdOp::mul, modifier.reg);
-								rreg = Reg::RDX;
+								else encode_mul_div(size, mdOp::div, modifier.reg);
+								if (size == 1) {
+									encode_shr(Reg::RAX, 8);
+									rreg = Reg::RAX;
+								} else rreg = Reg::RDX;
 							} else if (opcode == TransformIntegerSMod) {
-								encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
+								if (size > 1) {
+									encode_mov_reg_reg(size, Reg::RDX, Reg::RAX);
+									encode_shift(size, shOp::sar, Reg::RDX, 63);
+								} else { _dest.code << 0x66; _dest.code << 0x98; }
 								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::idiv, modifier.reg, true);
-								else encode_mul_div(size, mdOp::imul, modifier.reg);
-								rreg = Reg::RDX;
+								else encode_mul_div(size, mdOp::idiv, modifier.reg);
+								if (size == 1) {
+									encode_shr(Reg::RAX, 8);
+									rreg = Reg::RAX;
+								} else rreg = Reg::RDX;
 							} else throw InvalidArgumentException();
 						}
 						_encode_restore(modifier.reg, reg_in_use, !idle);
@@ -851,10 +865,9 @@ namespace Engine
 						uint stack_usage = 0;
 						uint num_args_by_stack = 0;
 						uint num_args_by_xmm = 0;
-						preserve_regs << Reg::RBX;
+						preserve_regs << Reg::RBX << Reg::RDI << Reg::RSI << Reg::RDX << Reg::RCX << Reg::R8 << Reg::R9;
 						for (auto & info : *layout) if (info.reg != Reg::NO && !_is_xmm_register(info.reg)) {
 							reg_used_mask |= uint(info.reg);
-							preserve_regs << info.reg;
 						} else {
 							stack_usage += WordSize;
 							if (info.reg == Reg::NO) num_args_by_stack++; else num_args_by_xmm++;
@@ -1142,7 +1155,7 @@ namespace Engine
 									if (!idle) _encode_blt(dest_d.reg, true, src_d.reg, src_d.flags & DispositionPointer, size, reg_in_use);
 									if ((disp->flags & DispositionRegister) && !(disp->flags & DispositionPointer)) {
 										if (!idle) {
-											if (src_d.flags & DispositionPointer) _encode_blt(src_d.reg, false, dest_d.reg, true, size, reg_in_use);
+											if (src_d.flags & DispositionPointer) _encode_blt(src_d.reg, false, dest_d.reg, true, size, reg_in_use | uint(dest_d.reg) | uint(src_d.reg));
 											encode_mov_reg_reg(8, dest_d.reg, src_d.reg);
 										}
 										disp->flags = DispositionRegister;

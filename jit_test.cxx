@@ -68,7 +68,7 @@ public:
 			uintptr addr;
 			MemoryCopy(&addr, &ptr, sizeof(void *));
 			return addr;
-		} else if (to == L"print_int") return reinterpret_cast<uintptr>(print_integer);
+		} else if (to == L"print_integer") return reinterpret_cast<uintptr>(print_integer);
 		else if (to == L"print") return reinterpret_cast<uintptr>(print);
 		else if (to == L"read_bool") return reinterpret_cast<uintptr>(cond_check);
 		else if (to == L"read_int") return reinterpret_cast<uintptr>(read_integer);
