@@ -389,7 +389,7 @@ namespace Engine
 					encode_operation(4, arOp::SBB, Reg::EDI, data, true, 4);
 					encode_mov_mem_reg(4, data, Reg::ESI);
 					encode_mov_mem_reg(4, data, 4, Reg::EDI);
-					encode_invert(4, sgn);
+					if (sgn != Reg::NO) encode_invert(4, sgn);
 					_dest.code[addr - 1] = _dest.code.Length() - addr;
 				}
 				void _encode_emulate_set_signum(Reg data_lo, Reg data_hi, Reg sgn) // inverts data_lo:data_hi if sgn != 0. uses ESI and EDI
@@ -1029,7 +1029,7 @@ namespace Engine
 							} else if (opcode == TransformIntegerSMod) {
 								encode_operation(4, arOp::XOR, Reg::EBX, Reg::EBX);
 								_encode_emulate_collect_signum(Reg::EAX, Reg::EBX);
-								_encode_emulate_collect_signum(Reg::ECX, Reg::EBX);
+								_encode_emulate_collect_signum(Reg::ECX, Reg::NO);
 								encode_push(Reg::EBX);
 								_encode_emulate_div_64();
 								encode_pop(Reg::EBX);
