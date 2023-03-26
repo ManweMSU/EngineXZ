@@ -860,25 +860,23 @@ namespace Engine
 									encode_mov_reg_mem(4, Reg::EDI, Reg::EDX, 4);
 									encode_mov_reg_mem(4, Reg::EDX, Reg::EDX); // EDI:EDX - second
 									if (opcode == TransformLogicalSame || opcode == TransformLogicalNotSame) {
-										encode_operation(size, arOp::OR, Reg::EAX, Reg::ESI);
-										encode_operation(size, arOp::OR, Reg::EDX, Reg::EDI);
-										encode_test(size, Reg::EAX, 0xFFFFFFFF);
-										_dest.code << (opcode == TransformLogicalSame ? 0x74 : 0x75); // JZ / JNZ
-										_dest.code << 0x00;
+										encode_operation(4, arOp::OR, Reg::EAX, Reg::ESI);
+										encode_operation(4, arOp::OR, Reg::EDX, Reg::EDI);
+										encode_test(4, Reg::EAX, 0xFFFFFFFF);
+										_dest.code << (opcode == TransformLogicalSame ? 0x74 : 0x75) << 0x00; // JZ / JNZ
 										int addr = _dest.code.Length();
-										encode_mov_reg_reg(size, Reg::EAX, Reg::EDX);
-										_dest.code << 0xEB; // JMP
-										_dest.code << 0x00;
+										encode_mov_reg_reg(4, Reg::EAX, Reg::EDX);
+										_dest.code << 0xEB << 0x00; // JMP
 										_dest.code[addr - 1] = _dest.code.Length() - addr;
 										addr = _dest.code.Length();
-										encode_test(size, Reg::EDX, 0xFFFFFFFF);
-										_dest.code << (opcode == TransformLogicalSame ? 0x75 : 0x74); // JNZ / JZ
-										_dest.code << 0x00;
+										encode_test(4, Reg::EDX, 0xFFFFFFFF);
+										_dest.code << (opcode == TransformLogicalSame ? 0x75 : 0x74) << 0x00; // JNZ / JZ
 										int addr2 = _dest.code.Length();
-										encode_operation(size, arOp::XOR, Reg::EAX, Reg::EAX);
+										if (opcode == TransformLogicalSame) encode_mov_reg_const(4, Reg::EAX, 1);
+										else encode_operation(4, arOp::XOR, Reg::EAX, Reg::EAX);
 										_dest.code[addr - 1] = _dest.code.Length() - addr;
 										_dest.code[addr2 - 1] = _dest.code.Length() - addr2;
-										encode_operation(size, arOp::XOR, Reg::EDX, Reg::EDX);
+										encode_operation(4, arOp::XOR, Reg::EDX, Reg::EDX);
 									} else if (opcode == TransformIntegerEQ || opcode == TransformIntegerNEQ) {
 										encode_operation(4, arOp::XOR, Reg::ESI, Reg::EDI);
 										encode_operation(4, arOp::XOR, Reg::EAX, Reg::EDX);
@@ -886,12 +884,12 @@ namespace Engine
 										_dest.code << 0x74; // JZ
 										_dest.code << 0x00;
 										int addr = _dest.code.Length();
-										encode_mov_reg_const(size, Reg::EAX, opcode == TransformIntegerEQ ? 0 : 1); // IF NON-ZERO
+										encode_mov_reg_const(4, Reg::EAX, opcode == TransformIntegerEQ ? 0 : 1); // IF NON-ZERO
 										_dest.code << 0xEB; // JMP
 										_dest.code << 0x00;
 										_dest.code[addr - 1] = _dest.code.Length() - addr;
 										addr = _dest.code.Length();
-										encode_mov_reg_const(size, Reg::EAX, opcode == TransformIntegerEQ ? 1 : 0); // IF ZERO
+										encode_mov_reg_const(4, Reg::EAX, opcode == TransformIntegerEQ ? 1 : 0); // IF ZERO
 										_dest.code[addr - 1] = _dest.code.Length() - addr;
 										encode_operation(4, arOp::XOR, Reg::ESI, Reg::ESI);
 									} else if (opcode == TransformVectorAnd) {
@@ -945,17 +943,16 @@ namespace Engine
 										_dest.code << (opcode == TransformLogicalSame ? 0x75 : 0x74); // JNZ / JZ
 										_dest.code << 0x00;
 										int addr2 = _dest.code.Length();
-										encode_operation(size, arOp::XOR, Reg::EAX, Reg::EAX);
+										if (opcode == TransformLogicalSame) encode_mov_reg_const(size, Reg::EAX, 1);
+										else encode_operation(size, arOp::XOR, Reg::EAX, Reg::EAX);
 										_dest.code[addr - 1] = _dest.code.Length() - addr;
 										_dest.code[addr2 - 1] = _dest.code.Length() - addr2;
 									} else if (opcode == TransformIntegerEQ || opcode == TransformIntegerNEQ) {
 										encode_operation(size, arOp::CMP, Reg::EAX, Reg::EDX, a2.flags & DispositionPointer);
-										_dest.code << 0x74; // JZ
-										_dest.code << 0x00;
+										_dest.code << 0x74 << 0x00; // JZ
 										int addr = _dest.code.Length();
 										encode_mov_reg_const(size, Reg::EAX, opcode == TransformIntegerEQ ? 0 : 1); // IF NON-ZERO
-										_dest.code << 0xEB; // JMP
-										_dest.code << 0x00;
+										_dest.code << 0xEB << 0x00; // JMP
 										_dest.code[addr - 1] = _dest.code.Length() - addr;
 										addr = _dest.code.Length();
 										encode_mov_reg_const(size, Reg::EAX, opcode == TransformIntegerEQ ? 1 : 0); // IF ZERO
