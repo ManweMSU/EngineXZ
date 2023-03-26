@@ -1,0 +1,17 @@
+INTERFACE 8:INT 8:INT => 32
+
+CODE {
+	EVAL { @BLT:8 8=>8(@OFFSET:32 0=>8(R, -), @X_RESIZE:1=>8(
+		@XXX:1 1=>1(@X_RESIZE:8=>1(A[0]), @X_RESIZE:8=>1(A[1]))
+	))}
+	EVAL { @BLT:8 8=>8(@OFFSET:32 8=>8(R, -), @X_RESIZE:2=>8(
+		@XXX:2 2=>2(@X_RESIZE:8=>2(A[0]), @X_RESIZE:8=>2(A[1]))
+	))}
+	EVAL { @BLT:8 8=>8(@OFFSET:32 16=>8(R, -), @X_RESIZE:4=>8(
+		@XXX:4 4=>4(@X_RESIZE:8=>4(A[0]), @X_RESIZE:8=>4(A[1]))
+	))}
+	EVAL { @BLT:8 8=>8(@OFFSET:32 24=>8(R, -), @X_RESIZE:8=>8(
+		@XXX:8 8=>8(@X_RESIZE:8=>8(A[0]), @X_RESIZE:8=>8(A[1]))
+	))}
+	RET
+}

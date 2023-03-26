@@ -25,6 +25,12 @@ namespace Engine
 				return result;
 			}
 		};
+		struct IntrisicTest {
+			int64 r1;
+			int64 r2;
+			int64 r4;
+			int64 r8;
+		};
 
 		typedef int (* TestIntFunc) (int a, int b, int c);
 		typedef double (* TestFloatFunc) (bool a, double b, double c);
@@ -32,6 +38,8 @@ namespace Engine
 		typedef TestStruct (TestStruct:: * TestClassFunc) (TestStruct & input);
 		typedef double (* TestComplexFunc) (int ia, double fa, double fb, int ib, int ic, int id, int ie, int if_, int ig, double fc, int * rv);
 		typedef int (* TestCallFunc) (void);
+		typedef IntrisicTest (* IntrisicTestFunc) (int64 a, int64 b);
+		typedef IntrisicTest (* IntrisicTestFuncUnary) (int64 a);
 
 		class TestReferenceResolver : public IReferenceResolver
 		{
@@ -60,6 +68,99 @@ namespace Engine
 				return 0;
 			}
 		};
+		void PerformIntrisicTests(IO::Console & console)
+		{
+			string code, code_unary;
+			SafePointer<Storage::Registry> reg;
+			{
+				auto path = IO::ExpandPath(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/../../xasm_tests");
+				Streaming::FileStream stream(path + L"/test_ar.tasm", Streaming::AccessRead, Streaming::OpenExisting);
+				Streaming::TextReader rdr(&stream);
+				code = rdr.ReadAll();
+			}
+			{
+				auto path = IO::ExpandPath(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/../../xasm_tests");
+				Streaming::FileStream stream(path + L"/test_ar_unary.tasm", Streaming::AccessRead, Streaming::OpenExisting);
+				Streaming::TextReader rdr(&stream);
+				code_unary = rdr.ReadAll();
+			}
+			{
+				auto path = IO::ExpandPath(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/../../xasm_tests");
+				Streaming::FileStream stream(path + L"/test_ar.ini", Streaming::AccessRead, Streaming::OpenExisting);
+				reg = Storage::CompileTextRegistry(&stream);
+			}
+			SafePointer<IAssemblyTranslator> trs = CreatePlatformTranslator();
+			SafePointer<IExecutableLinker> lnk = CreateLinker();
+			if (!lnk || !trs) {
+				console << L"Failed to create either translator or linker." << IO::LineFeedSequence;
+				return;
+			}
+			for (auto & op : reg->GetSubnodes()) {
+				SafePointer<Storage::RegistryNode> sn = reg->OpenNode(op);
+				auto sgn = sn->GetValueBoolean(L"S");
+				auto unr = sn->GetValueBoolean(L"U");
+				for (auto & test : sn->GetSubnodes()) {
+					SafePointer<Storage::RegistryNode> tn = sn->OpenNode(test);
+					int64 a = tn->GetValueLongInteger(L"A");
+					int64 b = tn->GetValueLongInteger(L"B");
+					console << FormatString(L"Testing: %0(%1, %2)...", op, a, b);
+					string local = (unr ? code_unary : code).Replace(L"XXX", op).Replace(L"X_RESIZE", sgn ? L"S_RESIZE" : L"U_RESIZE");
+					Function func;
+					CompilerStatusDesc desc;
+					CompileFunction(local, func, desc);
+					if (desc.status != CompilerStatus::Success) {
+						console << L"Failed compilation" << IO::LineFeedSequence;
+						return;
+					}
+					TranslatedFunction tfunc;
+					auto tstat = trs->Translate(tfunc, func);
+					if (!tstat) {
+						console << L"Failed translation" << IO::LineFeedSequence;
+						return;
+					}
+					Volumes::Dictionary<string, TranslatedFunction *> fd;
+					fd.Append(L"main", &tfunc);
+					SafePointer<IExecutable> exec = lnk->LinkFunctions(fd);
+					if (!exec) {
+						console << L"Failed linking" << IO::LineFeedSequence;
+						return;
+					}
+					IntrisicTest result;
+					if (unr) {
+						auto nfunc = exec->GetEntryPoint<IntrisicTestFuncUnary>(L"main");
+						if (!nfunc) {
+							console << L"Failed getting function" << IO::LineFeedSequence;
+							return;
+						}
+						result = nfunc(a);
+					} else {
+						auto nfunc = exec->GetEntryPoint<IntrisicTestFunc>(L"main");
+						if (!nfunc) {
+							console << L"Failed getting function" << IO::LineFeedSequence;
+							return;
+						}
+						result = nfunc(a, b);
+					}
+					if (result.r8 != tn->GetValueLongInteger(L"R8")) {
+						console << FormatString(L"Failed a R8 test: %0 != %1", result.r8, tn->GetValueLongInteger(L"R8")) << IO::LineFeedSequence;
+						return;
+					}
+					if (result.r4 != tn->GetValueLongInteger(L"R4")) {
+						console << FormatString(L"Failed a R4 test: %0 != %1", result.r4, tn->GetValueLongInteger(L"R4")) << IO::LineFeedSequence;
+						return;
+					}
+					if (result.r2 != tn->GetValueLongInteger(L"R2")) {
+						console << FormatString(L"Failed a R2 test: %0 != %1", result.r2, tn->GetValueLongInteger(L"R2")) << IO::LineFeedSequence;
+						return;
+					}
+					if (result.r1 != tn->GetValueLongInteger(L"R1")) {
+						console << FormatString(L"Failed a R1 test: %0 != %1", result.r1, tn->GetValueLongInteger(L"R1")) << IO::LineFeedSequence;
+						return;
+					}
+					console << L"OK" << IO::LineFeedSequence;
+				}
+			}
+		}
 		void PerformTests(IO::Console & console)
 		{
 			SafePointer<IExecutable> exec;
@@ -233,6 +334,7 @@ namespace Engine
 				return;
 			}
 			console << L"test_call: its OK" << IO::LineFeedSequence;
+			PerformIntrisicTests(console);
 		}
 	}
 }
