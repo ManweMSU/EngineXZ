@@ -50,6 +50,15 @@ namespace Engine
 			{
 				*rv = i1 + (i2 * 10) + (i3 * 100) + (i4 * 1000) + (i5 * 10000) + (i6 * 100000) + (i7 * 1000000) + (i8 * 10000000);
 			}
+			static int _return_one(intptr * error) { return 1; }
+			static int _return_zero(intptr * error) { return 0; }
+			static int _return_error(intptr * error) { *error = 1; return 0; }
+			static void * _func_selector(int index)
+			{
+				if (index == 0) return reinterpret_cast<void *>(_return_zero);
+				else if (index == 1) return reinterpret_cast<void *>(_return_one);
+				else return reinterpret_cast<void *>(_return_error);
+			}
 		public:
 			TestReferenceResolver(IO::Console & cns) : console(cns) {}
 			virtual uintptr ResolveReference(const string & to) noexcept override
@@ -63,6 +72,8 @@ namespace Engine
 					return reinterpret_cast<uintptr>(_fp_add_mul);
 				} else if (to == L"complex_call") {
 					return reinterpret_cast<uintptr>(_complex_call);
+				} else if (to == L"func_selector") {
+					return reinterpret_cast<uintptr>(_func_selector);
 				}
 				console.WriteLine(L"Nothing for link named \"" + to + L"\"");
 				return 0;
@@ -89,6 +100,7 @@ namespace Engine
 				Streaming::FileStream stream(path + L"/test_ar.ini", Streaming::AccessRead, Streaming::OpenExisting);
 				reg = Storage::CompileTextRegistry(&stream);
 			}
+			TestReferenceResolver ref(console);
 			SafePointer<IAssemblyTranslator> trs = CreatePlatformTranslator();
 			SafePointer<IExecutableLinker> lnk = CreateLinker();
 			if (!lnk || !trs) {
@@ -99,12 +111,20 @@ namespace Engine
 				SafePointer<Storage::RegistryNode> sn = reg->OpenNode(op);
 				auto sgn = sn->GetValueBoolean(L"S");
 				auto unr = sn->GetValueBoolean(L"U");
+				auto fal = sn->GetValueString(L"A");
+				auto local_code = unr ? code_unary : code;
+				if (fal.Length()) {
+					auto path = IO::ExpandPath(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/../../xasm_tests");
+					Streaming::FileStream stream(path + L"/" + fal, Streaming::AccessRead, Streaming::OpenExisting);
+					Streaming::TextReader rdr(&stream);
+					local_code = rdr.ReadAll();
+				}
 				for (auto & test : sn->GetSubnodes()) {
 					SafePointer<Storage::RegistryNode> tn = sn->OpenNode(test);
 					int64 a = tn->GetValueLongInteger(L"A");
 					int64 b = tn->GetValueLongInteger(L"B");
 					console << FormatString(L"Testing: %0(%1, %2)...", op, a, b);
-					string local = (unr ? code_unary : code).Replace(L"XXX", op).Replace(L"X_RESIZE", sgn ? L"S_RESIZE" : L"U_RESIZE");
+					string local = local_code.Replace(L"XXX", op).Replace(L"X_RESIZE", sgn ? L"S_RESIZE" : L"U_RESIZE");
 					Function func;
 					CompilerStatusDesc desc;
 					CompileFunction(local, func, desc);
@@ -120,7 +140,7 @@ namespace Engine
 					}
 					Volumes::Dictionary<string, TranslatedFunction *> fd;
 					fd.Append(L"main", &tfunc);
-					SafePointer<IExecutable> exec = lnk->LinkFunctions(fd);
+					SafePointer<IExecutable> exec = lnk->LinkFunctions(fd, &ref);
 					if (!exec) {
 						console << L"Failed linking" << IO::LineFeedSequence;
 						return;
@@ -334,7 +354,9 @@ namespace Engine
 				return;
 			}
 			console << L"test_call: its OK" << IO::LineFeedSequence;
+			console << L"Starting tests for intrisics." << IO::LineFeedSequence;
 			PerformIntrisicTests(console);
+			console << L"Intrisic tests are all OK" << IO::LineFeedSequence;
 		}
 	}
 }

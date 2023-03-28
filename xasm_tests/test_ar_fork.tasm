@@ -1,0 +1,26 @@
+INTERFACE 8:INT 8:INT => 32
+
+DATA QWORD 0
+DATA QWORD 0
+DATA QWORD 0
+DATA QWORD 0
+DATA QWORD 1
+DATA QWORD 2
+
+CODE {
+	EVAL { @BLT:32 32=>32(R, D[0]) }
+	EVAL {
+		@BLT:4 4=>4(
+			@OFFSET:32 W 0 W 1 W 1=>4(R,
+				@SHR:W 1 W 1=>W 1(A[0], D[32]),
+				@NEW:0=>W 1(@FORK:4 0 0=>0(
+					@AND:4 4=>4(A[0], D[32]),
+					@BLT:W 1 W 1=>W 1(I, D[40]),
+					@BLT:W 1 W 1=>W 1(I, D[32])
+				)
+			)),
+			A[1]
+		)
+	}
+	RET
+}
