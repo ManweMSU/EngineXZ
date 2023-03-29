@@ -24,6 +24,10 @@ namespace Engine
 				result.c = input.c + a;
 				return result;
 			}
+			void destruct(int * out, int * a1, int * a2)
+			{
+				*out = *reinterpret_cast<int *>(this) + *a1 + *a2;
+			}
 		};
 		struct IntrisicTest {
 			int64 r1;
@@ -67,6 +71,11 @@ namespace Engine
 					auto test = &TestStruct::test;
 					uintptr result;
 					MemoryCopy(&result, &test, sizeof(void *));
+					return result;
+				} else if (to == L"destruct") {
+					auto destruct = &TestStruct::destruct;
+					uintptr result;
+					MemoryCopy(&result, &destruct, sizeof(void *));
 					return result;
 				} else if (to == L"fp_add_mul") {
 					return reinterpret_cast<uintptr>(_fp_add_mul);
@@ -180,6 +189,7 @@ namespace Engine
 					console << L"OK" << IO::LineFeedSequence;
 				}
 			}
+			console << L"Intrisic tests are all OK" << IO::LineFeedSequence;
 		}
 		void PerformTests(IO::Console & console)
 		{
@@ -356,7 +366,6 @@ namespace Engine
 			console << L"test_call: its OK" << IO::LineFeedSequence;
 			console << L"Starting tests for intrisics." << IO::LineFeedSequence;
 			PerformIntrisicTests(console);
-			console << L"Intrisic tests are all OK" << IO::LineFeedSequence;
 		}
 	}
 }

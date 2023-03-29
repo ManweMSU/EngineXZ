@@ -1,0 +1,19 @@
+INTERFACE 8:INT 8:INT => 32
+
+EXTERNAL "destruct"
+
+DATA QWORD 0
+DATA QWORD 0
+DATA QWORD 0
+DATA QWORD 0
+DATA QWORD 66
+
+CODE {
+	EVAL { @BLT:32 32=>32(R, D[0]) }
+	EVAL {
+		@NEW:0=>4(
+			@BLT:4 4=>4(I, D[32])
+		)#E[0](R, A[0], A[1])
+	}
+	RET
+}
