@@ -2047,6 +2047,9 @@ namespace Engine
 					} catch (...) { dest.Clear(); return false; }
 				}
 				virtual uint GetWordSize(void) noexcept override { return 8; }
+				virtual Platform GetPlatform(void) noexcept override { return Platform::X64; }
+				virtual CallingConvention GetCallingConvention(void) noexcept override { return _conv; }
+				virtual string ToString(void) const override { return L"XA-x86-64"; }
 			};
 		}
 		

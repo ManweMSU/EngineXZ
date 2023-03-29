@@ -13,6 +13,8 @@ namespace Engine
 		public:
 			virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept = 0;
 			virtual uint GetWordSize(void) noexcept = 0;
+			virtual Platform GetPlatform(void) noexcept = 0;
+			virtual CallingConvention GetCallingConvention(void) noexcept = 0;
 		};
 		class IReferenceResolver
 		{
