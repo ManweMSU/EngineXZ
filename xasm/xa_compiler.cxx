@@ -132,7 +132,9 @@ namespace Engine
 					_pos++;
 					if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"?") spec.semantics = ArgumentSemantics::Unknown;
 					else if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"-") spec.semantics = ArgumentSemantics::Unclassified;
-					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"INT") spec.semantics = ArgumentSemantics::Integer;
+					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"INT") spec.semantics = ArgumentSemantics::SignedInteger;
+					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"SINT") spec.semantics = ArgumentSemantics::SignedInteger;
+					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"UINT") spec.semantics = ArgumentSemantics::Integer;
 					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"FLOAT") spec.semantics = ArgumentSemantics::FloatingPoint;
 					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"OBJECT") spec.semantics = ArgumentSemantics::Object;
 					else if (_text[_pos].Class == TokenClass::Identifier && _text[_pos].Content == L"THIS") spec.semantics = ArgumentSemantics::This;

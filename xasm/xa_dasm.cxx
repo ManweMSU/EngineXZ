@@ -70,7 +70,8 @@ namespace Engine
 				result << DisassemblySize(spec.size, consider_signed) << L" : ";
 				if (spec.semantics == ArgumentSemantics::Unknown) result << L"?";
 				else if (spec.semantics == ArgumentSemantics::Unclassified) result << L"-";
-				else if (spec.semantics == ArgumentSemantics::Integer) result << L"INT";
+				else if (spec.semantics == ArgumentSemantics::Integer) result << L"UINT";
+				else if (spec.semantics == ArgumentSemantics::SignedInteger) result << L"SINT";
 				else if (spec.semantics == ArgumentSemantics::FloatingPoint) result << L"FLOAT";
 				else if (spec.semantics == ArgumentSemantics::Object) result << L"OBJECT";
 				else if (spec.semantics == ArgumentSemantics::This) result << L"THIS";
