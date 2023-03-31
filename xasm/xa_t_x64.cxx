@@ -721,7 +721,7 @@ namespace Engine
 					} else {
 						if (!node.inputs.Length()) throw InvalidArgumentException();
 						Reg local = disp->reg != Reg::NO ? disp->reg : Reg::RCX;
-						_encode_preserve(local, reg_in_use, local != disp->reg);
+						_encode_preserve(local, reg_in_use, local != disp->reg && !idle);
 						Array<int> put_offs(0x10);
 						uint min_size = 0;
 						uint rv_size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
@@ -759,7 +759,7 @@ namespace Engine
 								put_offs << _dest.code.Length();
 							}
 						}
-						for (auto & p : put_offs) *reinterpret_cast<int *>(_dest.code.GetBuffer() + p - 4) = _dest.code.Length() - p;
+						if (!idle) for (auto & p : put_offs) *reinterpret_cast<int *>(_dest.code.GetBuffer() + p - 4) = _dest.code.Length() - p;
 						if (rv_size > min_size && !idle) {
 							uint cs = (8 - min_size) * 8;
 							encode_shl(local, cs);
@@ -780,7 +780,7 @@ namespace Engine
 						} else if (disp->flags & DispositionDiscard) {
 							disp->flags = DispositionDiscard;
 						}
-						_encode_restore(local, reg_in_use, local != disp->reg);
+						_encode_restore(local, reg_in_use, local != disp->reg && !idle);
 					}
 				}
 				void _encode_general_call(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)

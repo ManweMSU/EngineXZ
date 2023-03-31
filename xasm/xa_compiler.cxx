@@ -295,6 +295,9 @@ namespace Engine
 					} else if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L":") {
 						_pos++;
 						ProcessInterface(tree.input_specs, tree.retval_spec);
+					} else if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"!") {
+						_pos++;
+						tree.self.ref_flags |= ReferenceFlagUnaligned;
 					} else break;
 				}
 				if (tree.inputs.Length() != tree.input_specs.Length()) {
@@ -423,6 +426,7 @@ namespace Engine
 				spelling.IsolatedChars << L'@';
 				spelling.IsolatedChars << L'#';
 				spelling.IsolatedChars << L',';
+				spelling.IsolatedChars << L'!';
 				spelling.CombinableChars << L'=';
 				spelling.CombinableChars << L'>';
 				spelling.InfinityLiteral = L"INFINITY";

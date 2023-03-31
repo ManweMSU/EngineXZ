@@ -33,8 +33,9 @@ namespace Engine
 		};
 		enum ReferenceFlags : uint8
 		{
-			ReferenceFlagRefer	= 0x00,
-			ReferenceFlagInvoke	= 0x01,
+			ReferenceFlagRefer		= 0x00,
+			ReferenceFlagInvoke		= 0x01,
+			ReferenceFlagUnaligned	= 0x02,
 		};
 		enum ReferenceTransforms : uint32
 		{

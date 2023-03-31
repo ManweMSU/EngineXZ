@@ -173,6 +173,7 @@ namespace Engine
 			{
 				DisassemblyReference(tree.self, output);
 				if (tree.self.ref_flags & ReferenceFlagInvoke) {
+					if (tree.self.ref_flags & ReferenceFlagUnaligned) output << L"!";
 					output << L": " << DisassemblyInterface(tree.input_specs, tree.retval_spec, &tree.inputs) << L"(" << IO::LineFeedSequence;
 					auto sp = prefix + L"\t";
 					for (int i = 0; i < tree.inputs.Length(); i++) {
