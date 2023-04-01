@@ -34,6 +34,9 @@ namespace Engine
 			int64 r2;
 			int64 r4;
 			int64 r8;
+
+			IntrisicTest(void) {}
+			~IntrisicTest(void) {}
 		};
 
 		typedef int (* TestIntFunc) (int a, int b, int c);

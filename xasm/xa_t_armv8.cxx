@@ -141,16 +141,31 @@ namespace Engine
 				{
 					SafePointer< Array<_argument_passage_info> > result = new Array<_argument_passage_info>(0x20);
 					int gri = 0, sri = 0, spo = 0;
+					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This && _conv == CallingConvention::Windows) {
+						_argument_passage_info info;
+						info.index = i;
+						info.indirect = _is_pass_by_ref(inputs[i]);
+						info.reg_min = info.reg_max = _make_reg(gri);
+						info.vreg = VReg::NO;
+						info.stack_offset = -1;
+						gri++;
+						result->Append(info);
+					}
 					if (_is_pass_by_ref(output)) {
+						Reg reg;
+						if (_conv == CallingConvention::Windows) { reg = _make_reg(gri); gri++; }
+						else if (_conv == CallingConvention::Unix) { reg = Reg::X8; }
+						else throw InvalidArgumentException();
 						_argument_passage_info info;
 						info.index = -1;
-						info.reg_min = info.reg_max = Reg::X8;
+						info.reg_min = info.reg_max = reg;
 						info.vreg = VReg::NO;
 						info.stack_offset = -1;
 						info.indirect = true;
 						result->Append(info);
 					}
 					for (int i = 0; i < in_cnt; i++) {
+						if (inputs[i].semantics == ArgumentSemantics::This && _conv == CallingConvention::Windows) continue;
 						auto & spec = inputs[i];
 						_argument_passage_info info;
 						info.index = i;
@@ -182,11 +197,16 @@ namespace Engine
 							} else {
 								int size = _size_eval(spec.size);
 								gri = 8;
-								if (size == 1);
-								else if (size < 4) while (spo & 0x1) spo++;
-								else if (size < 8) while (spo & 0x3) spo++;
-								else if (size < 16) while (spo & 0x7) spo++;
-								else while (spo & 0xF) spo++;
+								if (_conv == CallingConvention::Windows) {
+									if (size < 16) while (spo & 0x7) spo++;
+									else while (spo & 0xF) spo++;
+								} else if (_conv == CallingConvention::Unix) {
+									if (size == 1);
+									else if (size < 4) while (spo & 0x1) spo++;
+									else if (size < 8) while (spo & 0x3) spo++;
+									else if (size < 16) while (spo & 0x7) spo++;
+									else while (spo & 0xF) spo++;
+								}
 								info.reg_min = info.reg_max = Reg::NO;
 								info.vreg = VReg::NO;
 								info.stack_offset = spo;
@@ -721,7 +741,7 @@ namespace Engine
 							*mem_load += _word_align(node.retval_spec.size);
 							if (!idle) {
 								rv_offset = _allocate_temporary(node.retval_spec.size, node.retval_final);
-								encode_emulate_lea(Reg::X8, Reg::FP, rv_offset);
+								encode_emulate_lea(info.reg_min, Reg::FP, rv_offset);
 							}
 						}
 					}
@@ -1329,10 +1349,11 @@ namespace Engine
 						_retval.fp_offset = -1;
 						if (_word_align(_src.retval.size) > 8) _retval.reg_max = Reg::X1;
 					}
+					Reg rv_reg = Reg::NO;
 					for (auto & info : *api) {
 						_argument_storage_spec * as;
 						if (info.index >= 0) as = &_inputs[info.index];
-						else as = &_retval;
+						else { as = &_retval; rv_reg = info.reg_min; }
 						as->indirect = info.indirect;
 						as->fp_offset = (info.stack_offset < 0) ? -1 : info.stack_offset + 16;
 						as->reg_min = info.reg_min;
@@ -1362,12 +1383,12 @@ namespace Engine
 							encode_store(_size_eval(_src.retval.size), Reg::X9, a.vreg);
 						}
 					}
-					if (_retval.reg_min == Reg::X8) encode_store(8, Reg::FP, _retval.fp_offset, Reg::X8);
+					if (rv_reg != Reg::NO) encode_store(8, Reg::FP, _retval.fp_offset, rv_reg);
 				}
 				void encode_function_epilogue(void)
 				{
 					if (_is_pass_by_ref(_src.retval)) {
-						encode_load(8, false, Reg::X8, Reg::FP, _retval.fp_offset);
+						encode_load(8, false, _conv == CallingConvention::Unix ? Reg::X8 : Reg::X0, Reg::FP, _retval.fp_offset);
 					} else if (_retval.vreg != VReg::NO) {
 						encode_emulate_lea(Reg::X8, Reg::FP, _retval.fp_offset);
 						encode_load(8, VReg::V0, Reg::X8);
