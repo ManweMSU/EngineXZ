@@ -79,13 +79,14 @@ public:
 int Main(void)
 {
 	PerformTests(console);
+	SafePointer<Streaming::TextReader> rdr;
 	try {
 		#ifdef ENGINE_DEBUG
 		SafePointer<Streaming::Stream> stream = new Streaming::FileStream(L"../../test.asm", Streaming::AccessRead, Streaming::OpenExisting);
 		#else
 		SafePointer<Streaming::Stream> stream = new Streaming::FileStream(L"test.asm", Streaming::AccessRead, Streaming::OpenExisting);
 		#endif
-		SafePointer<Streaming::TextReader> rdr = new Streaming::TextReader(stream);
+		rdr = new Streaming::TextReader(stream);
 	} catch (...) { return 1; }
 
 	Function fvnctia;
