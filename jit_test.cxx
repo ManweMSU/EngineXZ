@@ -5,6 +5,7 @@
 #include "xasm/xa_compiler.h"
 #include "xasm/xa_dasm.h"
 #include "xasm_tests/tests.h"
+#include "xenv/xe_module.h"
 
 using namespace Engine;
 using namespace Engine::XA;
@@ -78,6 +79,20 @@ public:
 
 int Main(void)
 {
+	while (true) {
+		try {
+			auto line = console.ReadLine();
+			auto tr = XE::Module::TypeReference(line);
+			console.SetTextColor(14);
+			console.WriteLine(tr.ToString());
+		} catch (Exception & e) {
+			console.SetTextColor(12);
+			console.WriteLine(L"EXCEPTION: " + e.ToString());
+		}
+		console.SetTextColor(-1);
+	}
+	return 1;
+
 	PerformTests(console);
 	SafePointer<Streaming::TextReader> rdr;
 	try {

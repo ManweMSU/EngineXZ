@@ -4,8 +4,10 @@
 
 namespace Engine
 {
-	namespace XCL
+	namespace XE
 	{
+		// TODO: REWORK LANGUAGE ABSTRACTION LAYER
+
 		enum class Class { Namespace, Scope, Alias, Transform, Type, Function, Variable, Literal };
 
 		class LObject : public Object

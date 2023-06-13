@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-	namespace XCL
+	namespace XE
 	{
 		// TODO: IMPLEMENT (RUNTIME TYPE SYSTEM API)
 	}
