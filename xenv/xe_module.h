@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "xasm/xa_types.h"
+#include "../xasm/xa_types.h"
 
 namespace Engine
 {
@@ -69,27 +69,78 @@ namespace Engine
 			public:
 				string TypeCanonicalName;
 				XA::ObjectSize Offset, Size;
+				Volumes::Dictionary<string, string> Attributes;
+			};
+			class Function
+			{
+			public:
+				enum FunctionCodeFlags : uint {
+					FunctionClassNull	= 0x000000,
+
+					FunctionClassXA		= 0x010000,
+					FunctionXA_Abstract	= 0x000000,
+					FunctionXA_Platform	= 0x000001,
+
+					FunctionClassImport	= 0x020000,
+					FunctionImportNear	= 0x000000,
+					FunctionImportFar	= 0x000001,
+
+					FunctionTypeMask	= 0x00FFFF,
+					FunctionClassMask	= 0xFF0000,
+
+					FunctionEntryPoint	= 0x01000000,
+					FunctionInitialize	= 0x02000000,
+					FunctionShutdown	= 0x04000000,
+					FunctionMiscMask	= 0xFF000000,
+				};
+			public:
+				uint CodeFlags;
+				Point VFT_Index;
+				SafePointer<DataBlock> Code;
+				Volumes::Dictionary<string, string> Attributes;
+			};
+			class Property
+			{
+			public:
+				Function Getter, Setter;
+			};
+			class Interface
+			{
+			public:
+				string InterfaceName; // FQN
+				XA::ObjectSize VFT_PointerOffset;
+			};
+			class Class
+			{
+			public:
+				enum class Nature { Core, Standard, Interface };
+			public:
+				Nature ClassNature;
+				XA::ObjectSize InstanceSize;
+				string ParentClassName; // FQN
+				XA::ObjectSize Parent_VFT_PointerOffset;
+				Array<Interface> InterfacesImplements;
+				Volumes::Dictionary<string, Variable> Fields;		// NAME
+				Volumes::Dictionary<string, Property> Properties;	// NAME
+				Volumes::Dictionary<string, Function> Methods;		// NAME:SCN
+				Volumes::Dictionary<string, string> Attributes;
+
+				Class(void);
 			};
 		public:
-			Array<string> ModuleDependsOn;
-			Volumes::Dictionary<string, Literal> Literals;
-
-			// TODO: IMPLEMENT
-			//   CLASS TYPE DATABASE AND METADATA
-			//   SYMBOL DATABASE (VARIABLES AND FUNCTIONS)
-
-			//   DATA SEGMENT
-
-			Volumes::Dictionary<string, Variable> Variables;
-			Volumes::Dictionary<string, string> Aliases;
+			Array<string> ModulesDependsOn;
+			Volumes::Dictionary<string, Literal> Literals;			// FQN
+			Volumes::Dictionary<string, Class> Classes;				// FQN
+			Volumes::Dictionary<string, Variable> Variables;		// FQN
+			Volumes::Dictionary<string, Function> Functions;		// FQN:SCN
+			Volumes::Dictionary<string, string> Aliases;			// FQN
+			Volumes::ObjectDictionary<string, DataBlock> Resources;	// TYPE:ID
 			SafePointer<DataBlock> DataSegment;
-
-			
-			//   RESOURCE SEGMENT
 		public:
 			Module(void);
 			Module(Streaming::Stream * source);
 			virtual ~Module(void) override;
+			void Save(Streaming::Stream * dest);
 		};
 	}
 }

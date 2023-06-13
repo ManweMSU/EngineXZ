@@ -163,15 +163,18 @@ namespace Engine
 			} else return L"UNKNOWN";
 		}
 
-		Module::Module(void) : ModuleDependsOn(0x10)
+		Module::Class::Class(void) : InterfacesImplements(0x10) {}
+
+		Module::Module(void) : ModulesDependsOn(0x10)
 		{
 			// TODO: IMPLEMENT
 		}
-		Module::Module(Streaming::Stream * source) : ModuleDependsOn(0x10)
+		Module::Module(Streaming::Stream * source) : ModulesDependsOn(0x10)
 		{
 			// TODO: IMPLEMENT
 		}
-		Module::~Module(void)
+		Module::~Module(void) {}
+		void Module::Save(Streaming::Stream * dest)
 		{
 			// TODO: IMPLEMENT
 		}
