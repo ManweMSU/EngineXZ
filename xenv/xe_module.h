@@ -47,29 +47,30 @@ namespace Engine
 			public:
 				enum class Class { Boolean, SignedInteger, UnsignedInteger, FloatingPoint, String };
 			public:
-				Class Contents;
-				uint Length;
+				Class contents;
+				uint length;
 				union {
-					bool DataBoolean;
-					uint8 DataUInt8;
-					int8 DataSInt8;
-					uint16 DataUInt16;
-					int16 DataSInt16;
-					uint32 DataUInt32;
-					int32 DataSInt32;
-					uint64 DataUInt64;
-					int64 DataSInt64;
-					float DataFloat;
-					double DataDouble;
+					bool data_boolean;
+					uint8 data_uint8;
+					int8 data_sint8;
+					uint16 data_uint16;
+					int16 data_sint16;
+					uint32 data_uint32;
+					int32 data_sint32;
+					uint64 data_uint64;
+					int64 data_sint64;
+					float data_float;
+					double data_double;
 				};
-				string DataString;
+				string data_string;
+				Volumes::Dictionary<string, string> attributes;
 			};
 			class Variable
 			{
 			public:
-				string TypeCanonicalName;
-				XA::ObjectSize Offset, Size;
-				Volumes::Dictionary<string, string> Attributes;
+				string type_canonical_name;
+				XA::ObjectSize offset, size;
+				Volumes::Dictionary<string, string> attributes;
 			};
 			class Function
 			{
@@ -94,48 +95,56 @@ namespace Engine
 					FunctionMiscMask	= 0xFF000000,
 				};
 			public:
-				uint CodeFlags;
-				Point VFT_Index;
-				SafePointer<DataBlock> Code;
-				Volumes::Dictionary<string, string> Attributes;
+				uint code_flags;
+				Point vft_index; // Index of VFT : Index of function in VFT
+				SafePointer<DataBlock> code;
+				Volumes::Dictionary<string, string> attributes;
 			};
 			class Property
 			{
 			public:
-				Function Getter, Setter;
+				string type_canonical_name;
+				Function getter, setter;
 			};
 			class Interface
 			{
 			public:
-				string InterfaceName; // FQN
-				XA::ObjectSize VFT_PointerOffset;
+				string interface_name; // FQN
+				XA::ObjectSize vft_pointer_offset;
 			};
 			class Class
 			{
 			public:
 				enum class Nature { Core, Standard, Interface };
 			public:
-				Nature ClassNature;
-				XA::ObjectSize InstanceSize;
-				string ParentClassName; // FQN
-				XA::ObjectSize Parent_VFT_PointerOffset;
-				Array<Interface> InterfacesImplements;
-				Volumes::Dictionary<string, Variable> Fields;		// NAME
-				Volumes::Dictionary<string, Property> Properties;	// NAME
-				Volumes::Dictionary<string, Function> Methods;		// NAME:SCN
-				Volumes::Dictionary<string, string> Attributes;
+				Nature class_nature;
+				XA::ArgumentSpecification instance_spec;
+				string parent_class_name; // FQN
+				XA::ObjectSize parent_vft_pointer_offset;
+				Array<Interface> interfaces_implements;
+				Volumes::Dictionary<string, Variable> fields;		// NAME
+				Volumes::Dictionary<string, Property> properties;	// NAME
+				Volumes::Dictionary<string, Function> methods;		// NAME:SCN
+				Volumes::Dictionary<string, string> attributes;
 
 				Class(void);
 			};
+			class Version
+			{
+			public:
+				uint major, minor, subver, build;
+			};
 		public:
-			Array<string> ModulesDependsOn;
-			Volumes::Dictionary<string, Literal> Literals;			// FQN
-			Volumes::Dictionary<string, Class> Classes;				// FQN
-			Volumes::Dictionary<string, Variable> Variables;		// FQN
-			Volumes::Dictionary<string, Function> Functions;		// FQN:SCN
-			Volumes::Dictionary<string, string> Aliases;			// FQN
-			Volumes::ObjectDictionary<string, DataBlock> Resources;	// TYPE:ID
-			SafePointer<DataBlock> DataSegment;
+			string module_import_name, assembler_name;
+			Version assembler_version;
+			Array<string> modules_depends_on;
+			Volumes::Dictionary<string, Literal> literals;			// FQN
+			Volumes::Dictionary<string, Class> classes;				// FQN
+			Volumes::Dictionary<string, Variable> variables;		// FQN
+			Volumes::Dictionary<string, Function> functions;		// FQN:SCN
+			Volumes::Dictionary<string, string> aliases;			// FQN
+			Volumes::ObjectDictionary<string, DataBlock> resources;	// TYPE:ID
+			SafePointer<DataBlock> data;
 		public:
 			Module(void);
 			Module(Streaming::Stream * source);

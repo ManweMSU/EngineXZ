@@ -163,13 +163,16 @@ namespace Engine
 			} else return L"UNKNOWN";
 		}
 
-		Module::Class::Class(void) : InterfacesImplements(0x10) {}
+		Module::Class::Class(void) : interfaces_implements(0x10) {}
 
-		Module::Module(void) : ModulesDependsOn(0x10)
+		Module::Module(void) : modules_depends_on(0x10)
 		{
-			// TODO: IMPLEMENT
+			module_import_name = L"module";
+			assembler_name = L"XE";
+			assembler_version.major = assembler_version.minor = 0;
+			assembler_version.subver = assembler_version.build = 0;
 		}
-		Module::Module(Streaming::Stream * source) : ModulesDependsOn(0x10)
+		Module::Module(Streaming::Stream * source) : modules_depends_on(0x10)
 		{
 			// TODO: IMPLEMENT
 		}
