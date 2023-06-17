@@ -167,6 +167,7 @@ namespace Engine
 
 		Module::Module(void) : modules_depends_on(0x10)
 		{
+			subsystem = ExecutionSubsystem::ConsoleUI;
 			module_import_name = L"module";
 			assembler_name = L"XE";
 			assembler_version.major = assembler_version.minor = 0;

@@ -9,6 +9,7 @@ namespace Engine
 		class Module : public Object
 		{
 		public:
+			enum class ExecutionSubsystem { NoUI, ConsoleUI, GUI, Library };
 			class TypeReference
 			{
 			public:
@@ -103,7 +104,7 @@ namespace Engine
 			class Property
 			{
 			public:
-				string type_canonical_name;
+				string type_canonical_name, getter_interface, setter_interface;
 				Function getter, setter;
 			};
 			class Interface
@@ -135,6 +136,7 @@ namespace Engine
 				uint major, minor, subver, build;
 			};
 		public:
+			ExecutionSubsystem subsystem;
 			string module_import_name, assembler_name;
 			Version assembler_version;
 			Array<string> modules_depends_on;
