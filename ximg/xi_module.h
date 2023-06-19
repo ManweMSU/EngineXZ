@@ -4,12 +4,18 @@
 
 namespace Engine
 {
-	namespace XE
+	namespace XI
 	{
 		class Module : public Object
 		{
 		public:
-			enum class ExecutionSubsystem { NoUI, ConsoleUI, GUI, Library };
+			enum class ModuleLoadFlags {
+				LoadAll			= 0x00,
+				LoadExecute		= 0x01,
+				LoadLink		= 0x02,
+				LoadResources	= 0x03,
+			};
+			enum class ExecutionSubsystem { NoUI = 0, ConsoleUI = 1, GUI = 2, Library = 3 };
 			class TypeReference
 			{
 			public:
@@ -46,7 +52,7 @@ namespace Engine
 			class Literal
 			{
 			public:
-				enum class Class { Boolean, SignedInteger, UnsignedInteger, FloatingPoint, String };
+				enum class Class { Boolean = 1, SignedInteger = 2, UnsignedInteger = 3, FloatingPoint = 4, String = 5 };
 			public:
 				Class contents;
 				uint length;
@@ -106,6 +112,7 @@ namespace Engine
 			public:
 				string type_canonical_name, getter_interface, setter_interface;
 				Function getter, setter;
+				Volumes::Dictionary<string, string> attributes;
 			};
 			class Interface
 			{
@@ -116,7 +123,7 @@ namespace Engine
 			class Class
 			{
 			public:
-				enum class Nature { Core, Standard, Interface };
+				enum class Nature { Core = 0, Standard = 1, Interface = 2 };
 			public:
 				Nature class_nature;
 				XA::ArgumentSpecification instance_spec;
@@ -150,6 +157,7 @@ namespace Engine
 		public:
 			Module(void);
 			Module(Streaming::Stream * source);
+			Module(Streaming::Stream * source, ModuleLoadFlags flags);
 			virtual ~Module(void) override;
 			void Save(Streaming::Stream * dest);
 		};

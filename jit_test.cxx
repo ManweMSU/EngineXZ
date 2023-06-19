@@ -5,7 +5,7 @@
 #include "xasm/xa_compiler.h"
 #include "xasm/xa_dasm.h"
 #include "xasm_tests/tests.h"
-#include "xenv/xe_module.h"
+#include "ximg/xi_module.h"
 
 using namespace Engine;
 using namespace Engine::XA;
@@ -80,11 +80,37 @@ public:
 int Main(void)
 {
 	while (true) {
+		Streaming::MemoryStream stream(0x10000);
 		try {
-			auto line = console.ReadLine();
-			auto tr = XE::Module::TypeReference(line);
-			console.SetTextColor(14);
-			console.WriteLine(tr.ToString());
+			XI::Module::Literal l1;
+			l1.contents = XI::Module::Literal::Class::FloatingPoint;
+			l1.data_double = 666.0;
+			l1.length = 8;
+			l1.attributes.Append(L"ATTR1", L"value-1");
+			l1.attributes.Append(L"ATTR2", L"value-666");
+			XI::Module m1;
+			m1.subsystem = XI::Module::ExecutionSubsystem::GUI;
+			m1.module_import_name = L"TM";
+			m1.assembler_name = L"TA";
+			m1.assembler_version.major = 1;
+			m1.assembler_version.minor = 2;
+			m1.assembler_version.subver = 3;
+			m1.assembler_version.build = 4;
+			m1.modules_depends_on << L"M1";
+			m1.modules_depends_on << L"M2";
+			m1.modules_depends_on << L"M3";
+			m1.data = new DataBlock(1);
+			m1.data->Append(66);
+			m1.resources.Append(L"DTA:55", m1.data);
+			m1.resources.Append(L"DTA:77", m1.data);
+			m1.literals.Append(L"LIT1", l1);
+			m1.Save(&stream);
+			XI::Module m2(&stream);
+
+			console.WriteLine(GetStringRepresentation(m2.resources));
+
+			int p = 55;
+
 		} catch (Exception & e) {
 			console.SetTextColor(12);
 			console.WriteLine(L"EXCEPTION: " + e.ToString());
