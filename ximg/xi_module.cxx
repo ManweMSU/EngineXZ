@@ -33,7 +33,7 @@ namespace Engine
 				ENGINE_END_PACKED_STRUCTURE
 				ENGINE_PACKED_STRUCTURE(XI_Symbol)
 					uint32 symbol_name_offset;
-					uint32 symbol_type; // 1 - literal, 2 - class, 3 - variable, 4 - function, 5 - alias
+					uint32 symbol_type; // 1 - literal, 2 - class, 3 - variable, 4 - function, 5 - alias, 6 - property
 					uint32 symbol_data_offset;
 					uint32 symbol_data_size; // not used for alias
 				ENGINE_END_PACKED_STRUCTURE
@@ -76,8 +76,8 @@ namespace Engine
 					uint32 property_type_cn_offset;
 					uint32 property_getter_cn_offset;
 					uint32 property_setter_cn_offset;
-					XI_Function property_getter;
-					XI_Function property_setter;
+					uint32 property_getter_function_offset;
+					uint32 property_setter_function_offset;
 					uint32 property_attribute_list_offset;
 					uint32 property_attribute_list_size;
 				ENGINE_END_PACKED_STRUCTURE
@@ -94,12 +94,8 @@ namespace Engine
 					XI_Interface class_parent;
 					uint32 class_interface_list_offset;
 					uint32 class_interface_list_size;
-					uint32 class_field_list_offset;
-					uint32 class_field_list_size;
-					uint32 class_property_list_offset;
-					uint32 class_property_list_size;
-					uint32 class_method_list_offset;
-					uint32 class_method_list_size;
+					uint32 class_symbol_list_offset;
+					uint32 class_symbol_list_size;
 					uint32 class_attribute_list_offset;
 					uint32 class_attribute_list_size;
 				ENGINE_END_PACKED_STRUCTURE
@@ -107,11 +103,13 @@ namespace Engine
 
 			template<class T> uint32 PreserveSpace(DataBlock & data, const T * t, int num_items = 1)
 			{
-				uint32 offset = data.Length();
-				data.SetLength(offset + sizeof(T) * num_items);
-				return offset;
+				if (sizeof(T) * num_items) {
+					uint32 offset = data.Length();
+					data.SetLength(offset + sizeof(T) * num_items);
+					return offset;
+				} else return 0;
 			}
-			template<class T> void EnplaceObject(DataBlock & data, uint32 at, const T * t, int num_items = 1) { MemoryCopy(data.GetBuffer() + at, t, sizeof(T) * num_items); }
+			template<class T> void EnplaceObject(DataBlock & data, uint32 at, const T * t, int num_items = 1) { if (sizeof(T) * num_items) MemoryCopy(data.GetBuffer() + at, t, sizeof(T) * num_items); }
 			uint32 EnplaceString(DataBlock & data, const string & text)
 			{
 				auto offset = data.Length();
@@ -159,23 +157,103 @@ namespace Engine
 			}
 			void EncodeVariable(DataBlock & info, uint32 & offset, uint32 & size, const Module::Variable & src)
 			{
-				// TODO: IMPLEMENT
+				DS::XI_Variable hdr;
+				offset = PreserveSpace(info, &hdr);
+				size = sizeof(hdr);
+				hdr.variable_type_cn_offset = EnplaceString(info, src.type_canonical_name);
+				hdr.variable_offset_byte_size = src.offset.num_bytes;
+				hdr.variable_offset_word_size = src.offset.num_words;
+				hdr.variable_size_byte_size = src.size.num_bytes;
+				hdr.variable_size_word_size = src.size.num_words;
+				EncodeAttributes(info, hdr.variable_attribute_list_offset, hdr.variable_attribute_list_size, src.attributes);
+				EnplaceObject(info, offset, &hdr);
 			}
 			void EncodeFunction(DataBlock & info, uint32 & offset, uint32 & size, const Module::Function & src)
 			{
-				// TODO: IMPLEMENT
+				DS::XI_Function hdr;
+				offset = PreserveSpace(info, &hdr);
+				size = sizeof(hdr);
+				hdr.function_flags = src.code_flags;
+				hdr.function_vft_table_index = src.vft_index.x;
+				hdr.function_vft_function_index = src.vft_index.y;
+				if (src.code && src.code->Length()) {
+					hdr.function_code_offset = PreserveSpace(info, src.code->GetBuffer(), src.code->Length());
+					hdr.function_code_size = src.code->Length();
+					EnplaceObject(info, hdr.function_code_offset, src.code->GetBuffer(), src.code->Length());
+				} else {
+					hdr.function_code_offset = 0;
+					hdr.function_code_size = 0;
+				}
+				EncodeAttributes(info, hdr.function_attribute_list_offset, hdr.function_attribute_list_size, src.attributes);
+				EnplaceObject(info, offset, &hdr);
 			}
-			void EncodeProperty(DataBlock & info, uint32 & offset, const Module::Property & src)
+			void EncodeProperty(DataBlock & info, uint32 & offset, uint32 & size, const Module::Property & src)
 			{
-				// TODO: IMPLEMENT
+				uint32 drain;
+				DS::XI_Property hdr;
+				offset = PreserveSpace(info, &hdr);
+				size = sizeof(hdr);
+				hdr.property_type_cn_offset = EnplaceString(info, src.type_canonical_name);
+				hdr.property_getter_cn_offset = EnplaceString(info, src.getter_interface);
+				hdr.property_setter_cn_offset = EnplaceString(info, src.setter_interface);
+				EncodeFunction(info, hdr.property_getter_function_offset, drain, src.getter);
+				EncodeFunction(info, hdr.property_setter_function_offset, drain, src.setter);
+				EncodeAttributes(info, hdr.property_attribute_list_offset, hdr.property_attribute_list_size, src.attributes);
+				EnplaceObject(info, offset, &hdr);
 			}
-			void EncodeInterface(DataBlock & info, uint32 & offset, const Module::Interface & src)
+			void EncodeInterface(DataBlock & info, DS::XI_Interface & dest, const Module::Interface & src)
 			{
-				// TODO: IMPLEMENT
+				dest.class_name_offset = EnplaceString(info, src.interface_name);
+				dest.vftp_byte_offset = src.vft_pointer_offset.num_bytes;
+				dest.vftp_word_offset = src.vft_pointer_offset.num_words;
 			}
 			void EncodeClass(DataBlock & info, uint32 & offset, uint32 & size, const Module::Class & src)
 			{
-				// TODO: IMPLEMENT
+				DS::XI_Class hdr;
+				offset = PreserveSpace(info, &hdr);
+				size = sizeof(hdr);
+				hdr.class_language_semantics = uint32(src.class_nature);
+				hdr.class_argument_semantics = uint32(src.instance_spec.semantics);
+				hdr.class_byte_size = src.instance_spec.size.num_bytes;
+				hdr.class_word_size = src.instance_spec.size.num_words;
+				EncodeInterface(info, hdr.class_parent, src.parent_class);
+				if (src.interfaces_implements.Length()) {
+					Array<DS::XI_Interface> ilist(1);
+					ilist.SetLength(src.interfaces_implements.Length());
+					hdr.class_interface_list_offset = PreserveSpace(info, ilist.GetBuffer(), ilist.Length());
+					hdr.class_interface_list_size = ilist.Length();
+					for (int i = 0; i < ilist.Length(); i++) EncodeInterface(info, ilist[i], src.interfaces_implements[i]);
+					EnplaceObject(info, hdr.class_interface_list_offset, ilist.GetBuffer(), ilist.Length());
+				} else {
+					hdr.class_interface_list_offset = 0;
+					hdr.class_interface_list_size = 0;
+				}
+				Array<DS::XI_Symbol> stable(1);
+				stable.SetLength(src.fields.Count() + src.properties.Count() + src.methods.Count());
+				hdr.class_symbol_list_offset = PreserveSpace(info, stable.GetBuffer(), stable.Length());
+				hdr.class_symbol_list_size = stable.Length();
+				int wp = 0;
+				for (auto & f : src.fields) {
+					stable[wp].symbol_type = 3;
+					stable[wp].symbol_name_offset = EnplaceString(info, f.key);
+					EncodeVariable(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, f.value);
+					wp++;
+				}
+				for (auto & p : src.properties) {
+					stable[wp].symbol_type = 6;
+					stable[wp].symbol_name_offset = EnplaceString(info, p.key);
+					EncodeProperty(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, p.value);
+					wp++;
+				}
+				for (auto & m : src.methods) {
+					stable[wp].symbol_type = 4;
+					stable[wp].symbol_name_offset = EnplaceString(info, m.key);
+					EncodeFunction(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, m.value);
+					wp++;
+				}
+				EnplaceObject(info, hdr.class_symbol_list_offset, stable.GetBuffer(), stable.Length());
+				EncodeAttributes(info, hdr.class_attribute_list_offset, hdr.class_attribute_list_size, src.attributes);
+				EnplaceObject(info, offset, &hdr);
 			}
 			void EncodeSymbols(DataBlock & info, DS::XI_Header & hdr, const Module & src)
 			{
@@ -263,23 +341,74 @@ namespace Engine
 			}
 			void DecodeVariable(Module::Variable & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				// TODO: IMPLEMENT
+				auto hdr = ReadObjects<DS::XI_Variable>(info, offset);
+				dest.type_canonical_name = ReadString(info, hdr->variable_type_cn_offset);
+				dest.offset.num_bytes = hdr->variable_offset_byte_size;
+				dest.offset.num_words = hdr->variable_offset_word_size;
+				dest.size.num_bytes = hdr->variable_size_byte_size;
+				dest.size.num_words = hdr->variable_size_word_size;
+				DecodeAttributes(dest.attributes, info, hdr->variable_attribute_list_offset, hdr->variable_attribute_list_size);
 			}
 			void DecodeFunction(Module::Function & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				// TODO: IMPLEMENT
+				auto hdr = ReadObjects<DS::XI_Function>(info, offset);
+				dest.code_flags = hdr->function_flags;
+				dest.vft_index.x = hdr->function_vft_table_index;
+				dest.vft_index.y = hdr->function_vft_function_index;
+				dest.code = new DataBlock(1);
+				dest.code->SetLength(hdr->function_code_size);
+				MemoryCopy(dest.code->GetBuffer(), info.GetBuffer() + hdr->function_code_offset, hdr->function_code_size);
+				DecodeAttributes(dest.attributes, info, hdr->function_attribute_list_offset, hdr->function_attribute_list_size);
 			}
-			void DecodeProperty(Module::Property & dest, const DataBlock & info, uint32 offset)
+			void DecodeProperty(Module::Property & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				// TODO: IMPLEMENT
+				auto hdr = ReadObjects<DS::XI_Property>(info, offset);
+				dest.type_canonical_name = ReadString(info, hdr->property_type_cn_offset);
+				dest.getter_interface = ReadString(info, hdr->property_getter_cn_offset);
+				dest.setter_interface = ReadString(info, hdr->property_setter_cn_offset);
+				DecodeFunction(dest.getter, info, hdr->property_getter_function_offset, sizeof(DS::XI_Function));
+				DecodeFunction(dest.setter, info, hdr->property_setter_function_offset, sizeof(DS::XI_Function));
+				DecodeAttributes(dest.attributes, info, hdr->property_attribute_list_offset, hdr->property_attribute_list_size);
 			}
-			void DecodeInterface(Module::Interface & dest, const DataBlock & info, uint32 offset)
+			void DecodeInterface(Module::Interface & dest, const DataBlock & info, const DS::XI_Interface & src)
 			{
-				// TODO: IMPLEMENT
+				dest.interface_name = ReadString(info, src.class_name_offset);
+				dest.vft_pointer_offset.num_bytes = src.vftp_byte_offset;
+				dest.vft_pointer_offset.num_words = src.vftp_word_offset;
 			}
 			void DecodeClass(Module::Class & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				// TODO: IMPLEMENT
+				auto hdr = ReadObjects<DS::XI_Class>(info, offset);
+				dest.class_nature = static_cast<Module::Class::Nature>(hdr->class_language_semantics);
+				dest.instance_spec.semantics = static_cast<XA::ArgumentSemantics>(hdr->class_argument_semantics);
+				dest.instance_spec.size.num_bytes = hdr->class_byte_size;
+				dest.instance_spec.size.num_words = hdr->class_word_size;
+				DecodeInterface(dest.parent_class, info, hdr->class_parent);
+				auto ihdr = ReadObjects<DS::XI_Interface>(info, hdr->class_interface_list_offset);
+				for (uint i = 0; i < hdr->class_interface_list_size; i++) {
+					Module::Interface mint;
+					DecodeInterface(mint, info, ihdr[i]);
+					dest.interfaces_implements.Append(mint);
+				}
+				auto stable = ReadObjects<DS::XI_Symbol>(info, hdr->class_symbol_list_offset);
+				for (uint i = 0; i < hdr->class_symbol_list_size; i++) {
+					auto & si = stable[i];
+					auto name = ReadString(info, si.symbol_name_offset);
+					if (si.symbol_type == 3) {
+						Module::Variable var;
+						DecodeVariable(var, info, si.symbol_data_offset, si.symbol_data_size);
+						dest.fields.Append(name, var);
+					} else if (si.symbol_type == 4) {
+						Module::Function func;
+						DecodeFunction(func, info, si.symbol_data_offset, si.symbol_data_size);
+						dest.methods.Append(name, func);
+					} else if (si.symbol_type == 6) {
+						Module::Property prop;
+						DecodeProperty(prop, info, si.symbol_data_offset, si.symbol_data_size);
+						dest.properties.Append(name, prop);
+					} else throw InvalidFormatException();
+				}
+				DecodeAttributes(dest.attributes, info, hdr->class_attribute_list_offset, hdr->class_attribute_list_size);
 			}
 			void DecodeSymbols(Module & dest, const DS::XI_Header & hdr, const DataBlock & info, Module::ModuleLoadFlags flags)
 			{

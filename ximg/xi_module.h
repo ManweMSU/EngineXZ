@@ -127,8 +127,7 @@ namespace Engine
 			public:
 				Nature class_nature;
 				XA::ArgumentSpecification instance_spec;
-				string parent_class_name; // FQN
-				XA::ObjectSize parent_vft_pointer_offset;
+				Interface parent_class;
 				Array<Interface> interfaces_implements;
 				Volumes::Dictionary<string, Variable> fields;		// NAME
 				Volumes::Dictionary<string, Property> properties;	// NAME
