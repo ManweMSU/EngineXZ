@@ -53,7 +53,7 @@ namespace Engine
 		}
 		void MakeFunction(Module::Function & dest, const string & import_name)
 		{
-			dest.code = import_name.EncodeSequence(Encoding::UTF16, false);
+			dest.code = import_name.EncodeSequence(Encoding::UTF16, true);
 			dest.code_flags &= Module::Function::FunctionMiscMask;
 			dest.code_flags |= Module::Function::FunctionClassImport | Module::Function::FunctionImportNear;
 		}
@@ -63,62 +63,52 @@ namespace Engine
 			dest.code_flags &= Module::Function::FunctionMiscMask;
 			dest.code_flags |= Module::Function::FunctionClassImport | Module::Function::FunctionImportFar;
 			SafePointer<DataBlock> s1 = import_name.EncodeSequence(Encoding::UTF16, true);
-			SafePointer<DataBlock> s2 = dl_name.EncodeSequence(Encoding::UTF16, false);
+			SafePointer<DataBlock> s2 = dl_name.EncodeSequence(Encoding::UTF16, true);
 			dest.code->Append(*s1);
 			dest.code->Append(*s2);
 		}
 		void LoadFunction(const string & symbol, const Module::Function & func, IFunctionLoader * loader)
 		{
-			if (!func.code) throw InvalidArgumentException();
+			if (!loader) throw InvalidArgumentException();
+			if (!func.code) {
+				loader->HandleLoadError(symbol, func, LoadFunctionError::InvalidFunctionFormat);
+				return;
+			}
 			auto fcls = func.code_flags & Module::Function::FunctionClassMask;
 			auto ftyp = func.code_flags & Module::Function::FunctionTypeMask;
-			// if (fcls == Module::Function::FunctionClassXA) {
-			// 	if (ftyp == Module::Function::FunctionXA_Abstract) {
-			// 		Streaming::MemoryStream stream(func.code->GetBuffer(), func.code->Length());
-			// 		XA::Function xa_func;
-			// 		XA::TranslatedFunction xa_func_t;
-			// 		xa_func.Load(&stream);
-			// 		if (!loader->GetTranslator()->Translate(xa_func_t, xa_func)) throw InvalidArgumentException();
-			// 		loader->HandleFunction(symbol, func, xa_func_t);
-			// 	} else if (ftyp == Module::Function::FunctionXA_Platform) {
-			// 		uint32 abi = EncodeABI(loader->GetArchitecture(), loader->GetCallingConvention());
-			// 		int pos = 0;
-			// 		while (pos + 8 <= func.code->Length()) {
-			// 			uint32 abi_cmp = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos);
-			// 			uint32 length = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos + 4);
-			// 			if (abi_cmp == abi) {
-			// 				Streaming::MemoryStream stream(func.code->GetBuffer() + pos + 8, length);
-			// 				XA::TranslatedFunction xa_func;
-			// 				xa_func.Load(&stream);
-			// 				loader->HandleFunction(symbol, func, xa_func);
-			// 				return;
-			// 			} else pos += length + 8;
-			// 		}
-			// 	} else throw InvalidArgumentException();
-			// } else if (fcls == Module::Function::FunctionClassImport) {
-			// 	if (ftyp == Module::Function::FunctionImportNear) {
-			// 		auto name = string(func.code->GetBuffer(), func.code->Length(), Encoding::UTF16);
-			// 		auto imp = loader->ImportFunction(name);
-			// 		if (!imp) throw InvalidArgumentException();
-			// 		loader->HandleFunction(symbol, func, imp);
-			// 	} else if (ftyp == Module::Function::FunctionImportFar) {
-			// 		auto ustr = reinterpret_cast<const uint16 *>(func.code->GetBuffer());
-			// 		auto ulen = func.code->Length() / 2;
-			// 		int sep = 0;
-			// 		while (sep < ulen && ustr[sep]) sep++;
-			// 		if (sep >= ulen) throw InvalidArgumentException();
-			// 		auto name = string(func.code->GetBuffer(), sep * 2, Encoding::UTF16);
-			// 		auto lib = string(func.code->GetBuffer() + sep * 2 + 2, func.code->Length() - sep * 2 - 2, Encoding::UTF16);
-			// 		auto hlib = loader->LoadDynamicLibrary(lib);
-			// 		if (!hlib) throw InvalidArgumentException();
-			// 		Array<char> byte_name(1);
-			// 		byte_name.SetLength(name.GetEncodedLength(Encoding::UTF8) + 1);
-			// 		name.Encode(byte_name.GetBuffer(), Encoding::UTF8, true);
-			// 		auto imp = GetLibraryRoutine(hlib, byte_name);
-			// 		if (!imp) throw InvalidArgumentException();
-			// 		loader->HandleFunction(symbol, func, imp);
-			// 	} else throw InvalidArgumentException();
-			// } else throw InvalidArgumentException();
+			if (fcls == Module::Function::FunctionClassXA) {
+				if (ftyp == Module::Function::FunctionXA_Abstract) {
+					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(func.code->GetBuffer(), func.code->Length());
+					loader->HandleAbstractFunction(symbol, func, stream);
+				} else if (ftyp == Module::Function::FunctionXA_Platform) {
+					uint32 abi = EncodeABI(loader->GetArchitecture(), loader->GetCallingConvention());
+					int pos = 0;
+					while (pos + 8 <= func.code->Length()) {
+						uint32 abi_cmp = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos);
+						uint32 length = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos + 4);
+						if (abi_cmp == abi) {
+							SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(func.code->GetBuffer() + pos + 8, length);
+							loader->HandlePlatformFunction(symbol, func, stream);
+							return;
+						} else pos += length + 8;
+					}
+					loader->HandleLoadError(symbol, func, LoadFunctionError::NoTargetPlatform);
+				} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
+			} else if (fcls == Module::Function::FunctionClassImport) {
+				if (ftyp == Module::Function::FunctionImportNear) {
+					auto name = string(func.code->GetBuffer(), -1, Encoding::UTF16);
+					loader->HandleNearImport(symbol, func, name);
+				} else if (ftyp == Module::Function::FunctionImportFar) {
+					auto ustr = reinterpret_cast<const uint16 *>(func.code->GetBuffer());
+					auto ulen = func.code->Length() / 2;
+					int sep = 0;
+					while (sep < ulen && ustr[sep]) sep++;
+					if (sep >= ulen) loader->HandleLoadError(symbol, func, LoadFunctionError::InvalidFunctionFormat);
+					auto name = string(func.code->GetBuffer(), sep * 2, Encoding::UTF16);
+					auto lib = string(func.code->GetBuffer() + sep * 2 + 2, -1, Encoding::UTF16);
+					loader->HandleFarImport(symbol, func, name, lib);
+				} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
+			} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
 		}
 	}
 }

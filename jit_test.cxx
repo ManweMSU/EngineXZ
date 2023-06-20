@@ -6,6 +6,8 @@
 #include "xasm/xa_dasm.h"
 #include "xasm_tests/tests.h"
 #include "ximg/xi_module.h"
+#include "ximg/xi_function.h"
+#include "ximg/xi_resources.h"
 
 using namespace Engine;
 using namespace Engine::XA;
@@ -80,72 +82,19 @@ public:
 int Main(void)
 {
 	while (true) {
-		Streaming::MemoryStream stream(0x10000);
 		try {
-			XI::Module::Literal l1;
-			l1.contents = XI::Module::Literal::Class::FloatingPoint;
-			l1.data_double = 666.0;
-			l1.length = 8;
-			l1.attributes.Append(L"ATTR1", L"value-1");
-			l1.attributes.Append(L"ATTR2", L"value-666");
-			XI::Module::Variable v1;
-			v1.size = TH::MakeSize(1, 2);
-			v1.offset = TH::MakeSize(0, 3);
-			v1.type_canonical_name = L"PIDOR";
-			v1.attributes.Append(L"SUKA", L"PIDOR");
-			XI::Module::Function f1;
-			f1.code_flags = 666;
-			f1.vft_index = Point(5, 4);
-			f1.attributes.Append(L"SUKA-2", L"PIDOR-2");
-			f1.code = new DataBlock(1);
-			f1.code->Append(55);
-			XI::Module::Property p1;
-			p1.type_canonical_name = L"PIDOR_PROP";
-			p1.getter_interface = L"GETTER-INT";
-			p1.setter_interface = L"SETTER-INT";
-			p1.getter = f1;
-			p1.setter = f1;
-			p1.attributes.Append(L"SUKA-5", L"PIDOR-5");
-			XI::Module::Class c1;
-			c1.class_nature = XI::Module::Class::Nature::Interface;
-			c1.instance_spec.semantics = XA::ArgumentSemantics::RTTI;
-			c1.instance_spec.size = TH::MakeSize(12, 34);
-			c1.parent_class.interface_name = L"PARENT";
-			c1.parent_class.vft_pointer_offset = TH::MakeSize(0, 1);
-			c1.interfaces_implements << XI::Module::Interface();
-			c1.interfaces_implements.LastElement().interface_name = L"INTERFACE";
-			c1.interfaces_implements.LastElement().vft_pointer_offset = TH::MakeSize(2, 3);
-			c1.fields.Append(L"F1", v1);
-			c1.methods.Append(L"M1", f1);
-			c1.properties.Append(L"P1", p1);
-			c1.attributes.Append(L"SUKA-3", L"PIDOR-3");
-			c1.attributes.Append(L"SUKA-4", L"PIDOR-4");
-			XI::Module m1;
-			m1.subsystem = XI::Module::ExecutionSubsystem::GUI;
-			m1.module_import_name = L"TM";
-			m1.assembler_name = L"TA";
-			m1.assembler_version.major = 1;
-			m1.assembler_version.minor = 2;
-			m1.assembler_version.subver = 3;
-			m1.assembler_version.build = 4;
-			m1.modules_depends_on << L"M1";
-			m1.modules_depends_on << L"M2";
-			m1.modules_depends_on << L"M3";
-			m1.data = new DataBlock(1);
-			m1.data->Append(66);
-			m1.resources.Append(L"DTA:55", m1.data);
-			m1.resources.Append(L"DTA:77", m1.data);
-			m1.literals.Append(L"LIT1", l1);
-			m1.variables.Append(L"VAR1", v1);
-			m1.functions.Append(L"FUNC1", f1);
-			m1.classes.Append(L"CLS1", c1);
-			m1.Save(&stream);
-			XI::Module m2(&stream);
-
-			console.WriteLine(GetStringRepresentation(m2.resources));
+			Volumes::Dictionary<string, string> mdt;
+			mdt.Append(XI::MetadataKeyModuleName, L"EGO");
+			mdt.Append(XI::MetadataKeyVersion, L"1.0.0.0");
+			Volumes::ObjectDictionary<string, DataBlock> rsrc;
+			XI::AddModuleMetadata(rsrc, mdt);
 
 			int p = 55;
 
+			auto mdt2 = XI::LoadModuleMetadata(rsrc);
+			console.WriteLine(mdt2);
+
+			int d = 66;
 		} catch (Exception & e) {
 			console.SetTextColor(12);
 			console.WriteLine(L"EXCEPTION: " + e.ToString());

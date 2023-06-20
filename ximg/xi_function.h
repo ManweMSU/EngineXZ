@@ -7,17 +7,17 @@ namespace Engine
 {
 	namespace XI
 	{
+		enum class LoadFunctionError { InvalidFunctionFormat, UnknownImageFlags, NoTargetPlatform };
 		class IFunctionLoader
 		{
 		public:
-			// virtual Platform GetArchitecture(void) noexcept = 0;
-			// virtual XA::CallingConvention GetCallingConvention(void) noexcept = 0;
-			// virtual XA::IAssemblyTranslator * GetTranslator(void) noexcept = 0;
-			// virtual handle LoadDynamicLibrary(const string & name) noexcept = 0;
-			// virtual void * ImportFunction(const string & name) noexcept = 0;
-
-			// virtual void HandleFunction(const string & symbol, const Module::Function & fin, const XA::TranslatedFunction & fout) noexcept = 0;
-			// virtual void HandleFunction(const string & symbol, const Module::Function & fin, void * fout) noexcept = 0;
+			virtual Platform GetArchitecture(void) noexcept = 0;
+			virtual XA::CallingConvention GetCallingConvention(void) noexcept = 0;
+			virtual void HandleAbstractFunction(const string & symbol, const Module::Function & fin, Streaming::Stream * fout) noexcept = 0;
+			virtual void HandlePlatformFunction(const string & symbol, const Module::Function & fin, Streaming::Stream * fout) noexcept = 0;
+			virtual void HandleNearImport(const string & symbol, const Module::Function & fin, const string & func_name) noexcept = 0;
+			virtual void HandleFarImport(const string & symbol, const Module::Function & fin, const string & func_name, const string & lib_name) noexcept = 0;
+			virtual void HandleLoadError(const string & symbol, const Module::Function & fin, LoadFunctionError error) noexcept = 0;
 		};
 
 		void MakeFunction(Module::Function & dest);
