@@ -83,18 +83,7 @@ int Main(void)
 {
 	while (true) {
 		try {
-			Volumes::Dictionary<string, string> mdt;
-			mdt.Append(XI::MetadataKeyModuleName, L"EGO");
-			mdt.Append(XI::MetadataKeyVersion, L"1.0.0.0");
-			Volumes::ObjectDictionary<string, DataBlock> rsrc;
-			XI::AddModuleMetadata(rsrc, mdt);
-
-			int p = 55;
-
-			auto mdt2 = XI::LoadModuleMetadata(rsrc);
-			console.WriteLine(mdt2);
-
-			int d = 66;
+		
 		} catch (Exception & e) {
 			console.SetTextColor(12);
 			console.WriteLine(L"EXCEPTION: " + e.ToString());
