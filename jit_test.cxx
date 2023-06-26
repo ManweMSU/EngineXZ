@@ -1,18 +1,14 @@
 ﻿#include <EngineRuntime.h>
 
 #include "xasm/xa_trans.h"
-#include "xasm/xa_type_helper.h"
 #include "xasm/xa_compiler.h"
-#include "xasm/xa_dasm.h"
 #include "xasm_tests/tests.h"
-#include "ximg/xi_module.h"
-#include "ximg/xi_function.h"
+#include "ximg/xi_build.h"
 #include "ximg/xi_resources.h"
 #include "xenv/xe_ctx.h"
 
 using namespace Engine;
 using namespace Engine::XA;
-using namespace Engine::XA::TH;
 
 IO::Console console;
 
@@ -80,16 +76,63 @@ public:
 	}
 };
 
+class my_ldr_t : public Object, public XE::ILoaderCallback
+{
+	SafePointer<Streaming::Stream> stream;
+public:
+	my_ldr_t(Streaming::Stream * input) { stream.SetRetain(input); }
+	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override { stream->Retain(); return stream; }
+	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
+	{
+		if (routine_name == L"print_integer") return print_integer;
+	}
+	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override { return 0; }
+	virtual void HandleModuleLoadError(const string & module_name, const string & subject, XE::ModuleLoadError error) noexcept override
+	{
+		console.WriteLine(FormatString(L"LOAD ERROR %0 AT %1 AT %2", int(error), module_name, subject));
+	}
+	virtual Object * ExposeObject(void) noexcept override { return this; }
+	virtual void * ExposeInterface(const string & interface) noexcept override
+	{
+		return 0;
+	}
+};
+
 int Main(void)
 {
 	while (true) {
-		try {
-		
-		} catch (Exception & e) {
+		XI::BuilderStatusDesc status;
+		XI::Module mdl;
+		XI::BuildModule(L"../../test.msch", mdl, status);
+		if (status.status != XI::BuilderStatus::Success) {
 			console.SetTextColor(12);
-			console.WriteLine(L"EXCEPTION: " + e.ToString());
+			console.WriteLine(L"Build module error.");
+			console.SetTextColor(-1);
+			return 1;
+		} else {
+			console.SetTextColor(10);
+			console.WriteLine(L"Build module OK.");
+			console.SetTextColor(-1);
 		}
-		console.SetTextColor(-1);
+		SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(0x10000);
+		mdl.Save(stream);
+		stream->Seek(0, Streaming::Begin);
+		SafePointer<my_ldr_t> ldr = new my_ldr_t(stream);
+		SafePointer<XE::ExecutionContext> xctx = new XE::ExecutionContext(ldr);
+		auto hmodule = xctx->LoadModule(L"test");
+		SafePointer< Volumes::Dictionary<string, string> > meta = XI::LoadModuleMetadata(hmodule->GetResources());
+		console.WriteLine(meta->ToString());
+		SafePointer< Volumes::Dictionary<string, const XE::SymbolObject *> > smbl = xctx->GetSymbols(XE::SymbolType::Variable, L"TEST");
+
+		auto routine = xctx->GetEntryPoint();
+		if (routine) {
+			XE::ErrorContext ectx;
+			ectx.error_code = ectx.error_subcode = 0;
+			reinterpret_cast<XE::StandardRoutine>(routine->GetSymbolEntity())(&ectx);
+			return ectx.error_code;
+		} else {
+			return 2;
+		}
 	}
 	return 1;
 

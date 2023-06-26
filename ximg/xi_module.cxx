@@ -687,7 +687,7 @@ namespace Engine
 		{
 			subsystem = ExecutionSubsystem::ConsoleUI;
 			module_import_name = L"module";
-			assembler_name = L"XE";
+			assembler_name = L"XI";
 			assembler_version.major = assembler_version.minor = 0;
 			assembler_version.subver = assembler_version.build = 0;
 		}
