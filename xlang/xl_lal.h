@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-	namespace XE
+	namespace XL
 	{
 		// TODO: REWORK LANGUAGE ABSTRACTION LAYER
 

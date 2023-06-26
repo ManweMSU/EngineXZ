@@ -8,6 +8,7 @@
 #include "ximg/xi_module.h"
 #include "ximg/xi_function.h"
 #include "ximg/xi_resources.h"
+#include "xenv/xe_ctx.h"
 
 using namespace Engine;
 using namespace Engine::XA;

@@ -83,23 +83,28 @@ namespace Engine
 			{
 			public:
 				enum FunctionCodeFlags : uint {
-					FunctionClassNull	= 0x000000,
+					FunctionClassNull	= 0x00,
 
-					FunctionClassXA		= 0x010000,
-					FunctionXA_Abstract	= 0x000000,
-					FunctionXA_Platform	= 0x000001,
+					FunctionClassXA		= 0x10,
+					FunctionXA_Abstract	= 0x00,
+					FunctionXA_Platform	= 0x01,
 
-					FunctionClassImport	= 0x020000,
-					FunctionImportNear	= 0x000000,
-					FunctionImportFar	= 0x000001,
+					FunctionClassImport	= 0x20,
+					FunctionImportNear	= 0x00,
+					FunctionImportFar	= 0x01,
 
-					FunctionTypeMask	= 0x00FFFF,
-					FunctionClassMask	= 0xFF0000,
+					FunctionTypeMask	= 0x0F,
+					FunctionClassMask	= 0xF0,
 
-					FunctionEntryPoint	= 0x01000000,
-					FunctionInitialize	= 0x02000000,
-					FunctionShutdown	= 0x04000000,
-					FunctionMiscMask	= 0xFF000000,
+					FunctionEntryPoint	= 0x00000100,
+					FunctionInitialize	= 0x00000200,
+					FunctionShutdown	= 0x00000400,
+
+					FunctionInstance	= 0x00000800,
+					FunctionThrows		= 0x00001000,
+					FunctionThisCall	= 0x00002000,
+
+					FunctionMiscMask	= 0xFFFFFF00,
 				};
 			public:
 				uint code_flags;
