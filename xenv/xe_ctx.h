@@ -13,6 +13,9 @@ namespace Engine
 		};
 		enum class ExecutionSubsystem { NoUI, ConsoleUI, GUI, Library };
 
+		class Module;
+		class ExecutionContext;
+
 		class ILoaderCallback
 		{
 		public:

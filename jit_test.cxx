@@ -84,7 +84,7 @@ public:
 	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override { stream->Retain(); return stream; }
 	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
 	{
-		if (routine_name == L"print_integer") return print_integer;
+		if (routine_name == L"print_integer") return reinterpret_cast<void *>(print_integer);
 	}
 	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override { return 0; }
 	virtual void HandleModuleLoadError(const string & module_name, const string & subject, XE::ModuleLoadError error) noexcept override

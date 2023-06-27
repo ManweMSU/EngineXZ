@@ -41,7 +41,7 @@ namespace Engine
 		}
 		LiteralSymbol::~LiteralSymbol(void) {}
 		SymbolType LiteralSymbol::GetSymbolType(void) const noexcept { return SymbolType::Literal; }
-		const void * LiteralSymbol::GetSymbolEntity(void) const noexcept { if (_data_large) return _data_large->GetBuffer(); else return &_data_64; }
+		void * LiteralSymbol::GetSymbolEntity(void) const noexcept { if (_data_large) return _data_large->GetBuffer(); else return const_cast<uint64 *>(&_data_64); }
 		const Volumes::Dictionary<string, string> * LiteralSymbol::GetAttributes(void) const noexcept { return &_attributes; }
 		Reflection::PropertyType LiteralSymbol::GetValueType(void) const noexcept { return _type; }
 
@@ -49,7 +49,7 @@ namespace Engine
 			_class_name(name), _semantics(semantics), _instance_size(size), _interface_list(0x10), _field_list(0x10), _prop_list(0x10), _method_list(0x10), _attributes(attrs) {}
 		ClassSymbol::~ClassSymbol(void) {}
 		SymbolType ClassSymbol::GetSymbolType(void) const noexcept { return SymbolType::Class; }
-		const void * ClassSymbol::GetSymbolEntity(void) const noexcept { return this; }
+		void * ClassSymbol::GetSymbolEntity(void) const noexcept { return const_cast<ClassSymbol *>(this); }
 		const Volumes::Dictionary<string, string> * ClassSymbol::GetAttributes(void) const noexcept { return &_attributes; }
 		void ClassSymbol::AddInterface(const string & name, int vft_offset, int cast_offset)
 		{
@@ -263,16 +263,16 @@ namespace Engine
 			_attributes(attrs), _size(size), _type(type) { _address = reinterpret_cast<char *>(at) + offset; }
 		VariableSymbol::~VariableSymbol(void) {}
 		SymbolType VariableSymbol::GetSymbolType(void) const noexcept { return SymbolType::Variable; }
-		const void * VariableSymbol::GetSymbolEntity(void) const noexcept { return _address; }
+		void * VariableSymbol::GetSymbolEntity(void) const noexcept { return _address; }
 		const Volumes::Dictionary<string, string> * VariableSymbol::GetAttributes(void) const noexcept { return &_attributes; }
 		uint32 VariableSymbol::GetSize(void) const noexcept { return _size; }
 		const string & VariableSymbol::GetType(void) const noexcept { return _type; }
 
-		FunctionSymbol::FunctionSymbol(const void * code, uint32 flags, const string & type, const Volumes::Dictionary<string, string> & attrs) :
+		FunctionSymbol::FunctionSymbol(void * code, uint32 flags, const string & type, const Volumes::Dictionary<string, string> & attrs) :
 			_code(code), _flags(flags), _type(type), _attributes(attrs) {}
 		FunctionSymbol::~FunctionSymbol(void) {}
 		SymbolType FunctionSymbol::GetSymbolType(void) const noexcept { return SymbolType::Function; }
-		const void * FunctionSymbol::GetSymbolEntity(void) const noexcept { return _code; }
+		void * FunctionSymbol::GetSymbolEntity(void) const noexcept { return _code; }
 		const Volumes::Dictionary<string, string> * FunctionSymbol::GetAttributes(void) const noexcept { return &_attributes; }
 		uint32 FunctionSymbol::GetFlags(void) const noexcept { return _flags; }
 		const string & FunctionSymbol::GetType(void) const noexcept { return _type; }
@@ -280,7 +280,7 @@ namespace Engine
 		AliasSymbol::AliasSymbol(const string & to) : _to(to) {}
 		AliasSymbol::~AliasSymbol(void) {}
 		SymbolType AliasSymbol::GetSymbolType(void) const noexcept { return SymbolType::Alias; }
-		const void * AliasSymbol::GetSymbolEntity(void) const noexcept { return 0; }
+		void * AliasSymbol::GetSymbolEntity(void) const noexcept { return 0; }
 		const Volumes::Dictionary<string, string> * AliasSymbol::GetAttributes(void) const noexcept { return 0; }
 		const string & AliasSymbol::GetDestination(void) const noexcept { return _to; }
 	}

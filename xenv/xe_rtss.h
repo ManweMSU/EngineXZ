@@ -12,7 +12,7 @@ namespace Engine
 		{
 		public:
 			virtual SymbolType GetSymbolType(void) const noexcept = 0;
-			virtual const void * GetSymbolEntity(void) const noexcept = 0;
+			virtual void * GetSymbolEntity(void) const noexcept = 0;
 			virtual const Volumes::Dictionary<string, string> * GetAttributes(void) const noexcept = 0;
 		};
 		class SymbolSystem : public Object
@@ -37,7 +37,7 @@ namespace Engine
 			LiteralSymbol(const void * pdata, Reflection::PropertyType data_type, const Volumes::Dictionary<string, string> & attrs);
 			virtual ~LiteralSymbol(void) override;
 			virtual SymbolType GetSymbolType(void) const noexcept override;
-			virtual const void * GetSymbolEntity(void) const noexcept override;
+			virtual void * GetSymbolEntity(void) const noexcept override;
 			virtual const Volumes::Dictionary<string, string> * GetAttributes(void) const noexcept override;
 			Reflection::PropertyType GetValueType(void) const noexcept;
 		};
@@ -75,7 +75,7 @@ namespace Engine
 			ClassSymbol(const string & name, XA::ArgumentSemantics semantics, uint size, const Volumes::Dictionary<string, string> & attrs);
 			virtual ~ClassSymbol(void) override;
 			virtual SymbolType GetSymbolType(void) const noexcept override;
-			virtual const void * GetSymbolEntity(void) const noexcept override;
+			virtual void * GetSymbolEntity(void) const noexcept override;
 			virtual const Volumes::Dictionary<string, string> * GetAttributes(void) const noexcept override;
 			void AddInterface(const string & name, int vft_offset, int cast_offset);
 			void AddField(const string & name, const string & type, uint offset, uint size, const Volumes::Dictionary<string, string> & attrs);
@@ -118,22 +118,22 @@ namespace Engine
 			VariableSymbol(void * at, uint32 offset, uint32 size, const string & type, const Volumes::Dictionary<string, string> & attrs);
 			virtual ~VariableSymbol(void) override;
 			virtual SymbolType GetSymbolType(void) const noexcept override;
-			virtual const void * GetSymbolEntity(void) const noexcept override;
+			virtual void * GetSymbolEntity(void) const noexcept override;
 			virtual const Volumes::Dictionary<string, string> * GetAttributes(void) const noexcept override;
 			uint32 GetSize(void) const noexcept;
 			const string & GetType(void) const noexcept;
 		};
 		class FunctionSymbol : public SymbolObject
 		{
-			const void * _code;
+			void * _code;
 			uint32 _flags;
 			string _type;
 			Volumes::Dictionary<string, string> _attributes;
 		public:
-			FunctionSymbol(const void * code, uint32 flags, const string & type, const Volumes::Dictionary<string, string> & attrs);
+			FunctionSymbol(void * code, uint32 flags, const string & type, const Volumes::Dictionary<string, string> & attrs);
 			virtual ~FunctionSymbol(void) override;
 			virtual SymbolType GetSymbolType(void) const noexcept override;
-			virtual const void * GetSymbolEntity(void) const noexcept override;
+			virtual void * GetSymbolEntity(void) const noexcept override;
 			virtual const Volumes::Dictionary<string, string> * GetAttributes(void) const noexcept override;
 			uint32 GetFlags(void) const noexcept;
 			const string & GetType(void) const noexcept;
@@ -145,7 +145,7 @@ namespace Engine
 			AliasSymbol(const string & to);
 			virtual ~AliasSymbol(void) override;
 			virtual SymbolType GetSymbolType(void) const noexcept override;
-			virtual const void * GetSymbolEntity(void) const noexcept override;
+			virtual void * GetSymbolEntity(void) const noexcept override;
 			virtual const Volumes::Dictionary<string, string> * GetAttributes(void) const noexcept override;
 			const string & GetDestination(void) const noexcept;
 		};
