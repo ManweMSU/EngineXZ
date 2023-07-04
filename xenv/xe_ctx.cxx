@@ -376,7 +376,7 @@ namespace Engine
 			try {
 				auto word_size = _trans->GetWordSize();
 				for (auto & l : data->literals) {
-					if (l.key[0] != L'!' && (local.FindSymbol(l.key, false) || _system.FindSymbol(l.key, false))) {
+					if (l.key[0] != L'.' && (local.FindSymbol(l.key, false) || _system.FindSymbol(l.key, false))) {
 						callback->HandleModuleLoadError(name, l.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -407,7 +407,7 @@ namespace Engine
 					local.RegisterSymbol(lit, l.key);
 				}
 				for (auto & v : data->variables) {
-					if (v.key[0] != L'!' && (local.FindSymbol(v.key, false) || _system.FindSymbol(v.key, false))) {
+					if (v.key[0] != L'.' && (local.FindSymbol(v.key, false) || _system.FindSymbol(v.key, false))) {
 						callback->HandleModuleLoadError(name, v.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -419,7 +419,7 @@ namespace Engine
 					local.RegisterSymbol(var, v.key);
 				}
 				for (auto & f : data->functions) {
-					if (f.key[0] != L'!' && (local.FindSymbol(f.key, false) || _system.FindSymbol(f.key, false))) {
+					if (f.key[0] != L'.' && (local.FindSymbol(f.key, false) || _system.FindSymbol(f.key, false))) {
 						callback->HandleModuleLoadError(name, f.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -431,7 +431,7 @@ namespace Engine
 					}
 				}
 				for (auto & c : data->classes) {
-					if (c.key[0] != L'!' && (local.FindSymbol(c.key, false) || _system.FindSymbol(c.key, false))) {
+					if (c.key[0] != L'.' && (local.FindSymbol(c.key, false) || _system.FindSymbol(c.key, false))) {
 						callback->HandleModuleLoadError(name, c.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -514,7 +514,7 @@ namespace Engine
 					local.RegisterSymbol(cls, c.key);
 				}
 				for (auto & a : data->aliases) {
-					if (a.key[0] != L'!' && (local.FindSymbol(a.key, false) || _system.FindSymbol(a.key, false))) {
+					if (a.key[0] != L'.' && (local.FindSymbol(a.key, false) || _system.FindSymbol(a.key, false))) {
 						callback->HandleModuleLoadError(name, a.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -558,8 +558,8 @@ namespace Engine
 			try {
 				_modules.Append(name, result);
 				for (auto & smbl : local.GetSymbolTable()) {
-					if (smbl.key[0] == L'!') {
-						string rename = L"!" + string(_nameless_counter);
+					if (smbl.key[0] == L'.') {
+						string rename = L"." + string(_nameless_counter);
 						_nameless_counter++;
 						_system.RegisterSymbol(smbl.value, rename);
 					} else _system.RegisterSymbol(smbl.value, smbl.key);
