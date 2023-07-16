@@ -7,8 +7,8 @@ namespace Engine
 	namespace XI
 	{
 		constexpr const widechar * MetadataKeyModuleName = L"NomenModuli";
-		constexpr const widechar * MetadataKeyCompanyName = L"ModuliCreatoris";
-		constexpr const widechar * MetadataKeyCopyright = L"ExemplumIura";
+		constexpr const widechar * MetadataKeyCompanyName = L"CreatorModuli";
+		constexpr const widechar * MetadataKeyCopyright = L"IuraExempli";
 		constexpr const widechar * MetadataKeyVersion = L"Versio";
 
 		void AddModuleMetadata(Volumes::ObjectDictionary<string, DataBlock> & rsrc, const Volumes::Dictionary<string, string> & meta);

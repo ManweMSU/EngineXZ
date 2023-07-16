@@ -1,0 +1,50 @@
+﻿
+[[innatum]]
+[[magnitudo] "4"]
+[[significatio] integer]
+genus int {}
+[[innatum]]
+[[magnitudo] "8"]
+[[significatio] integer]
+genus int64 {}
+[[innatum]]
+[[magnitudo] "0"]
+[[significatio] nihil]
+genus nihil {}
+
+[[importa] "WriteConsoleW"]
+[[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
+functio int WriteConsole(int64, int64, int, int64, int64)
+
+[[importa] "GetStdHandle"]
+[[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
+functio int64 GetStdHandle(int)
+
+constatus X = 666;
+constatus Z = 0;
+
+auxilium data ("TST", 666) = "test.asm";
+auxilium icon (1) = "icon.eiwv";
+auxilium attributum ("ты") = "сука";
+auxilium attributum ("пидор") = "ыыы";
+
+[[xa]]
+functio nihil primus() introitus iacit
+{
+	EXTERNAL "S:WriteConsole:F(Cint)(Cint64)(Cint64)(Cint)(Cint64)(Cint64)"
+	EXTERNAL "S:GetStdHandle:F(Cint64)(Cint)"
+	EXTERNAL "S:X"
+	EXTERNAL "S:Z"
+	DATA QWORD 14
+	DATA QWORD -11
+	DATA WORD "suka ty pidor\n"
+	INTERFACE W 1 : ERROR => 0
+	CODE {
+		ENTER
+			NEW { @BLT:W 1 W 1=>W 1(I, E[1]:4:INT=>W 1:INT(D[8])) } @ W 1
+			EVAL { E[0]:W 1:INT W 1:INT 4:INT W 1:INT W 1:INT=>4:INT(L[0], @PTR_TAKE:1=>W 1(D[16]), D[0], E[3], E[3]) }
+			EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), E[2]) }
+		LEAVE
+		RET
+	}
+}

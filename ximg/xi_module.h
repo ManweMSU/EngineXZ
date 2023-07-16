@@ -6,6 +6,9 @@ namespace Engine
 {
 	namespace XI
 	{
+		constexpr const widechar * GetterMethodName = L"adipisce";	// adepto
+		constexpr const widechar * SetterMethodName = L"loca";		// loco
+
 		class Module : public Object
 		{
 		public:
@@ -27,6 +30,7 @@ namespace Engine
 				TypeReference(const string & src);
 				TypeReference(const string & src, int from, int length);
 
+				string QueryCanonicalName(void) const;
 				Class GetReferenceClass(void) const;
 				string GetClassName(void) const;
 				int GetAbstractPlaceholderIndex(void) const;
@@ -103,6 +107,7 @@ namespace Engine
 					FunctionInstance	= 0x00000800,
 					FunctionThrows		= 0x00001000,
 					FunctionThisCall	= 0x00002000,
+					FunctionPrototype	= 0x00004000,
 
 					FunctionMiscMask	= 0xFFFFFF00,
 				};

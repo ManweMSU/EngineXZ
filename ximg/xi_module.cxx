@@ -524,6 +524,7 @@ namespace Engine
 
 		Module::TypeReference::TypeReference(const string & src) : _desc(src), _from(0) { _length = src.Length(); }
 		Module::TypeReference::TypeReference(const string & src, int from, int length) : _desc(src), _from(from), _length(length) {}
+		string Module::TypeReference::QueryCanonicalName(void) const { return _desc.Fragment(_from, _length); }
 		Module::TypeReference::Class Module::TypeReference::GetReferenceClass(void) const
 		{
 			if (_length <= 0) return Class::Unknown;

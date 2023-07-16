@@ -1,95 +1,41 @@
 ﻿#include <EngineRuntime.h>
 
-#include "xasm/xa_trans.h"
-#include "xasm/xa_compiler.h"
-#include "xasm_tests/tests.h"
-#include "ximg/xi_build.h"
-#include "ximg/xi_resources.h"
 #include "xenv/xe_ctx.h"
+#include "xlang/xl_lal.h"
+#include "ximg/xi_module.h"
+#include "ximg/xi_resources.h"
+#include "xv/xv_compiler.h"
 
 using namespace Engine;
 using namespace Engine::XA;
+using namespace Engine::XL;
+
+using namespace Engine::Streaming;
 
 IO::Console console;
 
-typedef int64 (* func_main) (int64 a);
-
-class __unused_class
+class ModuleLoader : public Object, public XE::ILoaderCallback
 {
 public:
-	void int_dtor(void)
+	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
 	{
-		console.WriteLine(FormatString(L"\"Destructing\" the int = %0", string(*reinterpret_cast<uint *>(this), HexadecimalBase, 8)));
+		try {
+			return new FileStream(L"C:\\Users\\Manwe\\Documents\\GitHub\\EngineJIT\\_build\\" + module_name + L".xx", AccessRead, OpenExisting);
+		} catch (...) { return 0; }
 	}
-};
-void print_integer(int64 p)
-{
-	console.WriteLine(FormatString(L"Printing an integer: %0", p));
-}
-bool cond_check(void)
-{
-	console.Write(L"Press Y or N: ");
-	console.SetInputMode(IO::ConsoleInputMode::Raw);
-	widechar c;
-	while (true) {
-		IO::ConsoleEventDesc event;
-		console.ReadEvent(event);
-		if (event.Event == IO::ConsoleEvent::CharacterInput) {
-			if (event.CharacterCode == L'Y' || event.CharacterCode == L'y') { c = L'Y'; break; }
-			else if (event.CharacterCode == L'N' || event.CharacterCode == L'n') { c = L'N'; break; }
-		}
-	}
-	console.SetInputMode(IO::ConsoleInputMode::Echo);
-	console.WriteLine(string(c));
-	return c == L'Y';
-}
-int64 read_integer(uint64 * error)
-{
-	try {
-		console.Write(L"Enter an integer: ");
-		return console.ReadLine().ToInt64();
-	} catch (...) {
-		if (error) *error = 1;
-		return 0;
-	}
-}
-void print(const char * utf8)
-{
-	console.Write(string(utf8));
-}
-
-class my_res_t : public IReferenceResolver
-{
-public:
-	virtual uintptr ResolveReference(const string & to) noexcept override
-	{
-		if (to == L"int_dtor") {
-			auto ptr = &__unused_class::int_dtor;
-			uintptr addr;
-			MemoryCopy(&addr, &ptr, sizeof(void *));
-			return addr;
-		} else if (to == L"print_integer") return reinterpret_cast<uintptr>(print_integer);
-		else if (to == L"print") return reinterpret_cast<uintptr>(print);
-		else if (to == L"read_bool") return reinterpret_cast<uintptr>(cond_check);
-		else if (to == L"read_int") return reinterpret_cast<uintptr>(read_integer);
-		else return 0;
-	}
-};
-
-class my_ldr_t : public Object, public XE::ILoaderCallback
-{
-	SafePointer<Streaming::Stream> stream;
-public:
-	my_ldr_t(Streaming::Stream * input) { stream.SetRetain(input); }
-	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override { stream->Retain(); return stream; }
 	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
 	{
-		if (routine_name == L"print_integer") return reinterpret_cast<void *>(print_integer);
+		return 0;
 	}
-	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override { return 0; }
+	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override
+	{
+		return LoadLibrary(library_name);
+	}
 	virtual void HandleModuleLoadError(const string & module_name, const string & subject, XE::ModuleLoadError error) noexcept override
 	{
-		console.WriteLine(FormatString(L"LOAD ERROR %0 AT %1 AT %2", int(error), module_name, subject));
+		console.SetTextColor(12);
+		console.WriteLine(FormatString(L"Error %0 loading module '%1' with subject '%2'", string(uint(error), HexadecimalBase, 8), module_name, subject));
+		console.SetTextColor(-1);
 	}
 	virtual Object * ExposeObject(void) noexcept override { return this; }
 	virtual void * ExposeInterface(const string & interface) noexcept override
@@ -100,59 +46,14 @@ public:
 
 int Main(void)
 {
-	while (true) {
-		XI::BuilderStatusDesc status;
-		XI::Module mdl;
-		XI::BuildModule(L"../../test.msch", mdl, status);
-		if (status.status != XI::BuilderStatus::Success) {
-			console.SetTextColor(12);
-			console.WriteLine(L"Build module error.");
-			console.SetTextColor(-1);
-			return 1;
-		} else {
-			console.SetTextColor(10);
-			console.WriteLine(L"Build module OK.");
-			console.SetTextColor(-1);
-		}
-		SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(0x10000);
-		mdl.Save(stream);
-		stream->Seek(0, Streaming::Begin);
-		SafePointer<my_ldr_t> ldr = new my_ldr_t(stream);
-		SafePointer<XE::ExecutionContext> xctx = new XE::ExecutionContext(ldr);
-		auto hmodule = xctx->LoadModule(L"test");
-		SafePointer< Volumes::Dictionary<string, string> > meta = XI::LoadModuleMetadata(hmodule->GetResources());
-		console.WriteLine(meta->ToString());
-		SafePointer< Volumes::Dictionary<string, const XE::SymbolObject *> > smbl = xctx->GetSymbols(XE::SymbolType::Variable, L"TEST");
+	Codec::InitializeDefaultCodecs();
 
-		auto routine = xctx->GetEntryPoint();
-		if (routine) {
-			XE::ErrorContext ectx;
-			ectx.error_code = ectx.error_subcode = 0;
-			reinterpret_cast<XE::StandardRoutine>(routine->GetSymbolEntity())(&ectx);
-			return ectx.error_code;
-		} else {
-			return 2;
-		}
-	}
-	return 1;
-
-	PerformTests(console);
-	SafePointer<Streaming::TextReader> rdr;
-	try {
-		#ifdef ENGINE_DEBUG
-		SafePointer<Streaming::Stream> stream = new Streaming::FileStream(L"../../test.asm", Streaming::AccessRead, Streaming::OpenExisting);
-		#else
-		SafePointer<Streaming::Stream> stream = new Streaming::FileStream(L"test.asm", Streaming::AccessRead, Streaming::OpenExisting);
-		#endif
-		rdr = new Streaming::TextReader(stream);
-	} catch (...) { return 1; }
-
-	Function fvnctia;
-	CompilerStatusDesc desc;
-	CompileFunction(rdr->ReadAll(), fvnctia, desc);
-	if (desc.status != CompilerStatus::Success) {
+	string output = L"C:\\Users\\Manwe\\Documents\\GitHub\\EngineJIT\\_build";
+	XV::CompilerStatusDesc desc;
+	XV::CompileModule(L"C:\\Users\\Manwe\\Documents\\GitHub\\EngineJIT\\test.xv", output, 0, desc);
+	if (desc.status != XV::CompilerStatus::Success) {
 		console.SetTextColor(12);
-		console.WriteLine(L"XASM COMPILER ERROR: " + string(uint(desc.status), HexadecimalBase, 4));
+		console.WriteLine(L"XV COMPILER ERROR: " + string(uint(desc.status), HexadecimalBase, 4));
 		console.WriteLine(L"AT LINE NO " + string(desc.error_line_no));
 		console.SetTextColor(-1);
 		console.WriteLine(desc.error_line);
@@ -165,27 +66,55 @@ int Main(void)
 		console.SetTextColor(-1);
 		return 1;
 	}
+	SafePointer<FileStream> stream = new FileStream(output, AccessRead, OpenExisting);
+	XI::Module module(stream);
+	for (auto & rsrc : module.resources) console.WriteLine(rsrc.key + L" - " + string(rsrc.value->Length()));
+	SafePointer< Volumes::Dictionary<string, string> > meta = XI::LoadModuleMetadata(module.resources);
+	if (meta) console.WriteLine(meta->ToString());
 
-	TranslatedFunction fvnctia2;
-	SafePointer<IAssemblyTranslator> trs = CreatePlatformTranslator();
-	if (!trs->Translate(fvnctia2, fvnctia)) {
-		console.WriteLine(L"TRANSLATOR ERROR");
-		return 2;
+	SafePointer<ModuleLoader> ldr = new ModuleLoader;
+	SafePointer<XE::ExecutionContext> ectx = new XE::ExecutionContext(ldr);
+	ectx->LoadModule(L"test");
+
+	auto main = ectx->GetEntryPoint();
+	if (main) {
+		auto routine = static_cast<XE::StandardRoutine>(main->GetSymbolEntity());
+		XE::ErrorContext error;
+		error.error_code = error.error_subcode = 0;
+		routine(&error);
+
+		console.SetTextColor(10);
+		console.WriteLine(FormatString(L"main() exited with exit code %0", error.error_code));
+		console.SetTextColor(-1);
 	}
 
-	SafePointer<IExecutableLinker> linker = CreateLinker();
-	Volumes::Dictionary<string, TranslatedFunction *> ft;
-	ft.Append(L"main", &fvnctia2);
-	my_res_t my_res;
-	SafePointer<IExecutable> exec = linker->LinkFunctions(ft, &my_res);
-	auto fvnctia3 = exec->GetEntryPoint<func_main>(L"main");
+	return 0;
+
+	// LContext ctx(L"test");
+	// {
+	// 	auto test_ns = ctx.CreateNamespace(ctx.GetRootNamespace(), L"test_ns");
+	// 	auto test_cls = ctx.CreateClass(test_ns, L"test_int");
+	// 	ctx.MarkClassAsCore(test_cls);
+	// 	ctx.SetClassSemantics(test_cls, XA::ArgumentSemantics::Unclassified);
+	// 	auto test_func = ctx.CreateFunction(test_ns, L"test_func");
+	// 	auto test_func_v = ctx.CreateFunctionOverload(test_func, test_cls, 0, 0, FunctionMain);
+
+	// 	auto alias = ctx.CreateAlias(test_ns, L"pidor", test_func);
+	// 	auto something = ctx.QueryObject(L"test_ns.pidor");
+
+	// 	SafePointer<LObject> tft = test_func->GetType();
+	// 	console.WriteLine(tft->ToString());
+
+	// 	int p = 5;
+
+	// 	something->Release();
+	// }
+
+	// MemoryStream stream(0x100000);
+	// ctx.ProduceModule(L"TEST ASM", 0, 0, 0, 0, &stream);
 	
-	while (true) {
-		try {
-			uint64 a = console.ReadLine().ToInt64();
-			auto c = fvnctia3(a);
-			console.WriteLine(FormatString(L"RESULT = %0", string(c)));
-		} catch (...) { break; }
-	}
+	// stream.Seek(0, Begin);
+	// XI::Module module(&stream);
+	
 	return 0;
 }

@@ -51,6 +51,7 @@ namespace Engine
 			if (fn->GetValueBoolean(L"Throws")) func.code_flags |= Module::Function::FunctionThrows;
 			if (fn->GetValueBoolean(L"Instance")) func.code_flags |= Module::Function::FunctionInstance;
 			if (fn->GetValueBoolean(L"ThisCall")) func.code_flags |= Module::Function::FunctionThisCall;
+			if (fn->GetValueBoolean(L"Prototype")) func.code_flags |= Module::Function::FunctionPrototype;
 			SafePointer<Storage::RegistryNode> attrs = fn->OpenNode(L"Attributes");
 			if (attrs) if (!BuildAttributes(attrs, func.attributes, status)) return false;
 			return true;
@@ -268,11 +269,11 @@ namespace Engine
 					else if (string::CompareIgnoreCase(ss, L"library") == 0) dest.subsystem = Module::ExecutionSubsystem::Library;
 					else dest.subsystem = Module::ExecutionSubsystem::NoUI;
 					dest.module_import_name = scheme->GetValueString(L"Name");
-					dest.assembler_name = L"Engine XI Builder";
-					dest.assembler_version.major = 1;
-					dest.assembler_version.minor = 0;
-					dest.assembler_version.subver = 0;
-					dest.assembler_version.build = 1;
+					dest.assembler_name = BuilderStamp;
+					dest.assembler_version.major = BuilderVersionMajor;
+					dest.assembler_version.minor = BuilderVersionMinor;
+					dest.assembler_version.subver = BuilderSubversion;
+					dest.assembler_version.build = BuilderBuildNumber;
 					dest.modules_depends_on = scheme->GetValueString(L"Dependencies").Split(L';');
 					dest.data = new DataBlock(1);
 					dest.data->SetLength(scheme->GetValueBinarySize(L"Data"));

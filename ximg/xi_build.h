@@ -7,6 +7,12 @@ namespace Engine
 {
 	namespace XI
 	{
+		constexpr const widechar * BuilderStamp = L"Engine XI Structor";
+		constexpr uint BuilderVersionMajor = 1;
+		constexpr uint BuilderVersionMinor = 0;
+		constexpr uint BuilderSubversion = 0;
+		constexpr uint BuilderBuildNumber = 1;
+
 		enum class BuilderStatus : uint {
 			Success					= 0x0000,
 			CompilationError		= 0x0001,

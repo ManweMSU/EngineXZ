@@ -63,7 +63,7 @@ namespace Engine
 					auto address = callback->GetRoutineAddress(func_name);
 					if (!address) {
 						ok = false;
-						callback->HandleModuleLoadError(module_name, symbol, ModuleLoadError::NoSuchGlobalImport);
+						callback->HandleModuleLoadError(*module_name, symbol, ModuleLoadError::NoSuchGlobalImport);
 					} else {
 						SafePointer<FunctionSymbol> func = new FunctionSymbol(address, fin.code_flags, GetTypeFromSymbol(symbol), fin.attributes);
 						local->RegisterSymbol(func, symbol);
@@ -88,14 +88,14 @@ namespace Engine
 						auto address = GetLibraryRoutine(mdl, rname);
 						if (!address) {
 							ok = false;
-							callback->HandleModuleLoadError(module_name, symbol, ModuleLoadError::NoSuchFunctionInDynamicLibrary);
+							callback->HandleModuleLoadError(*module_name, symbol, ModuleLoadError::NoSuchFunctionInDynamicLibrary);
 						} else {
 							SafePointer<FunctionSymbol> func = new FunctionSymbol(address, fin.code_flags, GetTypeFromSymbol(symbol), fin.attributes);
 							local->RegisterSymbol(func, symbol);
 						}
 					} else {
 						ok = false;
-						callback->HandleModuleLoadError(module_name, symbol, ModuleLoadError::NoSuchDynamicLibrary);
+						callback->HandleModuleLoadError(*module_name, symbol, ModuleLoadError::NoSuchDynamicLibrary);
 					}
 				} catch (...) { HandleLoadError(symbol, fin, XI::LoadFunctionError::InvalidFunctionFormat); }
 			}
@@ -103,13 +103,13 @@ namespace Engine
 			{
 				ok = false;
 				if (error == XI::LoadFunctionError::InvalidFunctionFormat) {
-					callback->HandleModuleLoadError(module_name, symbol, ModuleLoadError::InvalidFunctionFormat);
+					callback->HandleModuleLoadError(*module_name, symbol, ModuleLoadError::InvalidFunctionFormat);
 				} else if (error == XI::LoadFunctionError::UnknownImageFlags) {
-					callback->HandleModuleLoadError(module_name, symbol, ModuleLoadError::InvalidFunctionFormat);
+					callback->HandleModuleLoadError(*module_name, symbol, ModuleLoadError::InvalidFunctionFormat);
 				} else if (error == XI::LoadFunctionError::NoTargetPlatform) {
-					callback->HandleModuleLoadError(module_name, symbol, ModuleLoadError::InvalidFunctionABI);
+					callback->HandleModuleLoadError(*module_name, symbol, ModuleLoadError::InvalidFunctionABI);
 				} else {
-					callback->HandleModuleLoadError(module_name, symbol, ModuleLoadError::InvalidFunctionFormat);
+					callback->HandleModuleLoadError(*module_name, symbol, ModuleLoadError::InvalidFunctionFormat);
 				}
 			}
 		};
@@ -419,6 +419,7 @@ namespace Engine
 					local.RegisterSymbol(var, v.key);
 				}
 				for (auto & f : data->functions) {
+					if (f.value.code_flags & XI::Module::Function::FunctionPrototype) continue;
 					if (f.key[0] != L'.' && (local.FindSymbol(f.key, false) || _system.FindSymbol(f.key, false))) {
 						callback->HandleModuleLoadError(name, f.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
@@ -436,6 +437,7 @@ namespace Engine
 						_sync->Open();
 						return 0;
 					}
+					bool class_discard = false;
 					SafePointer<ClassSymbol> cls = new ClassSymbol(c.key, c.value.instance_spec.semantics,
 						c.value.instance_spec.size.num_bytes + c.value.instance_spec.size.num_words * word_size, c.value.attributes);
 					if (c.value.parent_class.vft_pointer_offset.num_bytes != 0xFFFFFFFF && c.value.parent_class.vft_pointer_offset.num_words != 0xFFFFFFFF) {
@@ -458,32 +460,38 @@ namespace Engine
 					for (auto & p : c.value.properties) {
 						string s_fqn, g_fqn;
 						string s_mn, g_mn;
-						s_mn = p.key + L".loca:" + p.value.setter_interface; // loco
-						g_mn = p.key + L".adipisce:" + p.value.getter_interface; // adepto
+						s_mn = p.key + L"." + string(XI::SetterMethodName) + L":" + p.value.setter_interface;
+						g_mn = p.key + L"." + string(XI::GetterMethodName) + L":" + p.value.getter_interface;
 						if ((p.value.setter.code_flags & XI::Module::Function::FunctionClassMask) != XI::Module::Function::FunctionClassNull) {
+							if (p.value.setter.code_flags & XI::Module::Function::FunctionPrototype) class_discard = true;
 							s_fqn = c.key + L"." + s_mn;
 							if (local.FindSymbol(s_fqn, false) || _system.FindSymbol(s_fqn, false)) {
 								callback->HandleModuleLoadError(name, s_fqn, ModuleLoadError::DuplicateSymbol);
 								_sync->Open();
 								return 0;
 							}
-							XI::LoadFunction(s_fqn, p.value.setter, &loader);
-							if (!loader.ok) {
-								_sync->Open();
-								return 0;
+							if (!class_discard) {
+								XI::LoadFunction(s_fqn, p.value.setter, &loader);
+								if (!loader.ok) {
+									_sync->Open();
+									return 0;
+								}
 							}
 						}
 						if ((p.value.getter.code_flags & XI::Module::Function::FunctionClassMask) != XI::Module::Function::FunctionClassNull) {
+							if (p.value.getter.code_flags & XI::Module::Function::FunctionPrototype) class_discard = true;
 							g_fqn = c.key + L"." + g_mn;
 							if (local.FindSymbol(g_fqn, false) || _system.FindSymbol(g_fqn, false)) {
 								callback->HandleModuleLoadError(name, g_fqn, ModuleLoadError::DuplicateSymbol);
 								_sync->Open();
 								return 0;
 							}
-							XI::LoadFunction(g_fqn, p.value.getter, &loader);
-							if (!loader.ok) {
-								_sync->Open();
-								return 0;
+							if (!class_discard) {
+								XI::LoadFunction(g_fqn, p.value.getter, &loader);
+								if (!loader.ok) {
+									_sync->Open();
+									return 0;
+								}
 							}
 						}
 						if (s_fqn.Length() || (p.value.setter.vft_index.x >= 0 && p.value.setter.vft_index.y)) {
@@ -495,6 +503,7 @@ namespace Engine
 						cls->AddProperty(p.key, p.value.type_canonical_name, s_fqn, g_fqn, p.value.attributes);
 					}
 					for (auto & m : c.value.methods) {
+						if (m.value.code_flags & XI::Module::Function::FunctionPrototype) class_discard = true;
 						string m_fqn;
 						if ((m.value.code_flags & XI::Module::Function::FunctionClassMask) != XI::Module::Function::FunctionClassNull) {
 							m_fqn = c.key + L"." + m.key;
@@ -503,24 +512,17 @@ namespace Engine
 								_sync->Open();
 								return 0;
 							}
-							XI::LoadFunction(m_fqn, m.value, &loader);
-							if (!loader.ok) {
-								_sync->Open();
-								return 0;
+							if (!class_discard) {
+								XI::LoadFunction(m_fqn, m.value, &loader);
+								if (!loader.ok) {
+									_sync->Open();
+									return 0;
+								}
 							}
 						}
 						cls->AddMethod(m.key, m_fqn, m.value.vft_index.x, m.value.vft_index.y, m.value.attributes);
 					}
-					local.RegisterSymbol(cls, c.key);
-				}
-				for (auto & a : data->aliases) {
-					if (a.key[0] != L'.' && (local.FindSymbol(a.key, false) || _system.FindSymbol(a.key, false))) {
-						callback->HandleModuleLoadError(name, a.key, ModuleLoadError::DuplicateSymbol);
-						_sync->Open();
-						return 0;
-					}
-					SafePointer<AliasSymbol> al = new AliasSymbol(a.value);
-					local.RegisterSymbol(al, a.key);
+					if (!class_discard) local.RegisterSymbol(cls, c.key);
 				}
 			} catch (...) {
 				callback->HandleModuleLoadError(name, L"", ModuleLoadError::AllocationFailure);

@@ -1,0 +1,191 @@
+﻿#include <EngineRuntime.h>
+
+#include "xasm/xa_trans.h"
+#include "xasm/xa_compiler.h"
+#include "xasm_tests/tests.h"
+#include "ximg/xi_build.h"
+#include "ximg/xi_resources.h"
+#include "xenv/xe_ctx.h"
+
+using namespace Engine;
+using namespace Engine::XA;
+
+IO::Console console;
+
+typedef int64 (* func_main) (int64 a);
+
+class __unused_class
+{
+public:
+	void int_dtor(void)
+	{
+		console.WriteLine(FormatString(L"\"Destructing\" the int = %0", string(*reinterpret_cast<uint *>(this), HexadecimalBase, 8)));
+	}
+};
+void print_integer(int64 p)
+{
+	console.WriteLine(FormatString(L"Printing an integer: %0", p));
+}
+bool cond_check(void)
+{
+	console.Write(L"Press Y or N: ");
+	console.SetInputMode(IO::ConsoleInputMode::Raw);
+	widechar c;
+	while (true) {
+		IO::ConsoleEventDesc event;
+		console.ReadEvent(event);
+		if (event.Event == IO::ConsoleEvent::CharacterInput) {
+			if (event.CharacterCode == L'Y' || event.CharacterCode == L'y') { c = L'Y'; break; }
+			else if (event.CharacterCode == L'N' || event.CharacterCode == L'n') { c = L'N'; break; }
+		}
+	}
+	console.SetInputMode(IO::ConsoleInputMode::Echo);
+	console.WriteLine(string(c));
+	return c == L'Y';
+}
+int64 read_integer(uint64 * error)
+{
+	try {
+		console.Write(L"Enter an integer: ");
+		return console.ReadLine().ToInt64();
+	} catch (...) {
+		if (error) *error = 1;
+		return 0;
+	}
+}
+void print(const char * utf8)
+{
+	console.Write(string(utf8));
+}
+
+class my_res_t : public IReferenceResolver
+{
+public:
+	virtual uintptr ResolveReference(const string & to) noexcept override
+	{
+		if (to == L"int_dtor") {
+			auto ptr = &__unused_class::int_dtor;
+			uintptr addr;
+			MemoryCopy(&addr, &ptr, sizeof(void *));
+			return addr;
+		} else if (to == L"print_integer") return reinterpret_cast<uintptr>(print_integer);
+		else if (to == L"print") return reinterpret_cast<uintptr>(print);
+		else if (to == L"read_bool") return reinterpret_cast<uintptr>(cond_check);
+		else if (to == L"read_int") return reinterpret_cast<uintptr>(read_integer);
+		else return 0;
+	}
+};
+
+class my_ldr_t : public Object, public XE::ILoaderCallback
+{
+	SafePointer<Streaming::Stream> stream;
+public:
+	my_ldr_t(Streaming::Stream * input) { stream.SetRetain(input); }
+	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override { stream->Retain(); return stream; }
+	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
+	{
+		if (routine_name == L"print_integer") return reinterpret_cast<void *>(print_integer);
+	}
+	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override { return 0; }
+	virtual void HandleModuleLoadError(const string & module_name, const string & subject, XE::ModuleLoadError error) noexcept override
+	{
+		console.WriteLine(FormatString(L"LOAD ERROR %0 AT %1 AT %2", int(error), module_name, subject));
+	}
+	virtual Object * ExposeObject(void) noexcept override { return this; }
+	virtual void * ExposeInterface(const string & interface) noexcept override
+	{
+		return 0;
+	}
+};
+
+int Main(void)
+{
+	// while (true) {
+	// 	XI::BuilderStatusDesc status;
+	// 	XI::Module mdl;
+	// 	XI::BuildModule(L"../../test.xi", mdl, status);
+	// 	if (status.status != XI::BuilderStatus::Success) {
+	// 		console.SetTextColor(12);
+	// 		console.WriteLine(L"Build module error.");
+	// 		console.SetTextColor(-1);
+	// 		return 1;
+	// 	} else {
+	// 		console.SetTextColor(10);
+	// 		console.WriteLine(L"Build module OK.");
+	// 		console.SetTextColor(-1);
+	// 	}
+	// 	SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(0x10000);
+	// 	mdl.Save(stream);
+	// 	stream->Seek(0, Streaming::Begin);
+	// 	SafePointer<my_ldr_t> ldr = new my_ldr_t(stream);
+	// 	SafePointer<XE::ExecutionContext> xctx = new XE::ExecutionContext(ldr);
+	// 	auto hmodule = xctx->LoadModule(L"test");
+	// 	SafePointer< Volumes::Dictionary<string, string> > meta = XI::LoadModuleMetadata(hmodule->GetResources());
+	// 	console.WriteLine(meta->ToString());
+	// 	SafePointer< Volumes::Dictionary<string, const XE::SymbolObject *> > smbl = xctx->GetSymbols(XE::SymbolType::Variable, L"TEST");
+
+	// 	auto routine = xctx->GetEntryPoint();
+	// 	if (routine) {
+	// 		XE::ErrorContext ectx;
+	// 		ectx.error_code = ectx.error_subcode = 0;
+	// 		reinterpret_cast<XE::StandardRoutine>(routine->GetSymbolEntity())(&ectx);
+	// 		return ectx.error_code;
+	// 	} else {
+	// 		return 2;
+	// 	}
+	// }
+	// return 1;
+
+	PerformTests(console);
+	SafePointer<Streaming::TextReader> rdr;
+	try {
+		#ifdef ENGINE_DEBUG
+		SafePointer<Streaming::Stream> stream = new Streaming::FileStream(L"../../test.asm", Streaming::AccessRead, Streaming::OpenExisting);
+		#else
+		SafePointer<Streaming::Stream> stream = new Streaming::FileStream(L"test.asm", Streaming::AccessRead, Streaming::OpenExisting);
+		#endif
+		rdr = new Streaming::TextReader(stream);
+	} catch (...) { return 1; }
+
+	Function fvnctia;
+	CompilerStatusDesc desc;
+	CompileFunction(rdr->ReadAll(), fvnctia, desc);
+	if (desc.status != CompilerStatus::Success) {
+		console.SetTextColor(12);
+		console.WriteLine(L"XASM COMPILER ERROR: " + string(uint(desc.status), HexadecimalBase, 4));
+		console.WriteLine(L"AT LINE NO " + string(desc.error_line_no));
+		console.SetTextColor(-1);
+		console.WriteLine(desc.error_line);
+		console.SetTextColor(4);
+		if (desc.error_line_pos >= 0 && desc.error_line_len > 0) {
+			console.Write(string(L' ', desc.error_line_pos));
+			console.Write(string(L'~', desc.error_line_len));
+			console.LineFeed();
+		}
+		console.SetTextColor(-1);
+		return 1;
+	}
+
+	TranslatedFunction fvnctia2;
+	SafePointer<IAssemblyTranslator> trs = CreatePlatformTranslator();
+	if (!trs->Translate(fvnctia2, fvnctia)) {
+		console.WriteLine(L"TRANSLATOR ERROR");
+		return 2;
+	}
+
+	SafePointer<IExecutableLinker> linker = CreateLinker();
+	Volumes::Dictionary<string, TranslatedFunction *> ft;
+	ft.Append(L"main", &fvnctia2);
+	my_res_t my_res;
+	SafePointer<IExecutable> exec = linker->LinkFunctions(ft, &my_res);
+	auto fvnctia3 = exec->GetEntryPoint<func_main>(L"main");
+	
+	while (true) {
+		try {
+			uint64 a = console.ReadLine().ToInt64();
+			auto c = fvnctia3(a);
+			console.WriteLine(FormatString(L"RESULT = %0", string(c)));
+		} catch (...) { break; }
+	}
+	return 0;
+}
