@@ -20,7 +20,7 @@ public:
 	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
 	{
 		try {
-			return new FileStream(L"C:\\Users\\Manwe\\Documents\\GitHub\\EngineJIT\\_build\\" + module_name + L".xx", AccessRead, OpenExisting);
+			return new FileStream(L"_build/" + module_name + L".xx", AccessRead, OpenExisting);
 		} catch (...) { return 0; }
 	}
 	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
@@ -47,10 +47,11 @@ public:
 int Main(void)
 {
 	Codec::InitializeDefaultCodecs();
+	IO::SetCurrentDirectory(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/../..");
 
-	string output = L"C:\\Users\\Manwe\\Documents\\GitHub\\EngineJIT\\_build";
+	string output = L"_build";
 	XV::CompilerStatusDesc desc;
-	XV::CompileModule(L"C:\\Users\\Manwe\\Documents\\GitHub\\EngineJIT\\test.xv", output, 0, desc);
+	XV::CompileModule(L"test.xv", output, 0, desc);
 	if (desc.status != XV::CompilerStatus::Success) {
 		console.SetTextColor(12);
 		console.WriteLine(L"XV COMPILER ERROR: " + string(uint(desc.status), HexadecimalBase, 4));

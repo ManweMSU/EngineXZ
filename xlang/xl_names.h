@@ -71,8 +71,9 @@ namespace Engine
 		constexpr const widechar * OperatorShiftRight	= L">>";
 
 		constexpr int CastPriorityNoCast	= -1;
-		constexpr int CastPriorityConverter	= 0;
-		constexpr int CastPriorityParent	= 1;
-		constexpr int CastPriorityIdentity	= 2;
+		constexpr int CastPriorityExplicit	= 0;
+		constexpr int CastPriorityConverter	= 1;
+		constexpr int CastPriorityParent	= 2;
+		constexpr int CastPriorityIdentity	= 3;
 	}
 }

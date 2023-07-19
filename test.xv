@@ -2,7 +2,14 @@
 [[innatum]]
 [[magnitudo] "4"]
 [[significatio] integer]
-genus int {}
+genus int {
+	[[xa]]
+	functio int operator - ()
+	{
+		INTERFACE W 1 : THIS => 4
+		CODE { RET { @BLT:4 4=>4(R, @NEG:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+}
 [[innatum]]
 [[magnitudo] "8"]
 [[significatio] integer]
@@ -11,6 +18,9 @@ genus int64 {}
 [[magnitudo] "0"]
 [[significatio] nihil]
 genus nihil {}
+
+nomen_alternum int32 = int;
+nomen_alternum nint32 = int;
 
 [[importa] "WriteConsoleW"]
 [[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
@@ -23,11 +33,17 @@ functio int64 GetStdHandle(int)
 constatus X = 666;
 constatus Z = 0;
 
-auxilium data ("TST", 666) = "test.asm";
-auxilium icon (1) = "icon.eiwv";
-auxilium attributum ("ты") = "сука";
-auxilium attributum ("пидор") = "ыыы";
+functio nihil primus() introitus iacit
+{
+	GetStdHandle(-11);
+	proba {
+		iace 666, 77;
+	} cape (int e, int e2) {
+		iace e2, e;
+	}
+}
 
+/*
 [[xa]]
 functio nihil primus() introitus iacit
 {
@@ -48,3 +64,4 @@ functio nihil primus() introitus iacit
 		RET
 	}
 }
+*/

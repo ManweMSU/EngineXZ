@@ -24,6 +24,10 @@ namespace Engine
 			ResourceFileNotFound	= 0x000E,
 			InvalidPictureFormat	= 0x000F,
 			InvalidResourceType		= 0x0010,
+			ExpressionMustBeValue	= 0x0011,
+			InvalidThrowPlace		= 0x0012,
+			FunctionMustBeInstance	= 0x0013,
+			InvalidFunctionTrats	= 0x0014,
 			
 			// TODO: IMPLEMENT
 

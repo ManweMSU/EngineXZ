@@ -27,6 +27,7 @@ namespace Engine
 			constexpr const widechar * KeywordOperator	= L"operator";
 			constexpr const widechar * KeywordEntry		= L"introitus";
 			constexpr const widechar * KeywordThrows	= L"iacit";
+			constexpr const widechar * KeywordThrow		= L"iace";
 			constexpr const widechar * KeywordSizeOf	= L"magnitudo";
 			constexpr const widechar * KeywordModule	= L"modulus";
 			constexpr const widechar * KeywordArray		= L"ordo";
@@ -35,12 +36,21 @@ namespace Engine
 			constexpr const widechar * KeywordVariable	= L"var";
 			constexpr const widechar * KeywordImport	= L"importa";
 			constexpr const widechar * KeywordResource	= L"auxilium";
+			constexpr const widechar * KeywordTry		= L"proba";
+			constexpr const widechar * KeywordCatch		= L"cape";
+			constexpr const widechar * KeywordClassFunc	= L"classis";
+			constexpr const widechar * KeywordCtor		= L"structor";
+			constexpr const widechar * KeywordDtor		= L"destructor";
+			constexpr const widechar * KeywordConvertor	= L"convertor";
+			constexpr const widechar * KeywordVirtual	= L"virtualis";
+			constexpr const widechar * KeywordPure		= L"pura";
 
 			constexpr const widechar * AttributeSemant	= L"[significatio]";
 			constexpr const widechar * AttributeSize	= L"[magnitudo]";
 			constexpr const widechar * AttributeCore	= L"[innatum]";
 			constexpr const widechar * AttributeSystem	= L"[systema]";
 			constexpr const widechar * AttributeInit	= L"[initium]";
+			constexpr const widechar * AttributeNoTC	= L"[nullum_thiscall]";
 			constexpr const widechar * AttributeFinal	= L"[finis]";
 			constexpr const widechar * AttributeAsm		= L"[xa]";
 			constexpr const widechar * AttributeImport	= L"[importa]";
@@ -58,6 +68,9 @@ namespace Engine
 			constexpr const widechar * AttributeSThis	= L"ego";
 			constexpr const widechar * AttributeSRTTI	= L"genus";
 			constexpr const widechar * AttributeSError	= L"error";
+
+			constexpr const widechar * ConstructorZero	= L"vacuus";
+			constexpr const widechar * ConstructorMove	= L"motus";
 
 			constexpr const widechar * ResourceData	= L"data";
 			constexpr const widechar * ResourceIcon	= L"icon";

@@ -36,6 +36,7 @@ namespace Engine
 			if (str == Lexic::KeywordOperator) return true;
 			if (str == Lexic::KeywordEntry) return true;
 			if (str == Lexic::KeywordThrows) return true;
+			if (str == Lexic::KeywordThrow) return true;
 			if (str == Lexic::KeywordSizeOf) return true;
 			if (str == Lexic::KeywordModule) return true;
 			if (str == Lexic::KeywordArray) return true;
@@ -44,6 +45,14 @@ namespace Engine
 			if (str == Lexic::KeywordVariable) return true;
 			if (str == Lexic::KeywordImport) return true;
 			if (str == Lexic::KeywordResource) return true;
+			if (str == Lexic::KeywordTry) return true;
+			if (str == Lexic::KeywordCatch) return true;
+			if (str == Lexic::KeywordClassFunc) return true;
+			if (str == Lexic::KeywordCtor) return true;
+			if (str == Lexic::KeywordDtor) return true;
+			if (str == Lexic::KeywordConvertor) return true;
+			if (str == Lexic::KeywordVirtual) return true;
+			if (str == Lexic::KeywordPure) return true;
 
 			// TODO: IMPLEMENT REGISTER KEYWORDS
 

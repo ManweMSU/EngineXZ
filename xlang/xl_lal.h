@@ -14,7 +14,8 @@ namespace Engine
 			FunctionMain = 0x08,
 			FunctionMethod = 0x10,
 			FunctionThrows = 0x20,
-			FunctionThisCall = 0x40
+			FunctionThisCall = 0x40,
+			FunctionPureCall = 0x80,
 		};
 
 		class LObject;
@@ -61,6 +62,12 @@ namespace Engine
 		{
 		public:
 			ObjectHasNoAttributesException(LObject * reason);
+			virtual string ToString(void) const override;
+		};
+		class ObjectMayThrow : public LException
+		{
+		public:
+			ObjectMayThrow(LObject * reason);
 			virtual string ToString(void) const override;
 		};
 
@@ -121,6 +128,7 @@ namespace Engine
 			// TODO: IMPLEMENT
 
 			LObject * QueryObject(const string & path);
+			LObject * QueryScope(void);
 			LObject * QueryStaticArray(LObject * type, int volume);
 			LObject * QueryTypePointer(LObject * type);
 			LObject * QueryTypeReference(LObject * type);
@@ -136,6 +144,7 @@ namespace Engine
 			LObject * QueryLiteral(double value);
 			LObject * QueryLiteral(const string & value);
 			LObject * QueryDetachedLiteral(LObject * base);
+			LObject * QueryComputable(LObject * of_type, const XA::ExpressionTree & with_tree);
 			void AttachLiteral(LObject * literal, LObject * attach_under, const string & name);
 			int QueryLiteralValue(LObject * literal);
 			string QueryLiteralString(LObject * literal);

@@ -22,6 +22,8 @@ namespace Engine
 		string ObjectIsNotEvaluatableException::ToString(void) const { return L"Object " + source->ToString() + L" can not be evaluated."; }
 		ObjectHasNoAttributesException::ObjectHasNoAttributesException(LObject * reason) : LException(reason) {}
 		string ObjectHasNoAttributesException::ToString(void) const { return L"Object " + source->ToString() + L" can not have attributes."; }
+		ObjectMayThrow::ObjectMayThrow(LObject * reason) : LException(reason) {}
+		string ObjectMayThrow::ToString(void) const { return L"Object " + source->ToString() + L" can throw exceptions."; }
 
 		XA::ExpressionTree MakeReference(XA::Function & func_at, const string & symbol)
 		{
@@ -61,6 +63,7 @@ namespace Engine
 		public:
 			virtual LObject * GetOverload(const string & ocn) = 0;
 			virtual LObject * GetOverload(int argc, const string * argv) = 0;
+			virtual LObject * SupplyInstance(LObject * instance) = 0;
 		};
 		class XInternal : public XObject
 		{
@@ -97,7 +100,14 @@ namespace Engine
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
+				if (argc != 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				SafePointer<LObject> type;
+				if (argv[0]->GetClass() == Class::Type) type.SetRetain(argv[0]);
+				else type = argv[0]->GetType();
+				auto size = _ctx.GetClassInstanceSize(type);
+
 				// TODO: IMPLEMENT RETURN COMPUTABLE
+				
 				throw ObjectHasNoSuchOverloadException(this, argc, argv);
 			}
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
@@ -493,6 +503,29 @@ namespace Engine
 			virtual void EncodeSymbols(XI::Module & dest) override { for (auto & m : _members) static_cast<XObject *>(m.value.Inner())->EncodeSymbols(dest); }
 			virtual string ToString(void) const override { if (_path.Length()) return L"namespace " + _path; else return L"root namespace"; }
 		};
+		class Scope : public XObject
+		{
+			Volumes::ObjectDictionary<string, LObject> _members;
+		public:
+			Scope(void) {}
+			virtual ~Scope(void) override {}
+			virtual Class GetClass(void) override { return Class::Scope; }
+			virtual string GetName(void) override { return L""; }
+			virtual string GetFullName(void) override { return L""; }
+			virtual bool IsDefinedLocally(void) override { return false; }
+			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
+			virtual LObject * GetMember(const string & name) override
+			{
+				auto member = _members[name];
+				if (member) { member->Retain(); return member; } else throw ObjectHasNoSuchMemberException(this, name);
+			}
+			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual void AddMember(const string & name, LObject * child) override { if (!_members.Append(name, child)) throw ObjectMemberRedefinitionException(this, name); }
+			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
+			virtual void EncodeSymbols(XI::Module & dest) override {}
+			virtual string ToString(void) const override { return L"scope"; }
+		};
 		class BaseType : public XType
 		{
 			LContext & _ctx;
@@ -500,6 +533,7 @@ namespace Engine
 			bool _local;
 			XA::ArgumentSpecification _type_spec;
 			XI::Module::Class::Nature _nature;
+			Volumes::ObjectDictionary<string, LObject> _members;
 			Volumes::Dictionary<string, string> _attributes;
 		public:
 			BaseType(const string & name, const string & path, bool local, LContext & ctx) : _name(name), _path(path), _local(local), _ctx(ctx)
@@ -520,19 +554,17 @@ namespace Engine
 			}
 			virtual LObject * GetMember(const string & name) override
 			{
-				// auto member = _members[name];
-				// if (member) { member->Retain(); return member; } else throw ObjectHasNoSuchMemberException(this, name);
+				// TODO: ADD PARENT/INTERFACE LOOKUP
 
-				// TODO: IMPLEMENT
-
-				throw ObjectHasNoSuchMemberException(this, name);
+				auto member = _members[name];
+				if (member && member->GetClass() == Class::Alias) {
+					auto alias = static_cast<Alias *>(member);
+					if (alias->IsTypeAlias()) return new CanonicalType(alias->GetDestination(), _ctx);
+					else return _ctx.QueryObject(alias->GetDestination());
+				}
+				if (member) { member->Retain(); return member; } else throw ObjectHasNoSuchMemberException(this, name);
 			}
-			virtual void AddMember(const string & name, LObject * child) override
-			{
-				// TODO: IMPLEMENT
-
-				throw LException(this);
-			}
+			virtual void AddMember(const string & name, LObject * child) override { if (!_members.Append(name, child)) throw ObjectMemberRedefinitionException(this, name); }
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw ObjectMemberRedefinitionException(this, key); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return MakeAddressOf(MakeSymbolReference(func, _path)); }
 			virtual void EncodeSymbols(XI::Module & dest) override
@@ -551,6 +583,7 @@ namespace Engine
 
 				self.attributes = _attributes;
 				dest.classes.Append(_path, self);
+				for (auto & m : _members) static_cast<XObject *>(m.value.Inner())->EncodeSymbols(dest);
 			}
 			virtual string GetCanonicalType(void) override { return XI::Module::TypeReference::MakeClassReference(_path); }
 			virtual void OverrideArgumentSpecification(XA::ArgumentSpecification spec) override { _type_spec = spec; }
@@ -643,20 +676,37 @@ namespace Engine
 		{
 			LContext & _ctx;
 			string _name, _path, _cn;
-			bool _local, _has_inline;
+			bool _local, _has_inline, _pure;
 			uint _flags;
 			Point _vft_info;
 			XA::Function _contents;
 			XA::ExpressionTree _inline_tree;
 			Volumes::Dictionary<string, string> _attributes;
 			string _import_func, _import_library;
+			SafePointer<LObject> _instance, _instance_type;
 
 			// TODO: IMPLEMENT INLINE
 			// TODO: IMPLEMENT PROTOTYPE
 		public:
+			FunctionOverload(const FunctionOverload & src, LObject * instance) : _ctx(src._ctx)
+			{
+				_name = src._name; _path = src._path; _cn = src._cn;
+				_local = src._local; _has_inline = src._has_inline; _pure = src._pure;
+				_flags = src._flags; _vft_info = src._vft_info; _inline_tree = src._inline_tree;
+				_instance.SetRetain(instance); _instance_type = src._instance_type;
+			}
 			FunctionOverload(const string & name, const string & path, const string & cn, bool local, LContext & ctx) : _name(name), _path(path), _cn(cn), _local(local), _ctx(ctx)
 			{
-				_has_inline = false;
+				_has_inline = _pure = false;
+				_flags = 0;
+				_vft_info = Point(-1, -1);
+
+				// TODO: IMPLEMENT
+			}
+			FunctionOverload(const string & name, const string & path, const string & cn, bool local, LObject * instance_type, LContext & ctx) : _name(name), _path(path), _cn(cn), _local(local), _ctx(ctx)
+			{
+				_instance_type.SetRetain(instance_type);
+				_has_inline = _pure = false;
 				_flags = 0;
 				_vft_info = Point(-1, -1);
 
@@ -676,6 +726,8 @@ namespace Engine
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
+				// try autocast
+
 				throw Exception();
 				// TODO: IMPLEMENT
 			}
@@ -709,22 +761,65 @@ namespace Engine
 			virtual string ToString(void) const override { return L"function overload " + _path; }
 			virtual LObject * SupplyInstance(LObject * instance) override
 			{
-				// TODO: IMPLEMENT
-				throw InvalidArgumentException();
+				if (_instance) throw InvalidStateException();
+				if (!_instance_type) { Retain(); return this; }
+				return new FunctionOverload(*this, instance);
 			}
 			uint & GetFlags(void) { return _flags; }
+			Point & GetVFT(void) { return _vft_info; }
 			XA::Function & GetContents(void) { return _contents; }
 			void MakeImport(const string & func, const string & lib) { _import_func = func; _import_library = lib; }
+			void MakePure(void) { _pure = true; }
 			void SetInline(const XA::ExpressionTree & tree) { _inline_tree = tree; _has_inline = true; }
 		};
 		class Function : public XFunction
 		{
 			Volumes::ObjectDictionary<string, FunctionOverload> _overloads;
 			SafePointer<FunctionOverload> _singular;
+			SafePointer<LObject> _instance_type;
 			string _name, _path;
-			bool _class;
+
+			FunctionOverload * _get_overload_for_input_set(int argc, LObject ** argv, bool allow_instance)
+			{
+				if (_singular) return _singular; else {
+
+					// TODO: SELECT OVERLOAD
+					throw ObjectHasNoSuchOverloadException(this, argc, argv);
+
+				}
+			}
+
+			friend class Method;
+			class Method : public XFunction
+			{
+				SafePointer<Function> _parent;
+				SafePointer<LObject> _instance;
+			public:
+				Method(Function * parent, LObject * instance) { _parent.SetRetain(parent); _instance.SetRetain(instance); }
+				virtual ~Method(void) override {}
+				virtual Class GetClass(void) override { return Class::Method; }
+				virtual string GetName(void) override { return _parent->_name; }
+				virtual string GetFullName(void) override { return _parent->_path; }
+				virtual bool IsDefinedLocally(void) override { return false; }
+				virtual LObject * GetType(void) override { return _parent->GetType(); }
+				virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+				virtual LObject * Invoke(int argc, LObject ** argv) override
+				{
+					auto subj = _parent->_get_overload_for_input_set(argc, argv, true);
+					SafePointer<LObject> spec = subj->SupplyInstance(_instance);
+					return spec->Invoke(argc, argv);
+				}
+				virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
+				virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
+				virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return _parent->Evaluate(func, error_ctx); }
+				virtual void EncodeSymbols(XI::Module & dest) override {}
+				virtual string ToString(void) const override { return _parent->ToString() + L" with instance " + _instance->ToString(); }
+				virtual LObject * GetOverload(const string & ocn) override { throw InvalidStateException(); }
+				virtual LObject * GetOverload(int argc, const string * argv) override { throw InvalidStateException(); }
+				virtual LObject * SupplyInstance(LObject * instance) override { throw InvalidStateException(); }
+			};
 		public:
-			Function(const string & name, const string & path, bool cls) : _name(name), _path(path), _class(cls) {}
+			Function(const string & name, const string & path, LObject * instance) : _name(name), _path(path) { _instance_type.SetRetain(instance); }
 			virtual ~Function(void) override {}
 			virtual Class GetClass(void) override { return Class::Function; }
 			virtual string GetName(void) override { return _name; }
@@ -734,12 +829,8 @@ namespace Engine
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
-				if (_singular) return _singular->Invoke(argc, argv); else {
-
-					// TODO: SELECT OVERLOAD
-					throw ObjectHasNoSuchOverloadException(this, argc, argv);
-
-				}
+				auto subj = _get_overload_for_input_set(argc, argv, false);
+				return subj->Invoke(argc, argv);
 			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
@@ -765,6 +856,11 @@ namespace Engine
 				list.Append(argv, argc);
 				throw ObjectHasNoSuchMemberException(this, _name + L":" + XI::Module::TypeReference::MakeFunction(L"", &list));
 			}
+			virtual LObject * SupplyInstance(LObject * instance) override
+			{
+				if (_instance_type) return new Method(this, instance);
+				else { Retain(); return this; }
+			}
 			LObject * AddOverload(LObject * retval, int argc, LObject ** argv, uint flags, LContext & ctx)
 			{
 				// TODO: IMPLEMENT PROTOTYPE
@@ -781,13 +877,47 @@ namespace Engine
 				string local_name = _name + L":" + fcn;
 				string local_path = _path + L":" + fcn;
 				SafePointer<FunctionOverload> overload;
-				if (_class && (flags & FunctionMethod)) {
-
-					// TODO: IMPLEMENT METHOD REGISTRATION
-					return 0;
-
+				if (_instance_type && (flags & FunctionMethod)) {
+					if ((flags & FunctionInitializer) || (flags & FunctionFinalizer) || (flags & FunctionMain)) throw InvalidArgumentException();
+					overload = new FunctionOverload(local_name, local_path, fcn, true, _instance_type, ctx);
+					overload->GetFlags() |= XI::Module::Function::FunctionInstance;
+					if (flags & FunctionThrows) overload->GetFlags() |= XI::Module::Function::FunctionThrows;
+					if (flags & FunctionThisCall) overload->GetFlags() |= XI::Module::Function::FunctionThisCall;
+					if (flags & FunctionVirtual) {
+						// TODO: HANDLE VIRTUAL API
+						// FunctionVirtual = 0x01,
+						// FunctionPureCall = 0x80,
+					}
+					auto & func = overload->GetContents();
+					func.retval = static_cast<XType *>(retval)->GetArgumentSpecification();
+					func.inputs << XA::TH::MakeSpec(flags & FunctionThisCall ? XA::ArgumentSemantics::This : XA::ArgumentSemantics::Unclassified, 0, 1);
+					for (int i = 0; i < argc; i++) func.inputs << static_cast<XType *>(argv[i])->GetArgumentSpecification();
+					if (flags & FunctionThrows) func.inputs << XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1);
+					if (_name == NameConstructorZero || _name == NameDestructor) {
+						if (func.inputs.Length() > 1) throw InvalidArgumentException();
+						if (func.retval.semantics != XA::ArgumentSemantics::Unclassified || func.retval.size.num_bytes || func.retval.size.num_words) {
+							throw InvalidArgumentException();
+						}
+					}
+					if (_name == NameConverter) {
+						if (func.inputs.Length() > 1) throw InvalidArgumentException();
+					}
+					if (_name == NameConstructorMove) {
+						if (func.inputs.Length() != 2) throw InvalidArgumentException();
+						if (func.retval.semantics != XA::ArgumentSemantics::Unclassified || func.retval.size.num_bytes || func.retval.size.num_words) {
+							throw InvalidArgumentException();
+						}
+						if (func.inputs[1].semantics != XA::ArgumentSemantics::Unclassified || func.inputs[1].size.num_bytes || func.inputs[1].size.num_words != 1) {
+							throw InvalidArgumentException();
+						}
+					}
+					if (_name == NameConstructor) {
+						if (func.retval.semantics != XA::ArgumentSemantics::Unclassified || func.retval.size.num_bytes || func.retval.size.num_words) {
+							throw InvalidArgumentException();
+						}
+					}
 				} else {
-					if ((flags & FunctionVirtual) || (flags & FunctionMethod) || (flags & FunctionThisCall)) throw InvalidArgumentException();
+					if ((flags & FunctionVirtual) || (flags & FunctionMethod) || (flags & FunctionThisCall) || (flags & FunctionPureCall)) throw InvalidArgumentException();
 					overload = new FunctionOverload(local_name, local_path, fcn, true, ctx);
 					if (flags & FunctionInitializer) overload->GetFlags() |= XI::Module::Function::FunctionInitialize;
 					if (flags & FunctionFinalizer) overload->GetFlags() |= XI::Module::Function::FunctionShutdown;
@@ -826,8 +956,31 @@ namespace Engine
 		public:
 			virtual LObject * GetMember(const string & name) override
 			{
-				// TODO: IMPLEMENT
-				throw ObjectHasNoSuchMemberException(this, name);
+				try {
+					SafePointer<LObject> type = GetType();
+					auto ct = XI::Module::TypeReference(static_cast<XType *>(type.Inner())->GetCanonicalType());
+					if (ct.GetReferenceClass() == XI::Module::TypeReference::Class::Reference) {
+						// TODO: SWITCH TO PARENT CLASS
+						throw Exception();
+					}
+
+					// TODO: SELF CAST TO PARENT CLASS?
+					// TODO: HANDLE VIRTUAL FUNCTIONS
+
+					SafePointer<LObject> member = type->GetMember(name);
+					if (member->GetClass() == Class::Field) {
+						// TODO: SET INSTANCE
+						throw Exception();
+					} else if (member->GetClass() == Class::Property) {
+						// TODO: SET INSTANCE
+						throw Exception();
+					} else if (member->GetClass() == Class::Function) {
+						return static_cast<Function *>(member.Inner())->SupplyInstance(this);
+					} else {
+						member->Retain();
+						return member;
+					}
+				} catch (...) { throw ObjectHasNoSuchMemberException(this, name); }
 			}
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
@@ -835,6 +988,32 @@ namespace Engine
 				throw ObjectHasNoSuchOverloadException(this, argc, argv);
 			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
+		};
+		class LocalVariable : public XComputable
+		{
+			LContext & _ctx;
+			SafePointer<LObject> _type;
+			XA::ExpressionTree _value;
+		public:
+			LocalVariable(LContext & ctx, LObject * type, const XA::ExpressionTree & value) : _ctx(ctx), _value(value) { _type.SetRetain(type); }
+			virtual ~LocalVariable(void) override {}
+			virtual Class GetClass(void) override { return Class::Variable; }
+			virtual string GetName(void) override { return L""; }
+			virtual string GetFullName(void) override { return L""; }
+			virtual bool IsDefinedLocally(void) override { return true; }
+			virtual LObject * GetType(void) override
+			{
+				auto cn = static_cast<XType *>(_type.Inner())->GetCanonicalType();
+				auto ct = XI::Module::TypeReference(cn);
+				if (ct.GetReferenceClass() == XI::Module::TypeReference::Class::Reference) {
+					auto dest = ct.GetReferenceDestination().QueryCanonicalName();
+					return new CanonicalType(dest, _ctx);
+				} else { _type->Retain(); return _type; }
+			}
+			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return _value; }
+			virtual void EncodeSymbols(XI::Module & dest) override {}
+			virtual string ToString(void) const override { return L"local variable"; }
 		};
 		class Literal : public XComputable
 		{
@@ -1027,7 +1206,7 @@ namespace Engine
 			} catch (...) {}
 			auto prefix = create_under->GetFullName();
 			if (prefix.Length()) prefix += L".";
-			SafePointer<LObject> func = new Function(name, prefix + name, create_under->GetClass() == Class::Type);
+			SafePointer<LObject> func = new Function(name, prefix + name, create_under->GetClass() == Class::Type ? create_under : 0);
 			create_under->AddMember(name, func);
 			return func;
 		}
@@ -1100,6 +1279,7 @@ namespace Engine
 			current->Retain();
 			return current;
 		}
+		LObject * LContext::QueryScope(void) { return new Scope; }
 		LObject * LContext::QueryStaticArray(LObject * type, int volume)
 		{
 			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
@@ -1148,6 +1328,7 @@ namespace Engine
 			if (!static_cast<Literal *>(base)->GetFullName().Length()) { base->Retain(); return base; }
 			else return new Literal(*static_cast<Literal *>(base));
 		}
+		LObject * LContext::QueryComputable(LObject * of_type, const XA::ExpressionTree & with_tree) { return new LocalVariable(*this, of_type, with_tree); }
 		void LContext::AttachLiteral(LObject * literal, LObject * attach_under, const string & name)
 		{
 			if (!attach_under) throw InvalidArgumentException();

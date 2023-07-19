@@ -237,7 +237,7 @@ namespace Engine
 			}
 			void DisassemblyCode(const Function & input, Streaming::ITextWriter & output)
 			{
-				if (input.data.Length()) {
+				if (input.instset.Length()) {
 					output.WriteLine(L"CODE {");
 					for (auto & s : input.instset) DisassemblyStatement(s, output);
 					output.WriteLine(L"}");

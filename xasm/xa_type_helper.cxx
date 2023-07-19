@@ -243,7 +243,7 @@ namespace Engine
 			{
 				Statement result;
 				result.opcode = OpcodeUnconditionalJump;
-				result.attachment = MakeSize(0, dist_rel_next_inst);
+				result.attachment = MakeSize(dist_rel_next_inst, 0);
 				result.attachment_final = MakeFinal();
 				result.tree = MakeTree();
 				return result;
@@ -252,7 +252,7 @@ namespace Engine
 			{
 				Statement result;
 				result.opcode = OpcodeConditionalJump;
-				result.attachment = MakeSize(0, dist_rel_next_inst);
+				result.attachment = MakeSize(dist_rel_next_inst, 0);
 				result.attachment_final = MakeFinal();
 				result.tree = condition;
 				return result;
