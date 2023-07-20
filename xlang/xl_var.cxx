@@ -72,6 +72,7 @@ namespace Engine
 				_data.data_uint64 = 0;
 				_data.data_string = value;
 			}
+			Literal(LContext & ctx, const XI::Module::Literal & data) : _ctx(ctx), _local(false), _data(data) {}
 			Literal(const Literal & src) : _ctx(src._ctx), _local(false)
 			{
 				_data.contents = src._data.contents;
@@ -221,6 +222,7 @@ namespace Engine
 		XLiteral * CreateLiteral(LContext & ctx, uint64 value) { return new Literal(ctx, value); }
 		XLiteral * CreateLiteral(LContext & ctx, double value) { return new Literal(ctx, value); }
 		XLiteral * CreateLiteral(LContext & ctx, const string & value) { return new Literal(ctx, value); }
+		XLiteral * CreateLiteral(LContext & ctx, const XI::Module::Literal & data) { return new Literal(ctx, data); }
 		XComputable * CreateComputable(LContext & ctx, XType * of_type, const XA::ExpressionTree & with_tree)
 		{
 			SafePointer<StaticComputableProvider> provider = new StaticComputableProvider(of_type, with_tree);

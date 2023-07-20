@@ -113,6 +113,9 @@ namespace Engine
 		LFunctionContext::LFunctionContext(LContext & ctx, LObject * dest, uint dest_flags, LObject * retval, int argc, LObject ** argvt, const string * argvn) :
 			_ctx(ctx), _flags(dest_flags), _acorr(0x1000), _local_counter(0), _current_catch_serial(-1)
 		{
+			// TODO: IMPLEMENT METHOD CASES
+			//   1. NON-ZERO BASE
+			//   2. CONSTRUCTOR AND DESTRUCTOR
 			_func.SetRetain(dest);
 			_root = _ctx.QueryScope();
 			_ctx.QueryFunctionImplementation(_func, _subj);

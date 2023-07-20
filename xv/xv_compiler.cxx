@@ -486,8 +486,10 @@ namespace Engine
 				string name, import_name, import_lib;
 				uint flags = 0;
 				uint org = 0; // 0 - V, 1 - A, 2 - import, 3 - import from library, -1 - pure
+				if (is_conv) { AssertPunct(L"("); ReadNextToken(); }
 				if (is_ctor || is_dtor) retval = ctx.QueryObject(XL::NameVoid);
 				else retval = ProcessTypeExpression(desc);
+				if (is_conv) { AssertPunct(L")"); ReadNextToken(); }
 				if (is_ctor) {
 					if (IsIdent() && current_token.contents == Lexic::ConstructorZero) {
 						ReadNextToken(); name = XL::NameConstructorZero;
@@ -541,6 +543,7 @@ namespace Engine
 					ReadNextToken();
 				}
 				for (auto & attr : attributes) {
+					// TODO: REPLACE FunctionInitializer AND FunctionFinalizer WITH AGREGATION
 					if (attr.key == Lexic::AttributeInit) flags |= XL::FunctionInitializer;
 					else if (attr.key == Lexic::AttributeFinal) flags |= XL::FunctionFinalizer;
 					else if (attr.key == Lexic::AttributeNoTC) flags &= ~XL::FunctionThisCall;

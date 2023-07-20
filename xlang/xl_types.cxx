@@ -164,6 +164,8 @@ namespace Engine
 			}
 			virtual LObject * GetCastMethod(XType * to_type) override
 			{
+				// SafePointer<LObject> conv = GetMember(NameConverter);
+
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}

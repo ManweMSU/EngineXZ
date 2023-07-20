@@ -1,6 +1,7 @@
 ﻿#include "xl_func.h"
 
 #include "xl_var.h"
+#include "xl_lit.h"
 
 #include "../ximg/xi_function.h"
 
@@ -60,6 +61,11 @@ namespace Engine
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				if (_parent->GetFlags() & XI::Module::Function::FunctionInstance) {
+					if (argc == 0 && _instance->GetClass() == Class::Literal) {
+						auto op = GetName().Fragment(0, GetName().FindFirst(L':'));
+						SafePointer<LObject> lit = ProcessLiteralTransform(GetContext(), op, static_cast<XLiteral *>(_instance.Inner()), 0);
+						if (lit) { lit->Retain(); return lit; }
+					}
 					auto & vfd = GetVFDesc();
 					if (vfd.vf_index >= 0 && vfd.vft_index >= 0) {
 
@@ -174,6 +180,11 @@ namespace Engine
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				if (_flags & XI::Module::Function::FunctionInstance) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (argc == 2 && argv[0]->GetClass() == Class::Literal && argv[1]->GetClass() == Class::Literal) {
+					auto op = _path.Fragment(0, _path.FindFirst(L':'));
+					SafePointer<LObject> lit = ProcessLiteralTransform(_ctx, op, static_cast<XLiteral *>(argv[0]), static_cast<XLiteral *>(argv[1]));
+					if (lit) { lit->Retain(); return lit; }
+				}
 				SafePointer<_invoke_provider> provider = new _invoke_provider;
 				SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(_cn).GetFunctionSignature();
 				if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);

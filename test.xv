@@ -1,4 +1,8 @@
-﻿
+﻿[[innatum]]
+[[magnitudo] "8"]
+[[significatio] integer]
+genus int64 {}
+
 [[innatum]]
 [[magnitudo] "4"]
 [[significatio] integer]
@@ -9,11 +13,13 @@ genus int {
 		INTERFACE W 1 : THIS => 4
 		CODE { RET { @BLT:4 4=>4(R, @NEG:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
+	[[xa]]
+	convertor (int64) ()
+	{
+		INTERFACE W 1 : THIS => 8
+		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
 }
-[[innatum]]
-[[magnitudo] "8"]
-[[significatio] integer]
-genus int64 {}
 [[innatum]]
 [[magnitudo] "0"]
 [[significatio] nihil]
@@ -44,7 +50,7 @@ functio int64 GetLongZero()
 {
 	DATA QWORD 0
 	INTERFACE => 8 : -
-	CODE { RET { @BLT:W 1 W 1=>W 1(R, D[0]) } }
+	CODE { RET { @BLT:8 8=>8(R, D[0]) } }
 }
 
 functio nihil primus() introitus iacit
