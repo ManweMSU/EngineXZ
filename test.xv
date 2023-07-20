@@ -36,8 +36,6 @@ functio int WriteConsole(int64, int64, int, int64, int64)
 [[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
 functio int64 GetStdHandle(int)
 
-constatus X = 666;
-
 [[xa]]
 functio int64 GetTextToPrint()
 {
@@ -45,6 +43,7 @@ functio int64 GetTextToPrint()
 	INTERFACE => W 1 : -
 	CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_TAKE:1=>W 1(D[0])) } }
 }
+
 [[xa]]
 functio int64 GetLongZero()
 {
