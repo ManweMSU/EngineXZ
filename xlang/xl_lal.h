@@ -70,8 +70,22 @@ namespace Engine
 			ObjectMayThrow(LObject * reason);
 			virtual string ToString(void) const override;
 		};
+		class ObjectHasNoSuitableCast : public LException
+		{
+			SafePointer<LObject> type_from, type_to;
+		public:
+			ObjectHasNoSuitableCast(LObject * reason, LObject * from, LObject * to);
+			virtual string ToString(void) const override;
+		};
 
-		enum class Class { Null, Namespace, Scope, Alias, Type, Function, FunctionOverload, Variable, Literal, Field, Property, Method, Internal };
+		enum class Class {
+			Null, Namespace, Scope, Alias,
+			Type,
+			Function, FunctionOverload, Method, MethodOverload,
+			Literal, Variable, Field,
+			Property,
+			Internal
+		};
 
 		class LObject : public Object
 		{
@@ -133,7 +147,6 @@ namespace Engine
 			LObject * QueryTypePointer(LObject * type);
 			LObject * QueryTypeReference(LObject * type);
 			LObject * QueryFunctionPointer(LObject * retval, int argc, LObject ** argv);
-			LObject * QueryAbstractType(int index);
 			LObject * QueryTypeOfOperator(void);
 			LObject * QuerySizeOfOperator(void);
 			LObject * QueryModuleOperator(void);

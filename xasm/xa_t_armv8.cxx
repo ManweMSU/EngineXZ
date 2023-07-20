@@ -1005,8 +1005,8 @@ namespace Engine
 										encode_branch_jcc(Cond::Z, jz);
 										auto scope = _scopes.GetLast();
 										while (scope && !scope->GetValue().shift_sp) scope = scope->GetPrevious();
-										if (!scope) throw InvalidStateException();
-										encode_emulate_lea(ld.reg, Reg::FP, scope->GetValue().frame_base);
+										if (scope) encode_emulate_lea(ld.reg, Reg::FP, scope->GetValue().frame_base);
+										else encode_emulate_lea(ld.reg, Reg::FP, _frame_base);
 										encode_mov(Reg::SP, ld.reg);
 										encode_scope_unroll(_current_instruction, _current_instruction + 1 + int(node.input_specs[2].size.num_bytes));
 										encode_branch_jmp(jmp);

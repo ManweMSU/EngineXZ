@@ -73,7 +73,7 @@ namespace Engine
 		constexpr int CastPriorityNoCast	= -1;
 		constexpr int CastPriorityExplicit	= 0;
 		constexpr int CastPriorityConverter	= 1;
-		constexpr int CastPriorityParent	= 2;
+		constexpr int CastPrioritySimilar	= 2; // Parent class/interface or type to reference
 		constexpr int CastPriorityIdentity	= 3;
 	}
 }

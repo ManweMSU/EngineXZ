@@ -539,7 +539,7 @@ namespace Engine
 				resolver.current_module_name = name;
 				resolver.current_module = result.Inner();
 				Volumes::Dictionary<string, XA::TranslatedFunction *> funcs;
-				for (auto & l : loader.to_link) funcs.Append(l.key, &l.value.function);
+				for (auto & l : loader.to_link) funcs.Append(L"S:" + l.key, &l.value.function);
 				result->_code = _linker->LinkFunctions(funcs, &resolver);
 				if (!result->_code) {
 					callback->HandleModuleLoadError(name, resolver.symbol_failed, ModuleLoadError::LinkageFailure);
@@ -547,7 +547,7 @@ namespace Engine
 					return 0;
 				}
 				for (auto & l : loader.to_link) {
-					auto address = result->_code->GetEntryPoint(l.key);
+					auto address = result->_code->GetEntryPoint(L"S:" + l.key);
 					SafePointer<FunctionSymbol> func = new FunctionSymbol(address, l.value.flags, l.value.type, l.value.attrs);
 					local.RegisterSymbol(func, l.key);
 				}

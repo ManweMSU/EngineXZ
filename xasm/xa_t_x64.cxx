@@ -1213,8 +1213,8 @@ namespace Engine
 										int addr = _dest.code.Length();
 										auto scope = _scopes.GetLast();
 										while (scope && !scope->GetValue().shift_rsp) scope = scope->GetPrevious();
-										if (!scope) throw InvalidStateException();
-										encode_lea(Reg::RSP, Reg::RBP, scope->GetValue().frame_base);
+										if (scope) encode_lea(Reg::RSP, Reg::RBP, scope->GetValue().frame_base);
+										else encode_lea(Reg::RSP, Reg::RBP, _scope_frame_base);
 										encode_scope_unroll(_current_instruction, _current_instruction + 1 + int(node.input_specs[2].size.num_bytes));
 										_dest.code << 0xE9; // JMP
 										_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;

@@ -10,6 +10,8 @@ namespace Engine
 {
 	namespace XL
 	{
+		// TODO: ADD SIZES
+
 		XA::ExpressionTree MakeConstant(XA::Function & hdlr, const void * pdata, int size, int align = 1)
 		{
 			int offset = -1;
@@ -42,27 +44,27 @@ namespace Engine
 			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(size));
 			return result;
 		}
-		XA::ExpressionTree MakePointer(const XA::ExpressionTree & obj)
+		XA::ExpressionTree MakePointer(const XA::ExpressionTree & obj, const XA::ObjectSize & size)
 		{
 			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformTakePointer, XA::ReferenceFlagInvoke));
-			XA::TH::AddTreeInput(result, obj, XA::TH::MakeSpec(1, 0));
+			XA::TH::AddTreeInput(result, obj, XA::TH::MakeSpec(size));
 			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(0, 1));
 			return result;
 		}
-		XA::ExpressionTree FollowPointer(const XA::ExpressionTree & obj)
+		XA::ExpressionTree FollowPointer(const XA::ExpressionTree & obj, const XA::ObjectSize & size)
 		{
 			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformFollowPointer, XA::ReferenceFlagInvoke));
 			XA::TH::AddTreeInput(result, obj, XA::TH::MakeSpec(0, 1));
-			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(1, 0));
+			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(size));
 			return result;
 		}
-		XA::ExpressionTree MakeOffset(const XA::ExpressionTree & obj, const XA::ObjectSize & by)
+		XA::ExpressionTree MakeOffset(const XA::ExpressionTree & obj, const XA::ObjectSize & by, const XA::ObjectSize & obj_size, const XA::ObjectSize & new_size)
 		{
 			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformAddressOffset, XA::ReferenceFlagInvoke));
-			XA::TH::AddTreeInput(result, obj, XA::TH::MakeSpec(1, 0));
+			XA::TH::AddTreeInput(result, obj, XA::TH::MakeSpec(obj_size));
 			XA::TH::AddTreeInput(result, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(by));
 			XA::TH::AddTreeInput(result, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(1, 0));
-			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(1, 0));
+			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(new_size));
 			return result;
 		}
 
@@ -127,7 +129,7 @@ namespace Engine
 				_blocks.InsertLast(block);
 				_current_catch_serial = 0;
 				block_try->SetScope(_root);
-				block_try->GetErrorContext() = FollowPointer(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, argc)));
+				block_try->GetErrorContext() = FollowPointer(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, argc)), XA::TH::MakeSize(0, 2));
 				block_try->GetCatchSerial() = _current_catch_serial;
 				_acorr << -1;
 				_subj.instset << XA::TH::MakeStatementOpenScope();
@@ -203,7 +205,7 @@ namespace Engine
 				try { if (var_error_code.Length()) block_scope->AddMember(var_error_code, var_error); } catch (...) {}
 			}
 			if (ser_type) {
-				SafePointer<LObject> var_suberror = _ctx.QueryComputable(ser_type, MakeOffset(block->GetErrorContext(), XA::TH::MakeSize(0, 1)));
+				SafePointer<LObject> var_suberror = _ctx.QueryComputable(ser_type, MakeOffset(block->GetErrorContext(), XA::TH::MakeSize(0, 1), XA::TH::MakeSize(0, 2), XA::TH::MakeSize(0, 1)));
 				try { if (var_error_subcode.Length()) block_scope->AddMember(var_error_subcode, var_suberror); } catch (...) {}
 			}
 			_current_catch_serial = -1;
@@ -250,7 +252,7 @@ namespace Engine
 				type_ec = error_subcode->GetType();
 				type_size = _ctx.GetClassInstanceSize(type_ec);
 				if (type_size.num_words > 1 || (type_size.num_words == 1 && type_size.num_bytes) || type_size.num_bytes > 4) throw InvalidArgumentException();
-				_subj.instset << XA::TH::MakeStatementExpression(MakeBlt(MakeOffset(error_context, XA::TH::MakeSize(0, 1)),
+				_subj.instset << XA::TH::MakeStatementExpression(MakeBlt(MakeOffset(error_context, XA::TH::MakeSize(0, 1), XA::TH::MakeSize(0, 2), XA::TH::MakeSize(0, 1)),
 					error_subcode->Evaluate(_subj, &error_context), type_size));
 			}
 			_subj.instset << XA::TH::MakeStatementJump(_current_catch_serial);
