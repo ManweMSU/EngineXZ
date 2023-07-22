@@ -28,6 +28,7 @@ namespace Engine
 			InvalidThrowPlace		= 0x0012,
 			FunctionMustBeInstance	= 0x0013,
 			InvalidFunctionTrats	= 0x0014,
+			MustBeLocalClass		= 0x0015,
 			
 			// TODO: IMPLEMENT
 

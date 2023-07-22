@@ -2,6 +2,8 @@
 
 #include "xl_base.h"
 #include "xl_func.h"
+#include "xl_var.h"
+#include "xl_lit.h"
 
 namespace Engine
 {
@@ -25,23 +27,13 @@ namespace Engine
 					input_types.Append(static_cast<XType *>(type.Inner()));
 				}
 				if (argc == 1) {
-					// TODO: SEARCH FOR CONSTRUCTOR FIRST
-
-					return PerformTypeCast(this, argv[0], CastPriorityExplicit);
+					return PerformTypeCast(this, argv[0], CastPriorityExplicit, true);
 				} else if (argc == 0) {
 					SafePointer<LObject> ctor = GetConstructorInit();
-					//static_cast<XFunctionOverload *>(ctor.Inner())->SupplyInstance()
-
-					// TODO: IMPLEMENT INIT CONSTRUCTOR
-					throw ObjectHasNoSuchOverloadException(this, argc, argv);
-
+					return ConstructObject(this, ctor, 0, 0);
 				} else {
-					Array<string> cnl(argc);
-					for (auto & t : input_types) cnl << t.GetCanonicalType();
-
-					// TODO: IMPLEMENT CONSTRUCTOR
-					throw ObjectHasNoSuchOverloadException(this, argc, argv);
-
+					SafePointer<LObject> ctor = GetMember(NameConstructor);
+					return ConstructObject(this, ctor, argc, argv);
 				}
 			} catch (...) { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
 		}
@@ -134,8 +126,21 @@ namespace Engine
 			}
 			virtual LObject * GetConstructorCopy(void) override
 			{
-				// TODO: IMPLEMENT
-				throw LException(this);
+				auto ctor = _members[NameConstructor];
+				if (ctor) {
+					if (ctor->GetClass() != Class::Function) throw InvalidStateException();
+					auto ctor_fd = static_cast<XFunction *>(ctor);
+					try {
+						auto self_ref = XI::Module::TypeReference::MakeReference(GetCanonicalType());
+						auto ctor_over = ctor_fd->GetOverloadT(1, &self_ref, true);
+						ctor_over->Retain();
+						return ctor_over;
+					} catch (...) {}
+					auto self_cn = GetCanonicalType();
+					auto ctor_over = ctor_fd->GetOverloadT(1, &self_cn, true);
+					ctor_over->Retain();
+					return ctor_over;
+				} else throw ObjectHasNoSuchMemberException(this, NameConstructor);
 			}
 			virtual LObject * GetConstructorZero(void) override
 			{
@@ -147,6 +152,36 @@ namespace Engine
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
+			virtual LObject * GetConstructorCast(XType * from_type) override
+			{
+				auto ctor = _members[NameConstructor];
+				if (ctor) {
+					if (ctor->GetClass() != Class::Function) throw InvalidStateException();
+					auto ctor_fd = static_cast<XFunction *>(ctor);
+					try {
+						auto type_ref = XI::Module::TypeReference::MakeReference(from_type->GetCanonicalType());
+						auto ctor_over = ctor_fd->GetOverloadT(1, &type_ref, true);
+						ctor_over->Retain();
+						return ctor_over;
+					} catch (...) {}
+					auto type_cn = from_type->GetCanonicalType();
+					auto ctor_over = ctor_fd->GetOverloadT(1, &type_cn, true);
+					ctor_over->Retain();
+					return ctor_over;
+				} else throw ObjectHasNoSuchMemberException(this, NameConstructor);
+			}
+			virtual LObject * GetCastMethod(XType * to_type) override
+			{
+				auto conv = _members[NameConverter];
+				if (conv) {
+					if (conv->GetClass() != Class::Function) throw InvalidStateException();
+					auto conv_fd = static_cast<XFunction *>(conv);
+					auto sign = XI::Module::TypeReference::MakeFunction(to_type->GetCanonicalType(), 0);
+					auto conv_over = conv_fd->GetOverloadT(sign, true);
+					conv_over->Retain();
+					return conv_over;
+				} else throw ObjectHasNoSuchMemberException(this, NameConverter);
+			}
 			virtual LObject * GetDestructor(void) override
 			{
 				auto dtor = _members[NameDestructor];
@@ -157,32 +192,33 @@ namespace Engine
 					return dtor_overload;
 				} else return CreateNull();
 			}
-			virtual LObject * GetConstructorCast(XType * from_type) override
+			virtual void GetTypesConformsTo(ObjectArray<XType> & types) override
 			{
-				// TODO: IMPLEMENT
-				throw LException(this);
-			}
-			virtual LObject * GetCastMethod(XType * to_type) override
-			{
-				// SafePointer<LObject> conv = GetMember(NameConverter);
+				SafePointer<XType> ref = CreateType(XI::Module::TypeReference::MakeReference(GetCanonicalType()), _ctx);
+				types.Append(this);
+				types.Append(ref);
 
-				// TODO: IMPLEMENT
-				throw LException(this);
+				// TODO: ADD PARENT TYPES AND THEIR REFS
+				//   TYPE	-> PARENT
+				//   TYPE	-> PARENT&
 			}
-			virtual int GetConstructorCastPriority(XType * from_type) override
+			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override
 			{
-				if (from_type->GetCanonicalType() == GetCanonicalType()) return CastPriorityIdentity;
+				if (cast_explicit) {
 
+				} else {
+					if (type->GetCanonicalType() == GetCanonicalType()) { subject->Retain(); return subject; }
+				}
 				// TODO: IMPLEMENT
+				// TODO: SIMILARITY CASTS (2)
+				//   TYPE	-> PARENT
+				//   TYPE	-> PARENT&
+				//   TYPE	-> TYPE&
+				// TODO: REVERSE SIMILARITY CASTS (0)
+				//   PARENT  -> TYPE&
 				throw LException(this);
 			}
-			virtual int GetCastMethodPriority(XType * to_type) override
-			{
-				if (to_type->GetCanonicalType() == GetCanonicalType()) return CastPriorityIdentity;
-
-				// TODO: IMPLEMENT
-				throw LException(this);
-			}
+			virtual XI::Module::Class::Nature GetLanguageSemantics(void) override { return _nature; }
 			virtual void OverrideArgumentSpecification(XA::ArgumentSpecification spec) override { _type_spec = spec; }
 			virtual void OverrideLanguageSemantics(XI::Module::Class::Nature spec) override { _nature = spec; }
 			virtual void AdoptParentClass(XClass * parent) override
@@ -253,11 +289,6 @@ namespace Engine
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual LObject * GetDestructor(void) override
-			{
-				// TODO: IMPLEMENT
-				throw LException(this);
-			}
 			virtual LObject * GetConstructorCast(XType * from_type) override
 			{
 				// TODO: IMPLEMENT
@@ -268,12 +299,17 @@ namespace Engine
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual int GetConstructorCastPriority(XType * from_type) override
+			virtual LObject * GetDestructor(void) override
 			{
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual int GetCastMethodPriority(XType * to_type) override
+			virtual void GetTypesConformsTo(ObjectArray<XType> & types) override
+			{
+				// TODO: IMPLEMENT
+				throw LException(this);
+			}
+			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override
 			{
 				// TODO: IMPLEMENT
 				throw LException(this);
@@ -333,7 +369,6 @@ namespace Engine
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual LObject * GetDestructor(void) override { return CreateNull(); }
 			virtual LObject * GetConstructorCast(XType * from_type) override
 			{
 				// TODO: IMPLEMENT
@@ -344,12 +379,17 @@ namespace Engine
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual int GetConstructorCastPriority(XType * from_type) override
+			virtual LObject * GetDestructor(void) override
 			{
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual int GetCastMethodPriority(XType * to_type) override
+			virtual void GetTypesConformsTo(ObjectArray<XType> & types) override
+			{
+				// TODO: IMPLEMENT
+				throw LException(this);
+			}
+			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override
 			{
 				// TODO: IMPLEMENT
 				throw LException(this);
@@ -398,7 +438,6 @@ namespace Engine
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual LObject * GetDestructor(void) override { return CreateNull(); }
 			virtual LObject * GetConstructorCast(XType * from_type) override
 			{
 				// TODO: IMPLEMENT
@@ -409,12 +448,17 @@ namespace Engine
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual int GetConstructorCastPriority(XType * from_type) override
+			virtual LObject * GetDestructor(void) override
 			{
 				// TODO: IMPLEMENT
 				throw LException(this);
 			}
-			virtual int GetCastMethodPriority(XType * to_type) override
+			virtual void GetTypesConformsTo(ObjectArray<XType> & types) override
+			{
+				// TODO: IMPLEMENT
+				throw LException(this);
+			}
+			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override
 			{
 				// TODO: IMPLEMENT
 				throw LException(this);
@@ -447,19 +491,11 @@ namespace Engine
 			virtual LObject * GetConstructorCopy(void) override { throw ObjectHasNoSuchMemberException(this, NameConstructor); }
 			virtual LObject * GetConstructorZero(void) override { throw ObjectHasNoSuchMemberException(this, NameConstructorZero); }
 			virtual LObject * GetConstructorMove(void) override { throw ObjectHasNoSuchMemberException(this, NameConstructorMove); }
-			virtual LObject * GetDestructor(void) override { throw ObjectHasNoSuchMemberException(this, NameDestructor); }
 			virtual LObject * GetConstructorCast(XType * from_type) override { throw ObjectHasNoSuchMemberException(this, NameConstructor); }
 			virtual LObject * GetCastMethod(XType * to_type) override { throw ObjectHasNoSuchMemberException(this, NameConverter); }
-			virtual int GetConstructorCastPriority(XType * from_type) override
-			{
-				if (from_type->GetCanonicalType() == GetCanonicalType()) return CastPriorityIdentity;
-				else return CastPriorityNoCast;
-			}
-			virtual int GetCastMethodPriority(XType * to_type) override
-			{
-				if (to_type->GetCanonicalType() == GetCanonicalType()) return CastPriorityIdentity;
-				else return CastPriorityNoCast;
-			}
+			virtual LObject * GetDestructor(void) override { throw ObjectHasNoSuchMemberException(this, NameDestructor); }
+			virtual void GetTypesConformsTo(ObjectArray<XType> & types) override {}
+			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override { throw LException(this); }
 			virtual int GetArgumentCount(void) override
 			{
 				SafePointer< Array<XI::Module::TypeReference> > sgn = _ref.GetFunctionSignature();
@@ -499,23 +535,149 @@ namespace Engine
 		}
 		XClass * CreateClass(const string & name, const string & path, bool local, LContext & ctx) { return new TypeClass(name, path, local, ctx); }
 
+		class ConstructObjectProvider : public Object, public IComputableProvider
+		{
+		public:
+			string _dtor_ref;
+			SafePointer<XType> _retval;
+			SafePointer<LObject> _init_expr;
+		public:
+			ConstructObjectProvider(void) {}
+			virtual ~ConstructObjectProvider(void) override {}
+			virtual Object * ComputableProviderQueryObject(void) override { return this; }
+			virtual XType * ComputableGetType(void) override { _retval->Retain(); return _retval; }
+			virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+			{
+				auto node = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformTemporary, XA::ReferenceFlagInvoke));
+				XA::TH::AddTreeInput(node, _init_expr->Evaluate(func, error_ctx), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 0));
+				XA::TH::AddTreeOutput(node, _retval->GetArgumentSpecification(),
+					XA::TH::MakeFinal(_dtor_ref.Length() ? MakeSymbolReferenceL(func, _dtor_ref) : XA::TH::MakeRef()));
+				return node;
+			}
+		};
 		int CheckCastPossibility(XType * dest, XType * src, int min_level)
 		{
-			int ctor = dest->GetConstructorCastPriority(src);
-			int cast = src->GetCastMethodPriority(dest);
-			int level = max(ctor, cast);
-			return level < min_level ? -1 : level;
+			if (min_level <= CastPriorityIdentity) {
+				if (dest->GetCanonicalType() == src->GetCanonicalType()) return CastPriorityIdentity;
+			}
+			ObjectArray<XType> conf(0x20);
+			if (min_level <= CastPrioritySimilar) {
+				src->GetTypesConformsTo(conf);
+				for (auto & c : conf) if (dest->GetCanonicalType() == c.GetCanonicalType()) return CastPrioritySimilar;
+			}
+			if (min_level <= CastPriorityConverter) {
+				try {
+					SafePointer<LObject> conv = src->GetMember(NameConverter);
+					if (conv->GetClass() != Class::Function) throw Exception();
+					Array<string> fcnl(0x20);
+					static_cast<XFunction *>(conv.Inner())->ListOverloads(fcnl, true);
+					for (auto & fcn : fcnl) {
+						ObjectArray<XType> conf2(0x20);
+						SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(fcn).GetFunctionSignature();
+						if (sgn->Length() > 1) continue;
+						SafePointer<XType> retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), src->GetContext());
+						retval->GetTypesConformsTo(conf2);
+						for (auto & c : conf2) if (dest->GetCanonicalType() == c.GetCanonicalType()) return CastPriorityConverter;
+					}
+				} catch (...) {}
+				for (auto & c : conf) {
+					try {
+						SafePointer<LObject> ctor = dest->GetConstructorCast(&c);
+						return CastPriorityConverter;
+					} catch (...) {}
+				}
+			}
+			return CastPriorityNoCast;
 		}
-		LObject * PerformTypeCast(XType * dest, LObject * src, int min_level)
+		LObject * ConstructObject(XType * of_type, LObject * with_ctor, int argc, LObject ** argv)
 		{
-			SafePointer<LObject> src_type = src->GetType();
-			int ctor = dest->GetConstructorCastPriority(static_cast<XType *>(src_type.Inner()));
-			int cast = static_cast<XType *>(src_type.Inner())->GetCastMethodPriority(dest);
-			int level = max(ctor, cast);
-			if (level < min_level) throw ObjectHasNoSuitableCast(src, src_type, dest);
-			if (level == CastPriorityIdentity) { src->Retain(); return src; }
-
-			// TODO: IMPLEMENT
+			if (with_ctor->GetClass() == Class::Function) {
+				auto ctor = static_cast<XFunction *>(with_ctor);
+				SafePointer<XComputable> instance = CreateComputable(of_type->GetContext(), of_type, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceInit)));
+				SafePointer<XMethod> ctor_over = ctor->SetInstance(instance);
+				SafePointer<LObject> expr = ctor_over->Invoke(argc, argv);
+				SafePointer<ConstructObjectProvider> provider = new ConstructObjectProvider;
+				SafePointer<LObject> dtor = of_type->GetDestructor();
+				if (dtor->GetClass() != Class::Null) provider->_dtor_ref = dtor->GetFullName();
+				provider->_retval.SetRetain(of_type);
+				provider->_init_expr = expr;
+				return CreateComputable(of_type->GetContext(), provider);
+			} else if (with_ctor->GetClass() == Class::FunctionOverload) {
+				auto ctor = static_cast<XFunctionOverload *>(with_ctor);
+				SafePointer<XComputable> instance = CreateComputable(of_type->GetContext(), of_type, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceInit)));
+				SafePointer<XMethodOverload> ctor_over = ctor->SetInstance(instance);
+				SafePointer<LObject> expr = ctor_over->Invoke(argc, argv);
+				SafePointer<ConstructObjectProvider> provider = new ConstructObjectProvider;
+				SafePointer<LObject> dtor = of_type->GetDestructor();
+				if (dtor->GetClass() != Class::Null) provider->_dtor_ref = dtor->GetFullName();
+				provider->_retval.SetRetain(of_type);
+				provider->_init_expr = expr;
+				return CreateComputable(of_type->GetContext(), provider);
+			} else throw InvalidArgumentException();
+		}
+		LObject * PerformTypeCast(XType * dest, LObject * src, int min_level, bool enforce_copy)
+		{
+			SafePointer<LObject> src_type_a = src->GetType();
+			if (src_type_a->GetClass() != Class::Type) throw InvalidStateException();
+			auto src_type = static_cast<XType *>(src_type_a.Inner());
+			if (min_level <= CastPriorityIdentity) {
+				if (dest->GetCanonicalType() == src_type->GetCanonicalType()) {
+					if (enforce_copy) {
+						SafePointer<LObject> ctor = dest->GetConstructorCopy();
+						return ConstructObject(dest, ctor, 1, &src);
+					} else { src->Retain(); return src; }
+				}
+			}
+			ObjectArray<XType> conf(0x20);
+			if (min_level <= CastPrioritySimilar) {
+				src_type->GetTypesConformsTo(conf);
+				for (auto & c : conf) if (dest->GetCanonicalType() == c.GetCanonicalType()) {
+					if (enforce_copy) {
+						SafePointer<LObject> ctor = dest->GetConstructorCopy();
+						SafePointer<LObject> subj = src_type->TransformTo(src, &c, false);
+						return ConstructObject(dest, ctor, 1, subj.InnerRef());
+					} else return src_type->TransformTo(src, &c, false);
+				}
+			}
+			if (min_level <= CastPriorityConverter) {
+				try {
+					SafePointer<LObject> conv = src_type->GetMember(NameConverter);
+					if (conv->GetClass() != Class::Function) throw Exception();
+					Array<string> fcnl(0x20);
+					static_cast<XFunction *>(conv.Inner())->ListOverloads(fcnl, true);
+					for (auto & fcn : fcnl) {
+						ObjectArray<XType> conf2(0x20);
+						SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(fcn).GetFunctionSignature();
+						if (sgn->Length() > 1) continue;
+						SafePointer<XType> retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), src_type->GetContext());
+						retval->GetTypesConformsTo(conf2);
+						for (auto & c : conf2) if (dest->GetCanonicalType() == c.GetCanonicalType()) {
+							try {
+								SafePointer<LObject> conv = src_type->GetCastMethod(retval);
+								SafePointer<LObject> result; // retval ~ c == dest
+								if (src->GetClass() == Class::Literal) {
+									auto lit = ProcessLiteralConvert(src_type->GetContext(), static_cast<XLiteral *>(src), retval);
+									if (lit) result = lit;
+								}
+								if (!result) {
+									if (conv->GetClass() != Class::FunctionOverload) throw Exception();
+									SafePointer<XMethodOverload> method = static_cast<XFunctionOverload *>(conv.Inner())->SetInstance(src);
+									result = method->Invoke(0, 0);
+								}
+								return retval->TransformTo(result, dest, false);
+							} catch (...) {}
+						}
+					}
+				} catch (...) {}
+				for (auto & c : conf) {
+					try {
+						SafePointer<LObject> ctor = dest->GetConstructorCast(&c);
+						SafePointer<LObject> src_trans = src_type->TransformTo(src, &c, false);
+						return ConstructObject(dest, ctor, 1, src_trans.InnerRef());
+					} catch (...) {}
+				}
+			}
+			if (min_level <= CastPriorityExplicit) return src_type->TransformTo(src, dest, true);
 			throw LException(dest);
 		}
 	}

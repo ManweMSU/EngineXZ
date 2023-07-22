@@ -87,6 +87,12 @@ namespace Engine
 			Internal
 		};
 
+		class IModuleLoadCallback
+		{
+		public:
+			virtual Streaming::Stream * GetModuleStream(const string & name) = 0;
+		};
+
 		class LObject : public Object
 		{
 		public:
@@ -108,6 +114,7 @@ namespace Engine
 			string _module_name;
 			uint _subsystem;
 			SafePointer<LObject> _root_ns;
+			Array<string> _import_list;
 			Volumes::ObjectDictionary<string, DataBlock> _rsrc;
 		public:
 			LContext(const string & module);
@@ -118,7 +125,7 @@ namespace Engine
 			void MakeSubsystemNone(void);
 			void MakeSubsystemLibrary(void);
 
-			bool IncludeModule(const string & name, Streaming::Stream * module_data);
+			bool IncludeModule(const string & name, IModuleLoadCallback * callback);
 			LObject * GetRootNamespace(void);
 			LObject * CreateNamespace(LObject * create_under, const string & name);
 			LObject * CreateAlias(LObject * create_under, const string & name, LObject * destination);
@@ -128,6 +135,7 @@ namespace Engine
 
 			// TODO: IMPLEMENT
 
+			bool IsInterface(LObject * cls);
 			XA::ArgumentSemantics GetClassSemantics(LObject * cls);
 			XA::ObjectSize GetClassInstanceSize(LObject * cls);
 			void SetClassSemantics(LObject * cls, XA::ArgumentSemantics value);

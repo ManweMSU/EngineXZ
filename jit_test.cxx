@@ -20,6 +20,9 @@ public:
 	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
 	{
 		try {
+			try {
+				return new FileStream(L"_build/" + module_name + L".xo", AccessRead, OpenExisting);
+			} catch (...) {}
 			return new FileStream(L"_build/" + module_name + L".xx", AccessRead, OpenExisting);
 		} catch (...) { return 0; }
 	}
@@ -44,27 +47,39 @@ public:
 	}
 };
 
+void PrintCompilerError(XV::CompilerStatusDesc & desc)
+{
+	console.SetTextColor(12);
+	console.WriteLine(L"XV COMPILER ERROR: " + string(uint(desc.status), HexadecimalBase, 4));
+	console.WriteLine(L"AT LINE NO " + string(desc.error_line_no));
+	console.SetTextColor(-1);
+	console.WriteLine(desc.error_line);
+	console.SetTextColor(4);
+	if (desc.error_line_pos >= 0 && desc.error_line_len > 0) {
+		console.Write(string(L' ', desc.error_line_pos));
+		console.Write(string(L'~', desc.error_line_len));
+		console.LineFeed();
+	}
+	console.SetTextColor(-1);
+}
+
 int Main(void)
 {
 	Codec::InitializeDefaultCodecs();
 	IO::SetCurrentDirectory(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/../..");
 
 	string output = L"_build";
+	SafePointer<XV::ICompilerCallback> callback = XV::CreateCompilerCallback(0, 0, &output, 1, 0);
 	XV::CompilerStatusDesc desc;
-	XV::CompileModule(L"test.xv", output, 0, desc);
+	XV::CompileModule(L"xv_lib/canonicalis.xv", output, callback, desc);
 	if (desc.status != XV::CompilerStatus::Success) {
-		console.SetTextColor(12);
-		console.WriteLine(L"XV COMPILER ERROR: " + string(uint(desc.status), HexadecimalBase, 4));
-		console.WriteLine(L"AT LINE NO " + string(desc.error_line_no));
-		console.SetTextColor(-1);
-		console.WriteLine(desc.error_line);
-		console.SetTextColor(4);
-		if (desc.error_line_pos >= 0 && desc.error_line_len > 0) {
-			console.Write(string(L' ', desc.error_line_pos));
-			console.Write(string(L'~', desc.error_line_len));
-			console.LineFeed();
-		}
-		console.SetTextColor(-1);
+		PrintCompilerError(desc);
+		return 1;
+	}
+	output = L"_build";
+	XV::CompileModule(L"test.xv", output, callback, desc);
+	if (desc.status != XV::CompilerStatus::Success) {
+		PrintCompilerError(desc);
 		return 1;
 	}
 	SafePointer<FileStream> stream = new FileStream(output, AccessRead, OpenExisting);

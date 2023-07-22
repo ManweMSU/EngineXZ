@@ -17,5 +17,6 @@ namespace Engine
 		XObject * CreateNamespace(const string & name, const string & path, LContext & ctx);
 		XObject * CreateScope(void);
 		XAlias * CreateAlias(const string & name, const string & path, const string & to, bool cn_alias, bool local);
+		XAlias * CreateAliasRaw(const string & name, const string & path, const string & to, bool local);
 	}
 }

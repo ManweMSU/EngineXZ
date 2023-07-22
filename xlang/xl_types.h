@@ -21,15 +21,16 @@ namespace Engine
 			virtual LObject * GetConstructorCopy(void) = 0;
 			virtual LObject * GetConstructorZero(void) = 0;
 			virtual LObject * GetConstructorMove(void) = 0;
-			virtual LObject * GetDestructor(void) = 0;
 			virtual LObject * GetConstructorCast(XType * from_type) = 0;
 			virtual LObject * GetCastMethod(XType * to_type) = 0;
-			virtual int GetConstructorCastPriority(XType * from_type) = 0;
-			virtual int GetCastMethodPriority(XType * to_type) = 0;
+			virtual LObject * GetDestructor(void) = 0;
+			virtual void GetTypesConformsTo(ObjectArray<XType> & types) = 0;
+			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) = 0;
 		};
 		class XClass : public XType
 		{
 		public:
+			virtual XI::Module::Class::Nature GetLanguageSemantics(void) = 0;
 			virtual void OverrideArgumentSpecification(XA::ArgumentSpecification spec) = 0;
 			virtual void OverrideLanguageSemantics(XI::Module::Class::Nature spec) = 0;
 			virtual void AdoptParentClass(XClass * parent) = 0;
@@ -66,6 +67,7 @@ namespace Engine
 		XClass * CreateClass(const string & name, const string & path, bool local, LContext & ctx);
 
 		int CheckCastPossibility(XType * dest, XType * src, int min_level);
-		LObject * PerformTypeCast(XType * dest, LObject * src, int min_level);
+		LObject * ConstructObject(XType * of_type, LObject * with_ctor, int argc, LObject ** argv);
+		LObject * PerformTypeCast(XType * dest, LObject * src, int min_level, bool enforce_copy = false);
 	}
 }

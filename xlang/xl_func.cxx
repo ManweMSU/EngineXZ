@@ -390,7 +390,7 @@ namespace Engine
 				SafePointer<XFunctionOverload> overload;
 				if (_instance_type && (flags & FunctionMethod)) {
 					if ((flags & FunctionInitializer) || (flags & FunctionFinalizer) || (flags & FunctionMain)) throw InvalidArgumentException();
-					overload = new FunctionOverload(_ctx, local_name, local_path, fcn, true, _instance_type);
+					overload = new FunctionOverload(_ctx, local_name, local_path, fcn, local, _instance_type);
 					overload->GetFlags() |= XI::Module::Function::FunctionInstance;
 					if (flags & FunctionThrows) overload->GetFlags() |= XI::Module::Function::FunctionThrows;
 					if (flags & FunctionThisCall) overload->GetFlags() |= XI::Module::Function::FunctionThisCall;
@@ -431,7 +431,7 @@ namespace Engine
 					}
 				} else {
 					if ((flags & FunctionVirtual) || (flags & FunctionMethod) || (flags & FunctionThisCall) || (flags & FunctionPureCall)) throw InvalidArgumentException();
-					overload = new FunctionOverload(_ctx, local_name, local_path, fcn, true, 0);
+					overload = new FunctionOverload(_ctx, local_name, local_path, fcn, local, 0);
 					if (flags & FunctionInitializer) overload->GetFlags() |= XI::Module::Function::FunctionInitialize;
 					if (flags & FunctionFinalizer) overload->GetFlags() |= XI::Module::Function::FunctionShutdown;
 					if (flags & FunctionMain) overload->GetFlags() |= XI::Module::Function::FunctionEntryPoint;
@@ -462,6 +462,24 @@ namespace Engine
 				else if (_singular) _singular.SetReference(0);
 				_overloads.Append(fcn, overload);
 				return overload;
+			}
+			virtual XFunctionOverload * AddOverload(XType * retval, int argc, XType ** argv, uint flags, bool local, Point vfi) override
+			{
+				auto result = AddOverload(retval, argc, argv, flags, local);
+				auto & desc = result->GetVFDesc();
+				desc.vft_index = vfi.x;
+				desc.vf_index = vfi.y;
+
+				// TODO: UPDATE VF INFO
+
+				return result;
+			}
+			virtual void ListOverloads(Array<string> & fcn, bool allow_instance) override
+			{
+				for (auto & o : _overloads) {
+					if (o.value->NeedsInstance() && !allow_instance) continue;
+					fcn << o.key;
+				}
 			}
 			virtual XClass * GetInstanceType(void) override { return _instance_type; }
 			virtual XMethod * SetInstance(LObject * instance) override { return new Method(this, instance); }

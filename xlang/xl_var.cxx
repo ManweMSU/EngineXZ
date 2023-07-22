@@ -55,8 +55,16 @@ namespace Engine
 			}
 			Literal(LContext & ctx, uint64 value) : _ctx(ctx), _local(false)
 			{
-				_data.contents = XI::Module::Literal::Class::UnsignedInteger;
-				_data.length = value > 0xFFFFFFFF ? 8 : 4;
+				if (value > 0xFFFFFFFF) {
+					_data.contents = XI::Module::Literal::Class::UnsignedInteger;
+					_data.length = 8;
+				} else if (value > 0x7FFFFFFF) {
+					_data.contents = XI::Module::Literal::Class::UnsignedInteger;
+					_data.length = 4;
+				} else {
+					_data.contents = XI::Module::Literal::Class::SignedInteger;
+					_data.length = 4;
+				}
 				_data.data_uint64 = value;
 			}
 			Literal(LContext & ctx, double value) : _ctx(ctx), _local(false)

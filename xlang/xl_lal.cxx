@@ -77,44 +77,79 @@ namespace Engine
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"sizeof"; }
 		};
-		class XModuleOf : public XInternal
+		class ModuleProvider : public Object, public IComputableProvider
 		{
 			LContext & _ctx;
 			string _name;
 		public:
-			XModuleOf(LContext & ctx, const string & name) : _ctx(ctx), _name(name) {}
-			virtual ~XModuleOf(void) override {}
-			virtual LObject * GetType(void) override
+			ModuleProvider(LContext & ctx, const string & name) : _ctx(ctx), _name(name) {}
+			virtual ~ModuleProvider(void) override {}
+			virtual Object * ComputableProviderQueryObject(void) override { return this; }
+			virtual XType * ComputableGetType(void) override
 			{
 				SafePointer<LObject> void_type = _ctx.QueryObject(NameVoid);
-				return _ctx.QueryTypePointer(void_type);
+				return static_cast<XType *>(_ctx.QueryTypePointer(void_type));
 			}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
-			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+			virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
 			{
 				if (_name.Length()) return MakeAddressOf(MakeReference(func, L"M:" + _name), XA::TH::MakeSize(0, 1));
 				else return MakeAddressOf(MakeReference(func, L"M"), XA::TH::MakeSize(0, 1));
 			}
-			virtual string ToString(void) const override { return L"module"; }
 		};
-		class XInterfaceOf : public XInternal
+		class InterfaceProvider : public Object, public IComputableProvider
 		{
 			LContext & _ctx;
 			string _name;
 		public:
-			XInterfaceOf(LContext & ctx, const string & name) : _ctx(ctx), _name(name) {}
-			virtual ~XInterfaceOf(void) override {}
-			virtual LObject * GetType(void) override
+			InterfaceProvider(LContext & ctx, const string & name) : _ctx(ctx), _name(name) {}
+			virtual ~InterfaceProvider(void) override {}
+			virtual Object * ComputableProviderQueryObject(void) override { return this; }
+			virtual XType * ComputableGetType(void) override
 			{
 				SafePointer<LObject> void_type = _ctx.QueryObject(NameVoid);
-				return _ctx.QueryTypePointer(void_type);
+				return static_cast<XType *>(_ctx.QueryTypePointer(void_type));
 			}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
-			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return MakeAddressOf(MakeReference(func, L"I:" + _name), XA::TH::MakeSize(0, 1)); }
-			virtual string ToString(void) const override { return L"interface"; }
+			virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+			{
+				return MakeAddressOf(MakeReference(func, L"I:" + _name), XA::TH::MakeSize(0, 1));
+			}
 		};
 		
-		LContext::LContext(const string & module) : _module_name(module)
+		string GetPath(const string & symbol)
+		{
+			int index = symbol.FindLast(L'.');
+			if (index >= 0) return symbol.Fragment(0, index); else return L"";
+		}
+		string GetName(const string & symbol)
+		{
+			int index = symbol.FindLast(L'.');
+			if (index >= 0) return symbol.Fragment(index + 1, -1); else return symbol;
+		}
+		string GetFuncPath(const string & symbol)
+		{
+			int index = symbol.FindFirst(L':');
+			if (index >= 0) return symbol.Fragment(0, index); else return L"";
+		}
+		string GetFuncSign(const string & symbol)
+		{
+			int index = symbol.FindFirst(L':');
+			if (index >= 0) return symbol.Fragment(index + 1, -1); else return symbol;
+		}
+		LObject * ProvidePath(LContext & ctx, const string & symbol)
+		{
+			auto path = GetPath(symbol);
+			if (!path.Length()) return ctx.GetRootNamespace();
+			try {
+				SafePointer<LObject> loc = ctx.QueryObject(path);
+				return loc;
+			} catch (...) {}
+			auto parent = ProvidePath(ctx, path);
+			SafePointer<LObject> ns = CreateNamespace(GetName(path), path, ctx);
+			parent->AddMember(ns->GetName(), ns);
+			return ns;
+		}
+
+		LContext::LContext(const string & module) : _module_name(module), _import_list(0x10)
 		{
 			_root_ns = XL::CreateNamespace(L"", L"", *this);
 			_subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI);
@@ -124,11 +159,104 @@ namespace Engine
 		void LContext::MakeSubsystemGUI(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::GUI); }
 		void LContext::MakeSubsystemNone(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::NoUI); }
 		void LContext::MakeSubsystemLibrary(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::Library); }
-		bool LContext::IncludeModule(const string & name, Streaming::Stream * module_data)
+		bool LContext::IncludeModule(const string & module_name, IModuleLoadCallback * callback)
 		{
-			// TODO: IMPLEMENT
+			if (module_name == _module_name) return true;
+			for (auto & imp : _import_list) if (imp == module_name) return true;
+			_import_list << module_name;
+			SafePointer<Streaming::Stream> input = callback->GetModuleStream(module_name);
+			if (!input) return false;
+			XI::Module module(input, XI::Module::ModuleLoadFlags::LoadLink);
+			Volumes::Dictionary<XClass *, XI::Module::Class *> cpp;
+			for (auto & d : module.modules_depends_on) if (!IncludeModule(d, callback)) return false;
+			for (auto & c : module.classes) {
+				auto obj = ProvidePath(*this, c.key);
+				SafePointer<XClass> cls = XL::CreateClass(GetName(c.key), c.key, false, *this);
+				obj->AddMember(GetName(c.key), cls);
+				cls->OverrideLanguageSemantics(c.value.class_nature);
+				cls->OverrideArgumentSpecification(c.value.instance_spec);
+				cpp.Append(cls, &c.value);
+			}
+			for (auto & c : module.aliases) {
+				auto obj = ProvidePath(*this, c.key);
+				SafePointer<XAlias> als = CreateAliasRaw(GetName(c.key), c.key, c.value, false);
+				obj->AddMember(GetName(c.key), als);
+			}
+			for (auto & c : module.functions) {
+				auto full_path = GetFuncPath(c.key);
+				auto sign = GetFuncSign(c.key);
+				auto name = GetName(full_path);
+				auto obj = ProvidePath(*this, full_path);
+				XFunction * fd = 0;
+				try {
+					SafePointer<LObject> fdp = obj->GetMember(name);
+					if (fdp->GetClass() == Class::Function) fd = static_cast<XFunction *>(fdp.Inner());
+				} catch (...) {}
+				if (!fd) {
+					SafePointer<XFunction> fdc = XL::CreateFunction(*this, name, full_path, 0);
+					obj->AddMember(name, fdc);
+					fd = fdc;
+				}
+				SafePointer< Array<XI::Module::TypeReference> > args = XI::Module::TypeReference(sign).GetFunctionSignature();
+				SafePointer<XType> retval = CreateType(args->ElementAt(0).QueryCanonicalName(), *this);
+				ObjectArray<XType> inputs(0x10);
+				Array<XType *> input_refs(0x10);
+				for (int i = 1; i < args->Length(); i++) {
+					SafePointer<XType> input = CreateType(args->ElementAt(i).QueryCanonicalName(), *this);
+					inputs.Append(input);
+					input_refs.Append(input.Inner());
+				}
+				uint flags = 0;
+				if (c.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
+				fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false);
+			}
+			for (auto & c : module.variables) {
+				// TODO: IMPLEMENT
+			}
+			for (auto & c : module.literals) {
+				auto obj = ProvidePath(*this, c.key);
+				SafePointer<XLiteral> lit = CreateLiteral(*this, c.value);
+				lit->Attach(GetName(c.key), c.key, false);
+				obj->AddMember(GetName(c.key), lit);
+			}
+			for (auto & c : cpp) {
+				// c.value.fields;
+				// c.value.interfaces_implements;
+				// c.value.parent_class;
+				// c.value.properties;
 
-			return false;
+				// TODO: PROCESS CLASS
+
+				for (auto & m : c.value->methods) {
+					auto name = GetFuncPath(m.key);
+					auto sign = GetFuncSign(m.key);
+					XFunction * fd = 0;
+					try {
+						SafePointer<LObject> fdp = c.key->GetMember(name);
+						if (fdp->GetClass() == Class::Function) fd = static_cast<XFunction *>(fdp.Inner());
+					} catch (...) {}
+					if (!fd) {
+						SafePointer<XFunction> fdc = XL::CreateFunction(*this, name, c.key->GetFullName() + L"." + name, c.key);
+						c.key->AddMember(name, fdc);
+						fd = fdc;
+					}
+					SafePointer< Array<XI::Module::TypeReference> > args = XI::Module::TypeReference(sign).GetFunctionSignature();
+					SafePointer<XType> retval = CreateType(args->ElementAt(0).QueryCanonicalName(), *this);
+					ObjectArray<XType> inputs(0x10);
+					Array<XType *> input_refs(0x10);
+					for (int i = 1; i < args->Length(); i++) {
+						SafePointer<XType> input = CreateType(args->ElementAt(i).QueryCanonicalName(), *this);
+						inputs.Append(input);
+						input_refs.Append(input.Inner());
+					}
+					uint flags = 0;
+					if (m.value.code_flags & XI::Module::Function::FunctionInstance) flags |= FunctionMethod;
+					if (m.value.code_flags & XI::Module::Function::FunctionThisCall) flags |= FunctionThisCall;
+					if (m.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
+					fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false, m.value.vft_index);
+				}
+			}
+			return true;
 		}
 		LObject * LContext::GetRootNamespace(void) { return _root_ns; }
 		LObject * LContext::CreateNamespace(LObject * create_under, const string & name)
@@ -195,6 +323,14 @@ namespace Engine
 		{
 			if (!create_under || create_under->GetClass() != Class::Function) throw InvalidArgumentException();
 			return static_cast<XFunction *>(create_under)->AddOverload(static_cast<XType *>(retval), argc, reinterpret_cast<XType **>(argv), flags, true);
+		}
+		bool LContext::IsInterface(LObject * cls)
+		{
+			if (!cls || cls->GetClass() != Class::Type) return false;
+			auto type = static_cast<XType *>(cls);
+			if (type->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) return false;
+			auto xcls = static_cast<XClass *>(cls);
+			return xcls->GetLanguageSemantics() == XI::Module::Class::Nature::Interface;
 		}
 		XA::ArgumentSemantics LContext::GetClassSemantics(LObject * cls)
 		{
@@ -307,9 +443,21 @@ namespace Engine
 		}
 		LObject * LContext::QueryTypeOfOperator(void) { return new XTypeOf; }
 		LObject * LContext::QuerySizeOfOperator(void) { return new XSizeOf(*this); }
-		LObject * LContext::QueryModuleOperator(void) { return new XModuleOf(*this, L""); }
-		LObject * LContext::QueryModuleOperator(const string & name) { return new XModuleOf(*this, name); }
-		LObject * LContext::QueryInterfaceOperator(const string & name) { return new XInterfaceOf(*this, name); }
+		LObject * LContext::QueryModuleOperator(void)
+		{
+			SafePointer<ModuleProvider> provider = new ModuleProvider(*this, L"");
+			return CreateComputable(*this, provider);
+		}
+		LObject * LContext::QueryModuleOperator(const string & name)
+		{
+			SafePointer<ModuleProvider> provider = new ModuleProvider(*this, name);
+			return CreateComputable(*this, provider);
+		}
+		LObject * LContext::QueryInterfaceOperator(const string & name)
+		{
+			SafePointer<InterfaceProvider> provider = new InterfaceProvider(*this, name);
+			return CreateComputable(*this, provider);
+		}
 		LObject * LContext::QueryLiteral(bool value) { return CreateLiteral(*this, value); }
 		LObject * LContext::QueryLiteral(uint64 value) { return CreateLiteral(*this, value); }
 		LObject * LContext::QueryLiteral(double value) { return CreateLiteral(*this, value); }
@@ -355,11 +503,11 @@ namespace Engine
 			module.assembler_version.subver = v3;
 			module.assembler_version.build = v4;
 			module.subsystem = static_cast<XI::Module::ExecutionSubsystem>(_subsystem);
+			module.modules_depends_on = _import_list;
 			module.resources = _rsrc;
 			static_cast<XObject *>(_root_ns.Inner())->EncodeSymbols(module, Class::Internal);
 
 			// TODO: IMPLEMENT
-			// Array<string> modules_depends_on;
 			// Volumes::Dictionary<string, Variable> variables;		// FQN
 			// SafePointer<DataBlock> data;
 

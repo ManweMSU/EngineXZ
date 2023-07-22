@@ -8,14 +8,14 @@ namespace Engine
 	{
 		bool IsIsolatedPunctuation(uint32 ucs)
 		{
-			return ucs == L'!' || ucs == L'@' || ucs == L'^' || ucs == L'(' || ucs == L')' || ucs == L'[' || ucs == L']' ||
+			return ucs == L'@' || ucs == L'^' || ucs == L'(' || ucs == L')' || ucs == L'[' || ucs == L']' ||
 				ucs == L'{' || ucs == L'}' || ucs == L';' || ucs == L':' || ucs == L'~' || ucs == L'.' || ucs == L',' ||
 				ucs == L'?';
 		}
 		bool IsContinualPunctuation(uint32 ucs)
 		{
 			return ucs == L'#' || ucs == L'%' || ucs == L'&' || ucs == L'*' || ucs == L'+' || ucs == L'-' || ucs == L'=' ||
-				ucs == L'|' || ucs == L'/' || ucs == L'<' || ucs == L'>';
+				ucs == L'|' || ucs == L'/' || ucs == L'<' || ucs == L'>' || ucs == L'!';
 		}
 		bool IsValidPunctuation(uint32 ucs) { return IsIsolatedPunctuation(ucs) || IsContinualPunctuation(ucs); }
 		bool IsReservedPunctuation(uint32 ucs)
@@ -53,6 +53,7 @@ namespace Engine
 			if (str == Lexic::KeywordConvertor) return true;
 			if (str == Lexic::KeywordVirtual) return true;
 			if (str == Lexic::KeywordPure) return true;
+			if (str == Lexic::KeywordContinue) return true;
 
 			// TODO: IMPLEMENT REGISTER KEYWORDS
 

@@ -306,5 +306,257 @@ namespace Engine
 				return CreateLiteral(ctx, r);
 			}
 		}
+		XLiteral * ProcessLiteralConvert(LContext & ctx, XLiteral * value, XType * type)
+		{
+			auto & lv = value->Expose();
+			XI::Module::Literal r;
+			r.data_uint64 = 0;
+			auto ts = type->GetArgumentSpecification();
+			if (ts.semantics != XA::ArgumentSemantics::Integer && ts.semantics != XA::ArgumentSemantics::SignedInteger &&
+				ts.semantics != XA::ArgumentSemantics::FloatingPoint) return 0;
+			auto tn = type->GetFullName();
+			if (tn == NameBoolean) {
+				r.contents = XI::Module::Literal::Class::Boolean;
+				r.length = 1;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_uint8 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger || lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_uint8 = lv.data_uint8 != 0;
+					else if (lv.length == 2) r.data_uint8 = lv.data_uint16 != 0;
+					else if (lv.length == 4) r.data_uint8 = lv.data_uint32 != 0;
+					else if (lv.length == 8) r.data_uint8 = lv.data_uint64 != 0;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_uint8 = lv.data_float != 0;
+					else if (lv.length == 8) r.data_uint8 = lv.data_double != 0;
+					else return 0;
+				} else return 0;
+			} else if (tn == NameInt8) {
+				r.contents = XI::Module::Literal::Class::SignedInteger;
+				r.length = 1;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_sint8 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_sint8 = lv.data_uint8;
+					else if (lv.length == 2) r.data_sint8 = lv.data_uint16;
+					else if (lv.length == 4) r.data_sint8 = lv.data_uint32;
+					else if (lv.length == 8) r.data_sint8 = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_sint8 = lv.data_sint8;
+					else if (lv.length == 2) r.data_sint8 = lv.data_sint16;
+					else if (lv.length == 4) r.data_sint8 = lv.data_sint32;
+					else if (lv.length == 8) r.data_sint8 = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_sint8 = int8(lv.data_float);
+					else if (lv.length == 8) r.data_sint8 = int8(lv.data_double);
+					else return 0;
+				} else return 0;
+			} else if (tn == NameInt16) {
+				r.contents = XI::Module::Literal::Class::SignedInteger;
+				r.length = 2;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_sint16 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_sint16 = lv.data_uint8;
+					else if (lv.length == 2) r.data_sint16 = lv.data_uint16;
+					else if (lv.length == 4) r.data_sint16 = lv.data_uint32;
+					else if (lv.length == 8) r.data_sint16 = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_sint16 = lv.data_sint8;
+					else if (lv.length == 2) r.data_sint16 = lv.data_sint16;
+					else if (lv.length == 4) r.data_sint16 = lv.data_sint32;
+					else if (lv.length == 8) r.data_sint16 = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_sint16 = int16(lv.data_float);
+					else if (lv.length == 8) r.data_sint16 = int16(lv.data_double);
+					else return 0;
+				} else return 0;
+			} else if (tn == NameInt32) {
+				r.contents = XI::Module::Literal::Class::SignedInteger;
+				r.length = 4;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_sint32 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_sint32 = lv.data_uint8;
+					else if (lv.length == 2) r.data_sint32 = lv.data_uint16;
+					else if (lv.length == 4) r.data_sint32 = lv.data_uint32;
+					else if (lv.length == 8) r.data_sint32 = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_sint32 = lv.data_sint8;
+					else if (lv.length == 2) r.data_sint32 = lv.data_sint16;
+					else if (lv.length == 4) r.data_sint32 = lv.data_sint32;
+					else if (lv.length == 8) r.data_sint32 = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_sint32 = int32(lv.data_float);
+					else if (lv.length == 8) r.data_sint32 = int32(lv.data_double);
+					else return 0;
+				} else return 0;
+			} else if (tn == NameInt64) {
+				r.contents = XI::Module::Literal::Class::SignedInteger;
+				r.length = 8;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_sint64 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_sint64 = lv.data_uint8;
+					else if (lv.length == 2) r.data_sint64 = lv.data_uint16;
+					else if (lv.length == 4) r.data_sint64 = lv.data_uint32;
+					else if (lv.length == 8) r.data_sint64 = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_sint64 = lv.data_sint8;
+					else if (lv.length == 2) r.data_sint64 = lv.data_sint16;
+					else if (lv.length == 4) r.data_sint64 = lv.data_sint32;
+					else if (lv.length == 8) r.data_sint64 = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_sint64 = int64(lv.data_float);
+					else if (lv.length == 8) r.data_sint64 = int64(lv.data_double);
+					else return 0;
+				} else return 0;
+			} else if (tn == NameUInt8) {
+				r.contents = XI::Module::Literal::Class::UnsignedInteger;
+				r.length = 1;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_uint8 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_uint8 = lv.data_uint8;
+					else if (lv.length == 2) r.data_uint8 = lv.data_uint16;
+					else if (lv.length == 4) r.data_uint8 = lv.data_uint32;
+					else if (lv.length == 8) r.data_uint8 = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_uint8 = lv.data_sint8;
+					else if (lv.length == 2) r.data_uint8 = lv.data_sint16;
+					else if (lv.length == 4) r.data_uint8 = lv.data_sint32;
+					else if (lv.length == 8) r.data_uint8 = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_uint8 = uint8(lv.data_float);
+					else if (lv.length == 8) r.data_uint8 = uint8(lv.data_double);
+					else return 0;
+				} else return 0;
+			} else if (tn == NameUInt16) {
+				r.contents = XI::Module::Literal::Class::UnsignedInteger;
+				r.length = 2;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_uint16 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_uint16 = lv.data_uint8;
+					else if (lv.length == 2) r.data_uint16 = lv.data_uint16;
+					else if (lv.length == 4) r.data_uint16 = lv.data_uint32;
+					else if (lv.length == 8) r.data_uint16 = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_uint16 = lv.data_sint8;
+					else if (lv.length == 2) r.data_uint16 = lv.data_sint16;
+					else if (lv.length == 4) r.data_uint16 = lv.data_sint32;
+					else if (lv.length == 8) r.data_uint16 = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_uint16 = uint16(lv.data_float);
+					else if (lv.length == 8) r.data_uint16 = uint16(lv.data_double);
+					else return 0;
+				} else return 0;
+			} else if (tn == NameUInt32) {
+				r.contents = XI::Module::Literal::Class::UnsignedInteger;
+				r.length = 4;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_uint32 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_uint32 = lv.data_uint8;
+					else if (lv.length == 2) r.data_uint32 = lv.data_uint16;
+					else if (lv.length == 4) r.data_uint32 = lv.data_uint32;
+					else if (lv.length == 8) r.data_uint32 = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_uint32 = lv.data_sint8;
+					else if (lv.length == 2) r.data_uint32 = lv.data_sint16;
+					else if (lv.length == 4) r.data_uint32 = lv.data_sint32;
+					else if (lv.length == 8) r.data_uint32 = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_uint32 = uint32(lv.data_float);
+					else if (lv.length == 8) r.data_uint32 = uint32(lv.data_double);
+					else return 0;
+				} else return 0;
+			} else if (tn == NameUInt64) {
+				r.contents = XI::Module::Literal::Class::UnsignedInteger;
+				r.length = 8;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_uint64 = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_uint64 = lv.data_uint8;
+					else if (lv.length == 2) r.data_uint64 = lv.data_uint16;
+					else if (lv.length == 4) r.data_uint64 = lv.data_uint32;
+					else if (lv.length == 8) r.data_uint64 = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_uint64 = lv.data_sint8;
+					else if (lv.length == 2) r.data_uint64 = lv.data_sint16;
+					else if (lv.length == 4) r.data_uint64 = lv.data_sint32;
+					else if (lv.length == 8) r.data_uint64 = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_uint64 = uint64(lv.data_float);
+					else if (lv.length == 8) r.data_uint64 = uint64(lv.data_double);
+					else return 0;
+				} else return 0;
+			} else if (tn == NameFloat32) {
+				r.contents = XI::Module::Literal::Class::FloatingPoint;
+				r.length = 4;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_float = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_float = lv.data_uint8;
+					else if (lv.length == 2) r.data_float = lv.data_uint16;
+					else if (lv.length == 4) r.data_float = lv.data_uint32;
+					else if (lv.length == 8) r.data_float = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_float = lv.data_sint8;
+					else if (lv.length == 2) r.data_float = lv.data_sint16;
+					else if (lv.length == 4) r.data_float = lv.data_sint32;
+					else if (lv.length == 8) r.data_float = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_float = lv.data_float;
+					else if (lv.length == 8) r.data_float = lv.data_double;
+					else return 0;
+				} else return 0;
+			} else if (tn == NameFloat64) {
+				r.contents = XI::Module::Literal::Class::FloatingPoint;
+				r.length = 8;
+				if (lv.contents == XI::Module::Literal::Class::Boolean) {
+					r.data_double = lv.data_uint8;
+				} else if (lv.contents == XI::Module::Literal::Class::UnsignedInteger) {
+					if (lv.length == 1) r.data_double = lv.data_uint8;
+					else if (lv.length == 2) r.data_double = lv.data_uint16;
+					else if (lv.length == 4) r.data_double = lv.data_uint32;
+					else if (lv.length == 8) r.data_double = lv.data_uint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::SignedInteger) {
+					if (lv.length == 1) r.data_double = lv.data_sint8;
+					else if (lv.length == 2) r.data_double = lv.data_sint16;
+					else if (lv.length == 4) r.data_double = lv.data_sint32;
+					else if (lv.length == 8) r.data_double = lv.data_sint64;
+					else return 0;
+				} else if (lv.contents == XI::Module::Literal::Class::FloatingPoint) {
+					if (lv.length == 4) r.data_double = lv.data_float;
+					else if (lv.length == 8) r.data_double = lv.data_double;
+					else return 0;
+				} else return 0;
+			} else return 0;
+			if (r.length == 4) r.data_uint64 &= 0xFFFFFFFF;
+			else if (r.length == 2) r.data_uint64 &= 0xFFFF;
+			else if (r.length == 1) r.data_uint64 &= 0xFF;
+			else if (r.length == 0) r.data_uint64 = 0;
+			return CreateLiteral(ctx, r);
+		}
 	}
 }

@@ -44,6 +44,7 @@ namespace Engine
 			constexpr const widechar * KeywordConvertor	= L"convertor";
 			constexpr const widechar * KeywordVirtual	= L"virtualis";
 			constexpr const widechar * KeywordPure		= L"pura";
+			constexpr const widechar * KeywordContinue	= L"dura";
 
 			constexpr const widechar * AttributeSemant	= L"[significatio]";
 			constexpr const widechar * AttributeSize	= L"[magnitudo]";

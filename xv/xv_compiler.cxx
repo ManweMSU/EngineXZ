@@ -41,7 +41,7 @@ namespace Engine
 			SafePointer<TokenStream> code_source;
 			bool constructor, destructor;
 		};
-		struct VContext
+		struct VContext : public XL::IModuleLoadCallback
 		{
 			bool module_is_library;
 			XL::LContext & ctx;
@@ -55,6 +55,11 @@ namespace Engine
 
 			VContext(XL::LContext & _lal, ICompilerCallback * _callback, CompilerStatusDesc & _status, TokenStream * stream) :
 				module_is_library(false), ctx(_lal), callback(_callback), status(_status) { input.SetRetain(stream); }
+			virtual Streaming::Stream * GetModuleStream(const string & name) override
+			{
+				if (callback) return callback->QueryModuleFileStream(name);
+				else throw IO::FileAccessException(IO::Error::FileNotFound);
+			}
 			void Abort(CompilerStatus error)
 			{
 				status.status = error;
@@ -351,7 +356,7 @@ namespace Engine
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionUnary(ssl, ssc);
 				while (IsPunct(XL::OperatorAnd) || IsPunct(XL::OperatorMultiply) || IsPunct(XL::OperatorDivide) ||
-					IsPunct(XL::OperatorResidual)) {
+					IsPunct(XL::OperatorResidual) || IsPunct(XL::OperatorShiftLeft) || IsPunct(XL::OperatorShiftRight)) {
 					auto op = current_token;
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionUnary(ssl, ssc), op_obj;
@@ -368,8 +373,7 @@ namespace Engine
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionMultiplicative(ssl, ssc);
 				while (IsPunct(XL::OperatorOr) || IsPunct(XL::OperatorXor) || IsPunct(XL::OperatorAdd) ||
-					IsPunct(XL::OperatorSubtract) || IsPunct(XL::OperatorShiftLeft) || IsPunct(XL::OperatorShiftRight) ||
-					IsPunct(XL::OperatorCompare)) {
+					IsPunct(XL::OperatorSubtract) || IsPunct(XL::OperatorCompare)) {
 					auto op = current_token;
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionMultiplicative(ssl, ssc), op_obj;
@@ -610,7 +614,10 @@ namespace Engine
 					XA::CompileFunction(asm_code, asm_func, asm_desc);
 					if (asm_desc.status != XA::CompilerStatus::Success) Abort(CompilerStatus::AssemblyError, start);
 					ctx.SupplyFunctionImplementation(func, asm_func);
-				} else ctx.SupplyFunctionImplementation(func, import_name, import_lib);
+				} else {
+					AssertPunct(L";"); ReadNextToken();
+					ctx.SupplyFunctionImplementation(func, import_name, import_lib);
+				}
 			}
 			void ProcessClassDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
@@ -659,7 +666,7 @@ namespace Engine
 				subdesc.current_namespace = type;
 				subdesc.namespace_search_list << type;
 				subdesc.namespace_search_list << desc.namespace_search_list;
-				ProcessClass(type, is_interface, subdesc);
+				ProcessClass(type, is_interface, false, subdesc);
 				AssertPunct(L"}"); ReadNextToken();
 			}
 			void ProcessAliasDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
@@ -746,7 +753,21 @@ namespace Engine
 					} else Abort(CompilerStatus::InvalidSubsystem, definition);
 				} else attributes.Append(key, value);
 			}
-			void ProcessClass(XL::LObject * cls, int is_interface, VObservationDesc & desc)
+			void ProcessContinue(VObservationDesc & desc)
+			{
+				ReadNextToken();
+				auto definition = current_token;
+				SafePointer<XL::LObject> type = ProcessTypeExpression(desc);
+				if (!type->IsDefinedLocally()) Abort(CompilerStatus::MustBeLocalClass, definition);
+				AssertPunct(L"{"); ReadNextToken();
+				VObservationDesc subdesc;
+				subdesc.current_namespace = type;
+				subdesc.namespace_search_list << type;
+				subdesc.namespace_search_list << desc.namespace_search_list;
+				ProcessClass(type, ctx.IsInterface(type), true, subdesc);
+				AssertPunct(L"}"); ReadNextToken();
+			}
+			void ProcessClass(XL::LObject * cls, bool is_interface, bool is_continue, VObservationDesc & desc)
 			{
 				Volumes::Dictionary<string, string> attributes;
 				while (!IsPunct(L"}")) {
@@ -754,6 +775,8 @@ namespace Engine
 						ProcessAttributeDefinition(attributes);
 					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface)) {
 						ProcessClassDefinition(attributes, desc);
+					} else if (IsKeyword(Lexic::KeywordContinue)) {
+						ProcessContinue(desc);
 					} else if (IsKeyword(Lexic::KeywordAlias)) {
 						ProcessAliasDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordFunction) ||
@@ -794,6 +817,8 @@ namespace Engine
 						AssertPunct(L"}"); ReadNextToken();
 					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface)) {
 						ProcessClassDefinition(attributes, desc);
+					} else if (IsKeyword(Lexic::KeywordContinue)) {
+						ProcessContinue(desc);
 					} else if (IsKeyword(Lexic::KeywordAlias)) {
 						ProcessAliasDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordFunction)) {
@@ -805,7 +830,11 @@ namespace Engine
 					} else if (IsKeyword(Lexic::KeywordVariable)) {
 						ProcessVariableDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordImport)) {
-						// TODO: ADD IMPORT
+						ReadNextToken();
+						AssertGenericIdent();
+						try { if (!ctx.IncludeModule(current_token.contents, this)) throw Exception(); }
+						catch (...) { Abort(CompilerStatus::ReferenceAccessFailure, current_token); }
+						ReadNextToken(); AssertPunct(L";"); ReadNextToken();
 					} else if (IsKeyword(Lexic::KeywordResource)) {
 						ReadNextToken();
 						if (IsIdent()) {
@@ -1014,8 +1043,8 @@ namespace Engine
 				_res(res_pc), _mdl(mdl_pc)
 			{
 				_dropback.SetRetain(dropback);
-				_res.Append(res_pv, res_pc);
-				_mdl.Append(mdl_pv, mdl_pc);
+				if (res_pc) _res.Append(res_pv, res_pc);
+				if (mdl_pc) _mdl.Append(mdl_pv, mdl_pc);
 			}
 			virtual ~ListCompilerCallback(void) override {}
 			virtual Streaming::Stream * QueryModuleFileStream(const string & module_name) override

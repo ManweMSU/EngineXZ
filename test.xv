@@ -1,59 +1,23 @@
-﻿[[innatum]]
-[[magnitudo] "8"]
-[[significatio] integer]
-genus int64 {}
-
-[[innatum]]
-[[magnitudo] "4"]
-[[significatio] integer]
-genus int {
-	[[xa]]
-	functio int operator - ()
-	{
-		INTERFACE W 1 : THIS => 4
-		CODE { RET { @BLT:4 4=>4(R, @NEG:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]]
-	convertor (int64) ()
-	{
-		INTERFACE W 1 : THIS => 8
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-}
-[[innatum]]
-[[magnitudo] "0"]
-[[significatio] nihil]
-genus nihil {}
-
-nomen_alternum int32 = int;
-nomen_alternum nint32 = int;
+﻿importa canonicalis;
 
 [[importa] "WriteConsoleW"]
 [[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
-functio int WriteConsole(int64, int64, int, int64, int64)
+functio int WriteConsole(nintadl, nintadl, int, nintadl, nintadl);
 
 [[importa] "GetStdHandle"]
 [[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
-functio int64 GetStdHandle(int)
+functio nintadl GetStdHandle(int);
 
 [[xa]]
-functio int64 GetTextToPrint()
+functio nintadl GetTextToPrint()
 {
 	DATA WORD "suka ty pidor\n"
 	INTERFACE => W 1 : -
 	CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_TAKE:1=>W 1(D[0])) } }
 }
 
-[[xa]]
-functio int64 GetLongZero()
-{
-	DATA QWORD 0
-	INTERFACE => 8 : -
-	CODE { RET { @BLT:8 8=>8(R, D[0]) } }
-}
-
 functio nihil primus() introitus iacit
 {
-	WriteConsole(GetStdHandle(-11), GetTextToPrint(), 14, GetLongZero(), GetLongZero());
+	WriteConsole(GetStdHandle(-11), GetTextToPrint(), 14, 0, 0);
 	iace 666;
 }

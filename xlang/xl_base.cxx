@@ -83,6 +83,7 @@ namespace Engine
 			bool _local;
 		public:
 			Alias(const string & name, const string & path, const string & to, bool cn_alias, bool local) : _name(name), _path(path), _local(local) { if (cn_alias) _dest = L"T:" + to; else _dest = L"S:" + to; }
+			Alias(const string & name, const string & path, const string & to, bool local) : _name(name), _path(path), _dest(to), _local(local) {}
 			virtual ~Alias(void) override {}
 			virtual Class GetClass(void) override { return Class::Alias; }
 			virtual string GetName(void) override { return _name; }
@@ -104,5 +105,6 @@ namespace Engine
 		XObject * CreateNamespace(const string & name, const string & path, LContext & ctx) { return new Namespace(name, path, ctx); }
 		XObject * CreateScope(void) { return new Scope; }
 		XAlias * CreateAlias(const string & name, const string & path, const string & to, bool cn_alias, bool local) { return new Alias(name, path, to, cn_alias, local); }
+		XAlias * CreateAliasRaw(const string & name, const string & path, const string & to, bool local) { return new Alias(name, path, to, local); }
 	}
 }

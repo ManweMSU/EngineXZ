@@ -65,6 +65,8 @@ namespace Engine
 			virtual XFunctionOverload * GetOverloadT(int argc, const string * argv, bool allow_instance = false) = 0;
 			virtual XFunctionOverload * GetOverloadV(int argc, LObject ** argv, bool allow_instance = false) = 0;
 			virtual XFunctionOverload * AddOverload(XType * retval, int argc, XType ** argv, uint flags, bool local) = 0;
+			virtual XFunctionOverload * AddOverload(XType * retval, int argc, XType ** argv, uint flags, bool local, Point vfi) = 0;
+			virtual void ListOverloads(Array<string> & fcn, bool allow_instance = false) = 0;
 			virtual XClass * GetInstanceType(void) = 0;
 			virtual XMethod * SetInstance(LObject * instance) = 0;
 			virtual LContext & GetContext(void) = 0;
