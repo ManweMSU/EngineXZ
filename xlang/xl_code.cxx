@@ -1,5 +1,7 @@
 ﻿#include "xl_code.h"
 
+#include "xl_types.h"
+#include "xl_var.h"
 #include "../xasm/xa_type_helper.h"
 
 // TODO: REMOVE
@@ -144,8 +146,51 @@ namespace Engine
 				_subj.instset << XA::TH::MakeStatementOpenScope();
 			}
 		}
+		LFunctionContext::LFunctionContext(LContext & ctx, LObject * dest, uint dest_flags, const Array<LObject *> & perform, const Array<LObject *> & revert) :
+			_ctx(ctx), _flags(dest_flags), _acorr(0x1000), _local_counter(0), _current_catch_serial(-1)
+		{
+			if (perform.Length() != revert.Length()) throw InvalidArgumentException();
+			_func.SetRetain(dest);
+			_ctx.QueryFunctionImplementation(_func, _subj);
+			_void_retval = true;
+			auto error_ctx = FollowPointer(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), XA::TH::MakeSize(0, 2));
+			auto throws = (_flags & FunctionThrows) != 0;
+			for (int i = 0; i < perform.Length(); i++) {
+				_current_catch_serial++;
+				_acorr << -1;
+				auto tree = perform[i]->Evaluate(_subj, throws ? &error_ctx : 0);
+				ThrowSerialSet(tree, _current_catch_serial);
+				_subj.instset << XA::TH::MakeStatementExpression(tree);
+			}
+			_subj.instset << XA::TH::MakeStatementReturn();
+			for (int i = perform.Length() - 1; i >= 0; i--) {
+				_acorr[_current_catch_serial] = _subj.instset.Length();
+				_current_catch_serial--;
+				if (revert[i]) {
+					auto tree = revert[i]->Evaluate(_subj, 0);
+					_subj.instset << XA::TH::MakeStatementExpression(tree);
+				}
+			}
+			_subj.instset << XA::TH::MakeStatementReturn();
+			for (int index = 0; index < _subj.instset.Length(); index++) {
+				auto & i = _subj.instset[index];
+				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
+					int abs_offs = _acorr[i.attachment.num_bytes];
+					i.attachment = XA::TH::MakeSize(abs_offs - index - 1, 0);
+				}
+				ThrowAddressCorrect(i.tree, _acorr, index);
+			}
+
+			// TODO: REMOVE
+			IO::Console console;
+			XA::DisassemblyFunction(_subj, &console);
+			// TODO: END REMOVE
+
+			_ctx.SupplyFunctionImplementation(_func, _subj);
+		}
 		LFunctionContext::~LFunctionContext(void) {}
 		LObject * LFunctionContext::GetRootScope(void) { return _root; }
+		bool LFunctionContext::IsZeroReturn(void) { return _void_retval; }
 		void LFunctionContext::OpenRegularBlock(LObject ** scope)
 		{
 			SafePointer<LObject> block_scope = _ctx.QueryScope();
@@ -241,6 +286,62 @@ namespace Engine
 			ThrowSerialSet(tree, _current_catch_serial);
 			_subj.instset << XA::TH::MakeStatementExpression(tree);
 		}
+		void LFunctionContext::EncodeReturn(LObject * expression)
+		{
+			if (_void_retval) {
+				_subj.instset << XA::TH::MakeStatementReturn();
+			} else {
+				SafePointer<LObject> rv_init = InitInstance(_retval, expression);
+				auto tree = rv_init->Evaluate(_subj, _current_try_block ? &static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0);
+				ThrowSerialSet(tree, _current_catch_serial);
+				_subj.instset << XA::TH::MakeStatementReturn(tree);
+			}
+		}
+		LObject * LFunctionContext::EncodeCreateVariable(LObject * of_type)
+		{
+			if (of_type->GetClass() != Class::Type) throw InvalidArgumentException();
+			SafePointer<LObject> init_instance = _ctx.QueryComputable(of_type, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceInit)));
+			SafePointer<LObject> dtor = static_cast<XType *>(of_type)->GetDestructor();
+			SafePointer<LObject> init_object = InitInstance(init_instance, 0, 0);
+			auto tree = init_object->Evaluate(_subj, _current_try_block ? &static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0);
+			ThrowSerialSet(tree, _current_catch_serial);
+			_subj.instset << XA::TH::MakeStatementNewLocal(static_cast<XType *>(of_type)->GetArgumentSpecification().size,
+				tree, XA::TH::MakeFinal(dtor->GetClass() == Class::Null ? XA::TH::MakeRef() : MakeSymbolReferenceL(_subj, dtor->GetFullName())));
+			SafePointer<LObject> var_instance = _ctx.QueryComputable(of_type, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLocal, _local_counter)));
+			_local_counter++;
+			var_instance->Retain();
+			return var_instance;
+		}
+		LObject * LFunctionContext::EncodeCreateVariable(LObject * of_type, LObject * init_expr)
+		{
+			if (of_type->GetClass() != Class::Type) throw InvalidArgumentException();
+			SafePointer<LObject> init_instance = _ctx.QueryComputable(of_type, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceInit)));
+			SafePointer<LObject> dtor = static_cast<XType *>(of_type)->GetDestructor();
+			SafePointer<LObject> init_object = InitInstance(init_instance, init_expr);
+			auto tree = init_object->Evaluate(_subj, _current_try_block ? &static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0);
+			ThrowSerialSet(tree, _current_catch_serial);
+			_subj.instset << XA::TH::MakeStatementNewLocal(static_cast<XType *>(of_type)->GetArgumentSpecification().size,
+				tree, XA::TH::MakeFinal(dtor->GetClass() == Class::Null ? XA::TH::MakeRef() : MakeSymbolReferenceL(_subj, dtor->GetFullName())));
+			SafePointer<LObject> var_instance = _ctx.QueryComputable(of_type, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLocal, _local_counter)));
+			_local_counter++;
+			var_instance->Retain();
+			return var_instance;
+		}
+		LObject * LFunctionContext::EncodeCreateVariable(LObject * of_type, int argc, LObject ** argv)
+		{
+			if (of_type->GetClass() != Class::Type) throw InvalidArgumentException();
+			SafePointer<LObject> init_instance = _ctx.QueryComputable(of_type, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceInit)));
+			SafePointer<LObject> dtor = static_cast<XType *>(of_type)->GetDestructor();
+			SafePointer<LObject> init_object = InitInstance(init_instance, argc, argv);
+			auto tree = init_object->Evaluate(_subj, _current_try_block ? &static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0);
+			ThrowSerialSet(tree, _current_catch_serial);
+			_subj.instset << XA::TH::MakeStatementNewLocal(static_cast<XType *>(of_type)->GetArgumentSpecification().size,
+				tree, XA::TH::MakeFinal(dtor->GetClass() == Class::Null ? XA::TH::MakeRef() : MakeSymbolReferenceL(_subj, dtor->GetFullName())));
+			SafePointer<LObject> var_instance = _ctx.QueryComputable(of_type, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLocal, _local_counter)));
+			_local_counter++;
+			var_instance->Retain();
+			return var_instance;
+		}
 		void LFunctionContext::EncodeThrow(LObject * error_code) { EncodeThrow(error_code, 0); }
 		void LFunctionContext::EncodeThrow(LObject * error_code, LObject * error_subcode)
 		{
@@ -272,9 +373,9 @@ namespace Engine
 				_subj.instset << XA::TH::MakeStatementCloseScope();
 				_acorr[block->GetCatchSerial()] = _subj.instset.Length();
 				if (_void_retval) _subj.instset << XA::TH::MakeStatementReturn(); else {
-
-					// TODO: IMPLEMENT ZERO CTOR CALL
-
+					SafePointer<LObject> rv_init = ZeroInstance(_retval);
+					auto tree = rv_init->Evaluate(_subj, 0);
+					_subj.instset << XA::TH::MakeStatementReturn(tree);
 				}
 			} else {
 				CloseRegularBlock();

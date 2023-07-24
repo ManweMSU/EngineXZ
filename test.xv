@@ -8,6 +8,9 @@ functio int WriteConsole(nintadl, nintadl, int, nintadl, nintadl);
 [[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
 functio nintadl GetStdHandle(int);
 
+[[importa] "read_bool"]
+functio logicum ReadBool();
+
 [[xa]]
 functio nintadl GetTextToPrint()
 {

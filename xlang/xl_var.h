@@ -19,6 +19,10 @@ namespace Engine
 			virtual LObject * GetMember(const string & name) override;
 			virtual LObject * Invoke(int argc, LObject ** argv) override;
 			virtual void AddMember(const string & name, LObject * child) override;
+			virtual bool GetWarpMode(void) = 0;
+			virtual LObject * UnwarpedGetType(void) = 0;
+			virtual XA::ExpressionTree UnwarpedEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) = 0;
+
 		};
 		class XLiteral : public XComputable
 		{
@@ -37,5 +41,7 @@ namespace Engine
 		XLiteral * CreateLiteral(LContext & ctx, const XI::Module::Literal & data);
 		XComputable * CreateComputable(LContext & ctx, XType * of_type, const XA::ExpressionTree & with_tree);
 		XComputable * CreateComputable(LContext & ctx, IComputableProvider * provider);
+		XComputable * CreateVariable(LContext & ctx, const string & name, const string & path, bool local, XType * type, XA::ObjectSize offset);
+		LObject * UnwarpObject(LObject * object);
 	}
 }

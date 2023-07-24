@@ -137,6 +137,7 @@ namespace Engine
 			virtual const Volumes::Dictionary<string, string> * GetAttributes(void) const noexcept override;
 			uint32 GetFlags(void) const noexcept;
 			const string & GetType(void) const noexcept;
+			void SetFlags(uint32 flags) noexcept;
 		};
 		class AliasSymbol : public SymbolObject
 		{

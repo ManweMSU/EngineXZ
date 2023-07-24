@@ -28,9 +28,11 @@ namespace Engine
 			bool _void_retval;
 		public:
 			LFunctionContext(LContext & ctx, LObject * dest, uint dest_flags, LObject * retval, int argc, LObject ** argvt, const string * argvn);
+			LFunctionContext(LContext & ctx, LObject * dest, uint dest_flags, const Array<LObject *> & perform, const Array<LObject *> & revert);
 			virtual ~LFunctionContext(void) override;
 
 			LObject * GetRootScope(void);
+			bool IsZeroReturn(void);
 
 			void OpenRegularBlock(LObject ** scope);
 			void CloseRegularBlock(void);
@@ -39,6 +41,10 @@ namespace Engine
 			void CloseCatchBlock(void);
 
 			void EncodeExpression(LObject * expression);
+			void EncodeReturn(LObject * expression);
+			LObject * EncodeCreateVariable(LObject * of_type);
+			LObject * EncodeCreateVariable(LObject * of_type, LObject * init_expr);
+			LObject * EncodeCreateVariable(LObject * of_type, int argc, LObject ** argv);
 			void EncodeThrow(LObject * error_code);
 			void EncodeThrow(LObject * error_code, LObject * error_subcode);
 

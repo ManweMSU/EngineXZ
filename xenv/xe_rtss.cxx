@@ -276,6 +276,7 @@ namespace Engine
 		const Volumes::Dictionary<string, string> * FunctionSymbol::GetAttributes(void) const noexcept { return &_attributes; }
 		uint32 FunctionSymbol::GetFlags(void) const noexcept { return _flags; }
 		const string & FunctionSymbol::GetType(void) const noexcept { return _type; }
+		void FunctionSymbol::SetFlags(uint32 flags) noexcept { _flags = flags; }
 
 		AliasSymbol::AliasSymbol(const string & to) : _to(to) {}
 		AliasSymbol::~AliasSymbol(void) {}

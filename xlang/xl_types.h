@@ -69,5 +69,9 @@ namespace Engine
 		int CheckCastPossibility(XType * dest, XType * src, int min_level);
 		LObject * ConstructObject(XType * of_type, LObject * with_ctor, int argc, LObject ** argv);
 		LObject * PerformTypeCast(XType * dest, LObject * src, int min_level, bool enforce_copy = false);
+		LObject * InitInstance(LObject * instance, LObject * with_value);
+		LObject * InitInstance(LObject * instance, int argc, LObject ** argv);
+		LObject * ZeroInstance(LObject * instance);
+		LObject * DestroyInstance(LObject * instance);
 	}
 }

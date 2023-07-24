@@ -833,6 +833,11 @@ namespace Engine
 										if (!idle) encode_load(8, false, src.reg, src.reg);
 										disp->flags = DispositionRegister;
 									} else if (disp->flags & DispositionDiscard) {
+										_internal_disposition src;
+										src.flags = DispositionDiscard;
+										src.reg = Reg::NO;
+										src.size = 0;
+										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										disp->flags = DispositionDiscard;
 									}
 								} else if (node.self.index == TransformTakePointer) {
@@ -854,6 +859,11 @@ namespace Engine
 										if (!idle) _encode_transform_to_pointer(src.reg, reg_in_use);
 										disp->flags = DispositionPointer;
 									} else if (disp->flags & DispositionDiscard) {
+										_internal_disposition src;
+										src.flags = DispositionDiscard;
+										src.reg = Reg::NO;
+										src.size = 0;
+										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										disp->flags = DispositionDiscard;
 									}
 								} else if (node.self.index == TransformAddressOffset) {
@@ -868,7 +878,10 @@ namespace Engine
 										uint offset = _size_eval(node.input_specs[1].size);
 										uint scale = 1;
 										if (node.inputs.Length() == 3) scale = _size_eval(node.input_specs[2].size);
-										if (!idle && offset * scale) encode_add(base.reg, base.reg, offset * scale);
+										if (!idle && offset * scale) {
+											if (scale != 0xFFFFFFFF) encode_add(base.reg, base.reg, offset * scale);
+											else encode_sub(base.reg, base.reg, offset);
+										}
 									} else if (node.inputs[1].self.ref_class != ReferenceLiteral && (node.inputs.Length() == 2 || node.inputs[2].self.ref_class == ReferenceLiteral)) {
 										uint scale = 1;
 										if (node.inputs.Length() == 3) scale = _size_eval(node.input_specs[2].size);

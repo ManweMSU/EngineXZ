@@ -10,32 +10,37 @@ namespace Engine
 		{
 			try {
 				SafePointer<LObject> type = GetType();
+				ObjectArray<XType> conf(0x20);
+				static_cast<XType *>(type.Inner())->GetTypesConformsTo(conf);
+				for (auto & c : conf) try {
+					SafePointer<LObject> member = c.GetMember(name);
+					SafePointer<LObject> cast = static_cast<XType *>(type.Inner())->TransformTo(this, &c, false);
+					if (member->GetClass() == Class::Field) {
 
-				// TODO: CHECK FOR PARENT CLASSES
+						// TODO: SET INSTANCE
+						throw Exception();
 
-				SafePointer<LObject> member = type->GetMember(name);
-				if (member->GetClass() == Class::Field) {
+					} else if (member->GetClass() == Class::Property) {
 
-					// TODO: SET INSTANCE
-					throw Exception();
+						// TODO: SET INSTANCE
+						throw Exception();
 
-				} else if (member->GetClass() == Class::Property) {
-
-					// TODO: SET INSTANCE
-					throw Exception();
-
-				} else if (member->GetClass() == Class::Function) {
-					return static_cast<XFunction *>(member.Inner())->SetInstance(this);
-				} else {
-					member->Retain();
-					return member;
-				}
+					} else if (member->GetClass() == Class::Function) {
+						return static_cast<XFunction *>(member.Inner())->SetInstance(cast);
+					} else if (member->GetClass() == Class::FunctionOverload) {
+						return static_cast<XFunctionOverload *>(member.Inner())->SetInstance(cast);
+					} else {
+						member->Retain();
+						return member;
+					}
+				} catch (...) {}
+				throw ObjectHasNoSuchMemberException(this, name);
 			} catch (...) { throw ObjectHasNoSuchMemberException(this, name); }
 		}
 		LObject * XComputable::Invoke(int argc, LObject ** argv)
 		{
-			// TODO: IMPLEMENT
-			throw ObjectHasNoSuchOverloadException(this, argc, argv);
+			SafePointer<LObject> inv = GetMember(OperatorInvoke);
+			return inv->Invoke(argc, argv);
 		}
 		void XComputable::AddMember(const string & name, LObject * child) { throw LException(this); }
 
@@ -167,6 +172,9 @@ namespace Engine
 			}
 			virtual void EncodeSymbols(XI::Module & dest, Class parent) override { if (_local) dest.literals.Append(_path, _data); }
 			virtual string ToString(void) const override { if (_path.Length()) return L"literal " + _path; else return L"nameless literal"; }
+			virtual bool GetWarpMode(void) override { return true; }
+			virtual LObject * UnwarpedGetType(void) override { return GetType(); }
+			virtual XA::ExpressionTree UnwarpedEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return Evaluate(func, error_ctx); }
 			virtual void Attach(const string & name, const string & path, bool as_local) override { _name = name; _path = path; _local = as_local; }
 			virtual int QueryValueAsInteger(void) override
 			{
@@ -224,6 +232,73 @@ namespace Engine
 			}
 			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
 			virtual string ToString(void) const override { return L"generic computable"; }
+			virtual bool GetWarpMode(void) override { return true; }
+			virtual LObject * UnwarpedGetType(void) override { return _provider->ComputableGetType(); }
+			virtual XA::ExpressionTree UnwarpedEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return _provider->ComputableEvaluate(func, error_ctx); }
+		};
+		class Variable : public XComputable
+		{
+			LContext & _ctx;
+			string _name, _path;
+			bool _local;
+			SafePointer<XType> _type;
+			XA::ObjectSize _offset;
+			Volumes::Dictionary<string, string> _attributes;
+		public:
+			Variable(LContext & ctx, const string & name, const string & path, bool local, XType * type, XA::ObjectSize offset) :
+				_ctx(ctx), _name(name), _path(path), _local(local), _offset(offset) { _type.SetRetain(type); }
+			virtual ~Variable(void) override {}
+			virtual Class GetClass(void) override { return Class::Variable; }
+			virtual string GetName(void) override { return _name; }
+			virtual string GetFullName(void) override { return _path; }
+			virtual bool IsDefinedLocally(void) override { return _local; }
+			virtual LObject * GetType(void) override
+			{
+				if (_type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
+					return static_cast<XReference *>(_type.Inner())->GetElementType();
+				} else { _type->Retain(); return _type; }
+			}
+			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw ObjectMemberRedefinitionException(this, key); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+			{
+				if (_type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
+					SafePointer<XType> element_type = static_cast<XReference *>(_type.Inner())->GetElementType();
+					return MakeAddressFollow(MakeSymbolReference(func, _path), element_type->GetArgumentSpecification().size);
+				} else return MakeSymbolReference(func, _path);
+			}
+			virtual void EncodeSymbols(XI::Module & dest, Class parent) override
+			{
+				if (!_local) return;
+				XI::Module::Variable var;
+				var.attributes = _attributes;
+				var.type_canonical_name = _type->GetCanonicalType();
+				var.offset = _offset;
+				var.size = _type->GetArgumentSpecification().size;
+				dest.variables.Append(_path, var);
+			}
+			virtual string ToString(void) const override { return L"variable " + _path; }
+			virtual bool GetWarpMode(void) override { return true; }
+			virtual LObject * UnwarpedGetType(void) override { _type->Retain(); return _type; }
+			virtual XA::ExpressionTree UnwarpedEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return MakeSymbolReference(func, _path); }
+		};
+		class Unwarped : public XComputable
+		{
+			SafePointer<XComputable> _inner;
+		public:
+			Unwarped(XComputable * com) { _inner.SetRetain(com); }
+			virtual ~Unwarped(void) override {}
+			virtual Class GetClass(void) override { return Class::Variable; }
+			virtual string GetName(void) override { return _inner->GetName(); }
+			virtual string GetFullName(void) override { return _inner->GetFullName(); }
+			virtual bool IsDefinedLocally(void) override { return _inner->IsDefinedLocally(); }
+			virtual LObject * GetType(void) override { return _inner->UnwarpedGetType(); }
+			virtual void AddAttribute(const string & key, const string & value) override { _inner->AddAttribute(key, value); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return _inner->UnwarpedEvaluate(func, error_ctx); }
+			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
+			virtual string ToString(void) const override { return L"unwarped " + _inner->ToString(); }
+			virtual bool GetWarpMode(void) override { return false; }
+			virtual LObject * UnwarpedGetType(void) override { return _inner->UnwarpedGetType(); }
+			virtual XA::ExpressionTree UnwarpedEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return _inner->UnwarpedEvaluate(func, error_ctx); }
 		};
 
 		XLiteral * CreateLiteral(LContext & ctx, bool value) { return new Literal(ctx, value); }
@@ -237,5 +312,13 @@ namespace Engine
 			return CreateComputable(ctx, provider);
 		}
 		XComputable * CreateComputable(LContext & ctx, IComputableProvider * provider) { return new GenericComputable(ctx, provider); }
+		XComputable * CreateVariable(LContext & ctx, const string & name, const string & path, bool local, XType * type, XA::ObjectSize offset) { return new Variable(ctx, name, path, local, type, offset); }
+		LObject * UnwarpObject(LObject * object)
+		{
+			if (object->GetClass() != Class::Variable) { object->Retain(); return object; }
+			auto com = static_cast<XComputable *>(object);
+			if (!com->GetWarpMode()) { com->Retain(); return com; }
+			return new Unwarped(com);
+		}
 	}
 }

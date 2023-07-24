@@ -1393,6 +1393,11 @@ namespace Engine
 										if (!idle) _encode_reg_load(disp->reg, disp->reg, 0, disp->size, disp->flags & DispositionCompress, reg_in_use);
 										disp->flags = DispositionRegister;
 									} else if (disp->flags & DispositionDiscard) {
+										_internal_disposition src;
+										src.flags = DispositionDiscard;
+										src.reg = Reg::NO;
+										src.size = 0;
+										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										disp->flags = DispositionDiscard;
 									}
 								} else if (node.self.index == TransformTakePointer) {
@@ -1419,6 +1424,11 @@ namespace Engine
 										}
 										disp->flags = DispositionPointer;
 									} else if (disp->flags & DispositionDiscard) {
+										_internal_disposition src;
+										src.flags = DispositionDiscard;
+										src.reg = Reg::NO;
+										src.size = 0;
+										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										disp->flags = DispositionDiscard;
 									}
 								} else if (node.self.index == TransformAddressOffset) {
@@ -1433,7 +1443,10 @@ namespace Engine
 										uint offset = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
 										uint scale = 1;
 										if (node.inputs.Length() == 3) scale = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;
-										if (!idle && offset * scale) encode_add(Reg::ESI, offset * scale);
+										if (!idle && offset * scale) {
+											if (scale != 0xFFFFFFFF) encode_add(Reg::ESI, offset * scale);
+											else encode_add(Reg::ESI, -offset);
+										}
 									} else if (node.inputs[1].self.ref_class != ReferenceLiteral && (node.inputs.Length() == 2 || node.inputs[2].self.ref_class == ReferenceLiteral)) {
 										uint scale = 1;
 										if (node.inputs.Length() == 3) scale = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;

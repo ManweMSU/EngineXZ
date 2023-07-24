@@ -32,6 +32,7 @@ namespace Engine
 				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
 				{
 					if (_throws && !error_ctx) throw ObjectMayThrow(_self);
+					_tree_node.inputs.Clear();
 					_tree_node.inputs << MakeAddressOf(_instance->Evaluate(func, error_ctx), _self->GetInstanceType()->GetArgumentSpecification().size);
 					for (auto & a : _args) _tree_node.inputs << a.Evaluate(func, error_ctx);
 					if (_throws) _tree_node.inputs << MakeAddressOf(*error_ctx, XA::TH::MakeSize(0, 2));
@@ -90,6 +91,7 @@ namespace Engine
 						for (int i = 0; i < argc; i++) {
 							SafePointer<XType> type_need = CreateType(sgn->ElementAt(i + 1).QueryCanonicalName(), GetContext());
 							SafePointer<LObject> casted = PerformTypeCast(type_need, argv[i], CastPriorityConverter);
+							if (type_need->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) casted = UnwarpObject(casted);
 							provider->_args.Append(casted);
 							provider->_tree_node.input_specs << type_need->GetArgumentSpecification();
 						}
@@ -137,6 +139,7 @@ namespace Engine
 				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
 				{
 					if (_throws && !error_ctx) throw ObjectMayThrow(_self);
+					_tree_node.inputs.Clear();
 					for (auto & a : _args) _tree_node.inputs << a.Evaluate(func, error_ctx);
 					if (_throws) _tree_node.inputs << MakeAddressOf(*error_ctx, XA::TH::MakeSize(0, 2));
 					_tree_node.self = MakeSymbolReferenceL(func, _self_ref);
@@ -198,6 +201,7 @@ namespace Engine
 				for (int i = 0; i < argc; i++) {
 					SafePointer<XType> type_need = CreateType(sgn->ElementAt(i + 1).QueryCanonicalName(), GetContext());
 					SafePointer<LObject> casted = PerformTypeCast(type_need, argv[i], CastPriorityConverter);
+					if (type_need->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) casted = UnwarpObject(casted);
 					provider->_args.Append(casted);
 					provider->_tree_node.input_specs << type_need->GetArgumentSpecification();
 				}

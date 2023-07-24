@@ -83,7 +83,7 @@ namespace Engine
 			Type,
 			Function, FunctionOverload, Method, MethodOverload,
 			Literal, Variable, Field,
-			Property,
+			Property, InstancedProperty,
 			Internal
 		};
 
@@ -112,9 +112,10 @@ namespace Engine
 		class LContext : public Object
 		{
 			string _module_name;
-			uint _subsystem;
-			SafePointer<LObject> _root_ns;
+			uint _subsystem, _private_counter;
+			SafePointer<LObject> _root_ns, _private_ns;
 			Array<string> _import_list;
+			SafePointer<DataBlock> _data;
 			Volumes::ObjectDictionary<string, DataBlock> _rsrc;
 		public:
 			LContext(const string & module);
@@ -132,6 +133,9 @@ namespace Engine
 			LObject * CreateClass(LObject * create_under, const string & name);
 			LObject * CreateFunction(LObject * create_under, const string & name);
 			LObject * CreateFunctionOverload(LObject * create_under, LObject * retval, int argc, LObject ** argv, uint flags);
+			LObject * CreateVariable(LObject * create_under, const string & name, LObject * type);
+			LObject * CreatePrivateFunction(uint flags);
+			LObject * CreatePrivateFunction(const string & name, LObject * retval, int argc, LObject ** argv, uint flags);
 
 			// TODO: IMPLEMENT
 
@@ -155,17 +159,24 @@ namespace Engine
 			LObject * QueryTypePointer(LObject * type);
 			LObject * QueryTypeReference(LObject * type);
 			LObject * QueryFunctionPointer(LObject * retval, int argc, LObject ** argv);
+			LObject * QueryTernaryResult(LObject * cond, LObject * if_true, LObject * if_false);
 			LObject * QueryTypeOfOperator(void);
 			LObject * QuerySizeOfOperator(void);
 			LObject * QueryModuleOperator(void);
 			LObject * QueryModuleOperator(const string & name);
 			LObject * QueryInterfaceOperator(const string & name);
+			LObject * QueryAddressOfOperator(void);
+			LObject * QueryLogicalAndOperator(void);
+			LObject * QueryLogicalOrOperator(void);
 			LObject * QueryLiteral(bool value);
 			LObject * QueryLiteral(uint64 value);
 			LObject * QueryLiteral(double value);
 			LObject * QueryLiteral(const string & value);
 			LObject * QueryDetachedLiteral(LObject * base);
 			LObject * QueryComputable(LObject * of_type, const XA::ExpressionTree & with_tree);
+			LObject * InitInstance(LObject * instance, LObject * expression);
+			LObject * InitInstance(LObject * instance, int argc, LObject ** argv);
+			LObject * DestroyInstance(LObject * instance);
 			void AttachLiteral(LObject * literal, LObject * attach_under, const string & name);
 			int QueryLiteralValue(LObject * literal);
 			string QueryLiteralString(LObject * literal);

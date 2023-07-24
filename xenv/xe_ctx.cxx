@@ -581,6 +581,14 @@ namespace Engine
 						auto inirt = reinterpret_cast<StandardRoutine>(func->GetSymbolEntity());
 						inirt(&ectx);
 						if (ectx.error_code) {
+							for (auto & smbl : local.GetSymbolTable()) {
+								if (smbl.value->GetSymbolType() == SymbolType::Function) {
+									auto func = static_cast<FunctionSymbol *>(smbl.value.Inner());
+									if (func->GetFlags() & XI::Module::Function::FunctionShutdown) {
+										func->SetFlags(func->GetFlags() & ~XI::Module::Function::FunctionShutdown);
+									}
+								}
+							}
 							_sync->Wait();
 							callback->HandleModuleLoadError(name, L"", ModuleLoadError::InitializationFailure);
 							_sync->Open();

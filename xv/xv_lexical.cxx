@@ -54,6 +54,7 @@ namespace Engine
 			if (str == Lexic::KeywordVirtual) return true;
 			if (str == Lexic::KeywordPure) return true;
 			if (str == Lexic::KeywordContinue) return true;
+			if (str == Lexic::KeywordReturn) return true;
 
 			// TODO: IMPLEMENT REGISTER KEYWORDS
 

@@ -29,6 +29,7 @@ namespace Engine
 			FunctionMustBeInstance	= 0x0013,
 			InvalidFunctionTrats	= 0x0014,
 			MustBeLocalClass		= 0x0015,
+			InvalidAutoVariable		= 0x0016,
 			
 			// TODO: IMPLEMENT
 

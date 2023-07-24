@@ -41,6 +41,125 @@ namespace Engine
 			virtual void AddAttribute(const string & key, const string & value) override { throw LException(this); }
 			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
 		};
+		class XAddressOf : public XInternal
+		{
+			LContext & _ctx;
+			class _computable : public Object, public IComputableProvider
+			{
+			public:
+				XA::ObjectSize _spec;
+				SafePointer<XType> _type;
+				SafePointer<LObject> _subject;
+			public:
+				_computable(void) {}
+				virtual ~_computable(void) override {}
+				virtual Object * ComputableProviderQueryObject(void) override { return this; }
+				virtual XType * ComputableGetType(void) override { _type->Retain(); return _type; }
+				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+				{
+					auto tree = _subject->Evaluate(func, error_ctx);
+					return MakeAddressOf(tree, _spec);
+				}
+			};
+		public:
+			XAddressOf(LContext & ctx) : _ctx(ctx) {}
+			virtual ~XAddressOf(void) override {}
+			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
+			virtual LObject * Invoke(int argc, LObject ** argv) override
+			{
+				if (argc != 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				SafePointer<_computable> com = new _computable;
+				SafePointer<LObject> type = argv[0]->GetType();
+				SafePointer<LObject> ptr = _ctx.QueryTypePointer(type);
+				if (ptr->GetClass() != Class::Type) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				com->_spec = static_cast<XType *>(type.Inner())->GetArgumentSpecification().size;
+				com->_type.SetRetain(static_cast<XType *>(ptr.Inner()));
+				com->_subject.SetRetain(argv[0]);
+				return CreateComputable(_ctx, com);
+			}
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
+			virtual string ToString(void) const override { return L"address of"; }
+		};
+		class XLogicalOr : public XInternal
+		{
+			LContext & _ctx;
+			class _computable : public Object, public IComputableProvider
+			{
+			public:
+				ObjectArray<Object> _retain;
+				SafePointer<XType> _boolean;
+				Array<LObject *> _argv;
+			public:
+				_computable(void) : _retain(0x20), _argv(0x20) {}
+				virtual ~_computable(void) override {}
+				virtual Object * ComputableProviderQueryObject(void) override { return this; }
+				virtual XType * ComputableGetType(void) override { _boolean->Retain(); return _boolean; }
+				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+				{
+					auto tree = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformLogicalOr, XA::ReferenceFlagInvoke));
+					for (auto & v : _argv) XA::TH::AddTreeInput(tree, v->Evaluate(func, error_ctx), _boolean->GetArgumentSpecification());
+					XA::TH::AddTreeOutput(tree, _boolean->GetArgumentSpecification());
+					return tree;
+				}
+			};
+		public:
+			XLogicalOr(LContext & ctx) : _ctx(ctx) {}
+			virtual ~XLogicalOr(void) override {}
+			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
+			virtual LObject * Invoke(int argc, LObject ** argv) override
+			{
+				if (argc < 2) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				SafePointer<_computable> com = new _computable;
+				com->_boolean = CreateType(XI::Module::TypeReference::MakeClassReference(NameBoolean), _ctx);
+				for (int i = 0; i < argc; i++) {
+					SafePointer<LObject> conv = PerformTypeCast(com->_boolean, argv[i], CastPriorityConverter);
+					com->_retain.Append(conv); com->_argv.Append(conv);
+				}
+				return CreateComputable(_ctx, com);
+			}
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
+			virtual string ToString(void) const override { return L"logical or"; }
+		};
+		class XLogicalAnd : public XInternal
+		{
+			LContext & _ctx;
+			class _computable : public Object, public IComputableProvider
+			{
+			public:
+				ObjectArray<Object> _retain;
+				SafePointer<XType> _boolean;
+				Array<LObject *> _argv;
+			public:
+				_computable(void) : _retain(0x20), _argv(0x20) {}
+				virtual ~_computable(void) override {}
+				virtual Object * ComputableProviderQueryObject(void) override { return this; }
+				virtual XType * ComputableGetType(void) override { _boolean->Retain(); return _boolean; }
+				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+				{
+					auto tree = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformLogicalAnd, XA::ReferenceFlagInvoke));
+					for (auto & v : _argv) XA::TH::AddTreeInput(tree, v->Evaluate(func, error_ctx), _boolean->GetArgumentSpecification());
+					XA::TH::AddTreeOutput(tree, _boolean->GetArgumentSpecification());
+					return tree;
+				}
+			};
+		public:
+			XLogicalAnd(LContext & ctx) : _ctx(ctx) {}
+			virtual ~XLogicalAnd(void) override {}
+			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
+			virtual LObject * Invoke(int argc, LObject ** argv) override
+			{
+				if (argc < 2) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				SafePointer<_computable> com = new _computable;
+				com->_boolean = CreateType(XI::Module::TypeReference::MakeClassReference(NameBoolean), _ctx);
+				for (int i = 0; i < argc; i++) {
+					SafePointer<LObject> conv = PerformTypeCast(com->_boolean, argv[i], CastPriorityConverter);
+					com->_retain.Append(conv); com->_argv.Append(conv);
+				}
+				return CreateComputable(_ctx, com);
+			}
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
+			virtual string ToString(void) const override { return L"logical and"; }
+		};
 		class XTypeOf : public XInternal
 		{
 		public:
@@ -58,6 +177,26 @@ namespace Engine
 		class XSizeOf : public XInternal
 		{
 			LContext & _ctx;
+			class _computable : public Object, public IComputableProvider
+			{
+			public:
+				SafePointer<XType> _retval;
+				XA::ObjectSize _size;
+			public:
+				_computable(void) {}
+				virtual ~_computable(void) override {}
+				virtual Object * ComputableProviderQueryObject(void) override { return this; }
+				virtual XType * ComputableGetType(void) override { _retval->Retain(); return _retval; }
+				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+				{
+					auto intptr = XA::TH::MakeSpec(XA::TH::MakeSize(0, 1));
+					auto offset = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformAddressOffset, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(offset, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceNull)), intptr);
+					XA::TH::AddTreeInput(offset, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, _size));
+					XA::TH::AddTreeOutput(offset, intptr);
+					return MakeAddressOf(offset, intptr.size);
+				}
+			};
 		public:
 			XSizeOf(LContext & ctx) : _ctx(ctx) {}
 			virtual ~XSizeOf(void) override {}
@@ -68,11 +207,10 @@ namespace Engine
 				SafePointer<LObject> type;
 				if (argv[0]->GetClass() == Class::Type) type.SetRetain(argv[0]);
 				else type = argv[0]->GetType();
-				auto size = _ctx.GetClassInstanceSize(type);
-
-				// TODO: IMPLEMENT RETURN COMPUTABLE
-				
-				throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				SafePointer<_computable> com = new _computable;
+				com->_size = _ctx.GetClassInstanceSize(type);
+				com->_retval = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), _ctx);
+				return CreateComputable(_ctx, com);
 			}
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"sizeof"; }
@@ -114,7 +252,36 @@ namespace Engine
 				return MakeAddressOf(MakeReference(func, L"I:" + _name), XA::TH::MakeSize(0, 1));
 			}
 		};
-		
+		class TernaryProvider : public Object, public IComputableProvider
+		{
+		public:
+			SafePointer<XType> _retval, _boolean;
+			SafePointer<LObject> _cond, _on_true, _on_false;
+		public:
+			TernaryProvider(void) {}
+			virtual ~TernaryProvider(void) override {}
+			virtual Object * ComputableProviderQueryObject(void) override { return this; }
+			virtual XType * ComputableGetType(void) override { _retval->Retain(); return _retval; }
+			virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+			{
+				auto init_tree = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceInit));
+				SafePointer<LObject> init = CreateComputable(_retval->GetContext(), _retval, init_tree);
+				SafePointer<LObject> on_true_init = InitInstance(init, _on_true);
+				SafePointer<LObject> on_false_init = InitInstance(init, _on_false);
+				auto fork = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformLogicalFork, XA::ReferenceFlagInvoke));
+				XA::TH::AddTreeInput(fork, _cond->Evaluate(func, error_ctx), _boolean->GetArgumentSpecification());
+				XA::TH::AddTreeInput(fork, on_true_init->Evaluate(func, error_ctx), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 0));
+				XA::TH::AddTreeInput(fork, on_false_init->Evaluate(func, error_ctx), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 0));
+				XA::TH::AddTreeOutput(fork, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 0));
+				auto create = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformTemporary, XA::ReferenceFlagInvoke));
+				SafePointer<LObject> dtor = _retval->GetDestructor();
+				XA::TH::AddTreeInput(create, fork, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 0));
+				XA::TH::AddTreeOutput(create, _retval->GetArgumentSpecification(), XA::TH::MakeFinal(dtor->GetClass() == Class::Null ?
+					XA::TH::MakeRef(XA::ReferenceNull) : MakeSymbolReferenceL(func, dtor->GetFullName())));
+				return create;
+			}
+		};
+
 		string GetPath(const string & symbol)
 		{
 			int index = symbol.FindLast(L'.');
@@ -149,10 +316,11 @@ namespace Engine
 			return ns;
 		}
 
-		LContext::LContext(const string & module) : _module_name(module), _import_list(0x10)
+		LContext::LContext(const string & module) : _module_name(module), _import_list(0x10), _private_counter(0)
 		{
 			_root_ns = XL::CreateNamespace(L"", L"", *this);
 			_subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI);
+			_data = new DataBlock(0x1000);
 		}
 		LContext::~LContext(void) {}
 		void LContext::MakeSubsystemConsole(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI); }
@@ -211,7 +379,10 @@ namespace Engine
 				fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false);
 			}
 			for (auto & c : module.variables) {
-				// TODO: IMPLEMENT
+				auto obj = ProvidePath(*this, c.key);
+				SafePointer<XType> type = XL::CreateType(c.value.type_canonical_name, *this);
+				SafePointer<XComputable> var = XL::CreateVariable(*this, GetName(c.key), c.key, false, type, c.value.offset);
+				obj->AddMember(GetName(c.key), var);
 			}
 			for (auto & c : module.literals) {
 				auto obj = ProvidePath(*this, c.key);
@@ -323,6 +494,53 @@ namespace Engine
 		{
 			if (!create_under || create_under->GetClass() != Class::Function) throw InvalidArgumentException();
 			return static_cast<XFunction *>(create_under)->AddOverload(static_cast<XType *>(retval), argc, reinterpret_cast<XType **>(argv), flags, true);
+		}
+		LObject * LContext::CreateVariable(LObject * create_under, const string & name, LObject * type)
+		{
+			if (!create_under) throw InvalidArgumentException();
+			if (create_under->GetClass() != Class::Namespace && create_under->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
+			auto xtype = static_cast<XType *>(type);
+			auto size = xtype->GetArgumentSpecification().size;
+			int align = 1;
+			int max_size = size.num_bytes + 8 * size.num_words;
+			if (size.num_bytes > 1) align = 2;
+			if (size.num_bytes > 3) align = 4;
+			if (size.num_bytes > 7) align = 8;
+			if (size.num_words) align = 8;
+			while (_data->Length() % align) _data->Append(0);
+			auto offset = _data->Length();
+			for (int i = 0; i < max_size; i++) _data->Append(0);
+			auto prefix = create_under->GetFullName();
+			if (prefix.Length()) prefix += L".";
+			SafePointer<LObject> var = XL::CreateVariable(*this, name, prefix + name, true, xtype, XA::TH::MakeSize(offset, 0));
+			create_under->AddMember(name, var);
+			return var;
+		}
+		LObject * LContext::CreatePrivateFunction(uint flags)
+		{
+			if (!_private_ns) {
+				_private_ns = XL::CreateNamespace(L"_" + _module_name, L"_" + _module_name, *this);
+				_root_ns->AddMember(_private_ns->GetName(), _private_ns);
+			}
+			auto name = string(_private_counter, HexadecimalBaseLowerCase, 8);
+			_private_counter++;
+			SafePointer<XFunction> fd = XL::CreateFunction(*this, name, _private_ns->GetName() + L"." + name, 0);
+			_private_ns->AddMember(fd->GetName(), fd);
+			SafePointer<XType> retval = XL::CreateType(XI::Module::TypeReference::MakeClassReference(NameVoid), *this);
+			return fd->AddOverload(retval, 0, 0, flags, true);
+		}
+		LObject * LContext::CreatePrivateFunction(const string & name, LObject * retval, int argc, LObject ** argv, uint flags)
+		{
+			if (!_private_ns) {
+				_private_ns = XL::CreateNamespace(L"_" + _module_name, L"_" + _module_name, *this);
+				_root_ns->AddMember(_private_ns->GetName(), _private_ns);
+			}
+			auto func = static_cast<XFunction *>(CreateFunction(_private_ns, name));
+			Array<string> ol(0x10);
+			func->ListOverloads(ol, true);
+			if (ol.Length()) return func->GetOverloadT(ol[0], true);
+			return CreateFunctionOverload(func, retval, argc, argv, flags);
 		}
 		bool LContext::IsInterface(LObject * cls)
 		{
@@ -441,6 +659,18 @@ namespace Engine
 			for (int i = 0; i < argc; i++) args << static_cast<XType *>(argv[i])->GetCanonicalType();
 			return CreateType(XI::Module::TypeReference::MakePointer(XI::Module::TypeReference::MakeFunction(rv, &args)), *this);
 		}
+		LObject * LContext::QueryTernaryResult(LObject * cond, LObject * if_true, LObject * if_false)
+		{
+			SafePointer<TernaryProvider> com = new TernaryProvider;
+			SafePointer<LObject> primary_type = if_true->GetType();
+			if (primary_type->GetClass() != Class::Type) throw InvalidStateException();
+			com->_boolean = CreateType(XI::Module::TypeReference::MakeClassReference(NameBoolean), *this);
+			com->_retval.SetRetain(static_cast<XType *>(primary_type.Inner()));
+			com->_cond = PerformTypeCast(com->_boolean, cond, CastPriorityConverter);
+			com->_on_true = PerformTypeCast(com->_retval, if_true, CastPriorityConverter);
+			com->_on_false = PerformTypeCast(com->_retval, if_false, CastPriorityConverter);
+			return CreateComputable(*this, com);
+		}
 		LObject * LContext::QueryTypeOfOperator(void) { return new XTypeOf; }
 		LObject * LContext::QuerySizeOfOperator(void) { return new XSizeOf(*this); }
 		LObject * LContext::QueryModuleOperator(void)
@@ -458,6 +688,9 @@ namespace Engine
 			SafePointer<InterfaceProvider> provider = new InterfaceProvider(*this, name);
 			return CreateComputable(*this, provider);
 		}
+		LObject * LContext::QueryAddressOfOperator(void) { return new XAddressOf(*this); }
+		LObject * LContext::QueryLogicalAndOperator(void) { return new XLogicalAnd(*this); }
+		LObject * LContext::QueryLogicalOrOperator(void) { return new XLogicalOr(*this); }
 		LObject * LContext::QueryLiteral(bool value) { return CreateLiteral(*this, value); }
 		LObject * LContext::QueryLiteral(uint64 value) { return CreateLiteral(*this, value); }
 		LObject * LContext::QueryLiteral(double value) { return CreateLiteral(*this, value); }
@@ -473,6 +706,9 @@ namespace Engine
 			if (of_type->GetClass() != Class::Type) throw InvalidArgumentException();
 			return CreateComputable(*this, static_cast<XType *>(of_type), with_tree);
 		}
+		LObject * LContext::InitInstance(LObject * instance, LObject * expression) { return XL::InitInstance(instance, expression); }
+		LObject * LContext::InitInstance(LObject * instance, int argc, LObject ** argv) { return XL::InitInstance(instance, argc, argv); }
+		LObject * LContext::DestroyInstance(LObject * instance) { return XL::DestroyInstance(instance); }
 		void LContext::AttachLiteral(LObject * literal, LObject * attach_under, const string & name)
 		{
 			if (!attach_under) throw InvalidArgumentException();
@@ -504,13 +740,9 @@ namespace Engine
 			module.assembler_version.build = v4;
 			module.subsystem = static_cast<XI::Module::ExecutionSubsystem>(_subsystem);
 			module.modules_depends_on = _import_list;
+			module.data = _data;
 			module.resources = _rsrc;
 			static_cast<XObject *>(_root_ns.Inner())->EncodeSymbols(module, Class::Internal);
-
-			// TODO: IMPLEMENT
-			// Volumes::Dictionary<string, Variable> variables;		// FQN
-			// SafePointer<DataBlock> data;
-
 			module.Save(dest);
 		}
 	}

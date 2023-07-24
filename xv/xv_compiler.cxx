@@ -11,6 +11,10 @@ namespace Engine
 {
 	namespace XV
 	{
+		constexpr int InitPriorityVFT	= 1;
+		constexpr int InitPriorityVar	= 2;
+		constexpr int InitPriorityUser	= 3;
+
 		void SetStatusError(CompilerStatusDesc & status, CompilerStatus error)
 		{
 			status.status = error;
@@ -24,6 +28,12 @@ namespace Engine
 			status.error_line_pos = status.error_line_no = status.error_line_len = -1;
 		}
 		
+		struct VInitServiceDesc
+		{
+			int priority;
+			SafePointer<XL::LObject> init_expr;
+			SafePointer<XL::LObject> shwn_expr;
+		};
 		struct VObservationDesc
 		{
 			XL::LObject * current_namespace;
@@ -50,6 +60,7 @@ namespace Engine
 			ICompilerCallback * callback;
 			CompilerStatusDesc & status;
 			Token current_token;
+			Volumes::List<VInitServiceDesc> init_list;
 			Volumes::List<VPostCompileDesc> post_compile;
 			Volumes::Dictionary<string, string> metadata;
 
@@ -109,6 +120,17 @@ namespace Engine
 			void AssertPunct(const widechar * seq) { if (!IsPunct(seq)) Abort(CompilerStatus::AnotherTokenExpected, current_token); }
 			void AssertKeyword(const widechar * seq) { if (!IsKeyword(seq)) Abort(CompilerStatus::AnotherTokenExpected, current_token); }
 			void AssertIdent(void) { if (!IsIdent()) Abort(CompilerStatus::AnotherTokenExpected, current_token); }
+			void RegisterInitHandler(int priority, XL::LObject * init, XL::LObject * sdwn)
+			{
+				VInitServiceDesc desc;
+				desc.priority = priority;
+				desc.init_expr.SetRetain(init);
+				desc.shwn_expr.SetRetain(sdwn);
+				auto element = init_list.GetFirst();
+				while (element && element->GetValue().priority <= priority) element = element->GetNext();
+				if (element) init_list.InsertBefore(element, desc);
+				else init_list.InsertLast(desc);
+			}
 			void AssertGenericIdent(void) { if (!IsGenericIdent()) Abort(CompilerStatus::AnotherTokenExpected, current_token); }
 			string ReadOperatorName(bool instance)
 			{
@@ -136,7 +158,7 @@ namespace Engine
 				}
 				return name;
 			}
-			XL::LObject * ProcessExpressionPostfix(XL::LObject ** ssl, int ssc)
+			XL::LObject * ProcessExpressionSubject(XL::LObject ** ssl, int ssc)
 			{
 				SafePointer<XL::LObject> object;
 				if (IsIdent()) {
@@ -220,6 +242,12 @@ namespace Engine
 					try { return ctx.QueryFunctionPointer(retval, input.Length(), input.GetBuffer()); }
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 				} else Abort(CompilerStatus::AnotherTokenExpected);
+				object->Retain();
+				return object;
+			}
+			XL::LObject * ProcessExpressionPostfix(XL::LObject ** ssl, int ssc)
+			{
+				SafePointer<XL::LObject> object = ProcessExpressionSubject(ssl, ssc);
 				while (IsPunct(L"(") || IsPunct(L".") || IsPunct(L"[") || IsPunct(XL::OperatorFollow) ||
 					IsPunct(XL::OperatorIncrement) || IsPunct(XL::OperatorDecrement)) {
 					auto op = current_token;
@@ -263,11 +291,17 @@ namespace Engine
 						try { object = subscript->Invoke(input.Length(), input.GetBuffer()); }
 						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 					} else {
-						SafePointer<XL::LObject> method;
-						try { method = object->GetMember(op.contents); }
-						catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-						try { object = method->Invoke(0, 0); }
-						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						if (object->GetClass() == XL::Class::InstancedProperty && (op.contents == XL::OperatorIncrement || op.contents == XL::OperatorDecrement)) {
+
+							// TODO: IMPLEMENT
+
+						} else {
+							SafePointer<XL::LObject> method;
+							try { method = object->GetMember(op.contents); }
+							catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+							try { object = method->Invoke(0, 0); }
+							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						}
 					}
 				}
 				object->Retain();
@@ -284,12 +318,10 @@ namespace Engine
 						try { return ctx.QueryTypePointer(object); }
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					} else {
-						// TODO: IMPLEMENT TAKE ADDRESS '@'
-						// SafePointer<XL::LObject> method;
-						// try { method = object->GetMember(op.contents); }
-						// catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-						// try { return method->Invoke(0, 0); }
-						// catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						try {
+							SafePointer<XL::LObject> take_addr = ctx.QueryAddressOfOperator();
+							return take_addr->Invoke(1, object.InnerRef());
+						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					}
 				} else if (IsPunct(XL::OperatorReferInvert)) {
 					auto op = current_token;
@@ -405,41 +437,78 @@ namespace Engine
 			}
 			XL::LObject * ProcessExpressionLogicalOr(XL::LObject ** ssl, int ssc)
 			{
-				// TODO: IMPLEMENT
-				// ||
-				return ProcessExpressionComparative(ssl, ssc);
+				SafePointer<XL::LObject> object = ProcessExpressionComparative(ssl, ssc);
+				ObjectArray<XL::LObject> args(0x10);
+				Array<XL::LObject *> argv(0x10);
+				args.Append(object); argv.Append(object);
+				auto definition = current_token;
+				while (IsPunct(L"||")) {
+					auto op = current_token; ReadNextToken();
+					SafePointer<XL::LObject> arg = ProcessExpressionComparative(ssl, ssc);
+					args.Append(arg); argv.Append(arg);
+				}
+				if (argv.Length() > 1) {
+					try {
+						SafePointer<XL::LObject> op = ctx.QueryLogicalOrOperator();
+						object = op->Invoke(argv.Length(), argv.GetBuffer());
+					} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+				}
+				object->Retain();
+				return object;
 			}
 			XL::LObject * ProcessExpressionLogicalAnd(XL::LObject ** ssl, int ssc)
 			{
-				// TODO: IMPLEMENT
-				// &&
-				return ProcessExpressionLogicalOr(ssl, ssc);
+				SafePointer<XL::LObject> object = ProcessExpressionLogicalOr(ssl, ssc);
+				ObjectArray<XL::LObject> args(0x10);
+				Array<XL::LObject *> argv(0x10);
+				args.Append(object); argv.Append(object);
+				auto definition = current_token;
+				while (IsPunct(L"&&")) {
+					auto op = current_token; ReadNextToken();
+					SafePointer<XL::LObject> arg = ProcessExpressionLogicalOr(ssl, ssc);
+					args.Append(arg); argv.Append(arg);
+				}
+				if (argv.Length() > 1) {
+					try {
+						SafePointer<XL::LObject> op = ctx.QueryLogicalAndOperator();
+						object = op->Invoke(argv.Length(), argv.GetBuffer());
+					} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+				}
+				object->Retain();
+				return object;
 			}
 			XL::LObject * ProcessExpressionTernary(XL::LObject ** ssl, int ssc)
 			{
-				// TODO: IMPLEMENT
-				// ?:
-				return ProcessExpressionLogicalAnd(ssl, ssc);
+				SafePointer<XL::LObject> primary = ProcessExpressionLogicalAnd(ssl, ssc);
+				if (IsPunct(L"?")) {
+					auto definition = current_token; ReadNextToken();
+					SafePointer<XL::LObject> if_true = ProcessExpressionTernary(ssl, ssc);
+					AssertPunct(L":"); ReadNextToken();
+					SafePointer<XL::LObject> if_false = ProcessExpressionTernary(ssl, ssc);
+					try { return ctx.QueryTernaryResult(primary, if_true, if_false); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+				} else { primary->Retain(); return primary; }
 			}
 			XL::LObject * ProcessExpressionAssignation(XL::LObject ** ssl, int ssc)
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionTernary(ssl, ssc);
+				if (IsPunct(XL::OperatorAssign) || IsPunct(XL::OperatorAOr) || IsPunct(XL::OperatorAXor) ||
+					IsPunct(XL::OperatorAAnd) || IsPunct(XL::OperatorAAdd) || IsPunct(XL::OperatorASubtract) ||
+					IsPunct(XL::OperatorAMultiply) || IsPunct(XL::OperatorADivide) || IsPunct(XL::OperatorAResidual) ||
+					IsPunct(XL::OperatorAShiftLeft) || IsPunct(XL::OperatorAShiftRight)) {
+					auto op = current_token;
+					ReadNextToken();
+					SafePointer<XL::LObject> rs = ProcessExpressionAssignation(ssl, ssc);
+					if (object->GetClass() == XL::Class::InstancedProperty) {
 
-				// TODO: IMPLEMENT
-				// if (IsPunct(XL::OperatorAssign) || IsPunct(XL::OperatorAOr) || IsPunct(XL::OperatorAXor) ||
-				// 	IsPunct(XL::OperatorAAnd) || IsPunct(XL::OperatorAAdd) || IsPunct(XL::OperatorASubtract) ||
-				// 	IsPunct(XL::OperatorAMultiply) || IsPunct(XL::OperatorADivide) || IsPunct(XL::OperatorAResidual) ||
-				// 	IsPunct(XL::OperatorAShiftLeft) || IsPunct(XL::OperatorAShiftRight)) {
-				// 	auto op = current_token;
-				// 	ReadNextToken();
-				// 	SafePointer<XL::LObject> rs = ProcessExpressionAssignation(ssl, ssc), op_obj;
-				// 	try { op_obj = ctx.QueryObject(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-				// 	try {
-				// 		XL::LObject * opv[2] = { object.Inner(), rs.Inner() };
-				// 		object = op_obj->Invoke(2, opv);
-				// 	} catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
-				// }
+						// TODO: IMPLEMENT
 
+					} else {
+						SafePointer<XL::LObject> op_obj;
+						try { op_obj = object->GetMember(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+						try { object = op_obj->Invoke(1, rs.InnerRef()); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+					}
+				}
 				object->Retain();
 				return object;
 			}
@@ -461,7 +530,46 @@ namespace Engine
 			}
 			void ProcessVariableDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
-				// TODO: IMPLEMENT VARIABLE
+				ReadNextToken();
+				SafePointer<XL::LObject> type = ProcessTypeExpression(desc);
+				while (true) {
+					auto definition = current_token; AssertIdent(); auto name = current_token.contents; ReadNextToken();
+					XL::LObject * var;
+					try { var = ctx.CreateVariable(desc.current_namespace, name, type); }
+					catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+					for (auto & attr : attributes) {
+						if (attr.key[0] == L'[') Abort(CompilerStatus::InapproptiateAttribute, definition);
+						else var->AddAttribute(attr.key, attr.value);
+					}
+					attributes.Clear();
+					SafePointer<XL::LObject> init, sdwn;
+					if (IsPunct(L"(")) {
+						ObjectArray<XL::LObject> args(0x10);
+						Array<XL::LObject *> argv(0x10);
+						ReadNextToken();
+						if (IsPunct(L")")) ReadNextToken(); else while (true) {
+							SafePointer<XL::LObject> arg = ProcessExpression(desc);
+							args.Append(arg); argv.Append(arg);
+							if (IsPunct(L")")) { ReadNextToken(); break; }
+							AssertPunct(L","); ReadNextToken(); 
+						}
+						try { init = ctx.InitInstance(var, argv.Length(), argv.GetBuffer()); }
+						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+					} else if (IsPunct(L"=")) {
+						ReadNextToken();
+						SafePointer<XL::LObject> expr = ProcessExpression(desc);
+						try { init = ctx.InitInstance(var, expr); }
+						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+					} else {
+						try { init = ctx.InitInstance(var, 0, 0); }
+						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+					}
+					sdwn = ctx.DestroyInstance(var);
+					if (init) RegisterInitHandler(InitPriorityVar, init, sdwn);
+					else if (sdwn) RegisterInitHandler(InitPriorityVar, 0, sdwn);
+					if (IsPunct(L";")) { ReadNextToken(); break; }
+					AssertPunct(L","); ReadNextToken();
+				}
 			}
 			void ProcessFunctionDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
@@ -547,10 +655,7 @@ namespace Engine
 					ReadNextToken();
 				}
 				for (auto & attr : attributes) {
-					// TODO: REPLACE FunctionInitializer AND FunctionFinalizer WITH AGREGATION
-					if (attr.key == Lexic::AttributeInit) flags |= XL::FunctionInitializer;
-					else if (attr.key == Lexic::AttributeFinal) flags |= XL::FunctionFinalizer;
-					else if (attr.key == Lexic::AttributeNoTC) flags &= ~XL::FunctionThisCall;
+					if (attr.key == Lexic::AttributeNoTC) flags &= ~XL::FunctionThisCall;
 				}
 				XL::LObject * func;
 				try {
@@ -561,8 +666,16 @@ namespace Engine
 					if (attr.key[0] == L'[') {
 						if (attr.key == Lexic::AttributeInit) {
 							if (!is_static || attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							try {
+								SafePointer<XL::LObject> inv = func->Invoke(0, 0);
+								RegisterInitHandler(InitPriorityUser, inv, 0);
+							} catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
 						} else if (attr.key == Lexic::AttributeFinal) {
 							if (!is_static || attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							try {
+								SafePointer<XL::LObject> inv = func->Invoke(0, 0);
+								RegisterInitHandler(InitPriorityUser, 0, inv);
+							} catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
 						} else if (attr.key == Lexic::AttributeAsm) {
 							if (org || attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							org = 1;
@@ -677,7 +790,10 @@ namespace Engine
 				ReadNextToken(); AssertPunct(L"=");
 				ReadNextToken();
 				auto expr = current_token;
-				SafePointer<XL::LObject> dest = ProcessExpression(desc);
+				VObservationDesc vspec;
+				vspec.current_namespace = desc.current_namespace;
+				vspec.namespace_search_list << desc.current_namespace;
+				SafePointer<XL::LObject> dest = ProcessExpression(desc.current_namespace->GetClass() == XL::Class::Type ? vspec : desc);
 				AssertPunct(L";"); ReadNextToken();
 				try { ctx.CreateAlias(desc.current_namespace, definition.contents, dest); }
 				catch (XL::ObjectMemberRedefinitionException &) { Abort(CompilerStatus::SymbolRedefinition, definition); }
@@ -917,6 +1033,45 @@ namespace Engine
 					} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				}
 			}
+			void ProcessLocalVariable(XL::LFunctionContext & fctx, VObservationDesc & desc, XL::LObject * type, bool auto_ref)
+			{
+				while (true) {
+					auto definition = current_token;
+					AssertIdent(); auto name = current_token.contents; ReadNextToken();
+					SafePointer<XL::LObject> var;
+					if (IsPunct(L"(") && type) {
+						ObjectArray<XL::LObject> args(0x10);
+						Array<XL::LObject *> argv(0x10);
+						ReadNextToken();
+						if (IsPunct(L")")) ReadNextToken(); else while (true) {
+							SafePointer<XL::LObject> arg = ProcessExpression(desc);
+							args.Append(arg); argv.Append(arg);
+							if (IsPunct(L")")) { ReadNextToken(); break; }
+							AssertPunct(L","); ReadNextToken(); 
+						}
+						try { var = fctx.EncodeCreateVariable(type, argv.Length(), argv.GetBuffer()); }
+						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+					} else if (IsPunct(L"=")) {
+						ReadNextToken();
+						SafePointer<XL::LObject> expr = ProcessExpression(desc);
+						try {
+							SafePointer<XL::LObject> act_type;
+							if (type) act_type.SetRetain(type); else {
+								act_type = expr->GetType();
+								if (auto_ref) act_type = ctx.QueryTypeReference(act_type);
+							}
+							var = fctx.EncodeCreateVariable(act_type, expr);
+						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+					} else if (type) {
+						try { var = fctx.EncodeCreateVariable(type); }
+						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+					} else Abort(CompilerStatus::InvalidAutoVariable, definition);
+					try { desc.current_namespace->AddMember(name, var); }
+					catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+					if (IsPunct(L";")) { ReadNextToken(); break; }
+					AssertPunct(L","); ReadNextToken(); 
+				}
+			}
 			void ProcessStatement(XL::LFunctionContext & fctx, VObservationDesc & desc, bool allow_new_regular_scope)
 			{
 				// TODO: IMPLEMENT
@@ -978,6 +1133,29 @@ namespace Engine
 						fctx.OpenCatchBlock(&scope, L"", L"", 0, 0);
 						fctx.CloseCatchBlock();
 					}
+				} else if (IsKeyword(Lexic::KeywordVariable)) {
+					ReadNextToken();
+					bool ref = false;
+					if (IsPunct(XL::OperatorReferInvert)) { ref = true; ReadNextToken(); }
+					ProcessLocalVariable(fctx, desc, 0, ref);
+				} else if (IsKeyword(Lexic::KeywordReturn)) {
+					ReadNextToken();
+					if (fctx.IsZeroReturn()) {
+						AssertPunct(L";"); ReadNextToken();
+						fctx.EncodeReturn(0);
+					} else {
+						auto definition = current_token;
+						SafePointer<XL::LObject> expr = ProcessExpression(desc);
+						try { fctx.EncodeReturn(expr); }
+						catch (XL::ObjectHasNoSuchOverloadException &) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						catch (XL::ObjectHasNoSuchMemberException &) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, definition); }
+						catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
+						catch (InvalidArgumentException &) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						catch (InvalidStateException &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
+						catch (...) { Abort(CompilerStatus::InternalError, definition); }
+						AssertPunct(L";"); ReadNextToken();
+					}
 				} else if (IsKeyword(Lexic::KeywordThrow)) {
 					auto definition = current_token;
 					ReadNextToken();
@@ -998,11 +1176,15 @@ namespace Engine
 				} else {
 					auto definition = current_token;
 					SafePointer<XL::LObject> expr = ProcessExpression(desc);
-					AssertPunct(L";"); ReadNextToken();
-					try { fctx.EncodeExpression(expr); }
-					catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, definition); }
-					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
-					catch (...) { Abort(CompilerStatus::InternalError, definition); }
+					if (expr->GetClass() == XL::Class::Type) {
+						ProcessLocalVariable(fctx, desc, expr, false);
+					} else {
+						AssertPunct(L";"); ReadNextToken();
+						try { fctx.EncodeExpression(expr); }
+						catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, definition); }
+						catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
+						catch (...) { Abort(CompilerStatus::InternalError, definition); }
+					}
 				}
 			}
 			void ProcessBlock(XL::LFunctionContext & fctx, VObservationDesc & desc) { while (!IsPunct(L"}") && !IsEOF()) ProcessStatement(fctx, desc, true); }
@@ -1029,6 +1211,30 @@ namespace Engine
 					ProcessNamespace(desc);
 					if (current_token.type != TokenType::EOF) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 					for (auto & pc : post_compile) ProcessCode(pc);
+					bool needs_init = false;
+					bool needs_final = false;
+					for (auto & d : init_list) {
+						if (d.init_expr) needs_init = true;
+						if (d.shwn_expr) needs_final = true;
+					}
+					if (needs_init) {
+						auto func = ctx.CreatePrivateFunction(XL::FunctionInitializer | XL::FunctionThrows);
+						Array<XL::LObject *> perform(0x100), revert(0x100);
+						for (auto & d : init_list) if (d.init_expr) {
+							perform << d.init_expr.Inner();
+							revert << d.shwn_expr.Inner();
+						}
+						XL::LFunctionContext fctx(ctx, func, XL::FunctionInitializer | XL::FunctionThrows, perform, revert);
+					}
+					if (needs_final) {
+						auto func = ctx.CreatePrivateFunction(XL::FunctionFinalizer);
+						Array<XL::LObject *> perform(0x100), revert(0x100);
+						for (auto & d : init_list.InversedElements()) if (d.shwn_expr) {
+							perform << d.shwn_expr.Inner();
+							revert << 0;
+						}
+						XL::LFunctionContext fctx(ctx, func, XL::FunctionFinalizer, perform, revert);
+					}
 					if (!metadata.IsEmpty()) XI::AddModuleMetadata(ctx.QueryResources(), metadata);
 				} catch (...) { if (status.status == CompilerStatus::Success) SetStatusError(status, CompilerStatus::InternalError); }
 			}

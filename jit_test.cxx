@@ -16,6 +16,23 @@ IO::Console console;
 
 class ModuleLoader : public Object, public XE::ILoaderCallback
 {
+	static bool cond_check(void) noexcept
+	{
+		console.Write(L"Press Y or N: ");
+		console.SetInputMode(IO::ConsoleInputMode::Raw);
+		widechar c;
+		while (true) {
+			IO::ConsoleEventDesc event;
+			console.ReadEvent(event);
+			if (event.Event == IO::ConsoleEvent::CharacterInput) {
+				if (event.CharacterCode == L'Y' || event.CharacterCode == L'y') { c = L'Y'; break; }
+				else if (event.CharacterCode == L'N' || event.CharacterCode == L'n') { c = L'N'; break; }
+			}
+		}
+		console.SetInputMode(IO::ConsoleInputMode::Echo);
+		console.WriteLine(string(c));
+		return c == L'Y';
+	}
 public:
 	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
 	{
@@ -28,6 +45,7 @@ public:
 	}
 	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
 	{
+		if (routine_name == L"read_bool") return cond_check;
 		return 0;
 	}
 	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override
