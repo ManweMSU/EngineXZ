@@ -30,6 +30,7 @@ namespace Engine
 			InvalidFunctionTrats	= 0x0014,
 			MustBeLocalClass		= 0x0015,
 			InvalidAutoVariable		= 0x0016,
+			InvalidLoopCtrlPlace	= 0x0017,
 			
 			// TODO: IMPLEMENT
 

@@ -241,6 +241,8 @@ namespace Engine
 					for (auto & arg : args) input << &arg;
 					try { return ctx.QueryFunctionPointer(retval, input.Length(), input.GetBuffer()); }
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+				} else if (IsKeyword(Lexic::KeywordNull)) {
+					ReadNextToken(); object = ctx.QueryNullLiteral();
 				} else Abort(CompilerStatus::AnotherTokenExpected);
 				object->Retain();
 				return object;
@@ -1074,8 +1076,6 @@ namespace Engine
 			}
 			void ProcessStatement(XL::LFunctionContext & fctx, VObservationDesc & desc, bool allow_new_regular_scope)
 			{
-				// TODO: IMPLEMENT
-
 				if (IsPunct(L"{")) {
 					ReadNextToken();
 					if (allow_new_regular_scope) {
@@ -1091,6 +1091,100 @@ namespace Engine
 					AssertPunct(L"}"); ReadNextToken();
 				} else if (IsPunct(L";")) {
 					ReadNextToken();
+				} else if (IsKeyword(Lexic::KeywordIf)) {
+					ReadNextToken(); AssertPunct(L"("); ReadNextToken();
+					auto expr = current_token;
+					XL::LObject * scope;
+					SafePointer<XL::LObject> cond = ProcessExpression(desc);
+					try { fctx.OpenIfBlock(cond, &scope); }
+					catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, expr); }
+					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, expr); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+					AssertPunct(L")"); ReadNextToken();
+					VObservationDesc subdesc;
+					subdesc.current_namespace = scope;
+					subdesc.namespace_search_list << scope;
+					subdesc.namespace_search_list << desc.namespace_search_list;
+					ProcessStatement(fctx, subdesc, false);
+					if (IsKeyword(Lexic::KeywordElse)) {
+						ReadNextToken();
+						fctx.OpenElseBlock(&scope);
+						subdesc.current_namespace = scope;
+						subdesc.namespace_search_list.Clear();
+						subdesc.namespace_search_list << scope;
+						subdesc.namespace_search_list << desc.namespace_search_list;
+						ProcessStatement(fctx, subdesc, false);
+						fctx.CloseIfElseBlock();
+					} else fctx.CloseIfElseBlock();
+				} else if (IsKeyword(Lexic::KeywordFor)) {
+
+					// TODO: IMPLEMENT
+					// for
+					throw Exception();
+
+				} else if (IsKeyword(Lexic::KeywordWhile)) {
+					ReadNextToken(); AssertPunct(L"("); ReadNextToken();
+					auto expr = current_token;
+					XL::LObject * scope;
+					SafePointer<XL::LObject> cond = ProcessExpression(desc);
+					try { fctx.OpenWhileBlock(cond, &scope); }
+					catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, expr); }
+					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, expr); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+					AssertPunct(L")"); ReadNextToken();
+					VObservationDesc subdesc;
+					subdesc.current_namespace = scope;
+					subdesc.namespace_search_list << scope;
+					subdesc.namespace_search_list << desc.namespace_search_list;
+					ProcessStatement(fctx, subdesc, false);
+					fctx.CloseWhileBlock();
+				} else if (IsKeyword(Lexic::KeywordDo)) {
+					ReadNextToken();
+					XL::LObject * scope;
+					fctx.OpenDoWhileBlock(&scope);
+					VObservationDesc subdesc;
+					subdesc.current_namespace = scope;
+					subdesc.namespace_search_list << scope;
+					subdesc.namespace_search_list << desc.namespace_search_list;
+					ProcessStatement(fctx, subdesc, false);
+					AssertKeyword(Lexic::KeywordWhile); ReadNextToken(); AssertPunct(L"("); ReadNextToken();
+					auto expr = current_token;
+					SafePointer<XL::LObject> cond = ProcessExpression(desc);
+					try { fctx.CloseDoWhileBlock(cond); }
+					catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, expr); }
+					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, expr); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+					AssertPunct(L")"); ReadNextToken(); AssertPunct(L";"); ReadNextToken();
+				} else if (IsKeyword(Lexic::KeywordBreak)) {
+					auto definition = current_token; ReadNextToken();
+					SafePointer<XL::LObject> dist;
+					if (!IsPunct(L";")) {
+						auto expr = current_token;
+						dist = ProcessExpression(desc);
+						if (dist->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
+						try {
+							int index = ctx.QueryLiteralValue(dist);
+							if (index < 0) throw Exception();
+						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+					}
+					AssertPunct(L";"); ReadNextToken();
+					try { if (dist) fctx.EncodeBreak(dist); else fctx.EncodeBreak(); }
+					catch (...) { Abort(CompilerStatus::InvalidLoopCtrlPlace, definition); }
+				} else if (IsKeyword(Lexic::KeywordContinue)) {
+					auto definition = current_token; ReadNextToken();
+					SafePointer<XL::LObject> dist;
+					if (!IsPunct(L";")) {
+						auto expr = current_token;
+						dist = ProcessExpression(desc);
+						if (dist->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
+						try {
+							int index = ctx.QueryLiteralValue(dist);
+							if (index < 0) throw Exception();
+						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+					}
+					AssertPunct(L";"); ReadNextToken();
+					try { if (dist) fctx.EncodeContinue(dist); else fctx.EncodeContinue(); }
+					catch (...) { Abort(CompilerStatus::InvalidLoopCtrlPlace, definition); }
 				} else if (IsKeyword(Lexic::KeywordTry)) {
 					ReadNextToken();
 					XL::LObject * scope;

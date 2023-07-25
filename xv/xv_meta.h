@@ -46,6 +46,13 @@ namespace Engine
 			constexpr const widechar * KeywordPure		= L"pura";
 			constexpr const widechar * KeywordContinue	= L"dura";
 			constexpr const widechar * KeywordReturn	= L"responde";
+			constexpr const widechar * KeywordIf		= L"si";
+			constexpr const widechar * KeywordElse		= L"alioqui";
+			constexpr const widechar * KeywordWhile		= L"dum";
+			constexpr const widechar * KeywordDo		= L"fac";
+			constexpr const widechar * KeywordFor		= L"pro";
+			constexpr const widechar * KeywordBreak		= L"exi";
+			constexpr const widechar * KeywordNull		= L"nullus";
 
 			constexpr const widechar * AttributeSemant	= L"[significatio]";
 			constexpr const widechar * AttributeSize	= L"[magnitudo]";

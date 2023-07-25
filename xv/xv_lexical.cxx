@@ -55,6 +55,13 @@ namespace Engine
 			if (str == Lexic::KeywordPure) return true;
 			if (str == Lexic::KeywordContinue) return true;
 			if (str == Lexic::KeywordReturn) return true;
+			if (str == Lexic::KeywordIf) return true;
+			if (str == Lexic::KeywordElse) return true;
+			if (str == Lexic::KeywordWhile) return true;
+			if (str == Lexic::KeywordDo) return true;
+			if (str == Lexic::KeywordFor) return true;
+			if (str == Lexic::KeywordBreak) return true;
+			if (str == Lexic::KeywordNull) return true;
 
 			// TODO: IMPLEMENT REGISTER KEYWORDS
 

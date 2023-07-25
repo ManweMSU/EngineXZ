@@ -82,7 +82,7 @@ namespace Engine
 			Null, Namespace, Scope, Alias,
 			Type,
 			Function, FunctionOverload, Method, MethodOverload,
-			Literal, Variable, Field,
+			Literal, NullLiteral, Variable, Field,
 			Property, InstancedProperty,
 			Internal
 		};
@@ -173,6 +173,7 @@ namespace Engine
 			LObject * QueryLiteral(double value);
 			LObject * QueryLiteral(const string & value);
 			LObject * QueryDetachedLiteral(LObject * base);
+			LObject * QueryNullLiteral(void);
 			LObject * QueryComputable(LObject * of_type, const XA::ExpressionTree & with_tree);
 			LObject * InitInstance(LObject * instance, LObject * expression);
 			LObject * InitInstance(LObject * instance, int argc, LObject ** argv);

@@ -889,15 +889,22 @@ namespace Engine
 		};
 		int CheckCastPossibility(XType * dest, XType * src, int min_level)
 		{
-			if (min_level <= CastPriorityIdentity) {
+			if (min_level <= CastPriorityIdentity && src) {
 				if (dest->GetCanonicalType() == src->GetCanonicalType()) return CastPriorityIdentity;
 			}
 			if (min_level <= CastPrioritySimilar) {
-				ObjectArray<XType> conf(0x20);
-				src->GetTypesConformsTo(conf);
-				for (auto & c : conf) if (dest->GetCanonicalType() == c.GetCanonicalType()) return CastPrioritySimilar;
+				if (src) {
+					ObjectArray<XType> conf(0x20);
+					src->GetTypesConformsTo(conf);
+					for (auto & c : conf) if (dest->GetCanonicalType() == c.GetCanonicalType()) return CastPrioritySimilar;
+				} else {
+					auto & ref = dest->GetTypeReference();
+					if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Pointer) return CastPrioritySimilar;
+					if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Reference &&
+						ref.GetReferenceDestination().GetReferenceClass() == XI::Module::TypeReference::Class::Pointer) return CastPrioritySimilar;
+				}
 			}
-			if (min_level <= CastPriorityConverter) {
+			if (min_level <= CastPriorityConverter && src) {
 				try {
 					SafePointer<LObject> conv = src->GetMember(NameConverter);
 					if (conv->GetClass() != Class::Function) throw Exception();
@@ -965,14 +972,29 @@ namespace Engine
 				}
 			}
 			if (min_level <= CastPrioritySimilar) {
-				ObjectArray<XType> conf(0x20);
-				src_type->GetTypesConformsTo(conf);
-				for (auto & c : conf) if (dest->GetCanonicalType() == c.GetCanonicalType()) {
-					if (enforce_copy) {
-						SafePointer<LObject> ctor = dest->GetConstructorCopy();
-						SafePointer<LObject> subj = src_type->TransformTo(src, &c, false);
-						return ConstructObject(dest, ctor, 1, subj.InnerRef());
-					} else return src_type->TransformTo(src, &c, false);
+				if (src->GetClass() == Class::NullLiteral) {
+					auto & ref = dest->GetTypeReference();
+					if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Pointer) {
+						SafePointer<ReinterpretComputable> com = new ReinterpretComputable(dest, src);
+						return CreateComputable(dest->GetContext(), com);
+					}
+					if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Reference &&
+						ref.GetReferenceDestination().GetReferenceClass() == XI::Module::TypeReference::Class::Pointer) {
+						SafePointer<ReinterpretComputable> com = new ReinterpretComputable(dest, src);
+						SafePointer<LObject> rein = CreateComputable(dest->GetContext(), com);
+						SafePointer<ReferenceComputable> ref_com = new ReferenceComputable(dest, src);
+						return CreateComputable(dest->GetContext(), ref_com);
+					}
+				} else {
+					ObjectArray<XType> conf(0x20);
+					src_type->GetTypesConformsTo(conf);
+					for (auto & c : conf) if (dest->GetCanonicalType() == c.GetCanonicalType()) {
+						if (enforce_copy) {
+							SafePointer<LObject> ctor = dest->GetConstructorCopy();
+							SafePointer<LObject> subj = src_type->TransformTo(src, &c, false);
+							return ConstructObject(dest, ctor, 1, subj.InnerRef());
+						} else return src_type->TransformTo(src, &c, false);
+					}
 				}
 			}
 			if (min_level <= CastPriorityConverter) {

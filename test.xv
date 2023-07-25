@@ -2,7 +2,7 @@
 
 [[importa] "WriteConsoleW"]
 [[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
-functio int WriteConsole(nintadl, nintadl, int, nintadl, nintadl);
+functio int WriteConsole(nintadl, @nint16, int, @int, @nihil);
 
 [[importa] "GetStdHandle"]
 [[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
@@ -11,16 +11,23 @@ functio nintadl GetStdHandle(int);
 [[importa] "read_bool"]
 functio logicum ReadBool();
 
-[[xa]]
-functio nintadl GetTextToPrint()
+var nint64 buffer0, buffer1, buffer2, buffer3, buffer4, buffer5, buffer6, buffer7, buffer8, buffer9;
+functio nihil Decompose(@char text, ~@nint16 utf16, ~int length)
 {
-	DATA WORD "suka ty pidor\n"
-	INTERFACE => W 1 : -
-	CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_TAKE:1=>W 1(D[0])) } }
+	length = 0;
+	utf16 = (@nint16) (@buffer0);
+	dum (text[length]) { utf16[length] = text[length]; length++; }
+	utf16[length] = 0;
+}
+functio nihil Print(@char text)
+{
+	int length; @nint16 utf16;
+	Decompose(text, utf16, length);
+	WriteConsole(GetStdHandle(-11), utf16, length, nullus, nullus);
 }
 
 functio nihil primus() introitus iacit
 {
-	WriteConsole(GetStdHandle(-11), GetTextToPrint(), 14, 0, 0);
+	Print("suka ty pidor\n");
 	iace 666;
 }

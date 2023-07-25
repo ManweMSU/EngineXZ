@@ -701,6 +701,7 @@ namespace Engine
 			if (!base->GetFullName().Length()) { base->Retain(); return base; }
 			else return static_cast<XLiteral *>(base)->Clone();
 		}
+		LObject * LContext::QueryNullLiteral(void) { return XL::CreateNullLiteral(*this); }
 		LObject * LContext::QueryComputable(LObject * of_type, const XA::ExpressionTree & with_tree)
 		{
 			if (of_type->GetClass() != Class::Type) throw InvalidArgumentException();

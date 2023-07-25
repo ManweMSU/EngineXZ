@@ -12,8 +12,6 @@ namespace Engine
 {
 	namespace XL
 	{
-		// TODO: ADD SIZES
-
 		XA::ExpressionTree MakeConstant(XA::Function & hdlr, const void * pdata, int size, int align = 1)
 		{
 			int offset = -1;
@@ -110,6 +108,40 @@ namespace Engine
 			int & GetPostCatchSerial(void) { return _post_catch_serial; }
 			void SetScope(LObject * scope) { _scope.SetRetain(scope); }
 			bool Active(void) { return _catch_serial >= 0; }
+		};
+		class IfElseBlock : public LFunctionBlock
+		{
+			int _base;
+			bool _else_mode;
+			SafePointer<LObject> _scope;
+			int _bypass_main_branch_serial;
+			int _bypass_secondary_branch_serial;
+		public:
+			IfElseBlock(int base) : _base(base), _else_mode(false), _bypass_main_branch_serial(-1), _bypass_secondary_branch_serial(-1) {}
+			virtual BlockClass GetClass(void) override { return BlockClass::Conditional; }
+			virtual int GetLocalBase(void) override { return _base; }
+			bool & GetElseMode(void) { return _else_mode; }
+			int & GetBypassMainSerial(void) { return _bypass_main_branch_serial; }
+			int & GetBypassSecondarySerial(void) { return _bypass_secondary_branch_serial; }
+			void SetScope(LObject * scope) { _scope.SetRetain(scope); }
+		};
+		class LoopBlock : public LFunctionBlock
+		{
+			int _base, _type;
+			SafePointer<LObject> _scope;
+			SafePointer<LObject> _step;
+			int _break_serial, _continue_serial, _bypass_serial, _loop_serial;
+		public:
+			LoopBlock(int base, int type) : _base(base), _type(type), _break_serial(-1), _continue_serial(-1), _bypass_serial(-1), _loop_serial(-1) {}
+			virtual BlockClass GetClass(void) override { return BlockClass::Loop; }
+			virtual int GetLocalBase(void) override { return _base; }
+			int GetLoopType(void) { return _type; }
+			int & GetBreakSerial(void) { return _break_serial; }
+			int & GetContinueSerial(void) { return _continue_serial; }
+			int & GetBypassSerial(void) { return _bypass_serial; }
+			int & GetLoopSerial(void) { return _loop_serial; }
+			void SetScope(LObject * scope) { _scope.SetRetain(scope); }
+			SafePointer<LObject> & GetStep(void) { return _step; }
 		};
 
 		LFunctionContext::LFunctionContext(LContext & ctx, LObject * dest, uint dest_flags, LObject * retval, int argc, LObject ** argvt, const string * argvn) :
@@ -209,6 +241,135 @@ namespace Engine
 			_blocks.RemoveLast();
 			_subj.instset << XA::TH::MakeStatementCloseScope();
 		}
+		void LFunctionContext::OpenIfBlock(LObject * condition, LObject ** scope)
+		{
+			SafePointer<LFunctionBlock> block = new IfElseBlock(_local_counter);
+			_blocks.InsertLast(block);
+			auto if_else = static_cast<IfElseBlock *>(block.Inner());
+			if_else->GetBypassMainSerial() = _acorr.Length();
+			_acorr << -1;
+			SafePointer<XType> boolean = CreateType(XI::Module::TypeReference::MakeClassReference(NameBoolean), _ctx);
+			SafePointer<LObject> cond_cast = PerformTypeCast(boolean, condition, CastPriorityConverter);
+			auto inverter = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformLogicalNot, XA::ReferenceFlagInvoke));
+			XA::TH::AddTreeInput(inverter, cond_cast->Evaluate(_subj, _current_try_block ?
+				&static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0), boolean->GetArgumentSpecification());
+			XA::TH::AddTreeOutput(inverter, boolean->GetArgumentSpecification());
+			ThrowSerialSet(inverter, _current_catch_serial);
+			_subj.instset << XA::TH::MakeStatementJump(if_else->GetBypassMainSerial(), inverter);
+			_subj.instset << XA::TH::MakeStatementOpenScope();
+			SafePointer<LObject> block_scope = _ctx.QueryScope();
+			*scope = block_scope;
+			if_else->SetScope(block_scope);
+		}
+		void LFunctionContext::OpenElseBlock(LObject ** scope)
+		{
+			auto last = _blocks.GetLast();
+			if (!last || last->GetValue()->GetClass() != BlockClass::Conditional) throw InvalidStateException();
+			auto data = static_cast<IfElseBlock *>(last->GetValue().Inner());
+			if (data->GetElseMode()) throw InvalidStateException();
+			data->GetElseMode() = true;
+			_local_counter = data->GetLocalBase();
+			_subj.instset << XA::TH::MakeStatementCloseScope();
+			data->GetBypassSecondarySerial() = _acorr.Length();
+			_acorr << -1;
+			_subj.instset << XA::TH::MakeStatementJump(data->GetBypassSecondarySerial());
+			_acorr[data->GetBypassMainSerial()] = _subj.instset.Length();
+			_subj.instset << XA::TH::MakeStatementOpenScope();
+			SafePointer<LObject> block_scope = _ctx.QueryScope();
+			*scope = block_scope;
+			data->SetScope(block_scope);
+		}
+		void LFunctionContext::CloseIfElseBlock(void)
+		{
+			auto last = _blocks.GetLast();
+			if (!last || last->GetValue()->GetClass() != BlockClass::Conditional) throw InvalidStateException();
+			auto ptr = last->GetValue();
+			auto data = static_cast<IfElseBlock *>(ptr.Inner());
+			_blocks.RemoveLast();
+			_subj.instset << XA::TH::MakeStatementCloseScope();
+			if (data->GetElseMode()) _acorr[data->GetBypassSecondarySerial()] = _subj.instset.Length();
+			else _acorr[data->GetBypassMainSerial()] = _subj.instset.Length();
+			_local_counter = data->GetLocalBase();
+		}
+		void LFunctionContext::OpenForBlock(LObject * condition, LObject * step, LObject ** scope)
+		{
+			// TODO: IMPLEMENT
+			throw Exception();
+		}
+		void LFunctionContext::CloseForBlock(void)
+		{
+			// TODO: IMPLEMENT
+			throw Exception();
+		}
+		void LFunctionContext::OpenWhileBlock(LObject * condition, LObject ** scope)
+		{
+			SafePointer<LFunctionBlock> block = new LoopBlock(_local_counter, 0);
+			_blocks.InsertLast(block);
+			auto loop = static_cast<LoopBlock *>(block.Inner());
+			auto begin = _acorr.Length(); _acorr << _subj.instset.Length();
+			auto end = _acorr.Length(); _acorr << -1;
+			loop->GetBreakSerial() = end;
+			loop->GetContinueSerial() = begin;
+			loop->GetBypassSerial() = end;
+			loop->GetLoopSerial() = begin;
+			SafePointer<XType> boolean = CreateType(XI::Module::TypeReference::MakeClassReference(NameBoolean), _ctx);
+			SafePointer<LObject> cond_cast = PerformTypeCast(boolean, condition, CastPriorityConverter);
+			auto inverter = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformLogicalNot, XA::ReferenceFlagInvoke));
+			XA::TH::AddTreeInput(inverter, cond_cast->Evaluate(_subj, _current_try_block ?
+				&static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0), boolean->GetArgumentSpecification());
+			XA::TH::AddTreeOutput(inverter, boolean->GetArgumentSpecification());
+			ThrowSerialSet(inverter, _current_catch_serial);
+			_subj.instset << XA::TH::MakeStatementJump(loop->GetBypassSerial(), inverter);
+			_subj.instset << XA::TH::MakeStatementOpenScope();
+			SafePointer<LObject> block_scope = _ctx.QueryScope();
+			*scope = block_scope;
+			loop->SetScope(block_scope);
+		}
+		void LFunctionContext::CloseWhileBlock(void)
+		{
+			auto last = _blocks.GetLast();
+			if (!last || last->GetValue()->GetClass() != BlockClass::Loop) throw InvalidStateException();
+			auto ptr = last->GetValue();
+			auto data = static_cast<LoopBlock *>(ptr.Inner());
+			if (data->GetLoopType() != 0) throw InvalidStateException();
+			_blocks.RemoveLast();
+			_subj.instset << XA::TH::MakeStatementCloseScope();
+			_subj.instset << XA::TH::MakeStatementJump(data->GetLoopSerial());
+			_acorr[data->GetBypassSerial()] = _subj.instset.Length();
+			_local_counter = data->GetLocalBase();
+		}
+		void LFunctionContext::OpenDoWhileBlock(LObject ** scope)
+		{
+			SafePointer<LFunctionBlock> block = new LoopBlock(_local_counter, 1);
+			_blocks.InsertLast(block);
+			auto loop = static_cast<LoopBlock *>(block.Inner());
+			loop->GetBypassSerial() = -1;
+			loop->GetLoopSerial() = _acorr.Length(); _acorr << _subj.instset.Length();
+			loop->GetBreakSerial() = _acorr.Length(); _acorr << -1;
+			loop->GetContinueSerial() = _acorr.Length(); _acorr << -1;
+			_subj.instset << XA::TH::MakeStatementOpenScope();
+			SafePointer<LObject> block_scope = _ctx.QueryScope();
+			*scope = block_scope;
+			loop->SetScope(block_scope);
+		}
+		void LFunctionContext::CloseDoWhileBlock(LObject * condition)
+		{
+			auto last = _blocks.GetLast();
+			if (!last || last->GetValue()->GetClass() != BlockClass::Loop) throw InvalidStateException();
+			auto ptr = last->GetValue();
+			auto data = static_cast<LoopBlock *>(ptr.Inner());
+			if (data->GetLoopType() != 1) throw InvalidStateException();
+			_blocks.RemoveLast();
+			_subj.instset << XA::TH::MakeStatementCloseScope();
+			_acorr[data->GetContinueSerial()] = _subj.instset.Length();
+			SafePointer<XType> boolean = CreateType(XI::Module::TypeReference::MakeClassReference(NameBoolean), _ctx);
+			SafePointer<LObject> cond_cast = PerformTypeCast(boolean, condition, CastPriorityConverter);
+			auto cond_tree = cond_cast->Evaluate(_subj, _current_try_block ? &static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0);
+			ThrowSerialSet(cond_tree, _current_catch_serial);
+			_subj.instset << XA::TH::MakeStatementJump(data->GetLoopSerial(), cond_tree);
+			_acorr[data->GetBreakSerial()] = _subj.instset.Length();
+			_local_counter = data->GetLocalBase();
+		}
 		void LFunctionContext::OpenTryBlock(LObject ** scope)
 		{
 			SafePointer<LFunctionBlock> block = new CatchThrowBlock(_local_counter);
@@ -286,17 +447,6 @@ namespace Engine
 			ThrowSerialSet(tree, _current_catch_serial);
 			_subj.instset << XA::TH::MakeStatementExpression(tree);
 		}
-		void LFunctionContext::EncodeReturn(LObject * expression)
-		{
-			if (_void_retval) {
-				_subj.instset << XA::TH::MakeStatementReturn();
-			} else {
-				SafePointer<LObject> rv_init = InitInstance(_retval, expression);
-				auto tree = rv_init->Evaluate(_subj, _current_try_block ? &static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0);
-				ThrowSerialSet(tree, _current_catch_serial);
-				_subj.instset << XA::TH::MakeStatementReturn(tree);
-			}
-		}
 		LObject * LFunctionContext::EncodeCreateVariable(LObject * of_type)
 		{
 			if (of_type->GetClass() != Class::Type) throw InvalidArgumentException();
@@ -342,6 +492,57 @@ namespace Engine
 			var_instance->Retain();
 			return var_instance;
 		}
+		void LFunctionContext::EncodeReturn(LObject * expression)
+		{
+			if (_void_retval) {
+				_subj.instset << XA::TH::MakeStatementReturn();
+			} else {
+				SafePointer<LObject> rv_init = InitInstance(_retval, expression);
+				auto tree = rv_init->Evaluate(_subj, _current_try_block ? &static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0);
+				ThrowSerialSet(tree, _current_catch_serial);
+				_subj.instset << XA::TH::MakeStatementReturn(tree);
+			}
+		}
+		void LFunctionContext::EncodeBreak(void) { EncodeBreak(0); }
+		void LFunctionContext::EncodeBreak(LObject * level)
+		{
+			if (level->GetClass() != Class::Literal) throw InvalidArgumentException();
+			EncodeBreak(_ctx.QueryLiteralValue(level));
+		}
+		void LFunctionContext::EncodeBreak(int level)
+		{
+			if (level < 0) throw InvalidArgumentException();
+			int current = 0;
+			for (auto & b : _blocks.InversedElements()) if (b->GetClass() == BlockClass::Loop) {
+				if (current == level) {
+					auto loop = static_cast<LoopBlock *>(b.Inner());
+					_subj.instset << XA::TH::MakeStatementJump(loop->GetBreakSerial());
+					return;
+				}
+				current++;
+			}
+			throw InvalidArgumentException();
+		}
+		void LFunctionContext::EncodeContinue(void) { EncodeContinue(0); }
+		void LFunctionContext::EncodeContinue(LObject * level)
+		{
+			if (level->GetClass() != Class::Literal) throw InvalidArgumentException();
+			EncodeContinue(_ctx.QueryLiteralValue(level));
+		}
+		void LFunctionContext::EncodeContinue(int level)
+		{
+			if (level < 0) throw InvalidArgumentException();
+			int current = 0;
+			for (auto & b : _blocks.InversedElements()) if (b->GetClass() == BlockClass::Loop) {
+				if (current == level) {
+					auto loop = static_cast<LoopBlock *>(b.Inner());
+					_subj.instset << XA::TH::MakeStatementJump(loop->GetContinueSerial());
+					return;
+				}
+				current++;
+			}
+			throw InvalidArgumentException();
+		}
 		void LFunctionContext::EncodeThrow(LObject * error_code) { EncodeThrow(error_code, 0); }
 		void LFunctionContext::EncodeThrow(LObject * error_code, LObject * error_subcode)
 		{
@@ -352,12 +553,14 @@ namespace Engine
 			auto type_size = _ctx.GetClassInstanceSize(type_ec);
 			if (type_size.num_words > 1 || (type_size.num_words == 1 && type_size.num_bytes) || type_size.num_bytes > 4) throw InvalidArgumentException();
 			_subj.instset << XA::TH::MakeStatementExpression(MakeBlt(error_context, error_code->Evaluate(_subj, &error_context), type_size));
+			ThrowSerialSet(_subj.instset.LastElement().tree, _current_catch_serial);
 			if (error_subcode) {
 				type_ec = error_subcode->GetType();
 				type_size = _ctx.GetClassInstanceSize(type_ec);
 				if (type_size.num_words > 1 || (type_size.num_words == 1 && type_size.num_bytes) || type_size.num_bytes > 4) throw InvalidArgumentException();
 				_subj.instset << XA::TH::MakeStatementExpression(MakeBlt(MakeOffset(error_context, XA::TH::MakeSize(0, 1), XA::TH::MakeSize(0, 2), XA::TH::MakeSize(0, 1)),
 					error_subcode->Evaluate(_subj, &error_context), type_size));
+				ThrowSerialSet(_subj.instset.LastElement().tree, _current_catch_serial);
 			}
 			_subj.instset << XA::TH::MakeStatementJump(_current_catch_serial);
 		}

@@ -358,6 +358,7 @@ namespace Engine
 							SafePointer<LObject> arg_type = argv[i]->GetType();
 							if (arg_type->GetClass() != Class::Type) throw InvalidStateException();
 							auto type_from = static_cast<XType *>(arg_type.Inner());
+							if (argv[i]->GetClass() == Class::NullLiteral) type_from = 0;
 							SafePointer<XType> type_to = CreateType(sgn->ElementAt(i + 1).QueryCanonicalName(), _ctx);
 							int type_compliance_level = CheckCastPossibility(type_to, type_from, CastPriorityConverter);
 							if (type_compliance_level < compliance_level) compliance_level = type_compliance_level;

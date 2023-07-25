@@ -39,6 +39,7 @@ namespace Engine
 		XLiteral * CreateLiteral(LContext & ctx, double value);
 		XLiteral * CreateLiteral(LContext & ctx, const string & value);
 		XLiteral * CreateLiteral(LContext & ctx, const XI::Module::Literal & data);
+		XComputable * CreateNullLiteral(LContext & ctx);
 		XComputable * CreateComputable(LContext & ctx, XType * of_type, const XA::ExpressionTree & with_tree);
 		XComputable * CreateComputable(LContext & ctx, IComputableProvider * provider);
 		XComputable * CreateVariable(LContext & ctx, const string & name, const string & path, bool local, XType * type, XA::ObjectSize offset);

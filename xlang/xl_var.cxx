@@ -281,6 +281,25 @@ namespace Engine
 			virtual LObject * UnwarpedGetType(void) override { _type->Retain(); return _type; }
 			virtual XA::ExpressionTree UnwarpedEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return MakeSymbolReference(func, _path); }
 		};
+		class Null : public XComputable
+		{
+			SafePointer<XType> _type;
+		public:
+			Null(XType * type) { _type.SetRetain(type); }
+			virtual ~Null(void) override {}
+			virtual Class GetClass(void) override { return Class::NullLiteral; }
+			virtual string GetName(void) override { return L""; }
+			virtual string GetFullName(void) override { return L""; }
+			virtual bool IsDefinedLocally(void) override { return false; }
+			virtual LObject * GetType(void) override { _type->Retain(); return _type; }
+			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return MakeAddressOf(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceNull)), XA::TH::MakeSize(0, 1)); }
+			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
+			virtual string ToString(void) const override { return L"null literal"; }
+			virtual bool GetWarpMode(void) override { return true; }
+			virtual LObject * UnwarpedGetType(void) override { return GetType(); }
+			virtual XA::ExpressionTree UnwarpedEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return Evaluate(func, error_ctx); }
+		};
 		class Unwarped : public XComputable
 		{
 			SafePointer<XComputable> _inner;
@@ -306,6 +325,11 @@ namespace Engine
 		XLiteral * CreateLiteral(LContext & ctx, double value) { return new Literal(ctx, value); }
 		XLiteral * CreateLiteral(LContext & ctx, const string & value) { return new Literal(ctx, value); }
 		XLiteral * CreateLiteral(LContext & ctx, const XI::Module::Literal & data) { return new Literal(ctx, data); }
+		XComputable * CreateNullLiteral(LContext & ctx)
+		{
+			SafePointer<XType> type = CreateType(XI::Module::TypeReference::MakePointer(XI::Module::TypeReference::MakeClassReference(NameVoid)), ctx);
+			return new Null(type);
+		}
 		XComputable * CreateComputable(LContext & ctx, XType * of_type, const XA::ExpressionTree & with_tree)
 		{
 			SafePointer<StaticComputableProvider> provider = new StaticComputableProvider(of_type, with_tree);
