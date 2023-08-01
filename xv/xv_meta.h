@@ -53,6 +53,8 @@ namespace Engine
 			constexpr const widechar * KeywordFor		= L"pro";
 			constexpr const widechar * KeywordBreak		= L"exi";
 			constexpr const widechar * KeywordNull		= L"nullus";
+			constexpr const widechar * KeywordOverride	= L"redefini";
+			constexpr const widechar * KeywordInherit	= L"hereditat";
 
 			constexpr const widechar * AttributeSemant	= L"[significatio]";
 			constexpr const widechar * AttributeSize	= L"[magnitudo]";
@@ -64,6 +66,8 @@ namespace Engine
 			constexpr const widechar * AttributeAsm		= L"[xa]";
 			constexpr const widechar * AttributeImport	= L"[importa]";
 			constexpr const widechar * AttributeImpLib	= L"[importa_de]";
+			constexpr const widechar * AttributeOffset	= L"[positus]";
+			constexpr const widechar * AttributeUnalign	= L"[non_polire]";
 			constexpr const widechar * AttributeConsole	= L"scriptum";
 			constexpr const widechar * AttributeGUI		= L"graphicum";
 			constexpr const widechar * AttributeNoUI	= L"nihil";
@@ -80,6 +84,7 @@ namespace Engine
 
 			constexpr const widechar * ConstructorZero	= L"vacuus";
 			constexpr const widechar * ConstructorMove	= L"motus";
+			constexpr const widechar * IdentifierThis	= L"ego";
 
 			constexpr const widechar * ResourceData	= L"data";
 			constexpr const widechar * ResourceIcon	= L"icon";

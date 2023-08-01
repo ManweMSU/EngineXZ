@@ -5,6 +5,7 @@
 #include "xl_types.h"
 #include "xl_var.h"
 #include "xl_func.h"
+#include "xl_prop.h"
 #include "../ximg/xi_resources.h"
 
 namespace Engine
@@ -391,12 +392,25 @@ namespace Engine
 				obj->AddMember(GetName(c.key), lit);
 			}
 			for (auto & c : cpp) {
-				// c.value.fields;
-				// c.value.interfaces_implements;
-				// c.value.parent_class;
-				// c.value.properties;
+				if (c.value->parent_class.interface_name.Length()) {
+					SafePointer<LObject> parent = QueryObject(c.value->parent_class.interface_name);
+					if (parent->GetClass() != Class::Type) return false;
+					if (static_cast<XType *>(parent.Inner())->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) return false;
+					c.key->AdoptParentClass(static_cast<XClass *>(parent.Inner()), false);
+				} else c.key->SetPrimaryVFT(c.value->parent_class.vft_pointer_offset);
+				for (auto & i : c.value->interfaces_implements) {
+					SafePointer<LObject> interface = QueryObject(i.interface_name);
+					if (interface->GetClass() != Class::Type) return false;
+					if (static_cast<XType *>(interface.Inner())->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) return false;
+					c.key->AdoptInterface(static_cast<XClass *>(interface.Inner()), -1, i.vft_pointer_offset);
+				}
+				for (auto & f : c.value->fields) {
+					SafePointer<XType> type = CreateType(f.value.type_canonical_name, *this);
+					XL::CreateField(c.key, type, f.key, f.value.offset);
+				}
 
 				// TODO: PROCESS CLASS
+				// c.value.properties;
 
 				for (auto & m : c.value->methods) {
 					auto name = GetFuncPath(m.key);
@@ -427,6 +441,7 @@ namespace Engine
 					fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false, m.value.vft_index);
 				}
 			}
+			for (auto & c : cpp) c.key->UpdateInternals();
 			return true;
 		}
 		LObject * LContext::GetRootNamespace(void) { return _root_ns; }
@@ -516,6 +531,70 @@ namespace Engine
 			SafePointer<LObject> var = XL::CreateVariable(*this, name, prefix + name, true, xtype, XA::TH::MakeSize(offset, 0));
 			create_under->AddMember(name, var);
 			return var;
+		}
+		LObject * LContext::CreateVariable(LObject * create_under, const string & name, LObject * type, XA::ObjectSize size)
+		{
+			if (!create_under) throw InvalidArgumentException();
+			if (create_under->GetClass() != Class::Namespace && create_under->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
+			auto xtype = static_cast<XType *>(type);
+			int align = 1;
+			int max_size = size.num_bytes + 8 * size.num_words;
+			if (size.num_bytes > 1) align = 2;
+			if (size.num_bytes > 3) align = 4;
+			if (size.num_bytes > 7) align = 8;
+			if (size.num_words) align = 8;
+			while (_data->Length() % align) _data->Append(0);
+			auto offset = _data->Length();
+			for (int i = 0; i < max_size; i++) _data->Append(0);
+			auto prefix = create_under->GetFullName();
+			if (prefix.Length()) prefix += L".";
+			SafePointer<LObject> var = XL::CreateVariable(*this, name, prefix + name, true, xtype, XA::TH::MakeSize(offset, 0));
+			create_under->AddMember(name, var);
+			return var;
+		}
+		LObject * LContext::CreateField(LObject * create_under, const string & name, LObject * type, XA::ObjectSize offs_override)
+		{
+			if (!create_under || create_under->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
+			auto type_create_under = static_cast<XType *>(create_under);
+			auto type_type = static_cast<XType *>(type);
+			if (type_create_under->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			auto class_create_under = static_cast<XClass *>(create_under);
+			return XL::CreateField(class_create_under, type_type, name, offs_override);
+		}
+		LObject * LContext::CreateField(LObject * create_under, const string & name, LObject * type, bool align_mode)
+		{
+			if (!create_under || create_under->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
+			auto type_create_under = static_cast<XType *>(create_under);
+			auto type_type = static_cast<XType *>(type);
+			if (type_create_under->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			auto class_create_under = static_cast<XClass *>(create_under);
+			XA::ObjectSize offset;
+			if (align_mode) {
+				auto spec_type = type_type->GetArgumentSpecification();
+				auto spec_class = class_create_under->GetArgumentSpecification();
+				offset = spec_class.size;
+				if (spec_type.size.num_words) while (offset.num_bytes & 0x07) offset.num_bytes++;
+				if ((spec_type.size.num_bytes & 0x07) == 0) {
+					while (offset.num_bytes & 0x07) offset.num_bytes++;
+					while (offset.num_words & 0x01) offset.num_words++;
+				}
+				if ((spec_type.size.num_bytes & 0x03) == 0) while (offset.num_bytes & 0x03) offset.num_bytes++;
+				if ((spec_type.size.num_bytes & 0x01) == 0) while (offset.num_bytes & 0x01) offset.num_bytes++;
+				XA::ObjectSize resize;
+				resize.num_bytes = offset.num_bytes + spec_type.size.num_bytes;
+				resize.num_words = offset.num_words + spec_type.size.num_words;
+				class_create_under->OverrideArgumentSpecification(XA::TH::MakeSpec(spec_class.semantics, resize));
+			} else {
+				offset = class_create_under->GetArgumentSpecification().size;
+				XA::ObjectSize resize;
+				resize.num_bytes = offset.num_bytes + type_type->GetArgumentSpecification().size.num_bytes;
+				resize.num_words = offset.num_words + type_type->GetArgumentSpecification().size.num_words;
+				class_create_under->OverrideArgumentSpecification(XA::TH::MakeSpec(class_create_under->GetArgumentSpecification().semantics, resize));
+			}
+			return XL::CreateField(class_create_under, type_type, name, offset);
 		}
 		LObject * LContext::CreatePrivateFunction(uint flags)
 		{
@@ -613,6 +692,35 @@ namespace Engine
 			auto & desc = static_cast<XFunctionOverload *>(func)->GetImplementationDesc();
 			desc._import_func = name;
 			desc._import_library = lib;
+		}
+		void LContext::CreateClassVFT(LObject * cls)
+		{
+			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			auto xcls = static_cast<XClass *>(cls);
+			auto current = xcls->GetPrimaryVFT();
+			auto spec = xcls->GetArgumentSpecification();
+			auto size = spec.size;
+			if (current.num_bytes != 0xFFFFFFFF || current.num_words != 0xFFFFFFFF) throw InvalidStateException();
+			if (size.num_bytes || size.num_words) throw InvalidStateException();
+			xcls->SetPrimaryVFT(XA::TH::MakeSize(0, 0));
+			xcls->OverrideArgumentSpecification(XA::TH::MakeSpec(spec.semantics, 0, 1));
+		}
+		void LContext::AdoptParentClass(LObject * cls, LObject * parent)
+		{
+			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			if (!parent || parent->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(parent)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			static_cast<XClass *>(cls)->AdoptParentClass(static_cast<XClass *>(parent));
+		}
+		void LContext::AdoptInterface(LObject * cls, LObject * interface)
+		{
+			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			if (!interface || interface->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(interface)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			static_cast<XClass *>(cls)->AdoptInterface(static_cast<XClass *>(interface));
 		}
 		LObject * LContext::QueryObject(const string & path)
 		{

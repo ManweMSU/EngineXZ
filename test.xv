@@ -25,9 +25,102 @@ functio nihil Print(@char text)
 	Decompose(text, utf16, length);
 	WriteConsole(GetStdHandle(-11), utf16, length, nullus, nullus);
 }
+functio nihil Print(int integer)
+{
+	nint64 bfr;
+	@char num = (@char)(@bfr);
+	num[0] = '0' + integer;
+	num[1] = 0;
+	Print(num);
+}
+
+var int counter = 0;
+
+genus TEST {
+	int value;
+
+	structor ()
+	{
+		counter++; value = counter;
+		Print("CTOR INIT: ");
+		Print(value);
+		Print("\n");
+	}
+	structor (~TEST src)
+	{
+		counter++; value = counter;
+		Print("CTOR COPY: ");
+		Print(value);
+		Print("\n");
+	}
+	destructor ()
+	{
+		Print("DTOR: ");
+		Print(value);
+		Print("\n");
+		ego^.print_shit();
+	}
+	functio nihil print_shit()
+	{
+		Print("SHIT: ");
+		Print(value);
+		Print("\n");
+	}
+	functio int initus() { responde 4; }
+	functio int prae_initus() { responde 3; }
+	functio int finis() { responde 8; }
+	functio int post_finis() { responde 9; }
+}
+
+genus TEST2 hereditat TEST {
+	nint64 value_2;
+	structor () {
+		value = value_2 = 8;
+		Print("PRIVET-TEST-2\n");
+		print_shit();
+	}
+}
+
+protocollum IConsole {
+	functio nihil PrintInteger(int value) virtualis pura;
+	functio nihil PrintLogicum(logicum value) virtualis pura;
+}
+genus Integer {
+	int _value;
+}
+genus ShiftedConsole hereditat Integer : IConsole
+{
+	@IConsole _console;
+	structor (@IConsole dropback, int value) { _value = value; _console = dropback; }
+	functio nihil PrintInteger(int value) redefini { _console^.PrintInteger(value + _value); }
+	functio nihil PrintLogicum(logicum value) redefini { _console^.PrintInteger(int(value) + _value); }
+	functio nihil Print() { _console^.PrintInteger(555); }
+}
 
 functio nihil primus() introitus iacit
 {
+	TEST test = TEST();
+	TEST2 test2;
+	test2.value = 66;
+	test2.value_2 = 77;
+
+	ShiftedConsole cns( (@IConsole)(protocollum(cns)), 10 );
+	//@IConsole cns2 = @cns;
+
+	cns.Print();
+	cns.PrintInteger(666);
+	cns.PrintLogicum(sic);
+
+	iace magnitudo(test2);
+
+	test.print_shit();
 	Print("suka ty pidor\n");
+
+	pro (var cnt : test) {
+		Print("LOOP: ");
+		Print(cnt);
+		Print("\n");
+	}
+
 	iace 666;
 }

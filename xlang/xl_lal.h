@@ -8,14 +8,15 @@ namespace Engine
 	namespace XL
 	{
 		enum FunctionFlags {
-			FunctionVirtual = 0x01,
-			FunctionInitializer = 0x02,
-			FunctionFinalizer = 0x04,
-			FunctionMain = 0x08,
-			FunctionMethod = 0x10,
-			FunctionThrows = 0x20,
-			FunctionThisCall = 0x40,
-			FunctionPureCall = 0x80,
+			FunctionVirtual		= 0x001,
+			FunctionInitializer	= 0x002,
+			FunctionFinalizer	= 0x004,
+			FunctionMain		= 0x008,
+			FunctionMethod		= 0x010,
+			FunctionThrows		= 0x020,
+			FunctionThisCall	= 0x040,
+			FunctionPureCall	= 0x080,
+			FunctionOverride	= 0x100,
 		};
 
 		class LObject;
@@ -134,6 +135,9 @@ namespace Engine
 			LObject * CreateFunction(LObject * create_under, const string & name);
 			LObject * CreateFunctionOverload(LObject * create_under, LObject * retval, int argc, LObject ** argv, uint flags);
 			LObject * CreateVariable(LObject * create_under, const string & name, LObject * type);
+			LObject * CreateVariable(LObject * create_under, const string & name, LObject * type, XA::ObjectSize size);
+			LObject * CreateField(LObject * create_under, const string & name, LObject * type, XA::ObjectSize offs_override);
+			LObject * CreateField(LObject * create_under, const string & name, LObject * type, bool align_mode);
 			LObject * CreatePrivateFunction(uint flags);
 			LObject * CreatePrivateFunction(const string & name, LObject * retval, int argc, LObject ** argv, uint flags);
 
@@ -150,6 +154,9 @@ namespace Engine
 			void QueryFunctionImplementation(LObject * func, XA::Function & code);
 			void SupplyFunctionImplementation(LObject * func, const XA::Function & code);
 			void SupplyFunctionImplementation(LObject * func, const string & name, const string & lib);
+			void CreateClassVFT(LObject * cls);
+			void AdoptParentClass(LObject * cls, LObject * parent);
+			void AdoptInterface(LObject * cls, LObject * interface);
 
 			// TODO: IMPLEMENT
 

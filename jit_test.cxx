@@ -14,6 +14,20 @@ using namespace Engine::Streaming;
 
 IO::Console console;
 
+class ITestConsole
+{
+public:
+	virtual void PrintInteger(int value)
+	{
+		console.WriteLine(FormatString(L"Write integer: %0", value));
+	}
+	virtual void PrintLogicum(bool value)
+	{
+		console.WriteLine(FormatString(L"Write boolean: %0", value));
+	}
+};
+ITestConsole test_console;
+
 class ModuleLoader : public Object, public XE::ILoaderCallback
 {
 	static bool cond_check(void) noexcept
@@ -61,6 +75,7 @@ public:
 	virtual Object * ExposeObject(void) noexcept override { return this; }
 	virtual void * ExposeInterface(const string & interface) noexcept override
 	{
+		if (interface == L"cns") return &test_console;
 		return 0;
 	}
 };

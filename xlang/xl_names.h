@@ -6,11 +6,12 @@ namespace Engine
 {
 	namespace XL
 	{
-		constexpr const widechar * NameConstructor = L"@crea";
-		constexpr const widechar * NameConstructorZero = L"@crea_vacui";
-		constexpr const widechar * NameConstructorMove = L"@crea_move";
-		constexpr const widechar * NameDestructor = L"@perde";
-		constexpr const widechar * NameConverter = L"@converte";
+		constexpr const widechar * NameConstructor		= L"@crea";
+		constexpr const widechar * NameConstructorZero	= L"@crea_vacui";
+		constexpr const widechar * NameConstructorMove	= L"@crea_move";
+		constexpr const widechar * NameDestructor		= L"@perde";
+		constexpr const widechar * NameConverter		= L"@converte";
+		constexpr const widechar * NameVFT				= L"@ofv";
 
 		constexpr const widechar * NameVoid		= L"nihil";
 		constexpr const widechar * NameBoolean	= L"logicum";
@@ -69,6 +70,11 @@ namespace Engine
 		constexpr const widechar * OperatorCompare		= L"<=>";
 		constexpr const widechar * OperatorShiftLeft	= L"<<";
 		constexpr const widechar * OperatorShiftRight	= L">>";
+
+		constexpr const widechar * IteratorBegin	= L"initus";
+		constexpr const widechar * IteratorEnd		= L"finis";
+		constexpr const widechar * IteratorPreBegin	= L"prae_initus";
+		constexpr const widechar * IteratorPostEnd	= L"post_finis";
 
 		constexpr int CastPriorityNoCast	= -1;
 		constexpr int CastPriorityExplicit	= 0;

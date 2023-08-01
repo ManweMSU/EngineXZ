@@ -162,6 +162,54 @@ namespace Engine
 			virtual XType * ComputableGetType(void) override { _type->Retain(); return _type; }
 			virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return _instance->Evaluate(func, error_ctx); }
 		};
+		class OffsetComputable : public Object, public IComputableProvider
+		{
+			SafePointer<XType> _type;
+			SafePointer<LObject> _instance, _index;
+			XA::ObjectSize _size;
+			bool _backward;
+		public:
+			OffsetComputable(XType * type, LObject * instance, XA::ObjectSize offs, bool backward) : _size(offs), _backward(backward) { _type.SetRetain(type); _instance.SetRetain(instance); }
+			OffsetComputable(XType * type, LObject * instance, XA::ObjectSize element, LObject * index) : _size(element), _backward(false) { _type.SetRetain(type); _instance.SetRetain(instance); _index.SetRetain(index); }
+			virtual ~OffsetComputable(void) override {}
+			virtual Object * ComputableProviderQueryObject(void) override { return this; }
+			virtual XType * ComputableGetType(void) override { _type->Retain(); return _type; }
+			virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+			{
+				auto node = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformAddressOffset, XA::ReferenceFlagInvoke));
+				SafePointer<LObject> intype = _instance->GetType();
+				XA::TH::AddTreeInput(node, _instance->Evaluate(func, error_ctx), static_cast<XType *>(intype.Inner())->GetArgumentSpecification());
+				if (_index) {
+					SafePointer<LObject> xtype = _index->GetType();
+					XA::TH::AddTreeInput(node, _index->Evaluate(func, error_ctx), static_cast<XType *>(xtype.Inner())->GetArgumentSpecification());
+					XA::TH::AddTreeInput(node, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, _size));
+				} else {
+					XA::TH::AddTreeInput(node, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, _size));
+					if (_backward) XA::TH::AddTreeInput(node, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, -1, 0));
+				}
+				XA::TH::AddTreeOutput(node, _type->GetArgumentSpecification());
+				return node;
+			}
+		};
+		class VirtualInitComputable : public Object, public IComputableProvider
+		{
+			SafePointer<XType> _type;
+			SafePointer<LObject> _instance;
+			int _index;
+			string _symbol;
+		public:
+			VirtualInitComputable(XType * type, LObject * instance, int index, const string & symbol) : _index(index), _symbol(symbol) { _type.SetRetain(type); _instance.SetRetain(instance); }
+			virtual ~VirtualInitComputable(void) override {}
+			virtual Object * ComputableProviderQueryObject(void) override { return this; }
+			virtual XType * ComputableGetType(void) override { _type->Retain(); return _type; }
+			virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+			{
+				return MakeBlt(
+					MakeOffset(_instance->Evaluate(func, error_ctx), XA::TH::MakeSize(0, _index), XA::TH::MakeSize(0, _index + 1), XA::TH::MakeSize(0, 1)),
+					MakeAddressOf(MakeSymbolReference(func, _symbol), XA::TH::MakeSize(0, 1)), XA::TH::MakeSize(0, 1)
+				);
+			}
+		};
 
 		class TypeClass : public XClass
 		{
@@ -190,7 +238,8 @@ namespace Engine
 			{
 				_type_spec = XA::TH::MakeSpec(XA::ArgumentSemantics::Object, 0, 0);
 				_nature = XI::Module::Class::Nature::Standard;
-				_vft_index = _last_vft_index = -1;
+				_vft_index = -1;
+				_last_vft_index = 0;
 				_vft_offset = XA::TH::MakeSize(-1, -1);
 				_parent._vft_index = 0;
 				_parent._vft_offset = XA::TH::MakeSize(-1, -1);
@@ -229,9 +278,7 @@ namespace Engine
 				}
 
 				// TODO: IMPLEMENT
-				// Volumes::Dictionary<string, Variable> fields;		// NAME
 				// Volumes::Dictionary<string, Property> properties;	// NAME
-				// Volumes::Dictionary<string, Function> methods;		// NAME:SCN
 
 				self.attributes = _attributes;
 				dest.classes.Append(_path, self);
@@ -346,10 +393,12 @@ namespace Engine
 				SafePointer<XType> ref = CreateType(XI::Module::TypeReference::MakeReference(GetCanonicalType()), _ctx);
 				types.Append(this);
 				types.Append(ref);
-
-				// TODO: ADD PARENT TYPES AND THEIR REFS
-				//   TYPE	-> PARENT
-				//   TYPE	-> PARENT&
+				for (auto & i : _interfaces) {
+					ref = CreateType(XI::Module::TypeReference::MakeReference(i._class->GetCanonicalType()), _ctx);
+					types.Append(i._class);
+					types.Append(ref);
+				}
+				if (_parent._class) _parent._class->GetTypesConformsTo(types);
 			}
 			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override
 			{
@@ -359,39 +408,279 @@ namespace Engine
 						SafePointer<ReinterpretComputable> com = new ReinterpretComputable(type, subject);
 						return CreateComputable(_ctx, com);
 					}
+					// TODO: IMPLEMENT
+					// TODO: REVERSE SIMILARITY CASTS (0)
+					//   PARENT  -> TYPE&
 				} else {
-					if (type->GetCanonicalType() == GetCanonicalType()) { subject->Retain(); return subject; }
-					else if (type->GetCanonicalType() == XI::Module::TypeReference::MakeReference(GetCanonicalType())) {
-						SafePointer<ReferenceComputable> com = new ReferenceComputable(this, subject);
-						return CreateComputable(_ctx, com);
+					bool ref;
+					string class_cn;
+					if (type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Class) {
+						ref = false;
+						class_cn = type->GetCanonicalType();
+					} else if (type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
+						SafePointer<XType> element = static_cast<XReference *>(type)->GetElementType();
+						if (element->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw LException(this);
+						ref = true;
+						class_cn = element->GetCanonicalType();
+					} else throw LException(this);
+					if (class_cn == _cn) {
+						if (ref) {
+							SafePointer<ReferenceComputable> com = new ReferenceComputable(this, subject);
+							return CreateComputable(_ctx, com);
+						} else {
+							SafePointer<ReinterpretComputable> com = new ReinterpretComputable(this, subject);
+							return CreateComputable(_ctx, com);
+						}
 					}
+					for (auto & i : _interfaces) if (i._class->GetCanonicalType() == class_cn) {
+						if (i._base_offset.num_bytes || i._base_offset.num_words) {
+							SafePointer<OffsetComputable> offs = new OffsetComputable(i._class, subject, i._base_offset, false);
+							SafePointer<LObject> shifted = CreateComputable(_ctx, offs);
+							if (ref) {
+								SafePointer<ReferenceComputable> com = new ReferenceComputable(i._class, shifted);
+								return CreateComputable(_ctx, com);
+							} else { shifted->Retain(); return shifted; }
+						} else {
+							if (ref) {
+								SafePointer<ReferenceComputable> com = new ReferenceComputable(i._class, subject);
+								return CreateComputable(_ctx, com);
+							} else {
+								SafePointer<ReinterpretComputable> com = new ReinterpretComputable(i._class, subject);
+								return CreateComputable(_ctx, com);
+							}
+						}
+					}
+					if (_parent._class) return _parent._class->TransformTo(subject, type, cast_explicit);
 				}
 				throw LException(this);
-
-				// TODO: IMPLEMENT
-				// TODO: SIMILARITY CASTS (2)
-				//   TYPE	-> PARENT
-				//   TYPE	-> PARENT&
-				// TODO: REVERSE SIMILARITY CASTS (0)
-				//   PARENT  -> TYPE&
-				//   INTPTR  -> TYPE*
 			}
 			virtual XI::Module::Class::Nature GetLanguageSemantics(void) override { return _nature; }
 			virtual void OverrideArgumentSpecification(XA::ArgumentSpecification spec) override { _type_spec = spec; }
 			virtual void OverrideLanguageSemantics(XI::Module::Class::Nature spec) override { _nature = spec; }
-			virtual void AdoptParentClass(XClass * parent) override
+			virtual void UpdateInternals(void) override
 			{
-				// TODO: IMPLEMENT
-				throw LException(this);
+				_last_vft_index = 0;
+				Volumes::Stack<XClass *> chain;
+				auto current = GetParentClass();
+				while (current) {
+					chain.Push(current);
+					current = current->GetParentClass();
+				}
+				while (!chain.IsEmpty()) {
+					auto cls = chain.Pop();
+					auto src = static_cast<TypeClass *>(cls);
+					_last_vft_index += src->_interfaces.Length();
+					_vft_index = src->_vft_index;
+					_vft_offset = src->_vft_offset;
+					_parent._vft_index = _vft_index;
+					_parent._vft_offset = _vft_offset;
+				}
+				for (auto & i : _interfaces) {
+					_last_vft_index++;
+					i._vft_index = _last_vft_index;
+				}
 			}
-			virtual void AdoptInterface(XClass * parent) override
+			virtual void AdoptParentClass(XClass * parent, bool alternate) override
 			{
-				// TODO: IMPLEMENT
-				throw LException(this);
+				if (_parent._class || _interfaces.Length()) throw InvalidStateException();
+				auto source = static_cast<TypeClass *>(parent);
+				if (_nature == XI::Module::Class::Nature::Interface && source->_nature != XI::Module::Class::Nature::Interface) throw InvalidArgumentException();
+				if (_nature != XI::Module::Class::Nature::Interface && source->_nature == XI::Module::Class::Nature::Interface) throw InvalidArgumentException();
+				if (alternate) {
+					_type_spec = source->_type_spec;
+					_nature = source->_nature;
+					_last_vft_index = source->_last_vft_index;
+					_vft_index = source->_vft_index;
+					_vft_offset = source->_vft_offset;
+					_parent._vft_index = _vft_index;
+					_parent._vft_offset = _vft_offset;
+				}
+				_parent._class.SetRetain(source);
+				_parent._base_offset = XA::TH::MakeSize(0, 0);
 			}
-			virtual XClass * GetParentClass(void) override { if (_parent._class) _parent._class->Retain(); return _parent._class; }
+			virtual void AdoptInterface(XClass * interface) override
+			{
+				auto source = static_cast<TypeClass *>(interface);
+				if (_nature == XI::Module::Class::Nature::Interface) throw InvalidArgumentException();
+				if (source->_nature != XI::Module::Class::Nature::Interface) throw InvalidArgumentException();
+				ObjectArray<XType> conf(0x20);
+				GetTypesConformsTo(conf);
+				for (auto & c : conf) if (c.GetCanonicalType() == interface->GetCanonicalType()) return;
+				while (_type_spec.size.num_bytes & 0x07) _type_spec.size.num_bytes++;
+				_last_vft_index++;
+				_interface_info info;
+				info._class.SetRetain(source);
+				info._vft_index = _last_vft_index;
+				info._vft_offset = info._base_offset = _type_spec.size;
+				_interfaces.Append(info);
+				_type_spec.size.num_words++;
+			}
+			virtual void AdoptInterface(XClass * interface, int vft_index, XA::ObjectSize vft_offset) override
+			{
+				auto source = static_cast<TypeClass *>(interface);
+				if (_nature == XI::Module::Class::Nature::Interface) throw InvalidArgumentException();
+				if (source->_nature != XI::Module::Class::Nature::Interface) throw InvalidArgumentException();
+				ObjectArray<XType> conf(0x20);
+				GetTypesConformsTo(conf);
+				for (auto & c : conf) if (c.GetCanonicalType() == interface->GetCanonicalType()) return;
+				_last_vft_index = max(_last_vft_index, vft_index);
+				_interface_info info;
+				info._class.SetRetain(source);
+				info._vft_index = vft_index;
+				info._vft_offset = info._base_offset = vft_offset;
+				_interfaces.Append(info);
+			}
+			virtual XClass * GetParentClass(void) override { return _parent._class; }
 			virtual int GetInterfaceCount(void) override { return _interfaces.Length(); }
-			virtual XClass * GetInterface(int index) override { _interfaces[index]._class->Retain(); return _interfaces[index]._class; }
+			virtual XClass * GetInterface(int index) override { return _interfaces[index]._class; }
+			virtual XA::ObjectSize GetPrimaryVFT(void) override { return _vft_offset; }
+			virtual void SetPrimaryVFT(XA::ObjectSize offset) override
+			{
+				_vft_offset = offset;
+				if (_vft_offset.num_bytes != 0xFFFFFFFF || _vft_offset.num_words != 0xFFFFFFFF) _vft_index = 0;
+				else _vft_index = -1;
+			}
+			virtual VirtualFunctionDesc FindVirtualFunctionInfo(const string & name, const string & sign, uint & flags) override
+			{
+				try {
+					SafePointer<LObject> func = GetMember(name);
+					if (func->GetClass() != Class::Function) throw Exception();
+					auto overload = static_cast<XFunction *>(func.Inner())->GetOverloadT(sign, true);
+					auto info = overload->GetVFDesc();
+					if (info.vf_index >= 0 && info.vft_index >= 0) {
+						flags = overload->GetFlags();
+						return info;
+					}
+				} catch (...) {}
+				for (auto & i : _interfaces) {
+					auto info = i._class->FindVirtualFunctionInfo(name, sign, flags);
+					if (info.vf_index >= 0 && info.vft_index >= 0) {
+						info.base_offset = i._base_offset;
+						info.vftp_offset = i._vft_offset;
+						info.vft_index = i._vft_index;
+						return info;
+					}
+				}
+				if (_parent._class) return _parent._class->FindVirtualFunctionInfo(name, sign, flags);
+				VirtualFunctionDesc zero;
+				zero.base_offset = zero.vfp_offset = zero.vftp_offset = XA::TH::MakeSize(0xFFFFFFFF, 0xFFFFFFFF);
+				zero.vf_index = zero.vft_index = -1;
+				return zero;
+			}
+			virtual int SizeOfPrimaryVFT(void) override
+			{
+				int size = 0;
+				if (_parent._class) size = _parent._class->SizeOfPrimaryVFT();
+				for (auto & m : _members) if (m.value->GetClass() == Class::Function) {
+					auto func = static_cast<XFunction *>(m.value.Inner());
+					Array<string> list(0x20);
+					func->ListOverloads(list, true);
+					for (auto & l : list) {
+						auto overload = func->GetOverloadT(l, true);
+						auto & vfd = overload->GetVFDesc();
+						if (vfd.vft_index == 0) size = max(size, vfd.vf_index + 1);
+					}
+				}
+				return size;
+			}
+			virtual void GetRangeVFT(int & first, int & last) override
+			{
+				if (_vft_index >= 0) {
+					first = 0; last = _last_vft_index;
+				} else {
+					if (_last_vft_index) { first = 1; last = _last_vft_index; }
+					else first = last = -1;
+				}
+			}
+			virtual void GetRangeVF(int vft, int & first, int & last) override
+			{
+				first = last = -1;
+				for (auto & m : _members) if (m.value->GetClass() == Class::Function) {
+					auto func = static_cast<XFunction *>(m.value.Inner());
+					Array<string> list(0x20);
+					func->ListOverloads(list, true);
+					for (auto & l : list) {
+						auto overload = func->GetOverloadT(l, true);
+						auto & vfd = overload->GetVFDesc();
+						if (vfd.vft_index == vft) {
+							if (first == -1) first = last = vfd.vf_index; else {
+								if (vfd.vf_index < first) first = vfd.vf_index;
+								if (vfd.vf_index > last) last = vfd.vf_index;
+							}
+						}
+					}
+				}
+				for (auto & i : _interfaces) if (i._vft_index == vft) {
+					int local_first, local_last;
+					i._class->GetRangeVF(0, local_first, local_last);
+					if (first == -1) {
+						first = local_first;
+						last = local_last;
+					} else {
+						if (local_first < first) first = local_first;
+						if (local_last > last) last = local_last;
+					}
+				}
+				if (_parent._class) {
+					int local_first, local_last;
+					_parent._class->GetRangeVF(vft, local_first, local_last);
+					if (first == -1) {
+						first = local_first;
+						last = local_last;
+					} else {
+						if (local_first < first) first = local_first;
+						if (local_last > last) last = local_last;
+					}
+				}
+			}
+			virtual XA::ObjectSize GetOffsetVFT(int vft) override
+			{
+				if (vft == 0) return _vft_offset;
+				for (auto & i : _interfaces) if (i._vft_index == vft) return i._vft_offset;
+				if (_parent._class) return _parent._class->GetOffsetVFT(vft);
+				return _vft_offset;
+			}
+			virtual LObject * GetCurrentImplementationForVF(int vft, int vf) override
+			{
+				for (auto & m : _members) if (m.value->GetClass() == Class::Function) {
+					auto func = static_cast<XFunction *>(m.value.Inner());
+					Array<string> list(0x20);
+					func->ListOverloads(list, true);
+					for (auto & l : list) {
+						auto overload = func->GetOverloadT(l, true);
+						auto & vfd = overload->GetVFDesc();
+						if (vfd.vft_index == vft && vfd.vf_index == vf) return overload;
+					}
+				}
+				for (auto & i : _interfaces) if (i._vft_index == vft) {
+					auto impl = i._class->GetCurrentImplementationForVF(0, vf);
+					if (impl) return impl;
+				}
+				if (_parent._class) return _parent._class->GetCurrentImplementationForVF(vft, vf);
+				return 0;
+			}
+			virtual LObject * CreateVFT(int vft, ObjectArray<LObject> & init_seq) override
+			{
+				auto name = FormatString(L"%0_%1", NameVFT, vft);
+				try {
+					SafePointer<LObject> vft_var = _ctx.QueryObject(_path + L"." + name);
+					if (vft_var->GetClass() != Class::Variable) throw InvalidStateException();
+					return vft_var;
+				} catch (...) {}
+				SafePointer<XType> type_void = CreateType(XI::Module::TypeReference::MakeClassReference(NameVoid), _ctx);
+				int vf_min, vf_max;
+				GetRangeVF(vft, vf_min, vf_max);
+				auto vft_var = _ctx.CreateVariable(this, name, type_void, XA::TH::MakeSize(0, vf_max + 1));
+				for (int i = vf_min; i <= vf_max; i++) {
+					auto impl = GetCurrentImplementationForVF(vft, i);
+					if (impl) {
+						SafePointer<VirtualInitComputable> com = new VirtualInitComputable(type_void, vft_var, i, impl->GetFullName());
+						SafePointer<XComputable> init = CreateComputable(_ctx, com);
+						init_seq.Append(init);
+					}
+				}
+				return vft_var;
+			}
 			virtual string ToString(void) const override { return L"class " + _path; }
 		};
 		class TypeArray : public XArray
@@ -409,6 +698,10 @@ namespace Engine
 			{
 				// TODO: IMPLEMENT
 				// [] always
+				// constexpr const widechar * IteratorBegin	= L"initus";
+				// constexpr const widechar * IteratorEnd		= L"finis";
+				// constexpr const widechar * IteratorPreBegin	= L"prae_initus";
+				// constexpr const widechar * IteratorPostEnd	= L"post_finis";
 				throw ObjectHasNoSuchMemberException(this, name);
 			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }

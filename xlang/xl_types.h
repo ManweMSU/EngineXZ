@@ -33,11 +33,22 @@ namespace Engine
 			virtual XI::Module::Class::Nature GetLanguageSemantics(void) = 0;
 			virtual void OverrideArgumentSpecification(XA::ArgumentSpecification spec) = 0;
 			virtual void OverrideLanguageSemantics(XI::Module::Class::Nature spec) = 0;
-			virtual void AdoptParentClass(XClass * parent) = 0;
-			virtual void AdoptInterface(XClass * parent) = 0;
+			virtual void UpdateInternals(void) = 0;
+			virtual void AdoptParentClass(XClass * parent, bool alternate = true) = 0;
+			virtual void AdoptInterface(XClass * interface) = 0;
+			virtual void AdoptInterface(XClass * interface, int vft_index, XA::ObjectSize vft_offset) = 0;
 			virtual XClass * GetParentClass(void) = 0;
 			virtual int GetInterfaceCount(void) = 0;
 			virtual XClass * GetInterface(int index) = 0;
+			virtual XA::ObjectSize GetPrimaryVFT(void) = 0;
+			virtual void SetPrimaryVFT(XA::ObjectSize offset) = 0;
+			virtual VirtualFunctionDesc FindVirtualFunctionInfo(const string & name, const string & sign, uint & flags) = 0;
+			virtual int SizeOfPrimaryVFT(void) = 0;
+			virtual void GetRangeVFT(int & first, int & last) = 0;
+			virtual void GetRangeVF(int vft, int & first, int & last) = 0;
+			virtual XA::ObjectSize GetOffsetVFT(int vft) = 0;
+			virtual LObject * GetCurrentImplementationForVF(int vft, int vf) = 0;
+			virtual LObject * CreateVFT(int vft, ObjectArray<LObject> & init_seq) = 0;
 		};
 		class XArray : public XType
 		{

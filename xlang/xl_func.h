@@ -6,11 +6,6 @@ namespace Engine
 {
 	namespace XL
 	{
-		struct VirtualFunctionDesc
-		{
-			int vft_index, vf_index;
-			XA::ObjectSize vftp_offset, vfp_offset, base_offset;
-		};
 		struct FunctionImplementationDesc
 		{
 			bool _pure;

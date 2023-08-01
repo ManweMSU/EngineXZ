@@ -14,11 +14,22 @@ namespace Engine
 			virtual BlockClass GetClass(void) = 0;
 			virtual int GetLocalBase(void) = 0;
 		};
+		struct FunctionContextDesc
+		{
+			LObject * retval, * instance;
+			int argc;
+			LObject ** argvt;
+			string * argvn;
+			string this_name;
+			uint flags;
+			LObject * vft_init;
+			ObjectArray<LObject> * vft_init_seq;
+		};
 
 		class LFunctionContext : public Object
 		{
 			LContext & _ctx;
-			SafePointer<LObject> _root, _func, _retval;
+			SafePointer<LObject> _root, _func, _retval, _self, _self_ptr;
 			uint _flags;
 			XA::Function _subj;
 			Volumes::Stack< SafePointer<LFunctionBlock> > _blocks;
@@ -27,11 +38,12 @@ namespace Engine
 			int _local_counter, _current_catch_serial;
 			bool _void_retval;
 		public:
-			LFunctionContext(LContext & ctx, LObject * dest, uint dest_flags, LObject * retval, int argc, LObject ** argvt, const string * argvn);
-			LFunctionContext(LContext & ctx, LObject * dest, uint dest_flags, const Array<LObject *> & perform, const Array<LObject *> & revert);
+			LFunctionContext(LContext & ctx, LObject * dest, const FunctionContextDesc & desc);
+			LFunctionContext(LContext & ctx, LObject * dest, uint flags, const Array<LObject *> & perform, const Array<LObject *> & revert);
 			virtual ~LFunctionContext(void) override;
 
 			LObject * GetRootScope(void);
+			LObject * GetInstance(void);
 			bool IsZeroReturn(void);
 
 			void OpenRegularBlock(LObject ** scope);

@@ -31,6 +31,8 @@ namespace Engine
 			MustBeLocalClass		= 0x0015,
 			InvalidAutoVariable		= 0x0016,
 			InvalidLoopCtrlPlace	= 0x0017,
+			InvalidParentClass		= 0x0018,
+			InvalidInterfaceClass	= 0x0019,
 			
 			// TODO: IMPLEMENT
 

@@ -18,11 +18,12 @@ namespace Engine
 			{
 			public:
 				XA::ExpressionTree _tree_node;
+				XA::ObjectSize _instance_rebase;
 				string _self_ref, _dtor_ref;
 				bool _throws;
 				SafePointer<XMethodOverload> _self;
 				SafePointer<XType> _retval;
-				SafePointer<LObject> _instance;
+				SafePointer<LObject> _instance, _vcptr;
 				ObjectArray<LObject> _args;
 			public:
 				_invoke_provider(void) : _args(0x10) {}
@@ -33,11 +34,18 @@ namespace Engine
 				{
 					if (_throws && !error_ctx) throw ObjectMayThrow(_self);
 					_tree_node.inputs.Clear();
-					_tree_node.inputs << MakeAddressOf(_instance->Evaluate(func, error_ctx), _self->GetInstanceType()->GetArgumentSpecification().size);
+					if (_vcptr) _tree_node.inputs << _vcptr->Evaluate(func, error_ctx);
+					if (_instance_rebase.num_bytes || _instance_rebase.num_words) {
+						_tree_node.inputs << MakeAddressOf(MakeOffset(_instance->Evaluate(func, error_ctx),
+							_instance_rebase, _self->GetInstanceType()->GetArgumentSpecification().size,
+							_self->GetInstanceType()->GetArgumentSpecification().size), _self->GetInstanceType()->GetArgumentSpecification().size);
+					} else _tree_node.inputs << MakeAddressOf(_instance->Evaluate(func, error_ctx), _self->GetInstanceType()->GetArgumentSpecification().size);
 					for (auto & a : _args) _tree_node.inputs << a.Evaluate(func, error_ctx);
 					if (_throws) _tree_node.inputs << MakeAddressOf(*error_ctx, XA::TH::MakeSize(0, 2));
-					_tree_node.self = MakeSymbolReferenceL(func, _self_ref);
-					_tree_node.self.ref_flags = XA::ReferenceFlagInvoke;
+					if (!_vcptr) {
+						_tree_node.self = MakeSymbolReferenceL(func, _self_ref);
+						_tree_node.self.ref_flags = XA::ReferenceFlagInvoke;
+					} else _tree_node.self = XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformInvoke, XA::ReferenceFlagInvoke);
 					_tree_node.retval_final.final = _dtor_ref.Length() ? MakeSymbolReferenceL(func, _dtor_ref) : XA::TH::MakeRef();
 					if (_throws) {
 						XA::ExpressionTree catch_node = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform,
@@ -48,6 +56,25 @@ namespace Engine
 						XA::TH::AddTreeOutput(catch_node, _tree_node.retval_spec);
 						return catch_node;
 					} else return _tree_node;
+				}
+			};
+			class _virtual_call_provider : public Object, public IComputableProvider
+			{
+				LContext & _ctx;
+				SafePointer<LObject> _instance;
+				XA::ObjectSize _table_offset, _function_offset;
+			public:
+				_virtual_call_provider(LContext & ctx, LObject * instance, const XA::ObjectSize & toffs, const XA::ObjectSize & foffs) : _ctx(ctx), _table_offset(toffs), _function_offset(foffs) { _instance.SetRetain(instance); }
+				virtual ~_virtual_call_provider(void) override {}
+				virtual Object * ComputableProviderQueryObject(void) override { return this; }
+				virtual XType * ComputableGetType(void) override { return CreateType(XI::Module::TypeReference::MakePointer(XI::Module::TypeReference::MakeClassReference(NameVoid)), _ctx); }
+				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+				{
+					auto node = _instance->Evaluate(func, error_ctx);
+					if (_table_offset.num_bytes || _table_offset.num_words) node = MakeOffset(node, _table_offset, XA::TH::MakeSize(_table_offset.num_bytes, _table_offset.num_words + 1), XA::TH::MakeSize(0, 1));
+					node = MakeAddressFollow(node, XA::TH::MakeSize(_function_offset.num_bytes, _function_offset.num_words + 1));
+					if (_function_offset.num_bytes || _function_offset.num_words) node = MakeOffset(node, _function_offset, XA::TH::MakeSize(_function_offset.num_bytes, _function_offset.num_words + 1), XA::TH::MakeSize(0, 1));
+					return node;
 				}
 			};
 		public:
@@ -68,36 +95,35 @@ namespace Engine
 						if (lit) { lit->Retain(); return lit; }
 					}
 					auto & vfd = GetVFDesc();
+					auto ct = GetCanonicalType();
+					SafePointer<_invoke_provider> provider = new _invoke_provider;
+					SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(ct).GetFunctionSignature();
+					if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+					bool use_thiscall = (_parent->GetFlags() & XI::Module::Function::FunctionThisCall);
+					provider->_throws = (_parent->GetFlags() & XI::Module::Function::FunctionThrows);
+					provider->_instance = _instance;
+					provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
+					provider->_self_ref = _parent->GetFullName();
+					provider->_self.SetRetain(this);
 					if (vfd.vf_index >= 0 && vfd.vft_index >= 0) {
-
-						// TODO: IMPLEMENT VIRTUAL CALL
-						throw LException(this);
-
-					} else {
-						auto ct = GetCanonicalType();
-						SafePointer<_invoke_provider> provider = new _invoke_provider;
-						SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(ct).GetFunctionSignature();
-						if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
-						bool use_thiscall = (_parent->GetFlags() & XI::Module::Function::FunctionThisCall);
-						provider->_throws = (_parent->GetFlags() & XI::Module::Function::FunctionThrows);
-						provider->_instance = _instance;
-						provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
-						provider->_self_ref = _parent->GetFullName();
-						provider->_self.SetRetain(this);
-						SafePointer<LObject> dtor = provider->_retval->GetDestructor();
-						if (dtor->GetClass() != Class::Null) provider->_dtor_ref = dtor->GetFullName();
-						provider->_tree_node.retval_spec = provider->_retval->GetArgumentSpecification();
-						provider->_tree_node.input_specs << XA::TH::MakeSpec(use_thiscall ? XA::ArgumentSemantics::This : XA::ArgumentSemantics::Unclassified, 0, 1);
-						for (int i = 0; i < argc; i++) {
-							SafePointer<XType> type_need = CreateType(sgn->ElementAt(i + 1).QueryCanonicalName(), GetContext());
-							SafePointer<LObject> casted = PerformTypeCast(type_need, argv[i], CastPriorityConverter);
-							if (type_need->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) casted = UnwarpObject(casted);
-							provider->_args.Append(casted);
-							provider->_tree_node.input_specs << type_need->GetArgumentSpecification();
-						}
-						if (provider->_throws) provider->_tree_node.input_specs << XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1);
-						return CreateComputable(GetContext(), provider);
+						SafePointer<_virtual_call_provider> vc = new _virtual_call_provider(GetContext(), _instance, vfd.vftp_offset, vfd.vfp_offset);
+						provider->_vcptr = CreateComputable(GetContext(), vc);
+						provider->_tree_node.input_specs << XA::TH::MakeSpec(0, 1);
+						provider->_instance_rebase = vfd.base_offset;
+					} else provider->_instance_rebase = XA::TH::MakeSize(0, 0);
+					SafePointer<LObject> dtor = provider->_retval->GetDestructor();
+					if (dtor->GetClass() != Class::Null) provider->_dtor_ref = dtor->GetFullName();
+					provider->_tree_node.retval_spec = provider->_retval->GetArgumentSpecification();
+					provider->_tree_node.input_specs << XA::TH::MakeSpec(use_thiscall ? XA::ArgumentSemantics::This : XA::ArgumentSemantics::Unclassified, 0, 1);
+					for (int i = 0; i < argc; i++) {
+						SafePointer<XType> type_need = CreateType(sgn->ElementAt(i + 1).QueryCanonicalName(), GetContext());
+						SafePointer<LObject> casted = PerformTypeCast(type_need, argv[i], CastPriorityConverter);
+						if (type_need->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) casted = UnwarpObject(casted);
+						provider->_args.Append(casted);
+						provider->_tree_node.input_specs << type_need->GetArgumentSpecification();
 					}
+					if (provider->_throws) provider->_tree_node.input_specs << XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1);
+					return CreateComputable(GetContext(), provider);
 				} else return _parent->Invoke(argc, argv);
 			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
@@ -399,12 +425,19 @@ namespace Engine
 					overload->GetFlags() |= XI::Module::Function::FunctionInstance;
 					if (flags & FunctionThrows) overload->GetFlags() |= XI::Module::Function::FunctionThrows;
 					if (flags & FunctionThisCall) overload->GetFlags() |= XI::Module::Function::FunctionThisCall;
-					if (flags & FunctionVirtual) {
+					if ((flags & FunctionVirtual) || (flags & FunctionOverride)) {
 						if (flags & FunctionPureCall) overload->GetImplementationDesc()._pure = true;
-
-						// TODO: HANDLE VIRTUAL API, SET VIRTUAL FUNCTION PROPS
-						// FunctionVirtual = 0x01,
-
+						uint base_flags;
+						auto vfd = _instance_type->FindVirtualFunctionInfo(_name, fcn, base_flags);
+						if (vfd.vf_index < 0 || vfd.vft_index < 0) {
+							if (flags & FunctionOverride) throw InvalidArgumentException();
+							if (_instance_type->GetPrimaryVFT().num_bytes == 0xFFFFFFFF) throw InvalidArgumentException();
+							vfd.base_offset = vfd.vftp_offset = XA::TH::MakeSize(0, 0);
+							vfd.vft_index = 0;
+							vfd.vf_index = _instance_type->SizeOfPrimaryVFT();
+							vfd.vfp_offset = XA::TH::MakeSize(0, vfd.vf_index);
+						} else if (base_flags != overload->GetFlags()) throw InvalidArgumentException();
+						overload->GetVFDesc() = vfd;
 					}
 					auto & func = overload->GetImplementationDesc()._xa;
 					func.retval = static_cast<XType *>(retval)->GetArgumentSpecification();
@@ -474,9 +507,8 @@ namespace Engine
 				auto & desc = result->GetVFDesc();
 				desc.vft_index = vfi.x;
 				desc.vf_index = vfi.y;
-
-				// TODO: UPDATE VF INFO
-
+				desc.base_offset = desc.vftp_offset = _instance_type->GetOffsetVFT(desc.vft_index);
+				desc.vfp_offset = XA::TH::MakeSize(0, desc.vf_index);
 				return result;
 			}
 			virtual void ListOverloads(Array<string> & fcn, bool allow_instance) override

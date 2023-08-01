@@ -1,6 +1,7 @@
 ﻿#include "xl_var.h"
 
 #include "xl_func.h"
+#include "xl_prop.h"
 
 namespace Engine
 {
@@ -16,22 +17,15 @@ namespace Engine
 					SafePointer<LObject> member = c.GetMember(name);
 					SafePointer<LObject> cast = static_cast<XType *>(type.Inner())->TransformTo(this, &c, false);
 					if (member->GetClass() == Class::Field) {
-
-						// TODO: SET INSTANCE
-						throw Exception();
-
+						return static_cast<XField *>(member.Inner())->SetInstance(cast);
 					} else if (member->GetClass() == Class::Property) {
-
-						// TODO: SET INSTANCE
-						throw Exception();
-
+						return static_cast<XProperty *>(member.Inner())->SetInstance(cast);
 					} else if (member->GetClass() == Class::Function) {
 						return static_cast<XFunction *>(member.Inner())->SetInstance(cast);
 					} else if (member->GetClass() == Class::FunctionOverload) {
 						return static_cast<XFunctionOverload *>(member.Inner())->SetInstance(cast);
 					} else {
-						member->Retain();
-						return member;
+						member->Retain(); return member;
 					}
 				} catch (...) {}
 				throw ObjectHasNoSuchMemberException(this, name);

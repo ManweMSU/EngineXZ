@@ -39,5 +39,22 @@ namespace Engine
 			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, entity));
 			return result;
 		}
+		XA::ExpressionTree MakeOffset(const XA::ExpressionTree & obj, const XA::ObjectSize & by, const XA::ObjectSize & obj_size, const XA::ObjectSize & new_size)
+		{
+			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformAddressOffset, XA::ReferenceFlagInvoke));
+			XA::TH::AddTreeInput(result, obj, XA::TH::MakeSpec(obj_size));
+			XA::TH::AddTreeInput(result, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(by));
+			XA::TH::AddTreeInput(result, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(1, 0));
+			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(new_size));
+			return result;
+		}
+		XA::ExpressionTree MakeBlt(const XA::ExpressionTree & dest, const XA::ExpressionTree & src, const XA::ObjectSize & size)
+		{
+			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+			XA::TH::AddTreeInput(result, dest, XA::TH::MakeSpec(size));
+			XA::TH::AddTreeInput(result, src, XA::TH::MakeSpec(size));
+			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(size));
+			return result;
+		}
 	}
 }
