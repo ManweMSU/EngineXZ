@@ -12,11 +12,6 @@ namespace Engine
 			XA::Function _xa;
 			string _import_func, _import_library;
 		};
-		struct FunctionInlineDesc
-		{
-			bool _has_inline;
-			XA::ExpressionTree _inline_tree;
-		};
 
 		class XMethodOverload;
 		class XFunctionOverload;
@@ -37,7 +32,6 @@ namespace Engine
 			virtual XMethodOverload * SetInstance(LObject * instance) = 0;
 			virtual VirtualFunctionDesc & GetVFDesc(void) = 0;
 			virtual FunctionImplementationDesc & GetImplementationDesc(void) = 0;
-			virtual FunctionInlineDesc & GetInlineDesc(void) = 0;
 			virtual bool NeedsInstance(void) = 0;
 			virtual uint & GetFlags(void) = 0;
 			virtual XClass * GetInstanceType(void) = 0;

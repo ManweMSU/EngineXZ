@@ -14,6 +14,16 @@ namespace Engine
 			virtual BlockClass GetClass(void) = 0;
 			virtual int GetLocalBase(void) = 0;
 		};
+		struct FunctionInitDesc
+		{
+			LObject * subject;
+			Volumes::List<LObject *> init;
+		};
+		class IFunctionInitCallback
+		{
+		public:
+			virtual void GetNextInit(LObject * arguments_scope, FunctionInitDesc & desc) = 0;
+		};
 		struct FunctionContextDesc
 		{
 			LObject * retval, * instance;
@@ -24,19 +34,22 @@ namespace Engine
 			uint flags;
 			LObject * vft_init;
 			ObjectArray<LObject> * vft_init_seq;
+			bool create_init_sequence, create_shutdown_sequence;
+			IFunctionInitCallback * init_callback;
 		};
 
 		class LFunctionContext : public Object
 		{
 			LContext & _ctx;
 			SafePointer<LObject> _root, _func, _retval, _self, _self_ptr;
+			SafePointer<Object> _shutdown_info;
 			uint _flags;
 			XA::Function _subj;
 			Volumes::Stack< SafePointer<LFunctionBlock> > _blocks;
 			Array<int> _acorr;
 			LFunctionBlock * _current_try_block;
 			int _local_counter, _current_catch_serial;
-			bool _void_retval;
+			bool _void_retval, _shutdown_on_error;
 		public:
 			LFunctionContext(LContext & ctx, LObject * dest, const FunctionContextDesc & desc);
 			LFunctionContext(LContext & ctx, LObject * dest, uint flags, const Array<LObject *> & perform, const Array<LObject *> & revert);

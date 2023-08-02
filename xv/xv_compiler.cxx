@@ -301,9 +301,12 @@ namespace Engine
 						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 					} else {
 						if (object->GetClass() == XL::Class::InstancedProperty && (op.contents == XL::OperatorIncrement || op.contents == XL::OperatorDecrement)) {
-
-							// TODO: IMPLEMENT
-
+							SafePointer<XL::LObject> method, inter;
+							try { method = object->GetMember(op.contents); }
+							catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+							try { inter = method->Invoke(0, 0); }
+							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+							try { object = ctx.SetPropertyValue(object, inter); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 						} else {
 							SafePointer<XL::LObject> method;
 							try { method = object->GetMember(op.contents); }
@@ -509,9 +512,18 @@ namespace Engine
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionAssignation(ssl, ssc);
 					if (object->GetClass() == XL::Class::InstancedProperty) {
-
-						// TODO: IMPLEMENT
-
+						if (op.contents == XL::OperatorAssign) {
+							try { object = ctx.SetPropertyValue(object, rs); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						} else {
+							auto sop = op.contents.Fragment(0, op.contents.Length() - 1);
+							SafePointer<XL::LObject> op_obj, inter;
+							try { op_obj = ctx.GetRootNamespace()->GetMember(sop); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+							try {
+								XL::LObject * argv[2] = { object, rs };
+								inter = op_obj->Invoke(2, argv);
+							} catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+							try { object = ctx.SetPropertyValue(object, inter); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						}
 					} else {
 						SafePointer<XL::LObject> op_obj;
 						try { op_obj = object->GetMember(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
@@ -917,6 +929,111 @@ namespace Engine
 				ProcessClass(type, ctx.IsInterface(type), true, subdesc);
 				AssertPunct(L"}"); ReadNextToken();
 			}
+			void ProcessProperty(XL::LObject * prop, XL::LObject * prop_type, VObservationDesc & desc)
+			{
+				Volumes::Dictionary<string, string> attributes;
+				while (!IsPunct(L"}")) {
+					if (IsPunct(L"[")) {
+						ProcessAttributeDefinition(attributes);
+					} else {
+						AssertIdent();
+						bool setter;
+						if (current_token.contents == Lexic::IdentifierSet) setter = true;
+						else if (current_token.contents == Lexic::IdentifierGet) setter = false;
+						else Abort(CompilerStatus::AnotherTokenExpected, current_token);
+						auto definition = current_token;
+						ReadNextToken();
+						string import_name, import_lib;
+						uint flags = XL::FunctionMethod | XL::FunctionThisCall;
+						uint org = 0; // 0 - V, 1 - A, 2 - import, 3 - import from library, -1 - pure
+						while (IsKeyword(Lexic::KeywordThrows) || IsKeyword(Lexic::KeywordVirtual) ||
+							IsKeyword(Lexic::KeywordPure) || IsKeyword(Lexic::KeywordOverride)) {
+							if (IsKeyword(Lexic::KeywordThrows)) flags |= XL::FunctionThrows;
+							else if (IsKeyword(Lexic::KeywordVirtual)) {
+								flags |= XL::FunctionVirtual;
+							} else if (IsKeyword(Lexic::KeywordPure)) {
+								if (!(flags & XL::FunctionVirtual)) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+								if (flags & XL::FunctionOverride) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+								org = -1; flags |= XL::FunctionPureCall;
+							} else if (IsKeyword(Lexic::KeywordOverride)) {
+								if (flags & XL::FunctionPureCall) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+								flags |= XL::FunctionOverride;
+							}
+							ReadNextToken();
+						}
+						for (auto & attr : attributes) {
+							if (attr.key == Lexic::AttributeNoTC) flags &= ~XL::FunctionThisCall;
+						}
+						XL::LObject * func;
+						try {
+							if (setter) func = ctx.CreatePropertySetter(prop, flags);
+							else func = ctx.CreatePropertyGetter(prop, flags);
+						} catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+						for (auto & attr : attributes) {
+							if (attr.key[0] == L'[') {
+								if (attr.key == Lexic::AttributeAsm) {
+									if (org || attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									org = 1;
+								} else if (attr.key == Lexic::AttributeImport) {
+									if (!attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									if (org == -1 || org == 1 || org == 2) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									if (org == 0) org = 2;
+									import_name = attr.value;
+								} else if (attr.key == Lexic::AttributeImpLib) {
+									if (!attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									if (org == -1 || org == 1 || org == 3) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									org = 3;
+									import_lib = attr.value;
+								} else if (attr.key == Lexic::AttributeNoTC) {
+									if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+								} else Abort(CompilerStatus::InapproptiateAttribute, definition);
+							} else func->AddAttribute(attr.key, attr.value);
+						}
+						if (org == 3 && !import_name.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+						attributes.Clear();
+						if (org == -1) {
+							AssertPunct(L";"); ReadNextToken();
+						} else if (org == 0) {
+							AssertPunct(L"{");
+							SafePointer<TokenStream> stream;
+							if (!input->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, input->GetCurrentPosition());
+							ReadNextToken();
+							VPostCompileDesc pc;
+							pc.visibility = desc;
+							pc.function = func;
+							pc.instance.SetRetain(desc.current_namespace);
+							if (setter) {
+								SafePointer<XL::LObject> ref_type = ctx.QueryTypeReference(prop_type);
+								SafePointer<XL::LObject> void_type = ctx.QueryObject(XL::NameVoid);
+								pc.retval = void_type;
+								pc.input_types.Append(ref_type);
+								pc.input_names.Append(Lexic::IdentifierValue);
+							} else pc.retval.SetRetain(prop_type);
+							pc.flags = flags;
+							pc.code_source = stream;
+							pc.constructor = false;
+							pc.destructor = false;
+							post_compile.InsertLast(pc);
+						} else if (org == 1) {
+							auto start = current_token;
+							AssertPunct(L"{");
+							SafePointer<TokenStream> asm_stream;
+							if (!input->ReadBlock(asm_stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, input->GetCurrentPosition());
+							ReadNextToken();
+							auto asm_code = asm_stream->ExtractContents();
+							XA::CompilerStatusDesc asm_desc;
+							XA::Function asm_func;
+							XA::CompileFunction(asm_code, asm_func, asm_desc);
+							if (asm_desc.status != XA::CompilerStatus::Success) Abort(CompilerStatus::AssemblyError, start);
+							ctx.SupplyFunctionImplementation(func, asm_func);
+						} else {
+							AssertPunct(L";"); ReadNextToken();
+							ctx.SupplyFunctionImplementation(func, import_name, import_lib);
+						}
+
+					}
+				}
+			}
 			void ProcessClass(XL::LObject * cls, bool is_interface, bool is_continue, VObservationDesc & desc)
 			{
 				Volumes::Dictionary<string, string> attributes;
@@ -978,10 +1095,17 @@ namespace Engine
 							}
 						} else {
 							AssertPunct(L"{"); ReadNextToken();
-
-							// TODO: ADD PROPERTIES
-
+							XL::LObject * prop;
+							try { prop = ctx.CreateProperty(cls, name, type); }
+							catch (...) { Abort(CompilerStatus::SymbolRedefinition, def); }
+							for (auto & a : attributes) {
+								if (a.key[0] == L'[') Abort(CompilerStatus::InapproptiateAttribute, def);
+								else prop->AddAttribute(a.key, a.value);
+							}
+							ProcessProperty(prop, type, desc);
+							AssertPunct(L"}"); ReadNextToken();
 						}
+						attributes.Clear();
 					}
 				}
 			}
@@ -1528,6 +1652,54 @@ namespace Engine
 			void ProcessBlock(XL::LFunctionContext & fctx, VObservationDesc & desc) { while (!IsPunct(L"}") && !IsEOF()) ProcessStatement(fctx, desc, true); }
 			void ProcessCode(VPostCompileDesc & pc)
 			{
+				class FunctionInitCallback : public XL::IFunctionInitCallback
+				{
+					ObjectArray<XL::LObject> retain_list;
+					VContext & _vctx;
+					VPostCompileDesc & _pc;
+				public:
+					FunctionInitCallback(VContext & vctx, VPostCompileDesc & pc) : retain_list(0x80), _vctx(vctx), _pc(pc) {}
+					virtual void GetNextInit(XL::LObject * arguments_scope, XL::FunctionInitDesc & desc) override
+					{
+						desc.init.Clear();
+						if (_vctx.IsKeyword(Lexic::KeywordInit)) {
+							VObservationDesc vdesc;
+							vdesc.current_namespace = arguments_scope;
+							vdesc.namespace_search_list << arguments_scope;
+							vdesc.namespace_search_list << _pc.visibility.namespace_search_list;
+							_vctx.ReadNextToken();
+							if (_vctx.IsPunct(L"(") || _vctx.IsPunct(L"=")) {
+								desc.subject = _pc.instance;
+							} else {
+								_vctx.AssertIdent();
+								SafePointer<XL::LObject> field = _pc.instance->GetMember(_vctx.current_token.contents);
+								if (field->GetClass() != XL::Class::Field) throw InvalidArgumentException();
+								retain_list.Append(field);
+								desc.subject = field;
+								_vctx.ReadNextToken();
+							}
+							if (_vctx.IsPunct(L"(")) {
+								_vctx.ReadNextToken();
+								if (!_vctx.IsPunct(L")")) {
+									while (true) {
+										SafePointer<XL::LObject> expr = _vctx.ProcessExpression(vdesc);
+										retain_list.Append(expr);
+										desc.init.InsertLast(expr);
+										if (_vctx.IsPunct(L")")) { _vctx.ReadNextToken(); break; }
+										_vctx.AssertPunct(L","); _vctx.ReadNextToken();
+									}
+								} else _vctx.ReadNextToken();
+							} else {
+								_vctx.AssertPunct(L"="); _vctx.ReadNextToken();
+								SafePointer<XL::LObject> expr = _vctx.ProcessExpression(vdesc);
+								retain_list.Append(expr);
+								desc.init.InsertLast(expr);
+							}
+							_vctx.AssertPunct(L";"); _vctx.ReadNextToken();
+						} else desc.subject = 0;
+					}
+				};
+				FunctionInitCallback init_callback(*this, pc);
 				OverrideInput(pc.code_source);
 				ObjectArray<XL::LObject> vft_init_seq(0x40);
 				Array<XL::LObject *> argv(0x10);
@@ -1542,13 +1714,14 @@ namespace Engine
 				fc_desc.flags = pc.flags;
 				fc_desc.vft_init = 0;
 				fc_desc.vft_init_seq = 0;
+				fc_desc.create_init_sequence = pc.constructor;
+				fc_desc.create_shutdown_sequence = pc.destructor;
+				fc_desc.init_callback = 0;
 				if (pc.constructor) {
 					fc_desc.vft_init = pc.instance;
 					fc_desc.vft_init_seq = &vft_init_seq;
+					fc_desc.init_callback = &init_callback;
 				}
-
-				// TODO: HANDLE CONSTRUCTOR/DESTRUCTOR
-
 				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, pc.function, fc_desc);
 				VObservationDesc desc;
 				desc.current_namespace = fctx->GetRootScope();

@@ -47,6 +47,10 @@ class ModuleLoader : public Object, public XE::ILoaderCallback
 		console.WriteLine(string(c));
 		return c == L'Y';
 	}
+	static void use_cns(ITestConsole * cns) noexcept
+	{
+		cns->PrintInteger(444);
+	}
 public:
 	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
 	{
@@ -60,6 +64,7 @@ public:
 	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
 	{
 		if (routine_name == L"read_bool") return cond_check;
+		if (routine_name == L"use_cns") return use_cns;
 		return 0;
 	}
 	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override

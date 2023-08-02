@@ -55,6 +55,7 @@ namespace Engine
 			constexpr const widechar * KeywordNull		= L"nullus";
 			constexpr const widechar * KeywordOverride	= L"redefini";
 			constexpr const widechar * KeywordInherit	= L"hereditat";
+			constexpr const widechar * KeywordInit		= L"funda";
 
 			constexpr const widechar * AttributeSemant	= L"[significatio]";
 			constexpr const widechar * AttributeSize	= L"[magnitudo]";
@@ -85,6 +86,9 @@ namespace Engine
 			constexpr const widechar * ConstructorZero	= L"vacuus";
 			constexpr const widechar * ConstructorMove	= L"motus";
 			constexpr const widechar * IdentifierThis	= L"ego";
+			constexpr const widechar * IdentifierSet	= L"loca";
+			constexpr const widechar * IdentifierGet	= L"adipisce";
+			constexpr const widechar * IdentifierValue	= L"valor";
 
 			constexpr const widechar * ResourceData	= L"data";
 			constexpr const widechar * ResourceIcon	= L"icon";

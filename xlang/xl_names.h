@@ -12,6 +12,8 @@ namespace Engine
 		constexpr const widechar * NameDestructor		= L"@perde";
 		constexpr const widechar * NameConverter		= L"@converte";
 		constexpr const widechar * NameVFT				= L"@ofv";
+		constexpr const widechar * NameGetter			= L"@adipisce";
+		constexpr const widechar * NameSetter			= L"@loca";
 
 		constexpr const widechar * NameVoid		= L"nihil";
 		constexpr const widechar * NameBoolean	= L"logicum";

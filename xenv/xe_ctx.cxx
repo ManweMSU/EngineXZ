@@ -458,49 +458,7 @@ namespace Engine
 						cls->AddField(f.key, f.value.type_canonical_name, offset, size, f.value.attributes);
 					}
 					for (auto & p : c.value.properties) {
-						string s_fqn, g_fqn;
-						string s_mn, g_mn;
-						s_mn = p.key + L"." + string(XI::SetterMethodName) + L":" + p.value.setter_interface;
-						g_mn = p.key + L"." + string(XI::GetterMethodName) + L":" + p.value.getter_interface;
-						if ((p.value.setter.code_flags & XI::Module::Function::FunctionClassMask) != XI::Module::Function::FunctionClassNull) {
-							if (p.value.setter.code_flags & XI::Module::Function::FunctionPrototype) class_discard = true;
-							s_fqn = c.key + L"." + s_mn;
-							if (local.FindSymbol(s_fqn, false) || _system.FindSymbol(s_fqn, false)) {
-								callback->HandleModuleLoadError(name, s_fqn, ModuleLoadError::DuplicateSymbol);
-								_sync->Open();
-								return 0;
-							}
-							if (!class_discard) {
-								XI::LoadFunction(s_fqn, p.value.setter, &loader);
-								if (!loader.ok) {
-									_sync->Open();
-									return 0;
-								}
-							}
-						}
-						if ((p.value.getter.code_flags & XI::Module::Function::FunctionClassMask) != XI::Module::Function::FunctionClassNull) {
-							if (p.value.getter.code_flags & XI::Module::Function::FunctionPrototype) class_discard = true;
-							g_fqn = c.key + L"." + g_mn;
-							if (local.FindSymbol(g_fqn, false) || _system.FindSymbol(g_fqn, false)) {
-								callback->HandleModuleLoadError(name, g_fqn, ModuleLoadError::DuplicateSymbol);
-								_sync->Open();
-								return 0;
-							}
-							if (!class_discard) {
-								XI::LoadFunction(g_fqn, p.value.getter, &loader);
-								if (!loader.ok) {
-									_sync->Open();
-									return 0;
-								}
-							}
-						}
-						if (s_fqn.Length() || (p.value.setter.vft_index.x >= 0 && p.value.setter.vft_index.y)) {
-							cls->AddMethod(s_mn, s_fqn, p.value.setter.vft_index.x, p.value.setter.vft_index.y, p.value.setter.attributes);
-						}
-						if (g_fqn.Length() || (p.value.getter.vft_index.x >= 0 && p.value.getter.vft_index.y)) {
-							cls->AddMethod(g_mn, g_fqn, p.value.getter.vft_index.x, p.value.getter.vft_index.y, p.value.getter.attributes);
-						}
-						cls->AddProperty(p.key, p.value.type_canonical_name, s_fqn, g_fqn, p.value.attributes);
+						cls->AddProperty(p.key, p.value.type_canonical_name, p.value.setter_name, p.value.getter_name, p.value.attributes);
 					}
 					for (auto & m : c.value.methods) {
 						if (m.value.code_flags & XI::Module::Function::FunctionPrototype) class_discard = true;

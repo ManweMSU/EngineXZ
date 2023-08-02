@@ -3,6 +3,7 @@
 #include "xl_func.h"
 #include "xl_types.h"
 #include "xl_var.h"
+#include "xl_prop.h"
 #include "../xasm/xa_type_helper.h"
 
 // TODO: REMOVE
@@ -128,6 +129,13 @@ namespace Engine
 			SafePointer<LObject> & GetStep(void) { return _step; }
 		};
 
+		struct InitShutdownInfo
+		{
+			int sdwn_serial;
+			SafePointer<LObject> init, sdwn;
+		};
+		typedef Array<InitShutdownInfo> InitShutdownVolume;
+
 		LFunctionContext::LFunctionContext(LContext & ctx, LObject * dest, const FunctionContextDesc & desc) :
 			_ctx(ctx), _acorr(0x1000), _local_counter(0), _current_catch_serial(-1), _current_try_block(0)
 		{
@@ -161,23 +169,6 @@ namespace Engine
 			}
 			auto retval_sem = _ctx.GetClassInstanceSize(desc.retval);
 			_void_retval = retval_sem.num_bytes == 0 && retval_sem.num_words == 0;
-
-			// TODO: IMPLEMENT INIT SEQUENCES
-
-			if (desc.vft_init) {
-				int vft_min, vft_max;
-				auto cls = static_cast<XClass *>(desc.vft_init);
-				cls->GetRangeVFT(vft_min, vft_max);
-				if (vft_min >= 0) for (int vft = vft_min; vft <= vft_max; vft++) {
-					auto vft_offs = cls->GetOffsetVFT(vft);
-					auto vft_var = cls->CreateVFT(vft, *desc.vft_init_seq);
-					auto init = MakeBlt(
-						MakeOffset(_self->Evaluate(_subj, 0), vft_offs, XA::TH::MakeSize(vft_offs.num_bytes, vft_offs.num_words + 1), XA::TH::MakeSize(0, 1)),
-						MakeAddressOf(vft_var->Evaluate(_subj, 0), XA::TH::MakeSize(0, 1)), XA::TH::MakeSize(0, 1)
-					);
-					_subj.instset << XA::TH::MakeStatementExpression(init);
-				}
-			}
 			if (_flags & FunctionThrows) {
 				SafePointer<LFunctionBlock> block = new CatchThrowBlock(_local_counter);
 				auto block_try = static_cast<CatchThrowBlock *>(block.Inner());
@@ -193,6 +184,97 @@ namespace Engine
 				SafePointer<LFunctionBlock> block = new RegularBlock(_local_counter, _root);
 				_blocks.InsertLast(block);
 				_subj.instset << XA::TH::MakeStatementOpenScope();
+			}
+			if (desc.create_init_sequence) {
+				SafePointer<InitShutdownVolume> list = new InitShutdownVolume(0x80);
+				ObjectArray<LObject> to_init(0x40);
+				auto cls = static_cast<XClass *>(desc.instance);
+				cls->ListFields(to_init);
+				if (cls->GetParentClass()) to_init.Append(cls->GetParentClass());
+				if (desc.init_callback) {
+					FunctionInitDesc init_desc;
+					while (true) {
+						desc.init_callback->GetNextInit(_root, init_desc);
+						if (init_desc.subject) {
+							if (init_desc.subject == desc.instance) init_desc.subject = cls->GetParentClass();
+							bool found = false;
+							for (int i = 0; i < to_init.Length(); i++) if (to_init.ElementAt(i) == init_desc.subject) { found = true; to_init.Remove(i); break; }
+							if (!found) throw InvalidArgumentException();
+							SafePointer<LObject> real_subject;
+							if (init_desc.subject->GetClass() == Class::Field) {
+								real_subject = static_cast<XField *>(init_desc.subject)->SetInstance(_self);
+							} else if (init_desc.subject == cls->GetParentClass()) {
+								real_subject = cls->TransformTo(_self, cls->GetParentClass(), false);
+							} else throw InvalidArgumentException();
+							Array<LObject *> argv(0x10);
+							for (auto & l : init_desc.init) argv.Append(l);
+							InitShutdownInfo info;
+							info.sdwn_serial = _acorr.Length(); _acorr << -1;
+							info.init = InitInstance(real_subject, argv.Length(), argv.GetBuffer());
+							info.sdwn = DestroyInstance(real_subject);
+							list->Append(info);
+						} else break;
+					}
+				}
+				for (auto & i : to_init) {
+					SafePointer<LObject> real_subject;
+					if (i.GetClass() == Class::Field) {
+						real_subject = static_cast<XField *>(&i)->SetInstance(_self);
+					} else if (&i == cls->GetParentClass()) {
+						real_subject = cls->TransformTo(_self, cls->GetParentClass(), false);
+					} else throw InvalidArgumentException();
+					InitShutdownInfo info;
+					info.sdwn_serial = _acorr.Length(); _acorr << -1;
+					info.init = InitInstance(real_subject, 0, 0);
+					info.sdwn = DestroyInstance(real_subject);
+					list->Append(info);
+				}
+				to_init.Clear();
+				for (auto & l : *list) {
+					auto tree = l.init->Evaluate(_subj, _current_try_block ?
+						&static_cast<CatchThrowBlock *>(_current_try_block)->GetErrorContext() : 0);
+					ThrowSerialSet(tree, l.sdwn_serial);
+					_subj.instset << XA::TH::MakeStatementExpression(tree);
+					l.init.SetReference(0);
+				}
+				_shutdown_info.SetRetain(list);
+			}
+			if (desc.create_shutdown_sequence) {
+				_shutdown_on_error = false;
+				SafePointer<InitShutdownVolume> list = new InitShutdownVolume(0x80);
+				ObjectArray<LObject> to_shutdown(0x40);
+				auto cls = static_cast<XClass *>(desc.instance);
+				cls->ListFields(to_shutdown);
+				if (cls->GetParentClass()) to_shutdown.Append(cls->GetParentClass());
+				for (auto & i : to_shutdown) {
+					SafePointer<LObject> real_subject;
+					if (i.GetClass() == Class::Field) {
+						real_subject = static_cast<XField *>(&i)->SetInstance(_self);
+					} else if (&i == cls->GetParentClass()) {
+						real_subject = cls->TransformTo(_self, cls->GetParentClass(), false);
+					} else throw InvalidArgumentException();
+					InitShutdownInfo info;
+					info.sdwn_serial = -1;
+					info.init = 0;
+					info.sdwn = DestroyInstance(real_subject);
+					list->Append(info);
+				}
+				to_shutdown.Clear();
+				_shutdown_info.SetRetain(list);
+			} else _shutdown_on_error = true;
+			if (desc.vft_init) {
+				int vft_min, vft_max;
+				auto cls = static_cast<XClass *>(desc.vft_init);
+				cls->GetRangeVFT(vft_min, vft_max);
+				if (vft_min >= 0) for (int vft = vft_min; vft <= vft_max; vft++) {
+					auto vft_offs = cls->GetOffsetVFT(vft);
+					auto vft_var = cls->CreateVFT(vft, *desc.vft_init_seq);
+					auto init = MakeBlt(
+						MakeOffset(_self->Evaluate(_subj, 0), vft_offs, XA::TH::MakeSize(vft_offs.num_bytes, vft_offs.num_words + 1), XA::TH::MakeSize(0, 1)),
+						MakeAddressOf(vft_var->Evaluate(_subj, 0), XA::TH::MakeSize(0, 1)), XA::TH::MakeSize(0, 1)
+					);
+					_subj.instset << XA::TH::MakeStatementExpression(init);
+				}
 			}
 		}
 		LFunctionContext::LFunctionContext(LContext & ctx, LObject * dest, uint flags, const Array<LObject *> & perform, const Array<LObject *> & revert) :
@@ -535,6 +617,10 @@ namespace Engine
 		}
 		void LFunctionContext::EncodeReturn(LObject * expression)
 		{
+			if (!_shutdown_on_error && _shutdown_info) {
+				auto list = static_cast<InitShutdownVolume *>(_shutdown_info.Inner());
+				for (auto & l : *list) if (l.sdwn) _subj.instset << XA::TH::MakeStatementExpression(l.sdwn->Evaluate(_subj, 0));
+			}
 			if (_void_retval) {
 				_subj.instset << XA::TH::MakeStatementReturn();
 			} else {
@@ -608,6 +694,10 @@ namespace Engine
 		void LFunctionContext::EndEncoding(void)
 		{
 			if (_flags & FunctionThrows) {
+				if (!_shutdown_on_error && _shutdown_info) {
+					auto list = static_cast<InitShutdownVolume *>(_shutdown_info.Inner());
+					for (auto & l : *list) if (l.sdwn) _subj.instset << XA::TH::MakeStatementExpression(l.sdwn->Evaluate(_subj, 0));
+				}
 				if (_void_retval) _subj.instset << XA::TH::MakeStatementReturn();
 				auto last = _blocks.GetLast();
 				if (!last) throw InvalidStateException();
@@ -616,6 +706,13 @@ namespace Engine
 				if (!block->Active()) throw InvalidStateException();
 				_subj.instset << XA::TH::MakeStatementCloseScope();
 				_acorr[block->GetCatchSerial()] = _subj.instset.Length();
+				if (_shutdown_on_error && _shutdown_info) {
+					auto list = static_cast<InitShutdownVolume *>(_shutdown_info.Inner());
+					for (auto & l : list->InversedElements()) {
+						if (l.sdwn) _subj.instset << XA::TH::MakeStatementExpression(l.sdwn->Evaluate(_subj, 0));
+						_acorr[l.sdwn_serial] = _subj.instset.Length();
+					}
+				}
 				if (_void_retval) _subj.instset << XA::TH::MakeStatementReturn(); else {
 					SafePointer<LObject> rv_init = ZeroInstance(_retval);
 					auto tree = rv_init->Evaluate(_subj, 0);
@@ -623,8 +720,15 @@ namespace Engine
 				}
 			} else {
 				CloseRegularBlock();
+				if (!_shutdown_on_error && _shutdown_info) {
+					auto list = static_cast<InitShutdownVolume *>(_shutdown_info.Inner());
+					for (auto & l : *list) if (l.sdwn) _subj.instset << XA::TH::MakeStatementExpression(l.sdwn->Evaluate(_subj, 0));
+				}
 				if (_void_retval) _subj.instset << XA::TH::MakeStatementReturn();
 			}
+
+			// TODO: PERFORM OPTIMIZATION
+
 			for (int index = 0; index < _subj.instset.Length(); index++) {
 				auto & i = _subj.instset[index];
 				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {

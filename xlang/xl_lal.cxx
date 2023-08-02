@@ -408,10 +408,6 @@ namespace Engine
 					SafePointer<XType> type = CreateType(f.value.type_canonical_name, *this);
 					XL::CreateField(c.key, type, f.key, f.value.offset);
 				}
-
-				// TODO: PROCESS CLASS
-				// c.value.properties;
-
 				for (auto & m : c.value->methods) {
 					auto name = GetFuncPath(m.key);
 					auto sign = GetFuncSign(m.key);
@@ -439,6 +435,12 @@ namespace Engine
 					if (m.value.code_flags & XI::Module::Function::FunctionThisCall) flags |= FunctionThisCall;
 					if (m.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
 					fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false, m.value.vft_index);
+				}
+				for (auto & p : c.value->properties) {
+					SafePointer<XType> type = CreateType(p.value.type_canonical_name, *this);
+					auto prop = XL::CreateProperty(c.key, type, p.key);
+					prop->SetSetter(p.value.setter_name);
+					prop->SetGetter(p.value.getter_name);
 				}
 			}
 			for (auto & c : cpp) c.key->UpdateInternals();
@@ -595,6 +597,38 @@ namespace Engine
 				class_create_under->OverrideArgumentSpecification(XA::TH::MakeSpec(class_create_under->GetArgumentSpecification().semantics, resize));
 			}
 			return XL::CreateField(class_create_under, type_type, name, offset);
+		}
+		LObject * LContext::CreateProperty(LObject * create_under, const string & name, LObject * type)
+		{
+			if (!create_under || create_under->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
+			auto type_create_under = static_cast<XType *>(create_under);
+			auto type_type = static_cast<XType *>(type);
+			if (type_create_under->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			auto class_create_under = static_cast<XClass *>(create_under);
+			return XL::CreateProperty(class_create_under, type_type, name);
+		}
+		LObject * LContext::CreatePropertySetter(LObject * prop, uint flags)
+		{
+			if (!prop || prop->GetClass() != Class::Property) throw InvalidArgumentException();
+			auto xprop = static_cast<XProperty *>(prop);
+			auto fd = CreateFunction(xprop->GetInstanceType(), xprop->GetName() + NameSetter);
+			SafePointer<LObject> type_prop = prop->GetType();
+			SafePointer<LObject> type_ref = QueryTypeReference(type_prop);
+			SafePointer<XType> type_void = CreateType(XI::Module::TypeReference::MakeClassReference(NameVoid), *this);
+			auto over = CreateFunctionOverload(fd, type_void, 1, type_ref.InnerRef(), flags);
+			xprop->SetSetter(over->GetName());
+			return over;
+		}
+		LObject * LContext::CreatePropertyGetter(LObject * prop, uint flags)
+		{
+			if (!prop || prop->GetClass() != Class::Property) throw InvalidArgumentException();
+			auto xprop = static_cast<XProperty *>(prop);
+			auto fd = CreateFunction(xprop->GetInstanceType(), xprop->GetName() + NameGetter);
+			SafePointer<LObject> type_prop = prop->GetType();
+			auto over = CreateFunctionOverload(fd, type_prop, 0, 0, flags);
+			xprop->SetGetter(over->GetName());
+			return over;
 		}
 		LObject * LContext::CreatePrivateFunction(uint flags)
 		{
@@ -818,6 +852,12 @@ namespace Engine
 		LObject * LContext::InitInstance(LObject * instance, LObject * expression) { return XL::InitInstance(instance, expression); }
 		LObject * LContext::InitInstance(LObject * instance, int argc, LObject ** argv) { return XL::InitInstance(instance, argc, argv); }
 		LObject * LContext::DestroyInstance(LObject * instance) { return XL::DestroyInstance(instance); }
+		LObject * LContext::SetPropertyValue(LObject * prop, LObject * value)
+		{
+			if (!prop || prop->GetClass() != Class::InstancedProperty) throw InvalidArgumentException();
+			auto setter = static_cast<XInstancedProperty *>(prop)->GetSetter();
+			return setter->Invoke(1, &value);
+		}
 		void LContext::AttachLiteral(LObject * literal, LObject * attach_under, const string & name)
 		{
 			if (!attach_under) throw InvalidArgumentException();

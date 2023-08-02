@@ -130,7 +130,6 @@ namespace Engine
 			virtual XMethodOverload * SetInstance(LObject * instance) override { return new PointerConstructorInstance(_ctx, _cls, instance); }
 			virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
 			virtual FunctionImplementationDesc & GetImplementationDesc(void) override { throw InvalidStateException(); }
-			virtual FunctionInlineDesc & GetInlineDesc(void) override { throw InvalidStateException(); }
 			virtual bool NeedsInstance(void) override { return true; }
 			virtual uint & GetFlags(void) override { throw InvalidStateException(); }
 			virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
@@ -276,10 +275,6 @@ namespace Engine
 					ie.vft_pointer_offset = i._vft_offset;
 					self.interfaces_implements << ie;
 				}
-
-				// TODO: IMPLEMENT
-				// Volumes::Dictionary<string, Property> properties;	// NAME
-
 				self.attributes = _attributes;
 				dest.classes.Append(_path, self);
 				for (auto & m : _members) static_cast<XObject *>(m.value.Inner())->EncodeSymbols(dest, Class::Type);
@@ -403,14 +398,24 @@ namespace Engine
 			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override
 			{
 				if (cast_explicit) {
+					if (type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
+						SafePointer<XType> cls = static_cast<XReference *>(type)->GetElementType();
+						if (cls->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Class) {
+							try {
+								auto xcls = static_cast<TypeClass *>(cls.Inner());
+								XA::ObjectSize rebase = xcls->GetRebase(this);
+								SafePointer<OffsetComputable> offs_com = new OffsetComputable(xcls, subject, rebase, true);
+								SafePointer<XComputable> offs = CreateComputable(_ctx, offs_com);
+								SafePointer<ReferenceComputable> ref_com = new ReferenceComputable(xcls, offs);
+								return CreateComputable(_ctx, ref_com);
+							} catch (...) {}
+						}
+					}
 					if (type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Pointer &&
 						_type_spec.size.num_bytes == 0 && _type_spec.size.num_words == 1) {
 						SafePointer<ReinterpretComputable> com = new ReinterpretComputable(type, subject);
 						return CreateComputable(_ctx, com);
 					}
-					// TODO: IMPLEMENT
-					// TODO: REVERSE SIMILARITY CASTS (0)
-					//   PARENT  -> TYPE&
 				} else {
 					bool ref;
 					string class_cn;
@@ -681,6 +686,17 @@ namespace Engine
 				}
 				return vft_var;
 			}
+			virtual XA::ObjectSize GetRebase(XClass * for_class) override
+			{
+				if (for_class->GetCanonicalType() == GetCanonicalType()) return XA::TH::MakeSize(0, 0);
+				for (auto & i : _interfaces) try {
+					auto rebase = i._class->GetRebase(for_class);
+					return XA::TH::MakeSize(rebase.num_bytes + i._base_offset.num_bytes, rebase.num_words + i._base_offset.num_words);
+				} catch (...) {}
+				if (_parent._class) return _parent._class->GetRebase(for_class);
+				throw InvalidArgumentException();
+			}
+			virtual void ListFields(ObjectArray<LObject> & list) override { for (auto & m : _members) if (m.value->GetClass() == Class::Field) list.Append(m.value); }
 			virtual string ToString(void) const override { return L"class " + _path; }
 		};
 		class TypeArray : public XArray
@@ -959,7 +975,6 @@ namespace Engine
 				virtual XMethodOverload * SetInstance(LObject * instance) override { return new _pointer_operator_instance(_op, _ptr_type, instance); }
 				virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
 				virtual FunctionImplementationDesc & GetImplementationDesc(void) override { throw InvalidStateException(); }
-				virtual FunctionInlineDesc & GetInlineDesc(void) override { throw InvalidStateException(); }
 				virtual bool NeedsInstance(void) override { return true; }
 				virtual uint & GetFlags(void) override { throw InvalidStateException(); }
 				virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
@@ -996,27 +1011,59 @@ namespace Engine
 			virtual LObject * GetDestructor(void) override { return CreateNull(); }
 			virtual void GetTypesConformsTo(ObjectArray<XType> & types) override
 			{
-				SafePointer<XType> self_ref = CreateType(XI::Module::TypeReference::MakeReference(GetCanonicalType()), _ctx);
+				if (_ref.GetPointerDestination().GetReferenceClass() == XI::Module::TypeReference::Class::Class) {
+					SafePointer<XType> cls = GetElementType();
+					ObjectArray<XType> cls_conf(0x10);
+					cls->GetTypesConformsTo(cls_conf);
+					for (auto & c : cls_conf) if (c.GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Class) {
+						SafePointer<XType> class_ptr = CreateType(XI::Module::TypeReference::MakePointer(c.GetCanonicalType()), _ctx);
+						SafePointer<XType> class_ptr_ref = CreateType(XI::Module::TypeReference::MakeReference(class_ptr->GetCanonicalType()), _ctx);
+						types.Append(class_ptr);
+						types.Append(class_ptr_ref);
+					}
+				} else {
+					SafePointer<XType> self_ref = CreateType(XI::Module::TypeReference::MakeReference(GetCanonicalType()), _ctx);
+					types.Append(this);
+					types.Append(self_ref);
+				}
 				SafePointer<XType> nothing_ptr = CreateType(XI::Module::TypeReference::MakePointer(XI::Module::TypeReference::MakeClassReference(NameVoid)), _ctx);
 				SafePointer<XType> nothing_ptr_ref = CreateType(XI::Module::TypeReference::MakeReference(nothing_ptr->GetCanonicalType()), _ctx);
-				types.Append(this);
-				types.Append(self_ref);
-
-				// TODO: IMPLEMENT
-				// TODO: SIMILARITY CASTS (2)
-				//   TYPE * -> PARENT *
-				//   TYPE * -> PARENT * &
-				
 				types.Append(nothing_ptr);
 				types.Append(nothing_ptr_ref);
 			}
 			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override
 			{
 				if (cast_explicit) {
-
-					// TODO: REVERSE SIMILARITY CASTS (0)
-					//   PARENT * -> TYPE *
-					
+					if (_ref.GetPointerDestination().GetReferenceClass() == XI::Module::TypeReference::Class::Class) {
+						bool ref = false;
+						SafePointer<XType> src_cls = GetElementType();
+						SafePointer<XType> dest_cls;
+						dest_cls.SetRetain(type);
+						if (dest_cls->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
+							ref = true;
+							dest_cls = static_cast<XReference *>(dest_cls.Inner())->GetElementType();
+						}
+						if (dest_cls->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Pointer) {
+							dest_cls = static_cast<XPointer *>(dest_cls.Inner())->GetElementType();
+							if (dest_cls->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Class) {
+								try {
+									SafePointer<XType> src_cls_ref = CreateType(XI::Module::TypeReference::MakeReference(src_cls->GetCanonicalType()), _ctx);
+									SafePointer<XType> dest_cls_ref = CreateType(XI::Module::TypeReference::MakeReference(dest_cls->GetCanonicalType()), _ctx);
+									SafePointer<XType> dest_cls_ptr = CreateType(XI::Module::TypeReference::MakePointer(dest_cls->GetCanonicalType()), _ctx);
+									SafePointer<ReinterpretComputable> reint_com = new ReinterpretComputable(src_cls_ref, subject);
+									SafePointer<XComputable> reint = CreateComputable(_ctx, reint_com);
+									SafePointer<LObject> casted = src_cls->TransformTo(reint, dest_cls_ref, true);
+									SafePointer<LObject> casted_unwarped = UnwarpObject(casted);
+									SafePointer<ReinterpretComputable> reint2_com = new ReinterpretComputable(dest_cls_ptr, casted_unwarped);
+									SafePointer<XComputable> reint2 = CreateComputable(_ctx, reint2_com);
+									if (ref) {
+										SafePointer<ReferenceComputable> ref_com = new ReferenceComputable(dest_cls_ptr, reint2);
+										return CreateComputable(_ctx, ref_com);
+									} else { reint2->Retain(); return reint2; }
+								} catch (...) {}
+							}
+						}
+					}
 					auto dest_size = type->GetArgumentSpecification().size;
 					SafePointer<LObject> dtor = type->GetDestructor();
 					if (dest_size.num_bytes == 0 && dest_size.num_words == 1 && dtor->GetClass() == Class::Null) {
@@ -1031,11 +1078,36 @@ namespace Engine
 						SafePointer<ReferenceComputable> com = new ReferenceComputable(this, subject);
 						return CreateComputable(_ctx, com);
 					}
-
-					// TODO: SIMILARITY CASTS (2)
-					//   TYPE * -> PARENT *
-					//   TYPE * -> PARENT * &
-
+					if (_ref.GetPointerDestination().GetReferenceClass() == XI::Module::TypeReference::Class::Class) {
+						bool ref = false;
+						SafePointer<XType> src_cls = GetElementType();
+						SafePointer<XType> dest_cls;
+						dest_cls.SetRetain(type);
+						if (dest_cls->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
+							ref = true;
+							dest_cls = static_cast<XReference *>(dest_cls.Inner())->GetElementType();
+						}
+						if (dest_cls->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Pointer) {
+							dest_cls = static_cast<XPointer *>(dest_cls.Inner())->GetElementType();
+							if (dest_cls->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Class) {
+								try {
+									SafePointer<XType> src_cls_ref = CreateType(XI::Module::TypeReference::MakeReference(src_cls->GetCanonicalType()), _ctx);
+									SafePointer<XType> dest_cls_ref = CreateType(XI::Module::TypeReference::MakeReference(dest_cls->GetCanonicalType()), _ctx);
+									SafePointer<XType> dest_cls_ptr = CreateType(XI::Module::TypeReference::MakePointer(dest_cls->GetCanonicalType()), _ctx);
+									SafePointer<ReinterpretComputable> reint_com = new ReinterpretComputable(src_cls_ref, subject);
+									SafePointer<XComputable> reint = CreateComputable(_ctx, reint_com);
+									SafePointer<LObject> casted = src_cls->TransformTo(reint, dest_cls_ref, false);
+									SafePointer<LObject> casted_unwarped = UnwarpObject(casted);
+									SafePointer<ReinterpretComputable> reint2_com = new ReinterpretComputable(dest_cls_ptr, casted_unwarped);
+									SafePointer<XComputable> reint2 = CreateComputable(_ctx, reint2_com);
+									if (ref) {
+										SafePointer<ReferenceComputable> ref_com = new ReferenceComputable(dest_cls_ptr, reint2);
+										return CreateComputable(_ctx, ref_com);
+									} else { reint2->Retain(); return reint2; }
+								} catch (...) {}
+							}
+						}
+					}
 					auto void_ptr = XI::Module::TypeReference::MakePointer(XI::Module::TypeReference::MakeClassReference(NameVoid));
 					SafePointer<XType> void_ptr_type = CreateType(void_ptr, _ctx);
 					if (dest.QueryCanonicalName() == void_ptr) {

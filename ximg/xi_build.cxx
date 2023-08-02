@@ -145,12 +145,8 @@ namespace Engine
 				SafePointer<Storage::RegistryNode> pn = node->OpenNode(v);
 				Module::Property prop;
 				prop.type_canonical_name = pn->GetValueString(L"TypeCN");
-				prop.getter_interface = pn->GetValueString(L"GetTCN");
-				prop.setter_interface = pn->GetValueString(L"SetTCN");
-				SafePointer<Storage::RegistryNode> get_node = pn->OpenNode(L"Get");
-				SafePointer<Storage::RegistryNode> set_node = pn->OpenNode(L"Set");
-				if (get_node) if (!BuildFunction(get_node, prop.getter, status, wd)) return false;
-				if (set_node) if (!BuildFunction(set_node, prop.setter, status, wd)) return false;
+				prop.getter_name = pn->GetValueString(L"Get");
+				prop.setter_name = pn->GetValueString(L"Set");
 				SafePointer<Storage::RegistryNode> attrs = pn->OpenNode(L"Attributes");
 				if (attrs) if (!BuildAttributes(attrs, prop.attributes, status)) return false;
 				dest.Append(v, prop);

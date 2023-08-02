@@ -26,12 +26,10 @@ namespace Engine
 		class XProperty : public XObject
 		{
 		public:
-			virtual XFunctionOverload * GetSetter(void) = 0;
-			virtual XFunctionOverload * GetGetter(void) = 0;
-			virtual XFunctionOverload * AddSetter(uint flags) = 0;
-			virtual XFunctionOverload * AddSetter(uint flags, Point vfi) = 0;
-			virtual XFunctionOverload * AddGetter(uint flags) = 0;
-			virtual XFunctionOverload * AddGetter(uint flags, Point vfi) = 0;
+			virtual string GetSetter(void) = 0;
+			virtual string GetGetter(void) = 0;
+			virtual void SetSetter(const string & method_fqn) = 0;
+			virtual void SetGetter(const string & method_fqn) = 0;
 			virtual XClass * GetInstanceType(void) = 0;
 			virtual XInstancedProperty * SetInstance(LObject * instance) = 0;
 			virtual LContext & GetContext(void) = 0;

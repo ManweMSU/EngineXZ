@@ -6,9 +6,6 @@ namespace Engine
 {
 	namespace XI
 	{
-		constexpr const widechar * GetterMethodName = L"adipisce";	// adepto
-		constexpr const widechar * SetterMethodName = L"loca";		// loco
-
 		class Module : public Object
 		{
 		public:
@@ -120,8 +117,7 @@ namespace Engine
 			class Property
 			{
 			public:
-				string type_canonical_name, getter_interface, setter_interface;
-				Function getter, setter;
+				string type_canonical_name, getter_name, setter_name;
 				Volumes::Dictionary<string, string> attributes;
 			};
 			class Interface

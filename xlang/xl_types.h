@@ -49,6 +49,8 @@ namespace Engine
 			virtual XA::ObjectSize GetOffsetVFT(int vft) = 0;
 			virtual LObject * GetCurrentImplementationForVF(int vft, int vf) = 0;
 			virtual LObject * CreateVFT(int vft, ObjectArray<LObject> & init_seq) = 0;
+			virtual XA::ObjectSize GetRebase(XClass * for_class) = 0;
+			virtual void ListFields(ObjectArray<LObject> & list) = 0;
 		};
 		class XArray : public XType
 		{

@@ -143,7 +143,6 @@ namespace Engine
 			bool _local;
 			uint _flags;
 			FunctionImplementationDesc _impl;
-			FunctionInlineDesc _inl;
 			VirtualFunctionDesc _virt;
 			Volumes::Dictionary<string, string> _attributes;
 			SafePointer<XClass> _instance_type;
@@ -187,12 +186,10 @@ namespace Engine
 				_ctx(ctx), _name(name), _path(path), _cn(cn), _local(local), _flags(0)
 			{
 				_instance_type.SetRetain(instance_type);
-				_impl._pure = _inl._has_inline = false;
+				_impl._pure = false;
 				_virt.vft_index = _virt.vf_index = -1;
 				_virt.vfp_offset = _virt.vftp_offset = XA::TH::MakeSize(-1, -1);
 				_virt.base_offset = XA::TH::MakeSize(0, 0);
-				
-				// TODO: ADD BUILT-IN INLINE
 			}
 			virtual ~FunctionOverload(void) override {}
 			virtual Class GetClass(void) override { return Class::FunctionOverload; }
@@ -265,10 +262,6 @@ namespace Engine
 						auto type_ref = dest.classes[type];
 						if (!type_ref) throw InvalidStateException();
 						type_ref->methods.Append(_name, func);
-					} else if (parent == Class::Property) {
-
-						// TODO: IMPLEMENT
-
 					} else throw InvalidArgumentException();
 				} else dest.functions.Append(_path, func);
 			}
@@ -276,7 +269,6 @@ namespace Engine
 			virtual XMethodOverload * SetInstance(LObject * instance) override { return new MethodOverload(this, instance); }
 			virtual VirtualFunctionDesc & GetVFDesc(void) override { return _virt; }
 			virtual FunctionImplementationDesc & GetImplementationDesc(void) override { return _impl; }
-			virtual FunctionInlineDesc & GetInlineDesc(void) override { return _inl; }
 			virtual bool NeedsInstance(void) override { return (_flags & XI::Module::Function::FunctionInstance) != 0; }
 			virtual uint & GetFlags(void) override { return _flags; }
 			virtual XClass * GetInstanceType(void) override { return _instance_type; }

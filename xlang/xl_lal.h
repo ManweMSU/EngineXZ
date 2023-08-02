@@ -138,11 +138,11 @@ namespace Engine
 			LObject * CreateVariable(LObject * create_under, const string & name, LObject * type, XA::ObjectSize size);
 			LObject * CreateField(LObject * create_under, const string & name, LObject * type, XA::ObjectSize offs_override);
 			LObject * CreateField(LObject * create_under, const string & name, LObject * type, bool align_mode);
+			LObject * CreateProperty(LObject * create_under, const string & name, LObject * type);
+			LObject * CreatePropertySetter(LObject * prop, uint flags);
+			LObject * CreatePropertyGetter(LObject * prop, uint flags);
 			LObject * CreatePrivateFunction(uint flags);
 			LObject * CreatePrivateFunction(const string & name, LObject * retval, int argc, LObject ** argv, uint flags);
-
-			// TODO: IMPLEMENT
-
 			bool IsInterface(LObject * cls);
 			XA::ArgumentSemantics GetClassSemantics(LObject * cls);
 			XA::ObjectSize GetClassInstanceSize(LObject * cls);
@@ -157,9 +157,6 @@ namespace Engine
 			void CreateClassVFT(LObject * cls);
 			void AdoptParentClass(LObject * cls, LObject * parent);
 			void AdoptInterface(LObject * cls, LObject * interface);
-
-			// TODO: IMPLEMENT
-
 			LObject * QueryObject(const string & path);
 			LObject * QueryScope(void);
 			LObject * QueryStaticArray(LObject * type, int volume);
@@ -185,6 +182,7 @@ namespace Engine
 			LObject * InitInstance(LObject * instance, LObject * expression);
 			LObject * InitInstance(LObject * instance, int argc, LObject ** argv);
 			LObject * DestroyInstance(LObject * instance);
+			LObject * SetPropertyValue(LObject * prop, LObject * value);
 			void AttachLiteral(LObject * literal, LObject * attach_under, const string & name);
 			int QueryLiteralValue(LObject * literal);
 			string QueryLiteralString(LObject * literal);

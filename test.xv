@@ -53,6 +53,7 @@ genus TEST {
 		Print(value);
 		Print("\n");
 	}
+	structor (int i) iacit { iace 321; }
 	destructor ()
 	{
 		Print("DTOR: ");
@@ -87,14 +88,46 @@ protocollum IConsole {
 }
 genus Integer {
 	int _value;
+	structor () {}
 }
 genus ShiftedConsole hereditat Integer : IConsole
 {
 	@IConsole _console;
-	structor (@IConsole dropback, int value) { _value = value; _console = dropback; }
+	structor () iacit { iace 123; }
+	structor (@IConsole dropback, int value) iacit { _value = value; _console = dropback; }
 	functio nihil PrintInteger(int value) redefini { _console^.PrintInteger(value + _value); }
 	functio nihil PrintLogicum(logicum value) redefini { _console^.PrintInteger(int(value) + _value); }
 	functio nihil Print() { _console^.PrintInteger(555); }
+}
+
+[[importa] "use_cns"]
+functio nihil UseConsole(@IConsole console);
+
+functio nihil some_shit(@IConsole console)
+{
+	(@ShiftedConsole)(console)^._value = -10;
+	console^.PrintInteger(111);
+}
+
+genus TEST_AUTO hereditat ShiftedConsole {
+	TEST _test;
+	structor () iacit
+	{
+		funda _test(TEST());
+		funda ( (@IConsole)(protocollum(cns)), 0 );
+	}
+	destructor () {}
+
+	int auto_value {
+		adipisce {
+			counter++;
+			responde counter;
+		}
+		loca {
+			.Print("SET PROP: ");
+			PrintInteger(valor);
+		}
+	}
 }
 
 functio nihil primus() introitus iacit
@@ -110,6 +143,20 @@ functio nihil primus() introitus iacit
 	cns.Print();
 	cns.PrintInteger(666);
 	cns.PrintLogicum(sic);
+
+	UseConsole(@cns);
+	some_shit(@cns);
+
+	TEST_AUTO test_auto;
+	test_auto.PrintInteger(666);
+
+	test_auto.PrintInteger(test_auto.auto_value);
+	test_auto.PrintInteger(test_auto.auto_value);
+	test_auto.PrintInteger(test_auto.auto_value);
+
+	test_auto.auto_value = 5050;
+	test_auto.auto_value += 20;
+	test_auto.auto_value++;
 
 	iace magnitudo(test2);
 

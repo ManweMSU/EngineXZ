@@ -74,10 +74,8 @@ namespace Engine
 				ENGINE_END_PACKED_STRUCTURE
 				ENGINE_PACKED_STRUCTURE(XI_Property)
 					uint32 property_type_cn_offset;
-					uint32 property_getter_cn_offset;
-					uint32 property_setter_cn_offset;
-					uint32 property_getter_function_offset;
-					uint32 property_setter_function_offset;
+					uint32 property_getter_name_offset;
+					uint32 property_setter_name_offset;
 					uint32 property_attribute_list_offset;
 					uint32 property_attribute_list_size;
 				ENGINE_END_PACKED_STRUCTURE
@@ -194,10 +192,8 @@ namespace Engine
 				offset = PreserveSpace(info, &hdr);
 				size = sizeof(hdr);
 				hdr.property_type_cn_offset = EnplaceString(info, src.type_canonical_name);
-				hdr.property_getter_cn_offset = EnplaceString(info, src.getter_interface);
-				hdr.property_setter_cn_offset = EnplaceString(info, src.setter_interface);
-				EncodeFunction(info, hdr.property_getter_function_offset, drain, src.getter);
-				EncodeFunction(info, hdr.property_setter_function_offset, drain, src.setter);
+				hdr.property_getter_name_offset = EnplaceString(info, src.getter_name);
+				hdr.property_setter_name_offset = EnplaceString(info, src.setter_name);
 				EncodeAttributes(info, hdr.property_attribute_list_offset, hdr.property_attribute_list_size, src.attributes);
 				EnplaceObject(info, offset, &hdr);
 			}
@@ -364,10 +360,8 @@ namespace Engine
 			{
 				auto hdr = ReadObjects<DS::XI_Property>(info, offset);
 				dest.type_canonical_name = ReadString(info, hdr->property_type_cn_offset);
-				dest.getter_interface = ReadString(info, hdr->property_getter_cn_offset);
-				dest.setter_interface = ReadString(info, hdr->property_setter_cn_offset);
-				DecodeFunction(dest.getter, info, hdr->property_getter_function_offset, sizeof(DS::XI_Function));
-				DecodeFunction(dest.setter, info, hdr->property_setter_function_offset, sizeof(DS::XI_Function));
+				dest.getter_name = ReadString(info, hdr->property_getter_name_offset);
+				dest.setter_name = ReadString(info, hdr->property_setter_name_offset);
 				DecodeAttributes(dest.attributes, info, hdr->property_attribute_list_offset, hdr->property_attribute_list_size);
 			}
 			void DecodeInterface(Module::Interface & dest, const DataBlock & info, const DS::XI_Interface & src)
