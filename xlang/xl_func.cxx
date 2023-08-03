@@ -145,7 +145,7 @@ namespace Engine
 			FunctionImplementationDesc _impl;
 			VirtualFunctionDesc _virt;
 			Volumes::Dictionary<string, string> _attributes;
-			SafePointer<XClass> _instance_type;
+			XClass * _instance_type;
 
 			class _invoke_provider : public Object, public IComputableProvider
 			{
@@ -185,7 +185,7 @@ namespace Engine
 			FunctionOverload(LContext & ctx, const string & name, const string & path, const string & cn, bool local, XClass * instance_type) :
 				_ctx(ctx), _name(name), _path(path), _cn(cn), _local(local), _flags(0)
 			{
-				_instance_type.SetRetain(instance_type);
+				_instance_type = instance_type;
 				_impl._pure = false;
 				_virt.vft_index = _virt.vf_index = -1;
 				_virt.vfp_offset = _virt.vftp_offset = XA::TH::MakeSize(-1, -1);
@@ -270,6 +270,7 @@ namespace Engine
 			virtual VirtualFunctionDesc & GetVFDesc(void) override { return _virt; }
 			virtual FunctionImplementationDesc & GetImplementationDesc(void) override { return _impl; }
 			virtual bool NeedsInstance(void) override { return (_flags & XI::Module::Function::FunctionInstance) != 0; }
+			virtual bool Throws(void) override { return (_flags & XI::Module::Function::FunctionThrows) != 0; }
 			virtual uint & GetFlags(void) override { return _flags; }
 			virtual XClass * GetInstanceType(void) override { return _instance_type; }
 			virtual LContext & GetContext(void) override { return _ctx; }
@@ -300,12 +301,12 @@ namespace Engine
 			virtual string ToString(void) const override { return _parent->ToString() + L" with instance " + _instance->ToString(); }
 			virtual XMethodOverload * GetOverloadT(const string & ocn) override
 			{
-				SafePointer<XFunctionOverload> over = _parent->GetOverloadT(ocn, true);
+				auto over = _parent->GetOverloadT(ocn, true);
 				return over->SetInstance(_instance);
 			}
 			virtual XMethodOverload * GetOverloadT(int argc, const string * argv) override
 			{
-				SafePointer<XFunctionOverload> over = _parent->GetOverloadT(argc, argv, true);
+				auto over = _parent->GetOverloadT(argc, argv, true);
 				return over->SetInstance(_instance);
 			}
 			virtual XMethodOverload * GetOverloadV(int argc, LObject ** argv) override
@@ -321,10 +322,10 @@ namespace Engine
 			LContext & _ctx;
 			Volumes::ObjectDictionary<string, XFunctionOverload> _overloads;
 			SafePointer<XFunctionOverload> _singular;
-			SafePointer<XClass> _instance_type;
+			XClass * _instance_type;
 			string _name, _path;
 		public:
-			Function(LContext & ctx, const string & name, const string & path, XClass * instance_type) : _ctx(ctx), _name(name), _path(path) { _instance_type.SetRetain(instance_type); }
+			Function(LContext & ctx, const string & name, const string & path, XClass * instance_type) : _ctx(ctx), _name(name), _path(path) { _instance_type = instance_type; }
 			virtual ~Function(void) override {}
 			virtual Class GetClass(void) override { return Class::Function; }
 			virtual string GetName(void) override { return _name; }
@@ -408,6 +409,7 @@ namespace Engine
 					string rvcn = static_cast<XType *>(retval)->GetCanonicalType();
 					fcn = XI::Module::TypeReference::MakeFunction(rvcn, &acn);
 				}
+				if (_overloads.ElementExists(fcn)) throw ObjectMemberRedefinitionException(this, fcn);
 				string local_name = _name + L":" + fcn;
 				string local_path = _path + L":" + fcn;
 				SafePointer<XFunctionOverload> overload;
@@ -417,12 +419,15 @@ namespace Engine
 					overload->GetFlags() |= XI::Module::Function::FunctionInstance;
 					if (flags & FunctionThrows) overload->GetFlags() |= XI::Module::Function::FunctionThrows;
 					if (flags & FunctionThisCall) overload->GetFlags() |= XI::Module::Function::FunctionThisCall;
+					uint base_flags;
+					auto probe_vfd = _instance_type->FindVirtualFunctionInfo(_name, fcn, base_flags);
+					if (probe_vfd.vf_index >= 0 && probe_vfd.vft_index >= 0) flags |= FunctionVirtual;
 					if ((flags & FunctionVirtual) || (flags & FunctionOverride)) {
 						if (flags & FunctionPureCall) overload->GetImplementationDesc()._pure = true;
-						uint base_flags;
 						auto vfd = _instance_type->FindVirtualFunctionInfo(_name, fcn, base_flags);
 						if (vfd.vf_index < 0 || vfd.vft_index < 0) {
 							if (flags & FunctionOverride) throw InvalidArgumentException();
+							if (!_instance_type->IsLocked()) throw InvalidArgumentException();
 							if (_instance_type->GetPrimaryVFT().num_bytes == 0xFFFFFFFF) throw InvalidArgumentException();
 							vfd.base_offset = vfd.vftp_offset = XA::TH::MakeSize(0, 0);
 							vfd.vft_index = 0;

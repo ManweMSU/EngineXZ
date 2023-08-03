@@ -56,6 +56,7 @@ namespace Engine
 			constexpr const widechar * KeywordOverride	= L"redefini";
 			constexpr const widechar * KeywordInherit	= L"hereditat";
 			constexpr const widechar * KeywordInit		= L"funda";
+			constexpr const widechar * KeywordStructure	= L"structura";
 
 			constexpr const widechar * AttributeSemant	= L"[significatio]";
 			constexpr const widechar * AttributeSize	= L"[magnitudo]";

@@ -235,12 +235,12 @@ namespace Engine
 			LContext & _ctx;
 			string _name, _path;
 			bool _local;
-			SafePointer<XType> _type;
+			string _type_cn;
 			XA::ObjectSize _offset;
 			Volumes::Dictionary<string, string> _attributes;
 		public:
 			Variable(LContext & ctx, const string & name, const string & path, bool local, XType * type, XA::ObjectSize offset) :
-				_ctx(ctx), _name(name), _path(path), _local(local), _offset(offset) { _type.SetRetain(type); }
+				_ctx(ctx), _name(name), _path(path), _local(local), _offset(offset) { _type_cn = type->GetCanonicalType(); }
 			virtual ~Variable(void) override {}
 			virtual Class GetClass(void) override { return Class::Variable; }
 			virtual string GetName(void) override { return _name; }
@@ -248,44 +248,50 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return _local; }
 			virtual LObject * GetType(void) override
 			{
-				if (_type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
-					return static_cast<XReference *>(_type.Inner())->GetElementType();
-				} else { _type->Retain(); return _type; }
+				auto ref = XI::Module::TypeReference(_type_cn);
+				if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Reference) {
+					SafePointer<XType> type = CreateType(_type_cn, _ctx);
+					return static_cast<XReference *>(type.Inner())->GetElementType();
+				} else { return CreateType(_type_cn, _ctx); }
 			}
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw ObjectMemberRedefinitionException(this, key); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
 			{
-				if (_type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
-					SafePointer<XType> element_type = static_cast<XReference *>(_type.Inner())->GetElementType();
+				auto ref = XI::Module::TypeReference(_type_cn);
+				if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Reference) {
+					SafePointer<XType> type = CreateType(_type_cn, _ctx);
+					SafePointer<XType> element_type = static_cast<XReference *>(type.Inner())->GetElementType();
 					return MakeAddressFollow(MakeSymbolReference(func, _path), element_type->GetArgumentSpecification().size);
 				} else return MakeSymbolReference(func, _path);
 			}
 			virtual void EncodeSymbols(XI::Module & dest, Class parent) override
 			{
 				if (!_local) return;
+				SafePointer<XType> type = CreateType(_type_cn, _ctx);
 				XI::Module::Variable var;
 				var.attributes = _attributes;
-				var.type_canonical_name = _type->GetCanonicalType();
+				var.type_canonical_name = _type_cn;
 				var.offset = _offset;
-				var.size = _type->GetArgumentSpecification().size;
+				var.size = type->GetArgumentSpecification().size;
 				dest.variables.Append(_path, var);
 			}
 			virtual string ToString(void) const override { return L"variable " + _path; }
 			virtual bool GetWarpMode(void) override { return true; }
-			virtual LObject * UnwarpedGetType(void) override { _type->Retain(); return _type; }
+			virtual LObject * UnwarpedGetType(void) override { return CreateType(_type_cn, _ctx); }
 			virtual XA::ExpressionTree UnwarpedEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return MakeSymbolReference(func, _path); }
 		};
 		class Null : public XComputable
 		{
-			SafePointer<XType> _type;
+			LContext & _ctx;
+			string _type_cn;
 		public:
-			Null(XType * type) { _type.SetRetain(type); }
+			Null(XType * type) : _ctx(type->GetContext()) { _type_cn = type->GetCanonicalType(); }
 			virtual ~Null(void) override {}
 			virtual Class GetClass(void) override { return Class::NullLiteral; }
 			virtual string GetName(void) override { return L""; }
 			virtual string GetFullName(void) override { return L""; }
 			virtual bool IsDefinedLocally(void) override { return false; }
-			virtual LObject * GetType(void) override { _type->Retain(); return _type; }
+			virtual LObject * GetType(void) override { return CreateType(_type_cn, _ctx); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return MakeAddressOf(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceNull)), XA::TH::MakeSize(0, 1)); }
 			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}

@@ -295,14 +295,17 @@ namespace Engine
 			}
 			_subj.instset << XA::TH::MakeStatementReturn();
 			for (int i = perform.Length() - 1; i >= 0; i--) {
-				_acorr[_current_catch_serial] = _subj.instset.Length();
-				_current_catch_serial--;
 				if (revert[i]) {
 					auto tree = revert[i]->Evaluate(_subj, 0);
 					_subj.instset << XA::TH::MakeStatementExpression(tree);
 				}
+				_acorr[_current_catch_serial] = _subj.instset.Length();
+				_current_catch_serial--;
 			}
 			_subj.instset << XA::TH::MakeStatementReturn();
+
+			// TODO: PERFORM OPTIMIZATION
+
 			for (int index = 0; index < _subj.instset.Length(); index++) {
 				auto & i = _subj.instset[index];
 				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
@@ -312,6 +315,61 @@ namespace Engine
 				ThrowAddressCorrect(i.tree, _acorr, index);
 			}
 			_ctx.SupplyFunctionImplementation(_func, _subj);
+		}
+		LFunctionContext::LFunctionContext(LContext & ctx, LObject * dest, const SimpifiedFunctionContextDesc & desc) :
+			_ctx(ctx), _acorr(0x1000), _flags(desc.flags), _local_counter(0), _current_catch_serial(-1)
+		{
+			_func.SetRetain(dest);
+			_ctx.QueryFunctionImplementation(_func, _subj);
+			_void_retval = true;
+			SafePointer<XComputable> self = CreateComputable(_ctx, static_cast<XType *>(desc.instance),
+				MakeAddressFollow(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)),
+					static_cast<XType *>(desc.instance)->GetArgumentSpecification().size));
+			SafePointer<XComputable> argument = desc.argument ? CreateComputable(_ctx, static_cast<XType *>(desc.argument),
+				XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 1))) : 0;
+			auto error_ctx = FollowPointer(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, argument ? 2 : 1)), XA::TH::MakeSize(0, 2));
+			auto throws = (_flags & FunctionThrows) != 0;
+			Volumes::Stack< SafePointer<LObject> > rev_list;
+			while (true) {
+				SafePointer<LObject> init, revert;
+				desc.init_callback->GetNextInit(self, argument, init.InnerRef(), revert.InnerRef());
+				if (init) {
+					_current_catch_serial++;
+					_acorr << -1;
+					auto tree = init->Evaluate(_subj, throws ? &error_ctx : 0);
+					ThrowSerialSet(tree, _current_catch_serial);
+					_subj.instset << XA::TH::MakeStatementExpression(tree);
+					rev_list.Push(revert);
+				} else break;
+			}
+			_subj.instset << XA::TH::MakeStatementReturn();
+			while (!rev_list.IsEmpty()) {
+				auto revert = rev_list.Pop();
+				if (revert) {
+					auto tree = revert->Evaluate(_subj, 0);
+					_subj.instset << XA::TH::MakeStatementExpression(tree);
+				}
+				_acorr[_current_catch_serial] = _subj.instset.Length();
+				_current_catch_serial--;
+			}
+			_subj.instset << XA::TH::MakeStatementReturn();
+
+			// TODO: PERFORM OPTIMIZATION
+
+			for (int index = 0; index < _subj.instset.Length(); index++) {
+				auto & i = _subj.instset[index];
+				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
+					int abs_offs = _acorr[i.attachment.num_bytes];
+					i.attachment = XA::TH::MakeSize(abs_offs - index - 1, 0);
+				}
+				ThrowAddressCorrect(i.tree, _acorr, index);
+			}
+			_ctx.SupplyFunctionImplementation(_func, _subj);
+
+			// TODO: REMOVE
+			IO::Console console;
+			XA::DisassemblyFunction(_subj, &console);
+			// TODO: END REMOVE
 		}
 		LFunctionContext::~LFunctionContext(void) {}
 		LObject * LFunctionContext::GetRootScope(void) { return _root; }

@@ -9,7 +9,7 @@ namespace Engine
 			string _path, _name;
 			XA::ObjectSize _offset;
 			XClass * _cls;
-			SafePointer<XType> _type;
+			string _type_cn;
 			Volumes::Dictionary<string, string> _attributes;
 
 			class _computable : public Object, public IComputableProvider
@@ -32,13 +32,13 @@ namespace Engine
 				}
 			};
 		public:
-			Field(XClass * cls, XType * type, const string & path, const string & name) : _path(path), _name(name), _cls(cls) { _offset = XA::TH::MakeSize(0, 0); _type.SetRetain(type); }
+			Field(XClass * cls, XType * type, const string & path, const string & name) : _path(path), _name(name), _cls(cls) { _offset = XA::TH::MakeSize(0, 0); _type_cn = type->GetCanonicalType(); }
 			virtual ~Field(void) override {}
 			virtual Class GetClass(void) override { return Class::Field; }
 			virtual string GetName(void) override { return _name; }
 			virtual string GetFullName(void) override { return _path; }
 			virtual bool IsDefinedLocally(void) override { return true; }
-			virtual LObject * GetType(void) override { _type->Retain(); return _type; }
+			virtual LObject * GetType(void) override { return CreateType(_type_cn, _cls->GetContext()); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
@@ -47,10 +47,11 @@ namespace Engine
 			virtual void EncodeSymbols(XI::Module & dest, Class parent) override
 			{
 				XI::Module::Variable field;
+				SafePointer<XType> xtype = CreateType(_type_cn, _cls->GetContext());
 				field.attributes = _attributes;
-				field.type_canonical_name = _type->GetCanonicalType();
+				field.type_canonical_name = _type_cn;
 				field.offset = _offset;
-				field.size = _type->GetArgumentSpecification().size;
+				field.size = xtype->GetArgumentSpecification().size;
 				auto del = _path.FindLast(L'.');
 				auto type = _path.Fragment(0, del);
 				auto type_ref = dest.classes[type];
@@ -61,7 +62,8 @@ namespace Engine
 			virtual XClass * GetInstanceType(void) override { return _cls; }
 			virtual XComputable * SetInstance(LObject * instance) override
 			{
-				SafePointer<_computable> com = new _computable(_type, instance, this);
+				SafePointer<XType> xtype = CreateType(_type_cn, _cls->GetContext());
+				SafePointer<_computable> com = new _computable(xtype, instance, this);
 				return CreateComputable(GetContext(), com);
 			}
 			virtual LContext & GetContext(void) override { return _cls->GetContext(); }
@@ -82,7 +84,7 @@ namespace Engine
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
 			{
-				auto getter = GetGetter();
+				SafePointer<LObject> getter = GetGetter();
 				SafePointer<LObject> inv = getter->Invoke(0, 0);
 				return inv->Evaluate(func, error_ctx);
 			}
@@ -114,16 +116,16 @@ namespace Engine
 			string _path, _name;
 			string _setter, _getter;
 			XClass * _cls;
-			SafePointer<XType> _type;
+			string _type_cn;
 			Volumes::Dictionary<string, string> _attributes;
 		public:
-			Property(XClass * cls, XType * type, const string & path, const string & name) : _path(path), _name(name), _cls(cls) { _type.SetRetain(type); }
+			Property(XClass * cls, XType * type, const string & path, const string & name) : _path(path), _name(name), _cls(cls) { _type_cn = type->GetCanonicalType(); }
 			virtual ~Property(void) override {}
 			virtual Class GetClass(void) override { return Class::Property; }
 			virtual string GetName(void) override { return _name; }
 			virtual string GetFullName(void) override { return _path; }
 			virtual bool IsDefinedLocally(void) override { return true; }
-			virtual LObject * GetType(void) override { _type->Retain(); return _type; }
+			virtual LObject * GetType(void) override { return CreateType(_type_cn, _cls->GetContext()); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
@@ -133,7 +135,7 @@ namespace Engine
 			{
 				XI::Module::Property prop;
 				prop.attributes = _attributes;
-				prop.type_canonical_name = _type->GetCanonicalType();
+				prop.type_canonical_name = _type_cn;
 				prop.setter_name = _setter;
 				prop.getter_name = _getter;
 				if (parent == Class::Type) {
@@ -150,7 +152,7 @@ namespace Engine
 			virtual void SetGetter(const string & method_fqn) override { _getter = method_fqn; }
 			virtual XClass * GetInstanceType(void) override { return _cls; }
 			virtual XInstancedProperty * SetInstance(LObject * instance) override { return new InstancedProperty(this, instance); }
-			virtual LContext & GetContext(void) override { return _type->GetContext(); }
+			virtual LContext & GetContext(void) override { return _cls->GetContext(); }
 			virtual string ToString(void) const override { return L"property " + _path; }
 		};
 

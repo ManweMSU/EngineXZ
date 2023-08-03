@@ -33,6 +33,7 @@ namespace Engine
 			virtual VirtualFunctionDesc & GetVFDesc(void) = 0;
 			virtual FunctionImplementationDesc & GetImplementationDesc(void) = 0;
 			virtual bool NeedsInstance(void) = 0;
+			virtual bool Throws(void) = 0;
 			virtual uint & GetFlags(void) = 0;
 			virtual XClass * GetInstanceType(void) = 0;
 			virtual LContext & GetContext(void) = 0;

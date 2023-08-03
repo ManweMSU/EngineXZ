@@ -26,6 +26,7 @@ namespace Engine
 			virtual LObject * GetDestructor(void) = 0;
 			virtual void GetTypesConformsTo(ObjectArray<XType> & types) = 0;
 			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) = 0;
+			virtual bool IsLocked(void) = 0;
 		};
 		class XClass : public XType
 		{
@@ -51,12 +52,14 @@ namespace Engine
 			virtual LObject * CreateVFT(int vft, ObjectArray<LObject> & init_seq) = 0;
 			virtual XA::ObjectSize GetRebase(XClass * for_class) = 0;
 			virtual void ListFields(ObjectArray<LObject> & list) = 0;
+			virtual void Lock(bool lock) = 0;
 		};
 		class XArray : public XType
 		{
 		public:
 			virtual XType * GetElementType(void) = 0;
 			virtual int GetVolume(void) = 0;
+			virtual LObject * ExtractElement(LObject * instance, int index) = 0;
 		};
 		class XPointer : public XType
 		{
@@ -84,6 +87,7 @@ namespace Engine
 		LObject * PerformTypeCast(XType * dest, LObject * src, int min_level, bool enforce_copy = false);
 		LObject * InitInstance(LObject * instance, LObject * with_value);
 		LObject * InitInstance(LObject * instance, int argc, LObject ** argv);
+		LObject * MoveInstance(LObject * instance, LObject * with_value);
 		LObject * ZeroInstance(LObject * instance);
 		LObject * DestroyInstance(LObject * instance);
 	}

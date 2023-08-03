@@ -763,6 +763,7 @@ namespace Engine
 			void ProcessClassDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
 				bool is_interface = IsKeyword(Lexic::KeywordInterface);
+				bool is_structure = IsKeyword(Lexic::KeywordStructure);
 				ReadNextToken();
 				bool is_abstract = IsKeyword(Lexic::KeywordVirtual) || is_interface;
 				if (IsKeyword(Lexic::KeywordVirtual)) ReadNextToken();
@@ -771,6 +772,7 @@ namespace Engine
 				XL::LObject * type;
 				try { type = ctx.CreateClass(desc.current_namespace, current_token.contents); }
 				catch (...) { Abort(CompilerStatus::SymbolRedefinition, current_token); }
+				ctx.LockClass(type, true);
 				if (is_interface) ctx.MarkClassAsInterface(type);
 				ReadNextToken();
 				if (IsKeyword(Lexic::KeywordInherit)) {
@@ -827,6 +829,16 @@ namespace Engine
 				subdesc.namespace_search_list << desc.namespace_search_list;
 				ProcessClass(type, is_interface, false, subdesc);
 				AssertPunct(L"}"); ReadNextToken();
+				ObjectArray<XL::LObject> vft_init_seq(0x40);
+				ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor, vft_init_seq);
+				if (is_structure) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit |
+					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero,
+					vft_init_seq);
+
+				// TODO: ADD AUTO METHODS
+
+				ctx.LockClass(type, false);
+				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 			}
 			void ProcessAliasDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
@@ -1040,7 +1052,7 @@ namespace Engine
 				while (!IsPunct(L"}")) {
 					if (IsPunct(L"[")) {
 						ProcessAttributeDefinition(attributes);
-					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface)) {
+					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface) || IsKeyword(Lexic::KeywordStructure)) {
 						ProcessClassDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordContinue)) {
 						ProcessContinue(desc);
@@ -1129,7 +1141,7 @@ namespace Engine
 						subdesc.namespace_search_list << desc.namespace_search_list;
 						ProcessNamespace(subdesc);
 						AssertPunct(L"}"); ReadNextToken();
-					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface)) {
+					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface) || IsKeyword(Lexic::KeywordStructure)) {
 						ProcessClassDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordContinue)) {
 						ProcessContinue(desc);
@@ -1742,6 +1754,7 @@ namespace Engine
 					ProcessNamespace(desc);
 					if (current_token.type != TokenType::EOF) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 					for (auto & pc : post_compile) ProcessCode(pc);
+					post_compile.Clear();
 					bool needs_init = false;
 					bool needs_final = false;
 					for (auto & d : init_list) {
@@ -1766,6 +1779,7 @@ namespace Engine
 						}
 						XL::LFunctionContext fctx(ctx, func, XL::FunctionFinalizer, perform, revert);
 					}
+					init_list.Clear();
 					if (!metadata.IsEmpty()) XI::AddModuleMetadata(ctx.QueryResources(), metadata);
 				} catch (...) { if (status.status == CompilerStatus::Success) SetStatusError(status, CompilerStatus::InternalError); }
 			}

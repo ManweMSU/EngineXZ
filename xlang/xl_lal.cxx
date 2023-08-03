@@ -6,6 +6,7 @@
 #include "xl_var.h"
 #include "xl_func.h"
 #include "xl_prop.h"
+#include "xl_synth.h"
 #include "../ximg/xi_resources.h"
 
 namespace Engine
@@ -29,6 +30,11 @@ namespace Engine
 		string ObjectMayThrow::ToString(void) const { return L"Object " + source->ToString() + L" can throw exceptions."; }
 		ObjectHasNoSuitableCast::ObjectHasNoSuitableCast(LObject * reason, LObject * from, LObject * to) : LException(reason) { type_from.SetRetain(from); type_to.SetRetain(to); }
 		string ObjectHasNoSuitableCast::ToString(void) const { return L"Object " + source->ToString() + L" cannot be casted from " + type_from->ToString() + L" to " + type_to->ToString() + L"."; }
+
+		Volumes::Set<LObject *> list;
+
+		LObject::LObject(void) { list.AddElement(this); }
+		LObject::~LObject(void) { list.RemoveElement(this); }
 
 		class XInternal : public XObject
 		{
@@ -323,7 +329,18 @@ namespace Engine
 			_subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI);
 			_data = new DataBlock(0x1000);
 		}
-		LContext::~LContext(void) {}
+		LContext::~LContext(void)
+		{
+			_root_ns.SetReference(0);
+			_private_ns.SetReference(0);
+			IO::Console console;
+			if (!list.IsEmpty()) {
+				console.SetTextColor(14);
+				console.WriteLine(L"OBJECTS NOT RELEASED:");
+				for (auto & l : list) console.WriteLine(l->ToString());
+				console.SetTextColor(-1);
+			}
+		}
 		void LContext::MakeSubsystemConsole(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI); }
 		void LContext::MakeSubsystemGUI(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::GUI); }
 		void LContext::MakeSubsystemNone(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::NoUI); }
@@ -447,6 +464,14 @@ namespace Engine
 			return true;
 		}
 		LObject * LContext::GetRootNamespace(void) { return _root_ns; }
+		LObject * LContext::GetPrivateNamespace(void)
+		{
+			if (!_private_ns) {
+				_private_ns = XL::CreateNamespace(L"_" + _module_name, L"_" + _module_name, *this);
+				_root_ns->AddMember(_private_ns->GetName(), _private_ns);
+			}
+			return _private_ns;
+		}
 		LObject * LContext::CreateNamespace(LObject * create_under, const string & name)
 		{
 			if (!create_under || create_under->GetClass() != Class::Namespace) throw InvalidArgumentException();
@@ -518,6 +543,7 @@ namespace Engine
 			if (create_under->GetClass() != Class::Namespace && create_under->GetClass() != Class::Type) throw InvalidArgumentException();
 			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
 			auto xtype = static_cast<XType *>(type);
+			if (xtype->IsLocked()) throw InvalidStateException();
 			auto size = xtype->GetArgumentSpecification().size;
 			int align = 1;
 			int max_size = size.num_bytes + 8 * size.num_words;
@@ -561,6 +587,7 @@ namespace Engine
 			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
 			auto type_create_under = static_cast<XType *>(create_under);
 			auto type_type = static_cast<XType *>(type);
+			if (type_type->IsLocked()) throw InvalidStateException();
 			if (type_create_under->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
 			auto class_create_under = static_cast<XClass *>(create_under);
 			return XL::CreateField(class_create_under, type_type, name, offs_override);
@@ -571,6 +598,7 @@ namespace Engine
 			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
 			auto type_create_under = static_cast<XType *>(create_under);
 			auto type_type = static_cast<XType *>(type);
+			if (type_type->IsLocked()) throw InvalidStateException();
 			if (type_create_under->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
 			auto class_create_under = static_cast<XClass *>(create_under);
 			XA::ObjectSize offset;
@@ -642,18 +670,6 @@ namespace Engine
 			_private_ns->AddMember(fd->GetName(), fd);
 			SafePointer<XType> retval = XL::CreateType(XI::Module::TypeReference::MakeClassReference(NameVoid), *this);
 			return fd->AddOverload(retval, 0, 0, flags, true);
-		}
-		LObject * LContext::CreatePrivateFunction(const string & name, LObject * retval, int argc, LObject ** argv, uint flags)
-		{
-			if (!_private_ns) {
-				_private_ns = XL::CreateNamespace(L"_" + _module_name, L"_" + _module_name, *this);
-				_root_ns->AddMember(_private_ns->GetName(), _private_ns);
-			}
-			auto func = static_cast<XFunction *>(CreateFunction(_private_ns, name));
-			Array<string> ol(0x10);
-			func->ListOverloads(ol, true);
-			if (ol.Length()) return func->GetOverloadT(ol[0], true);
-			return CreateFunctionOverload(func, retval, argc, argv, flags);
 		}
 		bool LContext::IsInterface(LObject * cls)
 		{
@@ -727,6 +743,12 @@ namespace Engine
 			desc._import_func = name;
 			desc._import_library = lib;
 		}
+		void LContext::CreateClassDefaultMethods(LObject * cls, uint methods, ObjectArray<LObject> & vft_init)
+		{
+			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			CreateDefaultImplementations(static_cast<XClass *>(cls), methods, vft_init);
+		}
 		void LContext::CreateClassVFT(LObject * cls)
 		{
 			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
@@ -746,6 +768,7 @@ namespace Engine
 			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
 			if (!parent || parent->GetClass() != Class::Type) throw InvalidArgumentException();
 			if (static_cast<XType *>(parent)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			if (static_cast<XType *>(parent)->IsLocked()) throw InvalidStateException();
 			static_cast<XClass *>(cls)->AdoptParentClass(static_cast<XClass *>(parent));
 		}
 		void LContext::AdoptInterface(LObject * cls, LObject * interface)
@@ -754,7 +777,14 @@ namespace Engine
 			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
 			if (!interface || interface->GetClass() != Class::Type) throw InvalidArgumentException();
 			if (static_cast<XType *>(interface)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			if (static_cast<XType *>(interface)->IsLocked()) throw InvalidStateException();
 			static_cast<XClass *>(cls)->AdoptInterface(static_cast<XClass *>(interface));
+		}
+		void LContext::LockClass(LObject * cls, bool lock)
+		{
+			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			static_cast<XClass *>(cls)->Lock(lock);
 		}
 		LObject * LContext::QueryObject(const string & path)
 		{
@@ -855,7 +885,7 @@ namespace Engine
 		LObject * LContext::SetPropertyValue(LObject * prop, LObject * value)
 		{
 			if (!prop || prop->GetClass() != Class::InstancedProperty) throw InvalidArgumentException();
-			auto setter = static_cast<XInstancedProperty *>(prop)->GetSetter();
+			SafePointer<LObject> setter = static_cast<XInstancedProperty *>(prop)->GetSetter();
 			return setter->Invoke(1, &value);
 		}
 		void LContext::AttachLiteral(LObject * literal, LObject * attach_under, const string & name)

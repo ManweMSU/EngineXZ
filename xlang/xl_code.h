@@ -24,6 +24,11 @@ namespace Engine
 		public:
 			virtual void GetNextInit(LObject * arguments_scope, FunctionInitDesc & desc) = 0;
 		};
+		class ISimpifiedFunctionInitCallback
+		{
+		public:
+			virtual void GetNextInit(LObject * self, LObject * argument, LObject ** init, LObject ** revert) = 0;
+		};
 		struct FunctionContextDesc
 		{
 			LObject * retval, * instance;
@@ -37,7 +42,13 @@ namespace Engine
 			bool create_init_sequence, create_shutdown_sequence;
 			IFunctionInitCallback * init_callback;
 		};
-
+		struct SimpifiedFunctionContextDesc
+		{
+			LObject * instance, * argument;
+			uint flags;
+			ISimpifiedFunctionInitCallback * init_callback;
+		};
+		
 		class LFunctionContext : public Object
 		{
 			LContext & _ctx;
@@ -53,6 +64,7 @@ namespace Engine
 		public:
 			LFunctionContext(LContext & ctx, LObject * dest, const FunctionContextDesc & desc);
 			LFunctionContext(LContext & ctx, LObject * dest, uint flags, const Array<LObject *> & perform, const Array<LObject *> & revert);
+			LFunctionContext(LContext & ctx, LObject * dest, const SimpifiedFunctionContextDesc & desc);
 			virtual ~LFunctionContext(void) override;
 
 			LObject * GetRootScope(void);

@@ -65,6 +65,7 @@ namespace Engine
 			if (str == Lexic::KeywordOverride) return true;
 			if (str == Lexic::KeywordInherit) return true;
 			if (str == Lexic::KeywordInit) return true;
+			if (str == Lexic::KeywordStructure) return true;
 
 			// TODO: IMPLEMENT REGISTER KEYWORDS
 

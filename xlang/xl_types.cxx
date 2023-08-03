@@ -4,10 +4,7 @@
 #include "xl_func.h"
 #include "xl_var.h"
 #include "xl_lit.h"
-
-// TODO: REMOVE
-#include "../xasm/xa_dasm.h"
-// TODO: END REMOVE
+#include "xl_synth.h"
 
 namespace Engine
 {
@@ -43,7 +40,46 @@ namespace Engine
 		}
 
 		enum class PointerConstructorClass { Init, Copy };
-		class PointerConstructorInstance : public XMethodOverload
+		class TBaseMethodOverload : public XMethodOverload
+		{
+		public:
+			virtual Class GetClass(void) override { return Class::MethodOverload; }
+			virtual string GetName(void) override { return L""; }
+			virtual string GetFullName(void) override { return L""; }
+			virtual bool IsDefinedLocally(void) override { return false; }
+			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
+			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
+			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
+			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
+			virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
+			virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
+			virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
+		};
+		class TBaseFunctionOverload : public XFunctionOverload
+		{
+		public:
+			virtual Class GetClass(void) override { return Class::FunctionOverload; }
+			virtual string GetName(void) override { return L""; }
+			virtual string GetFullName(void) override { return L""; }
+			virtual bool IsDefinedLocally(void) override { return false; }
+			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
+			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
+			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
+			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
+			virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
+			virtual FunctionImplementationDesc & GetImplementationDesc(void) override { throw InvalidStateException(); }
+			virtual bool NeedsInstance(void) override { return true; }
+			virtual bool Throws(void) override { return false; }
+			virtual uint & GetFlags(void) override { throw InvalidStateException(); }
+			virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
+			virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
+		};
+		class PointerConstructorInstance : public TBaseMethodOverload
 		{
 			LContext & _ctx;
 			PointerConstructorClass _cls;
@@ -80,12 +116,6 @@ namespace Engine
 		public:
 			PointerConstructorInstance(LContext & ctx, PointerConstructorClass cls, LObject * instance) : _ctx(ctx), _cls(cls) { _instance.SetRetain(instance); }
 			virtual ~PointerConstructorInstance(void) override {}
-			virtual Class GetClass(void) override { return Class::MethodOverload; }
-			virtual string GetName(void) override { return L""; }
-			virtual string GetFullName(void) override { return L""; }
-			virtual bool IsDefinedLocally(void) override { return false; }
-			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				if (_cls == PointerConstructorClass::Init && argc) throw ObjectHasNoSuchOverloadException(this, argc, argv);
@@ -98,43 +128,19 @@ namespace Engine
 				if (argc) com->_source = PerformTypeCast(static_cast<XType *>(type.Inner()), argv[0], CastPriorityConverter);
 				return CreateComputable(_ctx, com);
 			}
-			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
-			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
-			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"instanced pointer built-in constructor"; }
-			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
-			virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
-			virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
 			virtual LContext & GetContext(void) override { return _ctx; }
-			virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
 		};
-		class PointerConstructor : public XFunctionOverload
+		class PointerConstructor : public TBaseFunctionOverload
 		{
 			LContext & _ctx;
 			PointerConstructorClass _cls;
 		public:
 			PointerConstructor(LContext & ctx, PointerConstructorClass cls) : _ctx(ctx), _cls(cls) {}
 			virtual ~PointerConstructor(void) override {}
-			virtual Class GetClass(void) override { return Class::FunctionOverload; }
-			virtual string GetName(void) override { return L""; }
-			virtual string GetFullName(void) override { return L""; }
-			virtual bool IsDefinedLocally(void) override { return false; }
-			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
-			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
-			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
-			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
-			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"pointer built-in constructor"; }
-			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
 			virtual XMethodOverload * SetInstance(LObject * instance) override { return new PointerConstructorInstance(_ctx, _cls, instance); }
-			virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
-			virtual FunctionImplementationDesc & GetImplementationDesc(void) override { throw InvalidStateException(); }
-			virtual bool NeedsInstance(void) override { return true; }
-			virtual uint & GetFlags(void) override { throw InvalidStateException(); }
-			virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
 			virtual LContext & GetContext(void) override { return _ctx; }
-			virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
 		};
 		class ReferenceComputable : public Object, public IComputableProvider
 		{
@@ -214,14 +220,14 @@ namespace Engine
 		{
 			struct _interface_info
 			{
-				SafePointer<TypeClass> _class;
+				TypeClass * _class;
 				int _vft_index;
 				XA::ObjectSize _vft_offset, _base_offset;
 			};
 
 			LContext & _ctx;
 			string _name, _path, _cn;
-			bool _local;
+			bool _local, _locked;
 			XI::Module::TypeReference _ref;
 			XA::ArgumentSpecification _type_spec;
 			XI::Module::Class::Nature _nature;
@@ -235,11 +241,13 @@ namespace Engine
 			TypeClass(const string & name, const string & path, bool local, LContext & ctx) :
 				_name(name), _path(path), _cn(XI::Module::TypeReference::MakeClassReference(path)), _local(local), _ref(_cn), _ctx(ctx), _interfaces(0x10)
 			{
+				_locked = false;
 				_type_spec = XA::TH::MakeSpec(XA::ArgumentSemantics::Object, 0, 0);
 				_nature = XI::Module::Class::Nature::Standard;
 				_vft_index = -1;
 				_last_vft_index = 0;
 				_vft_offset = XA::TH::MakeSize(-1, -1);
+				_parent._class = 0;
 				_parent._vft_index = 0;
 				_parent._vft_offset = XA::TH::MakeSize(-1, -1);
 				_parent._base_offset = XA::TH::MakeSize(-1, -1);
@@ -459,6 +467,7 @@ namespace Engine
 				}
 				throw LException(this);
 			}
+			virtual bool IsLocked(void) override { return _locked; }
 			virtual XI::Module::Class::Nature GetLanguageSemantics(void) override { return _nature; }
 			virtual void OverrideArgumentSpecification(XA::ArgumentSpecification spec) override { _type_spec = spec; }
 			virtual void OverrideLanguageSemantics(XI::Module::Class::Nature spec) override { _nature = spec; }
@@ -500,7 +509,7 @@ namespace Engine
 					_parent._vft_index = _vft_index;
 					_parent._vft_offset = _vft_offset;
 				}
-				_parent._class.SetRetain(source);
+				_parent._class = source;
 				_parent._base_offset = XA::TH::MakeSize(0, 0);
 			}
 			virtual void AdoptInterface(XClass * interface) override
@@ -514,7 +523,7 @@ namespace Engine
 				while (_type_spec.size.num_bytes & 0x07) _type_spec.size.num_bytes++;
 				_last_vft_index++;
 				_interface_info info;
-				info._class.SetRetain(source);
+				info._class = source;
 				info._vft_index = _last_vft_index;
 				info._vft_offset = info._base_offset = _type_spec.size;
 				_interfaces.Append(info);
@@ -530,7 +539,7 @@ namespace Engine
 				for (auto & c : conf) if (c.GetCanonicalType() == interface->GetCanonicalType()) return;
 				_last_vft_index = max(_last_vft_index, vft_index);
 				_interface_info info;
-				info._class.SetRetain(source);
+				info._class = source;
 				info._vft_index = vft_index;
 				info._vft_offset = info._base_offset = vft_offset;
 				_interfaces.Append(info);
@@ -697,6 +706,7 @@ namespace Engine
 				throw InvalidArgumentException();
 			}
 			virtual void ListFields(ObjectArray<LObject> & list) override { for (auto & m : _members) if (m.value->GetClass() == Class::Field) list.Append(m.value); }
+			virtual void Lock(bool lock) override { _locked = lock; }
 			virtual string ToString(void) const override { return L"class " + _path; }
 		};
 		class TypeArray : public XArray
@@ -704,6 +714,61 @@ namespace Engine
 			LContext & _ctx;
 			string _cn;
 			XI::Module::TypeReference _ref;
+
+			class _array_instanced_method : public TBaseMethodOverload
+			{
+				SafePointer<XArray> _base;
+				SafePointer<LObject> _instance;
+				string _method;
+
+				LObject * _internal_create_literal(int value)
+				{
+					XI::Module::Literal lit;
+					lit.contents = XI::Module::Literal::Class::SignedInteger;
+					lit.length = 4;
+					lit.data_sint64 = value;
+					return CreateLiteral(GetContext(), lit);
+				}
+			public:
+				_array_instanced_method(XArray * base, LObject * instance, const string & method) : _method(method) { _base.SetRetain(base); _instance.SetRetain(instance); }
+				virtual ~_array_instanced_method(void) override {}
+				virtual LObject * Invoke(int argc, LObject ** argv) override
+				{
+					if (_method == OperatorSubscript) {
+						if (!argc) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+						SafePointer<XType> element = _base->GetElementType();
+						SafePointer<XType> type_intptr = CreateType(XI::Module::TypeReference::MakeClassReference(NameIntPtr), GetContext());
+						SafePointer<LObject> index = PerformTypeCast(type_intptr, argv[0], CastPriorityConverter);
+						SafePointer<OffsetComputable> com = new OffsetComputable(element, _instance, element->GetArgumentSpecification().size, index.Inner());
+						SafePointer<XComputable> offs = CreateComputable(GetContext(), com);
+						if (argc > 1) {
+							SafePointer<LObject> op = offs->GetMember(OperatorSubscript);
+							return op->Invoke(argc - 1, argv + 1);
+						} else { offs->Retain(); return offs; }
+					} else if (_method == IteratorBegin) {
+						return _internal_create_literal(0);
+					} else if (_method == IteratorEnd) {
+						return _internal_create_literal(_base->GetVolume() - 1);
+					} else if (_method == IteratorPostEnd) {
+						return _internal_create_literal(_base->GetVolume());
+					} else if (_method == IteratorPreBegin) {
+						return _internal_create_literal(-1);
+					} else throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				}
+				virtual string ToString(void) const override { return L"instanced array built-in method " + _method; }
+				virtual LContext & GetContext(void) override { return _base->GetContext(); }
+			};
+			class _array_method : public TBaseFunctionOverload
+			{
+				SafePointer<XArray> _base;
+				string _method;
+			public:
+				_array_method(XArray * base, const string & method) : _method(method) { _base.SetRetain(base); }
+				virtual ~_array_method(void) override {}
+				virtual string ToString(void) const override { return L"array built-in method " + _method; }
+				virtual XMethodOverload * SetInstance(LObject * instance) override { return new _array_instanced_method(_base, instance, _method); }
+				virtual LContext & GetContext(void) override { return _base->GetContext(); }
+			};
 		public:
 			TypeArray(const string & cn, LContext & ctx) : _cn(cn), _ctx(ctx), _ref(_cn) {}
 			virtual ~TypeArray(void) override {}
@@ -712,13 +777,9 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetMember(const string & name) override
 			{
-				// TODO: IMPLEMENT
-				// [] always
-				// constexpr const widechar * IteratorBegin	= L"initus";
-				// constexpr const widechar * IteratorEnd		= L"finis";
-				// constexpr const widechar * IteratorPreBegin	= L"prae_initus";
-				// constexpr const widechar * IteratorPostEnd	= L"post_finis";
-				throw ObjectHasNoSuchMemberException(this, name);
+				if (name == OperatorSubscript || name == IteratorBegin || name == IteratorEnd || name == IteratorPreBegin || name == IteratorPostEnd) {
+					return new _array_method(this, name);
+				} else throw ObjectHasNoSuchMemberException(this, name);
 			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
@@ -735,69 +796,13 @@ namespace Engine
 				auto element_spec = element->GetArgumentSpecification();
 				return XA::TH::MakeSpec(XA::ArgumentSemantics::Object, element_spec.size.num_bytes * volume, element_spec.size.num_words * volume);
 			}
-			virtual LObject * GetConstructorInit(void) override
-			{
-				// TODO: IMPLEMENT
-				throw LException(this);
-			}
-			virtual LObject * GetConstructorCopy(void) override
-			{
-				// TODO: IMPLEMENT
-				throw LException(this);
-			}
-			virtual LObject * GetConstructorZero(void) override
-			{
-				// TODO: IMPLEMENT
-				throw LException(this);
-			}
-			virtual LObject * GetConstructorMove(void) override
-			{
-				// TODO: IMPLEMENT
-				throw LException(this);
-			}
+			virtual LObject * GetConstructorInit(void) override { return CreateStaticArrayRoutine(this, CreateMethodConstructorInit); }
+			virtual LObject * GetConstructorCopy(void) override { return CreateStaticArrayRoutine(this, CreateMethodConstructorCopy); }
+			virtual LObject * GetConstructorZero(void) override { return CreateStaticArrayRoutine(this, CreateMethodConstructorZero); }
+			virtual LObject * GetConstructorMove(void) override { return CreateStaticArrayRoutine(this, CreateMethodConstructorMove); }
 			virtual LObject * GetConstructorCast(XType * from_type) override { throw ObjectHasNoSuchMemberException(this, NameConstructor); }
 			virtual LObject * GetCastMethod(XType * to_type) override { throw ObjectHasNoSuchMemberException(this, NameConverter); }
-			virtual LObject * GetDestructor(void) override
-			{
-				// TODO: REWORK
-				// SafePointer<XType> element = GetElementType();
-				// SafePointer<XType> type_void = CreateType(XI::Module::TypeReference::MakeClassReference(NameVoid), _ctx);
-				// SafePointer<LObject> dtor = element->GetDestructor();
-				// if (dtor->GetClass() == Class::Null) { dtor->Retain(); return dtor; }
-				// LObject * self = this;
-				// auto array_dtor = _ctx.CreatePrivateFunction(L"perde_ordinem", type_void, 1, &self, 0);
-				// auto & impl = static_cast<XFunctionOverload *>(array_dtor)->GetImplementationDesc();
-				// if (!impl._xa.instset.Length()) {
-				// 	SafePointer<LObject> self_ptr = _ctx.QueryTypePointer(this);
-				// 	SafePointer<LObject> subs = GetMember(OperatorSubscript);
-				// 	impl._xa.inputs[0].semantics = XA::ArgumentSemantics::This;
-				// 	impl._xa.inputs[0].size = XA::TH::MakeSize(0, 1);
-				// 	auto vol = GetVolume();
-				// 	auto xdtor = static_cast<XFunctionOverload *>(dtor.Inner());
-				// 	auto xsubs = static_cast<XFunctionOverload *>(subs.Inner());
-				// 	SafePointer<LObject> self = CreateComputable(_ctx, static_cast<XType *>(self_ptr.Inner()),
-				// 		MakeAddressFollow(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), GetArgumentSpecification().size));
-				// 	SafePointer<LObject> xsubs_inst = xsubs->SetInstance(self);
-				// 	for (int i = 0; i < vol; i++) {
-				// 		SafePointer<LObject> index = CreateLiteral(_ctx, uint64(0));
-				// 		SafePointer<LObject> element_object = xsubs_inst->Invoke(1, index.InnerRef());
-				// 		SafePointer<LObject> dtor_inst = xdtor->SetInstance(element_object);
-				// 		SafePointer<LObject> dtor_inv = dtor_inst->Invoke(0, 0);
-				// 		impl._xa.instset << XA::TH::MakeStatementExpression(dtor_inv->Evaluate(impl._xa, 0));
-				// 	}
-				// 	impl._xa.instset << XA::TH::MakeStatementReturn();
-
-				// 	// TODO: REMOVE
-				// 	IO::Console console;
-				// 	XA::DisassemblyFunction(impl._xa, &console);
-				// 	// TODO: END REMOVE
-				// }
-				// array_dtor->Retain();
-				// return array_dtor;
-
-				// TODO: IMPLEMENT
-				throw LException(this);
-			}
+			virtual LObject * GetDestructor(void) override { return CreateStaticArrayRoutine(this, CreateMethodDestructor); }
 			virtual void GetTypesConformsTo(ObjectArray<XType> & types) override
 			{
 				SafePointer<XType> self_ref = CreateType(XI::Module::TypeReference::MakeReference(GetCanonicalType()), _ctx);
@@ -825,14 +830,14 @@ namespace Engine
 					if (ref.QueryCanonicalName() == element_ptr) {
 						SafePointer<LObject> take_addr = _ctx.QueryAddressOfOperator();
 						SafePointer<LObject> address = take_addr->Invoke(1, &subject);
-						SafePointer<ReinterpretComputable> com = new ReinterpretComputable(element_ptr_type, subject);
+						SafePointer<ReinterpretComputable> com = new ReinterpretComputable(element_ptr_type, address);
 						return CreateComputable(_ctx, com);
 					}
 					if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Reference &&
 						ref.GetReferenceDestination().QueryCanonicalName() == element_ptr) {
 						SafePointer<LObject> take_addr = _ctx.QueryAddressOfOperator();
 						SafePointer<LObject> address = take_addr->Invoke(1, &subject);
-						SafePointer<ReinterpretComputable> com = new ReinterpretComputable(element_ptr_type, subject);
+						SafePointer<ReinterpretComputable> com = new ReinterpretComputable(element_ptr_type, address);
 						SafePointer<LObject> reint = CreateComputable(_ctx, com);
 						SafePointer<ReferenceComputable> com2 = new ReferenceComputable(element_ptr_type, reint);
 						return CreateComputable(_ctx, com2);
@@ -840,8 +845,17 @@ namespace Engine
 				}
 				throw LException(this);
 			}
+			virtual bool IsLocked(void) override { SafePointer<XType> inner = GetElementType(); return inner->IsLocked(); }
 			virtual XType * GetElementType(void) override { return CreateType(_ref.GetArrayElement().QueryCanonicalName(), _ctx); }
 			virtual int GetVolume(void) override { return _ref.GetArrayVolume(); }
+			virtual LObject * ExtractElement(LObject * instance, int index) override
+			{
+				SafePointer<XType> element = GetElementType();
+				auto size = element->GetArgumentSpecification().size;
+				auto offset = XA::TH::MakeSize(size.num_bytes * index, size.num_words * index);
+				SafePointer<OffsetComputable> com = new OffsetComputable(element, instance, offset, false);
+				return CreateComputable(GetContext(), com);
+			}
 			virtual string ToString(void) const override { return L"type " + _ref.ToString(); }
 		};
 		class TypePointer : public XPointer
@@ -892,7 +906,7 @@ namespace Engine
 					} else throw InvalidStateException();
 				}
 			};
-			class _pointer_operator_instance : public XMethodOverload
+			class _pointer_operator_instance : public TBaseMethodOverload
 			{
 				string _op;
 				SafePointer<XPointer> _ptr_type;
@@ -900,12 +914,6 @@ namespace Engine
 			public:
 				_pointer_operator_instance(const string & op, XPointer * ptr, LObject * inst) : _op(op) { _ptr_type.SetRetain(ptr); _instance.SetRetain(inst); }
 				virtual ~_pointer_operator_instance(void) override {}
-				virtual Class GetClass(void) override { return Class::MethodOverload; }
-				virtual string GetName(void) override { return L""; }
-				virtual string GetFullName(void) override { return L""; }
-				virtual bool IsDefinedLocally(void) override { return false; }
-				virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-				virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 				virtual LObject * Invoke(int argc, LObject ** argv) override
 				{
 					SafePointer<_pointer_operator_computable> com = new _pointer_operator_computable;
@@ -943,43 +951,19 @@ namespace Engine
 					} else throw ObjectHasNoSuchOverloadException(this, argc, argv);
 					return CreateComputable(_ptr_type->GetContext(), com);
 				}
-				virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
-				virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
-				virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 				virtual string ToString(void) const override { return L"instanced pointer built-in operator"; }
-				virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
-				virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
-				virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
 				virtual LContext & GetContext(void) override { return _ptr_type->GetContext(); }
-				virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
 			};
-			class _pointer_operator : public XFunctionOverload
+			class _pointer_operator : public TBaseFunctionOverload
 			{
 				string _op;
 				SafePointer<XPointer> _ptr_type;
 			public:
 				_pointer_operator(XPointer * ptr, const string & op) : _op(op) { _ptr_type.SetRetain(ptr); }
 				virtual ~_pointer_operator(void) override {}
-				virtual Class GetClass(void) override { return Class::FunctionOverload; }
-				virtual string GetName(void) override { return L""; }
-				virtual string GetFullName(void) override { return L""; }
-				virtual bool IsDefinedLocally(void) override { return false; }
-				virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-				virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
-				virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
-				virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
-				virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
-				virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 				virtual string ToString(void) const override { return L"pointer built-in operator"; }
-				virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}
 				virtual XMethodOverload * SetInstance(LObject * instance) override { return new _pointer_operator_instance(_op, _ptr_type, instance); }
-				virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
-				virtual FunctionImplementationDesc & GetImplementationDesc(void) override { throw InvalidStateException(); }
-				virtual bool NeedsInstance(void) override { return true; }
-				virtual uint & GetFlags(void) override { throw InvalidStateException(); }
-				virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
 				virtual LContext & GetContext(void) override { return _ptr_type->GetContext(); }
-				virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
 			};
 		public:
 			TypePointer(const string & cn, LContext & ctx) : _cn(cn), _ctx(ctx), _ref(_cn) {}
@@ -1123,6 +1107,7 @@ namespace Engine
 				}
 				throw LException(this);
 			}
+			virtual bool IsLocked(void) override { return false; }
 			virtual XType * GetElementType(void) override { return CreateType(_ref.GetPointerDestination().QueryCanonicalName(), _ctx); }
 			virtual string ToString(void) const override { return L"type " + _ref.ToString(); }
 		};
@@ -1160,6 +1145,7 @@ namespace Engine
 				if (type->GetCanonicalType() == GetCanonicalType() && !cast_explicit) { subject->Retain(); return subject; }
 				throw LException(this);
 			}
+			virtual bool IsLocked(void) override { return false; }
 			virtual XType * GetElementType(void) override { return CreateType(_ref.GetReferenceDestination().QueryCanonicalName(), _ctx); }
 			virtual string ToString(void) const override { return L"type " + _ref.ToString(); }
 		};
@@ -1193,6 +1179,7 @@ namespace Engine
 			virtual LObject * GetDestructor(void) override { throw ObjectHasNoSuchMemberException(this, NameDestructor); }
 			virtual void GetTypesConformsTo(ObjectArray<XType> & types) override {}
 			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override { throw LException(this); }
+			virtual bool IsLocked(void) override { return false; }
 			virtual int GetArgumentCount(void) override
 			{
 				SafePointer< Array<XI::Module::TypeReference> > sgn = _ref.GetFunctionSignature();
@@ -1441,6 +1428,14 @@ namespace Engine
 				SafePointer<LObject> ctor_inst = static_cast<XFunction *>(ctor.Inner())->SetInstance(uw);
 				return ctor_inst->Invoke(argc, argv);
 			}
+		}
+		LObject * MoveInstance(LObject * instance, LObject * with_value)
+		{
+			SafePointer<LObject> uw = UnwarpObject(instance);
+			SafePointer<LObject> type = uw->GetType();
+			SafePointer<LObject> move_ctor = static_cast<XType *>(type.Inner())->GetConstructorMove();
+			SafePointer<LObject> move_ctor_inst = static_cast<XFunctionOverload *>(move_ctor.Inner())->SetInstance(uw);
+			return move_ctor_inst->Invoke(1, &with_value);
 		}
 		LObject * ZeroInstance(LObject * instance)
 		{

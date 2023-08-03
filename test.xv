@@ -11,13 +11,19 @@ functio nintadl GetStdHandle(int);
 [[importa] "read_bool"]
 functio logicum ReadBool();
 
-var nint64 buffer0, buffer1, buffer2, buffer3, buffer4, buffer5, buffer6, buffer7, buffer8, buffer9;
+//var nint64 buffer0, buffer1, buffer2, buffer3, buffer4, buffer5, buffer6, buffer7, buffer8, buffer9;
+var ordo [256] nint16 buffer;
 functio nihil Decompose(@char text, ~@nint16 utf16, ~int length)
 {
 	length = 0;
-	utf16 = (@nint16) (@buffer0);
-	dum (text[length]) { utf16[length] = text[length]; length++; }
-	utf16[length] = 0;
+
+	utf16 = buffer;
+
+	//utf16 = (@nint16) (@buffer0);
+	//var ~ buffer = (@ordo [40] nint16)(@buffer0)^;
+
+	dum (text[length]) { buffer[length] = text[length]; length++; }
+	buffer[length] = 0;
 }
 functio nihil Print(@char text)
 {
@@ -130,8 +136,55 @@ genus TEST_AUTO hereditat ShiftedConsole {
 	}
 }
 
+genus cond_init
+{
+	int shit;
+
+	structor () iacit
+	{
+		shit = counter;
+		counter++;
+		Print("before init: "); Print(shit); Print("\n");
+		si (ReadBool()) iace 531;
+		Print("after init: "); Print(shit); Print("\n");
+	}
+	destructor ()
+	{
+		Print("destroy: "); Print(shit); Print("\n");
+	}
+}
+
+structura struct
+{
+	TEST value1;
+	int value2;
+	TEST value3;
+	int value4;
+}
+
+structura struct_2 hereditat struct
+{
+	TEST value5;
+}
+
 functio nihil primus() introitus iacit
 {
+	ShiftedConsole cns66( (@IConsole)(protocollum(cns)), 0 );
+	struct_2 CS;
+	CS.value2 = 44;
+	CS.value4 = 88;
+
+	struct CS2 = CS;
+
+	cns66.PrintInteger(CS.value2);
+	cns66.PrintInteger(CS.value4);
+	cns66.PrintInteger(CS2.value2);
+	cns66.PrintInteger(CS2.value4);
+
+	responde;
+
+	ordo [3] cond_init CI;
+
 	TEST test = TEST();
 	TEST2 test2;
 	test2.value = 66;
@@ -157,6 +210,11 @@ functio nihil primus() introitus iacit
 	test_auto.auto_value = 5050;
 	test_auto.auto_value += 20;
 	test_auto.auto_value++;
+
+	ordo [5] TEST TESTARRAY;
+	pro (var i : ~TESTARRAY) test_auto.PrintInteger(i);
+
+	var cpy = TESTARRAY;
 
 	iace magnitudo(test2);
 

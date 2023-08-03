@@ -18,6 +18,13 @@ namespace Engine
 			FunctionPureCall	= 0x080,
 			FunctionOverride	= 0x100,
 		};
+		enum CreateMethodsFlags {
+			CreateMethodConstructorInit	= 0x001,
+			CreateMethodConstructorCopy	= 0x002,
+			CreateMethodConstructorZero	= 0x004,
+			CreateMethodConstructorMove	= 0x008,
+			CreateMethodDestructor		= 0x010,
+		};
 
 		class LObject;
 		class LException : public Exception
@@ -97,6 +104,8 @@ namespace Engine
 		class LObject : public Object
 		{
 		public:
+			LObject(void);
+			virtual ~LObject(void) override;
 			// Object information
 			virtual Class GetClass(void) = 0;
 			virtual string GetName(void) = 0;
@@ -129,6 +138,7 @@ namespace Engine
 
 			bool IncludeModule(const string & name, IModuleLoadCallback * callback);
 			LObject * GetRootNamespace(void);
+			LObject * GetPrivateNamespace(void);
 			LObject * CreateNamespace(LObject * create_under, const string & name);
 			LObject * CreateAlias(LObject * create_under, const string & name, LObject * destination);
 			LObject * CreateClass(LObject * create_under, const string & name);
@@ -142,7 +152,6 @@ namespace Engine
 			LObject * CreatePropertySetter(LObject * prop, uint flags);
 			LObject * CreatePropertyGetter(LObject * prop, uint flags);
 			LObject * CreatePrivateFunction(uint flags);
-			LObject * CreatePrivateFunction(const string & name, LObject * retval, int argc, LObject ** argv, uint flags);
 			bool IsInterface(LObject * cls);
 			XA::ArgumentSemantics GetClassSemantics(LObject * cls);
 			XA::ObjectSize GetClassInstanceSize(LObject * cls);
@@ -154,9 +163,11 @@ namespace Engine
 			void QueryFunctionImplementation(LObject * func, XA::Function & code);
 			void SupplyFunctionImplementation(LObject * func, const XA::Function & code);
 			void SupplyFunctionImplementation(LObject * func, const string & name, const string & lib);
+			void CreateClassDefaultMethods(LObject * cls, uint methods, ObjectArray<LObject> & vft_init);
 			void CreateClassVFT(LObject * cls);
 			void AdoptParentClass(LObject * cls, LObject * parent);
 			void AdoptInterface(LObject * cls, LObject * interface);
+			void LockClass(LObject * cls, bool lock);
 			LObject * QueryObject(const string & path);
 			LObject * QueryScope(void);
 			LObject * QueryStaticArray(LObject * type, int volume);
