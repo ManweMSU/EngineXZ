@@ -22,8 +22,23 @@ functio nihil Print(@char text)
 	WriteConsole(GetStdHandle(-11), utf16, length, nullus, nullus);
 }
 
+[[xa]] functio int TEST_SPLIT(int input)
+{
+	INTERFACE 4:SINT=>4:SINT
+	CODE {
+		RET {
+			@BLT:4 4=>4(R,
+				@S_MUL:4 4=>4(
+					@SPLIT:4=>4(A),
+					S
+				)
+			)
+		}
+	}
+}
+
 functio nihil primus() introitus iacit
 {
 	Print("suka ty pidor\n");
-	iace 666;
+	iace TEST_SPLIT(6); //666;
 }

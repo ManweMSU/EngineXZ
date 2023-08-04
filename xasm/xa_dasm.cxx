@@ -104,6 +104,7 @@ namespace Engine
 				else if (ref.ref_class == ReferenceRetVal) output << L"R";
 				else if (ref.ref_class == ReferenceLocal) output << L"L";
 				else if (ref.ref_class == ReferenceInit) output << L"I";
+				else if (ref.ref_class == ReferenceSplitter) output << L"S";
 				else if (ref.ref_class == ReferenceTransform) output << L"@";
 				else if (ref.ref_class == ReferenceLiteral) output << L"-";
 				else throw InvalidArgumentException();
@@ -115,6 +116,7 @@ namespace Engine
 					else if (ref.index == TransformInvoke) output << L"CALL";
 					else if (ref.index == TransformTemporary) output << L"NEW";
 					else if (ref.index == TransformBreakIf) output << L"BREAKIF";
+					else if (ref.index == TransformSplit) output << L"SPLIT";
 					else if (ref.index == TransformLogicalAnd) output << L"ALL";
 					else if (ref.index == TransformLogicalOr) output << L"ANY";
 					else if (ref.index == TransformLogicalFork) output << L"FORK";

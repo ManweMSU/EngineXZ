@@ -172,6 +172,8 @@ namespace Engine
 					ref.ref_class = ReferenceLocal;
 				} else if (_text[_pos].Class == TokenClass::Keyword && _text[_pos].Content == L"I") {
 					ref.ref_class = ReferenceInit;
+				} else if (_text[_pos].Class == TokenClass::Keyword && _text[_pos].Content == L"S") {
+					ref.ref_class = ReferenceSplitter;
 				} else if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"@" && allow_intrinsic) {
 					ref.ref_class = ReferenceTransform;
 				} else if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"-" && allow_literals) {
@@ -189,6 +191,7 @@ namespace Engine
 					else if (i == L"CALL") ref.index = TransformInvoke;
 					else if (i == L"NEW") ref.index = TransformTemporary;
 					else if (i == L"BREAKIF") ref.index = TransformBreakIf;
+					else if (i == L"SPLIT") ref.index = TransformSplit;
 					// Logical
 					else if (i == L"ALL") ref.index = TransformLogicalAnd;
 					else if (i == L"ANY") ref.index = TransformLogicalOr;
@@ -403,6 +406,7 @@ namespace Engine
 				spelling.Keywords << L"R";
 				spelling.Keywords << L"L";
 				spelling.Keywords << L"I";
+				spelling.Keywords << L"S";
 				spelling.Keywords << L"W";
 				spelling.Keywords << L"EXTERNAL";
 				spelling.Keywords << L"INTERFACE";

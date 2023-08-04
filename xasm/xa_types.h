@@ -28,6 +28,7 @@ namespace Engine
 			ReferenceRetVal		= 0x05,
 			ReferenceLocal		= 0x06,
 			ReferenceInit		= 0x07,
+			ReferenceSplitter	= 0x08,
 			ReferenceTransform	= 0x80,
 			ReferenceLiteral	= 0x81,
 		};
@@ -47,6 +48,7 @@ namespace Engine
 			TransformInvoke			= 0x0005, // N + 1 arguments - the function to invoke pointer; its arguments then; retval - the function's one
 			TransformTemporary		= 0x0006, // 1 argument - no type data; retval - new entity, finilizer supplied
 			TransformBreakIf		= 0x0007, // 3 arguments - anything; integer; literal; retval - anything
+			TransformSplit			= 0x0008, // 1 argument - anything; retval - anything
 			TransformLogicalAnd		= 0x0010, // any number of integer arguments; retval - integer
 			TransformLogicalOr		= 0x0011, // any number of integer arguments; retval - integer
 			TransformLogicalFork	= 0x0012, // 3 arguments - integer; no type; no type; retval - no type

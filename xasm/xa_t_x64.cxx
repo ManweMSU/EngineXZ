@@ -56,6 +56,7 @@ namespace Engine
 					int frame_size;
 					int frame_size_unused;
 					int first_local_no;
+					int current_split_offset;
 					Array<_local_disposition> locals = Array<_local_disposition>(0x20);
 					bool shift_rsp, temporary;
 				};
@@ -236,6 +237,7 @@ namespace Engine
 					ls.frame_base = enf_base ? enf_base : (prev ? prev->GetValue().frame_base - of_size : _scope_frame_base - of_size);
 					ls.frame_size = of_size;
 					ls.frame_size_unused = of_size;
+					ls.current_split_offset = 0;
 					ls.first_local_no = prev ? prev->GetValue().first_local_no + prev->GetValue().locals.Length() : 0;
 					ls.shift_rsp = of_size && !enf_base;
 					ls.temporary = temporary;
@@ -1239,6 +1241,32 @@ namespace Engine
 										*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
 									}
 									_encode_restore(ld.reg, reg_in_use, !idle);
+								} else if (node.self.index == TransformSplit) {
+									if (node.inputs.Length() != 1) throw InvalidArgumentException();
+									auto size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
+									_internal_disposition ld = *disp;
+									if (ld.flags & DispositionDiscard) {
+										ld.flags = DispositionPointer;
+										ld.reg = Reg::RSI;
+										ld.size = size;
+									}
+									_encode_preserve(ld.reg, reg_in_use, !idle && ld.reg != disp->reg);
+									_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | uint(ld.reg));
+									*mem_load += _word_align(node.input_specs[0].size);
+									Reg dest = ld.reg == Reg::RDI ? Reg::RDX : Reg::RDI;
+									if (!idle) {
+										int offset;
+										_allocate_temporary(node.input_specs[0].size, XA::TH::MakeFinal(), &offset);
+										_scopes.GetLast()->GetValue().current_split_offset = offset;
+										_encode_preserve(dest, reg_in_use | uint(ld.reg), true);
+										encode_lea(dest, Reg::RBP, offset);
+										_encode_blt(dest, true, ld.reg, ld.flags & DispositionPointer, size, reg_in_use | uint(ld.reg) | uint(dest));
+										_encode_restore(dest, reg_in_use | uint(ld.reg), true);
+									}
+									_encode_restore(ld.reg, reg_in_use, !idle && ld.reg != disp->reg);
+									if (disp->flags & DispositionDiscard) {
+										disp->flags = DispositionDiscard;
+									} else *disp = ld;
 								} else throw InvalidArgumentException();
 							} else if (node.self.index >= 0x010 && node.self.index < 0x013) {
 								_encode_logics(node, idle, mem_load, disp, reg_in_use);
@@ -1774,6 +1802,11 @@ namespace Engine
 						if (!_init_locals.IsEmpty()) {
 							auto & local = _init_locals.GetLast()->GetValue();
 							encode_lea(dest, Reg::RBP, local.rbp_offset);
+						} else throw InvalidArgumentException();
+					} else if (value.ref_class == ReferenceSplitter) {
+						auto scope = _scopes.GetLast();
+						if (scope && scope->GetValue().current_split_offset) {
+							encode_lea(dest, Reg::RBP, scope->GetValue().current_split_offset);
 						} else throw InvalidArgumentException();
 					} else throw InvalidArgumentException();
 				}
