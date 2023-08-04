@@ -10,30 +10,6 @@ namespace Engine
 {
 	namespace XL
 	{
-		XA::ExpressionTree MakeConstant(XA::Function & hdlr, const void * pdata, int size, int align = 1)
-		{
-			int offset = -1;
-			for (int i = 0; i <= hdlr.data.Length() - size; i += align) {
-				if (pdata) {
-					if (MemoryCompare(hdlr.data.GetBuffer() + i, pdata, size) == 0) { offset = i; break; }
-				} else {
-					bool zero = true;
-					for (int j = 0; j < size; j++) if (hdlr.data[i + j]) { zero = false; break; }
-					if (zero) { offset = i; break; }
-				}
-			}
-			if (offset < 0) {
-				while (hdlr.data.Length() % align) hdlr.data << 0;
-				offset = hdlr.data.Length();
-				hdlr.data.SetLength(offset + size);
-				if (pdata) {
-					MemoryCopy(hdlr.data.GetBuffer() + offset, pdata, size);
-				} else {
-					for (int j = 0; j < size; j++) hdlr.data[offset + j] = 0;
-				}
-			}
-			return XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, offset));
-		}
 		XA::ExpressionTree MakePointer(const XA::ExpressionTree & obj, const XA::ObjectSize & size)
 		{
 			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformTakePointer, XA::ReferenceFlagInvoke));

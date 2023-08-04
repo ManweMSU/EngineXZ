@@ -47,7 +47,51 @@ namespace Engine
 			{
 				if (op == OperatorAssign) {
 					return MakeAddressOf(MakeBlt(inputs[0].Evaluate(func, error_ctx), inputs[1].Evaluate(func, error_ctx), spec.size), spec.size);
-				} else throw InvalidStateException();
+				} else if (inputs.Length() == 2) {
+					auto split = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformSplit, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(split, inputs[0].Evaluate(func, error_ctx), spec);
+					XA::TH::AddTreeOutput(split, spec);
+					auto trs = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformNull, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(trs, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceSplitter)), spec);
+					XA::TH::AddTreeInput(trs, inputs[1].Evaluate(func, error_ctx), spec);
+					XA::TH::AddTreeOutput(trs, spec);
+					if (op == OperatorAOr) trs.self.index = XA::TransformVectorOr;
+					else if (op == OperatorAXor) trs.self.index = XA::TransformVectorXor;
+					else if (op == OperatorAAnd) trs.self.index = XA::TransformVectorAnd;
+					else if (op == OperatorAAdd) trs.self.index = XA::TransformIntegerAdd;
+					else if (op == OperatorASubtract) trs.self.index = XA::TransformIntegerSubt;
+					else if (op == OperatorAMultiply) {
+						if (spec.semantics == XA::ArgumentSemantics::SignedInteger) trs.self.index = XA::TransformIntegerSMul;
+						else trs.self.index = XA::TransformIntegerUMul;
+					} else if (op == OperatorADivide) {
+						if (spec.semantics == XA::ArgumentSemantics::SignedInteger) trs.self.index = XA::TransformIntegerSDiv;
+						else trs.self.index = XA::TransformIntegerUDiv;
+					} else if (op == OperatorAResidual) {
+						if (spec.semantics == XA::ArgumentSemantics::SignedInteger) trs.self.index = XA::TransformIntegerSMod;
+						else trs.self.index = XA::TransformIntegerUMod;
+					} else if (op == OperatorAShiftLeft) {
+						if (spec.semantics == XA::ArgumentSemantics::SignedInteger) trs.self.index = XA::TransformVectorShiftAL;
+						else trs.self.index = XA::TransformVectorShiftL;
+					} else if (op == OperatorAShiftRight) {
+						if (spec.semantics == XA::ArgumentSemantics::SignedInteger) trs.self.index = XA::TransformVectorShiftAR;
+						else trs.self.index = XA::TransformVectorShiftR;
+					} else throw InvalidStateException();
+					return MakeAddressOf(MakeBlt(split, trs, spec.size), spec.size);
+				} else {
+					uint64 one = 1;
+					auto size = spec.size.num_bytes + 8 * spec.size.num_words;
+					auto split = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformSplit, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(split, inputs[0].Evaluate(func, error_ctx), spec);
+					XA::TH::AddTreeOutput(split, spec);
+					auto trs = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformNull, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(trs, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceSplitter)), spec);
+					XA::TH::AddTreeInput(trs, MakeConstant(func, &one, size, size), spec);
+					XA::TH::AddTreeOutput(trs, spec);
+					if (op == OperatorIncrement) trs.self.index = XA::TransformIntegerAdd;
+					else if (op == OperatorDecrement) trs.self.index = XA::TransformIntegerSubt;
+					else throw InvalidStateException();
+					return MakeAddressOf(MakeBlt(split, trs, spec.size), spec.size);
+				}
 			}
 		};
 
@@ -142,12 +186,22 @@ namespace Engine
 							sign->ElementAt(0).GetReferenceDestination().GetClassName() == cls) {
 							if (sign->Length() == 2) {
 								if (sign->ElementAt(1).GetClassName() != cls) return 0;
-								if (op == OperatorAssign) {
+								if (op == OperatorAssign || op == OperatorAOr || op == OperatorAXor || op == OperatorAAnd ||
+									op == OperatorAAdd || op == OperatorASubtract || op == OperatorAMultiply || op == OperatorADivide ||
+									op == OperatorAResidual || op == OperatorAShiftLeft || op == OperatorAShiftRight) {
 									SafePointer<XType> xtype = CreateType(XI::Module::TypeReference::MakeClassReference(cls), *ctx);
 									SafePointer<InlineAssignComputable> inl = new InlineAssignComputable(ctx, cls, op);
 									inl->spec = xtype->GetArgumentSpecification();
 									inl->inputs.Append(instance);
 									inl->inputs.Append(arg1);
+									return CreateComputable(*ctx, inl);
+								}
+							} else if (sign->Length() == 1) {
+								if (op == OperatorIncrement || op == OperatorDecrement) {
+									SafePointer<XType> xtype = CreateType(XI::Module::TypeReference::MakeClassReference(cls), *ctx);
+									SafePointer<InlineAssignComputable> inl = new InlineAssignComputable(ctx, cls, op);
+									inl->spec = xtype->GetArgumentSpecification();
+									inl->inputs.Append(instance);
 									return CreateComputable(*ctx, inl);
 								}
 							}

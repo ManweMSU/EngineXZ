@@ -16,6 +16,7 @@ namespace Engine
 		XA::ExpressionTree MakeAddressFollow(const XA::ExpressionTree & of, const XA::ObjectSize & entity);
 		XA::ExpressionTree MakeOffset(const XA::ExpressionTree & obj, const XA::ObjectSize & by, const XA::ObjectSize & obj_size, const XA::ObjectSize & new_size);
 		XA::ExpressionTree MakeBlt(const XA::ExpressionTree & dest, const XA::ExpressionTree & src, const XA::ObjectSize & size);
+		XA::ExpressionTree MakeConstant(XA::Function & hdlr, const void * pdata, int size, int align = 1);
 
 		class XObject : public LObject
 		{
