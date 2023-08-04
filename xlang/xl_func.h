@@ -38,6 +38,7 @@ namespace Engine
 			virtual XClass * GetInstanceType(void) = 0;
 			virtual LContext & GetContext(void) = 0;
 			virtual string GetCanonicalType(void) = 0;
+			virtual bool CheckForInline(void) = 0;
 		};
 		class XMethod : public XObject
 		{

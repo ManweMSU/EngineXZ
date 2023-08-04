@@ -78,6 +78,7 @@ namespace Engine
 			virtual uint & GetFlags(void) override { throw InvalidStateException(); }
 			virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
 			virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
+			virtual bool CheckForInline(void) override { return true; }
 		};
 		class PointerConstructorInstance : public TBaseMethodOverload
 		{

@@ -31,10 +31,9 @@ namespace Engine
 		ObjectHasNoSuitableCast::ObjectHasNoSuitableCast(LObject * reason, LObject * from, LObject * to) : LException(reason) { type_from.SetRetain(from); type_to.SetRetain(to); }
 		string ObjectHasNoSuitableCast::ToString(void) const { return L"Object " + source->ToString() + L" cannot be casted from " + type_from->ToString() + L" to " + type_to->ToString() + L"."; }
 
-		Volumes::Set<LObject *> list;
-
-		LObject::LObject(void) { list.AddElement(this); }
-		LObject::~LObject(void) { list.RemoveElement(this); }
+		//Volumes::Set<LObject *> list;
+		LObject::LObject(void) {} //{ list.AddElement(this); }
+		LObject::~LObject(void) {} // { list.RemoveElement(this); }
 
 		class XInternal : public XObject
 		{
@@ -331,15 +330,15 @@ namespace Engine
 		}
 		LContext::~LContext(void)
 		{
-			_root_ns.SetReference(0);
-			_private_ns.SetReference(0);
-			IO::Console console;
-			if (!list.IsEmpty()) {
-				console.SetTextColor(14);
-				console.WriteLine(L"OBJECTS NOT RELEASED:");
-				for (auto & l : list) console.WriteLine(l->ToString());
-				console.SetTextColor(-1);
-			}
+			// _root_ns.SetReference(0);
+			// _private_ns.SetReference(0);
+			// IO::Console console;
+			// if (!list.IsEmpty()) {
+			// 	console.SetTextColor(14);
+			// 	console.WriteLine(L"OBJECTS NOT RELEASED:");
+			// 	for (auto & l : list) console.WriteLine(l->ToString());
+			// 	console.SetTextColor(-1);
+			// }
 		}
 		void LContext::MakeSubsystemConsole(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI); }
 		void LContext::MakeSubsystemGUI(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::GUI); }

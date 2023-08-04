@@ -6,10 +6,6 @@
 #include "xl_prop.h"
 #include "../xasm/xa_type_helper.h"
 
-// TODO: REMOVE
-#include "../xasm/xa_dasm.h"
-// TODO: END REMOVE
-
 namespace Engine
 {
 	namespace XL
@@ -67,6 +63,154 @@ namespace Engine
 				ThrowSerialSet(at.inputs[0], number);
 				at.input_specs[2].size = XA::TH::MakeSize(number, 0);
 			} else for (auto & s : at.inputs) ThrowSerialSet(s, number);
+		}
+		bool GetUnifiedOffset(XA::ExpressionTree & node, XA::ObjectSize & offs)
+		{
+			if (node.inputs.Length() == 2) {
+				if (node.inputs[1].self.ref_class == XA::ReferenceLiteral) {
+					offs = node.input_specs[1].size;
+					return true;
+				} else return false;
+			} else if (node.inputs.Length() == 3) {
+				if (node.inputs[1].self.ref_class == XA::ReferenceLiteral && node.inputs[2].self.ref_class == XA::ReferenceLiteral) {
+					auto s1 = node.input_specs[1].size;
+					auto s2 = node.input_specs[2].size;
+					if (s1.num_words && s2.num_words) return false;
+					if (s1.num_bytes == 0xFFFFFFFF && s1.num_words == 0) {
+						offs.num_bytes = -s2.num_bytes;
+						offs.num_words = -s2.num_words;
+						return true;
+					} else if (s2.num_bytes == 0xFFFFFFFF && s2.num_words == 0) {
+						offs.num_bytes = -s1.num_bytes;
+						offs.num_words = -s1.num_words;
+						return true;
+					} else if (s1.num_words == 0) {
+						offs.num_bytes = s2.num_bytes * s1.num_bytes;
+						offs.num_words = s2.num_words * s1.num_bytes;
+						return true;
+					} else {
+						offs.num_bytes = s1.num_bytes * s2.num_bytes;
+						offs.num_words = s1.num_words * s2.num_bytes;
+						return true;
+					}
+				} else return false;
+			} else return false;
+		}
+		void OptimizeNode(XA::ExpressionTree & node)
+		{
+			for (auto & i : node.inputs) OptimizeNode(i);
+			if (node.self.ref_class == XA::ReferenceTransform && (node.self.ref_flags & XA::ReferenceFlagInvoke)) {
+				if (node.inputs.Length() && node.inputs[0].self.ref_class == XA::ReferenceTransform && (node.inputs[0].self.ref_flags & XA::ReferenceFlagInvoke)) {
+					if (node.self.index == XA::TransformFollowPointer) {
+						if (node.inputs[0].inputs.Length() && node.inputs[0].self.index == XA::TransformTakePointer) {
+							auto inter = node.inputs[0].inputs[0];
+							node = inter;
+						}
+					} else if (node.self.index == XA::TransformTakePointer) {
+						if (node.inputs[0].inputs.Length() && node.inputs[0].self.index == XA::TransformFollowPointer) {
+							auto inter = node.inputs[0].inputs[0];
+							node = inter;
+						}
+					} else if (node.self.index == XA::TransformAddressOffset) {
+						if (node.inputs[0].inputs.Length() && node.inputs[0].self.index == XA::TransformAddressOffset) {
+							XA::ObjectSize o1, o2;
+							if (GetUnifiedOffset(node, o1) && GetUnifiedOffset(node.inputs[0], o2)) {
+								int bytes = o1.num_bytes + o2.num_bytes;
+								int words = o1.num_words + o2.num_words;
+								if ((bytes >= 0 && words >= 0) || (bytes <= 0 && words <= 0)) {
+									int sign = 1;
+									if (bytes < 0) { sign = -1; bytes = -bytes; words = -words; }
+									XA::ExpressionTree ref;
+									ref.self = node.self;
+									ref.retval_spec = node.retval_spec;
+									ref.retval_final = node.retval_final;
+									ref.inputs << node.inputs[0].inputs[0];
+									ref.input_specs << node.inputs[0].input_specs[0];
+									ref.inputs << XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral));
+									ref.input_specs << XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, bytes, words);
+									if (sign == -1) {
+										ref.inputs << XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral));
+										ref.input_specs << XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, -1, 0);
+									}
+									node = ref;
+								}
+							}
+						}
+					} else if (node.self.index == XA::TransformVectorIsZero) {
+						if (node.inputs[0].self.index == XA::TransformVectorIsZero) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformVectorNotZero;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformVectorNotZero) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformVectorIsZero;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerEQ) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerNEQ;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerNEQ) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerEQ;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerULE) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerUG;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerUG) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerULE;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerUGE) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerUL;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerUL) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerUGE;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerSLE) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerSG;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerSG) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerSLE;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerSGE) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerSL;
+							node = inter;
+						} else if (node.inputs[0].self.index == XA::TransformIntegerSL) {
+							auto inter = node.inputs[0];
+							inter.self.index = XA::TransformIntegerSGE;
+							node = inter;
+						}
+					} else if (node.self.index == XA::TransformVectorInverse) {
+						if (node.inputs[0].inputs.Length() && node.inputs[0].self.index == XA::TransformVectorInverse) {
+							auto inter = node.inputs[0].inputs[0];
+							node = inter;
+						}
+					} else if (node.self.index == XA::TransformIntegerInverse) {
+						if (node.inputs[0].inputs.Length() && node.inputs[0].self.index == XA::TransformIntegerInverse) {
+							auto inter = node.inputs[0].inputs[0];
+							node = inter;
+						}
+					}
+				}
+			}
+		}
+		void OptimizeCode(XA::Function & func, Array<int> & acorr)
+		{
+			int p = 0;
+			while (p < func.instset.Length()) {
+				auto & i = func.instset[p];
+				OptimizeNode(i.tree);
+				if (i.opcode == XA::OpcodeExpression && !(i.tree.self.ref_flags & XA::ReferenceFlagInvoke)) {
+					for (auto & a : acorr) if (a > p) a--;
+					func.instset.Remove(p);
+				} else p++;
+			}
 		}
 
 		class RegularBlock : public LFunctionBlock
@@ -303,9 +447,7 @@ namespace Engine
 				_current_catch_serial--;
 			}
 			_subj.instset << XA::TH::MakeStatementReturn();
-
-			// TODO: PERFORM OPTIMIZATION
-
+			OptimizeCode(_subj, _acorr);
 			for (int index = 0; index < _subj.instset.Length(); index++) {
 				auto & i = _subj.instset[index];
 				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
@@ -353,9 +495,7 @@ namespace Engine
 				_current_catch_serial--;
 			}
 			_subj.instset << XA::TH::MakeStatementReturn();
-
-			// TODO: PERFORM OPTIMIZATION
-
+			OptimizeCode(_subj, _acorr);
 			for (int index = 0; index < _subj.instset.Length(); index++) {
 				auto & i = _subj.instset[index];
 				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
@@ -365,11 +505,6 @@ namespace Engine
 				ThrowAddressCorrect(i.tree, _acorr, index);
 			}
 			_ctx.SupplyFunctionImplementation(_func, _subj);
-
-			// TODO: REMOVE
-			IO::Console console;
-			XA::DisassemblyFunction(_subj, &console);
-			// TODO: END REMOVE
 		}
 		LFunctionContext::~LFunctionContext(void) {}
 		LObject * LFunctionContext::GetRootScope(void) { return _root; }
@@ -784,9 +919,7 @@ namespace Engine
 				}
 				if (_void_retval) _subj.instset << XA::TH::MakeStatementReturn();
 			}
-
-			// TODO: PERFORM OPTIMIZATION
-
+			OptimizeCode(_subj, _acorr);
 			for (int index = 0; index < _subj.instset.Length(); index++) {
 				auto & i = _subj.instset[index];
 				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
@@ -795,12 +928,6 @@ namespace Engine
 				}
 				ThrowAddressCorrect(i.tree, _acorr, index);
 			}
-
-			// TODO: REMOVE
-			IO::Console console;
-			XA::DisassemblyFunction(_subj, &console);
-			// TODO: END REMOVE
-
 			_ctx.SupplyFunctionImplementation(_func, _subj);
 		}
 	}

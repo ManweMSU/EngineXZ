@@ -2,6 +2,7 @@
 
 #include "xl_var.h"
 #include "xl_lit.h"
+#include "xl_inline.h"
 
 #include "../ximg/xi_function.h"
 
@@ -94,6 +95,13 @@ namespace Engine
 						SafePointer<LObject> lit = ProcessLiteralTransform(GetContext(), op, static_cast<XLiteral *>(_instance.Inner()), 0);
 						if (lit) { lit->Retain(); return lit; }
 					}
+					if (argc == 1 && _parent->CheckForInline()) {
+						auto result = CheckInlinePossibility(this, _instance, argv[0], 0);
+						if (result) return result;
+					} else if (argc == 0 && _parent->CheckForInline()) {
+						auto result = CheckInlinePossibility(this, _instance, 0, 0);
+						if (result) return result;
+					}
 					auto & vfd = GetVFDesc();
 					auto ct = GetCanonicalType();
 					SafePointer<_invoke_provider> provider = new _invoke_provider;
@@ -140,7 +148,7 @@ namespace Engine
 		{
 			LContext & _ctx;
 			string _name, _path, _cn;
-			bool _local;
+			bool _local, _try_inline;
 			uint _flags;
 			FunctionImplementationDesc _impl;
 			VirtualFunctionDesc _virt;
@@ -190,6 +198,7 @@ namespace Engine
 				_virt.vft_index = _virt.vf_index = -1;
 				_virt.vfp_offset = _virt.vftp_offset = XA::TH::MakeSize(-1, -1);
 				_virt.base_offset = XA::TH::MakeSize(0, 0);
+				_try_inline = MayHaveInline(_name, _instance_type ? _instance_type->GetFullName() : L"");
 			}
 			virtual ~FunctionOverload(void) override {}
 			virtual Class GetClass(void) override { return Class::FunctionOverload; }
@@ -210,6 +219,10 @@ namespace Engine
 					auto op = _path.Fragment(0, _path.FindFirst(L':'));
 					SafePointer<LObject> lit = ProcessLiteralTransform(_ctx, op, static_cast<XLiteral *>(argv[0]), static_cast<XLiteral *>(argv[1]));
 					if (lit) { lit->Retain(); return lit; }
+				}
+				if (argc == 2 && CheckForInline()) {
+					auto result = CheckInlinePossibility(this, 0, argv[0], argv[1]);
+					if (result) return result;
 				}
 				SafePointer<_invoke_provider> provider = new _invoke_provider;
 				SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(_cn).GetFunctionSignature();
@@ -275,6 +288,7 @@ namespace Engine
 			virtual XClass * GetInstanceType(void) override { return _instance_type; }
 			virtual LContext & GetContext(void) override { return _ctx; }
 			virtual string GetCanonicalType(void) override { return _cn; }
+			virtual bool CheckForInline(void) override { return _try_inline; }
 		};
 		class Method : public XMethod
 		{
