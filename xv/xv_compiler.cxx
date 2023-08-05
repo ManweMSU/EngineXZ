@@ -1548,7 +1548,7 @@ namespace Engine
 						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
 					}
 					AssertPunct(L";"); ReadNextToken();
-					try { if (dist) fctx.EncodeBreak(dist); else fctx.EncodeBreak(); }
+					try { if (dist) fctx.EncodeBreak(dist.Inner()); else fctx.EncodeBreak(); }
 					catch (...) { Abort(CompilerStatus::InvalidLoopCtrlPlace, definition); }
 				} else if (IsKeyword(Lexic::KeywordContinue)) {
 					auto definition = current_token; ReadNextToken();
@@ -1563,7 +1563,7 @@ namespace Engine
 						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
 					}
 					AssertPunct(L";"); ReadNextToken();
-					try { if (dist) fctx.EncodeContinue(dist); else fctx.EncodeContinue(); }
+					try { if (dist) fctx.EncodeContinue(dist.Inner()); else fctx.EncodeContinue(); }
 					catch (...) { Abort(CompilerStatus::InvalidLoopCtrlPlace, definition); }
 				} else if (IsKeyword(Lexic::KeywordTry)) {
 					ReadNextToken();

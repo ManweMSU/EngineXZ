@@ -819,7 +819,7 @@ namespace Engine
 			{
 				if (!cast_explicit) {
 					if (GetCanonicalType() == type->GetCanonicalType()) { subject->Retain(); return subject; }
-					auto & element = _ref.GetArrayElement();
+					auto element = _ref.GetArrayElement();
 					auto & ref = type->GetTypeReference();
 					if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Reference &&
 						ref.GetReferenceDestination().QueryCanonicalName() == GetCanonicalType()) {

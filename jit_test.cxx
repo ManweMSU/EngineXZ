@@ -142,7 +142,6 @@ int Main(void)
 	Logger logger;
 	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandardMMU | XE::UseStandardLD | XE::UseStandardSPU);
 	ldr->AddModuleSearchPath(L"_build");
-	ldr->AddDynamicLibrarySearchPath(L"C://Windows//System32");
 	SafePointer<XE::ExecutionContext> ectx = new XE::ExecutionContext(ldr);
 	SafePointer< Volumes::Dictionary<string, string> > loc = new Volumes::Dictionary<string, string>;
 	loc->Append(L"memoria_nulla", L"Недостаточно памяти");
@@ -160,7 +159,7 @@ int Main(void)
 
 	auto main = ectx->GetEntryPoint();
 	if (main) {
-		auto routine = static_cast<XE::StandardRoutine>(main->GetSymbolEntity());
+		auto routine = reinterpret_cast<XE::StandardRoutine>(main->GetSymbolEntity());
 		XE::ErrorContext error;
 		error.error_code = error.error_subcode = 0;
 		routine(&error);
