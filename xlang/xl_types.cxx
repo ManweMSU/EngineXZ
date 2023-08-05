@@ -1273,10 +1273,16 @@ namespace Engine
 					}
 				} catch (...) {}
 				ObjectArray<XType> conf(0x20);
+				SafePointer<XType> pre_dest;
 				src->GetTypesConformsTo(conf);
+				if (dest->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Class) {
+					pre_dest.SetRetain(dest);
+				} else if (dest->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
+					pre_dest = static_cast<XReference *>(dest)->GetElementType();
+				} else return CastPriorityNoCast;
 				for (auto & c : conf) {
 					try {
-						SafePointer<LObject> ctor = dest->GetConstructorCast(&c);
+						SafePointer<LObject> ctor = pre_dest->GetConstructorCast(&c);
 						return CastPriorityConverter;
 					} catch (...) {}
 				}

@@ -1,6 +1,7 @@
 ﻿#include <EngineRuntime.h>
 
-#include "xenv/xe_ctx.h"
+#include "xenv/xe_loader.h"
+#include "xenv/xe_logger.h"
 #include "xlang/xl_lal.h"
 #include "ximg/xi_module.h"
 #include "ximg/xi_resources.h"
@@ -28,61 +29,73 @@ public:
 };
 ITestConsole test_console;
 
-class ModuleLoader : public Object, public XE::ILoaderCallback
+// class ModuleLoader : public Object, public XE::ILoaderCallback
+// {
+// 	static bool cond_check(void) noexcept
+// 	{
+// 		console.Write(L"Press Y or N: ");
+// 		console.SetInputMode(IO::ConsoleInputMode::Raw);
+// 		widechar c;
+// 		while (true) {
+// 			IO::ConsoleEventDesc event;
+// 			console.ReadEvent(event);
+// 			if (event.Event == IO::ConsoleEvent::CharacterInput) {
+// 				if (event.CharacterCode == L'Y' || event.CharacterCode == L'y') { c = L'Y'; break; }
+// 				else if (event.CharacterCode == L'N' || event.CharacterCode == L'n') { c = L'N'; break; }
+// 			}
+// 		}
+// 		console.SetInputMode(IO::ConsoleInputMode::Echo);
+// 		console.WriteLine(string(c));
+// 		return c == L'Y';
+// 	}
+// 	static void use_cns(ITestConsole * cns) noexcept
+// 	{
+// 		cns->PrintInteger(444);
+// 	}
+// public:
+// 	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
+// 	{
+// 		try {
+// 			try {
+// 				return new FileStream(L"_build/" + module_name + L".xo", AccessRead, OpenExisting);
+// 			} catch (...) {}
+// 			return new FileStream(L"_build/" + module_name + L".xx", AccessRead, OpenExisting);
+// 		} catch (...) { return 0; }
+// 	}
+// 	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
+// 	{
+// 		if (routine_name == L"read_bool") return cond_check;
+// 		if (routine_name == L"use_cns") return use_cns;
+// 		return 0;
+// 	}
+// 	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override
+// 	{
+// 		return LoadLibrary(library_name);
+// 	}
+// 	virtual void HandleModuleLoadError(const string & module_name, const string & subject, XE::ModuleLoadError error) noexcept override
+// 	{
+// 		console.SetTextColor(12);
+// 		console.WriteLine(FormatString(L"Error %0 loading module '%1' with subject '%2'", string(uint(error), HexadecimalBase, 8), module_name, subject));
+// 		console.SetTextColor(-1);
+// 	}
+// 	virtual Object * ExposeObject(void) noexcept override { return this; }
+// 	virtual void * ExposeInterface(const string & interface) noexcept override
+// 	{
+// 		if (interface == L"cns") return &test_console;
+// 		return 0;
+// 	}
+// };
+
+class Logger : public XE::ILoggerSink
 {
-	static bool cond_check(void) noexcept
-	{
-		console.Write(L"Press Y or N: ");
-		console.SetInputMode(IO::ConsoleInputMode::Raw);
-		widechar c;
-		while (true) {
-			IO::ConsoleEventDesc event;
-			console.ReadEvent(event);
-			if (event.Event == IO::ConsoleEvent::CharacterInput) {
-				if (event.CharacterCode == L'Y' || event.CharacterCode == L'y') { c = L'Y'; break; }
-				else if (event.CharacterCode == L'N' || event.CharacterCode == L'n') { c = L'N'; break; }
-			}
-		}
-		console.SetInputMode(IO::ConsoleInputMode::Echo);
-		console.WriteLine(string(c));
-		return c == L'Y';
-	}
-	static void use_cns(ITestConsole * cns) noexcept
-	{
-		cns->PrintInteger(444);
-	}
 public:
-	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
+	virtual void Log(const string & line) noexcept override
 	{
-		try {
-			try {
-				return new FileStream(L"_build/" + module_name + L".xo", AccessRead, OpenExisting);
-			} catch (...) {}
-			return new FileStream(L"_build/" + module_name + L".xx", AccessRead, OpenExisting);
-		} catch (...) { return 0; }
-	}
-	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
-	{
-		if (routine_name == L"read_bool") return cond_check;
-		if (routine_name == L"use_cns") return use_cns;
-		return 0;
-	}
-	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override
-	{
-		return LoadLibrary(library_name);
-	}
-	virtual void HandleModuleLoadError(const string & module_name, const string & subject, XE::ModuleLoadError error) noexcept override
-	{
-		console.SetTextColor(12);
-		console.WriteLine(FormatString(L"Error %0 loading module '%1' with subject '%2'", string(uint(error), HexadecimalBase, 8), module_name, subject));
+		console.SetTextColor(14);
+		console.WriteLine(FormatString(L"%0", line));
 		console.SetTextColor(-1);
 	}
-	virtual Object * ExposeObject(void) noexcept override { return this; }
-	virtual void * ExposeInterface(const string & interface) noexcept override
-	{
-		if (interface == L"cns") return &test_console;
-		return 0;
-	}
+	virtual Object * ExposeObject(void) noexcept override { return 0; }
 };
 
 void PrintCompilerError(XV::CompilerStatusDesc & desc)
@@ -126,9 +139,24 @@ int Main(void)
 	SafePointer< Volumes::Dictionary<string, string> > meta = XI::LoadModuleMetadata(module.resources);
 	if (meta) console.WriteLine(meta->ToString());
 
-	SafePointer<ModuleLoader> ldr = new ModuleLoader;
+	Logger logger;
+	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandardMMU | XE::UseStandardLD | XE::UseStandardSPU);
+	ldr->AddModuleSearchPath(L"_build");
+	ldr->AddDynamicLibrarySearchPath(L"C://Windows//System32");
 	SafePointer<XE::ExecutionContext> ectx = new XE::ExecutionContext(ldr);
+	SafePointer< Volumes::Dictionary<string, string> > loc = new Volumes::Dictionary<string, string>;
+	loc->Append(L"memoria_nulla", L"Недостаточно памяти");
+	XE::SetErrorLocalization(*ectx, loc);
+	XE::SetLoggerSink(*ectx, &logger);
+
 	ectx->LoadModule(L"test");
+	if (!ldr->IsAlive()) {
+		console.SetTextColor(12);
+		console.WriteLine(FormatString(L"Error %0 loading module '%1' with subject '%2'", string(uint(ldr->GetLastError()), HexadecimalBase, 8),
+			ldr->GetLastErrorModule(), ldr->GetLastErrorSubject()));
+		console.SetTextColor(-1);
+		return 1;
+	}
 
 	auto main = ectx->GetEntryPoint();
 	if (main) {
@@ -136,39 +164,18 @@ int Main(void)
 		XE::ErrorContext error;
 		error.error_code = error.error_subcode = 0;
 		routine(&error);
-
+		if (error.error_code) {
+			string e, se;
+			XE::GetErrorDescription(error, *ectx, e, se);
+			console.SetTextColor(12);
+			if (se.Length()) console.WriteLine(FormatString(L"error %0 with subcode %1", e, se));
+			else console.WriteLine(FormatString(L"error %0", e));
+			console.SetTextColor(-1);
+		}
 		console.SetTextColor(10);
 		console.WriteLine(FormatString(L"main() exited with exit code %0", error.error_code));
 		console.SetTextColor(-1);
 	}
 
-	return 0;
-
-	// LContext ctx(L"test");
-	// {
-	// 	auto test_ns = ctx.CreateNamespace(ctx.GetRootNamespace(), L"test_ns");
-	// 	auto test_cls = ctx.CreateClass(test_ns, L"test_int");
-	// 	ctx.MarkClassAsCore(test_cls);
-	// 	ctx.SetClassSemantics(test_cls, XA::ArgumentSemantics::Unclassified);
-	// 	auto test_func = ctx.CreateFunction(test_ns, L"test_func");
-	// 	auto test_func_v = ctx.CreateFunctionOverload(test_func, test_cls, 0, 0, FunctionMain);
-
-	// 	auto alias = ctx.CreateAlias(test_ns, L"pidor", test_func);
-	// 	auto something = ctx.QueryObject(L"test_ns.pidor");
-
-	// 	SafePointer<LObject> tft = test_func->GetType();
-	// 	console.WriteLine(tft->ToString());
-
-	// 	int p = 5;
-
-	// 	something->Release();
-	// }
-
-	// MemoryStream stream(0x100000);
-	// ctx.ProduceModule(L"TEST ASM", 0, 0, 0, 0, &stream);
-	
-	// stream.Seek(0, Begin);
-	// XI::Module module(&stream);
-	
 	return 0;
 }

@@ -8,8 +8,18 @@ namespace Engine
 	namespace XE
 	{
 		enum class ModuleLoadError {
-			NoSuchModule, InvalidImageFormat, InvalidFunctionFormat, InvalidFunctionABI, DuplicateSymbol, LinkageFailure,
-			NoSuchGlobalImport, NoSuchDynamicLibrary, NoSuchFunctionInDynamicLibrary, AllocationFailure, InitializationFailure
+			Success							= 0x0000,
+			NoSuchModule					= 0x0001,
+			InvalidImageFormat				= 0x0002,
+			InvalidFunctionFormat			= 0x0003,
+			InvalidFunctionABI				= 0x0004,
+			DuplicateSymbol					= 0x0005,
+			LinkageFailure					= 0x0006,
+			NoSuchGlobalImport				= 0x0007,
+			NoSuchDynamicLibrary			= 0x0008,
+			NoSuchFunctionInDynamicLibrary	= 0x0009,
+			AllocationFailure				= 0x000A,
+			InitializationFailure			= 0x000B,
 		};
 		enum class ExecutionSubsystem { NoUI, ConsoleUI, GUI, Library };
 

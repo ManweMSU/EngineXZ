@@ -368,7 +368,7 @@ namespace Engine
 			FunctionLoader loader;
 			loader.ok = true;
 			loader.trans = _trans;
-			loader.module_name = &name;
+			loader.module_name = &result->_name;
 			loader.callback = callback;
 			loader.local = &local;
 			loader.dl_list = &result->_resident_dl;

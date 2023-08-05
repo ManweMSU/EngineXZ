@@ -1977,3 +1977,161 @@ dura nintadl {
 	INTERFACE W 1 : - W 1 : - => 1
 	CODE { RET { @BLT:1 1=>1(R, @NEQ:W 1 W 1=>W 1(A[0], A[1])) } }
 }
+
+spatium memoria {
+	[[importa] alloca_memoriam]		functio @nihil alloca(nintadl magn);
+	[[importa] realloca_memoriam]	functio @nihil realloca(@nihil mem, nintadl magn);
+	[[importa] dimitte_memoriam]	functio nihil dimitte(@nihil mem);
+}
+spatium errores {
+	[error] constatus error_nullus		= 0x00;
+	[error] constatus implantatio_nulla	= 0x01;
+	[error] constatus memoria_nulla		= 0x02;
+	[error] constatus argumentum_falsum	= 0x03;
+	[error] constatus efformatio_falsa	= 0x04;
+	[error] constatus habitus_falsus	= 0x05;
+	[error] constatus ie_falsum			= 0x06;
+	[error] constatus xe_defectus		= 0x07;
+
+	[sub_error xe_defectus] constatus xe_error_nullus			= 0x00;
+	[sub_error xe_defectus] constatus xe_modulus_nullus			= 0x01;
+	[sub_error xe_defectus] constatus xe_imago_falsa			= 0x02;
+	[sub_error xe_defectus] constatus xe_functio_falsa			= 0x03;
+	[sub_error xe_defectus] constatus xe_abi_functionis_falsa	= 0x04;
+	[sub_error xe_defectus] constatus xe_symbolus_duplicatus	= 0x05;
+	[sub_error xe_defectus] constatus xe_adhaesio_defecta		= 0x06;
+	[sub_error xe_defectus] constatus xe_importus_falsus		= 0x07;
+	[sub_error xe_defectus] constatus xe_librarium_nullum		= 0x08;
+	[sub_error xe_defectus] constatus xe_lib_importus_falsus	= 0x09;
+	[sub_error xe_defectus] constatus xe_allocatus_defectus		= 0x0A;
+	[sub_error xe_defectus] constatus xe_initium_defectum		= 0x0B;
+}
+
+genus linea {
+	@nihil _data;
+	int longitudo { [[importa] "spu_long"] [[nullum_thiscall]] adipisce; }
+
+	functio int initus() { responde 0; }
+	functio int finis() { responde longitudo - 1; }
+	functio int prae_initus() { responde -1; }
+	functio int post_finis() { responde longitudo; }
+
+	constatus radix_bina		= "01";
+	constatus radix_octava		= "01234567";
+	constatus radix_decima		= "0123456789";
+	constatus radix_sextadecima	= "0123456789ABCDEF";
+
+	constatus codex_ignotus		= 0x00;
+	constatus codex_ascii		= 0x01;
+	constatus codex_utf8		= 0x02;
+	constatus codex_utf16		= 0x03;
+	constatus codex_utf32		= 0x04;
+
+	structor () { _data = nullus; }
+	structor motus (~linea s) { _data = s._data; s._data = nullus; }
+	destructor () { memoria.dimitte(_data); }
+
+	[[importa] "spu_crea"]			[[nullum_thiscall]] structor (~linea valor) iacit;
+	[[importa] "spu_crea_utf32"]	[[nullum_thiscall]] structor (@char valor) iacit;
+	[[importa] "spu_crea_int8"]		[[nullum_thiscall]] structor (int8 valor) iacit;
+	[[importa] "spu_crea_nint8"]	[[nullum_thiscall]] structor (nint8 valor) iacit;
+	[[importa] "spu_crea_int16"]	[[nullum_thiscall]] structor (int16 valor) iacit;
+	[[importa] "spu_crea_nint16"]	[[nullum_thiscall]] structor (nint16 valor) iacit;
+	[[importa] "spu_crea_int32"]	[[nullum_thiscall]] structor (int32 valor) iacit;
+	[[importa] "spu_crea_nint32"]	[[nullum_thiscall]] structor (nint32 valor) iacit;
+	[[importa] "spu_crea_int64"]	[[nullum_thiscall]] structor (int64 valor) iacit;
+	[[importa] "spu_crea_nint64"]	[[nullum_thiscall]] structor (nint64 valor) iacit;
+	[[importa] "spu_crea_intadl"]	[[nullum_thiscall]] structor (intadl valor) iacit;
+	[[importa] "spu_crea_nintadl"]	[[nullum_thiscall]] structor (nintadl valor) iacit;
+	[[importa] "spu_crea_frac32"]	[[nullum_thiscall]] structor (frac valor) iacit;
+	[[importa] "spu_crea_frac64"]	[[nullum_thiscall]] structor (dfrac valor) iacit;
+	[[importa] "spu_crea_logicum"]	[[nullum_thiscall]] structor (logicum valor) iacit;
+	[[importa] "spu_crea_char"]		[[nullum_thiscall]] structor (char valor, int long) iacit;
+	[[importa] "spu_crea_adl"]		[[nullum_thiscall]] structor (@nihil valor) iacit;
+	[[importa] "spu_crea_data"]		[[nullum_thiscall]] structor (@nihil valor, int long, int codex) iacit;
+	[[importa] "spu_loca"]			[[nullum_thiscall]] functio ~linea operator = (~linea valor) iacit;
+	[[importa] "spu_loca_utf32"]	[[nullum_thiscall]] functio ~linea operator = (@char valor) iacit;
+	[[importa] "spu_concat"]		[[nullum_thiscall]] functio ~linea operator += (~linea valor) iacit;
+	[[importa] "spu_index"]			[[nullum_thiscall]] functio char operator [] (int index);
+
+	[[importa] "spu_crea_nint32_radix"]		[[nullum_thiscall]] structor (nint32 valor, ~linea radix, int long_min) iacit;
+	[[importa] "spu_crea_nint64_radix"]		[[nullum_thiscall]] structor (nint64 valor, ~linea radix, int long_min) iacit;
+	[[importa] "spu_crea_nintadl_radix"]	[[nullum_thiscall]] structor (nintadl valor, ~linea radix, int long_min) iacit;
+	[[importa] "spu_crea_frac32_2"]			[[nullum_thiscall]] structor (frac valor, char punctum) iacit;
+	[[importa] "spu_crea_frac32_3"]			[[nullum_thiscall]] structor (frac valor, char punctum, int long) iacit;
+	[[importa] "spu_crea_frac64_2"]			[[nullum_thiscall]] structor (dfrac valor, char punctum) iacit;
+	[[importa] "spu_crea_frac64_3"]			[[nullum_thiscall]] structor (dfrac valor, char punctum, int long) iacit;
+
+	[[importa] "spu_concat_classis"]	classis functio linea operator + (~linea a, ~linea b) iacit;
+	[[importa] "spu_compareo"]			classis functio int operator <=> (~linea a, ~linea b);
+	[[importa] "spu_compareo_2"]		classis functio int operator # (~linea a, ~linea b);
+
+	classis functio logicum operator == (~linea a, ~linea b) iacit { responde a <=> b == 0; }
+	classis functio logicum operator != (~linea a, ~linea b) iacit { responde a <=> b != 0; }
+	classis functio logicum operator <= (~linea a, ~linea b) iacit { responde a <=> b <= 0; }
+	classis functio logicum operator >= (~linea a, ~linea b) iacit { responde a <=> b >= 0; }
+	classis functio logicum operator < (~linea a, ~linea b) iacit { responde a <=> b < 0; }
+	classis functio logicum operator > (~linea a, ~linea b) iacit { responde a <=> b > 0; }
+
+	[[importa] "spu_reperi_primus"]		[[nullum_thiscall]] functio int reperi_primus(~linea valor);
+	[[importa] "spu_reperi_ultimus"]	[[nullum_thiscall]] functio int reperi_ultimus(~linea valor);
+	[[importa] "spu_fragmentum"]		[[nullum_thiscall]] functio linea fragmentum(int primus, int long) iacit;
+	[[importa] "spu_surroga"]			[[nullum_thiscall]] functio linea surroga(~linea sublinea, ~linea cum) iacit;
+	[[importa] "spu_codex_long"]		[[nullum_thiscall]] functio int longitudo_codicis(int codex) iacit;
+	[[importa] "spu_codifica"]			[[nullum_thiscall]] functio nihil codifica(@nihil data, int codex, logicum termina) iacit;
+	
+	[[importa] "spu_ad_int32"]			[[nullum_thiscall]] functio int32 ad_int32() iacit;
+	[[importa] "spu_ad_int32_2"]		[[nullum_thiscall]] functio int32 ad_int32(~linea radix) iacit;
+	[[importa] "spu_ad_int32_3"]		[[nullum_thiscall]] functio int32 ad_int32(~linea radix, logicum sensitivus) iacit;
+	[[importa] "spu_ad_nint32"]			[[nullum_thiscall]] functio nint32 ad_nint32() iacit;
+	[[importa] "spu_ad_nint32_2"]		[[nullum_thiscall]] functio nint32 ad_nint32(~linea radix) iacit;
+	[[importa] "spu_ad_nint32_3"]		[[nullum_thiscall]] functio nint32 ad_nint32(~linea radix, logicum sensitivus) iacit;
+	[[importa] "spu_ad_int64"]			[[nullum_thiscall]] functio int64 ad_int64() iacit;
+	[[importa] "spu_ad_int64_2"]		[[nullum_thiscall]] functio int64 ad_int64(~linea radix) iacit;
+	[[importa] "spu_ad_int64_3"]		[[nullum_thiscall]] functio int64 ad_int64(~linea radix, logicum sensitivus) iacit;
+	[[importa] "spu_ad_nint64"]			[[nullum_thiscall]] functio nint64 ad_nint64() iacit;
+	[[importa] "spu_ad_nint64_2"]		[[nullum_thiscall]] functio nint64 ad_nint64(~linea radix) iacit;
+	[[importa] "spu_ad_nint64_3"]		[[nullum_thiscall]] functio nint64 ad_nint64(~linea radix, logicum sensitivus) iacit;
+	[[importa] "spu_ad_frac32"]			[[nullum_thiscall]] functio frac ad_frac() iacit;
+	[[importa] "spu_ad_frac32_2"]		[[nullum_thiscall]] functio frac ad_frac(~linea punctum) iacit;
+	[[importa] "spu_ad_frac64"]			[[nullum_thiscall]] functio dfrac ad_dfrac() iacit;
+	[[importa] "spu_ad_frac64_2"]		[[nullum_thiscall]] functio dfrac ad_dfrac(~linea punctum) iacit;
+
+	[[importa] "spu_forma_0"] classis functio linea forma(~linea schema, ~linea a0) iacit;
+	[[importa] "spu_forma_1"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1) iacit;
+	[[importa] "spu_forma_2"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2) iacit;
+	[[importa] "spu_forma_3"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3) iacit;
+	[[importa] "spu_forma_4"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4) iacit;
+	[[importa] "spu_forma_5"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5) iacit;
+	[[importa] "spu_forma_6"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5, ~linea a6) iacit;
+	[[importa] "spu_forma_7"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5, ~linea a6, ~linea a7) iacit;
+	[[importa] "spu_forma_8"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5, ~linea a6, ~linea a7, ~linea a8) iacit;
+	[[importa] "spu_forma_9"] classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5, ~linea a6, ~linea a7, ~linea a8, ~linea a9) iacit;
+
+	linea inferna	{ [[importa] "spu_inferna"]	[[nullum_thiscall]] adipisce iacit; }
+	linea supera	{ [[importa] "spu_supera"]	[[nullum_thiscall]] adipisce iacit; }
+}
+
+spatium errores {
+	[[importa] descriptio_erroris] functio nihil _descriptio_erroris(nintadl ec, nintadl esc, @nihil mdl, ~linea error, ~linea sub_error);
+	functio nihil descriptio(nintadl ec, nintadl esc, ~linea error, ~linea sub_error) { _descriptio_erroris(ec, esc, modulus(), error, sub_error); }
+}
+spatium actuarius {
+	protocollum _actuarius { functio nihil scribe(~linea ln) virtualis pura; }
+	functio nihil scribe(~linea ln) { (@_actuarius)(protocollum(actuarius))^.scribe(ln); }
+}
+
+// TODO: REWORK
+
+genus virtualis objectum {
+	nintadl _num_ref;
+	functio nint contine() virtualis pura;
+	functio nint dimitte() virtualis pura;
+	destructor () virtualis {}
+	functio linea ad_linea() virtualis pura;
+}
+
+dura linea {
+	[[importa] "spu_codifica_taleam"]	[[nullum_thiscall]] functio @objectum codifica(int codex, logicum termina) iacit;
+	[[importa] "spu_scinde"]			[[nullum_thiscall]] functio @objectum scinde(char) iacit;
+}

@@ -162,7 +162,10 @@ namespace Engine
 						}
 						return XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, offset));
 					}
-				} else return MakeSymbolReference(func, _path);
+				} else {
+					if (_data.contents == XI::Module::Literal::Class::String) return MakeAddressOf(MakeSymbolReference(func, _path), XA::TH::MakeSize(1, 0));
+					else return MakeSymbolReference(func, _path);
+				}
 			}
 			virtual void EncodeSymbols(XI::Module & dest, Class parent) override { if (_local) dest.literals.Append(_path, _data); }
 			virtual string ToString(void) const override { if (_path.Length()) return L"literal " + _path; else return L"nameless literal"; }

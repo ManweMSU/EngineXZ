@@ -1,29 +1,7 @@
 ﻿importa canonicalis;
 
-[[importa] "WriteConsoleW"]
-[[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
-functio int WriteConsole(nintadl, @nint16, int, @int, @nihil);
-
-[[importa] "GetStdHandle"]
-[[importa_de] "C:\\Windows\\System32\\Kernel32.dll"]
-functio nintadl GetStdHandle(int);
-
-var ordo [256] nint16 buffer;
-functio nihil Decompose(@char text, ~@nint16 utf16, ~int length)
-{
-	length = 0; utf16 = buffer;
-	dum (text[length]) { buffer[length] = text[length]; length++; }
-	buffer[length] = 0;
-}
-functio nihil Print(@char text)
-{
-	int length; @nint16 utf16;
-	Decompose(text, utf16, length);
-	WriteConsole(GetStdHandle(-11), utf16, length, nullus, nullus);
-}
-
 functio nihil primus() introitus iacit
 {
-	Print("suka ty pidor\n");
+	actuarius.scribe("suka ty pidor");
 	iace 666;
 }
