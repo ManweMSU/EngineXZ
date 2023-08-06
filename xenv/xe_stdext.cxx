@@ -6,6 +6,283 @@ namespace Engine
 {
 	namespace XE
 	{
+		class FPU : public IAPIExtension
+		{
+			static float _neg_32(float & self) { return -self; }
+			static double _neg_64(double & self) { return -self; }
+			static bool _not_32(float & self) { return !self; }
+			static bool _not_64(double & self) { return !self; }
+			static float & _asgn_add_32(float & self, float value) { self += value; return self; }
+			static double & _asgn_add_64(double & self, double value) { self += value; return self; }
+			static float & _asgn_sub_32(float & self, float value) { self -= value; return self; }
+			static double & _asgn_sub_64(double & self, double value) { self -= value; return self; }
+			static float & _asgn_mul_32(float & self, float value) { self *= value; return self; }
+			static double & _asgn_mul_64(double & self, double value) { self *= value; return self; }
+			static float & _asgn_div_32(float & self, float value) { self /= value; return self; }
+			static double & _asgn_div_64(double & self, double value) { self /= value; return self; }
+			static float & _inc_32(float & self) { self += 1.0f; return self; }
+			static double & _inc_64(double & self) { self += 1.0; return self; }
+			static float & _dec_32(float & self) { self -= 1.0f; return self; }
+			static double & _dec_64(double & self) { self -= 1.0; return self; }
+			static float _add_32(float a, float b) { return a + b; }
+			static double _add_64(double a, double b) { return a + b; }
+			static float _sub_32(float a, float b) { return a - b; }
+			static double _sub_64(double a, double b) { return a - b; }
+			static float _mul_32(float a, float b) { return a * b; }
+			static double _mul_64(double a, double b) { return a * b; }
+			static float _div_32(float a, float b) { return a / b; }
+			static double _div_64(double a, double b) { return a / b; }
+			static bool _eq_32(float a, float b) { return a == b; }
+			static bool _eq_64(double a, double b) { return a == b; }
+			static bool _neq_32(float a, float b) { return a != b; }
+			static bool _neq_64(double a, double b) { return a != b; }
+			static bool _ls_32(float a, float b) { return a < b; }
+			static bool _ls_64(double a, double b) { return a < b; }
+			static bool _gt_32(float a, float b) { return a > b; }
+			static bool _gt_64(double a, double b) { return a > b; }
+			static bool _le_32(float a, float b) { return a <= b; }
+			static bool _le_64(double a, double b) { return a <= b; }
+			static bool _ge_32(float a, float b) { return a >= b; }
+			static bool _ge_64(double a, double b) { return a >= b; }
+			static float _b_f32(bool & self) { return self ? 1.0f : 0.0f; }
+			static double _b_f64(bool & self) { return self ? 1.0 : 0.0; }
+			static float _s8_f32(int8 & self) { return self; }
+			static float _u8_f32(uint8 & self) { return self; }
+			static double _s8_f64(int8 & self) { return self; }
+			static double _u8_f64(uint8 & self) { return self; }
+			static float _s16_f32(int16 & self) { return self; }
+			static float _u16_f32(uint16 & self) { return self; }
+			static double _s16_f64(int16 & self) { return self; }
+			static double _u16_f64(uint16 & self) { return self; }
+			static float _s32_f32(int32 & self) { return self; }
+			static float _u32_f32(uint32 & self) { return self; }
+			static double _s32_f64(int32 & self) { return self; }
+			static double _u32_f64(uint32 & self) { return self; }
+			static float _s64_f32(int64 & self) { return self; }
+			static float _u64_f32(uint64 & self) { return self; }
+			static double _s64_f64(int64 & self) { return self; }
+			static double _u64_f64(uint64 & self) { return self; }
+			static float _sw_f32(sintptr & self) { return self; }
+			static float _uw_f32(uintptr & self) { return self; }
+			static double _sw_f64(sintptr & self) { return self; }
+			static double _uw_f64(uintptr & self) { return self; }
+			static bool _f32_b(float & self) { return self; }
+			static int8 _f32_s8(float & self) { return self; }
+			static uint8 _f32_u8(float & self) { return self; }
+			static int16 _f32_s16(float & self) { return self; }
+			static uint16 _f32_u16(float & self) { return self; }
+			static int32 _f32_s32(float & self) { return self; }
+			static uint32 _f32_u32(float & self) { return self; }
+			static int64 _f32_s64(float & self) { return self; }
+			static uint64 _f32_u64(float & self) { return self; }
+			static sintptr _f32_sw(float & self) { return self; }
+			static uintptr _f32_uw(float & self) { return self; }
+			static bool _f64_b(double & self) { return self; }
+			static int8 _f64_s8(double & self) { return self; }
+			static uint8 _f64_u8(double & self) { return self; }
+			static int16 _f64_s16(double & self) { return self; }
+			static uint16 _f64_u16(double & self) { return self; }
+			static int32 _f64_s32(double & self) { return self; }
+			static uint32 _f64_u32(double & self) { return self; }
+			static int64 _f64_s64(double & self) { return self; }
+			static uint64 _f64_u64(double & self) { return self; }
+			static sintptr _f64_sw(double & self) { return self; }
+			static uintptr _f64_uw(double & self) { return self; }
+			static double _f32_f64(float & self) { return self; }
+			static float _f64_f32(double & self) { return self; }
+			static int8 _abs_i8(int8 value) { return value >= 0 ? value : -value; }
+			static int16 _abs_i16(int16 value) { return value >= 0 ? value : -value; }
+			static int32 _abs_i32(int32 value) { return value >= 0 ? value : -value; }
+			static int64 _abs_i64(int64 value) { return value >= 0 ? value : -value; }
+			static sintptr _abs_iw(sintptr value) { return value >= 0 ? value : -value; }
+			static float _abs_f32(float value) { return value >= 0.0f ? value : -value; }
+			static double _abs_f64(double value) { return value >= 0.0 ? value : -value; }
+			static int8 _sgn_i8(int8 value) { return value > 0 ? 1 : value < 0 ? -1 : 0; }
+			static int16 _sgn_i16(int16 value) { return value > 0 ? 1 : value < 0 ? -1 : 0; }
+			static int32 _sgn_i32(int32 value) { return value > 0 ? 1 : value < 0 ? -1 : 0; }
+			static int64 _sgn_i64(int64 value) { return value > 0 ? 1 : value < 0 ? -1 : 0; }
+			static sintptr _sgn_iw(sintptr value) { return value > 0 ? 1 : value < 0 ? -1 : 0; }
+			static float _sgn_f32(float value) { return value > 0.0f ? 1.0f : value < 0.0f ? -1.0f : 0.0f; }
+			static double _sgn_f64(double value) { return value > 0.0 ? 1.0 : value < 0.0 ? -1.0 : 0.0; }
+			static float _ctg_f32(float value) { return 1.0f / tanf(value); }
+			static double _ctg_f64(double value) { return 1.0 / tan(value); }
+			static float _arcctg_f32(float value) { return ENGINE_PI / 2.0 - atanf(value); }
+			static double _arcctg_f64(double value) { return ENGINE_PI / 2.0 - atan(value); }
+			static float _inf_pos_f32() { return INFINITY; }
+			static double _inf_pos_f64() { return INFINITY; }
+			static float _inf_neg_f32() { return -INFINITY; }
+			static double _inf_neg_f64() { return -INFINITY; }
+			static float _inf_nan_f32() { return NAN; }
+			static double _inf_nan_f64() { return NAN; }
+			static bool _is_inf_f32(float value) { return isinf(value); }
+			static bool _is_inf_f64(double value) { return isinf(value); }
+			static bool _is_nan_f32(float value) { return isnan(value); }
+			static bool _is_nan_f64(double value) { return isnan(value); }
+			static void _random_data(uint8 * dest, int length) { for (int i = 0; i < length; i++) dest[i] = Engine::Math::Random::RandomByte(); }
+			static int _random_int(int min, int max) { return min + Engine::Math::Random::RandomInteger() % (max + 1 - min); }
+
+			void * _expose_part_1(const string & routine_name) noexcept
+			{
+				if (routine_name == L"fpu_32_neg") return const_cast<void *>(reinterpret_cast<const void *>(&_neg_32));
+				else if (routine_name == L"fpu_64_neg") return const_cast<void *>(reinterpret_cast<const void *>(&_neg_64));
+				else if (routine_name == L"fpu_32_non") return const_cast<void *>(reinterpret_cast<const void *>(&_not_32));
+				else if (routine_name == L"fpu_64_non") return const_cast<void *>(reinterpret_cast<const void *>(&_not_64));
+				else if (routine_name == L"fpu_32_lsm") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_add_32));
+				else if (routine_name == L"fpu_64_lsm") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_add_64));
+				else if (routine_name == L"fpu_32_lsb") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_sub_32));
+				else if (routine_name == L"fpu_64_lsb") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_sub_64));
+				else if (routine_name == L"fpu_32_lml") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_mul_32));
+				else if (routine_name == L"fpu_64_lml") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_mul_64));
+				else if (routine_name == L"fpu_32_ldv") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_div_32));
+				else if (routine_name == L"fpu_64_ldv") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_div_64));
+				else if (routine_name == L"fpu_32_inc") return const_cast<void *>(reinterpret_cast<const void *>(&_inc_32));
+				else if (routine_name == L"fpu_64_inc") return const_cast<void *>(reinterpret_cast<const void *>(&_inc_64));
+				else if (routine_name == L"fpu_32_dec") return const_cast<void *>(reinterpret_cast<const void *>(&_dec_32));
+				else if (routine_name == L"fpu_64_dec") return const_cast<void *>(reinterpret_cast<const void *>(&_dec_64));
+				else if (routine_name == L"fpu_32_sum") return const_cast<void *>(reinterpret_cast<const void *>(&_add_32));
+				else if (routine_name == L"fpu_64_sum") return const_cast<void *>(reinterpret_cast<const void *>(&_add_64));
+				else if (routine_name == L"fpu_32_sub") return const_cast<void *>(reinterpret_cast<const void *>(&_sub_32));
+				else if (routine_name == L"fpu_64_sub") return const_cast<void *>(reinterpret_cast<const void *>(&_sub_64));
+				else if (routine_name == L"fpu_32_mul") return const_cast<void *>(reinterpret_cast<const void *>(&_mul_32));
+				else if (routine_name == L"fpu_64_mul") return const_cast<void *>(reinterpret_cast<const void *>(&_mul_64));
+				else if (routine_name == L"fpu_32_div") return const_cast<void *>(reinterpret_cast<const void *>(&_div_32));
+				else if (routine_name == L"fpu_64_div") return const_cast<void *>(reinterpret_cast<const void *>(&_div_64));
+				else if (routine_name == L"fpu_32_par") return const_cast<void *>(reinterpret_cast<const void *>(&_eq_32));
+				else if (routine_name == L"fpu_64_par") return const_cast<void *>(reinterpret_cast<const void *>(&_eq_64));
+				else if (routine_name == L"fpu_32_npr") return const_cast<void *>(reinterpret_cast<const void *>(&_neq_32));
+				else if (routine_name == L"fpu_64_npr") return const_cast<void *>(reinterpret_cast<const void *>(&_neq_64));
+				else if (routine_name == L"fpu_32_min") return const_cast<void *>(reinterpret_cast<const void *>(&_ls_32));
+				else if (routine_name == L"fpu_64_min") return const_cast<void *>(reinterpret_cast<const void *>(&_ls_64));
+				else if (routine_name == L"fpu_32_maj") return const_cast<void *>(reinterpret_cast<const void *>(&_gt_32));
+				else if (routine_name == L"fpu_64_maj") return const_cast<void *>(reinterpret_cast<const void *>(&_gt_64));
+				else if (routine_name == L"fpu_32_pmn") return const_cast<void *>(reinterpret_cast<const void *>(&_le_32));
+				else if (routine_name == L"fpu_64_pmn") return const_cast<void *>(reinterpret_cast<const void *>(&_le_64));
+				else if (routine_name == L"fpu_32_pmj") return const_cast<void *>(reinterpret_cast<const void *>(&_ge_32));
+				else if (routine_name == L"fpu_64_pmj") return const_cast<void *>(reinterpret_cast<const void *>(&_ge_64));
+				else if (routine_name == L"fpu_l_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_b_f32));
+				else if (routine_name == L"fpu_l_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_b_f64));
+				else if (routine_name == L"fpu_i8_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_s8_f32));
+				else if (routine_name == L"fpu_n8_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_u8_f32));
+				else if (routine_name == L"fpu_i8_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_s8_f64));
+				else if (routine_name == L"fpu_n8_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_u8_f64));
+				else if (routine_name == L"fpu_i16_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_s16_f32));
+				else if (routine_name == L"fpu_n16_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_u16_f32));
+				else if (routine_name == L"fpu_i16_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_s16_f64));
+				else if (routine_name == L"fpu_n16_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_u16_f64));
+				else if (routine_name == L"fpu_i32_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_s32_f32));
+				else if (routine_name == L"fpu_n32_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_u32_f32));
+				else if (routine_name == L"fpu_i32_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_s32_f64));
+				else if (routine_name == L"fpu_n32_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_u32_f64));
+				else if (routine_name == L"fpu_i64_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_s64_f32));
+				else if (routine_name == L"fpu_n64_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_u64_f32));
+				else if (routine_name == L"fpu_i64_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_s64_f64));
+				else if (routine_name == L"fpu_n64_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_u64_f64));
+				else if (routine_name == L"fpu_iadl_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_sw_f32));
+				else if (routine_name == L"fpu_nadl_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_uw_f32));
+				else if (routine_name == L"fpu_iadl_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_sw_f64));
+				else if (routine_name == L"fpu_nadl_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_uw_f64));
+				else if (routine_name == L"fpu_f32_ad_l") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_b));
+				else if (routine_name == L"fpu_f32_ad_i8") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_s8));
+				else if (routine_name == L"fpu_f32_ad_n8") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_u8));
+				else if (routine_name == L"fpu_f32_ad_i16") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_s16));
+				else if (routine_name == L"fpu_f32_ad_n16") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_u16));
+				else if (routine_name == L"fpu_f32_ad_i32") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_s32));
+				else if (routine_name == L"fpu_f32_ad_n32") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_u32));
+				else if (routine_name == L"fpu_f32_ad_i64") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_s64));
+				else if (routine_name == L"fpu_f32_ad_n64") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_u64));
+				else if (routine_name == L"fpu_f32_ad_iadl") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_sw));
+				else if (routine_name == L"fpu_f32_ad_nadl") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_uw));
+				else if (routine_name == L"fpu_f64_ad_l") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_b));
+				else if (routine_name == L"fpu_f64_ad_i8") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_s8));
+				else if (routine_name == L"fpu_f64_ad_n8") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_u8));
+				else if (routine_name == L"fpu_f64_ad_i16") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_s16));
+				else if (routine_name == L"fpu_f64_ad_n16") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_u16));
+				else if (routine_name == L"fpu_f64_ad_i32") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_s32));
+				else if (routine_name == L"fpu_f64_ad_n32") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_u32));
+				else if (routine_name == L"fpu_f64_ad_i64") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_s64));
+				else if (routine_name == L"fpu_f64_ad_n64") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_u64));
+				else if (routine_name == L"fpu_f64_ad_iadl") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_sw));
+				else if (routine_name == L"fpu_f64_ad_nadl") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_uw));
+				else if (routine_name == L"fpu_f32_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_f64));
+				else if (routine_name == L"fpu_f64_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_f32));
+				else return 0;
+			}
+			void * _expose_part_2(const string & routine_name) noexcept
+			{
+				if (routine_name == L"fpu_abs_i8") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_i8));
+				else if (routine_name == L"fpu_abs_i16") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_i16));
+				else if (routine_name == L"fpu_abs_i32") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_i32));
+				else if (routine_name == L"fpu_abs_i64") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_i64));
+				else if (routine_name == L"fpu_abs_iad") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_iw));
+				else if (routine_name == L"fpu_abs_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_f32));
+				else if (routine_name == L"fpu_abs_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_f64));
+				else if (routine_name == L"fpu_sgn_i8") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_i8));
+				else if (routine_name == L"fpu_sgn_i16") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_i16));
+				else if (routine_name == L"fpu_sgn_i32") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_i32));
+				else if (routine_name == L"fpu_sgn_i64") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_i64));
+				else if (routine_name == L"fpu_sgn_iad") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_iw));
+				else if (routine_name == L"fpu_sgn_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_f32));
+				else if (routine_name == L"fpu_sgn_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_f64));
+				else if (routine_name == L"fpu_c1") return const_cast<void *>(reinterpret_cast<const void *>(&roundf));
+				else if (routine_name == L"fpu_c1_d") return const_cast<void *>(reinterpret_cast<const void *>(&round));
+				else if (routine_name == L"fpu_c2") return const_cast<void *>(reinterpret_cast<const void *>(&truncf));
+				else if (routine_name == L"fpu_c2_d") return const_cast<void *>(reinterpret_cast<const void *>(&trunc));
+				else if (routine_name == L"fpu_c3") return const_cast<void *>(reinterpret_cast<const void *>(&floorf));
+				else if (routine_name == L"fpu_c3_d") return const_cast<void *>(reinterpret_cast<const void *>(&floor));
+				else if (routine_name == L"fpu_c4") return const_cast<void *>(reinterpret_cast<const void *>(&ceilf));
+				else if (routine_name == L"fpu_c4_d") return const_cast<void *>(reinterpret_cast<const void *>(&ceil));
+				else if (routine_name == L"fpu_rdx") return const_cast<void *>(reinterpret_cast<const void *>(&sqrtf));
+				else if (routine_name == L"fpu_rdx_d") return const_cast<void *>(reinterpret_cast<const void *>(&sqrt));
+				else if (routine_name == L"fpu_pot") return const_cast<void *>(reinterpret_cast<const void *>(&powf));
+				else if (routine_name == L"fpu_pot_d") return const_cast<void *>(reinterpret_cast<const void *>(&pow));
+				else if (routine_name == L"fpu_exp") return const_cast<void *>(reinterpret_cast<const void *>(&expf));
+				else if (routine_name == L"fpu_exp_d") return const_cast<void *>(reinterpret_cast<const void *>(&exp));
+				else if (routine_name == L"fpu_ln") return const_cast<void *>(reinterpret_cast<const void *>(&logf));
+				else if (routine_name == L"fpu_ln_d") return const_cast<void *>(reinterpret_cast<const void *>(&log));
+				else if (routine_name == L"fpu_lb") return const_cast<void *>(reinterpret_cast<const void *>(&log2f));
+				else if (routine_name == L"fpu_lb_d") return const_cast<void *>(reinterpret_cast<const void *>(&log2));
+				else if (routine_name == L"fpu_lg") return const_cast<void *>(reinterpret_cast<const void *>(&log10f));
+				else if (routine_name == L"fpu_lg_d") return const_cast<void *>(reinterpret_cast<const void *>(&log10));
+				else if (routine_name == L"fpu_sin") return const_cast<void *>(reinterpret_cast<const void *>(&sinf));
+				else if (routine_name == L"fpu_sin_d") return const_cast<void *>(reinterpret_cast<const void *>(&sin));
+				else if (routine_name == L"fpu_cos") return const_cast<void *>(reinterpret_cast<const void *>(&cosf));
+				else if (routine_name == L"fpu_cos_d") return const_cast<void *>(reinterpret_cast<const void *>(&cos));
+				else if (routine_name == L"fpu_tg") return const_cast<void *>(reinterpret_cast<const void *>(&tanf));
+				else if (routine_name == L"fpu_tg_d") return const_cast<void *>(reinterpret_cast<const void *>(&tan));
+				else if (routine_name == L"fpu_ctg") return const_cast<void *>(reinterpret_cast<const void *>(&_ctg_f32));
+				else if (routine_name == L"fpu_ctg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_ctg_f64));
+				else if (routine_name == L"fpu_asin") return const_cast<void *>(reinterpret_cast<const void *>(&asinf));
+				else if (routine_name == L"fpu_asin_d") return const_cast<void *>(reinterpret_cast<const void *>(&asin));
+				else if (routine_name == L"fpu_acos") return const_cast<void *>(reinterpret_cast<const void *>(&acosf));
+				else if (routine_name == L"fpu_acos_d") return const_cast<void *>(reinterpret_cast<const void *>(&acos));
+				else if (routine_name == L"fpu_atg") return const_cast<void *>(reinterpret_cast<const void *>(&atanf));
+				else if (routine_name == L"fpu_atg_d") return const_cast<void *>(reinterpret_cast<const void *>(&atan));
+				else if (routine_name == L"fpu_actg") return const_cast<void *>(reinterpret_cast<const void *>(&_arcctg_f32));
+				else if (routine_name == L"fpu_actg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_arcctg_f64));
+				else if (routine_name == L"fpu_f32_pi") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_pos_f32));
+				else if (routine_name == L"fpu_f32_ni") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_neg_f32));
+				else if (routine_name == L"fpu_f32_nn") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_nan_f32));
+				else if (routine_name == L"fpu_f64_pi") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_pos_f64));
+				else if (routine_name == L"fpu_f64_ni") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_neg_f64));
+				else if (routine_name == L"fpu_f64_nn") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_nan_f64));
+				else if (routine_name == L"fpu_ei_32") return const_cast<void *>(reinterpret_cast<const void *>(&_is_inf_f32));
+				else if (routine_name == L"fpu_ei_64") return const_cast<void *>(reinterpret_cast<const void *>(&_is_inf_f64));
+				else if (routine_name == L"fpu_enn_32") return const_cast<void *>(reinterpret_cast<const void *>(&_is_nan_f32));
+				else if (routine_name == L"fpu_enn_64") return const_cast<void *>(reinterpret_cast<const void *>(&_is_nan_f64));
+				else if (routine_name == L"fpu_ncg_1") return const_cast<void *>(reinterpret_cast<const void *>(&_random_data));
+				else if (routine_name == L"fpu_ncg_2") return const_cast<void *>(reinterpret_cast<const void *>(&_random_int));
+				else if (routine_name == L"fpu_ncg_3") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::Math::Random::RandomDouble));
+				else return 0;
+			}
+		public:
+			virtual void * ExposeRoutine(const string & routine_name) noexcept override
+			{
+				auto result = _expose_part_1(routine_name);
+				if (result) return result;
+				return _expose_part_2(routine_name);
+			}
+			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
+		};
 		class MMU : public IAPIExtension
 		{
 			static void * _mem_alloc(uintptr size) { return malloc(size); }
@@ -475,11 +752,7 @@ namespace Engine
 			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
 		};
 
-		IAPIExtension * CreateFPU(void)
-		{
-			// TODO: IMPLEMENT
-			return 0;
-		}
+		IAPIExtension * CreateFPU(void) { return new FPU; }
 		IAPIExtension * CreateMMU(void) { return new MMU; }
 		IAPIExtension * CreateSPU(void) { return new SPU; }
 	}

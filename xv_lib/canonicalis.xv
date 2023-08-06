@@ -1493,12 +1493,72 @@ genus nintadl {
 		CODE { RET { @BLT:1 1=>1(R, @U_GE:W 1 W 1=>W 1(A[0], A[1])) } }
 	}
 }
-
 [[innatum]] [[magnitudo] "4"] [[significatio] fractus]
-genus frac {}
-
+genus frac {
+	[[xa]] structor () {
+		INTERFACE W 1 : THIS => 0
+		CODE { RET }
+	}
+	[[xa]] structor (frac src) {
+		INTERFACE W 1 : THIS 4 : FLOAT => 0
+		CODE { RET { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } }
+	}
+	[[importa] "fpu_32_neg"] [[nullum_thiscall]] functio frac operator - ();
+	[[importa] "fpu_32_non"] [[nullum_thiscall]] functio logicum operator ! ();
+	[[xa]] functio ~frac operator = (frac src) {
+		INTERFACE W 1 : THIS 4 : FLOAT => W 1
+		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[importa] "fpu_32_lsm"] [[nullum_thiscall]] functio ~frac operator += (frac src);
+	[[importa] "fpu_32_lsb"] [[nullum_thiscall]] functio ~frac operator -= (frac src);
+	[[importa] "fpu_32_lml"] [[nullum_thiscall]] functio ~frac operator *= (frac src);
+	[[importa] "fpu_32_ldv"] [[nullum_thiscall]] functio ~frac operator /= (frac src);
+	[[importa] "fpu_32_inc"] [[nullum_thiscall]] functio ~frac operator ++ ();
+	[[importa] "fpu_32_dec"] [[nullum_thiscall]] functio ~frac operator -- ();
+	[[importa] "fpu_32_sum"] [[nullum_thiscall]] classis functio frac operator + (frac a, frac b);
+	[[importa] "fpu_32_sub"] [[nullum_thiscall]] classis functio frac operator - (frac a, frac b);
+	[[importa] "fpu_32_mul"] [[nullum_thiscall]] classis functio frac operator * (frac a, frac b);
+	[[importa] "fpu_32_div"] [[nullum_thiscall]] classis functio frac operator / (frac a, frac b);
+	[[importa] "fpu_32_par"] [[nullum_thiscall]] classis functio logicum operator == (frac a, frac b);
+	[[importa] "fpu_32_npr"] [[nullum_thiscall]] classis functio logicum operator != (frac a, frac b);
+	[[importa] "fpu_32_min"] [[nullum_thiscall]] classis functio logicum operator < (frac a, frac b);
+	[[importa] "fpu_32_maj"] [[nullum_thiscall]] classis functio logicum operator > (frac a, frac b);
+	[[importa] "fpu_32_pmn"] [[nullum_thiscall]] classis functio logicum operator <= (frac a, frac b);
+	[[importa] "fpu_32_pmj"] [[nullum_thiscall]] classis functio logicum operator >= (frac a, frac b);
+}
 [[innatum]] [[magnitudo] "8"] [[significatio] fractus]
-genus dfrac {}
+genus dfrac {
+	[[xa]] structor () {
+		INTERFACE W 1 : THIS => 0
+		CODE { RET }
+	}
+	[[xa]] structor (dfrac src) {
+		INTERFACE W 1 : THIS 8 : FLOAT => 0
+		CODE { RET { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } }
+	}
+	[[importa] "fpu_64_neg"] [[nullum_thiscall]] functio dfrac operator - ();
+	[[importa] "fpu_64_non"] [[nullum_thiscall]] functio logicum operator ! ();
+	[[xa]] functio ~dfrac operator = (dfrac src) {
+		INTERFACE W 1 : THIS 8 : FLOAT => W 1
+		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[importa] "fpu_64_lsm"] [[nullum_thiscall]] functio ~dfrac operator += (dfrac src);
+	[[importa] "fpu_64_lsb"] [[nullum_thiscall]] functio ~dfrac operator -= (dfrac src);
+	[[importa] "fpu_64_lml"] [[nullum_thiscall]] functio ~dfrac operator *= (dfrac src);
+	[[importa] "fpu_64_ldv"] [[nullum_thiscall]] functio ~dfrac operator /= (dfrac src);
+	[[importa] "fpu_64_inc"] [[nullum_thiscall]] functio ~dfrac operator ++ ();
+	[[importa] "fpu_64_dec"] [[nullum_thiscall]] functio ~dfrac operator -- ();
+	[[importa] "fpu_64_sum"] [[nullum_thiscall]] classis functio dfrac operator + (dfrac a, dfrac b);
+	[[importa] "fpu_64_sub"] [[nullum_thiscall]] classis functio dfrac operator - (dfrac a, dfrac b);
+	[[importa] "fpu_64_mul"] [[nullum_thiscall]] classis functio dfrac operator * (dfrac a, dfrac b);
+	[[importa] "fpu_64_div"] [[nullum_thiscall]] classis functio dfrac operator / (dfrac a, dfrac b);
+	[[importa] "fpu_64_par"] [[nullum_thiscall]] classis functio logicum operator == (dfrac a, dfrac b);
+	[[importa] "fpu_64_npr"] [[nullum_thiscall]] classis functio logicum operator != (dfrac a, dfrac b);
+	[[importa] "fpu_64_min"] [[nullum_thiscall]] classis functio logicum operator < (dfrac a, dfrac b);
+	[[importa] "fpu_64_maj"] [[nullum_thiscall]] classis functio logicum operator > (dfrac a, dfrac b);
+	[[importa] "fpu_64_pmn"] [[nullum_thiscall]] classis functio logicum operator <= (dfrac a, dfrac b);
+	[[importa] "fpu_64_pmj"] [[nullum_thiscall]] classis functio logicum operator >= (dfrac a, dfrac b);
+}
 
 nomen_alternum int = int32;
 nomen_alternum nint = nint32;
@@ -1547,6 +1607,8 @@ dura logicum {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
+	[[importa] "fpu_l_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_l_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura int8 {
 	[[xa]] convertor (logicum) () {
@@ -1589,6 +1651,8 @@ dura int8 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
+	[[importa] "fpu_i8_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_i8_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura nint8 {
 	[[xa]] convertor (logicum) () {
@@ -1631,6 +1695,8 @@ dura nint8 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
+	[[importa] "fpu_n8_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_n8_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura int16 {
 	[[xa]] convertor (logicum) () {
@@ -1673,6 +1739,8 @@ dura int16 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
+	[[importa] "fpu_i16_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_i16_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura nint16 {
 	[[xa]] convertor (logicum) () {
@@ -1715,6 +1783,8 @@ dura nint16 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
+	[[importa] "fpu_n16_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_n16_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura int32 {
 	[[xa]] convertor (logicum) () {
@@ -1757,6 +1827,8 @@ dura int32 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
+	[[importa] "fpu_i32_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_i32_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura nint32 {
 	[[xa]] convertor (logicum) () {
@@ -1799,6 +1871,8 @@ dura nint32 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
+	[[importa] "fpu_n32_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_n32_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura int64 {
 	[[xa]] convertor (logicum) () {
@@ -1841,6 +1915,8 @@ dura int64 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
+	[[importa] "fpu_i64_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_i64_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura nint64 {
 	[[xa]] convertor (logicum) () {
@@ -1883,6 +1959,8 @@ dura nint64 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
+	[[importa] "fpu_n64_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_n64_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura intadl {
 	[[xa]] convertor (logicum) () {
@@ -1925,6 +2003,8 @@ dura intadl {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } }
 	}
+	[[importa] "fpu_iadl_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_iadl_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
 }
 dura nintadl {
 	[[xa]] convertor (logicum) () {
@@ -1967,6 +2047,36 @@ dura nintadl {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } }
 	}
+	[[importa] "fpu_nadl_ad_f32"] [[nullum_thiscall]] convertor (frac) ();
+	[[importa] "fpu_nadl_ad_f64"] [[nullum_thiscall]] convertor (dfrac) ();
+}
+dura frac {
+	[[importa] "fpu_f32_ad_l"]		[[nullum_thiscall]] convertor (logicum) ();
+	[[importa] "fpu_f32_ad_i8"]		[[nullum_thiscall]] convertor (int8) ();
+	[[importa] "fpu_f32_ad_n8"]		[[nullum_thiscall]] convertor (nint8) ();
+	[[importa] "fpu_f32_ad_i16"]	[[nullum_thiscall]] convertor (int16) ();
+	[[importa] "fpu_f32_ad_n16"]	[[nullum_thiscall]] convertor (nint16) ();
+	[[importa] "fpu_f32_ad_i32"]	[[nullum_thiscall]] convertor (int32) ();
+	[[importa] "fpu_f32_ad_n32"]	[[nullum_thiscall]] convertor (nint32) ();
+	[[importa] "fpu_f32_ad_i64"]	[[nullum_thiscall]] convertor (int64) ();
+	[[importa] "fpu_f32_ad_n64"]	[[nullum_thiscall]] convertor (nint64) ();
+	[[importa] "fpu_f32_ad_iadl"]	[[nullum_thiscall]] convertor (intadl) ();
+	[[importa] "fpu_f32_ad_nadl"]	[[nullum_thiscall]] convertor (nintadl) ();
+	[[importa] "fpu_f32_ad_f64"]	[[nullum_thiscall]] convertor (dfrac) ();
+}
+dura dfrac {
+	[[importa] "fpu_f64_ad_l"]		[[nullum_thiscall]] convertor (logicum) ();
+	[[importa] "fpu_f64_ad_i8"]		[[nullum_thiscall]] convertor (int8) ();
+	[[importa] "fpu_f64_ad_n8"]		[[nullum_thiscall]] convertor (nint8) ();
+	[[importa] "fpu_f64_ad_i16"]	[[nullum_thiscall]] convertor (int16) ();
+	[[importa] "fpu_f64_ad_n16"]	[[nullum_thiscall]] convertor (nint16) ();
+	[[importa] "fpu_f64_ad_i32"]	[[nullum_thiscall]] convertor (int32) ();
+	[[importa] "fpu_f64_ad_n32"]	[[nullum_thiscall]] convertor (nint32) ();
+	[[importa] "fpu_f64_ad_i64"]	[[nullum_thiscall]] convertor (int64) ();
+	[[importa] "fpu_f64_ad_n64"]	[[nullum_thiscall]] convertor (nint64) ();
+	[[importa] "fpu_f64_ad_iadl"]	[[nullum_thiscall]] convertor (intadl) ();
+	[[importa] "fpu_f64_ad_nadl"]	[[nullum_thiscall]] convertor (nintadl) ();
+	[[importa] "fpu_f64_ad_f32"]	[[nullum_thiscall]] convertor (frac) ();
 }
 
 [[xa]] functio logicum operator == (@nihil a, @nihil b) {
@@ -1978,6 +2088,89 @@ dura nintadl {
 	CODE { RET { @BLT:1 1=>1(R, @NEQ:W 1 W 1=>W 1(A[0], A[1])) } }
 }
 
+spatium math {
+	dura .frac {
+		constatus pi = frac(3.14159265358979323846);
+		constatus e = frac(2.71828182845904523536);
+	}
+	dura .dfrac {
+		constatus pi = 3.14159265358979323846;
+		constatus e = 2.71828182845904523536;
+	}
+	spatium casualis {
+		[[importa] fpu_ncg_1]	functio nihil data(@nihil data, int long);
+		[[importa] fpu_ncg_2]	functio int integer(int min, int max);
+		[[importa] fpu_ncg_3]	functio dfrac fractus();
+	}
+
+	[[importa] fpu_f32_pi]	functio frac inf_pos_s();
+	[[importa] fpu_f32_ni]	functio frac inf_neg_s();
+	[[importa] fpu_f32_nn]	functio frac nn_s();
+	[[importa] fpu_f64_pi]	functio dfrac inf_pos_d();
+	[[importa] fpu_f64_ni]	functio dfrac inf_neg_d();
+	[[importa] fpu_f64_nn]	functio dfrac nn_d();
+	[[importa] fpu_ei_32]	functio logicum est_inf(frac valor);
+	[[importa] fpu_ei_64]	functio logicum est_inf(dfrac valor);
+	[[importa] fpu_enn_32]	functio logicum est_nn(frac valor);
+	[[importa] fpu_enn_64]	functio logicum est_nn(dfrac valor);
+
+	[[importa] fpu_abs_i8]	functio int8	abs(int8 valor);
+	[[importa] fpu_abs_i16]	functio int16	abs(int16 valor);
+	[[importa] fpu_abs_i32]	functio int32	abs(int32 valor);
+	[[importa] fpu_abs_i64]	functio int64	abs(int64 valor);
+	[[importa] fpu_abs_iad]	functio intadl	abs(intadl valor);
+	[[importa] fpu_abs_f32]	functio frac	abs(frac valor);
+	[[importa] fpu_abs_f64]	functio dfrac	abs(dfrac valor);
+
+	[[importa] fpu_sgn_i8]	functio int8	sgn(int8 valor);
+	[[importa] fpu_sgn_i16]	functio int16	sgn(int16 valor);
+	[[importa] fpu_sgn_i32]	functio int32	sgn(int32 valor);
+	[[importa] fpu_sgn_i64]	functio int64	sgn(int64 valor);
+	[[importa] fpu_sgn_iad]	functio intadl	sgn(intadl valor);
+	[[importa] fpu_sgn_f32]	functio frac	sgn(frac valor);
+	[[importa] fpu_sgn_f64]	functio dfrac	sgn(dfrac valor);
+
+	[[importa] fpu_c1]		functio frac	concava(frac valor);
+	[[importa] fpu_c1_d]	functio dfrac	concava(dfrac valor);
+	[[importa] fpu_c2]		functio frac	trunca(frac valor);
+	[[importa] fpu_c2_d]	functio dfrac	trunca(dfrac valor);
+	[[importa] fpu_c3]		functio frac	solum(frac valor);
+	[[importa] fpu_c3_d]	functio dfrac	solum(dfrac valor);
+	[[importa] fpu_c4]		functio frac	tectum(frac valor);
+	[[importa] fpu_c4_d]	functio dfrac	tectum(dfrac valor);
+
+	[[importa] fpu_rdx]		functio frac	radix(frac valor);
+	[[importa] fpu_rdx_d]	functio dfrac	radix(dfrac valor);
+	[[importa] fpu_pot]		functio frac	pot(frac valor, frac pot);
+	[[importa] fpu_pot_d]	functio dfrac	pot(dfrac valor, dfrac pot);
+
+	[[importa] fpu_exp]		functio frac	exp(frac valor);
+	[[importa] fpu_exp_d]	functio dfrac	exp(dfrac valor);
+	[[importa] fpu_ln]		functio frac	ln(frac valor);
+	[[importa] fpu_ln_d]	functio dfrac	ln(dfrac valor);
+	[[importa] fpu_lb]		functio frac	lb(frac valor);
+	[[importa] fpu_lb_d]	functio dfrac	lb(dfrac valor);
+	[[importa] fpu_lg]		functio frac	lg(frac valor);
+	[[importa] fpu_lg_d]	functio dfrac	lg(dfrac valor);
+
+	[[importa] fpu_sin]		functio frac	sin(frac valor);
+	[[importa] fpu_sin_d]	functio dfrac	sin(dfrac valor);
+	[[importa] fpu_cos]		functio frac	cos(frac valor);
+	[[importa] fpu_cos_d]	functio dfrac	cos(dfrac valor);
+	[[importa] fpu_tg]		functio frac	tg(frac valor);
+	[[importa] fpu_tg_d]	functio dfrac	tg(dfrac valor);
+	[[importa] fpu_ctg]		functio frac	ctg(frac valor);
+	[[importa] fpu_ctg_d]	functio dfrac	ctg(dfrac valor);
+
+	[[importa] fpu_asin]	functio frac	arcsin(frac valor);
+	[[importa] fpu_asin_d]	functio dfrac	arcsin(dfrac valor);
+	[[importa] fpu_acos]	functio frac	arccos(frac valor);
+	[[importa] fpu_acos_d]	functio dfrac	arccos(dfrac valor);
+	[[importa] fpu_atg]		functio frac	arctg(frac valor);
+	[[importa] fpu_atg_d]	functio dfrac	arctg(dfrac valor);
+	[[importa] fpu_actg]	functio frac	arcctg(frac valor);
+	[[importa] fpu_actg_d]	functio dfrac	arcctg(dfrac valor);
+}
 spatium memoria {
 	[[importa] alloca_memoriam]		functio @nihil alloca(nintadl magn);
 	[[importa] realloca_memoriam]	functio @nihil realloca(@nihil mem, nintadl magn);
@@ -1992,6 +2185,30 @@ spatium errores {
 	[error] constatus habitus_falsus	= 0x05;
 	[error] constatus ie_falsum			= 0x06;
 	[error] constatus xe_defectus		= 0x07;
+
+	[sub_error ie_falsum] constatus ie_error_nullus					= 0x00;
+	[sub_error ie_falsum] constatus ie_error_ignotus				= 0x01;
+	[sub_error ie_falsum] constatus ie_lima_nulla					= 0x02;
+	[sub_error ie_falsum] constatus ie_semita_nulla					= 0x03;
+	[sub_error ie_falsum] constatus ie_nimium_limae_apertae			= 0x04;
+	[sub_error ie_falsum] constatus ie_permissio_nulla				= 0x05;
+	[sub_error ie_falsum] constatus ie_manubrium_defectum			= 0x06;
+	[sub_error ie_falsum] constatus ie_memoria_nulla				= 0x07;
+	[sub_error ie_falsum] constatus ie_machinatio_defecta			= 0x08;
+	[sub_error ie_falsum] constatus ie_sole_legere					= 0x09;
+	[sub_error ie_falsum] constatus ie_spatium_disci_nullum			= 0x0A;
+	[sub_error ie_falsum] constatus ie_lima_preexistat				= 0x0B;
+	[sub_error ie_falsum] constatus ie_implantatio_nulla			= 0x0C;
+	[sub_error ie_falsum] constatus ie_collectorium_non_vacuum		= 0x0D;
+	[sub_error ie_falsum] constatus ie_collectorium_est_currens		= 0x0E;
+	[sub_error ie_falsum] constatus ie_machinatio_non_idem			= 0x0F;
+	[sub_error ie_falsum] constatus ie_nomen_semitae_defectum		= 0x10;
+	[sub_error ie_falsum] constatus ie_nomen_limae_nimium_largum	= 0x11;
+	[sub_error ie_falsum] constatus ie_lima_nimium_larga			= 0x12;
+	[sub_error ie_falsum] constatus ie_legere_falsum				= 0x13;
+	[sub_error ie_falsum] constatus ie_scribere_falsum				= 0x14;
+	[sub_error ie_falsum] constatus ie_creare_falsum				= 0x15;
+	[sub_error ie_falsum] constatus ie_aperire_falsum				= 0x16;
 
 	[sub_error xe_defectus] constatus xe_error_nullus			= 0x00;
 	[sub_error xe_defectus] constatus xe_modulus_nullus			= 0x01;

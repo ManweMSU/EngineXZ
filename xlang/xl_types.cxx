@@ -442,6 +442,7 @@ namespace Engine
 							SafePointer<ReferenceComputable> com = new ReferenceComputable(this, subject);
 							return CreateComputable(_ctx, com);
 						} else {
+							if (type->GetCanonicalType() == _cn) { subject->Retain(); return subject; }
 							SafePointer<ReinterpretComputable> com = new ReinterpretComputable(this, subject);
 							return CreateComputable(_ctx, com);
 						}

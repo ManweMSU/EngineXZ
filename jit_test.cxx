@@ -140,7 +140,7 @@ int Main(void)
 	if (meta) console.WriteLine(meta->ToString());
 
 	Logger logger;
-	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandardMMU | XE::UseStandardLD | XE::UseStandardSPU);
+	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandardMMU | XE::UseStandardLD | XE::UseStandardSPU | XE::UseStandardFPU);
 	ldr->AddModuleSearchPath(L"_build");
 	SafePointer<XE::ExecutionContext> ectx = new XE::ExecutionContext(ldr);
 	SafePointer< Volumes::Dictionary<string, string> > loc = new Volumes::Dictionary<string, string>;
