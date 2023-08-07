@@ -1,5 +1,7 @@
 ﻿#include "xe_logger.h"
 
+#include "../ximg/xi_module.h"
+
 namespace Engine
 {
 	namespace XE
@@ -108,6 +110,24 @@ namespace Engine
 		{
 			auto logger = Logger::ExposeLogger(xctx);
 			if (logger) logger->GetLocalization().SetRetain(dict);
+		}
+		Volumes::Dictionary<string, string> * LoadLocalizationTable(Streaming::Stream * stream)
+		{
+			SafePointer< Volumes::Dictionary<string, string> > result = new Volumes::Dictionary<string, string>;
+			XI::Module module(stream, XI::Module::ModuleLoadFlags::LoadLink);
+			for (auto & lit : module.literals) if (lit.value.contents == XI::Module::Literal::Class::String) {
+				result->Append(lit.key, lit.value.data_string);
+			}
+			result->Retain();
+			return result;
+		}
+		void LoadErrorLocalization(const ExecutionContext & xctx, const string & name)
+		{
+			auto callback = xctx.GetLoaderCallback();
+			if (!callback) return;
+			SafePointer<Streaming::Stream> stream = callback->OpenModule(name);
+			SafePointer< Volumes::Dictionary<string, string> > dict = LoadLocalizationTable(stream);
+			SetErrorLocalization(xctx, dict);
 		}
 	}
 }

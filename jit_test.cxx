@@ -128,6 +128,18 @@ int Main(void)
 		return 1;
 	}
 	output = L"_build";
+	XV::CompileModule(L"xv_lib/errores.en.xv", output, callback, desc);
+	if (desc.status != XV::CompilerStatus::Success) {
+		PrintCompilerError(desc);
+		return 1;
+	}
+	output = L"_build";
+	XV::CompileModule(L"xv_lib/errores.ru.xv", output, callback, desc);
+	if (desc.status != XV::CompilerStatus::Success) {
+		PrintCompilerError(desc);
+		return 1;
+	}
+	output = L"_build";
 	XV::CompileModule(L"test.xv", output, callback, desc);
 	if (desc.status != XV::CompilerStatus::Success) {
 		PrintCompilerError(desc);
@@ -143,9 +155,7 @@ int Main(void)
 	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandardMMU | XE::UseStandardLD | XE::UseStandardSPU | XE::UseStandardFPU);
 	ldr->AddModuleSearchPath(L"_build");
 	SafePointer<XE::ExecutionContext> ectx = new XE::ExecutionContext(ldr);
-	SafePointer< Volumes::Dictionary<string, string> > loc = new Volumes::Dictionary<string, string>;
-	loc->Append(L"memoria_nulla", L"Недостаточно памяти");
-	XE::SetErrorLocalization(*ectx, loc);
+	XE::LoadErrorLocalization(*ectx, L"errores.ru");
 	XE::SetLoggerSink(*ectx, &logger);
 
 	ectx->LoadModule(L"test");

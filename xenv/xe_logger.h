@@ -18,5 +18,7 @@ namespace Engine
 		IAPIExtension * CreateLogger(void);
 		void SetLoggerSink(const ExecutionContext & xctx, ILoggerSink * sink);
 		void SetErrorLocalization(const ExecutionContext & xctx, Volumes::Dictionary<string, string> * dict);
+		Volumes::Dictionary<string, string> * LoadLocalizationTable(Streaming::Stream * stream);
+		void LoadErrorLocalization(const ExecutionContext & xctx, const string & name);
 	}
 }

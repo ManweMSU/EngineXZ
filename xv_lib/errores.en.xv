@@ -1,0 +1,52 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Canonicalis Lingua Anglica";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2023";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+[[systema] liber]
+
+constatus error_nullus		= "Success";
+constatus implantatio_nulla	= "Not implemented";
+constatus memoria_nulla		= "Not enough memory";
+constatus argumentum_falsum	= "Invalid function argument";
+constatus efformatio_falsa	= "Invalid data format";
+constatus habitus_falsus	= "Invalid object state";
+constatus ie_falsum			= "Invalid I/O operation";
+constatus xe_defectus		= "XE loader failure";
+
+constatus ie_error_nullus				= "Success";
+constatus ie_error_ignotus				= "Unknown";
+constatus ie_lima_nulla					= "No such file";
+constatus ie_semita_nulla				= "No such path";
+constatus ie_nimium_limae_apertae		= "Too much opened files";
+constatus ie_permissio_nulla			= "Permission denied";
+constatus ie_manubrium_defectum			= "Invalid handle value";
+constatus ie_memoria_nulla				= "Not enough memory";
+constatus ie_machinatio_defecta			= "Invalid device";
+constatus ie_sole_legere				= "Object is read only";
+constatus ie_spatium_disci_nullum		= "Not enough disk space";
+constatus ie_lima_preexistat			= "File already exists";
+constatus ie_implantatio_nulla			= "Not implemented";
+constatus ie_collectorium_non_vacuum	= "Directory is not empty";
+constatus ie_collectorium_est_currens	= "Directory is current";
+constatus ie_machinatio_non_idem		= "Not same device";
+constatus ie_nomen_semitae_defectum		= "Wrong path name";
+constatus ie_nomen_limae_nimium_largum	= "File name is too long";
+constatus ie_lima_nimium_larga			= "File size is too large";
+constatus ie_legere_falsum				= "Reading failure";
+constatus ie_scribere_falsum			= "Writing failure";
+constatus ie_creare_falsum				= "Creation failure";
+constatus ie_aperire_falsum				= "Opening failure";
+
+constatus xe_error_nullus			= "Success";
+constatus xe_modulus_nullus			= "Module not found";
+constatus xe_imago_falsa			= "Wrong image file format";
+constatus xe_functio_falsa			= "Wrong function format";
+constatus xe_abi_functionis_falsa	= "No desired function ABI";
+constatus xe_symbolus_duplicatus	= "Duplicate symbol";
+constatus xe_adhaesio_defecta		= "Linkage failure";
+constatus xe_importus_falsus		= "No such local import";
+constatus xe_librarium_nullum		= "Error loading dynamic library";
+constatus xe_lib_importus_falsus	= "No such import in dynamic library";
+constatus xe_allocatus_defectus		= "Object allocation failure";
+constatus xe_initium_defectum		= "Module initialization failure";

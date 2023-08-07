@@ -1,0 +1,52 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Canonicalis Lingua Russa";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2023";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+[[systema] liber]
+
+constatus error_nullus		= "Успех";
+constatus implantatio_nulla	= "Не реализовано";
+constatus memoria_nulla		= "Недостаточно памяти";
+constatus argumentum_falsum	= "Неверный параметр функции";
+constatus efformatio_falsa	= "Неверный формат данных";
+constatus habitus_falsus	= "Неверное состояние объекта";
+constatus ie_falsum			= "Неверная операция В/В";
+constatus xe_defectus		= "Сбой загрузчика XE";
+
+constatus ie_error_nullus				= "Успех";
+constatus ie_error_ignotus				= "Неизвестная ошибка";
+constatus ie_lima_nulla					= "Файл не найден";
+constatus ie_semita_nulla				= "Путь не найден";
+constatus ie_nimium_limae_apertae		= "Слишком много открытых файлов";
+constatus ie_permissio_nulla			= "Отказано в доступе";
+constatus ie_manubrium_defectum			= "Неверное значение дескриптора";
+constatus ie_memoria_nulla				= "Недостаточно памяти";
+constatus ie_machinatio_defecta			= "Неверное устройство";
+constatus ie_sole_legere				= "Объект доступен только для чтения";
+constatus ie_spatium_disci_nullum		= "Недостаточно дискового пространства";
+constatus ie_lima_preexistat			= "Файл уже существует";
+constatus ie_implantatio_nulla			= "Не реализовано";
+constatus ie_collectorium_non_vacuum	= "Каталог не пуст";
+constatus ie_collectorium_est_currens	= "Каталог является текущим";
+constatus ie_machinatio_non_idem		= "Не то же самое устройство";
+constatus ie_nomen_semitae_defectum		= "Неверное имя пути";
+constatus ie_nomen_limae_nimium_largum	= "Слишком длинное имя файла";
+constatus ie_lima_nimium_larga			= "Слишком большой размер файла";
+constatus ie_legere_falsum				= "Сбой чтения";
+constatus ie_scribere_falsum			= "Сбой записи";
+constatus ie_creare_falsum				= "Сбой создания";
+constatus ie_aperire_falsum				= "Сбой открытия";
+
+constatus xe_error_nullus			= "Успех";
+constatus xe_modulus_nullus			= "Модуль не найден";
+constatus xe_imago_falsa			= "Некорректный формат образа модуля";
+constatus xe_functio_falsa			= "Некорректный формат функции";
+constatus xe_abi_functionis_falsa	= "Нет требуемого двоичного интерфейса функции";
+constatus xe_symbolus_duplicatus	= "Дублирующий символ";
+constatus xe_adhaesio_defecta		= "Сбой связки";
+constatus xe_importus_falsus		= "Не найден объект локального импорта";
+constatus xe_librarium_nullum		= "Сбой загрузки динамической библиотеки";
+constatus xe_lib_importus_falsus	= "Не найден объект импорта в динамической библиотеке";
+constatus xe_allocatus_defectus		= "Сбой выделения объекта";
+constatus xe_initium_defectum		= "Сбой инициализации модуля";
