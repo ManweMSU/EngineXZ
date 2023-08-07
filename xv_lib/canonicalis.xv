@@ -2175,6 +2175,8 @@ spatium memoria {
 	[[importa] alloca_memoriam]		functio @nihil alloca(nintadl magn);
 	[[importa] realloca_memoriam]	functio @nihil realloca(@nihil mem, nintadl magn);
 	[[importa] dimitte_memoriam]	functio nihil dimitte(@nihil mem);
+	[[importa] relabe_memoriam]		functio nihil relabe(@nihil mem, nintadl magn);
+	[[importa] exscribe_memoriam]	functio @nihil exscribe(@nihil in, @nihil ex, nintadl magn);
 }
 spatium errores {
 	[error] constatus error_nullus		= 0x00;
@@ -2223,6 +2225,9 @@ spatium errores {
 	[sub_error xe_defectus] constatus xe_allocatus_defectus		= 0x0A;
 	[sub_error xe_defectus] constatus xe_initium_defectum		= 0x0B;
 }
+
+[[importa] inc_sec] functio nint incrementum_securum(~nint valor);
+[[importa] dec_sec] functio nint decrementum_securum(~nint valor);
 
 genus linea {
 	@nihil _data;
@@ -2336,6 +2341,35 @@ spatium errores {
 spatium actuarius {
 	protocollum _actuarius { functio nihil scribe(~linea ln) virtualis pura; }
 	functio nihil scribe(~linea ln) { (@_actuarius)(protocollum(actuarius))^.scribe(ln); }
+}
+spatium systema {
+	constatus architectura_ignota	= 0x00;
+	constatus architectura_i386		= 0x01;
+	constatus architectura_x64		= 0x11;
+	constatus architectura_arm_m32	= 0x02;
+	constatus architectura_arm_a64	= 0x12;
+
+	constatus systema_ignota	= 0x00;
+	constatus systema_windows	= 0x01;
+	constatus systema_macos		= 0x02;
+	constatus systema_linux		= 0x03;
+
+	structura informatio {
+		int64 frequentia_processoris;
+		int64 numerus_memoriae;
+		linea nomen_processoris;
+		int32 systema_machinae;
+		int32 architectura_machinae;
+		int32 architectura_processi;
+		int32 numerus_corda_corporalia;
+		int32 numerus_corda_virtualia;
+		int32 versio_systemae_supera;
+		int32 versio_systemae_inferna;
+	}
+
+	[[importa] sys_info]	functio nihil para_informatio(~informatio inf);
+	[[importa] sys_temp]	functio nint32 para_tempus_systemae();
+	[[importa] sys_arch]	functio logicum proba_architecturam(int arch);
 }
 
 // TODO: REWORK

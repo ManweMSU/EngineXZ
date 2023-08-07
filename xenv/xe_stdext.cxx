@@ -301,15 +301,77 @@ namespace Engine
 		};
 		class MMU : public IAPIExtension
 		{
+			struct _sys_info {
+				int64 freq;
+				int64 mem;
+				string proc_name;
+				int sys_machine;
+				int arch_machine;
+				int arch_process;
+				int cores_phys;
+				int cores_virt;
+				int ver_major;
+				int ver_minor;
+			};
+
+			static int _get_arch(Platform platform)
+			{
+				if (platform == Platform::X86) return 0x01;
+				else if (platform == Platform::X64) return 0x11;
+				else if (platform == Platform::ARM) return 0x02;
+				else if (platform == Platform::ARM64) return 0x12;
+				else return 0;
+			}
 			static void * _mem_alloc(uintptr size) { return malloc(size); }
 			static void * _mem_realloc(void * mem, uintptr size) { return realloc(mem, size); }
 			static void _mem_release(void * mem) { free(mem); }
+			static void _get_system_info(_sys_info & info)
+			{
+				try {
+					SystemDesc desc;
+					if (!GetSystemInformation(desc)) return;
+					info.freq = desc.ClockFrequency;
+					info.mem = desc.PhysicalMemory;
+					info.proc_name = desc.ProcessorName;
+					info.arch_machine = _get_arch(desc.Architecture);
+					info.arch_process = _get_arch(ApplicationPlatform);
+					info.cores_phys = desc.PhysicalCores;
+					info.cores_virt = desc.VirtualCores;
+					info.ver_major = desc.SystemVersionMajor;
+					info.ver_minor = desc.SystemVersionMinor;
+					info.sys_machine = 0;
+					#ifdef ENGINE_WINDOWS
+					info.sys_machine = 0x01;
+					#endif
+					#ifdef ENGINE_MACOSX
+					info.sys_machine = 0x02;
+					#endif
+					#ifdef ENGINE_LINUX
+					info.sys_machine = 0x03;
+					#endif
+				} catch (...) {}
+			}
+			static bool _check_arch(int arch)
+			{
+				if (arch == 0x01) return IsPlatformAvailable(Platform::X86);
+				else if (arch == 0x11) return IsPlatformAvailable(Platform::X64);
+				else if (arch == 0x02) return IsPlatformAvailable(Platform::ARM);
+				else if (arch == 0x12) return IsPlatformAvailable(Platform::ARM64);
+				else return false;
+			}
 		public:
 			virtual void * ExposeRoutine(const string & routine_name) noexcept override
 			{
 				if (routine_name == L"alloca_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&_mem_alloc));
 				else if (routine_name == L"realloca_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&_mem_realloc));
 				else if (routine_name == L"dimitte_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&_mem_release));
+				else if (routine_name == L"relabe_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::ZeroMemory));
+				else if (routine_name == L"exscribe_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::MemoryCopy));
+				else if (routine_name == L"inc_sec") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::InterlockedIncrement));
+				else if (routine_name == L"dec_sec") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::InterlockedDecrement));
+				else if (routine_name == L"sys_info") return const_cast<void *>(reinterpret_cast<const void *>(&_get_system_info));
+				else if (routine_name == L"sys_temp") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::GetTimerValue));
+				else if (routine_name == L"sys_arch") return const_cast<void *>(reinterpret_cast<const void *>(&_check_arch));
 				else return 0;
 			}
 			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
