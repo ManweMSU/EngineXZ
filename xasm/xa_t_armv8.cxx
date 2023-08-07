@@ -1423,7 +1423,7 @@ namespace Engine
 						}
 						if (a.vreg != VReg::NO) {
 							encode_emulate_lea(Reg::X9, Reg::FP, a.fp_offset);
-							encode_store(_size_eval(_src.retval.size), Reg::X9, a.vreg);
+							encode_store(8, Reg::X9, a.vreg);
 						}
 					}
 					if (rv_reg != Reg::NO) encode_store(8, Reg::FP, _retval.fp_offset, rv_reg);

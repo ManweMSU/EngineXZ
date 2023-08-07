@@ -120,6 +120,22 @@ namespace Engine
 			static bool _is_nan_f64(double value) { return isnan(value); }
 			static void _random_data(uint8 * dest, int length) { for (int i = 0; i < length; i++) dest[i] = Engine::Math::Random::RandomByte(); }
 			static int _random_int(int min, int max) { return min + Engine::Math::Random::RandomInteger() % (max + 1 - min); }
+			static double _round_d(double value) { return round(value); }
+			static double _trunc_d(double value) { return trunc(value); }
+			static double _floor_d(double value) { return floor(value); }
+			static double _ceil_d(double value) { return ceil(value); }
+			static double _sqrt_d(double value) { return sqrt(value); }
+			static double _pow_d(double value, double p) { return pow(value, p); }
+			static double _exp_d(double value) { return exp(value); }
+			static double _log_d(double value) { return log(value); }
+			static double _log2_d(double value) { return log2(value); }
+			static double _log10_d(double value) { return log10(value); }
+			static double _sin_d(double value) { return sin(value); }
+			static double _cos_d(double value) { return cos(value); }
+			static double _tan_d(double value) { return tan(value); }
+			static double _asin_d(double value) { return asin(value); }
+			static double _acos_d(double value) { return acos(value); }
+			static double _atan_d(double value) { return atan(value); }
 
 			void * _expose_part_1(const string & routine_name) noexcept
 			{
@@ -224,39 +240,39 @@ namespace Engine
 				else if (routine_name == L"fpu_sgn_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_f32));
 				else if (routine_name == L"fpu_sgn_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_f64));
 				else if (routine_name == L"fpu_c1") return const_cast<void *>(reinterpret_cast<const void *>(&roundf));
-				else if (routine_name == L"fpu_c1_d") return const_cast<void *>(reinterpret_cast<const void *>(&round));
+				else if (routine_name == L"fpu_c1_d") return const_cast<void *>(reinterpret_cast<const void *>(&_round_d));
 				else if (routine_name == L"fpu_c2") return const_cast<void *>(reinterpret_cast<const void *>(&truncf));
-				else if (routine_name == L"fpu_c2_d") return const_cast<void *>(reinterpret_cast<const void *>(&trunc));
+				else if (routine_name == L"fpu_c2_d") return const_cast<void *>(reinterpret_cast<const void *>(&_trunc_d));
 				else if (routine_name == L"fpu_c3") return const_cast<void *>(reinterpret_cast<const void *>(&floorf));
-				else if (routine_name == L"fpu_c3_d") return const_cast<void *>(reinterpret_cast<const void *>(&floor));
+				else if (routine_name == L"fpu_c3_d") return const_cast<void *>(reinterpret_cast<const void *>(&_floor_d));
 				else if (routine_name == L"fpu_c4") return const_cast<void *>(reinterpret_cast<const void *>(&ceilf));
-				else if (routine_name == L"fpu_c4_d") return const_cast<void *>(reinterpret_cast<const void *>(&ceil));
+				else if (routine_name == L"fpu_c4_d") return const_cast<void *>(reinterpret_cast<const void *>(&_ceil_d));
 				else if (routine_name == L"fpu_rdx") return const_cast<void *>(reinterpret_cast<const void *>(&sqrtf));
-				else if (routine_name == L"fpu_rdx_d") return const_cast<void *>(reinterpret_cast<const void *>(&sqrt));
+				else if (routine_name == L"fpu_rdx_d") return const_cast<void *>(reinterpret_cast<const void *>(&_sqrt_d));
 				else if (routine_name == L"fpu_pot") return const_cast<void *>(reinterpret_cast<const void *>(&powf));
-				else if (routine_name == L"fpu_pot_d") return const_cast<void *>(reinterpret_cast<const void *>(&pow));
+				else if (routine_name == L"fpu_pot_d") return const_cast<void *>(reinterpret_cast<const void *>(&_pow_d));
 				else if (routine_name == L"fpu_exp") return const_cast<void *>(reinterpret_cast<const void *>(&expf));
-				else if (routine_name == L"fpu_exp_d") return const_cast<void *>(reinterpret_cast<const void *>(&exp));
+				else if (routine_name == L"fpu_exp_d") return const_cast<void *>(reinterpret_cast<const void *>(&_exp_d));
 				else if (routine_name == L"fpu_ln") return const_cast<void *>(reinterpret_cast<const void *>(&logf));
-				else if (routine_name == L"fpu_ln_d") return const_cast<void *>(reinterpret_cast<const void *>(&log));
+				else if (routine_name == L"fpu_ln_d") return const_cast<void *>(reinterpret_cast<const void *>(&_log_d));
 				else if (routine_name == L"fpu_lb") return const_cast<void *>(reinterpret_cast<const void *>(&log2f));
-				else if (routine_name == L"fpu_lb_d") return const_cast<void *>(reinterpret_cast<const void *>(&log2));
+				else if (routine_name == L"fpu_lb_d") return const_cast<void *>(reinterpret_cast<const void *>(&_log2_d));
 				else if (routine_name == L"fpu_lg") return const_cast<void *>(reinterpret_cast<const void *>(&log10f));
-				else if (routine_name == L"fpu_lg_d") return const_cast<void *>(reinterpret_cast<const void *>(&log10));
+				else if (routine_name == L"fpu_lg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_log10_d));
 				else if (routine_name == L"fpu_sin") return const_cast<void *>(reinterpret_cast<const void *>(&sinf));
-				else if (routine_name == L"fpu_sin_d") return const_cast<void *>(reinterpret_cast<const void *>(&sin));
+				else if (routine_name == L"fpu_sin_d") return const_cast<void *>(reinterpret_cast<const void *>(&_sin_d));
 				else if (routine_name == L"fpu_cos") return const_cast<void *>(reinterpret_cast<const void *>(&cosf));
-				else if (routine_name == L"fpu_cos_d") return const_cast<void *>(reinterpret_cast<const void *>(&cos));
+				else if (routine_name == L"fpu_cos_d") return const_cast<void *>(reinterpret_cast<const void *>(&_cos_d));
 				else if (routine_name == L"fpu_tg") return const_cast<void *>(reinterpret_cast<const void *>(&tanf));
-				else if (routine_name == L"fpu_tg_d") return const_cast<void *>(reinterpret_cast<const void *>(&tan));
+				else if (routine_name == L"fpu_tg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_tan_d));
 				else if (routine_name == L"fpu_ctg") return const_cast<void *>(reinterpret_cast<const void *>(&_ctg_f32));
 				else if (routine_name == L"fpu_ctg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_ctg_f64));
 				else if (routine_name == L"fpu_asin") return const_cast<void *>(reinterpret_cast<const void *>(&asinf));
-				else if (routine_name == L"fpu_asin_d") return const_cast<void *>(reinterpret_cast<const void *>(&asin));
+				else if (routine_name == L"fpu_asin_d") return const_cast<void *>(reinterpret_cast<const void *>(&_asin_d));
 				else if (routine_name == L"fpu_acos") return const_cast<void *>(reinterpret_cast<const void *>(&acosf));
-				else if (routine_name == L"fpu_acos_d") return const_cast<void *>(reinterpret_cast<const void *>(&acos));
+				else if (routine_name == L"fpu_acos_d") return const_cast<void *>(reinterpret_cast<const void *>(&_acos_d));
 				else if (routine_name == L"fpu_atg") return const_cast<void *>(reinterpret_cast<const void *>(&atanf));
-				else if (routine_name == L"fpu_atg_d") return const_cast<void *>(reinterpret_cast<const void *>(&atan));
+				else if (routine_name == L"fpu_atg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_atan_d));
 				else if (routine_name == L"fpu_actg") return const_cast<void *>(reinterpret_cast<const void *>(&_arcctg_f32));
 				else if (routine_name == L"fpu_actg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_arcctg_f64));
 				else if (routine_name == L"fpu_f32_pi") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_pos_f32));
