@@ -2,6 +2,8 @@
 
 #include "xv_meta.h"
 #include "xv_lexical.h"
+#include "xv_proto.h"
+#include "xv_oapi.h"
 #include "../xlang/xl_code.h"
 #include "../xexec/xx_ext.h"
 #include "../xasm/xa_compiler.h"
@@ -53,17 +55,18 @@ namespace Engine
 			SafePointer<XL::LObject> instance;
 			SafePointer<XL::LObject> retval;
 			ObjectArray<XL::LObject> input_types = ObjectArray<XL::LObject>(0x10);
+			ObjectArray<XL::LObject> objects_retain = ObjectArray<XL::LObject>(0x10);
 			Array<string> input_names = Array<string>(0x10);
 			uint flags;
-			SafePointer<TokenStream> code_source;
+			SafePointer<ITokenStream> code_source;
 			bool constructor, destructor;
 		};
-		struct VContext : public XL::IModuleLoadCallback
+		struct VContext : public XL::IModuleLoadCallback, public ICompilationContext
 		{
 			bool module_is_library;
 			XL::LContext & ctx;
 			SafePointer<TokenStream> input;
-			SafePointer<TokenStream> input_override;
+			SafePointer<ITokenStream> input_override;
 			ICompilerCallback * callback;
 			CompilerStatusDesc & status;
 			Token current_token;
@@ -78,6 +81,47 @@ namespace Engine
 				if (callback) return callback->QueryModuleFileStream(name);
 				else throw IO::FileAccessException(IO::Error::FileNotFound);
 			}
+			virtual XL::LContext * GetLanguageContext(void) override { return &ctx; }
+			virtual XL::LObject * ProcessLanguageExpression(ITokenStream * input, Token & input_current_token, XL::LObject ** vns, int num_vns) override
+			{
+				SafePointer<XL::LObject> result;
+				auto _io = input_override;
+				auto _s = status;
+				auto _t = current_token;
+				try {
+					VObservationDesc desc;
+					desc.current_namespace = 0;
+					for (int i = 0; i < num_vns; i++) desc.namespace_search_list << vns[i];
+					input_override.SetRetain(input);
+					current_token = input_current_token;
+					result = ProcessExpression(desc);
+					input_current_token = current_token;
+				} catch (...) { result.SetReference(0); }
+				input_override = _io;
+				status = _s;
+				current_token = _t;
+				if (result) result->Retain();
+				return result;
+			}
+			virtual bool ProcessLanguageDefinitions(ITokenStream * input, XL::LObject * dest_ns, XL::LObject ** vns, int num_vns) override
+			{
+				bool result = true;
+				auto _io = input_override;
+				auto _s = status;
+				auto _t = current_token;
+				try {
+					VObservationDesc desc;
+					desc.current_namespace = dest_ns;
+					for (int i = 0; i < num_vns; i++) desc.namespace_search_list << vns[i];
+					OverrideInput(input);
+					ProcessNamespace(desc);
+				} catch (...) { result = false; }
+				input_override = _io;
+				status = _s;
+				current_token = _t;
+				return result;
+			}
+			ITokenStream * ExposeInput(void) { return input_override ? input_override.Inner() : input.Inner(); }
 			void Abort(CompilerStatus error)
 			{
 				status.status = error;
@@ -107,7 +151,7 @@ namespace Engine
 					if (!input->ReadToken(current_token)) Abort(CompilerStatus::InvalidTokenInput, input->GetCurrentPosition(), 1);
 				}
 			}
-			void OverrideInput(TokenStream * new_input) { input_override.SetRetain(new_input); ReadNextToken(); }
+			void OverrideInput(ITokenStream * new_input) { input_override.SetRetain(new_input); ReadNextToken(); }
 			bool IsPunct(const widechar * seq) { return current_token.type == TokenType::Punctuation && current_token.contents == seq; }
 			bool IsKeyword(const widechar * seq) { return current_token.type == TokenType::Keyword && current_token.contents == seq; }
 			bool IsIdent(void) { return current_token.type == TokenType::Identifier; }
@@ -200,6 +244,9 @@ namespace Engine
 				} else if (IsKeyword(Lexic::KeywordSizeOf)) {
 					ReadNextToken();
 					object = ctx.QuerySizeOfOperator();
+				} else if (IsKeyword(Lexic::KeywordSizeOfMX)) {
+					ReadNextToken();
+					object = ctx.QuerySizeOfOperator(true);
 				} else if (IsKeyword(Lexic::KeywordModule)) {
 					ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 					if (IsPunct(L")")) {
@@ -250,6 +297,10 @@ namespace Engine
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 				} else if (IsKeyword(Lexic::KeywordNull)) {
 					ReadNextToken(); object = ctx.QueryNullLiteral();
+				} else if (IsKeyword(Lexic::KeywordNew)) {
+					ReadNextToken(); object = CreateOperatorNew(ctx);
+				} else if (IsKeyword(Lexic::KeywordConstruct)) {
+					ReadNextToken(); object = CreateOperatorConstruct(ctx);
 				} else Abort(CompilerStatus::AnotherTokenExpected);
 				object->Retain();
 				return object;
@@ -372,28 +423,40 @@ namespace Engine
 					ReadNextToken();
 					return ProcessExpressionUnary(ssl, ssc);
 				} else if (IsKeyword(Lexic::KeywordArray)) {
-					Array<int> dim_list(0x10);
-					ReadNextToken(); AssertPunct(L"["); ReadNextToken();
-					auto d1e = current_token;
-					SafePointer<XL::LObject> d1 = ProcessExpression(ssl, ssc);
-					if (d1->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, d1e);
-					try { dim_list << ctx.QueryLiteralValue(d1); }
-					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, d1e); }
-					while (IsPunct(L",")) {
-						ReadNextToken();
-						auto dne = current_token;
-						SafePointer<XL::LObject> dn = ProcessExpression(ssl, ssc);
-						if (dn->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, dne);
-						try { dim_list << ctx.QueryLiteralValue(dn); }
-						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, dne); }
+					ReadNextToken();
+					if (IsPunct(L"[")) {
+						Array<int> dim_list(0x10);
+						ReadNextToken(); auto d1e = current_token;
+						SafePointer<XL::LObject> d1 = ProcessExpression(ssl, ssc);
+						if (d1->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, d1e);
+						try { dim_list << ctx.QueryLiteralValue(d1); }
+						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, d1e); }
+						while (IsPunct(L",")) {
+							ReadNextToken();
+							auto dne = current_token;
+							SafePointer<XL::LObject> dn = ProcessExpression(ssl, ssc);
+							if (dn->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, dne);
+							try { dim_list << ctx.QueryLiteralValue(dn); }
+							catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, dne); }
+						}
+						AssertPunct(L"]"); ReadNextToken();
+						auto definition = current_token;
+						SafePointer<XL::LObject> type = ProcessExpressionUnary(ssl, ssc);
+						try { for (auto & d : dim_list.InversedElements()) { type = ctx.QueryStaticArray(type, d); } }
+						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						type->Retain();
+						return type;
+					} else {
+						auto definition = current_token;
+						SafePointer<XL::LObject> type = ProcessExpressionUnary(ssl, ssc);
+						try {
+							SafePointer<XL::LObject> dynamic_array = ctx.QueryObject(L"dordo");
+							SafePointer<XL::LObject> operator_instantiate = dynamic_array->GetMember(XL::OperatorSubscript);
+							type = operator_instantiate->Invoke(1, type.InnerRef());
+						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						type->Retain();
+						return type;
 					}
-					AssertPunct(L"]"); ReadNextToken();
-					auto definition = current_token;
-					SafePointer<XL::LObject> type = ProcessExpressionUnary(ssl, ssc);
-					try { for (auto & d : dim_list.InversedElements()) { type = ctx.QueryStaticArray(type, d); } }
-					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
-					type->Retain();
-					return type;
 				} else return ProcessExpressionPostfix(ssl, ssc);
 			}
 			XL::LObject * ProcessExpressionMultiplicative(XL::LObject ** ssl, int ssc)
@@ -592,6 +655,45 @@ namespace Engine
 					AssertPunct(L","); ReadNextToken();
 				}
 			}
+			void ProcessPrototypeDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
+			{
+				bool function;
+				string name;
+				Array<string> arg_list(0x10);
+				ReadNextToken();
+				if (IsKeyword(Lexic::KeywordClass)) {
+					ReadNextToken(); function = false;
+				} else {
+					AssertKeyword(Lexic::KeywordFunction);
+					ReadNextToken(); function = true;
+				}
+				auto def = current_token;
+				AssertIdent(); name = current_token.contents; ReadNextToken();
+				AssertPunct(L"("); ReadNextToken();
+				while (true) {
+					AssertIdent(); string arg = current_token.contents;
+					for (auto & a : arg_list) if (a == arg) Abort(CompilerStatus::SymbolRedefinition, current_token);
+					arg_list.Append(arg);
+					ReadNextToken(); if (IsPunct(L",")) ReadNextToken(); else break;
+				}
+				AssertPunct(L")"); ReadNextToken();
+				XL::LObject * prot;
+				try {
+					if (function) prot = CreateFunctionPrototype(this, desc.current_namespace, name, arg_list.Length(), arg_list.GetBuffer());
+					else prot = CreateClassPrototype(this, desc.current_namespace, name, arg_list.Length(), arg_list.GetBuffer());
+				} catch (...) {Abort( CompilerStatus::SymbolRedefinition, def); }
+				for (auto & attr : attributes) {
+					if (attr.key[0] == L'[') Abort(CompilerStatus::InapproptiateAttribute, def);
+					else prot->AddAttribute(attr.key, attr.value);
+				}
+				attributes.Clear();
+				SetPrototypeVisibility(prot, desc.namespace_search_list.GetBuffer(), desc.namespace_search_list.Length());
+				AssertPunct(L"{");
+				SafePointer<ITokenStream> stream;
+				if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
+				ReadNextToken();
+				SupplyPrototypeImplementation(prot, stream);
+			}
 			void ProcessFunctionDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
 				bool is_class_function = desc.current_namespace->GetClass() == XL::Class::Type;
@@ -728,8 +830,8 @@ namespace Engine
 					AssertPunct(L";"); ReadNextToken();
 				} else if (org == 0) {
 					AssertPunct(L"{");
-					SafePointer<TokenStream> stream;
-					if (!input->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, input->GetCurrentPosition());
+					SafePointer<ITokenStream> stream;
+					if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
 					ReadNextToken();
 					VPostCompileDesc pc;
 					pc.visibility = desc;
@@ -742,12 +844,13 @@ namespace Engine
 					pc.code_source = stream;
 					pc.constructor = is_ctor;
 					pc.destructor = is_dtor;
+					for (auto & v : desc.namespace_search_list) if (v->GetClass() != XL::Class::Namespace) pc.objects_retain.Append(v);
 					post_compile.InsertLast(pc);
 				} else if (org == 1) {
 					auto start = current_token;
 					AssertPunct(L"{");
-					SafePointer<TokenStream> asm_stream;
-					if (!input->ReadBlock(asm_stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, input->GetCurrentPosition());
+					SafePointer<ITokenStream> asm_stream;
+					if (!ExposeInput()->ReadBlock(asm_stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
 					ReadNextToken();
 					auto asm_code = asm_stream->ExtractContents();
 					XA::CompilerStatusDesc asm_desc;
@@ -1007,8 +1110,8 @@ namespace Engine
 							AssertPunct(L";"); ReadNextToken();
 						} else if (org == 0) {
 							AssertPunct(L"{");
-							SafePointer<TokenStream> stream;
-							if (!input->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, input->GetCurrentPosition());
+							SafePointer<ITokenStream> stream;
+							if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
 							ReadNextToken();
 							VPostCompileDesc pc;
 							pc.visibility = desc;
@@ -1025,12 +1128,13 @@ namespace Engine
 							pc.code_source = stream;
 							pc.constructor = false;
 							pc.destructor = false;
+							for (auto & v : desc.namespace_search_list) if (v->GetClass() != XL::Class::Namespace) pc.objects_retain.Append(v);
 							post_compile.InsertLast(pc);
 						} else if (org == 1) {
 							auto start = current_token;
 							AssertPunct(L"{");
-							SafePointer<TokenStream> asm_stream;
-							if (!input->ReadBlock(asm_stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, input->GetCurrentPosition());
+							SafePointer<ITokenStream> asm_stream;
+							if (!ExposeInput()->ReadBlock(asm_stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
 							ReadNextToken();
 							auto asm_code = asm_stream->ExtractContents();
 							XA::CompilerStatusDesc asm_desc;
@@ -1068,6 +1172,8 @@ namespace Engine
 						ProcessUsingDefinition(desc);
 					} else if (IsKeyword(Lexic::KeywordVariable)) {
 						ProcessVariableDefinition(attributes, desc);
+					} else if (IsKeyword(Lexic::KeywordPrototype)) {
+						ProcessPrototypeDefinition(attributes, desc);
 					} else {
 						auto type_def = current_token;
 						SafePointer<XL::LObject> type = ProcessTypeExpression(desc);
@@ -1155,6 +1261,8 @@ namespace Engine
 						ProcessUsingDefinition(desc);
 					} else if (IsKeyword(Lexic::KeywordVariable)) {
 						ProcessVariableDefinition(attributes, desc);
+					} else if (IsKeyword(Lexic::KeywordPrototype)) {
+						ProcessPrototypeDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordImport)) {
 						ReadNextToken();
 						AssertGenericIdent();
@@ -1647,6 +1755,33 @@ namespace Engine
 					catch (InvalidArgumentException &) { Abort(CompilerStatus::NoSuchOverload, definition); }
 					catch (InvalidStateException &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
 					catch (...) { Abort(CompilerStatus::InternalError, definition); }
+				} else if (IsKeyword(Lexic::KeywordDelete)) {
+					ReadNextToken();
+					auto definition = current_token;
+					SafePointer<XL::LObject> subj = ProcessExpression(desc);
+					AssertPunct(L";"); ReadNextToken();
+					try {
+						SafePointer<XL::LObject> eval = CreateDelete(subj);
+						fctx.EncodeExpression(eval);
+						eval = CreateFree(subj);
+						fctx.EncodeExpression(eval);
+					} catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, definition); }
+					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+				} else if (IsKeyword(Lexic::KeywordDestruct)) {
+					ReadNextToken();
+					auto definition = current_token;
+					SafePointer<XL::LObject> subj = ProcessExpression(desc);
+					AssertPunct(L";"); ReadNextToken();
+					try {
+						SafePointer<XL::LObject> eval = CreateDestruct(subj);
+						fctx.EncodeExpression(eval);
+					} catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, definition); }
+					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+				} else if (IsKeyword(Lexic::KeywordTrap)) {
+					ReadNextToken(); AssertPunct(L";"); ReadNextToken();
+					fctx.EncodeTrap();
 				} else {
 					auto definition = current_token;
 					SafePointer<XL::LObject> expr = ProcessExpression(desc);
@@ -1747,6 +1882,7 @@ namespace Engine
 			void Process(void)
 			{
 				try {
+					EnablePrototypes(this);
 					ReadNextToken();
 					VObservationDesc desc;
 					desc.current_namespace = ctx.GetRootNamespace();

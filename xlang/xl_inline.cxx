@@ -253,7 +253,7 @@ namespace Engine
 						if (use_signed) inl->tree.self.index = XA::TransformVectorShiftAR;
 						else inl->tree.self.index = XA::TransformVectorShiftR;
 					} else return 0;
-					inl->tree.retval_spec = xrv->GetArgumentSpecification();
+					inl->tree.retval_spec = xtype->GetArgumentSpecification();
 					inl->tree.input_specs << xtype->GetArgumentSpecification();
 					inl->tree.input_specs << xtype->GetArgumentSpecification();
 					inl->inputs.Append(arg1);

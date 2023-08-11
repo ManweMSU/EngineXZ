@@ -56,6 +56,7 @@ namespace Engine
 			virtual VirtualFunctionDesc & GetVFDesc(void) override { throw InvalidStateException(); }
 			virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
 			virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
+			virtual LObject * InvokeNoVirtual(int argc, LObject ** argv) override { return Invoke(argc, argv); }
 		};
 		class TBaseFunctionOverload : public XFunctionOverload
 		{
@@ -442,7 +443,9 @@ namespace Engine
 							SafePointer<ReferenceComputable> com = new ReferenceComputable(this, subject);
 							return CreateComputable(_ctx, com);
 						} else {
-							if (type->GetCanonicalType() == _cn) { subject->Retain(); return subject; }
+							SafePointer<LObject> unwarp = UnwarpObject(subject);
+							SafePointer<LObject> subj_type = unwarp->GetType();
+							if (static_cast<XType *>(subj_type.Inner())->GetCanonicalType() == _cn) { subject->Retain(); return subject; }
 							SafePointer<ReinterpretComputable> com = new ReinterpretComputable(this, subject);
 							return CreateComputable(_ctx, com);
 						}
@@ -494,6 +497,24 @@ namespace Engine
 				for (auto & i : _interfaces) {
 					_last_vft_index++;
 					i._vft_index = _last_vft_index;
+				}
+				for (auto & m : _members) if (m.value->GetClass() == Class::Function) {
+					auto xfunc = static_cast<XFunction *>(m.value.Inner());
+					Array<string> over(0x20);
+					xfunc->ListOverloads(over, true);
+					for (auto & o : over) {
+						auto ofunc = xfunc->GetOverloadT(o, true);
+						auto & vfd = ofunc->GetVFDesc();
+						if (vfd.vf_index >= 0 && vfd.vft_index >= 0) {
+							if (vfd.vft_index) {
+								vfd.vftp_offset = _interfaces[vfd.vft_index - 1]._vft_offset;
+								vfd.base_offset = _interfaces[vfd.vft_index - 1]._base_offset;
+							} else {
+								vfd.vftp_offset = _vft_offset;
+								vfd.base_offset = XA::TH::MakeSize(0, 0);
+							}
+						}
+					}
 				}
 			}
 			virtual void AdoptParentClass(XClass * parent, bool alternate) override
@@ -819,7 +840,14 @@ namespace Engine
 			virtual LObject * TransformTo(LObject * subject, XType * type, bool cast_explicit) override
 			{
 				if (!cast_explicit) {
-					if (GetCanonicalType() == type->GetCanonicalType()) { subject->Retain(); return subject; }
+					if (type->GetCanonicalType() == GetCanonicalType()) {
+						SafePointer<LObject> unwarped = UnwarpObject(subject);
+						SafePointer<LObject> unwarped_type = unwarped->GetType();
+						if (static_cast<XType *>(unwarped_type.Inner())->GetCanonicalType() == GetCanonicalType()) { subject->Retain(); return subject; } else {
+							SafePointer<ReinterpretComputable> com = new ReinterpretComputable(type, subject);
+							return CreateComputable(_ctx, com);
+						}
+					}
 					auto element = _ref.GetArrayElement();
 					auto & ref = type->GetTypeReference();
 					if (ref.GetReferenceClass() == XI::Module::TypeReference::Class::Reference &&
@@ -1057,7 +1085,14 @@ namespace Engine
 						return CreateComputable(_ctx, com);
 					}
 				} else {
-					if (type->GetCanonicalType() == GetCanonicalType()) { subject->Retain(); return subject; }
+					if (type->GetCanonicalType() == GetCanonicalType()) {
+						SafePointer<LObject> unwarped = UnwarpObject(subject);
+						SafePointer<LObject> unwarped_type = unwarped->GetType();
+						if (static_cast<XType *>(unwarped_type.Inner())->GetCanonicalType() == GetCanonicalType()) { subject->Retain(); return subject; } else {
+							SafePointer<ReinterpretComputable> com = new ReinterpretComputable(type, subject);
+							return CreateComputable(_ctx, com);
+						}
+					}
 					auto & dest = type->GetTypeReference();
 					if (dest.GetReferenceClass() == XI::Module::TypeReference::Class::Reference &&
 						dest.GetReferenceDestination().QueryCanonicalName() == GetCanonicalType()) {
@@ -1461,8 +1496,8 @@ namespace Engine
 			if (dtor->GetClass() == Class::Null) {
 				return 0;
 			} else {
-				SafePointer<LObject> dtor_inst = static_cast<XFunctionOverload *>(dtor.Inner())->SetInstance(uw);
-				return dtor_inst->Invoke(0, 0);
+				SafePointer<XMethodOverload> dtor_inst = static_cast<XFunctionOverload *>(dtor.Inner())->SetInstance(uw);
+				return dtor_inst->InvokeNoVirtual(0, 0);
 			}
 		}
 	}

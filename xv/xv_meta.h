@@ -29,6 +29,7 @@ namespace Engine
 			constexpr const widechar * KeywordThrows	= L"iacit";
 			constexpr const widechar * KeywordThrow		= L"iace";
 			constexpr const widechar * KeywordSizeOf	= L"magnitudo";
+			constexpr const widechar * KeywordSizeOfMX	= L"magnitudo_maxima";
 			constexpr const widechar * KeywordModule	= L"modulus";
 			constexpr const widechar * KeywordArray		= L"ordo";
 			constexpr const widechar * KeywordConst		= L"constatus";
@@ -57,6 +58,12 @@ namespace Engine
 			constexpr const widechar * KeywordInherit	= L"hereditat";
 			constexpr const widechar * KeywordInit		= L"funda";
 			constexpr const widechar * KeywordStructure	= L"structura";
+			constexpr const widechar * KeywordPrototype	= L"praeforma";
+			constexpr const widechar * KeywordNew		= L"crea";
+			constexpr const widechar * KeywordDelete	= L"perde";
+			constexpr const widechar * KeywordConstruct	= L"initia";
+			constexpr const widechar * KeywordDestruct	= L"fini";
+			constexpr const widechar * KeywordTrap		= L"__decipula__";
 
 			constexpr const widechar * AttributeSemant	= L"[significatio]";
 			constexpr const widechar * AttributeSize	= L"[magnitudo]";

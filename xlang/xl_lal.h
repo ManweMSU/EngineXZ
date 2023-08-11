@@ -88,7 +88,7 @@ namespace Engine
 
 		enum class Class {
 			Null, Namespace, Scope, Alias,
-			Type,
+			Type, Prototype,
 			Function, FunctionOverload, Method, MethodOverload,
 			Literal, NullLiteral, Variable, Field,
 			Property, InstancedProperty,
@@ -104,8 +104,6 @@ namespace Engine
 		class LObject : public Object
 		{
 		public:
-			LObject(void);
-			virtual ~LObject(void) override;
 			// Object information
 			virtual Class GetClass(void) = 0;
 			virtual string GetName(void) = 0;
@@ -119,11 +117,17 @@ namespace Engine
 			virtual void AddAttribute(const string & key, const string & value) = 0;
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) = 0;
 		};
+		class LPrototypeHandler : public Object
+		{
+		public:
+			virtual void HandlePrototype(const string & ident, const string & lang_spec, const DataBlock & data, const Volumes::Dictionary<string, string> & attributes) = 0;
+		};
 		class LContext : public Object
 		{
 			string _module_name;
 			uint _subsystem, _private_counter;
 			SafePointer<LObject> _root_ns, _private_ns;
+			SafePointer<LPrototypeHandler> _prot_hdlr;
 			Array<string> _import_list;
 			SafePointer<DataBlock> _data;
 			Volumes::ObjectDictionary<string, DataBlock> _rsrc;
@@ -137,6 +141,8 @@ namespace Engine
 			void MakeSubsystemLibrary(void);
 
 			bool IncludeModule(const string & name, IModuleLoadCallback * callback);
+			void SetPrototypeHandler(LPrototypeHandler * hdlr);
+			LPrototypeHandler * GetPrototypeHandler(void);
 			LObject * GetRootNamespace(void);
 			LObject * GetPrivateNamespace(void);
 			LObject * CreateNamespace(LObject * create_under, const string & name);
@@ -152,6 +158,7 @@ namespace Engine
 			LObject * CreatePropertySetter(LObject * prop, uint flags);
 			LObject * CreatePropertyGetter(LObject * prop, uint flags);
 			LObject * CreatePrivateFunction(uint flags);
+			void InstallObject(LObject * object, const string & path);
 			bool IsInterface(LObject * cls);
 			XA::ArgumentSemantics GetClassSemantics(LObject * cls);
 			XA::ObjectSize GetClassInstanceSize(LObject * cls);
@@ -176,7 +183,7 @@ namespace Engine
 			LObject * QueryFunctionPointer(LObject * retval, int argc, LObject ** argv);
 			LObject * QueryTernaryResult(LObject * cond, LObject * if_true, LObject * if_false);
 			LObject * QueryTypeOfOperator(void);
-			LObject * QuerySizeOfOperator(void);
+			LObject * QuerySizeOfOperator(bool max_size = false);
 			LObject * QueryModuleOperator(void);
 			LObject * QueryModuleOperator(const string & name);
 			LObject * QueryInterfaceOperator(const string & name);

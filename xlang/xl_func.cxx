@@ -143,6 +143,48 @@ namespace Engine
 			virtual XClass * GetInstanceType(void) override { return _parent->GetInstanceType(); }
 			virtual LContext & GetContext(void) override { return _parent->GetContext(); }
 			virtual string GetCanonicalType(void) override { return _parent->GetCanonicalType(); }
+			virtual LObject * InvokeNoVirtual(int argc, LObject ** argv) override
+			{
+				if (_parent->GetFlags() & XI::Module::Function::FunctionInstance) {
+					if (argc == 0 && _instance->GetClass() == Class::Literal) {
+						auto op = GetName().Fragment(0, GetName().FindFirst(L':'));
+						SafePointer<LObject> lit = ProcessLiteralTransform(GetContext(), op, static_cast<XLiteral *>(_instance.Inner()), 0);
+						if (lit) { lit->Retain(); return lit; }
+					}
+					if (argc == 1 && _parent->CheckForInline()) {
+						auto result = CheckInlinePossibility(this, _instance, argv[0], 0);
+						if (result) return result;
+					} else if (argc == 0 && _parent->CheckForInline()) {
+						auto result = CheckInlinePossibility(this, _instance, 0, 0);
+						if (result) return result;
+					}
+					auto & vfd = GetVFDesc();
+					auto ct = GetCanonicalType();
+					SafePointer<_invoke_provider> provider = new _invoke_provider;
+					SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(ct).GetFunctionSignature();
+					if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+					bool use_thiscall = (_parent->GetFlags() & XI::Module::Function::FunctionThisCall);
+					provider->_throws = (_parent->GetFlags() & XI::Module::Function::FunctionThrows);
+					provider->_instance = _instance;
+					provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
+					provider->_self_ref = _parent->GetFullName();
+					provider->_self.SetRetain(this);
+					provider->_instance_rebase = XA::TH::MakeSize(0, 0);
+					SafePointer<LObject> dtor = provider->_retval->GetDestructor();
+					if (dtor->GetClass() != Class::Null) provider->_dtor_ref = dtor->GetFullName();
+					provider->_tree_node.retval_spec = provider->_retval->GetArgumentSpecification();
+					provider->_tree_node.input_specs << XA::TH::MakeSpec(use_thiscall ? XA::ArgumentSemantics::This : XA::ArgumentSemantics::Unclassified, 0, 1);
+					for (int i = 0; i < argc; i++) {
+						SafePointer<XType> type_need = CreateType(sgn->ElementAt(i + 1).QueryCanonicalName(), GetContext());
+						SafePointer<LObject> casted = PerformTypeCast(type_need, argv[i], CastPriorityConverter);
+						if (type_need->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) casted = UnwarpObject(casted);
+						provider->_args.Append(casted);
+						provider->_tree_node.input_specs << type_need->GetArgumentSpecification();
+					}
+					if (provider->_throws) provider->_tree_node.input_specs << XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1);
+					return CreateComputable(GetContext(), provider);
+				} else return _parent->Invoke(argc, argv);
+			}
 		};
 		class FunctionOverload : public XFunctionOverload
 		{
@@ -515,11 +557,13 @@ namespace Engine
 			virtual XFunctionOverload * AddOverload(XType * retval, int argc, XType ** argv, uint flags, bool local, Point vfi) override
 			{
 				auto result = AddOverload(retval, argc, argv, flags, local);
-				auto & desc = result->GetVFDesc();
-				desc.vft_index = vfi.x;
-				desc.vf_index = vfi.y;
-				desc.base_offset = desc.vftp_offset = _instance_type->GetOffsetVFT(desc.vft_index);
-				desc.vfp_offset = XA::TH::MakeSize(0, desc.vf_index);
+				if (vfi.x >= 0 && vfi.y >= 0) {
+					auto & desc = result->GetVFDesc();
+					desc.vft_index = vfi.x;
+					desc.vf_index = vfi.y;
+					desc.base_offset = desc.vftp_offset = _instance_type->GetOffsetVFT(desc.vft_index);
+					desc.vfp_offset = XA::TH::MakeSize(0, desc.vf_index);
+				}
 				return result;
 			}
 			virtual void ListOverloads(Array<string> & fcn, bool allow_instance) override

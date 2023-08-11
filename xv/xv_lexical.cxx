@@ -38,6 +38,7 @@ namespace Engine
 			if (str == Lexic::KeywordThrows) return true;
 			if (str == Lexic::KeywordThrow) return true;
 			if (str == Lexic::KeywordSizeOf) return true;
+			if (str == Lexic::KeywordSizeOfMX) return true;
 			if (str == Lexic::KeywordModule) return true;
 			if (str == Lexic::KeywordArray) return true;
 			if (str == Lexic::KeywordConst) return true;
@@ -66,6 +67,12 @@ namespace Engine
 			if (str == Lexic::KeywordInherit) return true;
 			if (str == Lexic::KeywordInit) return true;
 			if (str == Lexic::KeywordStructure) return true;
+			if (str == Lexic::KeywordPrototype) return true;
+			if (str == Lexic::KeywordNew) return true;
+			if (str == Lexic::KeywordDelete) return true;
+			if (str == Lexic::KeywordConstruct) return true;
+			if (str == Lexic::KeywordDestruct) return true;
+			if (str == Lexic::KeywordTrap) return true;
 
 			// TODO: IMPLEMENT REGISTER KEYWORDS
 
@@ -73,6 +80,60 @@ namespace Engine
 		}
 		bool IsLiteralTrue(const string & str) { return str == Lexic::LiteralYes; }
 		bool IsLiteralFalse(const string & str) { return str == Lexic::LiteralNo; }
+
+		void DeserializeDataLiteral(const DataBlock & data, int & current, void * into, int length)
+		{
+			for (int i = 0; i < length; i++) reinterpret_cast<uint8 *>(into)[i] = data[current + i];
+			current += length;
+		}
+		string DeserializeStringLiteral(const DataBlock & data, int & current, uint8 hdr)
+		{
+			auto lc = hdr & 0xC0;
+			int length;
+			if (lc == 0x00) {
+				length = data[current];
+				current++;
+			} else if (lc == 0x40) {
+				length = data[current];
+				length |= uint(data[current + 1]) << 8;
+				current += 2;
+			} else if (lc == 0x80) {
+				length = data[current];
+				length |= uint(data[current + 1]) << 8;
+				length |= uint(data[current + 2]) << 16;
+				length |= uint(data[current + 3]) << 24;
+				current += 4;
+			} else length = 0;
+			auto result = string(data.GetBuffer() + current, length, Encoding::UTF8);
+			current += length;
+			return result;
+		}
+		void SerializeDataLiteral(DataBlock & out, const void * data, int length)
+		{
+			for (int i = 0; i < length; i++) out << reinterpret_cast<const uint8 *>(data)[i];
+		}
+		void SerializeStringLiteral(DataBlock & data, uint8 hdr, const string & text)
+		{
+			SafePointer<DataBlock> utf8 = text.EncodeSequence(Encoding::UTF8, false);
+			uint length = utf8->Length();
+			if (length < 0x100) {
+				data << hdr;
+				data << length;
+				data << *utf8;
+			} else if (length < 0x10000) {
+				data << (hdr | 0x40);
+				data << (length & 0xFF);
+				data << ((length >> 8) & 0xFF);
+				data << *utf8;
+			} else {
+				data << (hdr | 0x80);
+				data << (length & 0xFF);
+				data << ((length >> 8) & 0xFF);
+				data << ((length >> 16) & 0xFF);
+				data << ((length >> 24) & 0xFF);
+				data << *utf8;
+			}
+		}
 
 		bool ReadEscapeCode(const uint32 * data, int & current, int length, int max_len, const string & allowed, string & result)
 		{
@@ -291,6 +352,22 @@ namespace Engine
 					dest.contents = string(_data + from, dest.range_length, Encoding::UTF32);
 					dest.contents_i = 0;
 					dest.contents_f = 0.0;
+				} else if (_data[_current] == L'$') {
+					dest.range_from = _current;
+					dest.range_length = 1;
+					dest.ex_data = 0;
+					dest.type = TokenType::PrototypeSymbol;
+					dest.contents_i = 0;
+					dest.contents_f = 0.0;
+					_current++;
+				} else if (_data[_current] == L'\\') {
+					dest.range_from = _current;
+					dest.range_length = 1;
+					dest.ex_data = 0;
+					dest.type = TokenType::PrototypeCommand;
+					dest.contents_i = 0;
+					dest.contents_f = 0.0;
+					_current++;
 				} else {
 					int from = _current;
 					while (_current < _length && !IsWhitespace(_data[_current]) && !IsReservedPunctuation(_data[_current])) _current++;
@@ -312,7 +389,7 @@ namespace Engine
 			}
 			return true;
 		}
-		bool TokenStream::ReadBlock(TokenStream ** deferred_stream)
+		bool TokenStream::ReadBlock(ITokenStream ** deferred_stream)
 		{
 			*deferred_stream = 0;
 			int from = _current, end;
@@ -352,5 +429,137 @@ namespace Engine
 		}
 		int TokenStream::GetCurrentPosition(void) const { return _override_base + _current; }
 		string TokenStream::ExtractContents(void) const { return string(_data, _length, Encoding::UTF32); }
+		DataBlock * TokenStream::Serialize(void)
+		{
+			SafePointer<DataBlock> result = new DataBlock(0x1000);
+			_current = 0;
+			while (true) {
+				Token token;
+				if (!ReadToken(token)) return 0;
+				SerializeToken(*result, token);
+				if (token.type == TokenType::EOF) break;
+			}
+			result->Retain();
+			return result;
+		}
+
+		RestorationStream::RestorationStream(DataBlock * data, int offset) : _current(offset) { _data.SetRetain(data); }
+		RestorationStream::~RestorationStream(void) {}
+		bool RestorationStream::ReadToken(Token & dest)
+		{
+			uint8 hdr;
+			if (_current < _data->Length()) { hdr = _data->ElementAt(_current); _current++; } else hdr = 0;
+			auto code = hdr & 0x07;
+			if (code == 0) {
+				dest.range_from = dest.range_length = dest.ex_data = 0;
+				dest.type = TokenType::EOF;
+				dest.contents_i = 0;
+				dest.contents_f = 0.0;
+				return true;
+			} else if (code == 1) {
+				dest.range_from = dest.range_length = dest.ex_data = 0;
+				dest.type = TokenType::Keyword;
+				dest.contents = DeserializeStringLiteral(*_data, _current, hdr);
+				dest.contents_i = 0;
+				dest.contents_f = 0.0;
+				return true;
+			} else if (code == 2) {
+				dest.range_from = dest.range_length = dest.ex_data = 0;
+				dest.type = TokenType::Identifier;
+				dest.contents = DeserializeStringLiteral(*_data, _current, hdr);
+				dest.contents_i = 0;
+				dest.contents_f = 0.0;
+				return true;
+			} else if (code == 3) {
+				dest.range_from = dest.range_length = dest.ex_data = 0;
+				dest.type = TokenType::Punctuation;
+				dest.contents = DeserializeStringLiteral(*_data, _current, hdr);
+				dest.contents_i = 0;
+				dest.contents_f = 0.0;
+				return true;
+			} else if (code == 4) {
+				dest.range_from = dest.range_length = 0;
+				dest.type = TokenType::Literal;
+				auto lsc = hdr & 0x38;
+				if (lsc == 0x00) {
+					dest.ex_data = TokenLiteralLogicalY;
+					dest.contents = Lexic::LiteralYes;
+					dest.contents_i = 0;
+					dest.contents_f = 0.0;
+				} else if (lsc == 0x08) {
+					dest.ex_data = TokenLiteralLogicalN;
+					dest.contents = Lexic::LiteralNo;
+					dest.contents_i = 0;
+					dest.contents_f = 0.0;
+				} else if (lsc == 0x10) {
+					dest.ex_data = TokenLiteralInteger;
+					dest.contents_f = 0.0;
+					DeserializeDataLiteral(*_data, _current, &dest.contents_i, 8);
+				} else if (lsc == 0x18) {
+					dest.ex_data = TokenLiteralFloat;
+					dest.contents_i = 0;
+					DeserializeDataLiteral(*_data, _current, &dest.contents_f, 8);
+				} else if (lsc == 0x20) {
+					dest.ex_data = TokenLiteralString;
+					dest.contents = DeserializeStringLiteral(*_data, _current, hdr);
+					dest.contents_i = 0;
+					dest.contents_f = 0.0;
+				} else return false;
+				return true;
+			} else if (code == 5) {
+				dest.range_from = dest.range_length = dest.ex_data = 0;
+				dest.type = TokenType::PrototypeSymbol;
+				dest.contents_i = 0;
+				dest.contents_f = 0.0;
+				return true;
+			} else if (code == 6) {
+				dest.range_from = dest.range_length = dest.ex_data = 0;
+				dest.type = TokenType::PrototypeCommand;
+				dest.contents_i = 0;
+				dest.contents_f = 0.0;
+				return true;
+			} else return false;
+		}
+		bool RestorationStream::ReadBlock(ITokenStream ** deferred_stream)
+		{
+			SafePointer<DataBlock> data = new DataBlock(0x1000);
+			*deferred_stream = 0;
+			int level = 0;
+			while (true) {
+				Token token;
+				if (!ReadToken(token)) return false;
+				if (token.type == TokenType::EOF) return false;
+				else if (token.type == TokenType::Punctuation && token.contents == L"{") level++;
+				else if (token.type == TokenType::Punctuation && token.contents == L"}") { level--; if (level < 0) break; }
+				SerializeToken(*data, token);
+			}
+			data->Append(0);
+			*deferred_stream = new RestorationStream(data);
+			return true;
+		}
+		void RestorationStream::ExtractRange(int from, int length, string & line, int & line_no, int & line_from, int & line_length) const { line = ""; line_no = 1; line_from = 0; line_length = 0; }
+		int RestorationStream::GetCurrentPosition(void) const { return 0; }
+		string RestorationStream::ExtractContents(void) const { throw InvalidStateException(); }
+		DataBlock * RestorationStream::Serialize(void) { _data->Retain(); return _data; }
+
+		void SerializeToken(DataBlock & into, const Token & token)
+		{
+			if (token.type == TokenType::EOF) into.Append(0);
+			else if (token.type == TokenType::Keyword) SerializeStringLiteral(into, 1, token.contents);
+			else if (token.type == TokenType::Identifier) SerializeStringLiteral(into, 2, token.contents);
+			else if (token.type == TokenType::Punctuation) SerializeStringLiteral(into, 3, token.contents);
+			else if (token.type == TokenType::Literal) {
+				if (token.ex_data == TokenLiteralLogicalY) into.Append(4 | 0x00);
+				else if (token.ex_data == TokenLiteralLogicalN) into.Append(4 | 0x08);
+				else if (token.ex_data == TokenLiteralInteger) {
+					into.Append(4 | 0x10);
+					SerializeDataLiteral(into, &token.contents_i, 8);
+				} else if (token.ex_data == TokenLiteralFloat) {
+					into.Append(4 | 0x18);
+					SerializeDataLiteral(into, &token.contents_f, 8);
+				} else if (token.ex_data == TokenLiteralString) SerializeStringLiteral(into, 4 | 0x20, token.contents);
+			} else if (token.type == TokenType::PrototypeSymbol) into.Append(5);
+			else if (token.type == TokenType::PrototypeCommand) into.Append(6);
+		}
 	}
 }

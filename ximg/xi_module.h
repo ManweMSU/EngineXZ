@@ -142,6 +142,13 @@ namespace Engine
 
 				Class(void);
 			};
+			class Prototype
+			{
+			public:
+				string target_language;
+				SafePointer<DataBlock> data;
+				Volumes::Dictionary<string, string> attributes;
+			};
 			class Version
 			{
 			public:
@@ -157,6 +164,7 @@ namespace Engine
 			Volumes::Dictionary<string, Variable> variables;		// FQN
 			Volumes::Dictionary<string, Function> functions;		// FQN:SCN
 			Volumes::Dictionary<string, string> aliases;			// FQN
+			Volumes::Dictionary<string, Prototype> prototypes;		// FQN
 			Volumes::ObjectDictionary<string, DataBlock> resources;	// TYPE:ID
 			SafePointer<DataBlock> data;
 		public:

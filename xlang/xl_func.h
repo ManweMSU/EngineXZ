@@ -25,6 +25,7 @@ namespace Engine
 			virtual XClass * GetInstanceType(void) = 0;
 			virtual LContext & GetContext(void) = 0;
 			virtual string GetCanonicalType(void) = 0;
+			virtual LObject * InvokeNoVirtual(int argc, LObject ** argv) = 0;
 		};
 		class XFunctionOverload : public XObject
 		{

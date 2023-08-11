@@ -31,10 +31,6 @@ namespace Engine
 		ObjectHasNoSuitableCast::ObjectHasNoSuitableCast(LObject * reason, LObject * from, LObject * to) : LException(reason) { type_from.SetRetain(from); type_to.SetRetain(to); }
 		string ObjectHasNoSuitableCast::ToString(void) const { return L"Object " + source->ToString() + L" cannot be casted from " + type_from->ToString() + L" to " + type_to->ToString() + L"."; }
 
-		//Volumes::Set<LObject *> list;
-		LObject::LObject(void) {} //{ list.AddElement(this); }
-		LObject::~LObject(void) {} // { list.RemoveElement(this); }
-
 		class XInternal : public XObject
 		{
 		public:
@@ -183,6 +179,7 @@ namespace Engine
 		class XSizeOf : public XInternal
 		{
 			LContext & _ctx;
+			bool _mx;
 			class _computable : public Object, public IComputableProvider
 			{
 			public:
@@ -204,7 +201,7 @@ namespace Engine
 				}
 			};
 		public:
-			XSizeOf(LContext & ctx) : _ctx(ctx) {}
+			XSizeOf(LContext & ctx, bool max_size) : _ctx(ctx), _mx(max_size) {}
 			virtual ~XSizeOf(void) override {}
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override
@@ -213,10 +210,15 @@ namespace Engine
 				SafePointer<LObject> type;
 				if (argv[0]->GetClass() == Class::Type) type.SetRetain(argv[0]);
 				else type = argv[0]->GetType();
-				SafePointer<_computable> com = new _computable;
-				com->_size = _ctx.GetClassInstanceSize(type);
-				com->_retval = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), _ctx);
-				return CreateComputable(_ctx, com);
+				if (_mx) {
+					auto size = _ctx.GetClassInstanceSize(type);
+					return _ctx.QueryLiteral(uint64(size.num_bytes + 8 * size.num_words));
+				} else {
+					SafePointer<_computable> com = new _computable;
+					com->_size = _ctx.GetClassInstanceSize(type);
+					com->_retval = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), _ctx);
+					return CreateComputable(_ctx, com);
+				}
 			}
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"sizeof"; }
@@ -328,18 +330,7 @@ namespace Engine
 			_subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI);
 			_data = new DataBlock(0x1000);
 		}
-		LContext::~LContext(void)
-		{
-			// _root_ns.SetReference(0);
-			// _private_ns.SetReference(0);
-			// IO::Console console;
-			// if (!list.IsEmpty()) {
-			// 	console.SetTextColor(14);
-			// 	console.WriteLine(L"OBJECTS NOT RELEASED:");
-			// 	for (auto & l : list) console.WriteLine(l->ToString());
-			// 	console.SetTextColor(-1);
-			// }
-		}
+		LContext::~LContext(void) {}
 		void LContext::MakeSubsystemConsole(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI); }
 		void LContext::MakeSubsystemGUI(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::GUI); }
 		void LContext::MakeSubsystemNone(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::NoUI); }
@@ -460,8 +451,11 @@ namespace Engine
 				}
 			}
 			for (auto & c : cpp) c.key->UpdateInternals();
+			if (_prot_hdlr) for (auto & p : module.prototypes) if (p.value.data) _prot_hdlr->HandlePrototype(p.key, p.value.target_language, *p.value.data, p.value.attributes);
 			return true;
 		}
+		void LContext::SetPrototypeHandler(LPrototypeHandler * hdlr) { _prot_hdlr.SetRetain(hdlr); }
+		LPrototypeHandler * LContext::GetPrototypeHandler(void) { return _prot_hdlr; }
 		LObject * LContext::GetRootNamespace(void) { return _root_ns; }
 		LObject * LContext::GetPrivateNamespace(void)
 		{
@@ -670,6 +664,7 @@ namespace Engine
 			SafePointer<XType> retval = XL::CreateType(XI::Module::TypeReference::MakeClassReference(NameVoid), *this);
 			return fd->AddOverload(retval, 0, 0, flags, true);
 		}
+		void LContext::InstallObject(LObject * object, const string & path) { auto obj = ProvidePath(*this, path); obj->AddMember(GetName(path), object); }
 		bool LContext::IsInterface(LObject * cls)
 		{
 			if (!cls || cls->GetClass() != Class::Type) return false;
@@ -843,7 +838,7 @@ namespace Engine
 			return CreateComputable(*this, com);
 		}
 		LObject * LContext::QueryTypeOfOperator(void) { return new XTypeOf; }
-		LObject * LContext::QuerySizeOfOperator(void) { return new XSizeOf(*this); }
+		LObject * LContext::QuerySizeOfOperator(bool max_size) { return new XSizeOf(*this, max_size); }
 		LObject * LContext::QueryModuleOperator(void)
 		{
 			SafePointer<ModuleProvider> provider = new ModuleProvider(*this, L"");

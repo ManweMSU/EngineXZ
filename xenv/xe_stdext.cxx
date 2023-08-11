@@ -380,6 +380,8 @@ namespace Engine
 		{
 			static void _init_string_with_string(string * self, const string & with, ErrorContext & error)
 			{ try { new (self) string(with); } catch (...) { error.error_code = 2; error.error_subcode = 0; } }
+			static void _init_string_with_string_nothrow(string * self, const string & with)
+			{ try { new (self) string(with); } catch (...) { new (self) string; } }
 			static void _init_string_with_utf32(string * self, const uint * ucs, ErrorContext & error)
 			{ try { new (self) string(ucs, -1, Encoding::UTF32); } catch (...) { error.error_code = 2; error.error_subcode = 0; } }
 			static void _init_string_with_int8(string * self, int8 value, ErrorContext & error)
@@ -741,13 +743,13 @@ namespace Engine
 				try { return FormatString(form, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); }
 				catch (...) { error.error_code = 2; error.error_subcode = 0; return string(); }
 			}
-			static Array<string> * _split(const string & self, uint32 by, ErrorContext & error)
+			static SafePointer< Array<string> > _split(const string & self, uint32 by, ErrorContext & error)
 			{
 				if (by > 0xFFFF) { error.error_code = 3; error.error_subcode = 0; return 0; }
 				try { return new Array<string>(self.Split(widechar(by))); }
 				catch (...) { error.error_code = 2; error.error_subcode = 0; return 0; }
 			}
-			static DataBlock * _encode_block(const string & self, int encoding, bool with_term, ErrorContext & error)
+			static SafePointer<DataBlock> _encode_block(const string & self, int encoding, bool with_term, ErrorContext & error)
 			{
 				try { return self.EncodeSequence(static_cast<Encoding>(encoding), with_term); }
 				catch (InvalidArgumentException &) { error.error_code = 3; error.error_subcode = 0; return 0; }
@@ -757,6 +759,7 @@ namespace Engine
 			virtual void * ExposeRoutine(const string & routine_name) noexcept override
 			{
 				if (routine_name == L"spu_crea") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_string));
+				else if (routine_name == L"spu_crea_sec") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_string_nothrow));
 				else if (routine_name == L"spu_crea_utf32") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_utf32));
 				else if (routine_name == L"spu_crea_int8") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_int8));
 				else if (routine_name == L"spu_crea_nint8") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uint8));

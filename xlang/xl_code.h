@@ -99,6 +99,7 @@ namespace Engine
 			void EncodeContinue(int level);
 			void EncodeThrow(LObject * error_code);
 			void EncodeThrow(LObject * error_code, LObject * error_subcode);
+			void EncodeTrap(void);
 
 			void EndEncoding(void);
 		};

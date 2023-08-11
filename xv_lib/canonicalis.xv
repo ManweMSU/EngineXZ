@@ -2333,6 +2333,11 @@ genus linea {
 	linea inferna	{ [[importa] "spu_inferna"]	[[nullum_thiscall]] adipisce iacit; }
 	linea supera	{ [[importa] "spu_supera"]	[[nullum_thiscall]] adipisce iacit; }
 }
+genus linea_secura hereditat linea {
+	structor () {}
+	structor (~linea_secura valor) { _data = valor._data; valor._data = nullus; }
+	[[nullum_thiscall]] [[importa] spu_crea_sec] structor (~linea valor);
+}
 
 spatium errores {
 	[[importa] descriptio_erroris] functio nihil _descriptio_erroris(nintadl ec, nintadl esc, @nihil mdl, ~linea error, ~linea sub_error);
@@ -2372,17 +2377,249 @@ spatium systema {
 	[[importa] sys_arch]	functio logicum proba_architecturam(int arch);
 }
 
-// TODO: REWORK
+[[magnitudo] "0:2"] genus virtualis objectum {
+	[[positus] "0:1"] nint _num_ref;
 
-genus virtualis objectum {
-	nintadl _num_ref;
-	functio nint contine() virtualis pura;
-	functio nint dimitte() virtualis pura;
+	structor () { funda _num_ref(1); }
+	functio nint contine() virtualis { responde incrementum_securum(_num_ref); }
+	functio nint dimitte() virtualis { var nr = decrementum_securum(_num_ref); si (nr == 0) perde ego; responde nr; }
 	destructor () virtualis {}
-	functio linea ad_linea() virtualis pura;
+	functio linea_secura ad_linea() virtualis { proba { responde linea("objectum"); } responde linea_secura(); }
 }
 
+praeforma functio permuta(T) { \cense T genus(_0)\ functio nihil $_(~$T t1, ~$T t2) {
+	ordo [magnitudo_maxima($T)] nint8 m;
+	memoria.exscribe(@m, @t1, magnitudo(t1));
+	memoria.exscribe(@t1, @t2, magnitudo(t1));
+	memoria.exscribe(@t2, @m, magnitudo(t1));
+} }
+praeforma genus dordo(V) { genus $_ hereditat objectum {
+	@$V _data;
+	int _numerus;
+	int _allocatus;
+	int _talea;
+
+	functio int _poli(int num) { responde ((num + _talea - 1) / _talea) * _talea; }
+	functio nihil _adde(~$V v) iacit { initia(@_data[_numerus], v); _numerus++; }
+	functio nihil _realloca(int num) iacit
+	{
+		int numerus_novus = _poli(num);
+		si (numerus_novus != _allocatus) {
+			si (numerus_novus > _allocatus) {
+				var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * numerus_novus));
+				si (novum != nullus || !numerus_novus) { _data = novum; _allocatus = numerus_novus; } alioqui iace errores.memoria_nulla;
+			} alioqui {
+				var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * numerus_novus));
+				si (novum != nullus || !numerus_novus) { _data = novum; _allocatus = numerus_novus; }
+			}
+		}
+	}
+	functio nihil _realloca_secura(int num)
+	{
+		int numerus_novus = _poli(num);
+		si (numerus_novus != _numerus) {
+			var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * numerus_novus));
+			si (novum != nullus || !numerus_novus) { _data = novum; _allocatus = numerus_novus; }
+		}
+	}
+
+	structor () { funda _numerus(0); funda _allocatus(0); funda _talea(0x100); _data = nullus; }
+	structor (~dordo[$V] valor) iacit
+	{
+		funda _numerus(valor._numerus);
+		funda _allocatus(0);
+		funda _talea(valor._talea);
+		_data = nullus;
+		_realloca(_numerus);
+		int i = 0;
+		proba { pro (i = 0; i < _numerus; i++) initia(@_data[i], valor._data[i]); } cape (intadl e, intadl se) {
+			pro (int j = i - 1; j >= 0; j--) fini(_data[i]);
+			memoria.dimitte(_data);
+			iace e, se;
+		}
+	}
+	structor (int talea) { funda _numerus(0); funda _allocatus(0); funda _talea(talea); _data = nullus; }
+	destructor() redefini { pro (int i = 0; i < _numerus; i++) fini(_data[i]); memoria.dimitte(_data); }
+
+	functio ~dordo[$V] operator = (~dordo[$V] valor) iacit
+	{
+		si (ego == @valor) responde ego^;
+		dordo[$V] copia(valor);
+		pro (int i = 0; i < _numerus; i++) fini(_data[i]);
+		memoria.dimitte(_data);
+		_data = copia._data;
+		_numerus = copia._numerus;
+		_allocatus = copia._allocatus;
+		_talea = copia._talea;
+		copia._data = nullus;
+		copia._numerus = copia._allocatus = 0;
+		responde ego^;
+	}
+	functio ~$V operator [] (int i) { responde _data[i]; }
+	convertor (@$V) () { responde _data; }
+	classis functio ~dordo[$V] operator << (~dordo[$V] o, ~$V v) iacit { o.adde(v); responde o; }
+	classis functio ~dordo[$V] operator << (~dordo[$V] o, ~dordo[$V] o2) iacit { o.adde(o2); responde o; }
+
+	functio nihil adde(~$V v) iacit { _realloca(_numerus + 1); _adde(v); }
+	functio nihil adde(~dordo[$V] o) iacit
+	{
+		si (ego == @o) iace errores.argumentum_falsum;
+		_realloca(_numerus + o._numerus);
+		pro (int i = 0; i < o._numerus; i++) _adde(o._data[i]);
+	}
+	functio nihil adde(@$V v, int numerus) iacit
+	{
+		si (!numerus) responde;
+		si (v == _data) iace errores.argumentum_falsum;
+		_realloca(_numerus + numerus);
+		pro (int i = 0; i < numerus; i++) _adde(v[i]);
+	}
+	functio nihil permuta(int i, int j) { .permuta(_data[i], _data[j]); }
+	functio nihil insere(~$V v, int pos) iacit
+	{
+		_realloca(_numerus + 1);
+		pro (int i = _numerus - 1; i >= pos; i--) .permuta(_data[i], _data[i + 1]);
+		proba { initia(@_data[pos], v); _numerus++; }
+		cape (intadl e, intadl se) { pro (int i = pos; i < _numerus; i++) .permuta(_data[i], _data[i + 1]); iace e, se; }
+	}
+	functio nihil remove(int pos)
+	{
+		fini _data[pos];
+		pro (int i = pos; i < _numerus - 1; i++) .permuta(_data[i], _data[i + 1]);
+		_numerus--; _realloca_secura(_numerus);
+	}
+	functio nihil remove_primus() { remove(0); }
+	functio nihil remove_ultimus() { remove(_numerus - 1); }
+	functio nihil depura()
+	{
+		pro (int i = 0; i < _numerus; i++) fini(_data[i]);
+		memoria.dimitte(_data);
+		_data = nullus;
+		_numerus = _allocatus = 0;
+	}
+	functio ~$V primus() { responde _data[0]; }
+	functio ~$V ultimus() { responde _data[_numerus - 1]; }
+
+	functio linea_secura ad_linea() redefini
+	{
+		proba {
+			linea resp = "ordo : [";
+			pro (int i = 0; i < _numerus; i++) {
+				si (i) resp += ", ";
+				resp += linea.ad(_data[i]);
+			}
+			responde resp + "]";
+		}
+		responde linea_secura();
+	}
+
+	int longitudo {
+		adipisce { responde _numerus; }
+		\si tractus.habet_structor($V)\ loca iacit {
+			si (valor > _numerus) {
+				_realloca(valor); int i;
+				proba { pro (i = _numerus; i < valor; i++) initia(@_data[i]); }
+				cape (intadl e, intadl se) { pro (int j = i - 1; j >= _numerus; j--) fini _data[j]; iace e, se; }
+				_numerus = valor;
+			} alioqui si (valor < _numerus) {
+				si (valor < 0) iace errores.argumentum_falsum;
+				pro (int i = valor; i < _numerus; i++) fini _data[i];
+				_numerus = valor; _realloca_secura(valor);
+			}
+		} \fini\
+	}
+	@$V data { adipisce { responde _data; } }
+
+	functio int initus() { responde 0; }
+	functio int finis() { responde _numerus - 1; }
+	functio int prae_initus() { responde -1; }
+	functio int post_finis() { responde _numerus; }
+} }
+praeforma genus adl(O) { genus $_ {
+	@$O _adl;
+	structor () { _adl = nullus; }
+	structor (@$O o) { _adl = o; }
+	structor (~adl[$O] o) { _adl = o._adl; si(_adl != nullus) _adl^.contine(); }
+	destructor () { si(_adl != nullus) _adl^.dimitte(); }
+	functio ~$O operator ^ () { responde _adl^; }
+	functio logicum operator ! () { responde _adl == nullus; }
+	functio ~adl[$O] operator = (~adl[$O] valor)
+	{
+		si (ego == @valor) responde ego^;
+		si (_adl != nullus) _adl^.dimitte();
+		_adl = valor._adl;
+		si (_adl != nullus) _adl^.contine();
+		responde ego^;
+	}
+	convertor (@$O) () { responde _adl; }
+	convertor (logicum) () { responde _adl != nullus; }
+	functio @$O valor() { responde _adl; }
+	functio @@$O valor_adl() { responde @_adl; }
+	functio nihil depura() { si (_adl != nullus) _adl^.dimitte(); _adl = nullus; }
+	functio nihil contine(@$O o) { si (_adl != nullus) _adl^.dimitte(); _adl = o; si (_adl != nullus) _adl^.contine(); }
+	functio linea_secura ad_linea()
+	{
+		proba {
+			si (_adl == nullus) responde linea("nullus");
+			alioqui responde _adl^.ad_linea();
+		}
+		responde linea_secura();
+	}
+	classis functio logicum operator == (~adl[$O] a, ~adl[$O] b) { responde a._adl == b._adl; }
+	classis functio logicum operator != (~adl[$O] a, ~adl[$O] b) { responde a._adl != b._adl; }
+	classis functio logicum operator == (~adl[$O] a, @$O b) { responde a._adl == b; }
+	classis functio logicum operator != (~adl[$O] a, @$O b) { responde a._adl != b; }
+	classis functio logicum operator == (@$O a, ~adl[$O] b) { responde a == b._adl; }
+	classis functio logicum operator != (@$O a, ~adl[$O] b) { responde a != b._adl; }
+} }
+
+nomen_alternum dordo_linearum = dordo[linea];
+nomen_alternum dordo_datorum = dordo[nint8];
+
 dura linea {
-	[[importa] "spu_codifica_taleam"]	[[nullum_thiscall]] functio @objectum codifica(int codex, logicum termina) iacit;
-	[[importa] "spu_scinde"]			[[nullum_thiscall]] functio @objectum scinde(char) iacit;
+	[[importa] "spu_codifica_taleam"]	[[nullum_thiscall]] functio adl[dordo_datorum] codifica(int codex, logicum termina) iacit;
+	[[importa] "spu_scinde"]			[[nullum_thiscall]] functio adl[dordo_linearum] scinde(char) iacit;
+
+	praeforma functio ad(T) { \cense T genus(_0)\ functio linea $_(~$T t) iacit {
+		\si tractus.convertitur($T, linea)\
+			responde linea(t);
+		\fini\
+		\si !tractus.convertitur($T, linea)\
+			\si tractus.habet($T, "ad_linea")\
+				\si tractus.habet_vers($T.ad_linea)\
+					responde t.ad_linea();
+				\fini\
+				\si !tractus.habet_vers($T.ad_linea)\
+					responde "?";
+				\fini\
+			\fini\
+			\si !tractus.habet($T, "ad_linea")\
+				\si tractus.est_cls($T)\
+					linea r = "structura " + tractus.nomen($T) + " : [\n";
+					\replica F $T\
+						r += linea(tractus.nomen($T.\loca F\)) + " = " + linea.ad(t.\loca F\) + "\n";
+					\fini\
+					responde r + "]";
+				\fini\
+				\si tractus.est_ordo($T)\
+					linea r = "ordo : [";
+					\replica N $T\
+						si (\loca N\) r += ", ";
+						r += linea.ad(t[\loca N\]);
+					\fini\
+					responde r + "]";
+				\fini\
+				\si tractus.est_adl($T)\
+					responde linea((@nihil)(t));
+				\fini\
+				\si tractus.est_fadl($T)\
+					responde linea((@nihil)(t));
+				\fini\
+				\si tractus.est_com($T)\
+					responde linea((@nihil)(@t));
+				\fini\
+				responde "?";
+			\fini\
+		\fini\
+	} }
 }

@@ -9,7 +9,7 @@ namespace Engine
 			namespace DS
 			{
 				ENGINE_PACKED_STRUCTURE(XI_Header)
-					uint64 signature;		// "xximage"
+					uint64 signature;		// "xximago"
 					uint32 format_version;	// 0
 					uint32 target_subsystem;
 					uint32 info_segment_offset;
@@ -33,7 +33,7 @@ namespace Engine
 				ENGINE_END_PACKED_STRUCTURE
 				ENGINE_PACKED_STRUCTURE(XI_Symbol)
 					uint32 symbol_name_offset;
-					uint32 symbol_type; // 1 - literal, 2 - class, 3 - variable, 4 - function, 5 - alias, 6 - property
+					uint32 symbol_type; // 1 - literal, 2 - class, 3 - variable, 4 - function, 5 - alias, 6 - property, 7 - prototype
 					uint32 symbol_data_offset;
 					uint32 symbol_data_size; // not used for alias
 				ENGINE_END_PACKED_STRUCTURE
@@ -96,6 +96,13 @@ namespace Engine
 					uint32 class_symbol_list_size;
 					uint32 class_attribute_list_offset;
 					uint32 class_attribute_list_size;
+				ENGINE_END_PACKED_STRUCTURE
+				ENGINE_PACKED_STRUCTURE(XI_Prototype)
+					uint32 prototype_target_language_name_offset;
+					uint32 prototype_data_offset;
+					uint32 prototype_data_size;
+					uint32 prototype_attribute_list_offset;
+					uint32 prototype_attribute_list_size;
 				ENGINE_END_PACKED_STRUCTURE
 			}
 
@@ -251,10 +258,27 @@ namespace Engine
 				EncodeAttributes(info, hdr.class_attribute_list_offset, hdr.class_attribute_list_size, src.attributes);
 				EnplaceObject(info, offset, &hdr);
 			}
+			void EncodePrototype(DataBlock & info, uint32 & offset, uint32 & size, const Module::Prototype & src)
+			{
+				DS::XI_Prototype hdr;
+				offset = PreserveSpace(info, &hdr);
+				size = sizeof(hdr);
+				hdr.prototype_target_language_name_offset = EnplaceString(info, src.target_language);
+				if (src.data && src.data->Length()) {
+					hdr.prototype_data_offset = PreserveSpace(info, src.data->GetBuffer(), src.data->Length());
+					hdr.prototype_data_size = src.data->Length();
+					EnplaceObject(info, hdr.prototype_data_offset, src.data->GetBuffer(), src.data->Length());
+				} else {
+					hdr.prototype_data_offset = 0;
+					hdr.prototype_data_size = 0;
+				}
+				EncodeAttributes(info, hdr.prototype_attribute_list_offset, hdr.prototype_attribute_list_size, src.attributes);
+				EnplaceObject(info, offset, &hdr);
+			}
 			void EncodeSymbols(DataBlock & info, DS::XI_Header & hdr, const Module & src)
 			{
 				Array<DS::XI_Symbol> stable(1);
-				stable.SetLength(src.literals.Count() + src.classes.Count() + src.variables.Count() + src.functions.Count() + src.aliases.Count());
+				stable.SetLength(src.literals.Count() + src.classes.Count() + src.variables.Count() + src.functions.Count() + src.aliases.Count() + src.prototypes.Count());
 				hdr.symbol_list_offset = PreserveSpace(info, stable.GetBuffer(), stable.Length());
 				hdr.symbol_list_size = stable.Length();
 				int wp = 0;
@@ -287,6 +311,12 @@ namespace Engine
 					stable[wp].symbol_name_offset = EnplaceString(info, a.key);
 					stable[wp].symbol_data_offset = EnplaceString(info, a.value);
 					stable[wp].symbol_data_size = 0;
+					wp++;
+				}
+				for (auto & p : src.prototypes) {
+					stable[wp].symbol_type = 7;
+					stable[wp].symbol_name_offset = EnplaceString(info, p.key);
+					EncodePrototype(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, p.value);
 					wp++;
 				}
 				EnplaceObject(info, hdr.symbol_list_offset, stable.GetBuffer(), stable.Length());
@@ -404,6 +434,15 @@ namespace Engine
 				}
 				DecodeAttributes(dest.attributes, info, hdr->class_attribute_list_offset, hdr->class_attribute_list_size);
 			}
+			void DecodePrototype(Module::Prototype & dest, const DataBlock & info, uint32 offset, uint32 size)
+			{
+				auto hdr = ReadObjects<DS::XI_Prototype>(info, offset);
+				dest.target_language = ReadString(info, hdr->prototype_target_language_name_offset);
+				dest.data = new DataBlock(1);
+				dest.data->SetLength(hdr->prototype_data_size);
+				MemoryCopy(dest.data->GetBuffer(), info.GetBuffer() + hdr->prototype_data_offset, hdr->prototype_data_size);
+				DecodeAttributes(dest.attributes, info, hdr->prototype_attribute_list_offset, hdr->prototype_attribute_list_size);
+			}
 			void DecodeSymbols(Module & dest, const DS::XI_Header & hdr, const DataBlock & info, Module::ModuleLoadFlags flags)
 			{
 				auto stable = ReadObjects<DS::XI_Symbol>(info, hdr.symbol_list_offset);
@@ -428,6 +467,10 @@ namespace Engine
 						dest.functions.Append(name, func);
 					} else if (si.symbol_type == 5) {
 						dest.aliases.Append(name, ReadString(info, si.symbol_data_offset));
+					} else if (si.symbol_type == 7) {
+						Module::Prototype proto;
+						DecodePrototype(proto, info, si.symbol_data_offset, si.symbol_data_size);
+						dest.prototypes.Append(name, proto);
 					} else throw InvalidFormatException();
 				}
 			}
@@ -449,7 +492,7 @@ namespace Engine
 				DS::XI_Header hdr;
 				src->Seek(0, Streaming::Begin);
 				src->Read(&hdr, sizeof(hdr));
-				if (MemoryCompare(&hdr.signature, "xximage", 8) || hdr.format_version) throw InvalidFormatException();
+				if (MemoryCompare(&hdr.signature, "xximago", 8) || hdr.format_version) throw InvalidFormatException();
 				dest.subsystem = static_cast<Module::ExecutionSubsystem>(hdr.target_subsystem);
 				SafePointer<DataBlock> info, rsrc;
 				if (flags == Module::ModuleLoadFlags::LoadAll || flags == Module::ModuleLoadFlags::LoadExecute || flags == Module::ModuleLoadFlags::LoadLink) {
@@ -491,7 +534,7 @@ namespace Engine
 			{
 				DataBlock info(0x10000), rsrc(0x10000);
 				DS::XI_Header hdr;
-				MemoryCopy(&hdr.signature, "xximage", 8);
+				MemoryCopy(&hdr.signature, "xximago", 8);
 				hdr.format_version = 0;
 				hdr.target_subsystem = uint(src.subsystem);
 				hdr.module_name_offset = EnplaceString(info, src.module_import_name);

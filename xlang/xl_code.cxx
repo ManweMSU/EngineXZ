@@ -860,6 +860,7 @@ namespace Engine
 			}
 			_subj.instset << XA::TH::MakeStatementJump(_current_catch_serial);
 		}
+		void LFunctionContext::EncodeTrap(void) { _subj.instset << XA::TH::MakeStatementTrap(); }
 		void LFunctionContext::EndEncoding(void)
 		{
 			if (_flags & FunctionThrows) {
