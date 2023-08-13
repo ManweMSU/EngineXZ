@@ -685,7 +685,10 @@ namespace Engine
 					_encode_preserve(0x3FFFF, reg_in_use, uint(disp->reg), !idle);
 					uint stack_usage = 0;
 					for (auto & info : *layout) if (info.stack_offset < 0) {
-						uint stack_top = info.stack_offset + _size_eval(node.input_specs[first_arg + info.index].size);
+						ArgumentSpecification spec;
+						if (info.index >= 0) spec = node.input_specs[first_arg + info.index];
+						else spec = node.retval_spec;
+						uint stack_top = info.stack_offset + _size_eval(spec.size);
 						if (stack_top > stack_usage) stack_usage = stack_top;
 					}
 					stack_usage = _dword_align(stack_usage);

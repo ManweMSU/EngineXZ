@@ -685,6 +685,7 @@ namespace Engine
 					func->ListOverloads(list, true);
 					for (auto & l : list) {
 						auto overload = func->GetOverloadT(l, true);
+						if (overload->GetImplementationDesc()._pure) continue;
 						auto & vfd = overload->GetVFDesc();
 						if (vfd.vft_index == vft && vfd.vf_index == vf) return overload;
 					}

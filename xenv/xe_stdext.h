@@ -9,5 +9,6 @@ namespace Engine
 		IAPIExtension * CreateFPU(void);
 		IAPIExtension * CreateMMU(void);
 		IAPIExtension * CreateSPU(void);
+		IAPIExtension * CreateMiscUnit(void);
 	}
 }

@@ -2384,6 +2384,7 @@ spatium systema {
 	functio nint contine() virtualis { responde incrementum_securum(_num_ref); }
 	functio nint dimitte() virtualis { var nr = decrementum_securum(_num_ref); si (nr == 0) perde ego; responde nr; }
 	destructor () virtualis {}
+	functio nihil _perde() virtualis { perde ego; }
 	functio linea_secura ad_linea() virtualis { proba { responde linea("objectum"); } responde linea_secura(); }
 }
 
@@ -2506,7 +2507,7 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 			linea resp = "ordo : [";
 			pro (int i = 0; i < _numerus; i++) {
 				si (i) resp += ", ";
-				resp += linea.ad(_data[i]);
+				resp += linea.ex(_data[i]);
 			}
 			responde resp + "]";
 		}
@@ -2580,7 +2581,7 @@ dura linea {
 	[[importa] "spu_codifica_taleam"]	[[nullum_thiscall]] functio adl[dordo_datorum] codifica(int codex, logicum termina) iacit;
 	[[importa] "spu_scinde"]			[[nullum_thiscall]] functio adl[dordo_linearum] scinde(char) iacit;
 
-	praeforma functio ad(T) { \cense T genus(_0)\ functio linea $_(~$T t) iacit {
+	praeforma functio ex(T) { \cense T genus(_0)\ functio linea $_(~$T t) iacit {
 		\si tractus.convertitur($T, linea)\
 			responde linea(t);
 		\fini\
@@ -2597,7 +2598,7 @@ dura linea {
 				\si tractus.est_cls($T)\
 					linea r = "structura " + tractus.nomen($T) + " : [\n";
 					\replica F $T\
-						r += linea(tractus.nomen($T.\loca F\)) + " = " + linea.ad(t.\loca F\) + "\n";
+						r += linea(tractus.nomen($T.\loca F\)) + " = " + linea.ex(t.\loca F\) + "\n";
 					\fini\
 					responde r + "]";
 				\fini\
@@ -2605,7 +2606,7 @@ dura linea {
 					linea r = "ordo : [";
 					\replica N $T\
 						si (\loca N\) r += ", ";
-						r += linea.ad(t[\loca N\]);
+						r += linea.ex(t[\loca N\]);
 					\fini\
 					responde r + "]";
 				\fini\
@@ -2623,3 +2624,74 @@ dura linea {
 		\fini\
 	} }
 }
+
+[[significatio] integer] genus tempus {
+	nint64 momentum;
+
+	structor () {}
+	structor (tempus valor) { funda momentum(valor.momentum); }
+	structor (nint64 valor) { funda momentum(valor); }
+	[[nullum_thiscall]] [[importa] tmp_crea_7] structor (int annus, int mensis, int dies, int hora, int minuta, int secunda, int millisecunda);
+	[[nullum_thiscall]] [[importa] tmp_crea_4] structor (int hora, int minuta, int secunda, int millisecunda);
+
+	classis functio logicum operator == (tempus a, tempus b) { responde a.momentum == b.momentum; }
+	classis functio logicum operator != (tempus a, tempus b) { responde a.momentum != b.momentum; }
+	classis functio logicum operator <= (tempus a, tempus b) { responde a.momentum <= b.momentum; }
+	classis functio logicum operator >= (tempus a, tempus b) { responde a.momentum >= b.momentum; }
+	classis functio logicum operator < (tempus a, tempus b) { responde a.momentum < b.momentum; }
+	classis functio logicum operator > (tempus a, tempus b) { responde a.momentum > b.momentum; }
+
+	classis functio tempus operator + (tempus a, tempus b) { responde a.momentum + b.momentum; }
+	classis functio tempus operator - (tempus a, tempus b) { responde a.momentum - b.momentum; }
+
+	convertor (nint64) () { responde momentum; }
+	functio ~tempus operator = (tempus t) { momentum = t.momentum; responde ego^; }
+	functio ~tempus operator += (tempus t) { momentum += t.momentum; responde ego^; }
+	functio ~tempus operator -= (tempus t) { momentum -= t.momentum; responde ego^; }
+
+	int annus { [[nullum_thiscall]] [[importa] tmp_a_ans] adipisce; }
+	int mensis { [[nullum_thiscall]] [[importa] tmp_a_mns] adipisce; }
+	int dies_septimanae { [[nullum_thiscall]] [[importa] tmp_a_dis] adipisce; }
+	int dies { [[nullum_thiscall]] [[importa] tmp_a_die] adipisce; }
+	int hora { [[nullum_thiscall]] [[importa] tmp_a_hor] adipisce; }
+	int minuta { [[nullum_thiscall]] [[importa] tmp_a_min] adipisce; }
+	int secunda { [[nullum_thiscall]] [[importa] tmp_a_sec] adipisce; }
+	int millisecunda { [[nullum_thiscall]] [[importa] tmp_a_msc] adipisce; }
+
+	tempus tempus_universalus { [[nullum_thiscall]] [[importa] tmp_a_uni] adipisce; }
+	tempus tempus_localis { [[nullum_thiscall]] [[importa] tmp_a_loc] adipisce; }
+
+	[[nullum_thiscall]] [[importa] tmp_adl] functio linea ad_linea() iacit;
+	[[nullum_thiscall]] [[importa] tmp_alb] functio linea ad_linea_brevi() iacit;
+
+	[[nullum_thiscall]] [[importa] tmp_cur] classis functio tempus currens();
+	[[nullum_thiscall]] [[importa] tmp_dim] functio int dies_in_mense();
+}
+
+genus flumen hereditat objectum
+{
+	constatus initus	= 0;
+	constatus currens	= 1;
+	constatus finis		= 2;
+
+	structor () {}
+	functio int lege(@nihil data, int long) iacit virtualis pura;
+	functio nihil scribe(@nihil data, int long) iacit virtualis pura;
+	functio int64 quaerita(int64 pos, int origo) iacit virtualis pura;
+	int64 longitudo {
+		adipisce iacit virtualis pura;
+		loca iacit virtualis pura;
+	}
+	functio nihil annoda() virtualis pura;
+	functio logicum _est_xv() virtualis { responde sic; }
+
+	[[nullum_thiscall]] [[importa] flumen_ex_2] functio nihil exscribe(@flumen ad, int64 long) iacit;
+	[[nullum_thiscall]] [[importa] flumen_ex_1] functio nihil exscribe(@flumen ad) iacit;
+	[[nullum_thiscall]] [[importa] flumen_lo_1] functio adl[dordo_datorum] lege_ordinem(int long) iacit;
+	[[nullum_thiscall]] [[importa] flumen_lo_0] functio adl[dordo_datorum] lege_ordinem() iacit;
+	[[nullum_thiscall]] [[importa] flumen_so_1] functio nihil scribe_ordinem(@dordo_datorum ord) iacit;
+}
+
+[[importa] flumen_mem_0] functio adl[flumen] crea_flumen_in_memoriae() iacit;
+[[importa] flumen_mem_2] functio adl[flumen] crea_flumen_in_memoriae(@nihil data, intadl long) iacit;
+[[importa] flumen_auxil] functio adl[flumen] para_auxilium(@nihil mod, ~linea aux_genus, int aux_num) iacit;

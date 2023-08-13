@@ -1,6 +1,7 @@
 ﻿#include "xe_stdext.h"
 
 #include "xe_logger.h"
+#include "xe_interfaces.h"
 
 namespace Engine
 {
@@ -832,9 +833,194 @@ namespace Engine
 			}
 			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
 		};
+		class MiscUnit : public IAPIExtension
+		{
+			class _resource_stream : public Streaming::Stream
+			{
+				SafePointer<DataBlock> _data;
+				int _pos;
+			public:
+				_resource_stream(DataBlock * data) : _pos(0) { _data.SetRetain(data); }
+				virtual ~_resource_stream(void) override {}
+				virtual string ToString(void) const override { return L"XE Resource Stream"; }
+				virtual void Read(void * buffer, uint32 length) override
+				{
+					uint avail = _data->Length() - _pos;
+					uint read = min(length, avail);
+					MemoryCopy(buffer, _data->GetBuffer() + _pos, read);
+					_pos += read;
+					if (read != length) throw IO::FileReadEndOfFileException(read);
+				}
+				virtual void Write(const void * data, uint32 length) override { throw IO::FileAccessException(IO::Error::NotImplemented); }
+				virtual int64 Seek(int64 position, Streaming::SeekOrigin origin) override
+				{
+					if (origin == Streaming::SeekOrigin::Begin) _pos = position;
+					else if (origin == Streaming::SeekOrigin::Current) _pos += position;
+					else if (origin == Streaming::SeekOrigin::End) _pos = _data->Length() + position;
+					if (_pos < 0) _pos = 0;
+					if (_pos > _data->Length()) _pos = _data->Length();
+					return _pos;
+				}
+				virtual uint64 Length(void) override { return _data->Length(); }
+				virtual void SetLength(uint64 length) override { throw IO::FileAccessException(IO::Error::NotImplemented); }
+				virtual void Flush(void) override {}
+			};
+
+			static void _time_init_7(Time * self, int year, int month, int day, int hour, int minute, int second, int millisecond) { new (self) Time(year, month, day, hour, minute, second, millisecond); }
+			static void _time_init_4(Time * self, int hour, int minute, int second, int millisecond) { new (self) Time(hour, minute, second, millisecond); }
+			static int _get_year(Time * self) { return self->GetYear(); }
+			static int _get_month(Time * self) { return self->GetMonth(); }
+			static int _get_day_of_week(Time * self) { return self->DayOfWeek(); }
+			static int _get_day(Time * self) { return self->GetDay(); }
+			static int _get_hour(Time * self) { return self->GetHour(); }
+			static int _get_minute(Time * self) { return self->GetMinute(); }
+			static int _get_second(Time * self) { return self->GetSecond(); }
+			static int _get_millisecond(Time * self) { return self->GetMillisecond(); }
+			static Time _get_time_universal(Time * self) { return self->ToUniversal(); }
+			static Time _get_time_local(Time * self) { return self->ToLocal(); }
+			static Time _get_time_current(void) { return Time::GetCurrentTime(); }
+			static string _time_to_string(Time * self, ErrorContext & ectx)
+			{
+				try { return self->ToString(); }
+				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return L""; }
+			}
+			static string _time_to_string_short(Time * self, ErrorContext & ectx)
+			{
+				try { return self->ToShortString(); }
+				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return L""; }
+			}
+			static int _time_days_in_month(Time * self)
+			{
+				uint year, month, day;
+				self->GetDate(year, month, day);
+				if (Time::IsYearOdd(year)) return OddMonthLength[month - 1];
+				else return RegularMonthLength[month - 1];
+			}
+			static SafePointer<XStream> _create_memory_stream_0(ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(0x10000);
+					return WrapToXStream(stream);
+				} catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+			}
+			static SafePointer<XStream> _create_memory_stream_2(const void * data, intptr size, ErrorContext & ectx)
+			{
+				if (size >= 0x80000000) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				try {
+					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(data, size);
+					return WrapToXStream(stream);
+				} catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+			}
+			static SafePointer<XStream> _create_resource_stream(const Module * mdl, const string & type, int count, ErrorContext & ectx)
+			{
+				try {
+					auto & rsrc = mdl->GetResources();
+					auto res = rsrc.GetElementByKey(type + L":" + string(count));
+					if (!res || !res->Inner()) { ectx.error_code = 6; ectx.error_subcode = 2; return 0; }
+					SafePointer<_resource_stream> stream = new _resource_stream(res->Inner());
+					return WrapToXStream(stream);
+				} catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+			}
+			static void _stream_copy_to_2(XStream * from, XStream * to, int64 size, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> src = WrapFromXStream(from);
+					SafePointer<Streaming::Stream> dest = WrapFromXStream(to);
+					src->CopyTo(dest, size);
+				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			static void _stream_copy_to_1(XStream * from, XStream * to, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> src = WrapFromXStream(from);
+					SafePointer<Streaming::Stream> dest = WrapFromXStream(to);
+					src->CopyToUntilEof(dest);
+				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			static SafePointer<DataBlock> _stream_read_1(XStream * from, int size, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> src = WrapFromXStream(from);
+					return src->ReadBlock(size);
+				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			static SafePointer<DataBlock> _stream_read_0(XStream * from, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> src = WrapFromXStream(from);
+					return src->ReadAll();
+				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			static void _stream_write(XStream * to, const DataBlock * data, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> dest = WrapFromXStream(to);
+					dest->WriteArray(data);
+				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+		public:
+			virtual void * ExposeRoutine(const string & routine_name) noexcept override
+			{
+				if (routine_name == L"tmp_crea_7") return const_cast<void *>(reinterpret_cast<const void *>(&_time_init_7));
+				else if (routine_name == L"tmp_crea_4") return const_cast<void *>(reinterpret_cast<const void *>(&_time_init_4));
+				else if (routine_name == L"tmp_a_ans") return const_cast<void *>(reinterpret_cast<const void *>(&_get_year));
+				else if (routine_name == L"tmp_a_mns") return const_cast<void *>(reinterpret_cast<const void *>(&_get_month));
+				else if (routine_name == L"tmp_a_dis") return const_cast<void *>(reinterpret_cast<const void *>(&_get_day_of_week));
+				else if (routine_name == L"tmp_a_die") return const_cast<void *>(reinterpret_cast<const void *>(&_get_day));
+				else if (routine_name == L"tmp_a_hor") return const_cast<void *>(reinterpret_cast<const void *>(&_get_hour));
+				else if (routine_name == L"tmp_a_min") return const_cast<void *>(reinterpret_cast<const void *>(&_get_minute));
+				else if (routine_name == L"tmp_a_sec") return const_cast<void *>(reinterpret_cast<const void *>(&_get_second));
+				else if (routine_name == L"tmp_a_msc") return const_cast<void *>(reinterpret_cast<const void *>(&_get_millisecond));
+				else if (routine_name == L"tmp_a_uni") return const_cast<void *>(reinterpret_cast<const void *>(&_get_time_universal));
+				else if (routine_name == L"tmp_a_loc") return const_cast<void *>(reinterpret_cast<const void *>(&_get_time_local));
+				else if (routine_name == L"tmp_cur") return const_cast<void *>(reinterpret_cast<const void *>(&_get_time_current));
+				else if (routine_name == L"tmp_adl") return const_cast<void *>(reinterpret_cast<const void *>(&_time_to_string));
+				else if (routine_name == L"tmp_alb") return const_cast<void *>(reinterpret_cast<const void *>(&_time_to_string_short));
+				else if (routine_name == L"tmp_dim") return const_cast<void *>(reinterpret_cast<const void *>(&_time_days_in_month));
+				else if (routine_name == L"flumen_mem_0") return const_cast<void *>(reinterpret_cast<const void *>(&_create_memory_stream_0));
+				else if (routine_name == L"flumen_mem_2") return const_cast<void *>(reinterpret_cast<const void *>(&_create_memory_stream_2));
+				else if (routine_name == L"flumen_auxil") return const_cast<void *>(reinterpret_cast<const void *>(&_create_resource_stream));
+				else if (routine_name == L"flumen_ex_2") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_copy_to_2));
+				else if (routine_name == L"flumen_ex_1") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_copy_to_1));
+				else if (routine_name == L"flumen_lo_1") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_read_1));
+				else if (routine_name == L"flumen_lo_0") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_read_0));
+				else if (routine_name == L"flumen_so_1") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_write));
+
+				// TODO: IMPLEMENT
+				
+				else return 0;
+			}
+			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
+		};
 
 		IAPIExtension * CreateFPU(void) { return new FPU; }
 		IAPIExtension * CreateMMU(void) { return new MMU; }
 		IAPIExtension * CreateSPU(void) { return new SPU; }
+		IAPIExtension * CreateMiscUnit(void) { return new MiscUnit; }
 	}
 }

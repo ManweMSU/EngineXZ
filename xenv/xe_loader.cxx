@@ -127,9 +127,10 @@ namespace Engine
 				SafePointer<IAPIExtension> ext = CreateLogger();
 				result->RegisterAPIExtension(ext);
 			}
-
-			// TODO: IMPLEMENT
-
+			if (flags & UseStandardMisc) {
+				SafePointer<IAPIExtension> ext = CreateMiscUnit();
+				result->RegisterAPIExtension(ext);
+			}
 			result->Retain();
 			return result;
 		}

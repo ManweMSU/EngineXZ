@@ -11,8 +11,9 @@ namespace Engine
 			UseStandardMMU	= 0x0002,
 			UseStandardSPU	= 0x0004,
 			UseStandardLD	= 0x0008,
+			UseStandardMisc	= 0x0010,
 
-			UseStandard		= UseStandardFPU | UseStandardMMU | UseStandardSPU | UseStandardLD,
+			UseStandard		= UseStandardFPU | UseStandardMMU | UseStandardSPU | UseStandardLD | UseStandardMisc,
 		};
 
 		class IExtension : public Object {};

@@ -152,7 +152,7 @@ int Main(void)
 	if (meta) console.WriteLine(meta->ToString());
 
 	Logger logger;
-	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandardMMU | XE::UseStandardLD | XE::UseStandardSPU | XE::UseStandardFPU);
+	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandard);
 	ldr->AddModuleSearchPath(L"_build");
 	SafePointer<XE::ExecutionContext> ectx = new XE::ExecutionContext(ldr);
 	XE::LoadErrorLocalization(*ectx, L"errores.ru");
