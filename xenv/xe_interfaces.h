@@ -17,8 +17,27 @@ namespace Engine
 			virtual void Flush(void) noexcept = 0;
 			virtual bool IsXV(void) noexcept = 0;
 		};
+		class XTextEncoder : public Object
+		{
+		public:
+			virtual void Write(const string & str, ErrorContext & ectx) noexcept = 0;
+			virtual void WriteLine(const string & str, ErrorContext & ectx) noexcept = 0;
+			virtual void WriteLine(ErrorContext & ectx) noexcept = 0;
+			virtual void WriteSignature(ErrorContext & ectx) noexcept = 0;
+		};
+		class XTextDecoder : public Object
+		{
+		public:
+			virtual uint32 ReadChar(ErrorContext & ectx) noexcept = 0;
+			virtual string ReadLine(ErrorContext & ectx) noexcept = 0;
+			virtual string ReadAll(ErrorContext & ectx) noexcept = 0;
+			virtual bool IsAtEOS(void) noexcept = 0;
+			virtual int GetEncoding(void) noexcept = 0;
+		};
 
 		XStream * WrapToXStream(Streaming::Stream * stream);
 		Streaming::Stream * WrapFromXStream(XStream * stream);
+		XTextEncoder * WrapToEncoder(Streaming::TextWriter * writer);
+		XTextDecoder * WrapToDecoder(Streaming::TextReader * reader);
 	}
 }

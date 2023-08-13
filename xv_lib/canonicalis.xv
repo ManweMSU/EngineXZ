@@ -2668,8 +2668,7 @@ dura linea {
 	[[nullum_thiscall]] [[importa] tmp_dim] functio int dies_in_mense();
 }
 
-genus flumen hereditat objectum
-{
+genus flumen hereditat objectum {
 	constatus initus	= 0;
 	constatus currens	= 1;
 	constatus finis		= 2;
@@ -2695,3 +2694,31 @@ genus flumen hereditat objectum
 [[importa] flumen_mem_0] functio adl[flumen] crea_flumen_in_memoriae() iacit;
 [[importa] flumen_mem_2] functio adl[flumen] crea_flumen_in_memoriae(@nihil data, intadl long) iacit;
 [[importa] flumen_auxil] functio adl[flumen] para_auxilium(@nihil mod, ~linea aux_genus, int aux_num) iacit;
+
+spatium scriptio {
+	genus codificator hereditat objectum {
+		structor () {}
+		functio nihil scribe(~linea ln) iacit virtualis pura;
+		functio nihil scribe_lineam(~linea ln) iacit virtualis pura;
+		functio nihil scribe_lineam() iacit virtualis pura;
+		functio nihil scribe_subscriptionem() iacit virtualis pura;
+
+		classis functio ~codificator operator << (~codificator cdf, ~linea ln) iacit { cdf.scribe(ln); responde cdf; }
+	}
+	genus decodificator hereditat objectum {
+		structor () {}
+		functio char lege_characterem() iacit virtualis pura;
+		functio linea lege_lineam() iacit virtualis pura;
+		functio linea lege_cunctos() iacit virtualis pura;
+
+		logicum finis { adipisce virtualis pura; }
+		int codex { adipisce virtualis pura; }
+
+		classis functio ~decodificator operator >> (~decodificator cdf, ~linea ln) iacit { ln = cdf.lege_lineam(); responde cdf; }
+	}
+
+	[[importa] scr_cod_1] functio adl[codificator] codifica(@flumen fl) iacit;
+	[[importa] scr_cod_2] functio adl[codificator] codifica(@flumen fl, int codex) iacit;
+	[[importa] scr_dec_1] functio adl[decodificator] decodifica(@flumen fl) iacit;
+	[[importa] scr_dec_2] functio adl[decodificator] decodifica(@flumen fl, int codex) iacit;
+}

@@ -158,6 +158,94 @@ namespace Engine
 			virtual void Flush(void) override { _stream->Flush(); }
 			virtual XStream * Unwrap(void) noexcept { _stream->Retain(); return _stream; }
 		};
+		class TextEncoder : public XTextEncoder
+		{
+			SafePointer<Streaming::TextWriter> _wri;
+		public:
+			TextEncoder(Streaming::TextWriter * writer) { _wri.SetRetain(writer); }
+			virtual ~TextEncoder(void) override {}
+			virtual string ToString(void) const override { try { return _wri->ToString(); } catch (...) { return L""; } }
+			virtual void Write(const string & str, ErrorContext & ectx) noexcept override
+			{
+				try { _wri->Write(str); }
+				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			virtual void WriteLine(const string & str, ErrorContext & ectx) noexcept override
+			{
+				try { _wri->WriteLine(str); }
+				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			virtual void WriteLine(ErrorContext & ectx) noexcept override
+			{
+				try { _wri->LineFeed(); }
+				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			virtual void WriteSignature(ErrorContext & ectx) noexcept override
+			{
+				try { _wri->WriteEncodingSignature(); }
+				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+		};
+		class TextDecoder : public XTextDecoder
+		{
+			SafePointer<Streaming::TextReader> _rdr;
+		public:
+			TextDecoder(Streaming::TextReader * reader) { _rdr.SetRetain(reader); }
+			virtual ~TextDecoder(void) override {}
+			virtual string ToString(void) const override { try { return _rdr->ToString(); } catch (...) { return L""; } }
+			virtual uint32 ReadChar(ErrorContext & ectx) noexcept override
+			{
+				try { return _rdr->ReadChar(); }
+				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			virtual string ReadLine(ErrorContext & ectx) noexcept override
+			{
+				try { return _rdr->ReadLine(); }
+				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			virtual string ReadAll(ErrorContext & ectx) noexcept override
+			{
+				try { return _rdr->ReadAll(); }
+				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
+				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
+				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
+				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
+				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
+				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+			}
+			virtual bool IsAtEOS(void) noexcept override { return _rdr->EofReached(); }
+			virtual int GetEncoding(void) noexcept override { return int(_rdr->GetEncoding()); }
+		};
 
 		XStream * WrapToXStream(Streaming::Stream * stream)
 		{
@@ -169,5 +257,7 @@ namespace Engine
 			if (!stream->IsXV()) return static_cast<WrappedXStream *>(stream)->Unwrap();
 			return new WrappedStream(stream);
 		}
+		XTextEncoder * WrapToEncoder(Streaming::TextWriter * writer) { return new TextEncoder(writer); }
+		XTextDecoder * WrapToDecoder(Streaming::TextReader * reader) { return new TextDecoder(reader); }
 	}
 }

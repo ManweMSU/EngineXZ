@@ -983,6 +983,43 @@ namespace Engine
 				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
 				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
 			}
+		
+			static SafePointer<XTextEncoder> _create_writer_1(XStream * stream, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> str = WrapFromXStream(stream);
+					SafePointer<Streaming::TextWriter> wri = new Streaming::TextWriter(str);
+					return WrapToEncoder(wri);
+				} catch (InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+			}
+			static SafePointer<XTextEncoder> _create_writer_2(XStream * stream, int enc, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> str = WrapFromXStream(stream);
+					SafePointer<Streaming::TextWriter> wri = new Streaming::TextWriter(str, static_cast<Encoding>(enc));
+					return WrapToEncoder(wri);
+				} catch (InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+			}
+			static SafePointer<XTextDecoder> _create_reader_1(XStream * stream, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> str = WrapFromXStream(stream);
+					SafePointer<Streaming::TextReader> rdr = new Streaming::TextReader(str);
+					return WrapToDecoder(rdr);
+				} catch (InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+			}
+			static SafePointer<XTextDecoder> _create_reader_2(XStream * stream, int enc, ErrorContext & ectx)
+			{
+				try {
+					SafePointer<Streaming::Stream> str = WrapFromXStream(stream);
+					SafePointer<Streaming::TextReader> rdr = new Streaming::TextReader(str, static_cast<Encoding>(enc));
+					return WrapToDecoder(rdr);
+				} catch (InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+			}
 		public:
 			virtual void * ExposeRoutine(const string & routine_name) noexcept override
 			{
@@ -1010,6 +1047,10 @@ namespace Engine
 				else if (routine_name == L"flumen_lo_1") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_read_1));
 				else if (routine_name == L"flumen_lo_0") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_read_0));
 				else if (routine_name == L"flumen_so_1") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_write));
+				else if (routine_name == L"scr_cod_1") return const_cast<void *>(reinterpret_cast<const void *>(&_create_writer_1));
+				else if (routine_name == L"scr_cod_2") return const_cast<void *>(reinterpret_cast<const void *>(&_create_writer_2));
+				else if (routine_name == L"scr_dec_1") return const_cast<void *>(reinterpret_cast<const void *>(&_create_reader_1));
+				else if (routine_name == L"scr_dec_2") return const_cast<void *>(reinterpret_cast<const void *>(&_create_reader_2));
 
 				// TODO: IMPLEMENT
 				
