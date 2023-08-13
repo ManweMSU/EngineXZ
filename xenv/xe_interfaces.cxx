@@ -247,6 +247,26 @@ namespace Engine
 			virtual int GetEncoding(void) noexcept override { return int(_rdr->GetEncoding()); }
 		};
 
+		XDispatchContext::XDispatchContext(IDispatchQueue * queue) { _queue.SetRetain(queue); }
+		XDispatchContext::~XDispatchContext(void) {}
+		string XDispatchContext::ToString(void) const { try { return _queue->ToString(); } catch (...) { return L""; } }
+		bool XDispatchContext::AddTask(IDispatchTask * task) noexcept
+		{
+			try {
+				_queue->SubmitTask(task);
+				return true;
+			} catch (...) { return false; }
+		}
+		bool XDispatchContext::AddTasks(IDispatchTask ** tasks, int count) noexcept
+		{
+			try {
+				_queue->BeginSubmit();
+				try { for (int i = 0; i < count; i++) _queue->AppendTask(tasks[i]); } catch (...) { _queue->EndSubmit(); return false; }
+				_queue->EndSubmit();
+				return true;
+			} catch (...) { return false; }
+		}
+
 		XStream * WrapToXStream(Streaming::Stream * stream)
 		{
 			if (stream->ToString() == L"XStream") return static_cast<WrappedStream *>(stream)->Unwrap();

@@ -95,18 +95,23 @@ namespace Engine
 						SafePointer<LObject> lit = ProcessLiteralTransform(GetContext(), op, static_cast<XLiteral *>(_instance.Inner()), 0);
 						if (lit) { lit->Retain(); return lit; }
 					}
+					auto & vfd = GetVFDesc();
+					auto ct = GetCanonicalType();
+					SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(ct).GetFunctionSignature();
+					if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 					if (argc == 1 && _parent->CheckForInline()) {
-						auto result = CheckInlinePossibility(this, _instance, argv[0], 0);
-						if (result) return result;
+						try {
+							SafePointer<XType> type_need = CreateType(sgn->ElementAt(1).QueryCanonicalName(), GetContext());
+							SafePointer<LObject> casted = PerformTypeCast(type_need, argv[0], CastPriorityConverter);
+							if (type_need->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) casted = UnwarpObject(casted);
+							auto result = CheckInlinePossibility(this, _instance, casted, 0);
+							if (result) return result;
+						} catch (...) {}
 					} else if (argc == 0 && _parent->CheckForInline()) {
 						auto result = CheckInlinePossibility(this, _instance, 0, 0);
 						if (result) return result;
 					}
-					auto & vfd = GetVFDesc();
-					auto ct = GetCanonicalType();
 					SafePointer<_invoke_provider> provider = new _invoke_provider;
-					SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(ct).GetFunctionSignature();
-					if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 					bool use_thiscall = (_parent->GetFlags() & XI::Module::Function::FunctionThisCall);
 					provider->_throws = (_parent->GetFlags() & XI::Module::Function::FunctionThrows);
 					provider->_instance = _instance;
@@ -262,13 +267,19 @@ namespace Engine
 					SafePointer<LObject> lit = ProcessLiteralTransform(_ctx, op, static_cast<XLiteral *>(argv[0]), static_cast<XLiteral *>(argv[1]));
 					if (lit) { lit->Retain(); return lit; }
 				}
-				if (argc == 2 && CheckForInline()) {
-					auto result = CheckInlinePossibility(this, 0, argv[0], argv[1]);
-					if (result) return result;
-				}
-				SafePointer<_invoke_provider> provider = new _invoke_provider;
 				SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(_cn).GetFunctionSignature();
 				if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (argc == 2 && CheckForInline()) {
+					try {
+						SafePointer<XType> type_need_0 = CreateType(sgn->ElementAt(1).QueryCanonicalName(), GetContext());
+						SafePointer<XType> type_need_1 = CreateType(sgn->ElementAt(2).QueryCanonicalName(), GetContext());
+						SafePointer<LObject> casted_0 = PerformTypeCast(type_need_0, argv[0], CastPriorityConverter);
+						SafePointer<LObject> casted_1 = PerformTypeCast(type_need_1, argv[1], CastPriorityConverter);
+						auto result = CheckInlinePossibility(this, 0, casted_0, casted_1);
+						if (result) return result;
+					} catch (...) {}
+				}
+				SafePointer<_invoke_provider> provider = new _invoke_provider;
 				provider->_throws = (_flags & XI::Module::Function::FunctionThrows);
 				provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
 				provider->_self_ref = _path;

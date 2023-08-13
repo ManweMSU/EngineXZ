@@ -865,6 +865,62 @@ namespace Engine
 				virtual void SetLength(uint64 length) override { throw IO::FileAccessException(IO::Error::NotImplemented); }
 				virtual void Flush(void) override {}
 			};
+			class _semaphore : public Object
+			{
+				SafePointer<Semaphore> _sem;
+			public:
+				_semaphore(Semaphore * sem) { _sem.SetRetain(sem); }
+				virtual ~_semaphore(void) override {}
+				virtual void _wait(void) noexcept { _sem->Wait(); }
+				virtual bool _wait(uint quant) noexcept { if (quant) return _sem->WaitFor(quant); else return _sem->TryWait(); }
+				virtual void _open(void) noexcept { _sem->Open(); }
+			};
+			class _thread : public Object
+			{
+				SafePointer<Thread> _th;
+			public:
+				_thread(Thread * th) { _th.SetRetain(th); }
+				virtual ~_thread(void) override {}
+				virtual void _wait(void) noexcept { _th->Wait(); }
+				virtual bool _is_active(void) noexcept { return !_th->Exited(); }
+				virtual int _exit_code(void) noexcept { return _th->GetExitCode(); }
+			};
+			class _task_queue : public XDispatchContext
+			{
+				TaskQueue * _disp;
+			public:
+				_task_queue(TaskQueue * queue) : _disp(queue), XDispatchContext(queue) {}
+				virtual ~_task_queue() override {}
+				virtual void _execute(void) noexcept { try { _disp->Process(); } catch (...) {} }
+				virtual bool _execute_once(void) noexcept { try { return _disp->ProcessOnce(); } catch (...) { return false; } }
+				virtual SafePointer<_thread> _execute_in_thread(void) noexcept
+				{
+					try {
+						SafePointer<Thread> thread;
+						if (!_disp->ProcessAsSeparateThread(thread.InnerRef())) return 0;
+						return new _thread(thread);
+					} catch (...) { return 0; }
+				}
+				virtual void _break(void) noexcept { try { _disp->Break(); } catch (...) {} }
+				virtual void _quit(void) noexcept { try { _disp->Quit(); } catch (...) {} }
+				virtual int _length(void) noexcept { try { return _disp->GetTaskQueueLength(); } catch (...) { return -1; } }
+			};
+			class _thread_pool : public XDispatchContext
+			{
+				ThreadPool * _pool;
+			public:
+				_thread_pool(ThreadPool * pool) : _pool(pool), XDispatchContext(pool) {}
+				virtual ~_thread_pool() override {}
+				virtual void _get_state(int & num_threads, int & num_active_thread, int & num_tasks) noexcept
+				{
+					try {
+						num_threads = _pool->GetThreadCount();
+						num_active_thread = _pool->GetActiveThreads();
+						num_tasks = _pool->GetTaskQueueLength();
+					} catch (...) {}
+				}
+				virtual void _wait(void) noexcept { try { _pool->Wait(); } catch (...) {} }
+			};
 
 			static void _time_init_7(Time * self, int year, int month, int day, int hour, int minute, int second, int millisecond) { new (self) Time(year, month, day, hour, minute, second, millisecond); }
 			static void _time_init_4(Time * self, int hour, int minute, int second, int millisecond) { new (self) Time(hour, minute, second, millisecond); }
@@ -983,7 +1039,6 @@ namespace Engine
 				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
 				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
 			}
-		
 			static SafePointer<XTextEncoder> _create_writer_1(XStream * stream, ErrorContext & ectx)
 			{
 				try {
@@ -1020,6 +1075,47 @@ namespace Engine
 				} catch (InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
 				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
 			}
+			static void _sleep(uint time) noexcept { Sleep(time); }
+			static void _terminate(uint code) noexcept { ExitProcess(code); }
+			static SafePointer<_task_queue> _create_task_queue(void) noexcept
+			{
+				try {
+					SafePointer<TaskQueue> queue = new TaskQueue;
+					return new _task_queue(queue);
+				} catch (...) { return 0; }
+			}
+			static SafePointer<_thread_pool> _create_thread_pool_0(void) noexcept
+			{
+				try {
+					SafePointer<ThreadPool> pool = new ThreadPool;
+					return new _thread_pool(pool);
+				} catch (...) { return 0; }
+			}
+			static SafePointer<_thread_pool> _create_thread_pool_1(int threads) noexcept
+			{
+				try {
+					SafePointer<ThreadPool> pool = new ThreadPool(threads);
+					return new _thread_pool(pool);
+				} catch (...) { return 0; }
+			}
+			static SafePointer<_semaphore> _create_semaphore(int value) noexcept
+			{
+				try {
+					SafePointer<Semaphore> sem = CreateSemaphore(value);
+					return new _semaphore(sem);
+				} catch (...) { return 0; }
+			}
+			static SafePointer<_thread> _create_thread(IDispatchTask * task) noexcept
+			{
+				SafePointer<Thread> thread;
+				task->Retain();
+				try {
+					thread = CreateThread(reinterpret_cast<ThreadRoutine>(_do_task_thread), task);
+					if (!thread) throw Exception();
+				} catch (...) { task->Release(); return 0; }
+				try { return new _thread(thread); } catch (...) { return 0; }
+			}
+			static int _do_task_thread(IDispatchTask * task) noexcept { task->DoTask(0); task->Release(); return 0; }
 		public:
 			virtual void * ExposeRoutine(const string & routine_name) noexcept override
 			{
@@ -1051,9 +1147,13 @@ namespace Engine
 				else if (routine_name == L"scr_cod_2") return const_cast<void *>(reinterpret_cast<const void *>(&_create_writer_2));
 				else if (routine_name == L"scr_dec_1") return const_cast<void *>(reinterpret_cast<const void *>(&_create_reader_1));
 				else if (routine_name == L"scr_dec_2") return const_cast<void *>(reinterpret_cast<const void *>(&_create_reader_2));
-
-				// TODO: IMPLEMENT
-				
+				else if (routine_name == L"ctx_dormi") return const_cast<void *>(reinterpret_cast<const void *>(&_sleep));
+				else if (routine_name == L"ctx_siste") return const_cast<void *>(reinterpret_cast<const void *>(&_terminate));
+				else if (routine_name == L"ctx_ccsim") return const_cast<void *>(reinterpret_cast<const void *>(&_create_task_queue));
+				else if (routine_name == L"ctx_ccfl0") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread_pool_0));
+				else if (routine_name == L"ctx_ccfl1") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread_pool_1));
+				else if (routine_name == L"ctx_crsem") return const_cast<void *>(reinterpret_cast<const void *>(&_create_semaphore));
+				else if (routine_name == L"ctx_crfil") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread));
 				else return 0;
 			}
 			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }

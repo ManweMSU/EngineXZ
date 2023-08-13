@@ -34,6 +34,16 @@ namespace Engine
 			virtual bool IsAtEOS(void) noexcept = 0;
 			virtual int GetEncoding(void) noexcept = 0;
 		};
+		class XDispatchContext : public Object
+		{
+			SafePointer<IDispatchQueue> _queue;
+		public:
+			XDispatchContext(IDispatchQueue * queue);
+			virtual ~XDispatchContext(void) override;
+			virtual string ToString(void) const override;
+			virtual bool AddTask(IDispatchTask * task) noexcept;
+			virtual bool AddTasks(IDispatchTask ** tasks, int count) noexcept;
+		};
 
 		XStream * WrapToXStream(Streaming::Stream * stream);
 		Streaming::Stream * WrapFromXStream(XStream * stream);
