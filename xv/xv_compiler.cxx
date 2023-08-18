@@ -5,7 +5,6 @@
 #include "xv_proto.h"
 #include "xv_oapi.h"
 #include "../xlang/xl_code.h"
-#include "../xexec/xx_ext.h"
 #include "../xasm/xa_compiler.h"
 #include "../ximg/xi_resources.h"
 
@@ -935,8 +934,8 @@ namespace Engine
 				ObjectArray<XL::LObject> vft_init_seq(0x40);
 				ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor, vft_init_seq);
 				if (is_structure) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit |
-					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero,
-					vft_init_seq);
+					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
+					XL::CreateMethodAssign, vft_init_seq);
 
 				// TODO: ADD AUTO METHODS
 
@@ -1937,7 +1936,7 @@ namespace Engine
 			virtual Streaming::Stream * QueryModuleFileStream(const string & module_name) override
 			{
 				for (auto & path : _mdl) try {
-					return new Streaming::FileStream(path + L"/" + module_name + L"." + XX::FileExtensionLibrary, Streaming::AccessRead, Streaming::OpenExisting);
+					return new Streaming::FileStream(path + L"/" + module_name + L"." + XI::FileExtensionLibrary, Streaming::AccessRead, Streaming::OpenExisting);
 				} catch (...) {}
 				if (_dropback) return _dropback->QueryModuleFileStream(module_name);
 				throw IO::FileAccessException(IO::Error::FileNotFound);
@@ -1978,8 +1977,8 @@ namespace Engine
 					SafePointer<Streaming::MemoryStream> data = new Streaming::MemoryStream(0x10000);
 					lctx.ProduceModule(Meta::Stamp, Meta::VersionMajor, Meta::VersionMinor, Meta::Subversion, Meta::BuildNumber, data);
 					data->Seek(0, Streaming::Begin);
-					if (vctx.module_is_library) *output = new OutputModule(module_name, XX::FileExtensionLibrary, data);
-					else *output = new OutputModule(module_name, XX::FileExtensionExecutable, data);
+					if (vctx.module_is_library) *output = new OutputModule(module_name, XI::FileExtensionLibrary, data);
+					else *output = new OutputModule(module_name, XI::FileExtensionExecutable, data);
 					SetStatusError(status, CompilerStatus::Success);
 				}
 			} catch (...) { SetStatusError(status, CompilerStatus::InternalError); }

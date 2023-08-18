@@ -2827,6 +2827,7 @@ genus flumen hereditat objectum {
 [[importa] flumen_auxil] functio adl[flumen] para_auxilium(@nihil mod, ~linea aux_genus, int aux_num) iacit;
 
 spatium scriptio {
+	constatus finis_char = 0xFFFFFFFF;
 	genus codificator hereditat objectum {
 		structor () {}
 		functio nihil scribe(~linea ln) iacit virtualis pura;
@@ -2854,9 +2855,26 @@ spatium scriptio {
 	[[importa] scr_dec_2] functio adl[decodificator] decodifica(@flumen fl, int codex) iacit;
 }
 spatium contextus {
+	genus semaphorum hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		functio logicum opperire(nint ms) virtualis pura;
+		functio nihil aperi() virtualis pura;
+	}
+	genus signale hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		functio logicum opperire(nint ms) virtualis pura;
+		functio nihil erige() virtualis pura;
+		functio nihil inclina() virtualis pura;
+	}
 	genus labos hereditat objectum {
 		structor () {}
 		functio nihil exeque(@objectum ctx) virtualis pura;
+	}
+	genus labos_opperitus hereditat labos {
+		structor () {}
+		functio adl[signale] para_signale() virtualis pura;
 	}
 	genus filum hereditat objectum {
 		structor () {}
@@ -2883,12 +2901,6 @@ spatium contextus {
 		functio nihil para_statum(~int num_fil, ~int num_act_fil, ~int num_lab) virtualis pura;
 		functio nihil opperire() virtualis pura;
 	}
-	genus semaphorus hereditat objectum {
-		structor () {}
-		functio nihil opperire() virtualis pura;
-		functio logicum opperire(nint ms) virtualis pura;
-		functio nihil aperi() virtualis pura;
-	}
 
 	[[importa] ctx_dormi] functio nihil dormi(nint ms);
 	[[importa] ctx_siste] functio nihil siste(nint valor);
@@ -2896,6 +2908,7 @@ spatium contextus {
 	[[importa] ctx_ccsim] functio adl[cauda_simplex] crea_caudam_simplex();
 	[[importa] ctx_ccfl0] functio adl[cauda_filorum] crea_caudam_filorum();
 	[[importa] ctx_ccfl1] functio adl[cauda_filorum] crea_caudam_filorum(int num);
-	[[importa] ctx_crsem] functio adl[semaphorus] crea_semaphorum(int valor);
+	[[importa] ctx_crsem] functio adl[semaphorum] crea_semaphorum(int valor);
+	[[importa] ctx_crsgn] functio adl[signale] crea_signale();
 	[[importa] ctx_crfil] functio adl[filum] exeque(@labos lab);
 }

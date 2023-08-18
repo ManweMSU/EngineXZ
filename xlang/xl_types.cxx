@@ -803,6 +803,8 @@ namespace Engine
 			{
 				if (name == OperatorSubscript || name == IteratorBegin || name == IteratorEnd || name == IteratorPreBegin || name == IteratorPostEnd) {
 					return new _array_method(this, name);
+				} else if (name == OperatorAssign) {
+					return CreateStaticArrayRoutine(this, CreateMethodAssign);
 				} else throw ObjectHasNoSuchMemberException(this, name);
 			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
@@ -1466,11 +1468,13 @@ namespace Engine
 				SafePointer<LObject> init_ctor_inst = static_cast<XFunctionOverload *>(init_ctor.Inner())->SetInstance(uw);
 				return init_ctor_inst->Invoke(0, 0);
 			} else {
-				SafePointer<LObject> type = uw->GetType();
-				SafePointer<LObject> ctor = type->GetMember(NameConstructor);
-				if (ctor->GetClass() != Class::Function) throw InvalidStateException();
-				SafePointer<LObject> ctor_inst = static_cast<XFunction *>(ctor.Inner())->SetInstance(uw);
-				return ctor_inst->Invoke(argc, argv);
+				try {
+					SafePointer<LObject> type = uw->GetType();
+					SafePointer<LObject> ctor = type->GetMember(NameConstructor);
+					if (ctor->GetClass() != Class::Function) throw InvalidStateException();
+					SafePointer<LObject> ctor_inst = static_cast<XFunction *>(ctor.Inner())->SetInstance(uw);
+					return ctor_inst->Invoke(argc, argv);
+				} catch (...) { if (argc == 1) return InitInstance(instance, argv[0]); else throw; }
 			}
 		}
 		LObject * MoveInstance(LObject * instance, LObject * with_value)

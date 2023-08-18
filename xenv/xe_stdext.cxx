@@ -871,9 +871,27 @@ namespace Engine
 			public:
 				_semaphore(Semaphore * sem) { _sem.SetRetain(sem); }
 				virtual ~_semaphore(void) override {}
+				virtual string ToString(void) const override { try { return L"XE Semaphore"; } catch (...) { return L""; } }
 				virtual void _wait(void) noexcept { _sem->Wait(); }
-				virtual bool _wait(uint quant) noexcept { if (quant) return _sem->WaitFor(quant); else return _sem->TryWait(); }
+				virtual bool _wait_for(uint quant) noexcept { if (quant) return _sem->WaitFor(quant); else return _sem->TryWait(); }
 				virtual void _open(void) noexcept { _sem->Open(); }
+			};
+			class _signal : public Object
+			{
+				SafePointer<Semaphore> _sem;
+			public:
+				_signal(void) { _sem = CreateSemaphore(0); if (!_sem) throw Exception(); }
+				virtual ~_signal(void) override {}
+				virtual string ToString(void) const override { try { return L"XE Signal"; } catch (...) { return L""; } }
+				virtual void _wait(void) noexcept { _sem->Wait(); _sem->Open(); }
+				virtual bool _wait_for(uint quant) noexcept
+				{
+					bool result = quant ? _sem->WaitFor(quant) : _sem->TryWait();
+					if (result) _sem->Open();
+					return result;
+				}
+				virtual void _raise(void) noexcept { _sem->Open(); }
+				virtual void _lower(void) noexcept { _sem->Wait(); }
 			};
 			class _thread : public Object
 			{
@@ -881,6 +899,7 @@ namespace Engine
 			public:
 				_thread(Thread * th) { _th.SetRetain(th); }
 				virtual ~_thread(void) override {}
+				virtual string ToString(void) const override { try { return L"XE Thread"; } catch (...) { return L""; } }
 				virtual void _wait(void) noexcept { _th->Wait(); }
 				virtual bool _is_active(void) noexcept { return !_th->Exited(); }
 				virtual int _exit_code(void) noexcept { return _th->GetExitCode(); }
@@ -1105,6 +1124,7 @@ namespace Engine
 					return new _semaphore(sem);
 				} catch (...) { return 0; }
 			}
+			static SafePointer<_signal> _create_signal(void) noexcept { try { return new _signal; } catch (...) { return 0; } }
 			static SafePointer<_thread> _create_thread(IDispatchTask * task) noexcept
 			{
 				SafePointer<Thread> thread;
@@ -1153,6 +1173,7 @@ namespace Engine
 				else if (routine_name == L"ctx_ccfl0") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread_pool_0));
 				else if (routine_name == L"ctx_ccfl1") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread_pool_1));
 				else if (routine_name == L"ctx_crsem") return const_cast<void *>(reinterpret_cast<const void *>(&_create_semaphore));
+				else if (routine_name == L"ctx_crsgn") return const_cast<void *>(reinterpret_cast<const void *>(&_create_signal));
 				else if (routine_name == L"ctx_crfil") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread));
 				else return 0;
 			}

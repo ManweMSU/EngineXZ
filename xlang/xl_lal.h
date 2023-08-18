@@ -24,6 +24,7 @@ namespace Engine
 			CreateMethodConstructorZero	= 0x004,
 			CreateMethodConstructorMove	= 0x008,
 			CreateMethodDestructor		= 0x010,
+			CreateMethodAssign			= 0x020,
 		};
 
 		class LObject;

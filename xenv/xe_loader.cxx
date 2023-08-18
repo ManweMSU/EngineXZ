@@ -2,7 +2,7 @@
 
 #include "xe_stdext.h"
 #include "xe_logger.h"
-#include "../xexec/xx_ext.h"
+#include "../ximg/xi_module.h"
 
 namespace Engine
 {
@@ -25,9 +25,9 @@ namespace Engine
 					if (stream) return stream;
 				}
 				for (auto & p : _xi_paths) {
-					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XX::FileExtensionLibrary), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
-					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XX::FileExtensionExecutable), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
-					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XX::FileExtensionExecutable2), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
+					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionLibrary), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
+					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionExecutable), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
+					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionExecutable2), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
 				}
 				return 0;
 			}
