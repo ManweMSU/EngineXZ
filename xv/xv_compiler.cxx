@@ -937,7 +937,7 @@ namespace Engine
 					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
 					XL::CreateMethodAssign, vft_init_seq);
 
-				// TODO: ADD AUTO METHODS
+				// TODO: ADD METHODS: dynamic cast, get type
 
 				ctx.LockClass(type, false);
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
@@ -1149,6 +1149,55 @@ namespace Engine
 					}
 				}
 			}
+			void ProcessEnumeration(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
+			{
+				ReadNextToken(); AssertIdent(); auto definition = current_token;
+				XL::LObject * type;
+				try { type = ctx.CreateClass(desc.current_namespace, current_token.contents); }
+				catch (...) { Abort(CompilerStatus::SymbolRedefinition, current_token); }
+				SafePointer<XL::LObject> base_class;
+				ReadNextToken();
+				auto base_definition = definition;
+				if (IsKeyword(Lexic::KeywordInherit)) {
+					ReadNextToken();
+					base_definition = current_token;
+					base_class = ProcessTypeExpression(desc);
+				} else base_class = ctx.QueryObject(XL::NameInt);
+				if (!IsValidEnumerationBase(base_class)) Abort(CompilerStatus::InvalidParentClass, base_definition);
+				try { ctx.AdoptParentClass(type, base_class); }
+				catch (...) { Abort(CompilerStatus::InvalidParentClass, base_definition); }
+				for (auto & attr : attributes) {
+					if (attr.key[0] == L'[') Abort(CompilerStatus::InapproptiateAttribute, definition);
+					else type->AddAttribute(attr.key, attr.value);
+				}
+				attributes.Clear();
+				AssertPunct(L"{"); ReadNextToken();
+				Volumes::ObjectDictionary<string, XL::LObject> db;
+				VObservationDesc subdesc;
+				subdesc.current_namespace = type;
+				subdesc.namespace_search_list << type;
+				subdesc.namespace_search_list << desc.namespace_search_list;
+				while (!IsPunct(L"}")) {
+					AssertIdent();
+					auto value_def = current_token;
+					SafePointer<XL::LObject> value_init;
+					ReadNextToken();
+					if (IsPunct(L"=")) {
+						ReadNextToken();
+						value_init = ProcessExpression(subdesc);
+						if (value_init->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, value_def);
+					}
+					if (!CreateEnumerationValue(db, type, value_def.contents, value_init)) Abort(CompilerStatus::SymbolRedefinition, value_def);
+					if (!IsPunct(L"}")) { AssertPunct(L","); ReadNextToken(); }
+				}
+				AssertPunct(L"}"); ReadNextToken();
+				ObjectArray<XL::LObject> vft_init_seq(0x40);
+				ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor | XL::CreateMethodConstructorInit |
+					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
+					XL::CreateMethodAssign, vft_init_seq);
+				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
+				CreateEnumerationRoutines(db, type);
+			}
 			void ProcessClass(XL::LObject * cls, bool is_interface, bool is_continue, VObservationDesc & desc)
 			{
 				Volumes::Dictionary<string, string> attributes;
@@ -1171,6 +1220,8 @@ namespace Engine
 						ProcessUsingDefinition(desc);
 					} else if (IsKeyword(Lexic::KeywordVariable)) {
 						ProcessVariableDefinition(attributes, desc);
+					} else if (IsKeyword(Lexic::KeywordEnum)) {
+						ProcessEnumeration(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordPrototype)) {
 						ProcessPrototypeDefinition(attributes, desc);
 					} else {
@@ -1260,6 +1311,8 @@ namespace Engine
 						ProcessUsingDefinition(desc);
 					} else if (IsKeyword(Lexic::KeywordVariable)) {
 						ProcessVariableDefinition(attributes, desc);
+					} else if (IsKeyword(Lexic::KeywordEnum)) {
+						ProcessEnumeration(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordPrototype)) {
 						ProcessPrototypeDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordImport)) {
@@ -1778,6 +1831,8 @@ namespace Engine
 					} catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, definition); }
 					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+				} else if (IsKeyword(Lexic::KeywordUse)) {
+					ProcessUsingDefinition(desc);
 				} else if (IsKeyword(Lexic::KeywordTrap)) {
 					ReadNextToken(); AssertPunct(L";"); ReadNextToken();
 					fctx.EncodeTrap();

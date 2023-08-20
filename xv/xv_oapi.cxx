@@ -4,6 +4,7 @@
 #include "../xlang/xl_func.h"
 #include "../xlang/xl_base.h"
 #include "../xlang/xl_code.h"
+#include "../xlang/xl_var.h"
 
 namespace Engine
 {
@@ -234,6 +235,348 @@ namespace Engine
 				SafePointer<XL::LObject> dtor_inst = static_cast<XL::XFunctionOverload *>(dtor.Inner())->SetInstance(object);
 				return dtor_inst->Invoke(0, 0);
 			}
+		}
+
+		void EncodeSelectorRetval(XA::Function & xa, int rv, const XA::ArgumentSpecification & rv_spec)
+		{
+			auto rreg = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceRetVal));
+			auto sreg = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, rv));
+			if (rv_spec.size.num_words) sreg = XL::MakeAddressOf(sreg, rv_spec.size);
+			auto blt = XL::MakeBlt(rreg, sreg, rv_spec.size);
+			xa.instset << XA::TH::MakeStatementReturn(blt);
+		}
+		void EncodeSelectorRange(XA::Function & xa, const XA::ExpressionTree & subj, const XA::ArgumentSpecification & subj_spec,
+			const Volumes::KeyValuePair<int, int> * first, int length, int dropback, const XA::ArgumentSpecification & rv_spec)
+		{
+			if (length == 1) {
+				auto cmp = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformIntegerNEQ, XA::ReferenceFlagInvoke));
+				XA::TH::AddTreeInput(cmp, subj, subj_spec);
+				XA::TH::AddTreeInput(cmp, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, first[0].key)), subj_spec);
+				XA::TH::AddTreeOutput(cmp, subj_spec);
+				xa.instset << XA::TH::MakeStatementJump(1, cmp);
+				EncodeSelectorRetval(xa, first[0].value, rv_spec);
+				EncodeSelectorRetval(xa, dropback, rv_spec);
+			} else if (length > 1) {
+				int med = length / 2;
+				auto cmp = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformIntegerUGE, XA::ReferenceFlagInvoke));
+				XA::TH::AddTreeInput(cmp, subj, subj_spec);
+				XA::TH::AddTreeInput(cmp, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, first[med].key)), subj_spec);
+				XA::TH::AddTreeOutput(cmp, subj_spec);
+				int ip_jge = xa.instset.Length();
+				xa.instset << XA::TH::MakeStatementJump(0, cmp);
+				EncodeSelectorRange(xa, subj, subj_spec, first, med, dropback, rv_spec);
+				xa.instset[ip_jge].attachment.num_bytes = xa.instset.Length() - ip_jge - 1;
+				EncodeSelectorRange(xa, subj, subj_spec, first + med, length - med, dropback, rv_spec);
+			} else EncodeSelectorRetval(xa, dropback, rv_spec);
+		}
+		void EncodeSelector(XA::Function & xa, const XA::ExpressionTree & subj, const XA::ArgumentSpecification & subj_spec,
+			const Volumes::Dictionary<uint64, Volumes::KeyValuePair<int, int> > & mapping, int dropback, const XA::ArgumentSpecification & rv_spec)
+		{
+			Array< Volumes::KeyValuePair<int, int> > linear(mapping.Count());
+			for (auto & m : mapping) linear.Append(m.value);
+			EncodeSelectorRange(xa, subj, subj_spec, linear.GetBuffer(), linear.Length(), dropback, rv_spec);
+		}
+		void CreateEnumerationConstructInit(XL::XClass * enum_cls, XL::XClass * base)
+		{
+			auto & ctx = enum_cls->GetContext();
+			try {
+				SafePointer<XL::LObject> type_void = ctx.QueryObject(XL::NameVoid);
+				auto fd = ctx.CreateFunction(enum_cls, XL::NameConstructor);
+				auto func = ctx.CreateFunctionOverload(fd, type_void, 1, reinterpret_cast<XL::LObject **>(&base), XL::FunctionMethod | XL::FunctionThisCall);
+				auto & impl = static_cast<XL::XFunctionOverload *>(func)->GetImplementationDesc();
+				auto & xa = impl._xa;
+				auto spec = enum_cls->GetArgumentSpecification();
+				auto self = XL::MakeAddressFollow(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), spec.size);
+				auto blt = XL::MakeBlt(self, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 1)), spec.size);
+				xa.instset << XA::TH::MakeStatementReturn(blt);
+			} catch (...) {}
+			try {
+				SafePointer<XL::LObject> type_ref = ctx.QueryTypeReference(enum_cls);
+				auto fd = ctx.CreateFunction(enum_cls, XL::OperatorAssign);
+				auto func = ctx.CreateFunctionOverload(fd, type_ref, 1, reinterpret_cast<XL::LObject **>(&base), XL::FunctionMethod | XL::FunctionThisCall);
+				auto & impl = static_cast<XL::XFunctionOverload *>(func)->GetImplementationDesc();
+				auto & xa = impl._xa;
+				auto spec = enum_cls->GetArgumentSpecification();
+				auto self = XL::MakeAddressFollow(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), spec.size);
+				auto blt = XL::MakeBlt(self, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 1)), spec.size);
+				xa.instset << XA::TH::MakeStatementExpression(blt);
+				auto ret = XL::MakeBlt(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceRetVal)), XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), XA::TH::MakeSize(0, 1));
+				xa.instset << XA::TH::MakeStatementReturn(ret);
+			} catch (...) {}
+		}
+		void CreateEnumerationToString(Volumes::ObjectDictionary<string, XL::LObject> & db, XL::XClass * enum_cls)
+		{
+			string selector_name = L"_linea";
+			auto & ctx = enum_cls->GetContext();
+			try {
+				SafePointer<XL::XType> type_string_literal = XL::CreateType(XI::Module::TypeReference::MakePointer(XI::Module::TypeReference::MakeClassReference(XL::NameUInt32)), ctx);
+				auto fd = ctx.CreateFunction(enum_cls, selector_name);
+				auto func = ctx.CreateFunctionOverload(fd, type_string_literal, 0, 0, XL::FunctionMethod | XL::FunctionThisCall);
+				auto & impl = static_cast<XL::XFunctionOverload *>(func)->GetImplementationDesc();
+				auto & xa = impl._xa;
+				auto spec = enum_cls->GetArgumentSpecification();
+				auto ptr_spec = XA::TH::MakeSpec(0, 1);
+				auto self = XL::MakeAddressFollow(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), spec.size);
+				Volumes::Dictionary<uint64, Volumes::KeyValuePair<int, int> > mapping;
+				for (auto & lit : db) {
+					auto & xlit = static_cast<XL::XLiteral *>(lit.value.Inner())->Expose();
+					int value_offset = xa.data.Length();
+					xa.data.SetLength(value_offset + 8);
+					MemoryCopy(xa.data.GetBuffer() + value_offset, &xlit.data_uint64, 8);
+					int text_offset = xa.data.Length();
+					SafePointer<DataBlock> text = lit.value->GetFullName().EncodeSequence(Encoding::UTF32, true);
+					while (text->Length() & 0x7) text->Append(0);
+					xa.data << *text;
+					mapping.Append(xlit.data_uint64, Volumes::KeyValuePair<int, int>(value_offset, text_offset));
+				}
+				int dropback_offset = xa.data.Length();
+				xa.data << L'?';
+				while (xa.data.Length() & 0x7) xa.data << 0;
+				EncodeSelector(xa, self, spec, mapping, dropback_offset, ptr_spec);
+			} catch (...) {}
+			try {
+				SafePointer<XL::LObject> type_string = ctx.QueryObject(L"linea");
+				auto fd = ctx.CreateFunction(enum_cls, XL::NameConverter);
+				auto func = ctx.CreateFunctionOverload(fd, type_string, 0, 0, XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionThrows);
+				XL::FunctionContextDesc desc;
+				desc.retval = type_string;
+				desc.instance = enum_cls;
+				desc.argc = 0; desc.argvt = 0; desc.argvn = 0;
+				desc.flags = XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionThrows;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				SafePointer<XL::LObject> selector = fctx->GetInstance()->GetMember(selector_name);
+				SafePointer<XL::LObject> ret = selector->Invoke(0, 0);
+				fctx->EncodeReturn(ret);
+				fctx->EndEncoding();
+			} catch (...) {}
+		}
+		void CreateEnumerationIterations(Volumes::ObjectDictionary<string, XL::LObject> & db, XL::XClass * enum_cls)
+		{
+			uint64 neutal = -1;
+			string selector_next_name = L"_proximus";
+			string selector_prev_name = L"_pristinus";
+			auto & ctx = enum_cls->GetContext();
+			auto base = enum_cls->GetParentClass();
+			while (true) {
+				bool ok = true;
+				for (auto & e : db) {
+					auto & xlit = static_cast<XL::XLiteral *>(e.value.Inner())->Expose();
+					if (MemoryCompare(&xlit.data_uint64, &neutal, xlit.length) == 0) { ok = false; break; }
+				}
+				if (ok) break;
+				neutal--;
+			}
+			try {
+				auto fd = ctx.CreateFunction(enum_cls, selector_next_name);
+				auto func = ctx.CreateFunctionOverload(fd, enum_cls, 0, 0, XL::FunctionMethod | XL::FunctionThisCall);
+				auto & impl = static_cast<XL::XFunctionOverload *>(func)->GetImplementationDesc();
+				auto & xa = impl._xa;
+				auto spec = enum_cls->GetArgumentSpecification();
+				auto self = XL::MakeAddressFollow(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), spec.size);
+				Volumes::Dictionary<uint64, Volumes::KeyValuePair<int, int> > mapping;
+				auto current = db.GetFirst();
+				while (current) {
+					auto next = current->GetNext();
+					auto & xlit = static_cast<XL::XLiteral *>(current->GetValue().value.Inner())->Expose();
+					int value_offset = xa.data.Length();
+					int subst_offset = xa.data.Length() + 8;
+					xa.data.SetLength(value_offset + 16);
+					MemoryCopy(xa.data.GetBuffer() + value_offset, &xlit.data_uint64, 8);
+					if (next) {
+						auto & xlit_nx = static_cast<XL::XLiteral *>(next->GetValue().value.Inner())->Expose();
+						MemoryCopy(xa.data.GetBuffer() + subst_offset, &xlit_nx.data_uint64, 8);
+					} else MemoryCopy(xa.data.GetBuffer() + subst_offset, &neutal, 8);
+					mapping.Append(xlit.data_uint64, Volumes::KeyValuePair<int, int>(value_offset, subst_offset));
+					current = next;
+				}
+				int dropback_offset = xa.data.Length();
+				xa.data.SetLength(dropback_offset + 8);
+				MemoryCopy(xa.data.GetBuffer() + dropback_offset, &neutal, 8);
+				EncodeSelector(xa, self, spec, mapping, dropback_offset, spec);
+			} catch (...) {}
+			try {
+				auto fd = ctx.CreateFunction(enum_cls, selector_prev_name);
+				auto func = ctx.CreateFunctionOverload(fd, enum_cls, 0, 0, XL::FunctionMethod | XL::FunctionThisCall);
+				auto & impl = static_cast<XL::XFunctionOverload *>(func)->GetImplementationDesc();
+				auto & xa = impl._xa;
+				auto spec = enum_cls->GetArgumentSpecification();
+				auto self = XL::MakeAddressFollow(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), spec.size);
+				Volumes::Dictionary<uint64, Volumes::KeyValuePair<int, int> > mapping;
+				auto current = db.GetLast();
+				while (current) {
+					auto next = current->GetPrevious();
+					auto & xlit = static_cast<XL::XLiteral *>(current->GetValue().value.Inner())->Expose();
+					int value_offset = xa.data.Length();
+					int subst_offset = xa.data.Length() + 8;
+					xa.data.SetLength(value_offset + 16);
+					MemoryCopy(xa.data.GetBuffer() + value_offset, &xlit.data_uint64, 8);
+					if (next) {
+						auto & xlit_nx = static_cast<XL::XLiteral *>(next->GetValue().value.Inner())->Expose();
+						MemoryCopy(xa.data.GetBuffer() + subst_offset, &xlit_nx.data_uint64, 8);
+					} else MemoryCopy(xa.data.GetBuffer() + subst_offset, &neutal, 8);
+					mapping.Append(xlit.data_uint64, Volumes::KeyValuePair<int, int>(value_offset, subst_offset));
+					current = next;
+				}
+				int dropback_offset = xa.data.Length();
+				xa.data.SetLength(dropback_offset + 8);
+				MemoryCopy(xa.data.GetBuffer() + dropback_offset, &neutal, 8);
+				EncodeSelector(xa, self, spec, mapping, dropback_offset, spec);
+			} catch (...) {}
+			try {
+				SafePointer<XL::LObject> type_ref = ctx.QueryTypeReference(enum_cls);
+				auto fd = ctx.CreateFunction(enum_cls, XL::OperatorIncrement);
+				auto func = ctx.CreateFunctionOverload(fd, type_ref, 0, 0, XL::FunctionMethod | XL::FunctionThisCall);
+				XL::FunctionContextDesc desc;
+				desc.retval = type_ref;
+				desc.instance = enum_cls;
+				desc.argc = 0; desc.argvt = 0; desc.argvn = 0;
+				desc.flags = XL::FunctionMethod | XL::FunctionThisCall;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				SafePointer<XL::LObject> selector = fctx->GetInstance()->GetMember(selector_next_name);
+				SafePointer<XL::LObject> selector_inv = selector->Invoke(0, 0);
+				SafePointer<XL::LObject> asgn = fctx->GetInstance()->GetMember(XL::OperatorAssign);
+				SafePointer<XL::LObject> expr = asgn->Invoke(1, selector_inv.InnerRef());
+				fctx->EncodeExpression(expr);
+				fctx->EncodeReturn(fctx->GetInstance());
+				fctx->EndEncoding();
+			} catch (...) {}
+			try {
+				SafePointer<XL::LObject> type_ref = ctx.QueryTypeReference(enum_cls);
+				auto fd = ctx.CreateFunction(enum_cls, XL::OperatorDecrement);
+				auto func = ctx.CreateFunctionOverload(fd, type_ref, 0, 0, XL::FunctionMethod | XL::FunctionThisCall);
+				XL::FunctionContextDesc desc;
+				desc.retval = type_ref;
+				desc.instance = enum_cls;
+				desc.argc = 0; desc.argvt = 0; desc.argvn = 0;
+				desc.flags = XL::FunctionMethod | XL::FunctionThisCall;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				SafePointer<XL::LObject> selector = fctx->GetInstance()->GetMember(selector_prev_name);
+				SafePointer<XL::LObject> selector_inv = selector->Invoke(0, 0);
+				SafePointer<XL::LObject> asgn = fctx->GetInstance()->GetMember(XL::OperatorAssign);
+				SafePointer<XL::LObject> expr = asgn->Invoke(1, selector_inv.InnerRef());
+				fctx->EncodeExpression(expr);
+				fctx->EncodeReturn(fctx->GetInstance());
+				fctx->EndEncoding();
+			} catch (...) {}
+			try {
+				auto fd = ctx.CreateFunction(enum_cls, XL::IteratorBegin);
+				auto func = ctx.CreateFunctionOverload(fd, enum_cls, 0, 0, 0);
+				XL::FunctionContextDesc desc;
+				desc.retval = enum_cls;
+				desc.instance = 0; desc.argc = 0; desc.argvt = 0; desc.argvn = 0; desc.flags = 0;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				auto first = db.GetFirst();
+				SafePointer<XL::LObject> rv;
+				if (!first) {
+					rv = XL::CreateLiteral(ctx, neutal);
+					rv = XL::PerformTypeCast(base, rv, XL::CastPriorityConverter);
+				} else rv = first->GetValue().value;
+				fctx->EncodeReturn(rv);
+				fctx->EndEncoding();
+			} catch (...) {}
+			try {
+				auto fd = ctx.CreateFunction(enum_cls, XL::IteratorEnd);
+				auto func = ctx.CreateFunctionOverload(fd, enum_cls, 0, 0, 0);
+				XL::FunctionContextDesc desc;
+				desc.retval = enum_cls;
+				desc.instance = 0; desc.argc = 0; desc.argvt = 0; desc.argvn = 0; desc.flags = 0;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				auto first = db.GetLast();
+				SafePointer<XL::LObject> rv;
+				if (!first) {
+					rv = XL::CreateLiteral(ctx, neutal);
+					rv = XL::PerformTypeCast(base, rv, XL::CastPriorityConverter);
+				} else rv = first->GetValue().value;
+				fctx->EncodeReturn(rv);
+				fctx->EndEncoding();
+			} catch (...) {}
+			try {
+				auto fd = ctx.CreateFunction(enum_cls, XL::IteratorPreBegin);
+				auto func = ctx.CreateFunctionOverload(fd, enum_cls, 0, 0, 0);
+				XL::FunctionContextDesc desc;
+				desc.retval = enum_cls;
+				desc.instance = 0; desc.argc = 0; desc.argvt = 0; desc.argvn = 0; desc.flags = 0;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				SafePointer<XL::LObject> rv = XL::CreateLiteral(ctx, neutal);
+				rv = XL::PerformTypeCast(base, rv, XL::CastPriorityConverter);
+				fctx->EncodeReturn(rv);
+				fctx->EndEncoding();
+			} catch (...) {}
+			try {
+				auto fd = ctx.CreateFunction(enum_cls, XL::IteratorPostEnd);
+				auto func = ctx.CreateFunctionOverload(fd, enum_cls, 0, 0, 0);
+				XL::FunctionContextDesc desc;
+				desc.retval = enum_cls;
+				desc.instance = 0; desc.argc = 0; desc.argvt = 0; desc.argvn = 0; desc.flags = 0;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				SafePointer<XL::LObject> rv = XL::CreateLiteral(ctx, neutal);
+				rv = XL::PerformTypeCast(base, rv, XL::CastPriorityConverter);
+				fctx->EncodeReturn(rv);
+				fctx->EndEncoding();
+			} catch (...) {}
+		}
+
+		bool IsValidEnumerationBase(XL::LObject * type)
+		{
+			if (type->GetClass() != XL::Class::Type) return false;
+			if (static_cast<XL::XType *>(type)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) return false;
+			auto xcls = static_cast<XL::XClass *>(type);
+			auto spec = xcls->GetArgumentSpecification();
+			if (xcls->GetLanguageSemantics() != XI::Module::Class::Nature::Core) return false;
+			if (spec.semantics != XA::ArgumentSemantics::Integer && spec.semantics != XA::ArgumentSemantics::SignedInteger) return false;
+			if (spec.size.num_words) return false;
+			if (spec.size.num_bytes != 1 && spec.size.num_bytes != 2 && spec.size.num_bytes != 4 && spec.size.num_bytes != 8) return false;
+			return true;
+		}
+		bool CreateEnumerationValue(Volumes::ObjectDictionary<string, XL::LObject> & enum_db, XL::LObject * enum_type, const string & name, XL::LObject * value)
+		{
+			auto base = static_cast<XL::XClass *>(enum_type)->GetParentClass();
+			SafePointer<XL::LObject> act_value;
+			if (value) {
+				act_value = XL::PerformTypeCast(base, value, XL::CastPriorityConverter);
+			} else {
+				uint64 mx = 0;
+				for (auto & o : enum_db) {
+					auto & lit = static_cast<XL::XLiteral *>(o.value.Inner())->Expose();
+					if (lit.data_uint64 > mx) mx = lit.data_uint64;
+				}
+				SafePointer<XL::LObject> lit = XL::CreateLiteral(base->GetContext(), mx + 1);
+				act_value = XL::PerformTypeCast(base, lit, XL::CastPriorityConverter);
+			}
+			if (act_value->GetClass() != XL::Class::Literal) return false;
+			SafePointer<XL::XLiteral> act_value_copy = static_cast<XL::XLiteral *>(act_value.Inner())->Clone();
+			try { base->GetContext().AttachLiteral(act_value_copy, enum_type, name); }
+			catch (...) { return false; }
+			bool dupl = false;
+			for (auto & o : enum_db) {
+				auto & lit_new = act_value_copy->Expose();
+				auto & lit = static_cast<XL::XLiteral *>(o.value.Inner())->Expose();
+				if (lit.data_uint64 == lit_new.data_uint64) { dupl = true; break; }
+			}
+			if (!dupl) enum_db.Append(name, act_value_copy);
+			return true;
+		}
+		void CreateEnumerationRoutines(Volumes::ObjectDictionary<string, XL::LObject> & enum_db, XL::LObject * enum_type)
+		{
+			auto xcls = static_cast<XL::XClass *>(enum_type);
+			auto xbase = xcls->GetParentClass();
+			CreateEnumerationConstructInit(xcls, xbase);
+			CreateEnumerationToString(enum_db, xcls);
+			CreateEnumerationIterations(enum_db, xcls);
 		}
 	}
 }

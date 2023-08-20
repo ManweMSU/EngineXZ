@@ -72,6 +72,7 @@ namespace Engine
 			if (str == Lexic::KeywordDelete) return true;
 			if (str == Lexic::KeywordConstruct) return true;
 			if (str == Lexic::KeywordDestruct) return true;
+			if (str == Lexic::KeywordEnum) return true;
 			if (str == Lexic::KeywordTrap) return true;
 
 			// TODO: IMPLEMENT REGISTER KEYWORDS

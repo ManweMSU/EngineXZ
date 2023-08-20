@@ -2243,18 +2243,21 @@ genus linea {
 	constatus radix_decima		= "0123456789";
 	constatus radix_sextadecima	= "0123456789ABCDEF";
 
-	constatus codex_ignotus		= 0x00;
-	constatus codex_ascii		= 0x01;
-	constatus codex_utf8		= 0x02;
-	constatus codex_utf16		= 0x03;
-	constatus codex_utf32		= 0x04;
-
 	structor () { _data = nullus; }
 	structor motus (~linea s) { _data = s._data; s._data = nullus; }
 	destructor () { memoria.dimitte(_data); }
 
 	[[importa] "spu_crea"]			[[nullum_thiscall]] structor (~linea valor) iacit;
 	[[importa] "spu_crea_utf32"]	[[nullum_thiscall]] structor (@char valor) iacit;
+
+	enumeratio codex {
+		ignotus		= 0x00,
+		ascii		= 0x01,
+		utf8		= 0x02,
+		utf16		= 0x03,
+		utf32		= 0x04,
+	}
+
 	[[importa] "spu_crea_int8"]		[[nullum_thiscall]] structor (int8 valor) iacit;
 	[[importa] "spu_crea_nint8"]	[[nullum_thiscall]] structor (nint8 valor) iacit;
 	[[importa] "spu_crea_int16"]	[[nullum_thiscall]] structor (int16 valor) iacit;
@@ -2270,7 +2273,7 @@ genus linea {
 	[[importa] "spu_crea_logicum"]	[[nullum_thiscall]] structor (logicum valor) iacit;
 	[[importa] "spu_crea_char"]		[[nullum_thiscall]] structor (char valor, int long) iacit;
 	[[importa] "spu_crea_adl"]		[[nullum_thiscall]] structor (@nihil valor) iacit;
-	[[importa] "spu_crea_data"]		[[nullum_thiscall]] structor (@nihil valor, int long, int codex) iacit;
+	[[importa] "spu_crea_data"]		[[nullum_thiscall]] structor (@nihil valor, int long, codex cdx) iacit;
 	[[importa] "spu_loca"]			[[nullum_thiscall]] functio ~linea operator = (~linea valor) iacit;
 	[[importa] "spu_loca_utf32"]	[[nullum_thiscall]] functio ~linea operator = (@char valor) iacit;
 	[[importa] "spu_concat"]		[[nullum_thiscall]] functio ~linea operator += (~linea valor) iacit;
@@ -2299,8 +2302,8 @@ genus linea {
 	[[importa] "spu_reperi_ultimus"]	[[nullum_thiscall]] functio int reperi_ultimus(~linea valor);
 	[[importa] "spu_fragmentum"]		[[nullum_thiscall]] functio linea fragmentum(int primus, int long) iacit;
 	[[importa] "spu_surroga"]			[[nullum_thiscall]] functio linea surroga(~linea sublinea, ~linea cum) iacit;
-	[[importa] "spu_codex_long"]		[[nullum_thiscall]] functio int longitudo_codicis(int codex) iacit;
-	[[importa] "spu_codifica"]			[[nullum_thiscall]] functio nihil codifica(@nihil data, int codex, logicum termina) iacit;
+	[[importa] "spu_codex_long"]		[[nullum_thiscall]] functio int longitudo_codicis(codex cdx) iacit;
+	[[importa] "spu_codifica"]			[[nullum_thiscall]] functio nihil codifica(@nihil data, codex cdx, logicum termina) iacit;
 	
 	[[importa] "spu_ad_int32"]			[[nullum_thiscall]] functio int32 ad_int32() iacit;
 	[[importa] "spu_ad_int32_2"]		[[nullum_thiscall]] functio int32 ad_int32(~linea radix) iacit;
@@ -2376,136 +2379,136 @@ spatium systema {
 	[[importa] sys_temp]	functio nint32 para_tempus_systemae();
 	[[importa] sys_arch]	functio logicum proba_architecturam(int arch);
 }
-spatium tactus {
-	constatus back		= 0x08;
-	constatus tab		= 0x09;
-	constatus enter		= 0x0D;
-	constatus shift		= 0x10;
-	constatus ctrl		= 0x11;
-	constatus alt		= 0x12;
-	constatus system	= 0xFFFF;
-	constatus pause		= 0x13;
-	constatus caps_lock	= 0x14;
-	constatus escape	= 0x1B;
-	constatus l_shift	= 0xA0;
-	constatus r_shift	= 0xA1;
-	constatus l_ctrl	= 0xA2;
-	constatus r_ctrl	= 0xA3;
-	constatus l_alt		= 0xA4;
-	constatus r_alt		= 0xA5;
-	constatus l_system	= 0x5B;
-	constatus r_system	= 0x5C;
-	constatus space		= ' ';
-	constatus page_up	= 0x21;
-	constatus page_down	= 0x22;
-	constatus end		= 0x23;
-	constatus home		= 0x24;
-	constatus left		= 0x25;
-	constatus up		= 0x26;
-	constatus right		= 0x27;
-	constatus down		= 0x28;
-	constatus select	= 0x29;
-	constatus print		= 0x2A;
-	constatus execute	= 0x2B;
-	constatus prnt_scrn	= 0x2C;
-	constatus insert	= 0x2D;
-	constatus delete	= 0x2E;
-	constatus help		= 0x2F;
-	constatus N0		= '0';
-	constatus N1		= '1';
-	constatus N2		= '2';
-	constatus N3		= '3';
-	constatus N4		= '4';
-	constatus N5		= '5';
-	constatus N6		= '6';
-	constatus N7		= '7';
-	constatus N8		= '8';
-	constatus N9		= '9';
-	constatus A			= 'A';
-	constatus B			= 'B';
-	constatus C			= 'C';
-	constatus D			= 'D';
-	constatus E			= 'E';
-	constatus F			= 'F';
-	constatus G			= 'G';
-	constatus H			= 'H';
-	constatus I			= 'I';
-	constatus J			= 'J';
-	constatus K			= 'K';
-	constatus L			= 'L';
-	constatus M			= 'M';
-	constatus N			= 'N';
-	constatus O			= 'O';
-	constatus P			= 'P';
-	constatus Q			= 'Q';
-	constatus R			= 'R';
-	constatus S			= 'S';
-	constatus T			= 'T';
-	constatus U			= 'U';
-	constatus V			= 'V';
-	constatus W			= 'W';
-	constatus X			= 'X';
-	constatus Y			= 'Y';
-	constatus Z			= 'Z';
-	constatus sleep		= 0x5F;
-	constatus NP0		= 0x60;
-	constatus NP1		= 0x61;
-	constatus NP2		= 0x62;
-	constatus NP3		= 0x63;
-	constatus NP4		= 0x64;
-	constatus NP5		= 0x65;
-	constatus NP6		= 0x66;
-	constatus NP7		= 0x67;
-	constatus NP8		= 0x68;
-	constatus NP9		= 0x69;
-	constatus multiply	= 0x6A;
-	constatus add		= 0x6B;
-	constatus separator	= 0x6C;
-	constatus subtract	= 0x6D;
-	constatus decimal	= 0x6E;
-	constatus divide	= 0x6F;
-	constatus F1		= 0x70;
-	constatus F2		= 0x71;
-	constatus F3		= 0x72;
-	constatus F4		= 0x73;
-	constatus F5		= 0x74;
-	constatus F6		= 0x75;
-	constatus F7		= 0x76;
-	constatus F8		= 0x77;
-	constatus F9		= 0x78;
-	constatus F10		= 0x79;
-	constatus F11		= 0x7A;
-	constatus F12		= 0x7B;
-	constatus F13		= 0x7C;
-	constatus F14		= 0x7D;
-	constatus F15		= 0x7E;
-	constatus F16		= 0x7F;
-	constatus F17		= 0x80;
-	constatus F18		= 0x81;
-	constatus F19		= 0x82;
-	constatus F20		= 0x83;
-	constatus F21		= 0x84;
-	constatus F22		= 0x85;
-	constatus F23		= 0x86;
-	constatus F24		= 0x87;
-	constatus num_lock	= 0x90;
-	constatus scrl_lock	= 0x91;
-	constatus oem_plus	= 0xBB;
-	constatus oem_comma	= 0xBC;
-	constatus oem_minus	= 0xBD;
-	constatus oem_prd	= 0xBE;
-	constatus oem_clear	= 0xFE;
-	constatus vol_mute	= 0xAD;
-	constatus vol_down	= 0xAE;
-	constatus vol_up	= 0xAF;
-	constatus OEM1		= 0xBA;
-	constatus OEM2		= 0xBF;
-	constatus OEM3		= 0xC0;
-	constatus OEM4		= 0xDB;
-	constatus OEM5		= 0xDC;
-	constatus OEM6		= 0xDD;
-	constatus OEM7		= 0xDE;
-	constatus OEM8		= 0xFF;
+enumeratio tactus {
+	back		= 0x08,
+	tab			= 0x09,
+	enter		= 0x0D,
+	shift		= 0x10,
+	ctrl		= 0x11,
+	alt			= 0x12,
+	system		= 0xFFFF,
+	pause		= 0x13,
+	caps_lock	= 0x14,
+	escape		= 0x1B,
+	l_shift		= 0xA0,
+	r_shift		= 0xA1,
+	l_ctrl		= 0xA2,
+	r_ctrl		= 0xA3,
+	l_alt		= 0xA4,
+	r_alt		= 0xA5,
+	l_system	= 0x5B,
+	r_system	= 0x5C,
+	space		= ' ',
+	page_up		= 0x21,
+	page_down	= 0x22,
+	end			= 0x23,
+	home		= 0x24,
+	left		= 0x25,
+	up			= 0x26,
+	right		= 0x27,
+	down		= 0x28,
+	select		= 0x29,
+	print		= 0x2A,
+	execute		= 0x2B,
+	prnt_scrn	= 0x2C,
+	insert		= 0x2D,
+	delete		= 0x2E,
+	help		= 0x2F,
+	N0			= '0',
+	N1			= '1',
+	N2			= '2',
+	N3			= '3',
+	N4			= '4',
+	N5			= '5',
+	N6			= '6',
+	N7			= '7',
+	N8			= '8',
+	N9			= '9',
+	A			= 'A',
+	B			= 'B',
+	C			= 'C',
+	D			= 'D',
+	E			= 'E',
+	F			= 'F',
+	G			= 'G',
+	H			= 'H',
+	I			= 'I',
+	J			= 'J',
+	K			= 'K',
+	L			= 'L',
+	M			= 'M',
+	N			= 'N',
+	O			= 'O',
+	P			= 'P',
+	Q			= 'Q',
+	R			= 'R',
+	S			= 'S',
+	T			= 'T',
+	U			= 'U',
+	V			= 'V',
+	W			= 'W',
+	X			= 'X',
+	Y			= 'Y',
+	Z			= 'Z',
+	sleep		= 0x5F,
+	NP0			= 0x60,
+	NP1			= 0x61,
+	NP2			= 0x62,
+	NP3			= 0x63,
+	NP4			= 0x64,
+	NP5			= 0x65,
+	NP6			= 0x66,
+	NP7			= 0x67,
+	NP8			= 0x68,
+	NP9			= 0x69,
+	multiply	= 0x6A,
+	add			= 0x6B,
+	separator	= 0x6C,
+	subtract	= 0x6D,
+	decimal		= 0x6E,
+	divide		= 0x6F,
+	F1			= 0x70,
+	F2			= 0x71,
+	F3			= 0x72,
+	F4			= 0x73,
+	F5			= 0x74,
+	F6			= 0x75,
+	F7			= 0x76,
+	F8			= 0x77,
+	F9			= 0x78,
+	F10			= 0x79,
+	F11			= 0x7A,
+	F12			= 0x7B,
+	F13			= 0x7C,
+	F14			= 0x7D,
+	F15			= 0x7E,
+	F16			= 0x7F,
+	F17			= 0x80,
+	F18			= 0x81,
+	F19			= 0x82,
+	F20			= 0x83,
+	F21			= 0x84,
+	F22			= 0x85,
+	F23			= 0x86,
+	F24			= 0x87,
+	num_lock	= 0x90,
+	scrl_lock	= 0x91,
+	oem_plus	= 0xBB,
+	oem_comma	= 0xBC,
+	oem_minus	= 0xBD,
+	oem_prd		= 0xBE,
+	oem_clear	= 0xFE,
+	vol_mute	= 0xAD,
+	vol_down	= 0xAE,
+	vol_up		= 0xAF,
+	OEM1		= 0xBA,
+	OEM2		= 0xBF,
+	OEM3		= 0xC0,
+	OEM4		= 0xDB,
+	OEM5		= 0xDC,
+	OEM6		= 0xDD,
+	OEM7		= 0xDE,
+	OEM8		= 0xFF,
 }
 
 [[magnitudo] "0:2"] genus virtualis objectum {
@@ -2513,7 +2516,7 @@ spatium tactus {
 
 	structor () { funda _num_ref(1); }
 	functio nint contine() virtualis { responde incrementum_securum(_num_ref); }
-	functio nint dimitte() virtualis { var nr = decrementum_securum(_num_ref); si (nr == 0) perde ego; responde nr; }
+	functio nint dimitte() virtualis { var nr = decrementum_securum(_num_ref); si (nr == nint(0)) perde ego; responde nr; }
 	destructor () virtualis {}
 	functio nihil _perde() virtualis { perde ego; }
 	functio linea_secura ad_linea() virtualis { proba { responde linea("objectum"); } responde linea_secura(); }
@@ -2538,10 +2541,10 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 		int numerus_novus = _poli(num);
 		si (numerus_novus != _allocatus) {
 			si (numerus_novus > _allocatus) {
-				var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * numerus_novus));
+				var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * nintadl(numerus_novus)));
 				si (novum != nullus || !numerus_novus) { _data = novum; _allocatus = numerus_novus; } alioqui iace errores.memoria_nulla;
 			} alioqui {
-				var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * numerus_novus));
+				var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * nintadl(numerus_novus)));
 				si (novum != nullus || !numerus_novus) { _data = novum; _allocatus = numerus_novus; }
 			}
 		}
@@ -2550,7 +2553,7 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 	{
 		int numerus_novus = _poli(num);
 		si (numerus_novus != _numerus) {
-			var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * numerus_novus));
+			var novum = (@$V)(memoria.realloca(_data, magnitudo($V) * nintadl(numerus_novus)));
 			si (novum != nullus || !numerus_novus) { _data = novum; _allocatus = numerus_novus; }
 		}
 	}
@@ -2709,7 +2712,7 @@ nomen_alternum dordo_linearum = dordo[linea];
 nomen_alternum dordo_datorum = dordo[nint8];
 
 dura linea {
-	[[importa] "spu_codifica_taleam"]	[[nullum_thiscall]] functio adl[dordo_datorum] codifica(int codex, logicum termina) iacit;
+	[[importa] "spu_codifica_taleam"]	[[nullum_thiscall]] functio adl[dordo_datorum] codifica(codex cdx, logicum termina) iacit;
 	[[importa] "spu_scinde"]			[[nullum_thiscall]] functio adl[dordo_linearum] scinde(char) iacit;
 
 	praeforma functio ex(T) { \cense T genus(_0)\ functio linea $_(~$T t) iacit {
@@ -2844,15 +2847,15 @@ spatium scriptio {
 		functio linea lege_cunctos() iacit virtualis pura;
 
 		logicum finis { adipisce virtualis pura; }
-		int codex { adipisce virtualis pura; }
+		linea.codex codex { adipisce virtualis pura; }
 
 		classis functio ~decodificator operator >> (~decodificator cdf, ~linea ln) iacit { ln = cdf.lege_lineam(); responde cdf; }
 	}
 
 	[[importa] scr_cod_1] functio adl[codificator] codifica(@flumen fl) iacit;
-	[[importa] scr_cod_2] functio adl[codificator] codifica(@flumen fl, int codex) iacit;
+	[[importa] scr_cod_2] functio adl[codificator] codifica(@flumen fl, linea.codex codex) iacit;
 	[[importa] scr_dec_1] functio adl[decodificator] decodifica(@flumen fl) iacit;
-	[[importa] scr_dec_2] functio adl[decodificator] decodifica(@flumen fl, int codex) iacit;
+	[[importa] scr_dec_2] functio adl[decodificator] decodifica(@flumen fl, linea.codex codex) iacit;
 }
 spatium contextus {
 	genus semaphorum hereditat objectum {

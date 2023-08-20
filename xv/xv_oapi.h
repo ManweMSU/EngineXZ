@@ -14,5 +14,9 @@ namespace Engine
 		XL::LObject * CreateDelete(XL::LObject * object);
 		XL::LObject * CreateFree(XL::LObject * object);
 		XL::LObject * CreateDestruct(XL::LObject * object);
+
+		bool IsValidEnumerationBase(XL::LObject * type);
+		bool CreateEnumerationValue(Volumes::ObjectDictionary<string, XL::LObject> & enum_db, XL::LObject * enum_type, const string & name, XL::LObject * value);
+		void CreateEnumerationRoutines(Volumes::ObjectDictionary<string, XL::LObject> & enum_db, XL::LObject * enum_type);
 	}
 }

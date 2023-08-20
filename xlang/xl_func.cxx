@@ -515,7 +515,11 @@ namespace Engine
 						}
 					}
 					if (_name == NameConverter) {
-						if (func.inputs.Length() > 1) throw InvalidArgumentException();
+						if (flags & FunctionThrows) {
+							if (func.inputs.Length() > 2) throw InvalidArgumentException();
+						} else {
+							if (func.inputs.Length() > 1) throw InvalidArgumentException();
+						}
 					}
 					if (_name == NameConstructorMove) {
 						if (func.inputs.Length() != 2) throw InvalidArgumentException();
