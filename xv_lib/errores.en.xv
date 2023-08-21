@@ -3,7 +3,7 @@ auxilium attributum ("CreatorModuli") = "Engine Software";
 auxilium attributum ("IuraExempli") = "© Engine Software. 2023";
 auxilium attributum ("Versio") = "1.0.0.1";
 
-[[systema] liber]
+[[systema] libera]
 
 constatus error_nullus		= "Success";
 constatus implantatio_nulla	= "Not implemented";

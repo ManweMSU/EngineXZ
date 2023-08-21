@@ -2,6 +2,7 @@
 
 #include "xe_logger.h"
 #include "xe_interfaces.h"
+#include "../ximg/xi_resources.h"
 
 namespace Engine
 {
@@ -865,6 +866,43 @@ namespace Engine
 				virtual void SetLength(uint64 length) override { throw IO::FileAccessException(IO::Error::NotImplemented); }
 				virtual void Flush(void) override {}
 			};
+			class _module_metadata : public Object
+			{
+				SafePointer< Volumes::Dictionary<string, string> > _meta;
+				Volumes::BinaryTree< Volumes::KeyValuePair<string, string> >::Element * _current;
+				int _current_index, _length;
+			public:
+				_module_metadata(const Module * mdl) : _current(0), _current_index(-1) { _meta = XI::LoadModuleMetadata(mdl->GetResources()); _length = _meta->Count(); }
+				virtual ~_module_metadata(void) override {}
+				virtual string ToString(void) const override { try { return _meta->ToString(); } catch (...) { return L""; } }
+				virtual int Begin(void) noexcept { return 0; }
+				virtual int End(void) noexcept { return _length - 1; }
+				virtual int PreBegin(void) noexcept { return -1; }
+				virtual int PostEnd(void) noexcept { return _length; }
+				virtual string KeyByIndex(int index, ErrorContext & ectx) noexcept
+				{
+					try {
+						if (index < 0 || index >= _length) { ectx.error_code = 3; ectx.error_subcode = 0; return L""; }
+						if (index != _current_index) {
+							if (index == _current_index + 1 && _current) _current = _current->GetNext();
+							else if (index == _current_index - 1 && _current) _current = _current->GetPrevious();
+							else if (index == 0) _current = _meta->GetFirst();
+							else if (index == _length - 1) _current = _meta->GetLast();
+							else _current = _meta->ElementAt(index);
+							_current_index = index;
+						}
+						return _current->GetValue().key;
+					} catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return L""; }
+				}
+				virtual string ValueByKey(const string & key, ErrorContext & ectx) noexcept
+				{
+					try {
+						auto element = _meta->GetElementByKey(key);
+						if (!element) { ectx.error_code = 6; ectx.error_subcode = 2; return L""; }
+						return *element;
+					} catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return L""; }
+				}
+			};
 			class _semaphore : public Object
 			{
 				SafePointer<Semaphore> _sem;
@@ -1136,6 +1174,11 @@ namespace Engine
 				try { return new _thread(thread); } catch (...) { return 0; }
 			}
 			static int _do_task_thread(IDispatchTask * task) noexcept { task->DoTask(0); task->Release(); return 0; }
+			static SafePointer<_module_metadata> _query_metadata(const Module * mdl, ErrorContext & ectx)
+			{
+				try { return new _module_metadata(mdl); }
+				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+			}
 		public:
 			virtual void * ExposeRoutine(const string & routine_name) noexcept override
 			{
@@ -1175,6 +1218,7 @@ namespace Engine
 				else if (routine_name == L"ctx_crsem") return const_cast<void *>(reinterpret_cast<const void *>(&_create_semaphore));
 				else if (routine_name == L"ctx_crsgn") return const_cast<void *>(reinterpret_cast<const void *>(&_create_signal));
 				else if (routine_name == L"ctx_crfil") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread));
+				else if (routine_name == L"meta_moduli") return const_cast<void *>(reinterpret_cast<const void *>(&_query_metadata));
 				else return 0;
 			}
 			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
