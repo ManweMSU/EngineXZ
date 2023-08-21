@@ -460,7 +460,7 @@ namespace Engine
 		LObject * LContext::GetPrivateNamespace(void)
 		{
 			if (!_private_ns) {
-				_private_ns = XL::CreateNamespace(L"_" + _module_name, L"_" + _module_name, *this);
+				_private_ns = XL::CreateNamespace(L"_@" + _module_name, L"_@" + _module_name, *this);
 				_root_ns->AddMember(_private_ns->GetName(), _private_ns);
 			}
 			return _private_ns;
@@ -654,7 +654,7 @@ namespace Engine
 		LObject * LContext::CreatePrivateFunction(uint flags)
 		{
 			if (!_private_ns) {
-				_private_ns = XL::CreateNamespace(L"_" + _module_name, L"_" + _module_name, *this);
+				_private_ns = XL::CreateNamespace(L"_@" + _module_name, L"_@" + _module_name, *this);
 				_root_ns->AddMember(_private_ns->GetName(), _private_ns);
 			}
 			auto name = string(_private_counter, HexadecimalBaseLowerCase, 8);

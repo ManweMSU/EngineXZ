@@ -398,12 +398,13 @@ namespace Engine
 				try {
 					if (argc < _args.Length() && GetPrototypeClass() == PrototypeClass::Function) return CreatePartialInstantiation(this, argc, argv);
 					if (argc != _args.Length()) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
-					string inst_name = L"@praeformae." + _path + L"@cum";
+					auto inst_name = XI::Module::TypeReference::MakeClassReference(_path);
 					for (int i = 0; i < argc; i++) {
 						if (argv[i]->GetClass() == XL::Class::Type) {
-							inst_name += L"@" + static_cast<XL::XType *>(argv[i])->GetCanonicalType();
+							inst_name = XI::Module::TypeReference::MakeInstance(inst_name, i, static_cast<XL::XType *>(argv[i])->GetCanonicalType());
 						} else throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
 					}
+					inst_name = L"@praeformae." + inst_name;
 					XL::LObject * ns = _ctx.GetLanguageContext()->GetRootNamespace();
 					while (true) {
 						auto del = inst_name.FindFirst(L'.');
