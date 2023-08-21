@@ -2521,6 +2521,15 @@ enumeratio tactus {
 	functio nihil _perde() virtualis { perde ego; }
 	functio linea_secura ad_linea() virtualis { proba { responde linea("objectum"); } responde linea_secura(); }
 }
+genus objectum_dynamicum hereditat objectum {
+	structor () {}
+	functio @nihil converte_dynamice(@nihil gen) iacit virtualis pura;
+	functio @nihil para_classem() virtualis pura;
+}
+protocollum dynamicum {
+	functio @nihil converte_dynamice(@nihil gen) iacit virtualis pura;
+	functio @nihil para_classem() virtualis pura;
+}
 
 praeforma functio permuta(T) { \cense T genus(_0)\ functio nihil $_(~$T t1, ~$T t2) {
 	ordo [magnitudo_maxima($T)] nint8 m;
@@ -2533,6 +2542,7 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 	int _numerus;
 	int _allocatus;
 	int _talea;
+	nomen_alternum genus_objectum = $V;
 
 	functio int _poli(int num) { responde ((num + _talea - 1) / _talea) * _talea; }
 	functio nihil _adde(~$V v) iacit { initia(@_data[_numerus], v); _numerus++; }
@@ -2672,6 +2682,7 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 } }
 praeforma genus adl(O) { genus $_ {
 	@$O _adl;
+	nomen_alternum genus_objectum = $O;
 	structor () { _adl = nullus; }
 	structor (@$O o) { _adl = o; }
 	structor (~adl[$O] o) { _adl = o._adl; si(_adl != nullus) _adl^.contine(); }

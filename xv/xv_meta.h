@@ -64,6 +64,7 @@ namespace Engine
 			constexpr const widechar * KeywordConstruct	= L"initia";
 			constexpr const widechar * KeywordDestruct	= L"fini";
 			constexpr const widechar * KeywordEnum		= L"enumeratio";
+			constexpr const widechar * KeywordAs		= L"acsi";
 			constexpr const widechar * KeywordTrap		= L"__decipula__";
 
 			constexpr const widechar * AttributeSemant	= L"[significatio]";

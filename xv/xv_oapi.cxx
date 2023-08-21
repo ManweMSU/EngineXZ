@@ -236,6 +236,47 @@ namespace Engine
 				return dtor_inst->Invoke(0, 0);
 			}
 		}
+		XL::LObject * CreateDynamicCast(XL::LObject * object, XL::LObject * type_into)
+		{
+			type_info;
+			if (type_into->GetClass() != XL::Class::Type) throw InvalidArgumentException();
+			auto xtype = static_cast<XL::XType *>(type_into);
+			if (xtype->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			try {
+				ObjectArray<XL::XType> conf(0x10);
+				SafePointer<XL::LObject> type_into_ptr = xtype->GetContext().QueryTypePointer(type_into);
+				SafePointer<XL::LObject> cast;
+				try {
+					SafePointer<XL::LObject> follow = object->GetMember(XL::OperatorFollow);
+					SafePointer<XL::LObject> instance = follow->Invoke(0, 0);
+					cast = instance->GetMember(L"converte_dynamice");
+				} catch (...) {}
+				if (!cast) cast = object->GetMember(L"converte_dynamice");
+				SafePointer<XL::LObject> cast_inv = cast->Invoke(1, &type_into);
+				cast_inv = XL::PerformTypeCast(static_cast<XL::XType *>(type_into_ptr.Inner()), cast_inv, XL::CastPriorityExplicit);
+				xtype->GetTypesConformsTo(conf);
+				bool is_object = false;
+				for (auto & c : conf) if (c.GetFullName() == L"objectum") { is_object = true; break; }
+				if (is_object) {
+					SafePointer<XL::LObject> safe_ptr = xtype->GetContext().QueryObject(L"adl");
+					SafePointer<XL::LObject> safe_ptr_inst_op = safe_ptr->GetMember(XL::OperatorSubscript);
+					SafePointer<XL::LObject> safe_ptr_inst = safe_ptr_inst_op->Invoke(1, &type_into);
+					if (safe_ptr_inst->GetClass() != XL::Class::Type) throw InvalidStateException();
+					return XL::PerformTypeCast(static_cast<XL::XType *>(safe_ptr_inst.Inner()), cast_inv, XL::CastPriorityConverter);
+				} else { cast_inv->Retain(); return cast_inv; }
+			} catch (...) {}
+			SafePointer<XL::LObject> instance;
+			SafePointer<XL::XType> dest_type = XL::CreateType(XI::Module::TypeReference::MakeReference(xtype->GetCanonicalType()), xtype->GetContext());
+			try {
+				SafePointer<XL::LObject> follow = object->GetMember(XL::OperatorFollow);
+				instance = follow->Invoke(0, 0);
+			} catch (...) {}
+			if (!instance) instance.SetRetain(object);
+			SafePointer<XL::LObject> src_type = instance->GetType();
+			try { return static_cast<XL::XType *>(src_type.Inner())->TransformTo(instance, dest_type, false); }
+			catch (...) {}
+			return static_cast<XL::XType *>(src_type.Inner())->TransformTo(instance, dest_type, true);
+		}
 
 		void EncodeSelectorRetval(XA::Function & xa, int rv, const XA::ArgumentSpecification & rv_spec)
 		{
@@ -577,6 +618,108 @@ namespace Engine
 			CreateEnumerationConstructInit(xcls, xbase);
 			CreateEnumerationToString(enum_db, xcls);
 			CreateEnumerationIterations(enum_db, xcls);
+		}
+		void CreateTypeServiceRoutines(XL::LObject * cls)
+		{
+			ObjectArray<XL::XType> conf(0x10);
+			auto xcls = static_cast<XL::XClass *>(cls);
+			xcls->GetTypesConformsTo(conf);
+			bool is_dynamic = false;
+			for (auto & c : conf) if (c.GetFullName() == L"dynamicum" || c.GetFullName() == L"objectum_dynamicum") { is_dynamic = true; break; }
+			if (!is_dynamic) return;
+			auto & ctx = xcls->GetContext();
+			SafePointer<XL::LObject> type_void = ctx.QueryObject(XL::NameVoid);
+			SafePointer<XL::LObject> type_void_ptr = ctx.QueryTypePointer(type_void);
+			try {
+				string arg_name = L"cls";
+				auto fd = ctx.CreateFunction(cls, L"converte_dynamice");
+				auto func = ctx.CreateFunctionOverload(fd, type_void_ptr, 1, type_void_ptr.InnerRef(), XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionThrows | XL::FunctionOverride);
+				XL::FunctionContextDesc desc;
+				desc.retval = type_void_ptr;
+				desc.instance = cls; desc.argc = 1;
+				desc.argvt = type_void_ptr.InnerRef();
+				desc.argvn = &arg_name;
+				desc.flags = XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionThrows | XL::FunctionOverride;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				SafePointer<XL::LObject> arg = fctx->GetRootScope()->GetMember(arg_name);
+				SafePointer<XL::LObject> equality = ctx.QueryObject(XL::OperatorEqual);
+				SafePointer<XL::LObject> make_addr = ctx.QueryAddressOfOperator();
+				for (auto & c : conf) if (c.GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Class) {
+					ObjectArray<XL::XType> conf2(0x10);
+					c.GetTypesConformsTo(conf2);
+					bool is_object = false;
+					for (auto & c2 : conf2) if (c2.GetFullName() == L"objectum") { is_object = true; break; }
+					XL::LObject * argv[2] = { arg, &c };
+					SafePointer<XL::LObject> expr_if = equality->Invoke(2, argv);
+					XL::LObject * scope;
+					fctx->OpenIfBlock(expr_if, &scope);
+					SafePointer<XL::LObject> casted = xcls->TransformTo(fctx->GetInstance(), &c, false);
+					if (is_object) {
+						SafePointer<XL::LObject> retain = fctx->GetInstance()->GetMember(L"contine");
+						SafePointer<XL::LObject> retain_inv = retain->Invoke(0, 0);
+						fctx->EncodeExpression(retain_inv);
+					}
+					SafePointer<XL::LObject> addr = make_addr->Invoke(1, casted.InnerRef());
+					fctx->EncodeReturn(addr);
+					fctx->CloseIfElseBlock();
+				}
+				try {
+					Array<string> expone_vl(0x10);
+					SafePointer<XL::LObject> expone = cls->GetMember(L"expone_classem");
+					if (expone->GetClass() != XL::Class::Function) throw Exception();
+					static_cast<XL::XFunction *>(expone.Inner())->ListOverloads(expone_vl, true);
+					for (auto & e : expone_vl) {
+						SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(e).GetFunctionSignature();
+						if (sgn->Length() > 1) continue;
+						bool auto_ptr;
+						SafePointer<XL::XType> type = XL::CreateType(sgn->ElementAt(0).QueryCanonicalName(), ctx);
+						if (type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Class) {
+							auto_ptr = true;
+							SafePointer<XL::LObject> decl_type = type->GetMember(L"genus_objectum");
+							if (decl_type->GetClass() != XL::Class::Type) continue;
+							type.SetRetain(static_cast<XL::XType *>(decl_type.Inner()));
+						} else if (type->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Pointer) {
+							auto_ptr = false;
+							type = static_cast<XL::XPointer *>(type.Inner())->GetElementType();
+						} else continue;
+						XL::LObject * argv[2] = { arg, type.Inner() };
+						SafePointer<XL::LObject> expr_if = equality->Invoke(2, argv);
+						XL::LObject * scope;
+						fctx->OpenIfBlock(expr_if, &scope);
+						SafePointer<XL::LObject> method = static_cast<XL::XFunction *>(expone.Inner())->GetOverloadT(e, true)->SetInstance(fctx->GetInstance());
+						SafePointer<XL::LObject> rv_expr = method->Invoke(0, 0);
+						if (auto_ptr) {
+							SafePointer<XL::LObject> rv_expr_type = rv_expr->GetType();
+							SafePointer<XL::LObject> rv = fctx->EncodeCreateVariable(rv_expr_type, rv_expr);
+							SafePointer<XL::LObject> follow = rv->GetMember(XL::OperatorFollow);
+							SafePointer<XL::LObject> follow_inv = follow->Invoke(0, 0);
+							SafePointer<XL::LObject> retain = follow_inv->GetMember(L"contine");
+							SafePointer<XL::LObject> retain_inv = retain->Invoke(0, 0);
+							fctx->EncodeExpression(retain_inv);
+							fctx->EncodeReturn(rv);
+						} else fctx->EncodeReturn(rv_expr);
+						fctx->CloseIfElseBlock();
+					}
+				} catch (...) {}
+				SafePointer<XL::LObject> not_implemented_error = XL::CreateLiteral(ctx, uint64(1));
+				fctx->EncodeThrow(not_implemented_error);
+				fctx->EndEncoding();
+			} catch (...) {}
+			try {
+				auto fd = ctx.CreateFunction(cls, L"para_classem");
+				auto func = ctx.CreateFunctionOverload(fd, type_void_ptr, 0, 0, XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionOverride);
+				XL::FunctionContextDesc desc;
+				desc.retval = type_void_ptr;
+				desc.instance = cls; desc.argc = 0; desc.argvt = 0; desc.argvn = 0;
+				desc.flags = XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionOverride;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				fctx->EncodeReturn(cls);
+				fctx->EndEncoding();
+			} catch (...) {}
 		}
 	}
 }

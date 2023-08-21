@@ -308,7 +308,7 @@ namespace Engine
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionSubject(ssl, ssc);
 				while (IsPunct(L"(") || IsPunct(L".") || IsPunct(L"[") || IsPunct(XL::OperatorFollow) ||
-					IsPunct(XL::OperatorIncrement) || IsPunct(XL::OperatorDecrement)) {
+					IsPunct(XL::OperatorIncrement) || IsPunct(XL::OperatorDecrement) || IsKeyword(Lexic::KeywordAs)) {
 					auto op = current_token;
 					ReadNextToken();
 					if (op.contents == L"(") {
@@ -348,6 +348,12 @@ namespace Engine
 						Array<XL::LObject *> input(0x20);
 						for (auto & arg : args) input << &arg;
 						try { object = subscript->Invoke(input.Length(), input.GetBuffer()); }
+						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+					} else if (op.contents == Lexic::KeywordAs) {
+						AssertPunct(L"("); ReadNextToken();
+						SafePointer<XL::LObject> type_into = ProcessTypeExpression(ssl, ssc);
+						AssertPunct(L")"); ReadNextToken();
+						try { object = CreateDynamicCast(object, type_into); }
 						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 					} else {
 						if (object->GetClass() == XL::Class::InstancedProperty && (op.contents == XL::OperatorIncrement || op.contents == XL::OperatorDecrement)) {
@@ -932,13 +938,11 @@ namespace Engine
 				ProcessClass(type, is_interface, false, subdesc);
 				AssertPunct(L"}"); ReadNextToken();
 				ObjectArray<XL::LObject> vft_init_seq(0x40);
+				CreateTypeServiceRoutines(type);
 				ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor, vft_init_seq);
 				if (is_structure) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit |
 					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
 					XL::CreateMethodAssign, vft_init_seq);
-
-				// TODO: ADD METHODS: dynamic cast, get type
-
 				ctx.LockClass(type, false);
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 			}
@@ -950,10 +954,14 @@ namespace Engine
 				ReadNextToken(); AssertPunct(L"=");
 				ReadNextToken();
 				auto expr = current_token;
-				VObservationDesc vspec;
-				vspec.current_namespace = desc.current_namespace;
-				vspec.namespace_search_list << desc.current_namespace;
-				SafePointer<XL::LObject> dest = ProcessExpression(desc.current_namespace->GetClass() == XL::Class::Type ? vspec : desc);
+				SafePointer<XL::LObject> dest = ProcessExpression(desc);
+				if (desc.current_namespace->GetClass() == XL::Class::Type) {
+					if (dest->GetClass() == XL::Class::Function || dest->GetClass() == XL::Class::FunctionOverload ||
+						dest->GetClass() == XL::Class::Field || dest->GetClass() == XL::Class::Property) {
+						auto subs = dest->GetFullName().Fragment(0, desc.current_namespace->GetFullName().Length());
+						if (subs != desc.current_namespace->GetFullName()) Abort(CompilerStatus::ObjectTypeMismatch, expr);
+					}
+				}
 				AssertPunct(L";"); ReadNextToken();
 				try { ctx.CreateAlias(desc.current_namespace, definition.contents, dest); }
 				catch (XL::ObjectMemberRedefinitionException &) { Abort(CompilerStatus::SymbolRedefinition, definition); }
