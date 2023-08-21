@@ -238,7 +238,6 @@ namespace Engine
 		}
 		XL::LObject * CreateDynamicCast(XL::LObject * object, XL::LObject * type_into)
 		{
-			type_info;
 			if (type_into->GetClass() != XL::Class::Type) throw InvalidArgumentException();
 			auto xtype = static_cast<XL::XType *>(type_into);
 			if (xtype->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
