@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "../xlang/xl_lal.h"
+#include "../xlang/xl_code.h"
 
 namespace Engine
 {
@@ -16,9 +17,14 @@ namespace Engine
 		XL::LObject * CreateDestruct(XL::LObject * object);
 		XL::LObject * CreateDynamicCast(XL::LObject * object, XL::LObject * type_into);
 
+		bool ClassImplements(XL::LObject * cls, const string & impl);
 		bool IsValidEnumerationBase(XL::LObject * type);
 		bool CreateEnumerationValue(Volumes::ObjectDictionary<string, XL::LObject> & enum_db, XL::LObject * enum_type, const string & name, XL::LObject * value);
 		void CreateEnumerationRoutines(Volumes::ObjectDictionary<string, XL::LObject> & enum_db, XL::LObject * enum_type);
 		void CreateTypeServiceRoutines(XL::LObject * cls);
+
+		void BeginContextCapture(XL::LObject * base_class, XL::LObject ** vlist, int vlen, XL::LObject ** capture, XL::LObject ** function);
+		void ConfigureContextCapture(XL::LObject * capture, XL::LObject * function, XL::LFunctionContext ** fctx);
+		void EndContextCapture(XL::LObject * capture, ObjectArray<XL::LObject> & vft_init, XL::LObject ** task);
 	}
 }

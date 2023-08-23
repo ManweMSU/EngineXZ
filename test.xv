@@ -1,7 +1,37 @@
 ﻿importa canonicalis;
 
+genus test hereditat objectum {
+	int valor;
+
+	structor(int v) { funda valor(v); proba actuarius.scribe("created: " + linea(valor)); }
+	destructor() { proba actuarius.scribe("destroyed: " + linea(valor)); }
+
+	functio nihil do_something()
+	{
+		proba {
+			var task = contextus.labos_opperitus <== {
+				contextus.dormi(3000);
+				proba actuarius.scribe("task fire: " + linea(valor));
+			};
+			contextus.exeque(task);
+			task^.para_signale()^.opperire();
+		}
+	}
+}
+
 functio nihil primus() introitus iacit
 {
+	dfrac f1 = 5.0, f2 = 2.0;
+	linea e, se;
+	errores.descriptio(4, 5, e, se);
+	actuarius.scribe(e);
+	actuarius.scribe(se);
+	actuarius.scribe(math.sin(f1 / f2));
+
+	var t = crea(test, 234);
+
+	t^.do_something();
+
 	actuarius.scribe("suka ty pidor");
 	iace 666;
 }

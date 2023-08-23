@@ -5,6 +5,7 @@
 #include "../xlang/xl_base.h"
 #include "../xlang/xl_code.h"
 #include "../xlang/xl_var.h"
+#include "xv_meta.h"
 
 namespace Engine
 {
@@ -570,6 +571,14 @@ namespace Engine
 			} catch (...) {}
 		}
 
+		bool ClassImplements(XL::LObject * cls, const string & impl)
+		{
+			if (cls->GetClass() != XL::Class::Type) return false;
+			ObjectArray<XL::XType> conf(0x10);
+			static_cast<XL::XType *>(cls)->GetTypesConformsTo(conf);
+			for (auto & c : conf) if (c.GetFullName() == impl) return true;
+			return false;
+		}
 		bool IsValidEnumerationBase(XL::LObject * type)
 		{
 			if (type->GetClass() != XL::Class::Type) return false;
@@ -719,6 +728,264 @@ namespace Engine
 				fctx->EncodeReturn(cls);
 				fctx->EndEncoding();
 			} catch (...) {}
+		}
+
+		class ContextCaptureProxy : public XL::XObject, XL::IFunctionInitCallback
+		{
+			struct _object_capture_info {
+				SafePointer<XL::LObject> capture_from;
+				string field_name;
+			};
+
+			XL::LContext & _ctx;
+			XL::LObject * _cls;
+			XL::LFunctionContext * _fctx;
+			Array<XL::LObject *> _vlist;
+			SafePointer<XL::LObject> _signal_create, _signal_type;
+			Volumes::Dictionary<string, _object_capture_info> _capture;
+			_object_capture_info _self_capture;
+			bool _self_capture_object;
+			int _counter;
+
+			static bool _is_object_static(XL::LObject * object)
+			{
+				auto oc = object->GetClass();
+				if (oc == XL::Class::Method) return false;
+				if (oc == XL::Class::MethodOverload) return false;
+				if (oc == XL::Class::Variable) return false;
+				if (oc == XL::Class::InstancedProperty) return false;
+				return true;
+			}
+		public:
+			ContextCaptureProxy(XL::LContext & ctx, XL::LObject * cls, XL::LObject ** vlist, int vlen) : _ctx(ctx), _cls(cls), _vlist(0x10) { _counter = 0; _vlist.Append(vlist, vlen); }
+			virtual ~ContextCaptureProxy(void) override {}
+			virtual XL::Class GetClass(void) override { return XL::Class::Internal; }
+			virtual string GetName(void) override { return L""; }
+			virtual string GetFullName(void) override { return L""; }
+			virtual bool IsDefinedLocally(void) override { return false; }
+			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
+			virtual LObject * GetMember(const string & name) override
+			{
+				try { return _fctx->GetInstance()->GetMember(Lexic::IdentifierTVPP + name); } catch (...) {}
+				auto cpt = _capture.GetElementByKey(name);
+				if (cpt) return _fctx->GetInstance()->GetMember(cpt->field_name);
+				for (auto & v : _vlist) {
+					try {
+						SafePointer<XL::LObject> local = v->GetMember(name);
+						if (v->GetClass() == XL::Class::Namespace || v->GetClass() == XL::Class::Type || _is_object_static(local)) {
+							local->Retain();
+							return local;
+						} else if (v->GetClass() == XL::Class::Scope) {
+							_object_capture_info info;
+							info.capture_from = local;
+							info.field_name = L"_@" + name;
+							_capture.Append(name, info);
+							SafePointer<XL::LObject> type = local->GetType();
+							_ctx.CreateField(_cls, info.field_name, type, true);
+							return _fctx->GetInstance()->GetMember(info.field_name);
+						} else {
+							if (!_self_capture.capture_from) {
+								_self_capture.capture_from.SetRetain(v);
+								_self_capture.field_name = L"_@@ego";
+								SafePointer<XL::LObject> base_type = v->GetType();
+								SafePointer<XL::LObject> type;
+								if (ClassImplements(base_type, L"objectum")) {
+									SafePointer<XL::LObject> safe_ptr = _ctx.QueryObject(L"adl");
+									SafePointer<XL::LObject> safe_ptr_inst_op = safe_ptr->GetMember(XL::OperatorSubscript);
+									type = safe_ptr_inst_op->Invoke(1, base_type.InnerRef());
+									_self_capture_object = true;
+								} else {
+									type = _ctx.QueryTypePointer(base_type);
+									_self_capture_object = false;
+								}
+								_ctx.CreateField(_cls, _self_capture.field_name, type, true);
+							}
+							SafePointer<XL::LObject> self_ptr = _fctx->GetInstance()->GetMember(_self_capture.field_name);
+							SafePointer<XL::LObject> self_ptr_follow = self_ptr->GetMember(XL::OperatorFollow);
+							SafePointer<XL::LObject> self = self_ptr_follow->Invoke(0, 0);
+							return self->GetMember(name);
+						}
+					} catch (...) {}
+				}
+				throw XL::ObjectHasNoSuchMemberException(this, name);
+			}
+			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
+			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
+			virtual void EncodeSymbols(XI::Module & dest, XL::Class parent) override {}
+			XL::LContext & GetContext(void) { return _ctx; }
+			XL::LObject * GetClassObject(void) { return _cls; }
+			void SetFunctionContext(XL::LFunctionContext * fctx) { _fctx = fctx; }
+			XL::LObject * CreateInstance(void)
+			{
+				Array<XL::LObject *> argv(0x20);
+				if (_self_capture.capture_from) argv.Append(_self_capture.capture_from);
+				for (auto & c : _capture) argv.Append(c.value.capture_from);
+				return CreateNew(_ctx, _cls, argv.Length(), argv.GetBuffer());
+			}
+			XL::LObject * RaiseSignal(XL::LFunctionContext * fctx)
+			{
+				SafePointer<XL::LObject> field = fctx->GetInstance()->GetMember(L"_@@signale");
+				SafePointer<XL::LObject> field_follow = field->GetMember(XL::OperatorFollow);
+				SafePointer<XL::LObject> signal = field_follow->Invoke(0, 0);
+				SafePointer<XL::LObject> raise = signal->GetMember(L"erige");
+				return raise->Invoke(0, 0);
+			}
+			void CreateSignalField(void)
+			{
+				SafePointer<XL::LObject> create_signal = _ctx.QueryObject(L"contextus.crea_signale");
+				SafePointer<XL::LObject> create_signal_inv = create_signal->Invoke(0, 0);
+				_signal_create = create_signal_inv;
+				_signal_type = _signal_create->GetType();
+				_ctx.CreateField(_cls, L"_@@signale", _signal_type, true);
+			}
+			void CreateSignalGetter(void)
+			{
+				auto fd = _ctx.CreateFunction(_cls, L"para_signale");
+				auto func = _ctx.CreateFunctionOverload(fd, _signal_type, 0, 0, XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionOverride);
+				XL::FunctionContextDesc desc;
+				desc.retval = _signal_type; desc.instance = _cls;
+				desc.argc = 0; desc.argvt = 0; desc.argvn = 0;
+				desc.flags = XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionOverride;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(_ctx, func, desc);
+				SafePointer<XL::LObject> field = fctx->GetInstance()->GetMember(L"_@@signale");
+				fctx->EncodeReturn(field);
+				fctx->EndEncoding();
+			}
+			void CreateConstructor(ObjectArray<XL::LObject> & vft_init)
+			{
+				SafePointer<XL::LObject> type_void = _ctx.QueryObject(XL::NameVoid);
+				auto fd = _ctx.CreateFunction(_cls, XL::NameConstructor);
+				ObjectArray<XL::LObject> retain(0x20);
+				Array<XL::LObject *> argv(0x20);
+				Array<string> names(0x20);
+				if (_self_capture.capture_from) {
+					SafePointer<XL::LObject> type = _self_capture.capture_from->GetType();
+					SafePointer<XL::LObject> type_ref = _ctx.QueryTypeReference(type);
+					retain.Append(type_ref); argv.Append(type_ref);
+					names.Append(L"@A0");
+				}
+				int counter = 0;
+				for (auto & c : _capture) {
+					counter++;
+					SafePointer<XL::LObject> type = c.value.capture_from->GetType();
+					SafePointer<XL::LObject> type_ref = _ctx.QueryTypeReference(type);
+					retain.Append(type_ref); argv.Append(type_ref);
+					names.Append(L"@A" + string(counter));
+				}
+				auto func = _ctx.CreateFunctionOverload(fd, type_void, argv.Length(), argv.GetBuffer(), XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionThrows);
+				XL::FunctionContextDesc desc;
+				desc.retval = type_void; desc.instance = _cls;
+				desc.argc = argv.Length(); desc.argvt = argv.GetBuffer(); desc.argvn = names.GetBuffer();
+				desc.flags = XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionThrows;
+				desc.vft_init = _cls; desc.vft_init_seq = &vft_init;
+				desc.create_init_sequence = true; desc.create_shutdown_sequence = false;
+				desc.init_callback = this;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(_ctx, func, desc);
+				if (_self_capture.capture_from) {
+					SafePointer<XL::LObject> self_ptr = fctx->GetInstance()->GetMember(_self_capture.field_name);
+					SafePointer<XL::LObject> self_src = fctx->GetRootScope()->GetMember(L"@A0");
+					SafePointer<XL::LObject> operator_address_of = _ctx.QueryAddressOfOperator();
+					self_src = operator_address_of->Invoke(1, self_src.InnerRef());
+					if (_self_capture_object) {
+						SafePointer<XL::LObject> self_asgn = self_ptr->GetMember(L"contine");
+						SafePointer<XL::LObject> expr = self_asgn->Invoke(1, self_src.InnerRef());
+						fctx->EncodeExpression(expr);
+					} else {
+						SafePointer<XL::LObject> self_asgn = self_ptr->GetMember(XL::OperatorAssign);
+						SafePointer<XL::LObject> expr = self_asgn->Invoke(1, self_src.InnerRef());
+						fctx->EncodeExpression(expr);
+					}
+				}
+				if (ClassImplements(_cls, L"contextus.labos_opperitus")) {
+					SafePointer<XL::LObject> field = fctx->GetInstance()->GetMember(L"_@@signale");
+					SafePointer<XL::LObject> field_asgn = field->GetMember(XL::OperatorAssign);
+					SafePointer<XL::LObject> expr = field_asgn->Invoke(1, _signal_create.InnerRef());
+					fctx->EncodeExpression(expr);
+				}
+				fctx->EndEncoding();
+			}
+			virtual void GetNextInit(LObject * arguments_scope, XL::FunctionInitDesc & desc) override
+			{
+				desc.init.Clear();
+				auto element = _capture.ElementAt(_counter);
+				if (element) {
+					_counter++;
+					SafePointer<XL::LObject> field = _cls->GetMember(element->GetValue().value.field_name);
+					SafePointer<XL::LObject> from = arguments_scope->GetMember(L"@A" + string(_counter));
+					desc.subject = field;
+					desc.init.InsertLast(from);
+				} else desc.subject = 0;
+			}
+		};
+		void BeginContextCapture(XL::LObject * base_class, XL::LObject ** vlist, int vlen, XL::LObject ** capture, XL::LObject ** function)
+		{
+			auto xbase = static_cast<XL::XType *>(base_class);
+			auto & ctx = xbase->GetContext();
+			auto cls = ctx.CreatePrivateClass();
+			ctx.AdoptParentClass(cls, base_class);
+			*capture = new ContextCaptureProxy(ctx, cls, vlist, vlen);
+			SafePointer<XL::LObject> void_type = ctx.QueryObject(XL::NameVoid);
+			auto fd = ctx.CreateFunction(cls, L"_exeque");
+			auto func = ctx.CreateFunctionOverload(fd, void_type, 0, 0, XL::FunctionMethod | XL::FunctionThisCall);
+			func->Retain();
+			*function = func;
+		}
+		void ConfigureContextCapture(XL::LObject * capture, XL::LObject * function, XL::LFunctionContext ** fctx)
+		{
+			auto & ctx = static_cast<ContextCaptureProxy *>(capture)->GetContext();
+			SafePointer<XL::LObject> void_type = ctx.QueryObject(XL::NameVoid);
+			XL::FunctionContextDesc desc;
+			desc.retval = void_type;
+			desc.instance = static_cast<ContextCaptureProxy *>(capture)->GetClassObject();
+			desc.argc = 0; desc.argvt = 0; desc.argvn = 0;
+			desc.flags = XL::FunctionMethod | XL::FunctionThisCall;
+			desc.vft_init = 0; desc.vft_init_seq = 0;
+			desc.create_init_sequence = desc.create_shutdown_sequence = false;
+			desc.init_callback = 0;
+			*fctx = new XL::LFunctionContext(ctx, function, desc);
+			static_cast<ContextCaptureProxy *>(capture)->SetFunctionContext(*fctx);
+		}
+		void EndContextCapture(XL::LObject * capture, ObjectArray<XL::LObject> & vft_init, XL::LObject ** task)
+		{
+			auto xcapt = static_cast<ContextCaptureProxy *>(capture);
+			auto & ctx = xcapt->GetContext();
+			auto cls = xcapt->GetClassObject();
+			ctx.CreateClassDefaultMethods(xcapt->GetClassObject(), XL::CreateMethodDestructor, vft_init);
+			bool signals = false;
+			if (ClassImplements(xcapt->GetClassObject(), L"contextus.labos_opperitus")) {
+				signals = true;
+				xcapt->CreateSignalField();
+			}
+			try {
+				string name = L"";
+				SafePointer<XL::LObject> void_type = ctx.QueryObject(XL::NameVoid);
+				SafePointer<XL::LObject> object_type = ctx.QueryObject(L"objectum");
+				SafePointer<XL::LObject> object_type_ptr = ctx.QueryTypePointer(object_type);
+				auto fd = ctx.CreateFunction(cls, L"exeque");
+				auto func = ctx.CreateFunctionOverload(fd, void_type, 1, object_type_ptr.InnerRef(), XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionOverride);
+				XL::FunctionContextDesc desc;
+				desc.retval = void_type; desc.instance = cls;
+				desc.argc = 1; desc.argvt = object_type_ptr.InnerRef(); desc.argvn = &name;
+				desc.flags = XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionOverride;
+				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
+				desc.create_init_sequence = desc.create_shutdown_sequence = false;
+				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, func, desc);
+				SafePointer<XL::LObject> delegate = fctx->GetInstance()->GetMember(L"_exeque");
+				SafePointer<XL::LObject> delegate_inv = delegate->Invoke(0, 0);
+				fctx->EncodeExpression(delegate_inv);
+				if (signals) {
+					SafePointer<XL::LObject> raise = xcapt->RaiseSignal(fctx);
+					fctx->EncodeExpression(raise);
+				}
+				fctx->EndEncoding();
+			} catch (...) { throw; }
+			if (signals) xcapt->CreateSignalGetter();
+			xcapt->CreateConstructor(vft_init);
+			*task = xcapt->CreateInstance();
 		}
 	}
 }

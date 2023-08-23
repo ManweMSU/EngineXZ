@@ -798,150 +798,107 @@ namespace Engine
 					retval_byref = _is_pass_by_reference(node.retval_spec);
 					retval_final = node.retval_final.final.ref_class != ReferenceNull;
 					SafePointer< Array<_argument_passage_info> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no);
-					if (_conv == CallingConvention::Windows) {
-						_encode_preserve(Reg::RAX, reg_in_use, !idle && preserve_rax);
-						_encode_preserve(Reg::RCX, reg_in_use, !idle);
-						_encode_preserve(Reg::RDX, reg_in_use, !idle);
-						_encode_preserve(Reg::R8, reg_in_use, !idle);
-						_encode_preserve(Reg::R9, reg_in_use, !idle);
-						int unpush = max(layout->Length(), 4) * 8;
-						if ((_stack_oddity + unpush) & 0xF) if (!idle) {
-							encode_add(Reg::RSP, -8);
-							unpush += 8;
-						}
-						Volumes::Dictionary<Reg, Reg> remap;
-						for (auto & info : layout->InversedElements()) {
-							if (info.index >= 0) {
-								auto & spec = node.input_specs[info.index + first_arg];
-								_internal_disposition ld;
-								ld.reg = info.reg == Reg::NO ? Reg::RAX : info.reg;
-								ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
-								ld.flags = info.indirect ? DispositionPointer : DispositionRegister;
-								if (ld.reg == Reg::XMM0) {
-									ld.reg = Reg::RCX;
-									remap.Append(Reg::RCX, Reg::XMM0);
-								} else if (ld.reg == Reg::XMM1) {
-									ld.reg = Reg::RDX;
-									remap.Append(Reg::RDX, Reg::XMM1);
-								} else if (ld.reg == Reg::XMM2) {
-									ld.reg = Reg::R8;
-									remap.Append(Reg::R8, Reg::XMM2);
-								} else if (ld.reg == Reg::XMM3) {
-									ld.reg = Reg::R9;
-									remap.Append(Reg::R9, Reg::XMM3);
-								}
-								_encode_tree_node(node.inputs[info.index + first_arg], idle, mem_load, &ld, reg_in_use | uint(Reg::RCX) | uint(Reg::RDX) | uint(Reg::R8) | uint(Reg::R9));
-								if (info.reg == Reg::NO && !idle) encode_push(ld.reg);
-							} else {
-								*mem_load += _word_align(node.retval_spec.size);
-								if (!idle) {
-									int offs;
-									_allocate_temporary(node.retval_spec.size, node.retval_final, &offs);
-									encode_lea(info.reg, Reg::RBP, offs);
-								}
-							}
-						}
-						if (!idle) encode_add(Reg::RSP, -32);
-						if (indirect) {
-							_internal_disposition ld;
-							ld.flags = DispositionRegister;
-							ld.reg = Reg::RAX;
-							ld.size = 8;
-							_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | uint(Reg::RAX) | uint(Reg::RCX) | uint(Reg::RDX) | uint(Reg::R8) | uint(Reg::R9));
-						} else {
-							if (!idle) encode_put_addr_of(Reg::RAX, node.self);
-						}
-						if (!idle) {
-							for (auto r : remap) encode_mov_xmm_reg(8, r.value, r.key);
-							encode_call(Reg::RAX, false);
-							encode_add(Reg::RSP, unpush);
-							if (!retval_byref && node.retval_spec.semantics == ArgumentSemantics::FloatingPoint) encode_mov_reg_xmm(8, Reg::RAX, Reg::XMM0);
-						}
-						_encode_restore(Reg::R9, reg_in_use, !idle);
-						_encode_restore(Reg::R8, reg_in_use, !idle);
-						_encode_restore(Reg::RDX, reg_in_use, !idle);
-						_encode_restore(Reg::RCX, reg_in_use, !idle);
-					} else if (_conv == CallingConvention::Unix) {
-						Array<Reg> preserve_regs(0x10);
-						uint reg_used_mask = 0;
-						uint stack_usage = 0;
-						uint num_args_by_stack = 0;
-						uint num_args_by_xmm = 0;
-						preserve_regs << Reg::RBX << Reg::RDI << Reg::RSI << Reg::RDX << Reg::RCX << Reg::R8 << Reg::R9;
-						for (auto & info : *layout) if (info.reg != Reg::NO && !_is_xmm_register(info.reg)) {
-							reg_used_mask |= uint(info.reg);
-						} else {
-							stack_usage += WordSize;
-							if (info.reg == Reg::NO) num_args_by_stack++; else num_args_by_xmm++;
-						}
-						_encode_preserve(Reg::RAX, reg_in_use, !idle && preserve_rax);
-						for (auto & r : preserve_regs.Elements()) _encode_preserve(r, reg_in_use, !idle);
-						if ((_stack_oddity + stack_usage) & 0xF) stack_usage += WordSize;
-						if (!idle) {
-							if (stack_usage) encode_add(Reg::RSP, -int(stack_usage));
-							encode_mov_reg_reg(8, Reg::RBX, Reg::RSP);
-						}
-						uint stack_arg_index = 0, xmm_arg_index = 0;
-						for (auto & info : layout->InversedElements()) {
-							if (info.index >= 0) {
-								auto & spec = node.input_specs[info.index + first_arg];
-								_internal_disposition ld;
-								ld.reg = (info.reg == Reg::NO || _is_xmm_register(info.reg)) ? Reg::RAX : info.reg;
-								ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
-								ld.flags = info.indirect ? DispositionPointer : DispositionRegister;
-								_encode_tree_node(node.inputs[info.index + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask);
-								if (!idle) {
-									if (info.reg == Reg::NO) {
-										encode_mov_mem_reg(8, Reg::RBX, WordSize * (num_args_by_stack - stack_arg_index - 1), Reg::RAX);
-										stack_arg_index++;
-									} else if (_is_xmm_register(info.reg)) {
-										encode_mov_mem_reg(8, Reg::RBX, WordSize * (num_args_by_stack + xmm_arg_index), Reg::RAX);
-										xmm_arg_index++;
-									}
-								}
-							} else {
-								*mem_load += _word_align(node.retval_spec.size);
-								if (!idle) {
-									int offs;
-									_allocate_temporary(node.retval_spec.size, node.retval_final, &offs);
-									encode_lea(info.reg, Reg::RBP, offs);
-								}
-							}
-						}
-						if (indirect) {
-							_internal_disposition ld;
-							ld.flags = DispositionRegister;
-							ld.reg = Reg::RAX;
-							ld.size = 8;
-							_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | reg_used_mask);
-						} else {
-							if (!idle) encode_put_addr_of(Reg::RAX, node.self);
-						}
-						if (!idle && num_args_by_xmm) {
-							xmm_arg_index = 0;
-							encode_push(Reg::RAX);
-							for (auto & info : layout->InversedElements()) if (_is_xmm_register(info.reg)) {
-								encode_mov_reg_mem(8, Reg::RAX, Reg::RBX, WordSize * (num_args_by_stack + xmm_arg_index));
-								int index = num_args_by_xmm - xmm_arg_index - 1;
-								if (index == 0) encode_mov_xmm_reg(8, Reg::XMM0, Reg::RAX);
-								else if (index == 1) encode_mov_xmm_reg(8, Reg::XMM1, Reg::RAX);
-								else if (index == 2) encode_mov_xmm_reg(8, Reg::XMM2, Reg::RAX);
-								else if (index == 3) encode_mov_xmm_reg(8, Reg::XMM3, Reg::RAX);
-								else if (index == 4) encode_mov_xmm_reg(8, Reg::XMM4, Reg::RAX);
-								else if (index == 5) encode_mov_xmm_reg(8, Reg::XMM5, Reg::RAX);
-								else if (index == 6) encode_mov_xmm_reg(8, Reg::XMM6, Reg::RAX);
-								else encode_mov_xmm_reg(8, Reg::XMM7, Reg::RAX);
-								xmm_arg_index++;
-							}
-							encode_pop(Reg::RAX);
-						}
-						if (!idle) {
-							encode_call(Reg::RAX, false);
-							if (stack_usage) encode_add(Reg::RSP, int(stack_usage));
-							if (!retval_byref && node.retval_spec.semantics == ArgumentSemantics::FloatingPoint) encode_mov_reg_xmm(8, Reg::RAX, Reg::XMM0);
-						}
-						for (auto & r : preserve_regs.InversedElements()) _encode_restore(r, reg_in_use, !idle);
+					Array<Reg> preserve_regs(0x10);
+					Array<int> argument_homes(1), argument_layout_index(1);
+					if (_conv == CallingConvention::Windows) preserve_regs << Reg::RBX << Reg::RCX << Reg::RDX << Reg::R8 << Reg::R9;
+					else if (_conv == CallingConvention::Unix) preserve_regs << Reg::RBX << Reg::RDI << Reg::RSI << Reg::RDX << Reg::RCX << Reg::R8 << Reg::R9;
+					_encode_preserve(Reg::RAX, reg_in_use, !idle && preserve_rax);
+					for (auto & r : preserve_regs.Elements()) _encode_preserve(r, reg_in_use, !idle);
+					uint reg_used_mask = 0;
+					uint stack_usage = 0;
+					uint num_args_by_stack = 0;
+					uint num_args_by_xmm = 0;
+					for (auto & info : *layout) {
+						if (_is_xmm_register(info.reg)) num_args_by_xmm++;
+						else if (info.reg == Reg::NO) num_args_by_stack++;
 					}
+					if (_conv == CallingConvention::Windows) stack_usage = max(node.inputs.Length() - first_arg, 4) * 8;
+					else if (_conv == CallingConvention::Unix) stack_usage = (num_args_by_stack + num_args_by_xmm) * 8;
+					if ((_stack_oddity + stack_usage) & 0xF) stack_usage += 8;
+					if (stack_usage && !idle) encode_add(Reg::RSP, -int(stack_usage));
+					argument_homes.SetLength(node.inputs.Length() - first_arg);
+					argument_layout_index.SetLength(node.inputs.Length() - first_arg);
+					uint current_stack_index = 0;
+					int rv_offset = 0;
+					Reg rv_reg = Reg::NO;
+					for (int i = 0; i < layout->Length(); i++) {
+						auto & info = layout->ElementAt(i);
+						if (info.index >= 0) {
+							argument_layout_index[info.index] = i;
+							if (_conv == CallingConvention::Windows) {
+								argument_homes[info.index] = current_stack_index;
+								current_stack_index += 8;
+							} else if (_conv == CallingConvention::Unix) {
+								if (info.reg == Reg::NO) {
+									argument_homes[info.index] = current_stack_index;
+									current_stack_index += 8;
+								} else argument_homes[info.index] = -1;
+							}
+						} else {
+							*mem_load += _word_align(node.retval_spec.size);
+							rv_reg = info.reg;
+							if (!idle) _allocate_temporary(node.retval_spec.size, node.retval_final, &rv_offset);
+						}
+					}
+					if (_conv == CallingConvention::Unix) for (auto & info : layout->Elements()) if (info.index >= 0 && _is_xmm_register(info.reg)) {
+						argument_homes[info.index] = current_stack_index;
+						current_stack_index += 8;
+					}
+					if (indirect) {
+						_internal_disposition ld;
+						ld.flags = DispositionRegister;
+						ld.reg = Reg::RAX;
+						ld.size = 8;
+						reg_used_mask |= uint(ld.reg);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | reg_used_mask);
+					}
+					if (!idle && current_stack_index) {
+						encode_mov_reg_reg(8, Reg::RBX, Reg::RSP);
+						reg_used_mask |= uint(Reg::RBX);
+					}
+					for (int i = 0; i < argument_homes.Length(); i++) {
+						auto home = argument_homes[i];
+						auto & info = layout->ElementAt(argument_layout_index[i]);
+						auto & spec = node.input_specs[i + first_arg];
+						_internal_disposition ld;
+						ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
+						ld.flags = info.indirect ? DispositionPointer : DispositionRegister;
+						bool home_mode;
+						if (info.reg == Reg::NO || _is_xmm_register(info.reg)) {
+							home_mode = true;
+							ld.reg = Reg::RAX;
+						} else {
+							home_mode = false;
+							ld.reg = info.reg;
+							reg_used_mask |= uint(ld.reg);
+						}
+						if (home_mode) _encode_preserve(ld.reg, reg_used_mask, !idle);
+						_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask);
+						if (home_mode) {
+							if (!idle) encode_mov_mem_reg(8, Reg::RBX, home, ld.reg);
+							_encode_restore(ld.reg, reg_used_mask, !idle);
+						}
+					}
+					if (rv_reg != Reg::NO) encode_lea(rv_reg, Reg::RBP, rv_offset);
+					if (!idle && num_args_by_xmm) {
+						encode_push(Reg::RAX);
+						for (int i = 0; i < argument_homes.Length(); i++) {
+							auto home = argument_homes[i];
+							auto & info = layout->ElementAt(argument_layout_index[i]);
+							if (_is_xmm_register(info.reg)) {
+								encode_mov_reg_mem(8, Reg::RAX, Reg::RBX, home);
+								encode_mov_xmm_reg(8, info.reg, Reg::RAX);
+							}
+						}
+						encode_pop(Reg::RAX);
+					}
+					if (!indirect && !idle) encode_put_addr_of(Reg::RAX, node.self);
+					if (!idle) {
+						encode_call(Reg::RAX, false);
+						if (stack_usage) encode_add(Reg::RSP, int(stack_usage));
+						if (!retval_byref && node.retval_spec.semantics == ArgumentSemantics::FloatingPoint) encode_mov_reg_xmm(8, Reg::RAX, Reg::XMM0);
+					}
+					for (auto & r : preserve_regs.InversedElements()) _encode_restore(r, reg_in_use, !idle);
 					if ((disp->flags & DispositionPointer) && retval_byref) {
 						if (!idle && disp->reg != Reg::RAX) encode_mov_reg_reg(8, disp->reg, Reg::RAX);
 						disp->flags = DispositionPointer;
@@ -1534,14 +1491,14 @@ namespace Engine
 				{
 					uint rc = _regular_register_code(reg);
 					uint8 rex = _make_rex(false, false, false, rc & 0x08);
-					if (rex & 0x0F)  _dest.code << rex;
+					if (rex & 0x0F) _dest.code << rex;
 					_dest.code << (0x50 + (rc & 0x07));
 				}
 				void encode_pop(Reg reg)
 				{
 					uint rc = _regular_register_code(reg);
 					uint8 rex = _make_rex(false, false, false, rc & 0x08);
-					if (rex & 0x0F)  _dest.code << rex;
+					if (rex & 0x0F) _dest.code << rex;
 					_dest.code << (0x58 + (rc & 0x07));
 				}
 				void encode_operation(uint quant, Op op, Reg to, Reg value_ptr, bool indirect = false, int value_offset = 0)

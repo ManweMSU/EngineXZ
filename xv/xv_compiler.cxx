@@ -208,6 +208,22 @@ namespace Engine
 				}
 				return name;
 			}
+			void ProcessContextCapture(ITokenStream * input_stream, XL::LObject * capture, XL::LObject * function)
+			{
+				SafePointer<XL::LFunctionContext> fctx;
+				ConfigureContextCapture(capture, function, fctx.InnerRef());
+				VObservationDesc desc;
+				desc.current_namespace = fctx->GetRootScope();
+				desc.namespace_search_list << fctx->GetRootScope();
+				desc.namespace_search_list << capture;
+				auto io = input_override;
+				auto ct = current_token;
+				OverrideInput(input_stream);
+				ProcessBlock(*fctx, desc);
+				input_override = io;
+				current_token = ct;
+				fctx->EndEncoding();
+			}
 			XL::LObject * ProcessExpressionSubject(XL::LObject ** ssl, int ssc)
 			{
 				SafePointer<XL::LObject> object;
@@ -307,68 +323,84 @@ namespace Engine
 			XL::LObject * ProcessExpressionPostfix(XL::LObject ** ssl, int ssc)
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionSubject(ssl, ssc);
-				while (IsPunct(L"(") || IsPunct(L".") || IsPunct(L"[") || IsPunct(XL::OperatorFollow) ||
+				while (IsPunct(L"(") || IsPunct(L".") || IsPunct(L"[") || IsPunct(L"<==") || IsPunct(XL::OperatorFollow) ||
 					IsPunct(XL::OperatorIncrement) || IsPunct(XL::OperatorDecrement) || IsKeyword(Lexic::KeywordAs)) {
 					auto op = current_token;
-					ReadNextToken();
-					if (op.contents == L"(") {
-						ObjectArray<XL::LObject> args(0x20);
-						if (!IsPunct(L")")) {
-							while (true) {
-								SafePointer<XL::LObject> arg = ProcessExpression(ssl, ssc);
-								args.Append(arg);
-								if (!IsPunct(L",")) break;
-								ReadNextToken();
-							}
-							AssertPunct(L")"); ReadNextToken();
-						} else { ReadNextToken(); }
-						Array<XL::LObject *> input(0x20);
-						for (auto & arg : args) input << &arg;
-						try { object = object->Invoke(input.Length(), input.GetBuffer()); }
-						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
-					} else if (op.contents == L".") {
-						AssertIdent();
-						try { object = object->GetMember(current_token.contents); }
-						catch (...) { Abort(CompilerStatus::NoSuchSymbol, current_token); }
+					if (op.contents == L"<==") {
+						ReadNextToken(); AssertPunct(L"{");
+						if (!ClassImplements(object, L"contextus.labos")) Abort(CompilerStatus::NoSuchOverload, ExposeInput()->GetCurrentPosition());
+						SafePointer<ITokenStream> stream;
+						if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
 						ReadNextToken();
-					} else if (op.contents == L"[") {
-						SafePointer<XL::LObject> subscript;
-						try { subscript = object->GetMember(XL::OperatorSubscript); }
-						catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-						ObjectArray<XL::LObject> args(0x20);
-						if (!IsPunct(L"]")) {
-							while (true) {
-								SafePointer<XL::LObject> arg = ProcessExpression(ssl, ssc);
-								args.Append(arg);
-								if (!IsPunct(L",")) break;
-								ReadNextToken();
-							}
-							AssertPunct(L"]"); ReadNextToken();
-						} else { ReadNextToken(); }
-						Array<XL::LObject *> input(0x20);
-						for (auto & arg : args) input << &arg;
-						try { object = subscript->Invoke(input.Length(), input.GetBuffer()); }
-						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
-					} else if (op.contents == Lexic::KeywordAs) {
-						AssertPunct(L"("); ReadNextToken();
-						SafePointer<XL::LObject> type_into = ProcessTypeExpression(ssl, ssc);
-						AssertPunct(L")"); ReadNextToken();
-						try { object = CreateDynamicCast(object, type_into); }
-						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						SafePointer<XL::LObject> capture, function;
+						BeginContextCapture(object, ssl, ssc, capture.InnerRef(), function.InnerRef());
+						ProcessContextCapture(stream, capture, function);
+						SafePointer<XL::LObject> result;
+						ObjectArray<XL::LObject> vft_init_seq(0x40);
+						EndContextCapture(capture, vft_init_seq, result.InnerRef());
+						for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
+						object = result;
 					} else {
-						if (object->GetClass() == XL::Class::InstancedProperty && (op.contents == XL::OperatorIncrement || op.contents == XL::OperatorDecrement)) {
-							SafePointer<XL::LObject> method, inter;
-							try { method = object->GetMember(op.contents); }
-							catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-							try { inter = method->Invoke(0, 0); }
+						ReadNextToken();
+						if (op.contents == L"(") {
+							ObjectArray<XL::LObject> args(0x20);
+							if (!IsPunct(L")")) {
+								while (true) {
+									SafePointer<XL::LObject> arg = ProcessExpression(ssl, ssc);
+									args.Append(arg);
+									if (!IsPunct(L",")) break;
+									ReadNextToken();
+								}
+								AssertPunct(L")"); ReadNextToken();
+							} else { ReadNextToken(); }
+							Array<XL::LObject *> input(0x20);
+							for (auto & arg : args) input << &arg;
+							try { object = object->Invoke(input.Length(), input.GetBuffer()); }
 							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
-							try { object = ctx.SetPropertyValue(object, inter); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						} else if (op.contents == L".") {
+							AssertIdent();
+							try { object = object->GetMember(current_token.contents); }
+							catch (...) { Abort(CompilerStatus::NoSuchSymbol, current_token); }
+							ReadNextToken();
+						} else if (op.contents == L"[") {
+							SafePointer<XL::LObject> subscript;
+							try { subscript = object->GetMember(XL::OperatorSubscript); }
+							catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+							ObjectArray<XL::LObject> args(0x20);
+							if (!IsPunct(L"]")) {
+								while (true) {
+									SafePointer<XL::LObject> arg = ProcessExpression(ssl, ssc);
+									args.Append(arg);
+									if (!IsPunct(L",")) break;
+									ReadNextToken();
+								}
+								AssertPunct(L"]"); ReadNextToken();
+							} else { ReadNextToken(); }
+							Array<XL::LObject *> input(0x20);
+							for (auto & arg : args) input << &arg;
+							try { object = subscript->Invoke(input.Length(), input.GetBuffer()); }
+							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						} else if (op.contents == Lexic::KeywordAs) {
+							AssertPunct(L"("); ReadNextToken();
+							SafePointer<XL::LObject> type_into = ProcessTypeExpression(ssl, ssc);
+							AssertPunct(L")"); ReadNextToken();
+							try { object = CreateDynamicCast(object, type_into); }
+							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 						} else {
-							SafePointer<XL::LObject> method;
-							try { method = object->GetMember(op.contents); }
-							catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-							try { object = method->Invoke(0, 0); }
-							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+							if (object->GetClass() == XL::Class::InstancedProperty && (op.contents == XL::OperatorIncrement || op.contents == XL::OperatorDecrement)) {
+								SafePointer<XL::LObject> method, inter;
+								try { method = object->GetMember(op.contents); }
+								catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+								try { inter = method->Invoke(0, 0); }
+								catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+								try { object = ctx.SetPropertyValue(object, inter); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+							} else {
+								SafePointer<XL::LObject> method;
+								try { method = object->GetMember(op.contents); }
+								catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+								try { object = method->Invoke(0, 0); }
+								catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+							}
 						}
 					}
 				}

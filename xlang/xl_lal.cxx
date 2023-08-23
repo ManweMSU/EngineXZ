@@ -653,16 +653,20 @@ namespace Engine
 		}
 		LObject * LContext::CreatePrivateFunction(uint flags)
 		{
-			if (!_private_ns) {
-				_private_ns = XL::CreateNamespace(L"_@" + _module_name, L"_@" + _module_name, *this);
-				_root_ns->AddMember(_private_ns->GetName(), _private_ns);
-			}
+			GetPrivateNamespace();
 			auto name = string(_private_counter, HexadecimalBaseLowerCase, 8);
 			_private_counter++;
 			SafePointer<XFunction> fd = XL::CreateFunction(*this, name, _private_ns->GetName() + L"." + name, 0);
 			_private_ns->AddMember(fd->GetName(), fd);
 			SafePointer<XType> retval = XL::CreateType(XI::Module::TypeReference::MakeClassReference(NameVoid), *this);
 			return fd->AddOverload(retval, 0, 0, flags, true);
+		}
+		LObject * LContext::CreatePrivateClass(void)
+		{
+			GetPrivateNamespace();
+			auto name = string(_private_counter, HexadecimalBaseLowerCase, 8);
+			_private_counter++;
+			return CreateClass(_private_ns, name);
 		}
 		void LContext::InstallObject(LObject * object, const string & path) { auto obj = ProvidePath(*this, path); obj->AddMember(GetName(path), object); }
 		bool LContext::IsInterface(LObject * cls)

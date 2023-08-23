@@ -39,6 +39,13 @@ namespace Engine
 			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, entity));
 			return result;
 		}
+		XA::ExpressionTree MakeSplit(const XA::ExpressionTree & of, const XA::ObjectSize & entity)
+		{
+			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformSplit, XA::ReferenceFlagInvoke));
+			XA::TH::AddTreeInput(result, of, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, entity));
+			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, entity));
+			return result;
+		}
 		XA::ExpressionTree MakeOffset(const XA::ExpressionTree & obj, const XA::ObjectSize & by, const XA::ObjectSize & obj_size, const XA::ObjectSize & new_size)
 		{
 			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformAddressOffset, XA::ReferenceFlagInvoke));

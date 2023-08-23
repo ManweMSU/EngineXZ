@@ -99,6 +99,7 @@ namespace Engine
 			constexpr const widechar * IdentifierSet	= L"loca";
 			constexpr const widechar * IdentifierGet	= L"adipisce";
 			constexpr const widechar * IdentifierValue	= L"valor";
+			constexpr const widechar * IdentifierTVPP	= L"valor_publicus_";
 
 			constexpr const widechar * ResourceData	= L"data";
 			constexpr const widechar * ResourceIcon	= L"icon";

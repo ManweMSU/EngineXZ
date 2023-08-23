@@ -35,12 +35,21 @@ namespace Engine
 				{
 					if (_throws && !error_ctx) throw ObjectMayThrow(_self);
 					_tree_node.inputs.Clear();
-					if (_vcptr) _tree_node.inputs << _vcptr->Evaluate(func, error_ctx);
-					if (_instance_rebase.num_bytes || _instance_rebase.num_words) {
-						_tree_node.inputs << MakeAddressOf(MakeOffset(_instance->Evaluate(func, error_ctx),
-							_instance_rebase, _self->GetInstanceType()->GetArgumentSpecification().size,
-							_self->GetInstanceType()->GetArgumentSpecification().size), _self->GetInstanceType()->GetArgumentSpecification().size);
-					} else _tree_node.inputs << MakeAddressOf(_instance->Evaluate(func, error_ctx), _self->GetInstanceType()->GetArgumentSpecification().size);
+					if (_vcptr) {
+						_tree_node.inputs << _vcptr->Evaluate(func, error_ctx);
+						auto self_ptr = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceSplitter));
+						if (_instance_rebase.num_bytes || _instance_rebase.num_words) {
+							_tree_node.inputs << MakeAddressOf(MakeOffset(MakeAddressFollow(self_ptr, _self->GetInstanceType()->GetArgumentSpecification().size),
+								_instance_rebase, _self->GetInstanceType()->GetArgumentSpecification().size,
+								_self->GetInstanceType()->GetArgumentSpecification().size), _self->GetInstanceType()->GetArgumentSpecification().size);
+						} else _tree_node.inputs << self_ptr;
+					} else {
+						if (_instance_rebase.num_bytes || _instance_rebase.num_words) {
+							_tree_node.inputs << MakeAddressOf(MakeOffset(_instance->Evaluate(func, error_ctx),
+								_instance_rebase, _self->GetInstanceType()->GetArgumentSpecification().size,
+								_self->GetInstanceType()->GetArgumentSpecification().size), _self->GetInstanceType()->GetArgumentSpecification().size);
+						} else _tree_node.inputs << MakeAddressOf(_instance->Evaluate(func, error_ctx), _self->GetInstanceType()->GetArgumentSpecification().size);
+					}
 					for (auto & a : _args) _tree_node.inputs << a.Evaluate(func, error_ctx);
 					if (_throws) _tree_node.inputs << MakeAddressOf(*error_ctx, XA::TH::MakeSize(0, 2));
 					if (!_vcptr) {
@@ -62,22 +71,27 @@ namespace Engine
 			class _virtual_call_provider : public Object, public IComputableProvider
 			{
 				LContext & _ctx;
+				XA::ArgumentSpecification _spec;
 				SafePointer<LObject> _instance;
 				XA::ObjectSize _table_offset, _function_offset;
 			public:
-				_virtual_call_provider(LContext & ctx, LObject * instance, const XA::ObjectSize & toffs, const XA::ObjectSize & foffs) : _ctx(ctx), _table_offset(toffs), _function_offset(foffs) { _instance.SetRetain(instance); }
+				_virtual_call_provider(LContext & ctx, const XA::ArgumentSpecification & spec, LObject * instance, const XA::ObjectSize & toffs, const XA::ObjectSize & foffs) : _ctx(ctx), _spec(spec), _table_offset(toffs), _function_offset(foffs) { _instance.SetRetain(instance); }
 				virtual ~_virtual_call_provider(void) override {}
 				virtual Object * ComputableProviderQueryObject(void) override { return this; }
 				virtual XType * ComputableGetType(void) override { return CreateType(XI::Module::TypeReference::MakePointer(XI::Module::TypeReference::MakeClassReference(NameVoid)), _ctx); }
 				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
 				{
 					auto node = _instance->Evaluate(func, error_ctx);
+					node = MakeAddressOf(node, _spec.size);
+					node = MakeSplit(node, XA::TH::MakeSize(0, 1));
+					node = MakeAddressFollow(node, _spec.size);
 					if (_table_offset.num_bytes || _table_offset.num_words) node = MakeOffset(node, _table_offset, XA::TH::MakeSize(_table_offset.num_bytes, _table_offset.num_words + 1), XA::TH::MakeSize(0, 1));
 					node = MakeAddressFollow(node, XA::TH::MakeSize(_function_offset.num_bytes, _function_offset.num_words + 1));
 					if (_function_offset.num_bytes || _function_offset.num_words) node = MakeOffset(node, _function_offset, XA::TH::MakeSize(_function_offset.num_bytes, _function_offset.num_words + 1), XA::TH::MakeSize(0, 1));
 					return node;
 				}
 			};
+			static bool _is_invalid(const XA::ObjectSize & offset) { return offset.num_bytes == 0xFFFFFFFF || offset.num_words == 0xFFFFFFFF; }
 		public:
 			MethodOverload(XFunctionOverload * parent, LObject * instance) { _parent.SetRetain(parent); _instance.SetRetain(instance); }
 			virtual ~MethodOverload(void) override {}
@@ -119,7 +133,11 @@ namespace Engine
 					provider->_self_ref = _parent->GetFullName();
 					provider->_self.SetRetain(this);
 					if (vfd.vf_index >= 0 && vfd.vft_index >= 0) {
-						SafePointer<_virtual_call_provider> vc = new _virtual_call_provider(GetContext(), _instance, vfd.vftp_offset, vfd.vfp_offset);
+						if (_is_invalid(vfd.base_offset) || _is_invalid(vfd.vftp_offset) || _is_invalid(vfd.vfp_offset)) {
+							throw InvalidStateException();
+						}
+						SafePointer<_virtual_call_provider> vc = new _virtual_call_provider(GetContext(),
+							_parent->GetInstanceType()->GetArgumentSpecification(), _instance, vfd.vftp_offset, vfd.vfp_offset);
 						provider->_vcptr = CreateComputable(GetContext(), vc);
 						provider->_tree_node.input_specs << XA::TH::MakeSpec(0, 1);
 						provider->_instance_rebase = vfd.base_offset;

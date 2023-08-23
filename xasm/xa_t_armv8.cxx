@@ -695,6 +695,8 @@ namespace Engine
 					if (!idle) encode_sub(Reg::SP, Reg::SP, stack_usage);
 					Volumes::Dictionary<Reg, _vector_argument_reload> vec_reload;
 					int rv_offset = 0;
+
+					// TODO: REWORK
 					for (auto & info : *layout) {
 						if (info.index >= 0) {
 							auto & spec = node.input_specs[first_arg + info.index];
@@ -757,6 +759,8 @@ namespace Engine
 						ld.size = 8;
 						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | 0x3FFFF);
 					} else if (!idle) encode_put_addr_of(Reg::X17, node.self);
+					// TODO: END REWORK
+					
 					if (!idle) {
 						for (auto & ld : vec_reload) encode_load(ld.value.size, ld.value.reg, ld.key);
 						encode_branch_call(Reg::X17);

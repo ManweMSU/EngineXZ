@@ -1256,6 +1256,8 @@ namespace Engine
 					retval_byref = _is_out_pass_by_reference(node.retval_spec);
 					retval_final = node.retval_final.final.ref_class != ReferenceNull;
 					SafePointer< Array<_argument_passage_info> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no, &conv);
+					
+					// TODO: REWORK
 					_encode_preserve(Reg::EAX, reg_in_use, !idle && preserve_eax);
 					_encode_preserve(Reg::EDX, reg_in_use, !idle);
 					_encode_preserve(Reg::ECX, reg_in_use, !idle);
@@ -1316,6 +1318,8 @@ namespace Engine
 					} else {
 						if (!idle) encode_put_addr_of(Reg::EAX, node.self);
 					}
+					// TODO: END REWORK
+					
 					if (!idle) {
 						encode_call(Reg::EAX, false);
 						if (_conv == CallingConvention::Unix && retval_byref) unpush -= 4;

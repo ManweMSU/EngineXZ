@@ -159,6 +159,7 @@ namespace Engine
 			LObject * CreatePropertySetter(LObject * prop, uint flags);
 			LObject * CreatePropertyGetter(LObject * prop, uint flags);
 			LObject * CreatePrivateFunction(uint flags);
+			LObject * CreatePrivateClass(void);
 			void InstallObject(LObject * object, const string & path);
 			bool IsInterface(LObject * cls);
 			XA::ArgumentSemantics GetClassSemantics(LObject * cls);

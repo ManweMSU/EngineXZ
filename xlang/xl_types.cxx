@@ -485,14 +485,18 @@ namespace Engine
 					chain.Push(current);
 					current = current->GetParentClass();
 				}
+				bool first = true;
 				while (!chain.IsEmpty()) {
 					auto cls = chain.Pop();
 					auto src = static_cast<TypeClass *>(cls);
 					_last_vft_index += src->_interfaces.Length();
-					_vft_index = src->_vft_index;
-					_vft_offset = src->_vft_offset;
-					_parent._vft_index = _vft_index;
-					_parent._vft_offset = _vft_offset;
+					if (first) {
+						_vft_index = src->_vft_index;
+						_vft_offset = src->_vft_offset;
+						_parent._vft_index = _vft_index;
+						_parent._vft_offset = _vft_offset;
+						first = false;
+					}
 				}
 				for (auto & i : _interfaces) {
 					_last_vft_index++;
