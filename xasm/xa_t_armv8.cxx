@@ -695,75 +695,74 @@ namespace Engine
 					if (!idle) encode_sub(Reg::SP, Reg::SP, stack_usage);
 					Volumes::Dictionary<Reg, _vector_argument_reload> vec_reload;
 					int rv_offset = 0;
-
-					// TODO: REWORK
-					for (auto & info : *layout) {
-						if (info.index >= 0) {
-							auto & spec = node.input_specs[first_arg + info.index];
-							auto & tree = node.inputs[first_arg + info.index];
-							_internal_disposition ld;
-							ld.size = _size_eval(spec.size);
-							if (info.indirect) {
-								ld.flags = DispositionPointer;
-								ld.reg = info.reg_min != Reg::NO ? info.reg_min : Reg::X17;
-							} else {
-								if (info.vreg != VReg::NO) {
-									ld.flags = DispositionPointer;
-									ld.reg = _make_reg(_reg_code(info.vreg) + 9);
-									_vector_argument_reload rl;
-									rl.reg = info.vreg;
-									rl.size = ld.size;
-									vec_reload.Append(ld.reg, rl);
-								} else if (info.reg_min != Reg::NO && info.reg_max != Reg::NO && info.reg_min != info.reg_max) {
-									ld.flags = DispositionPointer;
-									ld.reg = info.reg_min;
-								} else if (info.reg_min != Reg::NO) {
-									ld.flags = DispositionAny;
-									ld.reg = info.reg_min;
-									if (spec.semantics == ArgumentSemantics::SignedInteger) ld.flags |= DispositionSigned;
-								} else {
-									ld.flags = DispositionAny;
-									ld.reg = Reg::X17;
-									if (spec.semantics == ArgumentSemantics::SignedInteger) ld.flags |= DispositionSigned;
-								}
-							}
-							_encode_tree_node(tree, idle, mem_load, &ld, reg_in_use | 0x3FFFF);
-							if (!idle) {
-								if (info.indirect) {
-									if (info.stack_offset >= 0) encode_store(8, Reg::SP, info.stack_offset, ld.reg);
-								} else {
-									if (info.vreg != VReg::NO) {
-									} else if (info.reg_min != Reg::NO && info.reg_max != Reg::NO && info.reg_min != info.reg_max) {
-										encode_load(8, false, info.reg_max, info.reg_min, 8);
-										encode_load(8, false, info.reg_min, info.reg_min);
-									} else if (info.reg_min != Reg::NO) {
-										if (ld.flags & DispositionPointer) encode_load(ld.size, spec.semantics == ArgumentSemantics::SignedInteger, info.reg_min, info.reg_min);
-									} else {
-										if (ld.flags & DispositionPointer) encode_load(ld.size, false, Reg::X17, Reg::X17);
-										encode_store(ld.size, Reg::SP, info.stack_offset, Reg::X17);
-									}
-								}
-							}
-						} else {
-							*mem_load += _word_align(node.retval_spec.size);
-							if (!idle) {
-								rv_offset = _allocate_temporary(node.retval_spec.size, node.retval_final);
-								encode_emulate_lea(info.reg_min, Reg::FP, rv_offset);
-							}
-						}
-					}
 					if (indirect) {
 						_internal_disposition ld;
 						ld.flags = DispositionRegister;
-						ld.reg = Reg::X17;
+						ld.reg = Reg::X16;
 						ld.size = 8;
 						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | 0x3FFFF);
-					} else if (!idle) encode_put_addr_of(Reg::X17, node.self);
-					// TODO: END REWORK
-					
+					}
+					for (int i = -1; i < node.inputs.Length(); i++) {
+						for (auto & info : *layout) if (info.index == i) {
+							if (info.index >= 0) {
+								auto & spec = node.input_specs[first_arg + info.index];
+								auto & tree = node.inputs[first_arg + info.index];
+								_internal_disposition ld;
+								ld.size = _size_eval(spec.size);
+								if (info.indirect) {
+									ld.flags = DispositionPointer;
+									ld.reg = info.reg_min != Reg::NO ? info.reg_min : Reg::X17;
+								} else {
+									if (info.vreg != VReg::NO) {
+										ld.flags = DispositionPointer;
+										ld.reg = _make_reg(_reg_code(info.vreg) + 9);
+										_vector_argument_reload rl;
+										rl.reg = info.vreg;
+										rl.size = ld.size;
+										vec_reload.Append(ld.reg, rl);
+									} else if (info.reg_min != Reg::NO && info.reg_max != Reg::NO && info.reg_min != info.reg_max) {
+										ld.flags = DispositionPointer;
+										ld.reg = info.reg_min;
+									} else if (info.reg_min != Reg::NO) {
+										ld.flags = DispositionAny;
+										ld.reg = info.reg_min;
+										if (spec.semantics == ArgumentSemantics::SignedInteger) ld.flags |= DispositionSigned;
+									} else {
+										ld.flags = DispositionAny;
+										ld.reg = Reg::X17;
+										if (spec.semantics == ArgumentSemantics::SignedInteger) ld.flags |= DispositionSigned;
+									}
+								}
+								_encode_tree_node(tree, idle, mem_load, &ld, reg_in_use | 0x3FFFF);
+								if (!idle) {
+									if (info.indirect) {
+										if (info.stack_offset >= 0) encode_store(8, Reg::SP, info.stack_offset, ld.reg);
+									} else {
+										if (info.vreg != VReg::NO) {
+										} else if (info.reg_min != Reg::NO && info.reg_max != Reg::NO && info.reg_min != info.reg_max) {
+											encode_load(8, false, info.reg_max, info.reg_min, 8);
+											encode_load(8, false, info.reg_min, info.reg_min);
+										} else if (info.reg_min != Reg::NO) {
+											if (ld.flags & DispositionPointer) encode_load(ld.size, spec.semantics == ArgumentSemantics::SignedInteger, info.reg_min, info.reg_min);
+										} else {
+											if (ld.flags & DispositionPointer) encode_load(ld.size, false, Reg::X17, Reg::X17);
+											encode_store(ld.size, Reg::SP, info.stack_offset, Reg::X17);
+										}
+									}
+								}
+							} else {
+								*mem_load += _word_align(node.retval_spec.size);
+								if (!idle) {
+									rv_offset = _allocate_temporary(node.retval_spec.size, node.retval_final);
+									encode_emulate_lea(info.reg_min, Reg::FP, rv_offset);
+								}
+							}
+						}
+					}
+					if (!indirect && !idle) encode_put_addr_of(Reg::X16, node.self);
 					if (!idle) {
 						for (auto & ld : vec_reload) encode_load(ld.value.size, ld.value.reg, ld.key);
-						encode_branch_call(Reg::X17);
+						encode_branch_call(Reg::X16);
 						encode_add(Reg::SP, Reg::SP, stack_usage);
 					}
 					if (!retval_byref) {
