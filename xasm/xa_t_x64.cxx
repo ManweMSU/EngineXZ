@@ -880,7 +880,7 @@ namespace Engine
 							_encode_restore(ld.reg, reg_in_use | reg_used_mask, !idle);
 						}
 					}
-					if (rv_reg != Reg::NO) encode_lea(rv_reg, Reg::RBP, rv_offset);
+					if (!idle && rv_reg != Reg::NO) encode_lea(rv_reg, Reg::RBP, rv_offset);
 					if (!idle && num_args_by_xmm) {
 						if (indirect) encode_push(Reg::RAX);
 						for (int i = 0; i < argument_homes.Length(); i++) {

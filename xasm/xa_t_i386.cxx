@@ -1256,57 +1256,41 @@ namespace Engine
 					retval_byref = _is_out_pass_by_reference(node.retval_spec);
 					retval_final = node.retval_final.final.ref_class != ReferenceNull;
 					SafePointer< Array<_argument_passage_info> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no, &conv);
-					
-					// TODO: REWORK
+					Array<Reg> preserve_regs(0x10);
+					Array<int> argument_homes(1), argument_layout_index(1);
+					preserve_regs << Reg::ECX << Reg::EDX;
 					_encode_preserve(Reg::EAX, reg_in_use, !idle && preserve_eax);
-					_encode_preserve(Reg::EDX, reg_in_use, !idle);
-					_encode_preserve(Reg::ECX, reg_in_use, !idle);
-					int unpush = 0;
-					for (auto & info : layout->InversedElements()) {
+					for (auto & r : preserve_regs.Elements()) _encode_preserve(r, reg_in_use, !idle);
+					uint reg_used_mask = 0;
+					uint stack_usage = 0;
+					uint num_args_by_stack = 0;
+					for (auto & info : *layout) if (info.reg == Reg::NO) {
+						const XA::ArgumentSpecification * spec;
+						if (info.index >= 0) spec = &node.input_specs[info.index + first_arg];
+						else spec = &node.retval_spec;
+						if (info.indirect) stack_usage += 4; else stack_usage += _word_align(spec->size);
+						num_args_by_stack++;
+					}
+					if (stack_usage && !idle) encode_add(Reg::ESP, -int(stack_usage));
+					argument_homes.SetLength(node.inputs.Length() - first_arg);
+					argument_layout_index.SetLength(node.inputs.Length() - first_arg);
+					uint current_stack_index = 0;
+					int rv_offset = 0;
+					int rv_home = -1;
+					for (int i = 0; i < layout->Length(); i++) {
+						auto & info = layout->ElementAt(i);
 						if (info.index >= 0) {
-							auto & spec = node.input_specs[info.index + first_arg];
+							argument_layout_index[info.index] = i;
 							if (info.reg == Reg::NO) {
-								_internal_disposition ld;
-								ld.reg = Reg::EAX;
-								ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
-								ld.flags = info.indirect ? DispositionPointer : DispositionAny;
-								_encode_tree_node(node.inputs[info.index + first_arg], idle, mem_load, &ld, reg_in_use | uint(Reg::ECX) | uint(Reg::EAX));
-								if (info.indirect) {
-									if (!idle) encode_push(ld.reg);
-									unpush += 4;
-								} else {
-									if (ld.flags & DispositionPointer) {
-										if (ld.size == 4) {
-											unpush += 4;
-											if (!idle) { encode_mov_reg_mem(4, Reg::EDX, Reg::EAX); encode_push(Reg::EDX); }
-										} else if (ld.size > 0) {
-											int sa = _word_align(spec.size); unpush += sa;
-											if (!idle) {
-												encode_add(Reg::ESP, -sa);
-												encode_mov_reg_reg(4, Reg::EDX, Reg::ESP);
-												_encode_blt(Reg::EDX, Reg::EAX, ld.size, reg_in_use | uint(Reg::ECX) | uint(Reg::EDX) | uint(Reg::EAX));
-											}
-										}
-									} else if (ld.flags & DispositionRegister) {
-										if (ld.size > 0) { if (!idle) encode_push(ld.reg); unpush += 4; }
-									}
-								}
-							} else {
-								_internal_disposition ld;
-								ld.reg = info.reg;
-								ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
-								ld.flags = info.indirect ? DispositionPointer : DispositionRegister;
-								_encode_tree_node(node.inputs[info.index + first_arg], idle, mem_load, &ld, reg_in_use | uint(Reg::ECX) | uint(Reg::EAX));
-							}
+								argument_homes[info.index] = current_stack_index;
+								if (info.indirect) current_stack_index += 4;
+								else current_stack_index += _word_align(node.input_specs[info.index + first_arg].size);
+							} else argument_homes[info.index] = -1;
 						} else {
 							*mem_load += _word_align(node.retval_spec.size);
-							if (!idle) {
-								int offs;
-								_allocate_temporary(node.retval_spec.size, node.retval_final, &offs);
-								encode_lea(Reg::EAX, Reg::EBP, offs);
-								encode_push(Reg::EAX);
-								unpush += 4;
-							}
+							rv_home = current_stack_index;
+							current_stack_index += 4;
+							if (!idle) _allocate_temporary(node.retval_spec.size, node.retval_final, &rv_offset);
 						}
 					}
 					if (indirect) {
@@ -1314,16 +1298,65 @@ namespace Engine
 						ld.flags = DispositionRegister;
 						ld.reg = Reg::EAX;
 						ld.size = 4;
-						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | uint(Reg::ECX) | uint(Reg::EAX));
-					} else {
-						if (!idle) encode_put_addr_of(Reg::EAX, node.self);
+						reg_used_mask |= uint(ld.reg);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | reg_used_mask);
 					}
-					// TODO: END REWORK
-					
+					if (!idle && current_stack_index) {
+						encode_mov_reg_reg(4, Reg::EDX, Reg::ESP);
+						reg_used_mask |= uint(Reg::EDX);
+					}
+					for (int i = 0; i < argument_homes.Length(); i++) {
+						auto home = argument_homes[i];
+						auto & info = layout->ElementAt(argument_layout_index[i]);
+						auto & spec = node.input_specs[i + first_arg];
+						if (info.reg == Reg::NO) {
+							_internal_disposition ld;
+							ld.reg = Reg::EAX;
+							ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
+							ld.flags = info.indirect ? DispositionPointer : DispositionAny;
+							if (indirect && !idle) encode_push(Reg::EAX);
+							_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask | uint(Reg::EAX));
+							if (info.indirect) {
+								if (!idle) encode_mov_mem_reg(4, Reg::EDX, home, ld.reg);
+							} else {
+								if (ld.flags & DispositionPointer) {
+									if (ld.size == 4) {
+										if (!idle) {
+											encode_mov_reg_mem(4, ld.reg, ld.reg);
+											encode_mov_mem_reg(4, Reg::EDX, home, ld.reg);
+										}
+									} else {
+										if (!idle) {
+											if (home) encode_add(Reg::EDX, home);
+											_encode_blt(Reg::EDX, ld.reg, ld.size, reg_in_use | reg_used_mask | uint(Reg::EAX));
+											if (home) encode_add(Reg::EDX, -home);
+										}
+									}
+								} else if (ld.flags & DispositionRegister) {
+									if (ld.size > 0) { if (!idle) encode_mov_mem_reg(4, Reg::EDX, home, ld.reg); }
+								}
+							}
+							if (indirect && !idle) encode_pop(Reg::EAX);
+						} else {
+							_internal_disposition ld;
+							ld.reg = info.reg;
+							ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
+							ld.flags = info.indirect ? DispositionPointer : DispositionRegister;
+							reg_used_mask |= uint(ld.reg);
+							_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask);
+						}
+					}
+					if (!idle && rv_home != -1) {
+						if (indirect) encode_push(Reg::EAX);
+						encode_lea(Reg::EAX, Reg::EBP, rv_offset);
+						encode_mov_mem_reg(4, Reg::EDX, rv_home, Reg::EAX);
+						if (indirect) encode_pop(Reg::EAX);
+					}
+					if (!indirect && !idle) encode_put_addr_of(Reg::EAX, node.self);
 					if (!idle) {
 						encode_call(Reg::EAX, false);
-						if (_conv == CallingConvention::Unix && retval_byref) unpush -= 4;
-						if (unpush && conv == CC::CDECL) encode_add(Reg::ESP, unpush);
+						if (_conv == CallingConvention::Unix && retval_byref) stack_usage -= 4;
+						if (stack_usage && conv == CC::CDECL) encode_add(Reg::ESP, int(stack_usage));
 					}
 					int quant = _word_align(node.retval_spec.size);
 					if (!retval_byref && (node.retval_spec.semantics == ArgumentSemantics::FloatingPoint || quant > 4 || retval_final)) {
@@ -1342,8 +1375,7 @@ namespace Engine
 						retval_byref = true;
 						retval_final = false;
 					}
-					_encode_restore(Reg::ECX, reg_in_use, !idle);
-					_encode_restore(Reg::EDX, reg_in_use, !idle);
+					for (auto & r : preserve_regs.InversedElements()) _encode_restore(r, reg_in_use, !idle);
 					if ((disp->flags & DispositionPointer) && retval_byref) {
 						if (!idle && disp->reg != Reg::EAX) encode_mov_reg_reg(4, disp->reg, Reg::EAX);
 						disp->flags = DispositionPointer;
