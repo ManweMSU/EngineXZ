@@ -812,7 +812,7 @@ namespace Engine
 						if (_is_xmm_register(info.reg)) num_args_by_xmm++;
 						else if (info.reg == Reg::NO) num_args_by_stack++;
 					}
-					if (_conv == CallingConvention::Windows) stack_usage = max(node.inputs.Length() - first_arg, 4) * 8;
+					if (_conv == CallingConvention::Windows) stack_usage = max(layout->Length(), 4) * 8;
 					else if (_conv == CallingConvention::Unix) stack_usage = (num_args_by_stack + num_args_by_xmm) * 8;
 					if ((_stack_oddity + stack_usage) & 0xF) stack_usage += 8;
 					if (stack_usage && !idle) encode_add(Reg::RSP, -int(stack_usage));
@@ -835,6 +835,7 @@ namespace Engine
 								} else argument_homes[info.index] = -1;
 							}
 						} else {
+							if (_conv == CallingConvention::Windows) current_stack_index += 8;
 							*mem_load += _word_align(node.retval_spec.size);
 							rv_reg = info.reg;
 							if (!idle) _allocate_temporary(node.retval_spec.size, node.retval_final, &rv_offset);
@@ -866,7 +867,7 @@ namespace Engine
 						bool home_mode;
 						if (info.reg == Reg::NO || _is_xmm_register(info.reg)) {
 							home_mode = true;
-							ld.reg = Reg::RAX;
+							ld.reg = Reg::R14;
 						} else {
 							home_mode = false;
 							ld.reg = info.reg;
@@ -881,7 +882,7 @@ namespace Engine
 					}
 					if (rv_reg != Reg::NO) encode_lea(rv_reg, Reg::RBP, rv_offset);
 					if (!idle && num_args_by_xmm) {
-						encode_push(Reg::RAX);
+						if (indirect) encode_push(Reg::RAX);
 						for (int i = 0; i < argument_homes.Length(); i++) {
 							auto home = argument_homes[i];
 							auto & info = layout->ElementAt(argument_layout_index[i]);
@@ -890,7 +891,7 @@ namespace Engine
 								encode_mov_xmm_reg(8, info.reg, Reg::RAX);
 							}
 						}
-						encode_pop(Reg::RAX);
+						if (indirect) encode_pop(Reg::RAX);
 					}
 					if (!indirect && !idle) encode_put_addr_of(Reg::RAX, node.self);
 					if (!idle) {

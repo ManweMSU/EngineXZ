@@ -33,5 +33,7 @@ functio nihil primus() introitus iacit
 	t^.do_something();
 
 	actuarius.scribe("suka ty pidor");
+
+	linea("pidor").ad_int32();
 	iace 666;
 }
