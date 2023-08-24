@@ -874,7 +874,7 @@ namespace Engine
 							reg_used_mask |= uint(ld.reg);
 						}
 						if (home_mode) _encode_preserve(ld.reg, reg_in_use | reg_used_mask, !idle);
-						_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask);
+						_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask | uint(ld.reg));
 						if (home_mode) {
 							if (!idle) encode_mov_mem_reg(8, Reg::RBX, home, ld.reg);
 							_encode_restore(ld.reg, reg_in_use | reg_used_mask, !idle);
