@@ -873,11 +873,11 @@ namespace Engine
 							ld.reg = info.reg;
 							reg_used_mask |= uint(ld.reg);
 						}
-						if (home_mode) _encode_preserve(ld.reg, reg_used_mask, !idle);
+						if (home_mode) _encode_preserve(ld.reg, reg_in_use | reg_used_mask, !idle);
 						_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask);
 						if (home_mode) {
 							if (!idle) encode_mov_mem_reg(8, Reg::RBX, home, ld.reg);
-							_encode_restore(ld.reg, reg_used_mask, !idle);
+							_encode_restore(ld.reg, reg_in_use | reg_used_mask, !idle);
 						}
 					}
 					if (rv_reg != Reg::NO) encode_lea(rv_reg, Reg::RBP, rv_offset);
