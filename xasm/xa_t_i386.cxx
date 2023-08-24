@@ -1293,17 +1293,17 @@ namespace Engine
 							if (!idle) _allocate_temporary(node.retval_spec.size, node.retval_final, &rv_offset);
 						}
 					}
+					if (!idle && current_stack_index) {
+						encode_mov_reg_reg(4, Reg::EDX, Reg::ESP);
+						reg_used_mask |= uint(Reg::EDX);
+					}
 					if (indirect) {
 						_internal_disposition ld;
 						ld.flags = DispositionRegister;
 						ld.reg = Reg::EAX;
 						ld.size = 4;
-						reg_used_mask |= uint(ld.reg);
-						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | reg_used_mask);
-					}
-					if (!idle && current_stack_index) {
-						encode_mov_reg_reg(4, Reg::EDX, Reg::ESP);
-						reg_used_mask |= uint(Reg::EDX);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | reg_used_mask | uint(ld.reg));
+						if (!idle) encode_push(ld.reg);
 					}
 					for (int i = 0; i < argument_homes.Length(); i++) {
 						auto home = argument_homes[i];
@@ -1314,7 +1314,6 @@ namespace Engine
 							ld.reg = Reg::EAX;
 							ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
 							ld.flags = info.indirect ? DispositionPointer : DispositionAny;
-							if (indirect && !idle) encode_push(Reg::EAX);
 							_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask | uint(Reg::EAX));
 							if (info.indirect) {
 								if (!idle) encode_mov_mem_reg(4, Reg::EDX, home, ld.reg);
@@ -1336,7 +1335,6 @@ namespace Engine
 									if (ld.size > 0) { if (!idle) encode_mov_mem_reg(4, Reg::EDX, home, ld.reg); }
 								}
 							}
-							if (indirect && !idle) encode_pop(Reg::EAX);
 						} else {
 							_internal_disposition ld;
 							ld.reg = info.reg;
@@ -1347,13 +1345,12 @@ namespace Engine
 						}
 					}
 					if (!idle && rv_home != -1) {
-						if (indirect) encode_push(Reg::EAX);
 						encode_lea(Reg::EAX, Reg::EBP, rv_offset);
 						encode_mov_mem_reg(4, Reg::EDX, rv_home, Reg::EAX);
-						if (indirect) encode_pop(Reg::EAX);
 					}
-					if (!indirect && !idle) encode_put_addr_of(Reg::EAX, node.self);
 					if (!idle) {
+						if (indirect) encode_pop(Reg::EAX);
+						else encode_put_addr_of(Reg::EAX, node.self);
 						encode_call(Reg::EAX, false);
 						if (_conv == CallingConvention::Unix && retval_byref) stack_usage -= 4;
 						if (stack_usage && conv == CC::CDECL) encode_add(Reg::ESP, int(stack_usage));

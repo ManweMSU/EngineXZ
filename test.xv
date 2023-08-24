@@ -27,6 +27,10 @@ functio nihil primus() introitus iacit
 	actuarius.scribe(e);
 	actuarius.scribe(se);
 	actuarius.scribe(math.sin(f1 / f2));
+	actuarius.scribe(int64(60606060) * int64(1000000));
+	systema.informatio inf;
+	systema.para_informatio(inf);
+	actuarius.scribe(linea.ex(inf));
 
 	var t = crea(test, 234);
 
