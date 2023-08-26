@@ -2928,7 +2928,13 @@ spatium contextus {
 	[[importa] ctx_crsem] functio adl[semaphorum] crea_semaphorum(int valor);
 	[[importa] ctx_crsgn] functio adl[signale] crea_signale();
 	[[importa] ctx_crfil] functio adl[filum] exeque(@labos lab);
+
+	functio nihil exeque_in_contextu(@cauda ctx, @labos lab) { ctx^.adde(lab); }
+	functio adl[signale] exeque_in_contextu_et_opperire(@cauda ctx, @labos_opperitus lab) { ctx^.adde(lab); responde lab^.para_signale(); }
 }
+
+praeforma operator muta_contextum(C) { .contextus.exeque_in_contextu($C, .contextus.labos ## { $_ }) }
+praeforma operator muta_contextum_et_opperire(C) { .contextus.exeque_in_contextu_et_opperire($C, .contextus.labos_opperitus ## { $_ }) }
 
 genus meta hereditat objectum {
 	constatus attributum_nomen_moduli	= "NomenModuli";

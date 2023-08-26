@@ -33,9 +33,6 @@ namespace Engine
 			InvalidLoopCtrlPlace	= 0x0017,
 			InvalidParentClass		= 0x0018,
 			InvalidInterfaceClass	= 0x0019,
-			
-			// TODO: IMPLEMENT
-
 			InternalError			= 0xFFFF,
 		};
 		struct CompilerStatusDesc

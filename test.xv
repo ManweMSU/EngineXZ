@@ -9,7 +9,7 @@ genus test hereditat objectum {
 	functio nihil do_something()
 	{
 		proba {
-			var task = contextus.labos_opperitus <== {
+			var task = contextus.labos_opperitus ## {
 				contextus.dormi(3000);
 				proba actuarius.scribe("task fire: " + linea(valor));
 			};
@@ -17,6 +17,10 @@ genus test hereditat objectum {
 			task^.para_signale()^.opperire();
 		}
 	}
+}
+
+praeforma operator parallel_context() {
+	.contextus.exeque(.contextus.labos ## { $_ })
 }
 
 functio nihil primus() introitus iacit
@@ -31,6 +35,14 @@ functio nihil primus() introitus iacit
 	systema.informatio inf;
 	systema.para_informatio(inf);
 	actuarius.scribe(linea.ex(inf));
+
+	var actx = contextus.crea_caudam_filorum();
+	muta_contextum_et_opperire(actx) {
+		pro (var i : [0, 5]) {
+			proba actuarius.scribe(linea.forma("waiting: %0", i));
+			contextus.dormi(1000);
+		}
+	}^.opperire();
 
 	var t = crea(test, 234);
 

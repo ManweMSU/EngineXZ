@@ -39,7 +39,7 @@ namespace Engine
 
 		XL::LObject * CreatePartialInstantiation(XL::LObject * proto, int argc, XL::LObject ** argv);
 
-		enum class PrototypeClass { Type, Function };
+		enum class PrototypeClass { Type, Function, Block, BlockAwait };
 		class VPrototype : public XL::XObject
 		{
 		public:
@@ -371,6 +371,7 @@ namespace Engine
 				proto.data = new DataBlock(0x1000);
 				if (GetPrototypeClass() == PrototypeClass::Type) proto.data->Append(0);
 				else if (GetPrototypeClass() == PrototypeClass::Function) proto.data->Append(1);
+				else if (GetPrototypeClass() == PrototypeClass::Block) proto.data->Append(2);
 				else return;
 				for (auto & a : _args) {
 					Token token;
@@ -467,6 +468,177 @@ namespace Engine
 				return instance->Invoke(argc, argv);
 			}
 		};
+		class BlockAwaitPrototype : public VPrototype
+		{
+			ICompilationContext & _ctx;
+			SafePointer<DataBlock> _impl;
+			Array<string> _args_names;
+			ObjectArray<XL::LObject> _args;
+
+			class ArrayTokenStream : public ITokenStream
+			{
+				SafePointer< Array<Token> > _data;
+				int _current;
+			public:
+				ArrayTokenStream(Array<Token> * data) : _current(0) { _data.SetRetain(data); }
+				virtual ~ArrayTokenStream(void) override {}
+				virtual bool ReadToken(Token & dest) override
+				{
+					if (_current < _data->Length()) {
+						dest = _data->ElementAt(_current);
+						_current++;
+					} else {
+						dest.type = TokenType::EOF;
+						dest.ex_data = dest.range_from = dest.range_length = 0;
+						dest.contents_i = 0;
+						dest.contents_f = 0.0;
+					}
+					return true;
+				}
+				virtual bool ReadBlock(ITokenStream ** deferred_stream) override
+				{
+					SafePointer< Array<Token> > data = new Array<Token>(0x100);
+					*deferred_stream = 0;
+					int level = 0;
+					while (true) {
+						Token token;
+						if (!ReadToken(token)) return false;
+						if (token.type == TokenType::EOF) return false;
+						else if (token.type == TokenType::Punctuation && token.contents == L"{") level++;
+						else if (token.type == TokenType::Punctuation && token.contents == L"}") { level--; if (level < 0) break; }
+						data->Append(token);
+					}
+					*deferred_stream = new ArrayTokenStream(data);
+					return true;
+				}
+				virtual void ExtractRange(int from, int length, string & line, int & line_no, int & line_from, int & line_length) const override { throw Exception(); }
+				virtual int GetCurrentPosition(void) const override { throw Exception(); }
+				virtual string ExtractContents(void) const override { throw Exception(); }
+				virtual DataBlock * Serialize(void) override { throw Exception(); }
+			};
+			class HybridTokenStream : public ITokenStream
+			{
+				bool _source;
+				SafePointer<ITokenStream> _command, _parameter;
+				Volumes::Dictionary<string, string> _inputs;
+			public:
+				HybridTokenStream(ITokenStream * cmd, ITokenStream * param, int inc, const string * inarg, const string * inrepl) : _source(false)
+				{
+					_command.SetRetain(cmd);
+					_parameter.SetRetain(param);
+					for (int i = 0; i < inc; i++) _inputs.Append(inarg[i], inrepl[i]);
+				}
+				virtual ~HybridTokenStream(void) override {}
+				virtual bool ReadToken(Token & dest) override
+				{
+					Token internal;
+					if (_source) {
+						if (!_parameter->ReadToken(internal)) return false;
+						if (internal.type == TokenType::EOF) {
+							_source = false;
+							return ReadToken(dest);
+						} else dest = internal;
+					} else {
+						if (!_command->ReadToken(internal)) return false;
+						if (internal.type == TokenType::PrototypeSymbol) {
+							if (!_command->ReadToken(internal)) return false;
+							if (internal.type != TokenType::Identifier) return false;
+							if (internal.contents == L"_") {
+								_source = true;
+								return ReadToken(dest);
+							} else {
+								auto repl = _inputs[internal.contents];
+								if (!repl) return false;
+								internal.contents = *repl;
+								dest = internal;
+							}
+						} else dest = internal;
+					}
+					return true;
+				}
+				virtual bool ReadBlock(ITokenStream ** deferred_stream) override
+				{
+					SafePointer< Array<Token> > data = new Array<Token>(0x100);
+					*deferred_stream = 0;
+					int level = 0;
+					while (true) {
+						Token token;
+						if (!ReadToken(token)) return false;
+						if (token.type == TokenType::EOF) return false;
+						else if (token.type == TokenType::Punctuation && token.contents == L"{") level++;
+						else if (token.type == TokenType::Punctuation && token.contents == L"}") { level--; if (level < 0) break; }
+						data->Append(token);
+					}
+					*deferred_stream = new ArrayTokenStream(data);
+					return true;
+				}
+				virtual void ExtractRange(int from, int length, string & line, int & line_no, int & line_from, int & line_length) const override { _parameter->ExtractRange(from, length, line, line_no, line_from, line_length); }
+				virtual int GetCurrentPosition(void) const override { return _parameter->GetCurrentPosition(); }
+				virtual string ExtractContents(void) const override { throw Exception(); }
+				virtual DataBlock * Serialize(void) override { throw Exception(); }
+			};
+		public:
+			BlockAwaitPrototype(ICompilationContext & ctx, DataBlock * impl, const Array<string> & names, int argc, LObject ** argv) : _ctx(ctx), _args_names(names), _args(0x10)
+			{
+				_impl.SetRetain(impl);
+				for (int i = 0; i < argc; i++) _args.Append(argv[i]);
+			}
+			virtual ~BlockAwaitPrototype(void) override {}
+			virtual string GetName(void) override { return L""; }
+			virtual string GetFullName(void) override { return L""; }
+			virtual bool IsDefinedLocally(void) override { return false; }
+			virtual XL::Class GetClass(void) override { return XL::Class::Prototype; }
+			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
+			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
+			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
+			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
+			virtual void EncodeSymbols(XI::Module & dest, XL::Class parent) override {}
+			virtual PrototypeClass GetPrototypeClass(void) override { return PrototypeClass::BlockAwait; }
+			virtual int GetPrototypeArgumentCount(void) override { return _args_names.Length(); }
+			virtual string GetPrototypeArgument(int index) override { return _args_names[index]; }
+			virtual XL::LObject * Instantiate(int argc, XL::LObject ** argv) override { throw Exception(); }
+			virtual void SetArgumentList(int argc, const string * argv) override { throw Exception(); }
+			virtual void SetVisibilityList(int argc, XL::LObject ** argv) override { throw Exception(); }
+			virtual void SetImplementation(ITokenStream * impl) override { throw Exception(); }
+			XL::LObject * BlockInvoke(ITokenStream * block, XL::LObject ** ssl, int ssc)
+			{
+				SafePointer<XL::LObject> internal_scope = XL::CreateScope();
+				Array<string> equiv(0x10);
+				for (int i = 0; i < _args_names.Length(); i++) {
+					auto name = FormatString(L"@A@", i);
+					internal_scope->AddMember(name, _args.ElementAt(i));
+					equiv << name;
+				}
+				SafePointer<ITokenStream> command = new RestorationStream(_impl);
+				SafePointer<ITokenStream> stream = new HybridTokenStream(command, block, equiv.Length(), _args_names.GetBuffer(), equiv.GetBuffer());
+				Array<XL::LObject *> new_ssl(0x10);
+				new_ssl.Append(internal_scope);
+				new_ssl.Append(ssl, ssc);
+				Token current;
+				if (!stream->ReadToken(current)) throw Exception();
+				SafePointer<XL::LObject> result = _ctx.ProcessLanguageExpressionThrow(stream, current, new_ssl.GetBuffer(), ssc + 1);
+				result->Retain();
+				return result;
+			}
+		};
+		class BlockPrototype : public BasePrototype
+		{
+		public:
+			BlockPrototype(ICompilationContext & ctx, const string & name, const string & path, bool local) : BasePrototype(ctx, name, path, local) {}
+			BlockPrototype(ICompilationContext & ctx, const string & name, const string & path, bool local, const DataBlock & data) : BasePrototype(ctx, name, path, local, data) {}
+			virtual ~BlockPrototype(void) override {}
+			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
+			virtual LObject * Invoke(int argc, LObject ** argv) override
+			{
+				if (argc != _args.Length()) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
+				return new BlockAwaitPrototype(_ctx, _impl, _args, argc, argv);
+			}
+			virtual PrototypeClass GetPrototypeClass(void) override { return PrototypeClass::Block; }
+			virtual XL::LObject * Instantiate(int argc, XL::LObject ** argv) override { throw Exception(); }
+			virtual void SetVisibilityList(int argc, XL::LObject ** argv) override { throw Exception(); }
+		};
 		class PartialPrototype : public XL::XObject
 		{
 			ObjectArray<Object> _retain;
@@ -505,6 +677,7 @@ namespace Engine
 				auto del = ident.FindLast(L'.');
 				if (data[0] == 0) proto = new BasePrototype(_ctx, ident.Fragment(del + 1, -1), ident, false, data);
 				else if (data[0] == 1) proto = new FunctionPrototype(_ctx, ident.Fragment(del + 1, -1), ident, false, data);
+				else if (data[0] == 2) proto = new BlockPrototype(_ctx, ident.Fragment(del + 1, -1), ident, false, data);
 				_ctx.GetLanguageContext()->InstallObject(proto, ident);
 			}
 		};
@@ -778,6 +951,29 @@ namespace Engine
 			proto->SetArgumentList(argc, argv);
 			at->AddMember(name, proto);
 			return proto;
+		}
+		XL::LObject * CreateBlockPrototype(ICompilationContext * context, XL::LObject * at, const string & name, int argc, const string * argv)
+		{
+			if (!at) throw InvalidArgumentException();
+			if (at->GetClass() != XL::Class::Namespace && at->GetClass() != XL::Class::Type) throw InvalidArgumentException();
+			auto prefix = at->GetFullName();
+			if (prefix.Length()) prefix += L".";
+			SafePointer<BasePrototype> proto = new BlockPrototype(*context, name, prefix + name, true);
+			proto->SetArgumentList(argc, argv);
+			at->AddMember(name, proto);
+			return proto;
+		}
+
+		bool IsBlockAwaitPrototype(XL::LObject * proto)
+		{
+			if (proto->GetClass() != XL::Class::Prototype) return false;
+			if (static_cast<VPrototype *>(proto)->GetPrototypeClass() != PrototypeClass::BlockAwait) return false;
+			return true;
+		}
+		XL::LObject * InvokeBlockPrototype(XL::LObject * proto, ITokenStream * block, XL::LObject ** ssl, int ssc)
+		{
+			if (!IsBlockAwaitPrototype(proto)) throw InvalidArgumentException();
+			return static_cast<BlockAwaitPrototype *>(proto)->BlockInvoke(block, ssl, ssc);
 		}
 	}
 }

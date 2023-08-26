@@ -102,6 +102,29 @@ namespace Engine
 				if (result) result->Retain();
 				return result;
 			}
+			virtual XL::LObject * ProcessLanguageExpressionThrow(ITokenStream * input, Token & input_current_token, XL::LObject ** vns, int num_vns) override
+			{
+				SafePointer<XL::LObject> result;
+				auto _io = input_override;
+				auto _t = current_token;
+				try {
+					VObservationDesc desc;
+					desc.current_namespace = 0;
+					for (int i = 0; i < num_vns; i++) desc.namespace_search_list << vns[i];
+					input_override.SetRetain(input);
+					current_token = input_current_token;
+					result = ProcessExpression(desc);
+					input_current_token = current_token;
+				} catch (...) {
+					input_override = _io;
+					current_token = _t;
+					throw;
+				}
+				input_override = _io;
+				current_token = _t;
+				if (result) result->Retain();
+				return result;
+			}
 			virtual bool ProcessLanguageDefinitions(ITokenStream * input, XL::LObject * dest_ns, XL::LObject ** vns, int num_vns) override
 			{
 				bool result = true;
@@ -323,10 +346,16 @@ namespace Engine
 			XL::LObject * ProcessExpressionPostfix(XL::LObject ** ssl, int ssc)
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionSubject(ssl, ssc);
-				while (IsPunct(L"(") || IsPunct(L".") || IsPunct(L"[") || IsPunct(L"<==") || IsPunct(XL::OperatorFollow) ||
+				while (IsPunct(L"(") || IsPunct(L".") || IsPunct(L"[") || IsPunct(L"##") || IsPunct(L"{") || IsPunct(XL::OperatorFollow) ||
 					IsPunct(XL::OperatorIncrement) || IsPunct(XL::OperatorDecrement) || IsKeyword(Lexic::KeywordAs)) {
 					auto op = current_token;
-					if (op.contents == L"<==") {
+					if (op.contents == L"{") {
+						if (!IsBlockAwaitPrototype(object)) break;
+						SafePointer<ITokenStream> stream;
+						if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
+						ReadNextToken();
+						object = InvokeBlockPrototype(object, stream, ssl, ssc);
+					} else if (op.contents == L"##") {
 						ReadNextToken(); AssertPunct(L"{");
 						if (!ClassImplements(object, L"contextus.labos")) Abort(CompilerStatus::NoSuchOverload, ExposeInput()->GetCurrentPosition());
 						SafePointer<ITokenStream> stream;
@@ -694,20 +723,22 @@ namespace Engine
 			}
 			void ProcessPrototypeDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
-				bool function;
+				bool function, block;
 				string name;
 				Array<string> arg_list(0x10);
 				ReadNextToken();
 				if (IsKeyword(Lexic::KeywordClass)) {
-					ReadNextToken(); function = false;
+					function = block = false;
+				} else if (IsKeyword(Lexic::KeywordFunction)) {
+					function = true; block = false;
 				} else {
-					AssertKeyword(Lexic::KeywordFunction);
-					ReadNextToken(); function = true;
+					AssertKeyword(Lexic::KeywordOperator);
+					function = false; block = true;
 				}
-				auto def = current_token;
+				ReadNextToken(); auto def = current_token;
 				AssertIdent(); name = current_token.contents; ReadNextToken();
 				AssertPunct(L"("); ReadNextToken();
-				while (true) {
+				if (!block || !IsPunct(L")")) while (true) {
 					AssertIdent(); string arg = current_token.contents;
 					for (auto & a : arg_list) if (a == arg) Abort(CompilerStatus::SymbolRedefinition, current_token);
 					arg_list.Append(arg);
@@ -717,6 +748,7 @@ namespace Engine
 				XL::LObject * prot;
 				try {
 					if (function) prot = CreateFunctionPrototype(this, desc.current_namespace, name, arg_list.Length(), arg_list.GetBuffer());
+					else if (block) prot = CreateBlockPrototype(this, desc.current_namespace, name, arg_list.Length(), arg_list.GetBuffer());
 					else prot = CreateClassPrototype(this, desc.current_namespace, name, arg_list.Length(), arg_list.GetBuffer());
 				} catch (...) {Abort( CompilerStatus::SymbolRedefinition, def); }
 				for (auto & attr : attributes) {
@@ -724,7 +756,7 @@ namespace Engine
 					else prot->AddAttribute(attr.key, attr.value);
 				}
 				attributes.Clear();
-				SetPrototypeVisibility(prot, desc.namespace_search_list.GetBuffer(), desc.namespace_search_list.Length());
+				if (!block) SetPrototypeVisibility(prot, desc.namespace_search_list.GetBuffer(), desc.namespace_search_list.Length());
 				AssertPunct(L"{");
 				SafePointer<ITokenStream> stream;
 				if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());

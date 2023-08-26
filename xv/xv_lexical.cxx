@@ -75,9 +75,6 @@ namespace Engine
 			if (str == Lexic::KeywordEnum) return true;
 			if (str == Lexic::KeywordAs) return true;
 			if (str == Lexic::KeywordTrap) return true;
-
-			// TODO: IMPLEMENT REGISTER KEYWORDS
-
 			return false;
 		}
 		bool IsLiteralTrue(const string & str) { return str == Lexic::LiteralYes; }
