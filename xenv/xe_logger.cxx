@@ -29,7 +29,7 @@ namespace Engine
 			virtual ~Logger(void) override {}
 			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				if (routine_name == L"descriptio_erroris") return _error_desc;
+				if (routine_name == L"descriptio_erroris") return reinterpret_cast<const void *>(&_error_desc);
 				else return 0;
 			}
 			virtual const void * ExposeInterface(const string & interface) noexcept override
