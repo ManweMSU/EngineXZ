@@ -35,7 +35,7 @@ namespace Engine
 			{
 				for (auto & e : _apis) {
 					auto addr = e.ExposeRoutine(routine_name);
-					if (addr) return addr;
+					if (addr) return const_cast<void *>(addr);
 				}
 				return 0;
 			}
@@ -60,7 +60,7 @@ namespace Engine
 			{
 				for (auto & e : _apis) {
 					auto addr = e.ExposeInterface(interface);
-					if (addr) return addr;
+					if (addr) return const_cast<void *>(addr);
 				}
 				return 0;
 			}

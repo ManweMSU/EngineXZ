@@ -27,12 +27,12 @@ namespace Engine
 		public:
 			Logger(void) : _sink(0) {}
 			virtual ~Logger(void) override {}
-			virtual void * ExposeRoutine(const string & routine_name) noexcept override
+			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				if (routine_name == L"descriptio_erroris") return const_cast<void *>(reinterpret_cast<const void *>(&_error_desc));
+				if (routine_name == L"descriptio_erroris") return _error_desc;
 				else return 0;
 			}
-			virtual void * ExposeInterface(const string & interface) noexcept override
+			virtual const void * ExposeInterface(const string & interface) noexcept override
 			{
 				if (interface == L"actuarius") return static_cast<InternalLoggerInterface *>(this);
 				else return 0;

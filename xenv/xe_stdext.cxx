@@ -138,168 +138,589 @@ namespace Engine
 			static double _asin_d(double value) { return asin(value); }
 			static double _acos_d(double value) { return acos(value); }
 			static double _atan_d(double value) { return atan(value); }
-
-			void * _expose_part_1(const string & routine_name) noexcept
-			{
-				if (routine_name == L"fpu_32_neg") return const_cast<void *>(reinterpret_cast<const void *>(&_neg_32));
-				else if (routine_name == L"fpu_64_neg") return const_cast<void *>(reinterpret_cast<const void *>(&_neg_64));
-				else if (routine_name == L"fpu_32_non") return const_cast<void *>(reinterpret_cast<const void *>(&_not_32));
-				else if (routine_name == L"fpu_64_non") return const_cast<void *>(reinterpret_cast<const void *>(&_not_64));
-				else if (routine_name == L"fpu_32_lsm") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_add_32));
-				else if (routine_name == L"fpu_64_lsm") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_add_64));
-				else if (routine_name == L"fpu_32_lsb") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_sub_32));
-				else if (routine_name == L"fpu_64_lsb") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_sub_64));
-				else if (routine_name == L"fpu_32_lml") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_mul_32));
-				else if (routine_name == L"fpu_64_lml") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_mul_64));
-				else if (routine_name == L"fpu_32_ldv") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_div_32));
-				else if (routine_name == L"fpu_64_ldv") return const_cast<void *>(reinterpret_cast<const void *>(&_asgn_div_64));
-				else if (routine_name == L"fpu_32_inc") return const_cast<void *>(reinterpret_cast<const void *>(&_inc_32));
-				else if (routine_name == L"fpu_64_inc") return const_cast<void *>(reinterpret_cast<const void *>(&_inc_64));
-				else if (routine_name == L"fpu_32_dec") return const_cast<void *>(reinterpret_cast<const void *>(&_dec_32));
-				else if (routine_name == L"fpu_64_dec") return const_cast<void *>(reinterpret_cast<const void *>(&_dec_64));
-				else if (routine_name == L"fpu_32_sum") return const_cast<void *>(reinterpret_cast<const void *>(&_add_32));
-				else if (routine_name == L"fpu_64_sum") return const_cast<void *>(reinterpret_cast<const void *>(&_add_64));
-				else if (routine_name == L"fpu_32_sub") return const_cast<void *>(reinterpret_cast<const void *>(&_sub_32));
-				else if (routine_name == L"fpu_64_sub") return const_cast<void *>(reinterpret_cast<const void *>(&_sub_64));
-				else if (routine_name == L"fpu_32_mul") return const_cast<void *>(reinterpret_cast<const void *>(&_mul_32));
-				else if (routine_name == L"fpu_64_mul") return const_cast<void *>(reinterpret_cast<const void *>(&_mul_64));
-				else if (routine_name == L"fpu_32_div") return const_cast<void *>(reinterpret_cast<const void *>(&_div_32));
-				else if (routine_name == L"fpu_64_div") return const_cast<void *>(reinterpret_cast<const void *>(&_div_64));
-				else if (routine_name == L"fpu_32_par") return const_cast<void *>(reinterpret_cast<const void *>(&_eq_32));
-				else if (routine_name == L"fpu_64_par") return const_cast<void *>(reinterpret_cast<const void *>(&_eq_64));
-				else if (routine_name == L"fpu_32_npr") return const_cast<void *>(reinterpret_cast<const void *>(&_neq_32));
-				else if (routine_name == L"fpu_64_npr") return const_cast<void *>(reinterpret_cast<const void *>(&_neq_64));
-				else if (routine_name == L"fpu_32_min") return const_cast<void *>(reinterpret_cast<const void *>(&_ls_32));
-				else if (routine_name == L"fpu_64_min") return const_cast<void *>(reinterpret_cast<const void *>(&_ls_64));
-				else if (routine_name == L"fpu_32_maj") return const_cast<void *>(reinterpret_cast<const void *>(&_gt_32));
-				else if (routine_name == L"fpu_64_maj") return const_cast<void *>(reinterpret_cast<const void *>(&_gt_64));
-				else if (routine_name == L"fpu_32_pmn") return const_cast<void *>(reinterpret_cast<const void *>(&_le_32));
-				else if (routine_name == L"fpu_64_pmn") return const_cast<void *>(reinterpret_cast<const void *>(&_le_64));
-				else if (routine_name == L"fpu_32_pmj") return const_cast<void *>(reinterpret_cast<const void *>(&_ge_32));
-				else if (routine_name == L"fpu_64_pmj") return const_cast<void *>(reinterpret_cast<const void *>(&_ge_64));
-				else if (routine_name == L"fpu_l_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_b_f32));
-				else if (routine_name == L"fpu_l_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_b_f64));
-				else if (routine_name == L"fpu_i8_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_s8_f32));
-				else if (routine_name == L"fpu_n8_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_u8_f32));
-				else if (routine_name == L"fpu_i8_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_s8_f64));
-				else if (routine_name == L"fpu_n8_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_u8_f64));
-				else if (routine_name == L"fpu_i16_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_s16_f32));
-				else if (routine_name == L"fpu_n16_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_u16_f32));
-				else if (routine_name == L"fpu_i16_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_s16_f64));
-				else if (routine_name == L"fpu_n16_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_u16_f64));
-				else if (routine_name == L"fpu_i32_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_s32_f32));
-				else if (routine_name == L"fpu_n32_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_u32_f32));
-				else if (routine_name == L"fpu_i32_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_s32_f64));
-				else if (routine_name == L"fpu_n32_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_u32_f64));
-				else if (routine_name == L"fpu_i64_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_s64_f32));
-				else if (routine_name == L"fpu_n64_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_u64_f32));
-				else if (routine_name == L"fpu_i64_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_s64_f64));
-				else if (routine_name == L"fpu_n64_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_u64_f64));
-				else if (routine_name == L"fpu_iadl_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_sw_f32));
-				else if (routine_name == L"fpu_nadl_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_uw_f32));
-				else if (routine_name == L"fpu_iadl_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_sw_f64));
-				else if (routine_name == L"fpu_nadl_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_uw_f64));
-				else if (routine_name == L"fpu_f32_ad_l") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_b));
-				else if (routine_name == L"fpu_f32_ad_i8") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_s8));
-				else if (routine_name == L"fpu_f32_ad_n8") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_u8));
-				else if (routine_name == L"fpu_f32_ad_i16") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_s16));
-				else if (routine_name == L"fpu_f32_ad_n16") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_u16));
-				else if (routine_name == L"fpu_f32_ad_i32") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_s32));
-				else if (routine_name == L"fpu_f32_ad_n32") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_u32));
-				else if (routine_name == L"fpu_f32_ad_i64") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_s64));
-				else if (routine_name == L"fpu_f32_ad_n64") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_u64));
-				else if (routine_name == L"fpu_f32_ad_iadl") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_sw));
-				else if (routine_name == L"fpu_f32_ad_nadl") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_uw));
-				else if (routine_name == L"fpu_f64_ad_l") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_b));
-				else if (routine_name == L"fpu_f64_ad_i8") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_s8));
-				else if (routine_name == L"fpu_f64_ad_n8") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_u8));
-				else if (routine_name == L"fpu_f64_ad_i16") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_s16));
-				else if (routine_name == L"fpu_f64_ad_n16") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_u16));
-				else if (routine_name == L"fpu_f64_ad_i32") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_s32));
-				else if (routine_name == L"fpu_f64_ad_n32") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_u32));
-				else if (routine_name == L"fpu_f64_ad_i64") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_s64));
-				else if (routine_name == L"fpu_f64_ad_n64") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_u64));
-				else if (routine_name == L"fpu_f64_ad_iadl") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_sw));
-				else if (routine_name == L"fpu_f64_ad_nadl") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_uw));
-				else if (routine_name == L"fpu_f32_ad_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_f32_f64));
-				else if (routine_name == L"fpu_f64_ad_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_f64_f32));
-				else return 0;
-			}
-			void * _expose_part_2(const string & routine_name) noexcept
-			{
-				if (routine_name == L"fpu_abs_i8") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_i8));
-				else if (routine_name == L"fpu_abs_i16") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_i16));
-				else if (routine_name == L"fpu_abs_i32") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_i32));
-				else if (routine_name == L"fpu_abs_i64") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_i64));
-				else if (routine_name == L"fpu_abs_iad") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_iw));
-				else if (routine_name == L"fpu_abs_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_f32));
-				else if (routine_name == L"fpu_abs_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_abs_f64));
-				else if (routine_name == L"fpu_sgn_i8") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_i8));
-				else if (routine_name == L"fpu_sgn_i16") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_i16));
-				else if (routine_name == L"fpu_sgn_i32") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_i32));
-				else if (routine_name == L"fpu_sgn_i64") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_i64));
-				else if (routine_name == L"fpu_sgn_iad") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_iw));
-				else if (routine_name == L"fpu_sgn_f32") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_f32));
-				else if (routine_name == L"fpu_sgn_f64") return const_cast<void *>(reinterpret_cast<const void *>(&_sgn_f64));
-				else if (routine_name == L"fpu_c1") return const_cast<void *>(reinterpret_cast<const void *>(&roundf));
-				else if (routine_name == L"fpu_c1_d") return const_cast<void *>(reinterpret_cast<const void *>(&_round_d));
-				else if (routine_name == L"fpu_c2") return const_cast<void *>(reinterpret_cast<const void *>(&truncf));
-				else if (routine_name == L"fpu_c2_d") return const_cast<void *>(reinterpret_cast<const void *>(&_trunc_d));
-				else if (routine_name == L"fpu_c3") return const_cast<void *>(reinterpret_cast<const void *>(&floorf));
-				else if (routine_name == L"fpu_c3_d") return const_cast<void *>(reinterpret_cast<const void *>(&_floor_d));
-				else if (routine_name == L"fpu_c4") return const_cast<void *>(reinterpret_cast<const void *>(&ceilf));
-				else if (routine_name == L"fpu_c4_d") return const_cast<void *>(reinterpret_cast<const void *>(&_ceil_d));
-				else if (routine_name == L"fpu_rdx") return const_cast<void *>(reinterpret_cast<const void *>(&sqrtf));
-				else if (routine_name == L"fpu_rdx_d") return const_cast<void *>(reinterpret_cast<const void *>(&_sqrt_d));
-				else if (routine_name == L"fpu_pot") return const_cast<void *>(reinterpret_cast<const void *>(&powf));
-				else if (routine_name == L"fpu_pot_d") return const_cast<void *>(reinterpret_cast<const void *>(&_pow_d));
-				else if (routine_name == L"fpu_exp") return const_cast<void *>(reinterpret_cast<const void *>(&expf));
-				else if (routine_name == L"fpu_exp_d") return const_cast<void *>(reinterpret_cast<const void *>(&_exp_d));
-				else if (routine_name == L"fpu_ln") return const_cast<void *>(reinterpret_cast<const void *>(&logf));
-				else if (routine_name == L"fpu_ln_d") return const_cast<void *>(reinterpret_cast<const void *>(&_log_d));
-				else if (routine_name == L"fpu_lb") return const_cast<void *>(reinterpret_cast<const void *>(&log2f));
-				else if (routine_name == L"fpu_lb_d") return const_cast<void *>(reinterpret_cast<const void *>(&_log2_d));
-				else if (routine_name == L"fpu_lg") return const_cast<void *>(reinterpret_cast<const void *>(&log10f));
-				else if (routine_name == L"fpu_lg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_log10_d));
-				else if (routine_name == L"fpu_sin") return const_cast<void *>(reinterpret_cast<const void *>(&sinf));
-				else if (routine_name == L"fpu_sin_d") return const_cast<void *>(reinterpret_cast<const void *>(&_sin_d));
-				else if (routine_name == L"fpu_cos") return const_cast<void *>(reinterpret_cast<const void *>(&cosf));
-				else if (routine_name == L"fpu_cos_d") return const_cast<void *>(reinterpret_cast<const void *>(&_cos_d));
-				else if (routine_name == L"fpu_tg") return const_cast<void *>(reinterpret_cast<const void *>(&tanf));
-				else if (routine_name == L"fpu_tg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_tan_d));
-				else if (routine_name == L"fpu_ctg") return const_cast<void *>(reinterpret_cast<const void *>(&_ctg_f32));
-				else if (routine_name == L"fpu_ctg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_ctg_f64));
-				else if (routine_name == L"fpu_asin") return const_cast<void *>(reinterpret_cast<const void *>(&asinf));
-				else if (routine_name == L"fpu_asin_d") return const_cast<void *>(reinterpret_cast<const void *>(&_asin_d));
-				else if (routine_name == L"fpu_acos") return const_cast<void *>(reinterpret_cast<const void *>(&acosf));
-				else if (routine_name == L"fpu_acos_d") return const_cast<void *>(reinterpret_cast<const void *>(&_acos_d));
-				else if (routine_name == L"fpu_atg") return const_cast<void *>(reinterpret_cast<const void *>(&atanf));
-				else if (routine_name == L"fpu_atg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_atan_d));
-				else if (routine_name == L"fpu_actg") return const_cast<void *>(reinterpret_cast<const void *>(&_arcctg_f32));
-				else if (routine_name == L"fpu_actg_d") return const_cast<void *>(reinterpret_cast<const void *>(&_arcctg_f64));
-				else if (routine_name == L"fpu_f32_pi") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_pos_f32));
-				else if (routine_name == L"fpu_f32_ni") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_neg_f32));
-				else if (routine_name == L"fpu_f32_nn") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_nan_f32));
-				else if (routine_name == L"fpu_f64_pi") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_pos_f64));
-				else if (routine_name == L"fpu_f64_ni") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_neg_f64));
-				else if (routine_name == L"fpu_f64_nn") return const_cast<void *>(reinterpret_cast<const void *>(&_inf_nan_f64));
-				else if (routine_name == L"fpu_ei_32") return const_cast<void *>(reinterpret_cast<const void *>(&_is_inf_f32));
-				else if (routine_name == L"fpu_ei_64") return const_cast<void *>(reinterpret_cast<const void *>(&_is_inf_f64));
-				else if (routine_name == L"fpu_enn_32") return const_cast<void *>(reinterpret_cast<const void *>(&_is_nan_f32));
-				else if (routine_name == L"fpu_enn_64") return const_cast<void *>(reinterpret_cast<const void *>(&_is_nan_f64));
-				else if (routine_name == L"fpu_ncg_1") return const_cast<void *>(reinterpret_cast<const void *>(&_random_data));
-				else if (routine_name == L"fpu_ncg_2") return const_cast<void *>(reinterpret_cast<const void *>(&_random_int));
-				else if (routine_name == L"fpu_ncg_3") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::Math::Random::RandomDouble));
-				else return 0;
-			}
 		public:
-			virtual void * ExposeRoutine(const string & routine_name) noexcept override
+			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				auto result = _expose_part_1(routine_name);
-				if (result) return result;
-				return _expose_part_2(routine_name);
+				if (string::Compare(routine_name, L"fpu_f32_ad_i64") < 0) {
+					if (string::Compare(routine_name, L"fpu_abs_f32") < 0) {
+						if (string::Compare(routine_name, L"fpu_64_dec") < 0) {
+							if (string::Compare(routine_name, L"fpu_32_mul") < 0) {
+								if (string::Compare(routine_name, L"fpu_32_lml") < 0) {
+									if (string::Compare(routine_name, L"fpu_32_inc") < 0) {
+										if (string::Compare(routine_name, L"fpu_32_div") < 0) {
+											if (string::Compare(routine_name, L"fpu_32_dec") == 0) return _dec_32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_32_div") == 0) return _div_32;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_32_ldv") < 0) {
+											if (string::Compare(routine_name, L"fpu_32_inc") == 0) return _inc_32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_32_ldv") == 0) return _asgn_div_32;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_32_lsm") < 0) {
+										if (string::Compare(routine_name, L"fpu_32_lsb") < 0) {
+											if (string::Compare(routine_name, L"fpu_32_lml") == 0) return _asgn_mul_32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_32_lsb") == 0) return _asgn_sub_32;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_32_maj") < 0) {
+											if (string::Compare(routine_name, L"fpu_32_lsm") == 0) return _asgn_add_32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_32_min") < 0) {
+												if (string::Compare(routine_name, L"fpu_32_maj") == 0) return _gt_32;
+											} else {
+												if (string::Compare(routine_name, L"fpu_32_min") == 0) return _ls_32;
+											}
+										}
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"fpu_32_par") < 0) {
+									if (string::Compare(routine_name, L"fpu_32_non") < 0) {
+										if (string::Compare(routine_name, L"fpu_32_neg") < 0) {
+											if (string::Compare(routine_name, L"fpu_32_mul") == 0) return _mul_32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_32_neg") == 0) return _neg_32;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_32_npr") < 0) {
+											if (string::Compare(routine_name, L"fpu_32_non") == 0) return _not_32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_32_npr") == 0) return _neq_32;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_32_pmn") < 0) {
+										if (string::Compare(routine_name, L"fpu_32_pmj") < 0) {
+											if (string::Compare(routine_name, L"fpu_32_par") == 0) return _eq_32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_32_pmj") == 0) return _ge_32;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_32_sub") < 0) {
+											if (string::Compare(routine_name, L"fpu_32_pmn") == 0) return _le_32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_32_sum") < 0) {
+												if (string::Compare(routine_name, L"fpu_32_sub") == 0) return _sub_32;
+											} else {
+												if (string::Compare(routine_name, L"fpu_32_sum") == 0) return _add_32;
+											}
+										}
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"fpu_64_mul") < 0) {
+								if (string::Compare(routine_name, L"fpu_64_lml") < 0) {
+									if (string::Compare(routine_name, L"fpu_64_inc") < 0) {
+										if (string::Compare(routine_name, L"fpu_64_div") < 0) {
+											if (string::Compare(routine_name, L"fpu_64_dec") == 0) return _dec_64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_64_div") == 0) return _div_64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_64_ldv") < 0) {
+											if (string::Compare(routine_name, L"fpu_64_inc") == 0) return _inc_64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_64_ldv") == 0) return _asgn_div_64;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_64_lsm") < 0) {
+										if (string::Compare(routine_name, L"fpu_64_lsb") < 0) {
+											if (string::Compare(routine_name, L"fpu_64_lml") == 0) return _asgn_mul_64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_64_lsb") == 0) return _asgn_sub_64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_64_maj") < 0) {
+											if (string::Compare(routine_name, L"fpu_64_lsm") == 0) return _asgn_add_64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_64_min") < 0) {
+												if (string::Compare(routine_name, L"fpu_64_maj") == 0) return _gt_64;
+											} else {
+												if (string::Compare(routine_name, L"fpu_64_min") == 0) return _ls_64;
+											}
+										}
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"fpu_64_par") < 0) {
+									if (string::Compare(routine_name, L"fpu_64_non") < 0) {
+										if (string::Compare(routine_name, L"fpu_64_neg") < 0) {
+											if (string::Compare(routine_name, L"fpu_64_mul") == 0) return _mul_64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_64_neg") == 0) return _neg_64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_64_npr") < 0) {
+											if (string::Compare(routine_name, L"fpu_64_non") == 0) return _not_64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_64_npr") == 0) return _neq_64;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_64_pmn") < 0) {
+										if (string::Compare(routine_name, L"fpu_64_pmj") < 0) {
+											if (string::Compare(routine_name, L"fpu_64_par") == 0) return _eq_64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_64_pmj") == 0) return _ge_64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_64_sub") < 0) {
+											if (string::Compare(routine_name, L"fpu_64_pmn") == 0) return _le_64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_64_sum") < 0) {
+												if (string::Compare(routine_name, L"fpu_64_sub") == 0) return _sub_64;
+											} else {
+												if (string::Compare(routine_name, L"fpu_64_sum") == 0) return _add_64;
+											}
+										}
+									}
+								}
+							}
+						}
+					} else {
+						if (string::Compare(routine_name, L"fpu_c2_d") < 0) {
+							if (string::Compare(routine_name, L"fpu_actg") < 0) {
+								if (string::Compare(routine_name, L"fpu_abs_i64") < 0) {
+									if (string::Compare(routine_name, L"fpu_abs_i16") < 0) {
+										if (string::Compare(routine_name, L"fpu_abs_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_abs_f32") == 0) return _abs_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_abs_f64") == 0) return _abs_f64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_abs_i32") < 0) {
+											if (string::Compare(routine_name, L"fpu_abs_i16") == 0) return _abs_i16;
+										} else {
+											if (string::Compare(routine_name, L"fpu_abs_i32") == 0) return _abs_i32;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_abs_iad") < 0) {
+										if (string::Compare(routine_name, L"fpu_abs_i8") < 0) {
+											if (string::Compare(routine_name, L"fpu_abs_i64") == 0) return _abs_i64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_abs_i8") == 0) return _abs_i8;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_acos") < 0) {
+											if (string::Compare(routine_name, L"fpu_abs_iad") == 0) return _abs_iw;
+										} else {
+											if (string::Compare(routine_name, L"fpu_acos_d") < 0) {
+												if (string::Compare(routine_name, L"fpu_acos") == 0) return acosf;
+											} else {
+												if (string::Compare(routine_name, L"fpu_acos_d") == 0) return _acos_d;
+											}
+										}
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"fpu_atg") < 0) {
+									if (string::Compare(routine_name, L"fpu_asin") < 0) {
+										if (string::Compare(routine_name, L"fpu_actg_d") < 0) {
+											if (string::Compare(routine_name, L"fpu_actg") == 0) return _arcctg_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_actg_d") == 0) return _arcctg_f64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_asin_d") < 0) {
+											if (string::Compare(routine_name, L"fpu_asin") == 0) return asinf;
+										} else {
+											if (string::Compare(routine_name, L"fpu_asin_d") == 0) return _asin_d;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_c1") < 0) {
+										if (string::Compare(routine_name, L"fpu_atg_d") < 0) {
+											if (string::Compare(routine_name, L"fpu_atg") == 0) return atanf;
+										} else {
+											if (string::Compare(routine_name, L"fpu_atg_d") == 0) return _atan_d;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_c1_d") < 0) {
+											if (string::Compare(routine_name, L"fpu_c1") == 0) return roundf;
+										} else {
+											if (string::Compare(routine_name, L"fpu_c2") < 0) {
+												if (string::Compare(routine_name, L"fpu_c1_d") == 0) return _round_d;
+											} else {
+												if (string::Compare(routine_name, L"fpu_c2") == 0) return truncf;
+											}
+										}
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"fpu_ei_32") < 0) {
+								if (string::Compare(routine_name, L"fpu_c4_d") < 0) {
+									if (string::Compare(routine_name, L"fpu_c3_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_c3") < 0) {
+											if (string::Compare(routine_name, L"fpu_c2_d") == 0) return _trunc_d;
+										} else {
+											if (string::Compare(routine_name, L"fpu_c3") == 0) return floorf;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_c4") < 0) {
+											if (string::Compare(routine_name, L"fpu_c3_d") == 0) return _floor_d;
+										} else {
+											if (string::Compare(routine_name, L"fpu_c4") == 0) return ceilf;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_cos_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_cos") < 0) {
+											if (string::Compare(routine_name, L"fpu_c4_d") == 0) return _ceil_d;
+										} else {
+											if (string::Compare(routine_name, L"fpu_cos") == 0) return cosf;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_ctg") < 0) {
+											if (string::Compare(routine_name, L"fpu_cos_d") == 0) return _cos_d;
+										} else {
+											if (string::Compare(routine_name, L"fpu_ctg_d") < 0) {
+												if (string::Compare(routine_name, L"fpu_ctg") == 0) return _ctg_f32;
+											} else {
+												if (string::Compare(routine_name, L"fpu_ctg_d") == 0) return _ctg_f64;
+											}
+										}
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"fpu_exp") < 0) {
+									if (string::Compare(routine_name, L"fpu_enn_32") < 0) {
+										if (string::Compare(routine_name, L"fpu_ei_64") < 0) {
+											if (string::Compare(routine_name, L"fpu_ei_32") == 0) return _is_inf_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_ei_64") == 0) return _is_inf_f64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_enn_64") < 0) {
+											if (string::Compare(routine_name, L"fpu_enn_32") == 0) return _is_nan_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_enn_64") == 0) return _is_nan_f64;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_f32_ad_f64") < 0) {
+										if (string::Compare(routine_name, L"fpu_exp_d") < 0) {
+											if (string::Compare(routine_name, L"fpu_exp") == 0) return expf;
+										} else {
+											if (string::Compare(routine_name, L"fpu_exp_d") == 0) return _exp_d;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_f32_ad_i16") < 0) {
+											if (string::Compare(routine_name, L"fpu_f32_ad_f64") == 0) return _f32_f64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f32_ad_i32") < 0) {
+												if (string::Compare(routine_name, L"fpu_f32_ad_i16") == 0) return _f32_s16;
+											} else {
+												if (string::Compare(routine_name, L"fpu_f32_ad_i32") == 0) return _f32_s32;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				} else {
+					if (string::Compare(routine_name, L"fpu_iadl_ad_f64") < 0) {
+						if (string::Compare(routine_name, L"fpu_f64_ad_l") < 0) {
+							if (string::Compare(routine_name, L"fpu_f32_ni") < 0) {
+								if (string::Compare(routine_name, L"fpu_f32_ad_n16") < 0) {
+									if (string::Compare(routine_name, L"fpu_f32_ad_iadl") < 0) {
+										if (string::Compare(routine_name, L"fpu_f32_ad_i8") < 0) {
+											if (string::Compare(routine_name, L"fpu_f32_ad_i64") == 0) return _f32_s64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f32_ad_i8") == 0) return _f32_s8;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_f32_ad_l") < 0) {
+											if (string::Compare(routine_name, L"fpu_f32_ad_iadl") == 0) return _f32_sw;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f32_ad_l") == 0) return _f32_b;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_f32_ad_n64") < 0) {
+										if (string::Compare(routine_name, L"fpu_f32_ad_n32") < 0) {
+											if (string::Compare(routine_name, L"fpu_f32_ad_n16") == 0) return _f32_u16;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f32_ad_n32") == 0) return _f32_u32;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_f32_ad_n8") < 0) {
+											if (string::Compare(routine_name, L"fpu_f32_ad_n64") == 0) return _f32_u64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f32_ad_nadl") < 0) {
+												if (string::Compare(routine_name, L"fpu_f32_ad_n8") == 0) return _f32_u8;
+											} else {
+												if (string::Compare(routine_name, L"fpu_f32_ad_nadl") == 0) return _f32_uw;
+											}
+										}
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"fpu_f64_ad_i16") < 0) {
+									if (string::Compare(routine_name, L"fpu_f32_pi") < 0) {
+										if (string::Compare(routine_name, L"fpu_f32_nn") < 0) {
+											if (string::Compare(routine_name, L"fpu_f32_ni") == 0) return _inf_neg_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f32_nn") == 0) return _inf_nan_f32;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_f64_ad_f32") < 0) {
+											if (string::Compare(routine_name, L"fpu_f32_pi") == 0) return _inf_pos_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f64_ad_f32") == 0) return _f64_f32;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_f64_ad_i64") < 0) {
+										if (string::Compare(routine_name, L"fpu_f64_ad_i32") < 0) {
+											if (string::Compare(routine_name, L"fpu_f64_ad_i16") == 0) return _f64_s16;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f64_ad_i32") == 0) return _f64_s32;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_f64_ad_i8") < 0) {
+											if (string::Compare(routine_name, L"fpu_f64_ad_i64") == 0) return _f64_s64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f64_ad_iadl") < 0) {
+												if (string::Compare(routine_name, L"fpu_f64_ad_i8") == 0) return _f64_s8;
+											} else {
+												if (string::Compare(routine_name, L"fpu_f64_ad_iadl") == 0) return _f64_sw;
+											}
+										}
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"fpu_i16_ad_f32") < 0) {
+								if (string::Compare(routine_name, L"fpu_f64_ad_n8") < 0) {
+									if (string::Compare(routine_name, L"fpu_f64_ad_n32") < 0) {
+										if (string::Compare(routine_name, L"fpu_f64_ad_n16") < 0) {
+											if (string::Compare(routine_name, L"fpu_f64_ad_l") == 0) return _f64_b;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f64_ad_n16") == 0) return _f64_u16;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_f64_ad_n64") < 0) {
+											if (string::Compare(routine_name, L"fpu_f64_ad_n32") == 0) return _f64_u32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f64_ad_n64") == 0) return _f64_u64;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_f64_ni") < 0) {
+										if (string::Compare(routine_name, L"fpu_f64_ad_nadl") < 0) {
+											if (string::Compare(routine_name, L"fpu_f64_ad_n8") == 0) return _f64_u8;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f64_ad_nadl") == 0) return _f64_uw;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_f64_nn") < 0) {
+											if (string::Compare(routine_name, L"fpu_f64_ni") == 0) return _inf_neg_f64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_f64_pi") < 0) {
+												if (string::Compare(routine_name, L"fpu_f64_nn") == 0) return _inf_nan_f64;
+											} else {
+												if (string::Compare(routine_name, L"fpu_f64_pi") == 0) return _inf_pos_f64;
+											}
+										}
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"fpu_i64_ad_f32") < 0) {
+									if (string::Compare(routine_name, L"fpu_i32_ad_f32") < 0) {
+										if (string::Compare(routine_name, L"fpu_i16_ad_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_i16_ad_f32") == 0) return _s16_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_i16_ad_f64") == 0) return _s16_f64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_i32_ad_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_i32_ad_f32") == 0) return _s32_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_i32_ad_f64") == 0) return _s32_f64;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_i8_ad_f32") < 0) {
+										if (string::Compare(routine_name, L"fpu_i64_ad_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_i64_ad_f32") == 0) return _s64_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_i64_ad_f64") == 0) return _s64_f64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_i8_ad_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_i8_ad_f32") == 0) return _s8_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_iadl_ad_f32") < 0) {
+												if (string::Compare(routine_name, L"fpu_i8_ad_f64") == 0) return _s8_f64;
+											} else {
+												if (string::Compare(routine_name, L"fpu_iadl_ad_f32") == 0) return _sw_f32;
+											}
+										}
+									}
+								}
+							}
+						}
+					} else {
+						if (string::Compare(routine_name, L"fpu_nadl_ad_f64") < 0) {
+							if (string::Compare(routine_name, L"fpu_n16_ad_f32") < 0) {
+								if (string::Compare(routine_name, L"fpu_lb_d") < 0) {
+									if (string::Compare(routine_name, L"fpu_l_ad_f64") < 0) {
+										if (string::Compare(routine_name, L"fpu_l_ad_f32") < 0) {
+											if (string::Compare(routine_name, L"fpu_iadl_ad_f64") == 0) return _sw_f64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_l_ad_f32") == 0) return _b_f32;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_lb") < 0) {
+											if (string::Compare(routine_name, L"fpu_l_ad_f64") == 0) return _b_f64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_lb") == 0) return log2f;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_lg_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_lg") < 0) {
+											if (string::Compare(routine_name, L"fpu_lb_d") == 0) return _log2_d;
+										} else {
+											if (string::Compare(routine_name, L"fpu_lg") == 0) return log10f;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_ln") < 0) {
+											if (string::Compare(routine_name, L"fpu_lg_d") == 0) return _log10_d;
+										} else {
+											if (string::Compare(routine_name, L"fpu_ln_d") < 0) {
+												if (string::Compare(routine_name, L"fpu_ln") == 0) return logf;
+											} else {
+												if (string::Compare(routine_name, L"fpu_ln_d") == 0) return _log_d;
+											}
+										}
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"fpu_n64_ad_f32") < 0) {
+									if (string::Compare(routine_name, L"fpu_n32_ad_f32") < 0) {
+										if (string::Compare(routine_name, L"fpu_n16_ad_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_n16_ad_f32") == 0) return _u16_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_n16_ad_f64") == 0) return _u16_f64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_n32_ad_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_n32_ad_f32") == 0) return _u32_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_n32_ad_f64") == 0) return _u32_f64;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_n8_ad_f32") < 0) {
+										if (string::Compare(routine_name, L"fpu_n64_ad_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_n64_ad_f32") == 0) return _u64_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_n64_ad_f64") == 0) return _u64_f64;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_n8_ad_f64") < 0) {
+											if (string::Compare(routine_name, L"fpu_n8_ad_f32") == 0) return _u8_f32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_nadl_ad_f32") < 0) {
+												if (string::Compare(routine_name, L"fpu_n8_ad_f64") == 0) return _u8_f64;
+											} else {
+												if (string::Compare(routine_name, L"fpu_nadl_ad_f32") == 0) return _uw_f32;
+											}
+										}
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"fpu_sgn_f64") < 0) {
+								if (string::Compare(routine_name, L"fpu_pot") < 0) {
+									if (string::Compare(routine_name, L"fpu_ncg_2") < 0) {
+										if (string::Compare(routine_name, L"fpu_ncg_1") < 0) {
+											if (string::Compare(routine_name, L"fpu_nadl_ad_f64") == 0) return _uw_f64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_ncg_1") == 0) return _random_data;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_ncg_3") < 0) {
+											if (string::Compare(routine_name, L"fpu_ncg_2") == 0) return _random_int;
+										} else {
+											if (string::Compare(routine_name, L"fpu_ncg_3") == 0) return Engine::Math::Random::RandomDouble;
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_rdx") < 0) {
+										if (string::Compare(routine_name, L"fpu_pot_d") < 0) {
+											if (string::Compare(routine_name, L"fpu_pot") == 0) return powf;
+										} else {
+											if (string::Compare(routine_name, L"fpu_pot_d") == 0) return _pow_d;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_rdx_d") < 0) {
+											if (string::Compare(routine_name, L"fpu_rdx") == 0) return sqrtf;
+										} else {
+											if (string::Compare(routine_name, L"fpu_sgn_f32") < 0) {
+												if (string::Compare(routine_name, L"fpu_rdx_d") == 0) return _sqrt_d;
+											} else {
+												if (string::Compare(routine_name, L"fpu_sgn_f32") == 0) return _sgn_f32;
+											}
+										}
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"fpu_sgn_iad") < 0) {
+									if (string::Compare(routine_name, L"fpu_sgn_i32") < 0) {
+										if (string::Compare(routine_name, L"fpu_sgn_i16") < 0) {
+											if (string::Compare(routine_name, L"fpu_sgn_f64") == 0) return _sgn_f64;
+										} else {
+											if (string::Compare(routine_name, L"fpu_sgn_i16") == 0) return _sgn_i16;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_sgn_i64") < 0) {
+											if (string::Compare(routine_name, L"fpu_sgn_i32") == 0) return _sgn_i32;
+										} else {
+											if (string::Compare(routine_name, L"fpu_sgn_i8") < 0) {
+												if (string::Compare(routine_name, L"fpu_sgn_i64") == 0) return _sgn_i64;
+											} else {
+												if (string::Compare(routine_name, L"fpu_sgn_i8") == 0) return _sgn_i8;
+											}
+										}
+									}
+								} else {
+									if (string::Compare(routine_name, L"fpu_sin_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_sin") < 0) {
+											if (string::Compare(routine_name, L"fpu_sgn_iad") == 0) return _sgn_iw;
+										} else {
+											if (string::Compare(routine_name, L"fpu_sin") == 0) return sinf;
+										}
+									} else {
+										if (string::Compare(routine_name, L"fpu_tg") < 0) {
+											if (string::Compare(routine_name, L"fpu_sin_d") == 0) return _sin_d;
+										} else {
+											if (string::Compare(routine_name, L"fpu_tg_d") < 0) {
+												if (string::Compare(routine_name, L"fpu_tg") == 0) return tanf;
+											} else {
+												if (string::Compare(routine_name, L"fpu_tg_d") == 0) return _tan_d;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				return 0;
 			}
-			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
+			virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }
 		};
 		class MMU : public IAPIExtension
 		{
@@ -362,21 +783,48 @@ namespace Engine
 				else return false;
 			}
 		public:
-			virtual void * ExposeRoutine(const string & routine_name) noexcept override
+			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				if (routine_name == L"alloca_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&_mem_alloc));
-				else if (routine_name == L"realloca_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&_mem_realloc));
-				else if (routine_name == L"dimitte_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&_mem_release));
-				else if (routine_name == L"relabe_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::ZeroMemory));
-				else if (routine_name == L"exscribe_memoriam") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::MemoryCopy));
-				else if (routine_name == L"inc_sec") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::InterlockedIncrement));
-				else if (routine_name == L"dec_sec") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::InterlockedDecrement));
-				else if (routine_name == L"sys_info") return const_cast<void *>(reinterpret_cast<const void *>(&_get_system_info));
-				else if (routine_name == L"sys_temp") return const_cast<void *>(reinterpret_cast<const void *>(&Engine::GetTimerValue));
-				else if (routine_name == L"sys_arch") return const_cast<void *>(reinterpret_cast<const void *>(&_check_arch));
-				else return 0;
+				if (string::Compare(routine_name, L"realloca_memoriam") < 0) {
+					if (string::Compare(routine_name, L"dimitte_memoriam") < 0) {
+						if (string::Compare(routine_name, L"dec_sec") < 0) {
+							if (string::Compare(routine_name, L"alloca_memoriam") == 0) return _mem_alloc;
+						} else {
+							if (string::Compare(routine_name, L"dec_sec") == 0) return Engine::InterlockedDecrement;
+						}
+					} else {
+						if (string::Compare(routine_name, L"exscribe_memoriam") < 0) {
+							if (string::Compare(routine_name, L"dimitte_memoriam") == 0) return _mem_release;
+						} else {
+							if (string::Compare(routine_name, L"inc_sec") < 0) {
+								if (string::Compare(routine_name, L"exscribe_memoriam") == 0) return Engine::MemoryCopy;
+							} else {
+								if (string::Compare(routine_name, L"inc_sec") == 0) return Engine::InterlockedIncrement;
+							}
+						}
+					}
+				} else {
+					if (string::Compare(routine_name, L"sys_arch") < 0) {
+						if (string::Compare(routine_name, L"relabe_memoriam") < 0) {
+							if (string::Compare(routine_name, L"realloca_memoriam") == 0) return _mem_realloc;
+						} else {
+							if (string::Compare(routine_name, L"relabe_memoriam") == 0) return Engine::ZeroMemory;
+						}
+					} else {
+						if (string::Compare(routine_name, L"sys_info") < 0) {
+							if (string::Compare(routine_name, L"sys_arch") == 0) return _check_arch;
+						} else {
+							if (string::Compare(routine_name, L"sys_temp") < 0) {
+								if (string::Compare(routine_name, L"sys_info") == 0) return _get_system_info;
+							} else {
+								if (string::Compare(routine_name, L"sys_temp") == 0) return Engine::GetTimerValue;
+							}
+						}
+					}
+				}
+				return 0;
 			}
-			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
+			virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }
 		};
 		class SPU : public IAPIExtension
 		{
@@ -758,81 +1206,288 @@ namespace Engine
 				catch (...) { error.error_code = 2; error.error_subcode = 0; return 0; }
 			}
 		public:
-			virtual void * ExposeRoutine(const string & routine_name) noexcept override
+			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				if (routine_name == L"spu_crea") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_string));
-				else if (routine_name == L"spu_crea_sec") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_string_nothrow));
-				else if (routine_name == L"spu_crea_utf32") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_utf32));
-				else if (routine_name == L"spu_crea_int8") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_int8));
-				else if (routine_name == L"spu_crea_nint8") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uint8));
-				else if (routine_name == L"spu_crea_int16") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_int16));
-				else if (routine_name == L"spu_crea_nint16") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uint16));
-				else if (routine_name == L"spu_crea_int32") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_int32));
-				else if (routine_name == L"spu_crea_nint32") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uint32));
-				else if (routine_name == L"spu_crea_int64") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_int64));
-				else if (routine_name == L"spu_crea_nint64") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uint64));
-				else if (routine_name == L"spu_crea_intadl") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_intptr));
-				else if (routine_name == L"spu_crea_nintadl") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uintptr));
-				else if (routine_name == L"spu_crea_nint32_radix") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uint32_radix));
-				else if (routine_name == L"spu_crea_nint64_radix") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uint64_radix));
-				else if (routine_name == L"spu_crea_nintadl_radix") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_uintptr_radix));
-				else if (routine_name == L"spu_crea_frac32") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_float));
-				else if (routine_name == L"spu_crea_frac32_2") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_float_del));
-				else if (routine_name == L"spu_crea_frac32_3") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_float_del_len));
-				else if (routine_name == L"spu_crea_frac64") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_double));
-				else if (routine_name == L"spu_crea_frac64_2") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_double_del));
-				else if (routine_name == L"spu_crea_frac64_3") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_double_del_len));
-				else if (routine_name == L"spu_crea_logicum") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_boolean));
-				else if (routine_name == L"spu_crea_char") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_char));
-				else if (routine_name == L"spu_crea_adl") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_ptr));
-				else if (routine_name == L"spu_crea_data") return const_cast<void *>(reinterpret_cast<const void *>(&_init_string_with_data));
-				else if (routine_name == L"spu_loca") return const_cast<void *>(reinterpret_cast<const void *>(&_assign_with_string));
-				else if (routine_name == L"spu_loca_utf32") return const_cast<void *>(reinterpret_cast<const void *>(&_assign_with_utf32));
-				else if (routine_name == L"spu_concat") return const_cast<void *>(reinterpret_cast<const void *>(&_concat));
-				else if (routine_name == L"spu_concat_classis") return const_cast<void *>(reinterpret_cast<const void *>(&_static_concat));
-				else if (routine_name == L"spu_compareo") return const_cast<void *>(reinterpret_cast<const void *>(&_static_order));
-				else if (routine_name == L"spu_compareo_2") return const_cast<void *>(reinterpret_cast<const void *>(&_static_order_nc));
-				else if (routine_name == L"spu_long") return const_cast<void *>(reinterpret_cast<const void *>(&_length));
-				else if (routine_name == L"spu_index") return const_cast<void *>(reinterpret_cast<const void *>(&_subscript));
-				else if (routine_name == L"spu_reperi_primus") return const_cast<void *>(reinterpret_cast<const void *>(&_find_first));
-				else if (routine_name == L"spu_reperi_ultimus") return const_cast<void *>(reinterpret_cast<const void *>(&_find_last));
-				else if (routine_name == L"spu_fragmentum") return const_cast<void *>(reinterpret_cast<const void *>(&_fragment));
-				else if (routine_name == L"spu_surroga") return const_cast<void *>(reinterpret_cast<const void *>(&_replace));
-				else if (routine_name == L"spu_inferna") return const_cast<void *>(reinterpret_cast<const void *>(&_lower_case));
-				else if (routine_name == L"spu_supera") return const_cast<void *>(reinterpret_cast<const void *>(&_upper_case));
-				else if (routine_name == L"spu_codex_long") return const_cast<void *>(reinterpret_cast<const void *>(&_encode_length));
-				else if (routine_name == L"spu_codifica") return const_cast<void *>(reinterpret_cast<const void *>(&_encode));
-				else if (routine_name == L"spu_ad_int32") return const_cast<void *>(reinterpret_cast<const void *>(&_to_int32));
-				else if (routine_name == L"spu_ad_int32_2") return const_cast<void *>(reinterpret_cast<const void *>(&_to_int32_2));
-				else if (routine_name == L"spu_ad_int32_3") return const_cast<void *>(reinterpret_cast<const void *>(&_to_int32_3));
-				else if (routine_name == L"spu_ad_nint32") return const_cast<void *>(reinterpret_cast<const void *>(&_to_uint32));
-				else if (routine_name == L"spu_ad_nint32_2") return const_cast<void *>(reinterpret_cast<const void *>(&_to_uint32_2));
-				else if (routine_name == L"spu_ad_nint32_3") return const_cast<void *>(reinterpret_cast<const void *>(&_to_uint32_3));
-				else if (routine_name == L"spu_ad_int64") return const_cast<void *>(reinterpret_cast<const void *>(&_to_int64));
-				else if (routine_name == L"spu_ad_int64_2") return const_cast<void *>(reinterpret_cast<const void *>(&_to_int64_2));
-				else if (routine_name == L"spu_ad_int64_3") return const_cast<void *>(reinterpret_cast<const void *>(&_to_int64_3));
-				else if (routine_name == L"spu_ad_nint64") return const_cast<void *>(reinterpret_cast<const void *>(&_to_uint64));
-				else if (routine_name == L"spu_ad_nint64_2") return const_cast<void *>(reinterpret_cast<const void *>(&_to_uint64_2));
-				else if (routine_name == L"spu_ad_nint64_3") return const_cast<void *>(reinterpret_cast<const void *>(&_to_uint64_3));
-				else if (routine_name == L"spu_ad_frac32") return const_cast<void *>(reinterpret_cast<const void *>(&_to_float));
-				else if (routine_name == L"spu_ad_frac32_2") return const_cast<void *>(reinterpret_cast<const void *>(&_to_float_2));
-				else if (routine_name == L"spu_ad_frac64") return const_cast<void *>(reinterpret_cast<const void *>(&_to_double));
-				else if (routine_name == L"spu_ad_frac64_2") return const_cast<void *>(reinterpret_cast<const void *>(&_to_double_2));
-				else if (routine_name == L"spu_forma_0") return const_cast<void *>(reinterpret_cast<const void *>(&_format_0));
-				else if (routine_name == L"spu_forma_1") return const_cast<void *>(reinterpret_cast<const void *>(&_format_1));
-				else if (routine_name == L"spu_forma_2") return const_cast<void *>(reinterpret_cast<const void *>(&_format_2));
-				else if (routine_name == L"spu_forma_3") return const_cast<void *>(reinterpret_cast<const void *>(&_format_3));
-				else if (routine_name == L"spu_forma_4") return const_cast<void *>(reinterpret_cast<const void *>(&_format_4));
-				else if (routine_name == L"spu_forma_5") return const_cast<void *>(reinterpret_cast<const void *>(&_format_5));
-				else if (routine_name == L"spu_forma_6") return const_cast<void *>(reinterpret_cast<const void *>(&_format_6));
-				else if (routine_name == L"spu_forma_7") return const_cast<void *>(reinterpret_cast<const void *>(&_format_7));
-				else if (routine_name == L"spu_forma_8") return const_cast<void *>(reinterpret_cast<const void *>(&_format_8));
-				else if (routine_name == L"spu_forma_9") return const_cast<void *>(reinterpret_cast<const void *>(&_format_9));
-				else if (routine_name == L"spu_codifica_taleam") return const_cast<void *>(reinterpret_cast<const void *>(&_encode_block));
-				else if (routine_name == L"spu_scinde") return const_cast<void *>(reinterpret_cast<const void *>(&_split));
-				else return 0;
+				if (string::Compare(routine_name, L"spu_crea_int64") < 0) {
+					if (string::Compare(routine_name, L"spu_codifica") < 0) {
+						if (string::Compare(routine_name, L"spu_ad_int64_2") < 0) {
+							if (string::Compare(routine_name, L"spu_ad_int32") < 0) {
+								if (string::Compare(routine_name, L"spu_ad_frac64") < 0) {
+									if (string::Compare(routine_name, L"spu_ad_frac32_2") < 0) {
+										if (string::Compare(routine_name, L"spu_ad_frac32") == 0) return _to_float;
+									} else {
+										if (string::Compare(routine_name, L"spu_ad_frac32_2") == 0) return _to_float_2;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_ad_frac64_2") < 0) {
+										if (string::Compare(routine_name, L"spu_ad_frac64") == 0) return _to_double;
+									} else {
+										if (string::Compare(routine_name, L"spu_ad_frac64_2") == 0) return _to_double_2;
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"spu_ad_int32_3") < 0) {
+									if (string::Compare(routine_name, L"spu_ad_int32_2") < 0) {
+										if (string::Compare(routine_name, L"spu_ad_int32") == 0) return _to_int32;
+									} else {
+										if (string::Compare(routine_name, L"spu_ad_int32_2") == 0) return _to_int32_2;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_ad_int64") < 0) {
+										if (string::Compare(routine_name, L"spu_ad_int32_3") == 0) return _to_int32_3;
+									} else {
+										if (string::Compare(routine_name, L"spu_ad_int64") == 0) return _to_int64;
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"spu_ad_nint32_3") < 0) {
+								if (string::Compare(routine_name, L"spu_ad_nint32") < 0) {
+									if (string::Compare(routine_name, L"spu_ad_int64_3") < 0) {
+										if (string::Compare(routine_name, L"spu_ad_int64_2") == 0) return _to_int64_2;
+									} else {
+										if (string::Compare(routine_name, L"spu_ad_int64_3") == 0) return _to_int64_3;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_ad_nint32_2") < 0) {
+										if (string::Compare(routine_name, L"spu_ad_nint32") == 0) return _to_uint32;
+									} else {
+										if (string::Compare(routine_name, L"spu_ad_nint32_2") == 0) return _to_uint32_2;
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"spu_ad_nint64_2") < 0) {
+									if (string::Compare(routine_name, L"spu_ad_nint64") < 0) {
+										if (string::Compare(routine_name, L"spu_ad_nint32_3") == 0) return _to_uint32_3;
+									} else {
+										if (string::Compare(routine_name, L"spu_ad_nint64") == 0) return _to_uint64;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_ad_nint64_3") < 0) {
+										if (string::Compare(routine_name, L"spu_ad_nint64_2") == 0) return _to_uint64_2;
+									} else {
+										if (string::Compare(routine_name, L"spu_codex_long") < 0) {
+											if (string::Compare(routine_name, L"spu_ad_nint64_3") == 0) return _to_uint64_3;
+										} else {
+											if (string::Compare(routine_name, L"spu_codex_long") == 0) return _encode_length;
+										}
+									}
+								}
+							}
+						}
+					} else {
+						if (string::Compare(routine_name, L"spu_crea_data") < 0) {
+							if (string::Compare(routine_name, L"spu_concat") < 0) {
+								if (string::Compare(routine_name, L"spu_compareo") < 0) {
+									if (string::Compare(routine_name, L"spu_codifica_taleam") < 0) {
+										if (string::Compare(routine_name, L"spu_codifica") == 0) return _encode;
+									} else {
+										if (string::Compare(routine_name, L"spu_codifica_taleam") == 0) return _encode_block;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_compareo_2") < 0) {
+										if (string::Compare(routine_name, L"spu_compareo") == 0) return _static_order;
+									} else {
+										if (string::Compare(routine_name, L"spu_compareo_2") == 0) return _static_order_nc;
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"spu_crea") < 0) {
+									if (string::Compare(routine_name, L"spu_concat_classis") < 0) {
+										if (string::Compare(routine_name, L"spu_concat") == 0) return _concat;
+									} else {
+										if (string::Compare(routine_name, L"spu_concat_classis") == 0) return _static_concat;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_crea_adl") < 0) {
+										if (string::Compare(routine_name, L"spu_crea") == 0) return _init_string_with_string;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_char") < 0) {
+											if (string::Compare(routine_name, L"spu_crea_adl") == 0) return _init_string_with_ptr;
+										} else {
+											if (string::Compare(routine_name, L"spu_crea_char") == 0) return _init_string_with_char;
+										}
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"spu_crea_frac64") < 0) {
+								if (string::Compare(routine_name, L"spu_crea_frac32_2") < 0) {
+									if (string::Compare(routine_name, L"spu_crea_frac32") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_data") == 0) return _init_string_with_data;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_frac32") == 0) return _init_string_with_float;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_crea_frac32_3") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_frac32_2") == 0) return _init_string_with_float_del;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_frac32_3") == 0) return _init_string_with_float_del_len;
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"spu_crea_frac64_3") < 0) {
+									if (string::Compare(routine_name, L"spu_crea_frac64_2") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_frac64") == 0) return _init_string_with_double;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_frac64_2") == 0) return _init_string_with_double_del;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_crea_int16") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_frac64_3") == 0) return _init_string_with_double_del_len;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_int32") < 0) {
+											if (string::Compare(routine_name, L"spu_crea_int16") == 0) return _init_string_with_int16;
+										} else {
+											if (string::Compare(routine_name, L"spu_crea_int32") == 0) return _init_string_with_int32;
+										}
+									}
+								}
+							}
+						}
+					}
+				} else {
+					if (string::Compare(routine_name, L"spu_forma_3") < 0) {
+						if (string::Compare(routine_name, L"spu_crea_nint64_radix") < 0) {
+							if (string::Compare(routine_name, L"spu_crea_nint16") < 0) {
+								if (string::Compare(routine_name, L"spu_crea_intadl") < 0) {
+									if (string::Compare(routine_name, L"spu_crea_int8") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_int64") == 0) return _init_string_with_int64;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_int8") == 0) return _init_string_with_int8;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_crea_logicum") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_intadl") == 0) return _init_string_with_intptr;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_logicum") == 0) return _init_string_with_boolean;
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"spu_crea_nint32_radix") < 0) {
+									if (string::Compare(routine_name, L"spu_crea_nint32") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_nint16") == 0) return _init_string_with_uint16;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_nint32") == 0) return _init_string_with_uint32;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_crea_nint64") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_nint32_radix") == 0) return _init_string_with_uint32_radix;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_nint64") == 0) return _init_string_with_uint64;
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"spu_crea_sec") < 0) {
+								if (string::Compare(routine_name, L"spu_crea_nintadl") < 0) {
+									if (string::Compare(routine_name, L"spu_crea_nint8") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_nint64_radix") == 0) return _init_string_with_uint64_radix;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_nint8") == 0) return _init_string_with_uint8;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_crea_nintadl_radix") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_nintadl") == 0) return _init_string_with_uintptr;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_nintadl_radix") == 0) return _init_string_with_uintptr_radix;
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"spu_forma_0") < 0) {
+									if (string::Compare(routine_name, L"spu_crea_utf32") < 0) {
+										if (string::Compare(routine_name, L"spu_crea_sec") == 0) return _init_string_with_string_nothrow;
+									} else {
+										if (string::Compare(routine_name, L"spu_crea_utf32") == 0) return _init_string_with_utf32;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_forma_1") < 0) {
+										if (string::Compare(routine_name, L"spu_forma_0") == 0) return _format_0;
+									} else {
+										if (string::Compare(routine_name, L"spu_forma_2") < 0) {
+											if (string::Compare(routine_name, L"spu_forma_1") == 0) return _format_1;
+										} else {
+											if (string::Compare(routine_name, L"spu_forma_2") == 0) return _format_2;
+										}
+									}
+								}
+							}
+						}
+					} else {
+						if (string::Compare(routine_name, L"spu_inferna") < 0) {
+							if (string::Compare(routine_name, L"spu_forma_7") < 0) {
+								if (string::Compare(routine_name, L"spu_forma_5") < 0) {
+									if (string::Compare(routine_name, L"spu_forma_4") < 0) {
+										if (string::Compare(routine_name, L"spu_forma_3") == 0) return _format_3;
+									} else {
+										if (string::Compare(routine_name, L"spu_forma_4") == 0) return _format_4;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_forma_6") < 0) {
+										if (string::Compare(routine_name, L"spu_forma_5") == 0) return _format_5;
+									} else {
+										if (string::Compare(routine_name, L"spu_forma_6") == 0) return _format_6;
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"spu_forma_9") < 0) {
+									if (string::Compare(routine_name, L"spu_forma_8") < 0) {
+										if (string::Compare(routine_name, L"spu_forma_7") == 0) return _format_7;
+									} else {
+										if (string::Compare(routine_name, L"spu_forma_8") == 0) return _format_8;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_fragmentum") < 0) {
+										if (string::Compare(routine_name, L"spu_forma_9") == 0) return _format_9;
+									} else {
+										if (string::Compare(routine_name, L"spu_index") < 0) {
+											if (string::Compare(routine_name, L"spu_fragmentum") == 0) return _fragment;
+										} else {
+											if (string::Compare(routine_name, L"spu_index") == 0) return _subscript;
+										}
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"spu_reperi_primus") < 0) {
+								if (string::Compare(routine_name, L"spu_loca_utf32") < 0) {
+									if (string::Compare(routine_name, L"spu_loca") < 0) {
+										if (string::Compare(routine_name, L"spu_inferna") == 0) return _lower_case;
+									} else {
+										if (string::Compare(routine_name, L"spu_loca") == 0) return _assign_with_string;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_long") < 0) {
+										if (string::Compare(routine_name, L"spu_loca_utf32") == 0) return _assign_with_utf32;
+									} else {
+										if (string::Compare(routine_name, L"spu_long") == 0) return _length;
+									}
+								}
+							} else {
+								if (string::Compare(routine_name, L"spu_scinde") < 0) {
+									if (string::Compare(routine_name, L"spu_reperi_ultimus") < 0) {
+										if (string::Compare(routine_name, L"spu_reperi_primus") == 0) return _find_first;
+									} else {
+										if (string::Compare(routine_name, L"spu_reperi_ultimus") == 0) return _find_last;
+									}
+								} else {
+									if (string::Compare(routine_name, L"spu_supera") < 0) {
+										if (string::Compare(routine_name, L"spu_scinde") == 0) return _split;
+									} else {
+										if (string::Compare(routine_name, L"spu_surroga") < 0) {
+											if (string::Compare(routine_name, L"spu_supera") == 0) return _upper_case;
+										} else {
+											if (string::Compare(routine_name, L"spu_surroga") == 0) return _replace;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				return 0;
 			}
-			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
+			virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }
 		};
 		class MiscUnit : public IAPIExtension
 		{
@@ -1180,48 +1835,156 @@ namespace Engine
 				catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
 			}
 		public:
-			virtual void * ExposeRoutine(const string & routine_name) noexcept override
+			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				if (routine_name == L"tmp_crea_7") return const_cast<void *>(reinterpret_cast<const void *>(&_time_init_7));
-				else if (routine_name == L"tmp_crea_4") return const_cast<void *>(reinterpret_cast<const void *>(&_time_init_4));
-				else if (routine_name == L"tmp_a_ans") return const_cast<void *>(reinterpret_cast<const void *>(&_get_year));
-				else if (routine_name == L"tmp_a_mns") return const_cast<void *>(reinterpret_cast<const void *>(&_get_month));
-				else if (routine_name == L"tmp_a_dis") return const_cast<void *>(reinterpret_cast<const void *>(&_get_day_of_week));
-				else if (routine_name == L"tmp_a_die") return const_cast<void *>(reinterpret_cast<const void *>(&_get_day));
-				else if (routine_name == L"tmp_a_hor") return const_cast<void *>(reinterpret_cast<const void *>(&_get_hour));
-				else if (routine_name == L"tmp_a_min") return const_cast<void *>(reinterpret_cast<const void *>(&_get_minute));
-				else if (routine_name == L"tmp_a_sec") return const_cast<void *>(reinterpret_cast<const void *>(&_get_second));
-				else if (routine_name == L"tmp_a_msc") return const_cast<void *>(reinterpret_cast<const void *>(&_get_millisecond));
-				else if (routine_name == L"tmp_a_uni") return const_cast<void *>(reinterpret_cast<const void *>(&_get_time_universal));
-				else if (routine_name == L"tmp_a_loc") return const_cast<void *>(reinterpret_cast<const void *>(&_get_time_local));
-				else if (routine_name == L"tmp_cur") return const_cast<void *>(reinterpret_cast<const void *>(&_get_time_current));
-				else if (routine_name == L"tmp_adl") return const_cast<void *>(reinterpret_cast<const void *>(&_time_to_string));
-				else if (routine_name == L"tmp_alb") return const_cast<void *>(reinterpret_cast<const void *>(&_time_to_string_short));
-				else if (routine_name == L"tmp_dim") return const_cast<void *>(reinterpret_cast<const void *>(&_time_days_in_month));
-				else if (routine_name == L"flumen_mem_0") return const_cast<void *>(reinterpret_cast<const void *>(&_create_memory_stream_0));
-				else if (routine_name == L"flumen_mem_2") return const_cast<void *>(reinterpret_cast<const void *>(&_create_memory_stream_2));
-				else if (routine_name == L"flumen_auxil") return const_cast<void *>(reinterpret_cast<const void *>(&_create_resource_stream));
-				else if (routine_name == L"flumen_ex_2") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_copy_to_2));
-				else if (routine_name == L"flumen_ex_1") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_copy_to_1));
-				else if (routine_name == L"flumen_lo_1") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_read_1));
-				else if (routine_name == L"flumen_lo_0") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_read_0));
-				else if (routine_name == L"flumen_so_1") return const_cast<void *>(reinterpret_cast<const void *>(&_stream_write));
-				else if (routine_name == L"scr_cod_1") return const_cast<void *>(reinterpret_cast<const void *>(&_create_writer_1));
-				else if (routine_name == L"scr_cod_2") return const_cast<void *>(reinterpret_cast<const void *>(&_create_writer_2));
-				else if (routine_name == L"scr_dec_1") return const_cast<void *>(reinterpret_cast<const void *>(&_create_reader_1));
-				else if (routine_name == L"scr_dec_2") return const_cast<void *>(reinterpret_cast<const void *>(&_create_reader_2));
-				else if (routine_name == L"ctx_dormi") return const_cast<void *>(reinterpret_cast<const void *>(&_sleep));
-				else if (routine_name == L"ctx_siste") return const_cast<void *>(reinterpret_cast<const void *>(&_terminate));
-				else if (routine_name == L"ctx_ccsim") return const_cast<void *>(reinterpret_cast<const void *>(&_create_task_queue));
-				else if (routine_name == L"ctx_ccfl0") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread_pool_0));
-				else if (routine_name == L"ctx_ccfl1") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread_pool_1));
-				else if (routine_name == L"ctx_crsem") return const_cast<void *>(reinterpret_cast<const void *>(&_create_semaphore));
-				else if (routine_name == L"ctx_crsgn") return const_cast<void *>(reinterpret_cast<const void *>(&_create_signal));
-				else if (routine_name == L"ctx_crfil") return const_cast<void *>(reinterpret_cast<const void *>(&_create_thread));
-				else if (routine_name == L"meta_moduli") return const_cast<void *>(reinterpret_cast<const void *>(&_query_metadata));
-				else return 0;
+				if (string::Compare(routine_name, L"scr_cod_2") < 0) {
+					if (string::Compare(routine_name, L"flumen_ex_1") < 0) {
+						if (string::Compare(routine_name, L"ctx_crsem") < 0) {
+							if (string::Compare(routine_name, L"ctx_ccsim") < 0) {
+								if (string::Compare(routine_name, L"ctx_ccfl1") < 0) {
+									if (string::Compare(routine_name, L"ctx_ccfl0") == 0) return _create_thread_pool_0;
+								} else {
+									if (string::Compare(routine_name, L"ctx_ccfl1") == 0) return _create_thread_pool_1;
+								}
+							} else {
+								if (string::Compare(routine_name, L"ctx_crfil") < 0) {
+									if (string::Compare(routine_name, L"ctx_ccsim") == 0) return _create_task_queue;
+								} else {
+									if (string::Compare(routine_name, L"ctx_crfil") == 0) return _create_thread;
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"ctx_dormi") < 0) {
+								if (string::Compare(routine_name, L"ctx_crsgn") < 0) {
+									if (string::Compare(routine_name, L"ctx_crsem") == 0) return _create_semaphore;
+								} else {
+									if (string::Compare(routine_name, L"ctx_crsgn") == 0) return _create_signal;
+								}
+							} else {
+								if (string::Compare(routine_name, L"ctx_siste") < 0) {
+									if (string::Compare(routine_name, L"ctx_dormi") == 0) return _sleep;
+								} else {
+									if (string::Compare(routine_name, L"flumen_auxil") < 0) {
+										if (string::Compare(routine_name, L"ctx_siste") == 0) return _terminate;
+									} else {
+										if (string::Compare(routine_name, L"flumen_auxil") == 0) return _create_resource_stream;
+									}
+								}
+							}
+						}
+					} else {
+						if (string::Compare(routine_name, L"flumen_mem_0") < 0) {
+							if (string::Compare(routine_name, L"flumen_lo_0") < 0) {
+								if (string::Compare(routine_name, L"flumen_ex_2") < 0) {
+									if (string::Compare(routine_name, L"flumen_ex_1") == 0) return _stream_copy_to_1;
+								} else {
+									if (string::Compare(routine_name, L"flumen_ex_2") == 0) return _stream_copy_to_2;
+								}
+							} else {
+								if (string::Compare(routine_name, L"flumen_lo_1") < 0) {
+									if (string::Compare(routine_name, L"flumen_lo_0") == 0) return _stream_read_0;
+								} else {
+									if (string::Compare(routine_name, L"flumen_lo_1") == 0) return _stream_read_1;
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"flumen_so_1") < 0) {
+								if (string::Compare(routine_name, L"flumen_mem_2") < 0) {
+									if (string::Compare(routine_name, L"flumen_mem_0") == 0) return _create_memory_stream_0;
+								} else {
+									if (string::Compare(routine_name, L"flumen_mem_2") == 0) return _create_memory_stream_2;
+								}
+							} else {
+								if (string::Compare(routine_name, L"meta_moduli") < 0) {
+									if (string::Compare(routine_name, L"flumen_so_1") == 0) return _stream_write;
+								} else {
+									if (string::Compare(routine_name, L"scr_cod_1") < 0) {
+										if (string::Compare(routine_name, L"meta_moduli") == 0) return _query_metadata;
+									} else {
+										if (string::Compare(routine_name, L"scr_cod_1") == 0) return _create_writer_1;
+									}
+								}
+							}
+						}
+					}
+				} else {
+					if (string::Compare(routine_name, L"tmp_a_mns") < 0) {
+						if (string::Compare(routine_name, L"tmp_a_die") < 0) {
+							if (string::Compare(routine_name, L"scr_dec_2") < 0) {
+								if (string::Compare(routine_name, L"scr_dec_1") < 0) {
+									if (string::Compare(routine_name, L"scr_cod_2") == 0) return _create_writer_2;
+								} else {
+									if (string::Compare(routine_name, L"scr_dec_1") == 0) return _create_reader_1;
+								}
+							} else {
+								if (string::Compare(routine_name, L"tmp_a_ans") < 0) {
+									if (string::Compare(routine_name, L"scr_dec_2") == 0) return _create_reader_2;
+								} else {
+									if (string::Compare(routine_name, L"tmp_a_ans") == 0) return _get_year;
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"tmp_a_hor") < 0) {
+								if (string::Compare(routine_name, L"tmp_a_dis") < 0) {
+									if (string::Compare(routine_name, L"tmp_a_die") == 0) return _get_day;
+								} else {
+									if (string::Compare(routine_name, L"tmp_a_dis") == 0) return _get_day_of_week;
+								}
+							} else {
+								if (string::Compare(routine_name, L"tmp_a_loc") < 0) {
+									if (string::Compare(routine_name, L"tmp_a_hor") == 0) return _get_hour;
+								} else {
+									if (string::Compare(routine_name, L"tmp_a_min") < 0) {
+										if (string::Compare(routine_name, L"tmp_a_loc") == 0) return _get_time_local;
+									} else {
+										if (string::Compare(routine_name, L"tmp_a_min") == 0) return _get_minute;
+									}
+								}
+							}
+						}
+					} else {
+						if (string::Compare(routine_name, L"tmp_alb") < 0) {
+							if (string::Compare(routine_name, L"tmp_a_sec") < 0) {
+								if (string::Compare(routine_name, L"tmp_a_msc") < 0) {
+									if (string::Compare(routine_name, L"tmp_a_mns") == 0) return _get_month;
+								} else {
+									if (string::Compare(routine_name, L"tmp_a_msc") == 0) return _get_millisecond;
+								}
+							} else {
+								if (string::Compare(routine_name, L"tmp_a_uni") < 0) {
+									if (string::Compare(routine_name, L"tmp_a_sec") == 0) return _get_second;
+								} else {
+									if (string::Compare(routine_name, L"tmp_adl") < 0) {
+										if (string::Compare(routine_name, L"tmp_a_uni") == 0) return _get_time_universal;
+									} else {
+										if (string::Compare(routine_name, L"tmp_adl") == 0) return _time_to_string;
+									}
+								}
+							}
+						} else {
+							if (string::Compare(routine_name, L"tmp_crea_7") < 0) {
+								if (string::Compare(routine_name, L"tmp_crea_4") < 0) {
+									if (string::Compare(routine_name, L"tmp_alb") == 0) return _time_to_string_short;
+								} else {
+									if (string::Compare(routine_name, L"tmp_crea_4") == 0) return _time_init_4;
+								}
+							} else {
+								if (string::Compare(routine_name, L"tmp_cur") < 0) {
+									if (string::Compare(routine_name, L"tmp_crea_7") == 0) return _time_init_7;
+								} else {
+									if (string::Compare(routine_name, L"tmp_dim") < 0) {
+										if (string::Compare(routine_name, L"tmp_cur") == 0) return _get_time_current;
+									} else {
+										if (string::Compare(routine_name, L"tmp_dim") == 0) return _time_days_in_month;
+									}
+								}
+							}
+						}
+					}
+				}
+				return 0;
 			}
-			virtual void * ExposeInterface(const string & interface) noexcept override { return 0; }
+			virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }
 		};
 
 		IAPIExtension * CreateFPU(void) { return new FPU; }

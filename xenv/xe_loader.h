@@ -20,8 +20,8 @@ namespace Engine
 		class IAPIExtension : public IExtension
 		{
 		public:
-			virtual void * ExposeRoutine(const string & routine_name) noexcept = 0;
-			virtual void * ExposeInterface(const string & interface) noexcept = 0;
+			virtual const void * ExposeRoutine(const string & routine_name) noexcept = 0;
+			virtual const void * ExposeInterface(const string & interface) noexcept = 0;
 		};
 		class IModuleExtension : public IExtension
 		{
