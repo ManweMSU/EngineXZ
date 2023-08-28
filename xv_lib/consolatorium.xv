@@ -1,0 +1,82 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Consolatorium";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2023";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+genus consolatorium hereditat objectum_dynamicum {
+	enumeratio color {
+		defalta					= -1,
+		niger					= 0,
+		blavius_tenebrosus		= 1,
+		viridis_tenebrosus		= 2,
+		lazulinus_tenebrosus	= 3,
+		ruber_tenebrosus		= 4,
+		purpureus_tenebrosus	= 5,
+		flavus_tenebrosus		= 6,
+		griseus					= 7,
+		griseus_tenebrosus		= 8,
+		blavius					= 9,
+		viridis					= 10,
+		lazulinus				= 11,
+		ruber					= 12,
+		purpureus				= 13,
+		flavus					= 14,
+		albus					= 15
+	}
+	enumeratio codex_eventi {
+		finis			= 0,
+		character_in	= 1,
+		tactus_in		= 2,
+		cressatus_est	= 3
+	}
+	enumeratio modus { purus = 0, repulsus = 1 }
+	enumeratio status_tactus { shift = 0x1, ctrl = 0x2, alt = 0x4 }
+
+	structura positus {
+		int x; int y;
+		structor (int xv, int yv) { funda x(xv); funda y(yv); }
+	}
+	structura eventum {
+		codex_eventi codex_eventi;
+		char character;
+		tactus tactus;
+		int status_tactus;
+		positus magnitudines;
+	}
+
+	linea titulus { loca iacit virtualis pura; }
+	color color_primus { loca iacit virtualis pura; }
+	color color_secundus { loca iacit virtualis pura; }
+	modus modus_currens { loca iacit virtualis pura; }
+	logicum culicare_alterum { loca iacit virtualis pura; }
+	positus cursor { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	positus magnitudines { adipisce iacit virtualis pura; }
+
+	functio nihil scribe(~linea ln) iacit virtualis pura;
+	functio nihil scribe_lineam(~linea ln) iacit virtualis pura;
+	functio nihil scribe_lineam() iacit virtualis pura;
+
+	functio nihil depura_lineam() iacit virtualis pura;
+	functio nihil depura_cunctum() iacit virtualis pura;
+
+	functio char lege_characterem() iacit virtualis pura;
+	functio linea lege_lineam() iacit virtualis pura;
+	functio nihil lege_eventum(~eventum ev) iacit virtualis pura;
+
+	classis functio ~consolatorium operator << (~consolatorium cns, ~linea ln) iacit { cns.scribe(ln); responde cns; }
+	classis functio ~consolatorium operator >> (~consolatorium cns, ~linea ln) iacit { ln = cns.lege_lineam(); responde cns; }
+
+	classis functio @consolatorium currens() iacit { responde (@_consolatorium)(protocollum(consolatorium))^.currens(); }
+	classis functio @consolatorium alloca() iacit { responde (@_consolatorium)(protocollum(consolatorium))^.alloca(); }
+	classis functio logicum annexum_est() { responde (@_consolatorium)(protocollum(consolatorium))^.annexum_est(); }
+
+	protocollum _consolatorium {
+		functio @consolatorium currens() iacit virtualis pura;
+		functio @consolatorium alloca() iacit virtualis pura;
+		functio logicum annexum_est() virtualis pura;
+	}
+}

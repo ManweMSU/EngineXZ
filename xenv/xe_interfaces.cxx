@@ -185,7 +185,7 @@ namespace Engine
 				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
 				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
 			}
-			virtual void WriteLine(ErrorContext & ectx) noexcept override
+			virtual void LineFeed(ErrorContext & ectx) noexcept override
 			{
 				try { _wri->LineFeed(); }
 				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }

@@ -2,6 +2,7 @@
 
 #include "xenv/xe_loader.h"
 #include "xenv/xe_logger.h"
+#include "xenv/xe_conapi.h"
 #include "xlang/xl_lal.h"
 #include "ximg/xi_module.h"
 #include "ximg/xi_resources.h"
@@ -128,6 +129,12 @@ int Main(void)
 		return 1;
 	}
 	output = L"_build";
+	XV::CompileModule(L"xv_lib/consolatorium.xv", output, callback, desc);
+	if (desc.status != XV::CompilerStatus::Success) {
+		PrintCompilerError(desc);
+		return 1;
+	}
+	output = L"_build";
 	XV::CompileModule(L"xv_lib/errores.en.xv", output, callback, desc);
 	if (desc.status != XV::CompilerStatus::Success) {
 		PrintCompilerError(desc);
@@ -153,6 +160,8 @@ int Main(void)
 
 	Logger logger;
 	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandard);
+	SafePointer<XE::IConsoleDevice> console_device = XE::CreateSystemConsoleDevice(&console);
+	XE::ActivateConsoleIO(*ldr, console_device, 0);
 	ldr->AddModuleSearchPath(L"_build");
 	SafePointer<XE::ExecutionContext> ectx = new XE::ExecutionContext(ldr);
 	XE::LoadErrorLocalization(*ectx, L"errores.ru");

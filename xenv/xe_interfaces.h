@@ -22,7 +22,7 @@ namespace Engine
 		public:
 			virtual void Write(const string & str, ErrorContext & ectx) noexcept = 0;
 			virtual void WriteLine(const string & str, ErrorContext & ectx) noexcept = 0;
-			virtual void WriteLine(ErrorContext & ectx) noexcept = 0;
+			virtual void LineFeed(ErrorContext & ectx) noexcept = 0;
 			virtual void WriteSignature(ErrorContext & ectx) noexcept = 0;
 		};
 		class XTextDecoder : public Object

@@ -1,4 +1,5 @@
 ﻿importa canonicalis;
+importa consolatorium;
 
 genus test hereditat objectum {
 	int valor;
@@ -25,6 +26,19 @@ praeforma operator parallel_context() {
 
 functio nihil primus() introitus iacit
 {
+	var ~ cns = consolatorium.currens()^;
+	cns.titulus = "сука ты пидор";
+	cns.color_primus = consolatorium.color.viridis;
+
+	var crr = cns acsi (scriptio.decodificator);
+	var cdx = crr^.codex;
+	var txt = crr^.lege_lineam();
+
+	cns.scribe_lineam(linea.ex(cdx));
+	cns.scribe_lineam(txt);
+	
+	cns.color_primus = consolatorium.color.defalta;
+
 	dfrac f1 = 5.0, f2 = 2.0;
 	linea e, se;
 	errores.descriptio(4, 5, e, se);
