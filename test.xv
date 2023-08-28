@@ -1,5 +1,6 @@
 ﻿importa canonicalis;
 importa consolatorium;
+importa limae;
 
 genus test hereditat objectum {
 	int valor;
@@ -30,13 +31,9 @@ functio nihil primus() introitus iacit
 	cns.titulus = "сука ты пидор";
 	cns.color_primus = consolatorium.color.viridis;
 
-	var crr = cns acsi (scriptio.decodificator);
-	var cdx = crr^.codex;
-	var txt = crr^.lege_lineam();
+	var args = para_argumenta();
+	cns.scribe_lineam(linea.ex(args));
 
-	cns.scribe_lineam(linea.ex(cdx));
-	cns.scribe_lineam(txt);
-	
 	cns.color_primus = consolatorium.color.defalta;
 
 	dfrac f1 = 5.0, f2 = 2.0;

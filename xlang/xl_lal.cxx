@@ -600,7 +600,7 @@ namespace Engine
 				auto spec_class = class_create_under->GetArgumentSpecification();
 				offset = spec_class.size;
 				if (spec_type.size.num_words) while (offset.num_bytes & 0x07) offset.num_bytes++;
-				if ((spec_type.size.num_bytes & 0x07) == 0) {
+				if ((spec_type.size.num_bytes & 0x07) == 0 && spec_type.size.num_bytes) {
 					while (offset.num_bytes & 0x07) offset.num_bytes++;
 					while (offset.num_words & 0x01) offset.num_words++;
 				}

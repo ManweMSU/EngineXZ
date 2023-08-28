@@ -1,0 +1,121 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Systema Limarum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2023";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+enumeratio modus_limae {
+	modus_nullus		= 0x00,
+	exequi				= 0x01,
+	scribere			= 0x02,
+	legere				= 0x04,
+	ultimus				= 0x07,
+	exequi_at_scribere	= 0x03,
+	exequi_at_legere	= 0x05,
+	scribere_at_legere	= 0x06
+}
+enumeratio modus_creatoris {
+	crea_semper		= 0x01,
+	crea_nova		= 0x02,
+	aperi_semper	= 0x03,
+	aperi_praesens	= 0x04,
+	trunca_praesens	= 0x05
+}
+enumeratio modus_exscribendum {
+	rescribe_ultime		= 0x01,
+	rescribe_partium	= 0x02,
+	rescribere_nullum	= 0x03,
+	rescribere_falsum	= 0x04,
+}
+genus flumen_limae hereditat flumen {
+	tempus tempus_creaturae { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	tempus tempus_apertionis { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	tempus tempus_alternationis { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	modus_limae aditus_moderatoris { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	modus_limae aditus_grupi { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	modus_limae aditus_populum { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+}
+structura semita hereditat linea {
+	structor (~linea sem) iacit { funda((@_systema_limarum)(protocollum(syslim))^.expande(sem)); }
+	structor (@char sem) iacit { funda((@_systema_limarum)(protocollum(syslim))^.expande(sem)); }
+	structor (~semita radix, ~linea sem) iacit { funda((@_systema_limarum)(protocollum(syslim))^.expande(radix, sem)); }
+	structor (~semita radix, @char sem) iacit { funda((@_systema_limarum)(protocollum(syslim))^.expande(radix, sem)); }
+
+	semita parens { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.parens(ego^); } }
+	linea nomen { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.pars(ego^, 0); } }
+	linea nomen_purus { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.pars(ego^, 1); } }
+	linea extensio { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.pars(ego^, 2); } }
+
+	nint64 memoria { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(ego^, 0); } }
+	nint64 memoria_libera { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(ego^, 1); } }
+	nint64 memoria_moderatoris_libera { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(ego^, 2); } }
+
+	functio adl[dordo_linearum] limae() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, "*", 0); }
+	functio adl[dordo_linearum] limae(~linea filtrum) iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, filtrum, 0); }
+	functio adl[dordo_linearum] limae_cunctae() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, "*", 1); }
+	functio adl[dordo_linearum] limae_cunctae(~linea filtrum) iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, filtrum, 1); }
+	functio adl[dordo_linearum] collectoria() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, "*", 2); }
+	functio adl[dordo_linearum] collectoria(~linea filtrum) iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, filtrum, 2); }
+
+	logicum limae_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 0); } }
+	logicum collectorium_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 1); } }
+	logicum adhaesio_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 2); } }
+
+	functio adl[flumen_limae] crea_limam(modus_limae ml, modus_creatoris mc) iacit { responde (@_systema_limarum)(protocollum(syslim))^.crea_limam(ego^, ml, mc); }
+	functio nihil crea_collectorium() iacit { (@_systema_limarum)(protocollum(syslim))^.crea_collectorium(ego^, 0); }
+	functio nihil crea_arborem_collectoriorum() iacit { (@_systema_limarum)(protocollum(syslim))^.crea_collectorium(ego^, 1); }
+	functio nihil crea_adhaesio_insolida(~linea ad) iacit { (@_systema_limarum)(protocollum(syslim))^.crea_adhaesio(ego^, ad, 0); }
+	functio nihil crea_adhaesio_solida(~semita ad) iacit { (@_systema_limarum)(protocollum(syslim))^.crea_adhaesio(ego^, ad, 1); }
+
+	functio linea lege_adhaesionem() iacit { responde (@_systema_limarum)(protocollum(syslim))^.lege_adhaesionem(ego^); }
+	functio nihil move(~semita ad) iacit { (@_systema_limarum)(protocollum(syslim))^.move(ego^, ad, 0); }
+	functio nihil exscribe(~semita ad, modus_exscribendum modus) iacit { (@_systema_limarum)(protocollum(syslim))^.move(ego^, ad, modus); }
+	functio nihil remove() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 0); }
+	functio nihil remove_collectoriorum() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 1); }
+	functio nihil remove_collectoriorum_cunctum() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 2); }
+
+	functio nihil monstra() iacit { (@_systema_limarum)(protocollum(syslim))^.aperi(ego^, 0); }
+	functio nihil aperi_externe() iacit { (@_systema_limarum)(protocollum(syslim))^.aperi(ego^, 1); }
+	functio nihil aperi_collectorium() iacit { (@_systema_limarum)(protocollum(syslim))^.aperi(ego^, 2); }
+	functio nihil aperi_consolatorium() iacit { (@_systema_limarum)(protocollum(syslim))^.aperi(ego^, 3); }
+
+	classis functio semita currens() iacit { responde (@_systema_limarum)(protocollum(syslim))^.currens; }
+	classis functio semita modulus_primus() iacit { responde (@_systema_limarum)(protocollum(syslim))^.modulus_primus; }
+
+	functio nihil loca_currentem() iacit { (@_systema_limarum)(protocollum(syslim))^.currens = ego^; }
+}
+structura volumen {
+	semita radix;
+	linea nomen;
+
+	nint64 memoria { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(radix, 0); } }
+	nint64 memoria_libera { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(radix, 1); } }
+	nint64 memoria_moderatoris_libera { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(radix, 2); } }
+}
+
+functio adl[dordo_linearum] para_argumenta() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_argumenta(); }
+functio adl[ordo volumen] para_volumina() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_volumina(); }
+
+protocollum _systema_limarum {
+	functio adl[dordo_linearum] para_argumenta() iacit virtualis pura;
+	functio linea expande(~linea valor) iacit virtualis pura;
+	functio linea expande(~linea radix, ~linea valor) iacit virtualis pura;
+	semita currens { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	semita modulus_primus { adipisce iacit virtualis pura; }
+	functio semita parens(~linea valor) iacit virtualis pura;
+	functio linea pars(~linea valor, int pars) iacit virtualis pura;
+	functio adl[ordo volumen] para_volumina() iacit virtualis pura;
+	functio nint64 memoria_voluminis(~semita sem, int pars) iacit virtualis pura;
+	functio adl[dordo_linearum] para_limas(~semita sem, ~linea filtrum, int modus) iacit virtualis pura;
+	functio logicum status(~semita sem, int modus) virtualis pura;
+	functio nihil aperi(~semita sem, int modus) iacit virtualis pura;
+	functio adl[flumen_limae] crea_limam(~semita sem, modus_limae ml, modus_creatoris mc) iacit virtualis pura;
+	functio nihil crea_collectorium(~semita sem, int modus) iacit virtualis pura;
+	functio nihil crea_adhaesio(~semita sem, ~linea valor, int modus) iacit virtualis pura;
+	functio linea lege_adhaesionem(~semita sem) iacit virtualis pura;
+	functio nihil move(~semita sem, ~semita ad, int modus) iacit virtualis pura;
+	functio nihil remove(~semita sem, int modus) iacit virtualis pura;
+}
