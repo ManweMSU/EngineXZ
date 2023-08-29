@@ -17,77 +17,6 @@ using namespace Engine::Streaming;
 
 IO::Console console;
 
-class ITestConsole
-{
-public:
-	virtual void PrintInteger(int value)
-	{
-		console.WriteLine(FormatString(L"Write integer: %0", value));
-	}
-	virtual void PrintLogicum(bool value)
-	{
-		console.WriteLine(FormatString(L"Write boolean: %0", value));
-	}
-};
-ITestConsole test_console;
-
-// class ModuleLoader : public Object, public XE::ILoaderCallback
-// {
-// 	static bool cond_check(void) noexcept
-// 	{
-// 		console.Write(L"Press Y or N: ");
-// 		console.SetInputMode(IO::ConsoleInputMode::Raw);
-// 		widechar c;
-// 		while (true) {
-// 			IO::ConsoleEventDesc event;
-// 			console.ReadEvent(event);
-// 			if (event.Event == IO::ConsoleEvent::CharacterInput) {
-// 				if (event.CharacterCode == L'Y' || event.CharacterCode == L'y') { c = L'Y'; break; }
-// 				else if (event.CharacterCode == L'N' || event.CharacterCode == L'n') { c = L'N'; break; }
-// 			}
-// 		}
-// 		console.SetInputMode(IO::ConsoleInputMode::Echo);
-// 		console.WriteLine(string(c));
-// 		return c == L'Y';
-// 	}
-// 	static void use_cns(ITestConsole * cns) noexcept
-// 	{
-// 		cns->PrintInteger(444);
-// 	}
-// public:
-// 	virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
-// 	{
-// 		try {
-// 			try {
-// 				return new FileStream(L"_build/" + module_name + L".xo", AccessRead, OpenExisting);
-// 			} catch (...) {}
-// 			return new FileStream(L"_build/" + module_name + L".xx", AccessRead, OpenExisting);
-// 		} catch (...) { return 0; }
-// 	}
-// 	virtual void * GetRoutineAddress(const string & routine_name) noexcept override
-// 	{
-// 		if (routine_name == L"read_bool") return cond_check;
-// 		if (routine_name == L"use_cns") return use_cns;
-// 		return 0;
-// 	}
-// 	virtual handle LoadDynamicLibrary(const string & library_name) noexcept override
-// 	{
-// 		return LoadLibrary(library_name);
-// 	}
-// 	virtual void HandleModuleLoadError(const string & module_name, const string & subject, XE::ModuleLoadError error) noexcept override
-// 	{
-// 		console.SetTextColor(12);
-// 		console.WriteLine(FormatString(L"Error %0 loading module '%1' with subject '%2'", string(uint(error), HexadecimalBase, 8), module_name, subject));
-// 		console.SetTextColor(-1);
-// 	}
-// 	virtual Object * ExposeObject(void) noexcept override { return this; }
-// 	virtual void * ExposeInterface(const string & interface) noexcept override
-// 	{
-// 		if (interface == L"cns") return &test_console;
-// 		return 0;
-// 	}
-// };
-
 class Logger : public XE::ILoggerSink
 {
 public:
@@ -118,7 +47,9 @@ void PrintCompilerError(XV::CompilerStatusDesc & desc)
 
 int Main(void)
 {
+	Math::Random::Init();
 	Codec::InitializeDefaultCodecs();
+	Assembly::CurrentLocale = Assembly::GetCurrentUserLocale();
 	IO::SetCurrentDirectory(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/../..");
 
 	string output = L"_build";

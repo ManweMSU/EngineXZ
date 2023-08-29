@@ -13,10 +13,12 @@ namespace Engine
 
 		void AddModuleMetadata(Volumes::ObjectDictionary<string, DataBlock> & rsrc, const Volumes::Dictionary<string, string> & meta);
 		void AddModuleIcon(Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id, Codec::Image * image);
+		void AddModuleLocalization(Volumes::ObjectDictionary<string, DataBlock> & rsrc, const string & language, const Volumes::Dictionary<string, string> & localization);
 
 		Volumes::Dictionary<string, string> * LoadModuleMetadata(const Volumes::ObjectDictionary<string, DataBlock> & rsrc);
 		Codec::Image * LoadModuleIcon(const Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id);
 		Codec::Frame * LoadModuleIcon(const Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id, Point size);
 		Codec::Frame * LoadModuleIcon(const Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id, double dpi);
+		Volumes::Dictionary<string, string> * LoadModuleLocalization(Volumes::ObjectDictionary<string, DataBlock> & rsrc, const string & language);
 	}
 }

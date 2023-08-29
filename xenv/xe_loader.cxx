@@ -4,6 +4,20 @@
 #include "xe_logger.h"
 #include "../ximg/xi_module.h"
 
+#ifdef ENGINE_X64
+	#ifdef ENGINE_ARM
+		#define XE_CURRENT_MACHINE L"arm64"
+	#else
+		#define XE_CURRENT_MACHINE L"x64"
+	#endif
+#else
+	#ifdef ENGINE_ARM
+		#define XE_CURRENT_MACHINE L"arm"
+	#else
+		#define XE_CURRENT_MACHINE L"x86"
+	#endif
+#endif
+
 namespace Engine
 {
 	namespace XE
@@ -43,6 +57,8 @@ namespace Engine
 			{
 				for (auto & p : _dl_paths) {
 					auto dl = LoadLibrary(IO::ExpandPath(p + L"/" + library_name + L"." + string(ENGINE_LIBRARY_EXTENSION)));
+					if (dl) return dl;
+					dl = LoadLibrary(IO::ExpandPath(p + L"/" + library_name + L"_" + string(XE_CURRENT_MACHINE) + L"." + string(ENGINE_LIBRARY_EXTENSION)));
 					if (dl) return dl;
 					dl = LoadLibrary(IO::ExpandPath(p + L"/" + library_name));
 					if (dl) return dl;

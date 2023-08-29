@@ -1,6 +1,7 @@
 ﻿#include "xe_ctx.h"
 
 #include "../ximg/xi_function.h"
+#include "../ximg/xi_resources.h"
 #include "../ximg/xi_module.h"
 
 namespace Engine
@@ -374,6 +375,8 @@ namespace Engine
 			loader.dl_list = &result->_resident_dl;
 			_sync->Wait();
 			try {
+				SafePointer< Volumes::Dictionary<string, string> > localization;
+				try { localization = XI::LoadModuleLocalization(data->resources, Assembly::CurrentLocale); } catch (...) {}
 				auto word_size = _trans->GetWordSize();
 				for (auto & l : data->literals) {
 					if (l.key[0] != L'.' && (local.FindSymbol(l.key, false) || _system.FindSymbol(l.key, false))) {
@@ -383,7 +386,11 @@ namespace Engine
 					}
 					SafePointer<LiteralSymbol> lit;
 					if (l.value.contents == XI::Module::Literal::Class::String) {
-						lit = new LiteralSymbol(&l.value.data_string, Reflection::PropertyType::String, l.value.attributes);
+						if (localization) {
+							auto lv = localization->GetElementByKey(l.key);
+							if (lv) lit = new LiteralSymbol(lv, Reflection::PropertyType::String, l.value.attributes);
+						}
+						if (!lit) lit = new LiteralSymbol(&l.value.data_string, Reflection::PropertyType::String, l.value.attributes);
 					} else if (l.value.contents == XI::Module::Literal::Class::Boolean) {
 						if (l.value.length == 1) lit = new LiteralSymbol(&l.value.data_uint64, Reflection::PropertyType::Boolean, l.value.attributes);
 						else throw InvalidArgumentException();

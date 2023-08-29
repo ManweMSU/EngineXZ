@@ -72,6 +72,7 @@ namespace Engine
 			Volumes::List<VInitServiceDesc> init_list;
 			Volumes::List<VPostCompileDesc> post_compile;
 			Volumes::Dictionary<string, string> metadata;
+			Volumes::ObjectDictionary< string, Volumes::Dictionary<string, string> > localizations;
 
 			VContext(XL::LContext & _lal, ICompilerCallback * _callback, CompilerStatusDesc & _status, TokenStream * stream) :
 				module_is_library(false), ctx(_lal), callback(_callback), status(_status) { input.SetRetain(stream); }
@@ -1039,7 +1040,6 @@ namespace Engine
 				ReadNextToken();
 				auto expr = current_token;
 				SafePointer<XL::LObject> value = ProcessExpression(desc);
-				AssertPunct(L";"); ReadNextToken();
 				if (value->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
 				value = ctx.QueryDetachedLiteral(value);
 				for (auto & attr : attributes) {
@@ -1049,6 +1049,24 @@ namespace Engine
 				attributes.Clear();
 				try { ctx.AttachLiteral(value, desc.current_namespace, definition.contents); }
 				catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+				string path = desc.current_namespace->GetFullName().Length() ? desc.current_namespace->GetFullName() + L"." + definition.contents : definition.contents;
+				while (IsPunct(L"{")) {
+					ReadNextToken();
+					auto expr = current_token;
+					SafePointer<XL::LObject> lang_expr = ProcessExpression(desc);
+					AssertPunct(L","); ReadNextToken();
+					SafePointer<XL::LObject> variant_expr = ProcessExpression(desc);
+					string lang, variant;
+					try {
+						lang = ctx.QueryLiteralString(lang_expr);
+						variant = ctx.QueryLiteralString(variant_expr);
+					} catch (...) { Abort(CompilerStatus::ExpressionMustBeConst, expr); }
+					auto dict = localizations.GetObjectByKey(lang);
+					if (!dict) Abort(CompilerStatus::ResourceFileNotFound, expr);
+					dict->Append(path, variant);
+					AssertPunct(L"}"); ReadNextToken();
+				}
+				AssertPunct(L";"); ReadNextToken();
 			}
 			void ProcessUsingDefinition(VObservationDesc & desc)
 			{
@@ -1470,6 +1488,18 @@ namespace Engine
 								try { value = ctx.QueryLiteralString(meta_value); }
 								catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, value_expr); }
 								if (!metadata.Append(key, value)) Abort(CompilerStatus::SymbolRedefinition, key_expr);
+							} else if (current_token.contents == Lexic::ResourceLang) {
+								ReadNextToken();
+								auto expr = current_token;
+								SafePointer<XL::LObject> lang_expr = ProcessExpression(desc);
+								AssertPunct(L";"); ReadNextToken();
+								string lang;
+								if (lang_expr->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
+								try { lang = ctx.QueryLiteralString(lang_expr); }
+								catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+								if (lang.Length() != 2) Abort(CompilerStatus::ObjectTypeMismatch, expr);
+								SafePointer< Volumes::Dictionary<string, string> > table = new Volumes::Dictionary<string, string>;
+								if (!localizations.Append(lang, table)) Abort(CompilerStatus::SymbolRedefinition, expr);
 							} else Abort(CompilerStatus::AnotherTokenExpected);
 						} else Abort(CompilerStatus::AnotherTokenExpected);
 					} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
@@ -2043,6 +2073,7 @@ namespace Engine
 					}
 					init_list.Clear();
 					if (!metadata.IsEmpty()) XI::AddModuleMetadata(ctx.QueryResources(), metadata);
+					for (auto & loc : localizations) if (!loc.value->IsEmpty()) XI::AddModuleLocalization(ctx.QueryResources(), loc.key, *loc.value);
 				} catch (...) { if (status.status == CompilerStatus::Success) SetStatusError(status, CompilerStatus::InternalError); }
 			}
 		};

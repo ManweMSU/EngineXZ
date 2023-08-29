@@ -104,6 +104,7 @@ namespace Engine
 			constexpr const widechar * ResourceData	= L"data";
 			constexpr const widechar * ResourceIcon	= L"icon";
 			constexpr const widechar * ResourceMeta	= L"attributum";
+			constexpr const widechar * ResourceLang	= L"lingua";
 		}
 	}
 }

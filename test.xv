@@ -2,6 +2,10 @@
 importa consolatorium;
 importa limae;
 
+auxilium lingua "ru";
+
+constatus some_text = "suka ty pidor" { "ru", "сука ты пидор" };
+
 genus test hereditat objectum {
 	int valor;
 
@@ -28,7 +32,7 @@ praeforma operator parallel_context() {
 functio nihil primus() introitus iacit
 {
 	var ~ cns = consolatorium.currens()^;
-	cns.titulus = "сука ты пидор";
+	cns.titulus = some_text;
 	cns.color_primus = consolatorium.color.viridis;
 
 	var args = para_argumenta();
@@ -59,7 +63,7 @@ functio nihil primus() introitus iacit
 
 	t^.do_something();
 
-	actuarius.scribe("suka ty pidor");
+	actuarius.scribe(some_text);
 
 	linea("pidor").ad_int32();
 	iace 666;
