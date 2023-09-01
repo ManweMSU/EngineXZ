@@ -2162,7 +2162,8 @@ namespace Engine
 			}
 			CompileModule(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output.InnerRef(), internal_callback, status);
 			if (status.status != CompilerStatus::Success) return;
-			output_path = IO::ExpandPath(output_path + L"/" + output->GetOutputModuleName() + L"." + output->GetOutputModuleExtension());
+			if (output_path[0] == L'?') output_path = output_path.Fragment(1, -1);
+			else output_path = IO::ExpandPath(output_path + L"/" + output->GetOutputModuleName() + L"." + output->GetOutputModuleExtension());
 			try {
 				SafePointer<Streaming::Stream> stream = new Streaming::FileStream(output_path, Streaming::AccessWrite, Streaming::CreateAlways);
 				auto data = output->GetOutputModuleData();

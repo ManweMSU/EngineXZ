@@ -5,14 +5,11 @@
 #include "xenv/xe_conapi.h"
 #include "xenv/xe_filesys.h"
 #include "xenv/xe_imgapi.h"
-#include "xlang/xl_lal.h"
 #include "ximg/xi_module.h"
 #include "ximg/xi_resources.h"
-#include "xv/xv_compiler.h"
 
 using namespace Engine;
 using namespace Engine::XA;
-using namespace Engine::XL;
 
 using namespace Engine::Streaming;
 
@@ -30,20 +27,16 @@ public:
 	virtual Object * ExposeObject(void) noexcept override { return 0; }
 };
 
-void PrintCompilerError(XV::CompilerStatusDesc & desc)
+bool CompileModule(const string & input, const string & output)
 {
-	console.SetTextColor(12);
-	console.WriteLine(L"XV COMPILER ERROR: " + string(uint(desc.status), HexadecimalBase, 4));
-	console.WriteLine(L"AT LINE NO " + string(desc.error_line_no));
-	console.SetTextColor(-1);
-	console.WriteLine(desc.error_line);
-	console.SetTextColor(4);
-	if (desc.error_line_pos >= 0 && desc.error_line_len > 0) {
-		console.Write(string(L' ', desc.error_line_pos));
-		console.Write(string(L'~', desc.error_line_len));
-		console.LineFeed();
-	}
-	console.SetTextColor(-1);
+	Array<string> cmd(0x10);
+	cmd << IO::ExpandPath(input);
+	cmd << L"-NO";
+	cmd << IO::ExpandPath(output);
+	SafePointer<Process> process = CreateProcess(L"xv_com/_build/windows_x64_debug/xv.exe", &cmd);
+	if (!process) return false;
+	process->Wait();
+	return process->GetExitCode() == 0;
 }
 
 int Main(void)
@@ -53,55 +46,14 @@ int Main(void)
 	Assembly::CurrentLocale = Assembly::GetCurrentUserLocale();
 	IO::SetCurrentDirectory(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/../..");
 
-	string output = L"_build";
-	SafePointer<XV::ICompilerCallback> callback = XV::CreateCompilerCallback(0, 0, &output, 1, 0);
-	XV::CompilerStatusDesc desc;
-	XV::CompileModule(L"xv_lib/canonicalis.xv", output, callback, desc);
-	if (desc.status != XV::CompilerStatus::Success) {
-		PrintCompilerError(desc);
-		return 1;
-	}
-	output = L"_build";
-	XV::CompileModule(L"xv_lib/limae.xv", output, callback, desc);
-	if (desc.status != XV::CompilerStatus::Success) {
-		PrintCompilerError(desc);
-		return 1;
-	}
-	output = L"_build";
-	XV::CompileModule(L"xv_lib/imago.xv", output, callback, desc);
-	if (desc.status != XV::CompilerStatus::Success) {
-		PrintCompilerError(desc);
-		return 1;
-	}
-	output = L"_build";
-	XV::CompileModule(L"xv_lib/consolatorium.xv", output, callback, desc);
-	if (desc.status != XV::CompilerStatus::Success) {
-		PrintCompilerError(desc);
-		return 1;
-	}
-	output = L"_build";
-	XV::CompileModule(L"xv_lib/errores.en.xv", output, callback, desc);
-	if (desc.status != XV::CompilerStatus::Success) {
-		PrintCompilerError(desc);
-		return 1;
-	}
-	output = L"_build";
-	XV::CompileModule(L"xv_lib/errores.ru.xv", output, callback, desc);
-	if (desc.status != XV::CompilerStatus::Success) {
-		PrintCompilerError(desc);
-		return 1;
-	}
-	output = L"_build";
-	XV::CompileModule(L"test.xv", output, callback, desc);
-	if (desc.status != XV::CompilerStatus::Success) {
-		PrintCompilerError(desc);
-		return 1;
-	}
-	SafePointer<FileStream> stream = new FileStream(output, AccessRead, OpenExisting);
-	XI::Module module(stream);
-	for (auto & rsrc : module.resources) console.WriteLine(rsrc.key + L" - " + string(rsrc.value->Length()));
-	SafePointer< Volumes::Dictionary<string, string> > meta = XI::LoadModuleMetadata(module.resources);
-	if (meta) console.WriteLine(meta->ToString());
+	string output = IO::ExpandPath(L"_build");
+	if (!CompileModule(L"xv_lib/canonicalis.xv", output)) return 1;
+	if (!CompileModule(L"xv_lib/limae.xv", output)) return 1;
+	if (!CompileModule(L"xv_lib/imago.xv", output)) return 1;
+	if (!CompileModule(L"xv_lib/consolatorium.xv", output)) return 1;
+	if (!CompileModule(L"xv_lib/errores.en.xv", output)) return 1;
+	if (!CompileModule(L"xv_lib/errores.ru.xv", output)) return 1;
+	if (!CompileModule(L"test.xv", output)) return 1;
 
 	Logger logger;
 	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandard);

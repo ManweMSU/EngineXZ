@@ -1,2 +1,29 @@
-﻿CompileAll = true
-NoHiDPI = true
+﻿NoHiDPI = true
+UseVersionDefines = true
+CompileList {
+	AAAAAA = "jit_test.cxx"
+	AAAAAB = "xasm\\xa_compiler.cxx"
+	AAAAAC = "xasm\\xa_dasm.cxx"
+	AAAAAD = "xasm\\xa_t_armv8.cxx"
+	AAAAAE = "xasm\\xa_t_i386.cxx"
+	AAAAAF = "xasm\\xa_t_x64.cxx"
+	AAAAAG = "xasm\\xa_trans.cxx"
+	AAAAAH = "xasm\\xa_type_helper.cxx"
+	AAAAAI = "xasm\\xa_types.cxx"
+	AAAAAJ = "xasm_tests\\tests.cxx"
+	AAAAAK = "xenv\\xe_conapi.cxx"
+	AAAAAL = "xenv\\xe_ctx.cxx"
+	AAAAAM = "xenv\\xe_filesys.cxx"
+	AAAAAN = "xenv\\xe_imgapi.cxx"
+	AAAAAO = "xenv\\xe_interfaces.cxx"
+	AAAAAP = "xenv\\xe_loader.cxx"
+	AAAAAQ = "xenv\\xe_logger.cxx"
+	AAAAAR = "xenv\\xe_rtss.cxx"
+	AAAAAS = "xenv\\xe_stdext.cxx"
+	AAAAAT = "xexec\\xx_com.cxx"
+	AAAAAU = "ximg\\xi_build.cxx"
+	AAAAAV = "ximg\\xi_function.cxx"
+	AAAAAW = "ximg\\xi_module.cxx"
+	AAAAAX = "ximg\\xi_pret.cxx"
+	AAAAAY = "ximg\\xi_resources.cxx"
+}

@@ -1,0 +1,77 @@
+﻿UseVersionDefines = true
+Attachments {
+	AAAAAA {
+		From = "xv.ini"
+		To = "xv.ini"
+	}
+}
+CompileList {
+	AAAAAA = "..\\xasm\\xa_compiler.cxx"
+	AAAAAB = "..\\xasm\\xa_type_helper.cxx"
+	AAAAAC = "..\\xasm\\xa_types.cxx"
+	AAAAA = "..\\xasm\\xa_trans.cxx"
+	AAAAA1 = "..\\xasm\\xa_t_i386.cxx"
+	AAAAA2 = "..\\xasm\\xa_t_x64.cxx"
+	AAAAA3 = "..\\xasm\\xa_t_armv8.cxx"
+	AAAAAD = "..\\xenv\\xe_conapi.cxx"
+	AAAAAE = "..\\xenv\\xe_ctx.cxx"
+	AAAAAF = "..\\xenv\\xe_filesys.cxx"
+	AAAAAG = "..\\xenv\\xe_interfaces.cxx"
+	AAAAAH = "..\\xenv\\xe_loader.cxx"
+	AAAAAI = "..\\xenv\\xe_logger.cxx"
+	AAAAAJ = "..\\xenv\\xe_rtss.cxx"
+	AAAAAK = "..\\xenv\\xe_stdext.cxx"
+	AAAAAL = "..\\xexec\\xx_com.cxx"
+	AAAAAM = "..\\ximg\\xi_function.cxx"
+	AAAAAN = "..\\ximg\\xi_module.cxx"
+	AAAAAO = "..\\ximg\\xi_resources.cxx"
+	AAAAAP = "..\\xlang\\xl_base.cxx"
+	AAAAAQ = "..\\xlang\\xl_code.cxx"
+	AAAAAR = "..\\xlang\\xl_com.cxx"
+	AAAAAS = "..\\xlang\\xl_func.cxx"
+	AAAAAT = "..\\xlang\\xl_inline.cxx"
+	AAAAAU = "..\\xlang\\xl_lal.cxx"
+	AAAAAV = "..\\xlang\\xl_lit.cxx"
+	AAAAAW = "..\\xlang\\xl_prop.cxx"
+	AAAAAX = "..\\xlang\\xl_synth.cxx"
+	AAAAAY = "..\\xlang\\xl_types.cxx"
+	AAAAAZ = "..\\xlang\\xl_var.cxx"
+	AAAABA = "xv.cxx"
+	AAAABB = "..\\xv\\xv_compiler.cxx"
+	AAAABC = "..\\xv\\xv_lexical.cxx"
+	AAAABD = "..\\xv\\xv_oapi.cxx"
+	AAAABE = "..\\xv\\xv_proto.cxx"
+}
+"-debug" {
+	Attachments {
+		AAMAAA {
+			From = "store.ecs"
+			To = "store.ecs"
+		}
+		AAMAAB {
+			From = "xe.debug.ini"
+			To = "xe.ini"
+		}
+	}
+}
+EngineStore {
+	ShellPath = "."
+	StoreLinkFile = "store.ecs"
+}
+"-release" {
+	Attachments {
+		AALAAA {
+			From = "xe.ini"
+			To = "xe.ini"
+		}
+	}
+}
+VersionInformation {
+	ApplicationIdentifier = "XVC"
+	ApplicationName = "Engine XV Compilator"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2023"
+	InternalName = "xv"
+	Version = "1.0.0.1"
+}
