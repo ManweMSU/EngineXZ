@@ -158,7 +158,7 @@ namespace Engine
 					Reg unix_fr[] = { Reg::XMM0, Reg::XMM1, Reg::XMM2, Reg::XMM3, Reg::XMM4, Reg::XMM5, Reg::XMM6, Reg::XMM7, Reg::NO };
 					for (int i = 0; i < result->Length(); i++) {
 						auto & info = result->ElementAt(i);
-						if (!info.indirect && inputs[i].semantics == ArgumentSemantics::FloatingPoint) {
+						if (!info.indirect && inputs[info.index].semantics == ArgumentSemantics::FloatingPoint) {
 							if (_conv == CallingConvention::Windows) {
 								if (i == 0) info.reg = Reg::XMM0;
 								else if (i == 1) info.reg = Reg::XMM1;
@@ -815,7 +815,10 @@ namespace Engine
 					if (_conv == CallingConvention::Windows) stack_usage = max(layout->Length(), 4) * 8;
 					else if (_conv == CallingConvention::Unix) stack_usage = (num_args_by_stack + num_args_by_xmm) * 8;
 					if ((_stack_oddity + stack_usage) & 0xF) stack_usage += 8;
-					if (stack_usage && !idle) encode_add(Reg::RSP, -int(stack_usage));
+					if (stack_usage && !idle) {
+						_stack_oddity += stack_usage;
+						encode_add(Reg::RSP, -int(stack_usage));
+					}
 					argument_homes.SetLength(node.inputs.Length() - first_arg);
 					argument_layout_index.SetLength(node.inputs.Length() - first_arg);
 					uint current_stack_index = 0;
@@ -896,6 +899,7 @@ namespace Engine
 					if (!indirect && !idle) encode_put_addr_of(Reg::RAX, node.self);
 					if (!idle) {
 						encode_call(Reg::RAX, false);
+						_stack_oddity -= stack_usage;
 						if (stack_usage) encode_add(Reg::RSP, int(stack_usage));
 						if (!retval_byref && node.retval_spec.semantics == ArgumentSemantics::FloatingPoint) encode_mov_reg_xmm(8, Reg::RAX, Reg::XMM0);
 					}

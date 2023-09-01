@@ -13,9 +13,9 @@ enumeratio modus_limae {
 	scribere			= 0x02,
 	legere				= 0x04,
 	ultimus				= 0x07,
-	exequi_at_scribere	= 0x03,
-	exequi_at_legere	= 0x05,
-	scribere_at_legere	= 0x06
+	exequi_et_scribere	= 0x03,
+	exequi_et_legere	= 0x05,
+	scribere_et_legere	= 0x06
 }
 enumeratio modus_creatoris {
 	crea_semper		= 0x01,

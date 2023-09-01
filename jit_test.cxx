@@ -4,6 +4,7 @@
 #include "xenv/xe_logger.h"
 #include "xenv/xe_conapi.h"
 #include "xenv/xe_filesys.h"
+#include "xenv/xe_imgapi.h"
 #include "xlang/xl_lal.h"
 #include "ximg/xi_module.h"
 #include "ximg/xi_resources.h"
@@ -67,6 +68,12 @@ int Main(void)
 		return 1;
 	}
 	output = L"_build";
+	XV::CompileModule(L"xv_lib/imago.xv", output, callback, desc);
+	if (desc.status != XV::CompilerStatus::Success) {
+		PrintCompilerError(desc);
+		return 1;
+	}
+	output = L"_build";
 	XV::CompileModule(L"xv_lib/consolatorium.xv", output, callback, desc);
 	if (desc.status != XV::CompilerStatus::Success) {
 		PrintCompilerError(desc);
@@ -102,6 +109,7 @@ int Main(void)
 	XE::ActivateConsoleIO(*ldr, console_device, 0);
 	string argv[3] = { output, L"suka", L"pidor" };
 	XE::ActivateFileIO(*ldr, output, argv, 3);
+	XE::ActivateImageIO(*ldr);
 	ldr->AddModuleSearchPath(L"_build");
 	SafePointer<XE::ExecutionContext> ectx = new XE::ExecutionContext(ldr);
 	XE::LoadErrorLocalization(*ectx, L"errores.ru");

@@ -1,0 +1,306 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Imaginis";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2023";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium imago {
+	spatium codex {
+		constatus DIB			= "BMP";
+		constatus PNG			= "PNG";
+		constatus JPEG			= "JPG";
+		constatus GIF			= "GIF";
+		constatus TIFF			= "TIF";
+		constatus DDS			= "DDS";
+		constatus HEIF			= "HEIF";
+		constatus WindowsIcon	= "ICO";
+		constatus WindowsCursor	= "CUR";
+		constatus AppleIcon		= "ICNS";
+		constatus Engine		= "EIWV";
+	}
+	enumeratio consuetudo { color = 0, normativus = 1, lux = 2 }
+	enumeratio modus_alpha { rectus = 0, praemultiplicatus = 1 }
+	enumeratio modus_convisendi { superus_primus = 0, infernus_primus = 1 }
+	enumeratio formatus hereditat nint32 {
+		B8G8R8A8 = 0x04888800, R8G8B8A8 = 0x14888800, B8G8R8X8 = 0x04888008, R8G8B8X8 = 0x14888008,
+		B8G8R8 = 0x03888000, R8G8B8 = 0x13888000,
+		B5G5R5A1 = 0x04555100, B5G5R5X1 = 0x04555001, B5G6R5 = 0x03565000,
+		R5G5B5A1 = 0x14555100, R5G5B5X1 = 0x14555001, R5G6B5 = 0x13565000,
+		B4G4R4A4 = 0x04444400, B4G4R4X4 = 0x04444004, R4G4B4A4 = 0x14444400, R4G4B4X4 = 0x14444004,
+		R8A8 = 0x02800800,
+		B2G3R2A1 = 0x04232100, B2G3R2X1 = 0x04232001, B2G3R3 = 0x03332000,
+		R2G3B2A1 = 0x14232100, R2G3B2X1 = 0x14232001, R3G3B2 = 0x13332000,
+		B2G2R2A2 = 0x04222200, B2G2R2X2 = 0x04222002, R2G2B2A2 = 0x14222200, R2G2B2X2 = 0x14222002,
+		R4A4 = 0x02400400, A8 = 0x01000800, R8 = 0x01800000, P8 = 0x01000080,
+		R2A2 = 0x02200200, A4 = 0x01000400, R4 = 0x01400000, P4 = 0x01000040,
+		R1A1 = 0x02100100, A2 = 0x01000200, R2 = 0x01200000, P2 = 0x01000020,
+		A1 = 0x01000100, R1 = 0x01100000, P1 = 0x01000010
+	}
+
+	structura color {
+		nint8 r;
+		nint8 g;
+		nint8 b;
+		nint8 a;
+		[[positus] "0"] nint32 valor;
+
+		structor (nint8 _r, nint8 _g, nint8 _b, nint8 _a) { funda r(_r); funda g(_g); funda b(_b); funda a(_a); }
+		structor (nint8 _r, nint8 _g, nint8 _b) { funda r(_r); funda g(_g); funda b(_b); funda a(255); }
+		structor (nint32 _v) { funda valor(_v); }
+
+		convertor (linea) () iacit { responde linea.forma("(%0, %1, %2; %3)", r, g, b, a); }
+	}
+	structura descriptio_repli {
+		int latitudo;
+		int altitudo;
+		int magnitudo_lineae;
+		formatus formatus;
+		modus_alpha modus_alpha;
+		modus_convisendi modus_convisendi;
+		int centrum_x;
+		int centrum_y;
+		int duratio;
+		consuetudo consuetudo;
+		dfrac conscendens;
+
+		convertor (linea) () iacit
+		{
+			responde linea.forma("%0 x %1, linea %2; formatus: (%3, %4, %5);\nmeta: (%6)", latitudo, altitudo, magnitudo_lineae,
+				formatus, modus_alpha, modus_convisendi, linea.forma("centrum: (%0, %1), duratio: %2, consuetudo : %3, conscendens : %4",
+					centrum_x, centrum_y, duratio, consuetudo, conscendens));
+		}
+	}
+	genus replum hereditat objectum {
+		structura tractus {
+			int minimus;
+			int maximus;
+
+			structor (int mn, int mx) { funda minimus(mn); funda maximus(mx); }
+			functio int initus() { responde minimus; }
+			functio int finis() { responde maximus; }
+			functio int prae_initus() { responde minimus - 1; }
+			functio int post_finis() { responde maximus + 1; }
+		}
+
+		[[importa] im_al_0] classis functio adl[replum] alloca(int x, int y, formatus form) iacit;
+		[[importa] im_al_1] classis functio adl[replum] alloca(int x, int y, formatus form, modus_alpha alpha) iacit;
+		[[importa] im_al_2] classis functio adl[replum] alloca(int x, int y, formatus form, modus_convisendi conv) iacit;
+		[[importa] im_al_3] classis functio adl[replum] alloca(int x, int y, formatus form, modus_alpha alpha, modus_convisendi conv) iacit;
+		[[importa] im_al_4] classis functio adl[replum] alloca_cum_linea(int x, int y, int linea, formatus form) iacit;
+		[[importa] im_al_5] classis functio adl[replum] alloca_cum_linea(int x, int y, int linea, formatus form, modus_alpha alpha) iacit;
+		[[importa] im_al_6] classis functio adl[replum] alloca_cum_linea(int x, int y, int linea, formatus form, modus_convisendi conv) iacit;
+		[[importa] im_al_7] classis functio adl[replum] alloca_cum_linea(int x, int y, int linea, formatus form, modus_alpha alpha, modus_convisendi conv) iacit;
+		[[importa] im_md_2] classis functio adl[replum] moduli(@nihil mdl, int id, int lat, int alt) iacit;
+		[[importa] im_md_1] classis functio adl[replum] moduli(@nihil mdl, int id, dfrac consc) iacit;
+
+		functio adl[replum] exscribe() iacit virtualis pura;
+		functio adl[replum] converte(formatus form) iacit virtualis pura;
+		functio adl[replum] converte(modus_alpha alpha) iacit virtualis pura;
+		functio adl[replum] converte(modus_convisendi conv) iacit virtualis pura;
+		functio adl[replum] converte_linea(int linea) iacit virtualis pura;
+
+		int latitudo { adipisce virtualis pura; }
+		int altitudo { adipisce virtualis pura; }
+		@nihil data { adipisce virtualis pura; }
+
+		functio color lege(int x, int y) virtualis pura;
+		functio nihil scribe(int x, int y, ~color clr) virtualis pura;
+		functio color lege_crabattum(int i) virtualis pura;
+		functio nihil scribe_crabattum(int i, ~color clr) virtualis pura;
+
+		int magnitudo_lineae { adipisce virtualis pura; }
+		formatus formatus { adipisce virtualis pura; }
+		modus_alpha modus_alpha { adipisce virtualis pura; }
+		modus_convisendi modus_convisendi { adipisce virtualis pura; }
+
+		int centrum_x { adipisce virtualis pura; loca virtualis pura; }
+		int centrum_y { adipisce virtualis pura; loca virtualis pura; }
+		int duratio { adipisce virtualis pura; loca virtualis pura; }
+		consuetudo consuetudo { adipisce virtualis pura; loca virtualis pura; }
+		dfrac conscendens { adipisce virtualis pura; loca virtualis pura; }
+
+		functio color operator [] (int x, int y) { responde lege(x, y); }
+		tractus tractus_x { adipisce { responde tractus(0, latitudo - 1); } }
+		tractus tractus_y { adipisce { responde tractus(0, altitudo - 1); } }
+		descriptio_repli descriptio { adipisce {
+			descriptio_repli res;
+			res.latitudo = latitudo;
+			res.altitudo = altitudo;
+			res.magnitudo_lineae = magnitudo_lineae;
+			res.formatus = formatus;
+			res.modus_alpha = modus_alpha;
+			res.modus_convisendi = modus_convisendi;
+			res.centrum_x = centrum_x;
+			res.centrum_y = centrum_y;
+			res.duratio = duratio;
+			res.consuetudo = consuetudo;
+			res.conscendens = conscendens;
+			responde res;
+		} }
+		convertor (linea) () iacit { responde linea.ex(descriptio); }
+	}
+	genus collectus hereditat objectum {
+		ordo adl[replum] repli;
+
+		structor () { funda repli(0x10); }
+		
+		classis functio adl[collectus] alloca() iacit { responde crea(collectus); }
+		[[importa] im_md_0] classis functio adl[collectus] moduli(@nihil mdl, int id) iacit;
+
+		functio int initus() { responde 0; }
+		functio int finis() { responde repli.finis(); }
+		functio int prae_initus() { responde -1; }
+		functio int post_finis() { responde repli.post_finis(); }
+
+		functio adl[replum] operator [] (int i) { responde repli[i]; }
+		functio adl[replum] operator [] (int lat, int alt) iacit
+		{
+			si (repli.longitudo == 0) iace errores.habitus_falsus;
+			var vr = repli[0];
+			var err = math.abs(lat - repli[0]^.latitudo) + math.abs(alt - repli[0]^.altitudo);
+			pro (var i : repli) {
+				var err_loc = math.abs(lat - repli[i]^.latitudo) + math.abs(alt - repli[i]^.altitudo);
+				si (err_loc < err) { err = err_loc; vr = repli[i]; }
+			}
+			responde vr;
+		}
+		functio adl[replum] operator [] (dfrac consc) iacit
+		{
+			si (repli.longitudo == 0) iace errores.habitus_falsus;
+			var vr = repli[0];
+			var err = math.abs(consc - repli[0]^.conscendens);
+			pro (var i : repli) {
+				var err_loc = math.abs(consc - repli[i]^.conscendens);
+				si (err_loc < err) { err = err_loc; vr = repli[i]; }
+			}
+			responde vr;
+		}
+		functio adl[replum] operator [] (consuetudo cons) iacit
+		{
+			pro (var i : repli) si (repli[i]^.consuetudo == cons) responde repli[i];
+			iace errores.habitus_falsus;
+		}
+		convertor (linea) () iacit
+		{
+			linea res = "collectus : [\n";
+			pro (var i : repli) res += linea.ex(repli[i]^) + "\n";
+			responde res + "]";
+		}
+	}
+
+	[[importa] im_crep] functio nihil codifica(@flumen in, @replum repl, ~linea cdx) iacit;
+	[[importa] im_ccol] functio nihil codifica(@flumen in, @collectus col, ~linea cdx) iacit;
+	[[importa] im_dr_1] functio adl[replum] decodifica_replum(@flumen ex) iacit;
+	[[importa] im_dr_2] functio adl[replum] decodifica_replum(@flumen ex, ~linea cdx) iacit;
+	[[importa] im_dc_1] functio adl[collectus] decodifica_collectum(@flumen ex) iacit;
+	[[importa] im_dc_2] functio adl[collectus] decodifica_collectum(@flumen ex, ~linea cdx) iacit;
+}
+spatium graphicum {
+	spatium typographica_systemae {
+		constatus serif				= "@serif";
+		constatus sans_serif		= "@sans serif";
+		constatus mono_serif		= "@mono serif";
+		constatus mono_sans_serif	= "@mono sans serif";
+	}
+	enumeratio functio_machinae {
+		macula		= 0x00000001,
+		inversio	= 0x00000002,
+		polygonum	= 0x00000004,
+		tabulatum	= 0x00000008,
+		rigidus		= 0x20000000,
+		cooperatio	= 0x40000000,
+		imago		= 0x80000000
+	}
+	enumeratio positus_scriptionis {
+		sinistrus	= 0,
+		superficies	= 0,
+		centrum		= 1,
+		dextrus		= 2,
+		subsutus	= 2
+	}
+	enumeratio modus_alpha_pingendi { neclegere = 0, praemultiplicatus = 1 }
+
+	genus pictura hereditat objectum {
+		int latitudo { adipisce virtualis pura; }
+		int altitudo { adipisce virtualis pura; }
+		adl[imago.replum] replum { adipisce virtualis pura; }
+		functio logicum rescribe(@imago.replum valor) virtualis pura;
+	}
+	genus typographica hereditat objectum {
+		int latitudo { adipisce virtualis pura; }
+		int altitudo { adipisce virtualis pura; }
+		int altitudo_lineae { adipisce virtualis pura; }
+		int basis { adipisce virtualis pura; }
+	}
+
+	genus saeta hereditat objectum {
+		@nihil _parens { adipisce virtualis pura; }
+	}
+	genus saeta_coloris hereditat saeta {}
+	genus saeta_maculae hereditat saeta {}
+	genus saeta_inversionis hereditat saeta {}
+	genus saeta_picturae hereditat saeta {}
+	genus saeta_scriptionis hereditat saeta {
+		functio nihil para_magnitudines(~int lat, ~int alt) virtualis pura;
+		functio nihil loca_colorem_dorsualem(~imago.color clr) virtualis pura;
+		functio nihil designa(int ab, int ad) virtualis pura;
+		functio int positus_linei(int punctum) virtualis pura;
+		functio int positus_characteris(int i) virtualis pura;
+		functio int longitudo() virtualis pura;
+		functio nihil loca_crabattum(@imago.color clr, int num) virtualis pura;
+		functio nihil loca_colores(@nint8 clr, int num) virtualis pura;
+		functio nihil loca_promotiones(@dfrac prom) virtualis pura;
+		functio nihil para_promotiones(@dfrac prom) virtualis pura;
+	}
+
+	genus contextus_machinae hereditat objectum_dynamicum {
+		functio nihil para_implantationem(@linea tech, @nint versio, @nint func) virtualis pura;
+
+		functio adl[saeta_coloris] crea_saetam_coloris_soldam(~imago.color clr) virtualis pura;
+		functio adl[saeta_coloris] crea_saetam_coloris_gressam(int ab_x, int ab_y, int ad_x, int ad_y, @imago.color clr, @dfrac pos, int num) virtualis pura;
+		functio adl[saeta_maculae] crea_saetam_maculae(dfrac pot) virtualis pura;
+		functio adl[saeta_inversionis] crea_saetam_inversionis() virtualis pura;
+		functio adl[saeta_picturae] crea_saetam_picturae(@pictura pict, int sin, int sup, int dex, int sub, logicum test) virtualis pura;
+		functio adl[saeta_scriptionis] crea_saetam_scriptionis(@typographica typ, ~linea ln, positus_scriptionis hori, positus_scriptionis vert, ~imago.color clr) virtualis pura;
+		functio nihil depura() virtualis pura;
+
+		functio nihil preme_margoem(int sin, int sup, int dex, int sub) virtualis pura;
+		functio nihil cancella_margoem() virtualis pura;
+		functio nihil exordi_tabulatum(int sin, int sup, int dex, int sub, dfrac opc) virtualis pura;
+		functio nihil ende_tabulatum() virtualis pura;
+
+		functio nihil redige(@saeta_coloris sae, int sin, int sup, int dex, int sub) virtualis pura;
+		functio nihil redige(@saeta_picturae sae, int sin, int sup, int dex, int sub) virtualis pura;
+		functio nihil redige(@saeta_scriptionis sae, int sin, int sup, int dex, int sub, logicum marg) virtualis pura;
+		functio nihil redige(@saeta_maculae sae, int sin, int sup, int dex, int sub) virtualis pura;
+		functio nihil redige(@saeta_inversionis sae, int sin, int sup, int dex, int sub, logicum nict) virtualis pura;
+
+		functio nihil redige_polygonum(@dfrac puncta, int num, ~imago.color clr) virtualis pura;
+		functio nihil redige_polylineam(@dfrac puncta, int num, ~imago.color clr, dfrac magn) virtualis pura;
+
+		nint tempus { adipisce virtualis pura; loca virtualis pura; }
+		nint tempus_cursoris { adipisce virtualis pura; loca virtualis pura; }
+		nint tempus_nictandi { adipisce virtualis pura; loca virtualis pura; }
+		logicum cursor_visibilis { adipisce virtualis pura; }
+
+		functio adl[saeta_picturae] crea_saetam_picturae(@pictura pict, logicum test) { responde crea_saetam_picturae(pict, 0, 0, pict^.latitudo, pict^.altitudo, test); }
+		functio adl[saeta_picturae] crea_saetam_picturae(@pictura pict) { responde crea_saetam_picturae(pict, 0, 0, pict^.latitudo, pict^.altitudo, non); }
+	}
+	genus contextus_picturae hereditat contextus_machinae {
+		functio logicum exordi(@pictura pict) virtualis pura;
+		functio logicum exordi(@pictura pict, ~imago.color clr) virtualis pura;
+		functio logicum ende() virtualis pura;
+	}
+	genus fabricatio_contextus hereditat objectum_dynamicum {
+		functio adl[pictura] crea_picturam(int lat, int alt, ~imago.color clr) virtualis pura;
+		functio adl[pictura] onera_picturam(@imago.replum) virtualis pura;
+		functio adl[typographica] onera_typographicae(~linea nomen, int alt, int magn, logicum cursiva, logicum sublinea, logicum plancta) virtualis pura;
+		functio adl[dordo_linearum] para_typographicarum() virtualis pura;
+		functio adl[contextus_picturae] crea_contextum_picturae() virtualis pura;
+	}
+
+	[[importa] im_crfc] functio adl[fabricatio_contextus] crea_fabricationem_contextus();
+}

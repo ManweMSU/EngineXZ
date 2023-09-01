@@ -291,6 +291,7 @@ namespace Engine
 					SafePointer<LObject> expr = asgn_method->Invoke(1, src_parent.InnerRef());
 					fctx->EncodeExpression(expr);
 				}
+				fctx->EncodeReturn(self);
 				fctx->EndEncoding();
 			} else {
 				try {

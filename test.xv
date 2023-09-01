@@ -1,70 +1,52 @@
 ﻿importa canonicalis;
 importa consolatorium;
 importa limae;
+importa imago;
 
 auxilium lingua "ru";
 
+auxilium icon (1) = "icon.eiwv";
+
 constatus some_text = "suka ty pidor" { "ru", "сука ты пидор" };
-
-genus test hereditat objectum {
-	int valor;
-
-	structor(int v) { funda valor(v); proba actuarius.scribe("created: " + linea(valor)); }
-	destructor() { proba actuarius.scribe("destroyed: " + linea(valor)); }
-
-	functio nihil do_something()
-	{
-		proba {
-			var task = contextus.labos_opperitus ## {
-				contextus.dormi(3000);
-				proba actuarius.scribe("task fire: " + linea(valor));
-			};
-			contextus.exeque(task);
-			task^.para_signale()^.opperire();
-		}
-	}
-}
-
-praeforma operator parallel_context() {
-	.contextus.exeque(.contextus.labos ## { $_ })
-}
 
 functio nihil primus() introitus iacit
 {
+	imago.color clr = nint(0x11223344);
+
 	var ~ cns = consolatorium.currens()^;
 	cns.titulus = some_text;
 	cns.color_primus = consolatorium.color.viridis;
 
-	var args = para_argumenta();
-	cns.scribe_lineam(linea.ex(args));
+	linea impl;
+	nint vers, fl;
+	var fact = graphicum.crea_fabricationem_contextus();
+	var bitmap = fact^.onera_picturam(imago.replum.moduli(modulus(), 1, 256, 256));
+	var ctx = fact^.crea_contextum_picturae();
+	ctx^.para_implantationem(@impl, @vers, @fl);
+	cns << impl << ": " << vers << " - " << fl << "\n";
+	ctx^.exordi(bitmap);
+
+	var font = fact^.onera_typographicae(graphicum.typographica_systemae.serif, 16, 700, sic, non, non);
+	var brush = ctx^.crea_saetam_scriptionis(font, some_text, 1, 1, imago.color(128, 0, 255));
+	var brush_image = ctx^.crea_saetam_picturae(fact^.onera_picturam(imago.replum.moduli(modulus(), 1, 2.0)));
+
+	ordo [6] dfrac path;
+	path[0] = 0.0; path[1] = 0.0;
+	path[2] = 100.0; path[3] = 0.0;
+	path[4] = 100.0; path[5] = 100.0;
+
+	ctx^.exordi_tabulatum(0, 0, 100, 100, 0.5);
+	ctx^.redige(brush_image, 0, 0, 100, 100);
+	ctx^.redige_polygonum(path, 3, imago.color(255, 0, 0));
+	ctx^.redige_polylineam(path, 3, imago.color(0, 0, 255), 5.0);
+	ctx^.redige(brush, 0, 0, 100, 100, sic);
+	ctx^.ende_tabulatum();
+
+	ctx^.ende();
+	imago.codifica(semita("out.png").crea_limam(modus_limae.scribere_et_legere, modus_creatoris.crea_semper),
+		bitmap^.replum, imago.codex.PNG);
 
 	cns.color_primus = consolatorium.color.defalta;
-
-	dfrac f1 = 5.0, f2 = 2.0;
-	linea e, se;
-	errores.descriptio(4, 5, e, se);
-	actuarius.scribe(e);
-	actuarius.scribe(se);
-	actuarius.scribe(math.sin(f1 / f2));
-	actuarius.scribe(int64(60606060) * int64(1000000));
-	systema.informatio inf;
-	systema.para_informatio(inf);
-	actuarius.scribe(linea.ex(inf));
-
-	var actx = contextus.crea_caudam_filorum();
-	muta_contextum_et_opperire(actx) {
-		pro (var i : [0, 5]) {
-			proba actuarius.scribe(linea.forma("waiting: %0", i));
-			contextus.dormi(1000);
-		}
-	}^.opperire();
-
-	var t = crea(test, 234);
-
-	t^.do_something();
-
-	actuarius.scribe(some_text);
-
-	linea("pidor").ad_int32();
+	cns.scribe_lineam(some_text);
 	iace 666;
 }

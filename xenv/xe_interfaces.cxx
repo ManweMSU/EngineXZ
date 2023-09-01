@@ -71,7 +71,7 @@ namespace Engine
 			}
 			virtual void Flush(void) noexcept override { try { _stream->Flush(); } catch (...) {} }
 			virtual bool IsXV(void) noexcept override { return false; }
-			virtual Streaming::Stream * Unwrap(void) noexcept { _stream->Retain(); return _stream; }
+			Streaming::Stream * Unwrap(void) noexcept { _stream->Retain(); return _stream; }
 		};
 		class WrappedStream : public Streaming::Stream
 		{
@@ -156,7 +156,7 @@ namespace Engine
 				}
 			}
 			virtual void Flush(void) override { _stream->Flush(); }
-			virtual XStream * Unwrap(void) noexcept { _stream->Retain(); return _stream; }
+			XStream * Unwrap(void) noexcept { _stream->Retain(); return _stream; }
 		};
 		class TextEncoder : public XTextEncoder
 		{
