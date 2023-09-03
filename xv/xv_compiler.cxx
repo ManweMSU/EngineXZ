@@ -67,6 +67,7 @@ namespace Engine
 			SafePointer<TokenStream> input;
 			SafePointer<ITokenStream> input_override;
 			ICompilerCallback * callback;
+			CodeMetaInfo * meta_info;
 			CompilerStatusDesc & status;
 			Token current_token;
 			Volumes::List<VInitServiceDesc> init_list;
@@ -163,6 +164,7 @@ namespace Engine
 			{
 				status.status = error;
 				input->ExtractRange(from, length, status.error_line, status.error_line_no, status.error_line_pos, status.error_line_len);
+				if (meta_info) meta_info->error_absolute_from = from;
 				throw Exception();
 			}
 			void Abort(CompilerStatus error, const Token & where) { Abort(error, where.range_from, where.range_length); }
@@ -248,8 +250,94 @@ namespace Engine
 				current_token = ct;
 				fctx->EndEncoding();
 			}
+			CodeRangeTag TagFromXLClass(XL::Class cls)
+			{
+				if (cls == XL::Class::Namespace || cls == XL::Class::Scope) return CodeRangeTag::IdentifierNamespace;
+				else if (cls == XL::Class::Type) return CodeRangeTag::IdentifierType;
+				else if (cls == XL::Class::Prototype) return CodeRangeTag::IdentifierPrototype;
+				else if (cls == XL::Class::Function || cls == XL::Class::FunctionOverload) return CodeRangeTag::IdentifierFunction;
+				else if (cls == XL::Class::Method || cls == XL::Class::MethodOverload) return CodeRangeTag::IdentifierFunction;
+				else if (cls == XL::Class::Literal) return CodeRangeTag::IdentifierConstant;
+				else if (cls == XL::Class::NullLiteral) return CodeRangeTag::LiteralNull;
+				else if (cls == XL::Class::Variable) return CodeRangeTag::IdentifierVariable;
+				else if (cls == XL::Class::Field) return CodeRangeTag::IdentifierField;
+				else if (cls == XL::Class::Property || cls == XL::Class::InstancedProperty) return CodeRangeTag::IdentifierProperty;
+				else return CodeRangeTag::IdentifierUnknown;
+			}
+			bool CheckSymbol(const string & name)
+			{
+				if (name[0] == L'_') return false;
+				for (int i = 0; i < name.Length(); i++) if (IsReservedPunctuation(name[i])) return false;
+				return true;
+			}
+			void AssignAutocomplete(const string & text, CodeRangeTag tag) { if (meta_info) meta_info->autocomplete.Append(text, tag); }
+			void AssignAutocomplete(XL::LObject * holder)
+			{
+				if (!meta_info) return;
+				Volumes::Dictionary<string, XL::Class> list;
+				holder->ListMembers(list);
+				for (auto & e : list) if (CheckSymbol(e.key)) meta_info->autocomplete.Append(e.key, TagFromXLClass(e.value));
+			}
+			void AssignAutocomplete(XL::LObject ** ssl, int ssc)
+			{
+				if (!meta_info) return;
+				Volumes::Dictionary<string, XL::Class> list;
+				for (int i = 0; i < ssc; i++) ssl[i]->ListMembers(list);
+				for (auto & e : list) if (CheckSymbol(e.key)) meta_info->autocomplete.Append(e.key, TagFromXLClass(e.value));
+			}
+			void AssignTokenInfo(const Token & token, XL::LObject * object, bool is_definition, bool is_local)
+			{
+				if (!meta_info || token.range_length <= 0) return;
+				auto info = meta_info->info[token.range_from];
+				if (info) {
+					auto cls = object->GetClass();
+					if (cls == XL::Class::Type) info->identifier = GetTypeFullName(ctx, object);
+					else info->identifier = GetObjectFullName(ctx, object);
+					if (cls == XL::Class::Literal) info->value = GetLiteralValue(ctx, object);
+					try {
+						SafePointer<XL::LObject> type = object->GetType();
+						info->type = GetTypeFullName(ctx, type);
+					} catch (...) {}
+					if (info->tag == CodeRangeTag::IdentifierUnknown) {
+						info->tag = TagFromXLClass(cls);
+					}
+					if (is_definition) info->flags |= CodeRangeSymbolDefinition;
+					if (is_local) info->flags |= CodeRangeSymbolLocal;
+				}
+			}
+			void SuggestAutocomplete(const string & text, CodeRangeTag tag)
+			{
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(text, tag);
+				}
+			}
+			void ExpressionSubjectAutocomplete(XL::LObject ** ssl, int ssc)
+			{
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(ssl, ssc);
+					AssignAutocomplete(Lexic::KeywordClass, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordSizeOf, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordSizeOfMX, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordModule, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordNull, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordNew, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordConstruct, CodeRangeTag::Keyword);
+				}
+			}
+			void ExpressionUnaryAutocomplete(XL::LObject ** ssl, int ssc)
+			{
+				ExpressionSubjectAutocomplete(ssl, ssc);
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(Lexic::KeywordArray, CodeRangeTag::Keyword);
+				}
+			}
+			void ExpressionAutocomplete(XL::LObject ** ssl, int ssc) { ExpressionUnaryAutocomplete(ssl, ssc); }
+			void ExpressionAutocomplete(VObservationDesc & desc) { ExpressionAutocomplete(desc.namespace_search_list.GetBuffer(), desc.namespace_search_list.Length()); }
 			XL::LObject * ProcessExpressionSubject(XL::LObject ** ssl, int ssc)
 			{
+				ExpressionSubjectAutocomplete(ssl, ssc);
 				SafePointer<XL::LObject> object;
 				if (IsIdent()) {
 					for (int i = 0; i < ssc; i++) try {
@@ -257,12 +345,17 @@ namespace Engine
 						break;
 					} catch (...) {}
 					if (!object) Abort(CompilerStatus::NoSuchSymbol, current_token);
+					AssignTokenInfo(current_token, object, false, false);
 					ReadNextToken();
 				} else if (IsPunct(L".")) {
 					object.SetRetain(ctx.GetRootNamespace());
+					AssignTokenInfo(current_token, object, false, false);
 				} else if (IsPunct(L"(")) {
+					auto start = current_token;
 					ReadNextToken();
 					object = ProcessExpressionAssignation(ssl, ssc);
+					AssignTokenInfo(start, object, false, false);
+					AssignTokenInfo(current_token, object, false, false);
 					AssertPunct(L")"); ReadNextToken();
 				} else if (IsLiteral()) {
 					if (current_token.ex_data == TokenLiteralLogicalY) {
@@ -276,21 +369,24 @@ namespace Engine
 					} else if (current_token.ex_data == TokenLiteralString) {
 						object = ctx.QueryLiteral(current_token.contents);
 					} else Abort(CompilerStatus::InternalError, current_token);
+					AssignTokenInfo(current_token, object, false, false);
 					ReadNextToken();
 				} else if (IsKeyword(Lexic::KeywordClass)) {
-					ReadNextToken();
 					object = ctx.QueryTypeOfOperator();
+					ReadNextToken();
 				} else if (IsKeyword(Lexic::KeywordSizeOf)) {
-					ReadNextToken();
 					object = ctx.QuerySizeOfOperator();
-				} else if (IsKeyword(Lexic::KeywordSizeOfMX)) {
 					ReadNextToken();
+				} else if (IsKeyword(Lexic::KeywordSizeOfMX)) {
 					object = ctx.QuerySizeOfOperator(true);
+					ReadNextToken();
 				} else if (IsKeyword(Lexic::KeywordModule)) {
+					auto def = current_token;
 					ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 					if (IsPunct(L")")) {
 						ReadNextToken();
 						object = ctx.QueryModuleOperator();
+						AssignTokenInfo(def, object, false, false);
 					} else {
 						AssertGenericIdent();
 						auto name = current_token.contents;
@@ -302,8 +398,10 @@ namespace Engine
 						}
 						AssertPunct(L")"); ReadNextToken();
 						object = ctx.QueryModuleOperator(name);
+						AssignTokenInfo(def, object, false, false);
 					}
 				} else if (IsKeyword(Lexic::KeywordInterface)) {
+					auto def = current_token;
 					ReadNextToken(); AssertPunct(L"("); ReadNextToken(); AssertGenericIdent();
 					auto name = current_token.contents;
 					ReadNextToken();
@@ -314,6 +412,7 @@ namespace Engine
 					}
 					AssertPunct(L")"); ReadNextToken();
 					object = ctx.QueryInterfaceOperator(name);
+					AssignTokenInfo(def, object, false, false);
 				} else if (IsKeyword(Lexic::KeywordFunction)) {
 					auto definition = current_token;
 					ReadNextToken(); AssertPunct(L"("); ReadNextToken();
@@ -321,6 +420,7 @@ namespace Engine
 					AssertPunct(L")"); ReadNextToken();
 					ObjectArray<XL::LObject> args(0x10);
 					AssertPunct(L"("); ReadNextToken();
+					ExpressionAutocomplete(ssl, ssc);
 					if (!IsPunct(L")")) {
 						while (true) {
 							SafePointer<XL::LObject> arg = ProcessTypeExpression(ssl, ssc);
@@ -334,12 +434,13 @@ namespace Engine
 					for (auto & arg : args) input << &arg;
 					try { return ctx.QueryFunctionPointer(retval, input.Length(), input.GetBuffer()); }
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+					AssignTokenInfo(definition, object, false, false);
 				} else if (IsKeyword(Lexic::KeywordNull)) {
-					ReadNextToken(); object = ctx.QueryNullLiteral();
+					object = ctx.QueryNullLiteral(); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
 				} else if (IsKeyword(Lexic::KeywordNew)) {
-					ReadNextToken(); object = CreateOperatorNew(ctx);
+					object = CreateOperatorNew(ctx); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
 				} else if (IsKeyword(Lexic::KeywordConstruct)) {
-					ReadNextToken(); object = CreateOperatorConstruct(ctx);
+					object = CreateOperatorConstruct(ctx); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
 				} else Abort(CompilerStatus::AnotherTokenExpected);
 				object->Retain();
 				return object;
@@ -347,6 +448,9 @@ namespace Engine
 			XL::LObject * ProcessExpressionPostfix(XL::LObject ** ssl, int ssc)
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionSubject(ssl, ssc);
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(Lexic::KeywordAs, CodeRangeTag::Keyword);
+				}
 				while (IsPunct(L"(") || IsPunct(L".") || IsPunct(L"[") || IsPunct(L"##") || IsPunct(L"{") || IsPunct(XL::OperatorFollow) ||
 					IsPunct(XL::OperatorIncrement) || IsPunct(XL::OperatorDecrement) || IsKeyword(Lexic::KeywordAs)) {
 					auto op = current_token;
@@ -356,6 +460,7 @@ namespace Engine
 						if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
 						ReadNextToken();
 						object = InvokeBlockPrototype(object, stream, ssl, ssc);
+						AssignTokenInfo(op, object, true, true);
 					} else if (op.contents == L"##") {
 						ReadNextToken(); AssertPunct(L"{");
 						if (!ClassImplements(object, L"contextus.labos")) Abort(CompilerStatus::NoSuchOverload, ExposeInput()->GetCurrentPosition());
@@ -370,10 +475,13 @@ namespace Engine
 						EndContextCapture(capture, vft_init_seq, result.InnerRef());
 						for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 						object = result;
+						AssignTokenInfo(op, object, true, true);
 					} else {
 						ReadNextToken();
 						if (op.contents == L"(") {
+							Token end;
 							ObjectArray<XL::LObject> args(0x20);
+							ExpressionAutocomplete(ssl, ssc);
 							if (!IsPunct(L")")) {
 								while (true) {
 									SafePointer<XL::LObject> arg = ProcessExpression(ssl, ssc);
@@ -381,22 +489,29 @@ namespace Engine
 									if (!IsPunct(L",")) break;
 									ReadNextToken();
 								}
+								end = current_token;
 								AssertPunct(L")"); ReadNextToken();
 							} else { ReadNextToken(); }
 							Array<XL::LObject *> input(0x20);
 							for (auto & arg : args) input << &arg;
 							try { object = object->Invoke(input.Length(), input.GetBuffer()); }
 							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+							AssignTokenInfo(op, object, false, false);
+							AssignTokenInfo(end, object, false, false);
 						} else if (op.contents == L".") {
+							if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) AssignAutocomplete(object);
 							AssertIdent();
 							try { object = object->GetMember(current_token.contents); }
 							catch (...) { Abort(CompilerStatus::NoSuchSymbol, current_token); }
+							AssignTokenInfo(current_token, object, false, false);
 							ReadNextToken();
 						} else if (op.contents == L"[") {
+							Token end;
 							SafePointer<XL::LObject> subscript;
 							try { subscript = object->GetMember(XL::OperatorSubscript); }
 							catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
 							ObjectArray<XL::LObject> args(0x20);
+							ExpressionAutocomplete(ssl, ssc);
 							if (!IsPunct(L"]")) {
 								while (true) {
 									SafePointer<XL::LObject> arg = ProcessExpression(ssl, ssc);
@@ -404,18 +519,22 @@ namespace Engine
 									if (!IsPunct(L",")) break;
 									ReadNextToken();
 								}
+								end = current_token;
 								AssertPunct(L"]"); ReadNextToken();
 							} else { ReadNextToken(); }
 							Array<XL::LObject *> input(0x20);
 							for (auto & arg : args) input << &arg;
 							try { object = subscript->Invoke(input.Length(), input.GetBuffer()); }
 							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+							AssignTokenInfo(op, subscript, false, false);
+							AssignTokenInfo(end, subscript, false, false);
 						} else if (op.contents == Lexic::KeywordAs) {
 							AssertPunct(L"("); ReadNextToken();
 							SafePointer<XL::LObject> type_into = ProcessTypeExpression(ssl, ssc);
 							AssertPunct(L")"); ReadNextToken();
 							try { object = CreateDynamicCast(object, type_into); }
 							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+							AssignTokenInfo(op, object, false, false);
 						} else {
 							if (object->GetClass() == XL::Class::InstancedProperty && (op.contents == XL::OperatorIncrement || op.contents == XL::OperatorDecrement)) {
 								SafePointer<XL::LObject> method, inter;
@@ -431,6 +550,7 @@ namespace Engine
 								try { object = method->Invoke(0, 0); }
 								catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 							}
+							AssignTokenInfo(op, object, false, false);
 						}
 					}
 				}
@@ -439,17 +559,23 @@ namespace Engine
 			}
 			XL::LObject * ProcessExpressionUnary(XL::LObject ** ssl, int ssc)
 			{
+				ExpressionUnaryAutocomplete(ssl, ssc);
 				if (IsPunct(XL::OperatorTakeAddress)) {
 					auto op = current_token;
 					ReadNextToken();
 					auto definition = current_token;
 					SafePointer<XL::LObject> object = ProcessExpressionUnary(ssl, ssc);
 					if (object->GetClass() == XL::Class::Type) {
-						try { return ctx.QueryTypePointer(object); }
-						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						try {
+							SafePointer<XL::LObject> rv = ctx.QueryTypePointer(object);
+							AssignTokenInfo(op, rv, false, false);
+							rv->Retain();
+							return rv;
+						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					} else {
 						try {
 							SafePointer<XL::LObject> take_addr = ctx.QueryAddressOfOperator();
+							AssignTokenInfo(op, take_addr, false, false);
 							return take_addr->Invoke(1, object.InnerRef());
 						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					}
@@ -459,12 +585,17 @@ namespace Engine
 					auto definition = current_token;
 					SafePointer<XL::LObject> object = ProcessExpressionUnary(ssl, ssc);
 					if (object->GetClass() == XL::Class::Type) {
-						try { return ctx.QueryTypeReference(object); }
-						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						try {
+							SafePointer<XL::LObject> rv = ctx.QueryTypeReference(object);
+							AssignTokenInfo(op, rv, false, false);
+							rv->Retain();
+							return rv;
+						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					} else {
 						SafePointer<XL::LObject> method;
 						try { method = object->GetMember(op.contents); }
 						catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+						AssignTokenInfo(op, method, false, false);
 						try { return method->Invoke(0, 0); }
 						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 					}
@@ -475,6 +606,7 @@ namespace Engine
 					SafePointer<XL::LObject> object = ProcessExpressionUnary(ssl, ssc), method;
 					try { method = object->GetMember(op.contents); }
 					catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+					AssignTokenInfo(op, method, false, false);
 					try { return method->Invoke(0, 0); }
 					catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 				} else if (IsPunct(XL::OperatorNegative)) {
@@ -484,13 +616,16 @@ namespace Engine
 					SafePointer<XL::LObject> object = ProcessExpressionUnary(ssl, ssc), method;
 					try { method = object->GetMember(op.contents); }
 					catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+					AssignTokenInfo(op, method, false, false);
 					try { return method->Invoke(0, 0); }
 					catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 				} else if (IsPunct(XL::OperatorAdd)) {
 					ReadNextToken();
 					return ProcessExpressionUnary(ssl, ssc);
 				} else if (IsKeyword(Lexic::KeywordArray)) {
+					auto op = current_token;
 					ReadNextToken();
+					ExpressionAutocomplete(ssl, ssc);
 					if (IsPunct(L"[")) {
 						Array<int> dim_list(0x10);
 						ReadNextToken(); auto d1e = current_token;
@@ -511,6 +646,7 @@ namespace Engine
 						SafePointer<XL::LObject> type = ProcessExpressionUnary(ssl, ssc);
 						try { for (auto & d : dim_list.InversedElements()) { type = ctx.QueryStaticArray(type, d); } }
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						AssignTokenInfo(op, type, false, false);
 						type->Retain();
 						return type;
 					} else {
@@ -521,6 +657,7 @@ namespace Engine
 							SafePointer<XL::LObject> operator_instantiate = dynamic_array->GetMember(XL::OperatorSubscript);
 							type = operator_instantiate->Invoke(1, type.InnerRef());
 						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						AssignTokenInfo(op, type, false, false);
 						type->Retain();
 						return type;
 					}
@@ -535,6 +672,7 @@ namespace Engine
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionUnary(ssl, ssc), op_obj;
 					try { op_obj = ctx.QueryObject(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+					AssignTokenInfo(op, op_obj, false, false);
 					try {
 						XL::LObject * opv[2] = { object.Inner(), rs.Inner() };
 						object = op_obj->Invoke(2, opv);
@@ -552,6 +690,7 @@ namespace Engine
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionMultiplicative(ssl, ssc), op_obj;
 					try { op_obj = ctx.QueryObject(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+					AssignTokenInfo(op, op_obj, false, false);
 					try {
 						XL::LObject * opv[2] = { object.Inner(), rs.Inner() };
 						object = op_obj->Invoke(2, opv);
@@ -569,6 +708,7 @@ namespace Engine
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionAdditive(ssl, ssc), op_obj;
 					try { op_obj = ctx.QueryObject(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+					AssignTokenInfo(op, op_obj, false, false);
 					try {
 						XL::LObject * opv[2] = { object.Inner(), rs.Inner() };
 						object = op_obj->Invoke(2, opv);
@@ -657,6 +797,7 @@ namespace Engine
 					} else {
 						SafePointer<XL::LObject> op_obj;
 						try { op_obj = object->GetMember(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+						AssignTokenInfo(op, op_obj, false, false);
 						try { object = op_obj->Invoke(1, rs.InnerRef()); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
 					}
 				}
@@ -715,6 +856,7 @@ namespace Engine
 						try { init = ctx.InitInstance(var, 0, 0); }
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					}
+					AssignTokenInfo(definition, var, true, false);
 					sdwn = ctx.DestroyInstance(var);
 					if (init) RegisterInitHandler(InitPriorityVar, init, sdwn);
 					else if (sdwn) RegisterInitHandler(InitPriorityVar, 0, sdwn);
@@ -728,6 +870,11 @@ namespace Engine
 				string name;
 				Array<string> arg_list(0x10);
 				ReadNextToken();
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(Lexic::KeywordClass, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordOperator, CodeRangeTag::Keyword);
+				}
 				if (IsKeyword(Lexic::KeywordClass)) {
 					function = block = false;
 				} else if (IsKeyword(Lexic::KeywordFunction)) {
@@ -758,6 +905,7 @@ namespace Engine
 				}
 				attributes.Clear();
 				if (!block) SetPrototypeVisibility(prot, desc.namespace_search_list.GetBuffer(), desc.namespace_search_list.Length());
+				AssignTokenInfo(def, prot, true, false);
 				AssertPunct(L"{");
 				SafePointer<ITokenStream> stream;
 				if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
@@ -782,7 +930,12 @@ namespace Engine
 				}
 				if (is_static && (is_ctor || is_dtor || is_conv)) Abort(CompilerStatus::FunctionMustBeInstance, current_token);
 				auto definition = current_token;
-				if (!is_ctor && !is_dtor && !is_conv) AssertKeyword(Lexic::KeywordFunction);
+				if (!is_ctor && !is_dtor && !is_conv) {
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
+					}
+					AssertKeyword(Lexic::KeywordFunction);
+				}
 				ReadNextToken();
 				SafePointer<XL::LObject> retval;
 				ObjectArray<XL::LObject> argv_object(0x10);
@@ -833,6 +986,13 @@ namespace Engine
 				}
 				AssertPunct(L")"); ReadNextToken();
 				if (!is_static) flags |= XL::FunctionMethod | XL::FunctionThisCall;
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(Lexic::KeywordEntry, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
+				}
 				while (IsKeyword(Lexic::KeywordEntry) || IsKeyword(Lexic::KeywordThrows) || IsKeyword(Lexic::KeywordVirtual) ||
 					IsKeyword(Lexic::KeywordPure) || IsKeyword(Lexic::KeywordOverride)) {
 					if (IsKeyword(Lexic::KeywordEntry)) {
@@ -896,6 +1056,7 @@ namespace Engine
 				}
 				if (org == 3 && !import_name.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 				attributes.Clear();
+				AssignTokenInfo(definition, func, true, false);
 				if (org == -1) {
 					AssertPunct(L";"); ReadNextToken();
 				} else if (org == 0) {
@@ -938,6 +1099,9 @@ namespace Engine
 				bool is_interface = IsKeyword(Lexic::KeywordInterface);
 				bool is_structure = IsKeyword(Lexic::KeywordStructure);
 				ReadNextToken();
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
+				}
 				bool is_abstract = IsKeyword(Lexic::KeywordVirtual) || is_interface;
 				if (IsKeyword(Lexic::KeywordVirtual)) ReadNextToken();
 				AssertIdent();
@@ -948,6 +1112,9 @@ namespace Engine
 				ctx.LockClass(type, true);
 				if (is_interface) ctx.MarkClassAsInterface(type);
 				ReadNextToken();
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(Lexic::KeywordInherit, CodeRangeTag::Keyword);
+				}
 				if (IsKeyword(Lexic::KeywordInherit)) {
 					ReadNextToken();
 					auto def = current_token;
@@ -1009,6 +1176,7 @@ namespace Engine
 					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
 					XL::CreateMethodAssign, vft_init_seq);
 				ctx.LockClass(type, false);
+				AssignTokenInfo(definition, type, true, false);
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 			}
 			void ProcessAliasDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
@@ -1047,6 +1215,7 @@ namespace Engine
 					else value->AddAttribute(attr.key, attr.value);
 				}
 				attributes.Clear();
+				AssignTokenInfo(definition, value, true, false);
 				try { ctx.AttachLiteral(value, desc.current_namespace, definition.contents); }
 				catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
 				string path = desc.current_namespace->GetFullName().Length() ? desc.current_namespace->GetFullName() + L"." + definition.contents : definition.contents;
@@ -1150,6 +1319,12 @@ namespace Engine
 						string import_name, import_lib;
 						uint flags = XL::FunctionMethod | XL::FunctionThisCall;
 						uint org = 0; // 0 - V, 1 - A, 2 - import, 3 - import from library, -1 - pure
+						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+							AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
+							AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
+							AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
+							AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
+						}
 						while (IsKeyword(Lexic::KeywordThrows) || IsKeyword(Lexic::KeywordVirtual) ||
 							IsKeyword(Lexic::KeywordPure) || IsKeyword(Lexic::KeywordOverride)) {
 							if (IsKeyword(Lexic::KeywordThrows)) flags |= XL::FunctionThrows;
@@ -1195,6 +1370,7 @@ namespace Engine
 						}
 						if (org == 3 && !import_name.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 						attributes.Clear();
+						AssignTokenInfo(definition, func, true, false);
 						if (org == -1) {
 							AssertPunct(L";"); ReadNextToken();
 						} else if (org == 0) {
@@ -1248,6 +1424,9 @@ namespace Engine
 				SafePointer<XL::LObject> base_class;
 				ReadNextToken();
 				auto base_definition = definition;
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(Lexic::KeywordInherit, CodeRangeTag::Keyword);
+				}
 				if (IsKeyword(Lexic::KeywordInherit)) {
 					ReadNextToken();
 					base_definition = current_token;
@@ -1287,11 +1466,30 @@ namespace Engine
 					XL::CreateMethodAssign, vft_init_seq);
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 				CreateEnumerationRoutines(db, type);
+				AssignTokenInfo(definition, type, true, false);
 			}
 			void ProcessClass(XL::LObject * cls, bool is_interface, bool is_continue, VObservationDesc & desc)
 			{
 				Volumes::Dictionary<string, string> attributes;
 				while (!IsPunct(L"}")) {
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						AssignAutocomplete(Lexic::KeywordClass, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordStructure, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordContinue, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordAlias, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordClassFunc, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordCtor, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordDtor, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordConvertor, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordConst, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordUse, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordEnum, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordPrototype, CodeRangeTag::Keyword);
+						ExpressionAutocomplete(desc);
+					}
 					if (IsPunct(L"[")) {
 						ProcessAttributeDefinition(attributes);
 					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface) || IsKeyword(Lexic::KeywordStructure)) {
@@ -1351,6 +1549,7 @@ namespace Engine
 									} else Abort(CompilerStatus::InapproptiateAttribute, def);
 								} else field->AddAttribute(a.key, a.value);
 							}
+							AssignTokenInfo(def, field, true, false);
 						} else {
 							AssertPunct(L"{"); ReadNextToken();
 							XL::LObject * prop;
@@ -1360,6 +1559,7 @@ namespace Engine
 								if (a.key[0] == L'[') Abort(CompilerStatus::InapproptiateAttribute, def);
 								else prop->AddAttribute(a.key, a.value);
 							}
+							AssignTokenInfo(def, prop, true, false);
 							ProcessProperty(prop, type, desc);
 							AssertPunct(L"}"); ReadNextToken();
 						}
@@ -1371,6 +1571,22 @@ namespace Engine
 			{
 				Volumes::Dictionary<string, string> attributes;
 				while (!IsEOF() && !IsPunct(L"}")) {
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						AssignAutocomplete(Lexic::KeywordNamespace, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordClass, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordStructure, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordContinue, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordAlias, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordConst, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordUse, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordEnum, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordPrototype, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordImport, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordResource, CodeRangeTag::Keyword);
+					}
 					if (IsPunct(L"[")) {
 						ProcessAttributeDefinition(attributes);
 					} else if (IsKeyword(Lexic::KeywordNamespace)) {
@@ -1413,6 +1629,12 @@ namespace Engine
 						ReadNextToken(); AssertPunct(L";"); ReadNextToken();
 					} else if (IsKeyword(Lexic::KeywordResource)) {
 						ReadNextToken();
+						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+							AssignAutocomplete(Lexic::ResourceData, CodeRangeTag::IdentifierUnknown);
+							AssignAutocomplete(Lexic::ResourceIcon, CodeRangeTag::IdentifierUnknown);
+							AssignAutocomplete(Lexic::ResourceMeta, CodeRangeTag::IdentifierUnknown);
+							AssignAutocomplete(Lexic::ResourceLang, CodeRangeTag::IdentifierUnknown);
+						}
 						if (IsIdent()) {
 							if (current_token.contents == Lexic::ResourceData) {
 								ReadNextToken(); AssertPunct(L"("); ReadNextToken();
@@ -1540,11 +1762,12 @@ namespace Engine
 					} else Abort(CompilerStatus::InvalidAutoVariable, definition);
 					try { desc.current_namespace->AddMember(name, var); }
 					catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+					AssignTokenInfo(definition, var, true, true);
 					if (IsPunct(L";")) { ReadNextToken(); break; }
 					AssertPunct(L","); ReadNextToken(); 
 				}
 			}
-			void ProcessForRange(XL::LFunctionContext & fctx, VObservationDesc & desc, VEnumerableDesc & edesc)
+			void ProcessForRange(XL::LFunctionContext & fctx, VObservationDesc & desc, VEnumerableDesc & edesc, Token & at)
 			{
 				bool invert = false;
 				if (IsPunct(L"~")) { ReadNextToken(); invert = true; }
@@ -1560,6 +1783,7 @@ namespace Engine
 							if (edesc.iterator_enforce_ref) edesc.iterator = ctx.QueryTypeReference(edesc.iterator);
 						}
 						edesc.iterator = fctx.EncodeCreateVariable(edesc.iterator, edesc.init);
+						AssignTokenInfo(at, edesc.iterator, true, true);
 						desc.current_namespace->AddMember(edesc.iterator_name, edesc.iterator);
 					} else {
 						SafePointer<XL::LObject> asgn = edesc.iterator->GetMember(XL::OperatorAssign);
@@ -1607,6 +1831,7 @@ namespace Engine
 							if (edesc.iterator_enforce_ref) edesc.iterator = ctx.QueryTypeReference(edesc.iterator);
 						}
 						edesc.init = edesc.iterator = fctx.EncodeCreateVariable(edesc.iterator, begin);
+						AssignTokenInfo(at, edesc.iterator, true, true);
 						desc.current_namespace->AddMember(edesc.iterator_name, edesc.iterator);
 					} else {
 						SafePointer<XL::LObject> asgn = edesc.iterator->GetMember(XL::OperatorAssign);
@@ -1621,6 +1846,23 @@ namespace Engine
 			}
 			void ProcessStatement(XL::LFunctionContext & fctx, VObservationDesc & desc, bool allow_new_regular_scope)
 			{
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					AssignAutocomplete(Lexic::KeywordIf, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordFor, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordWhile, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordDo, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordBreak, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordContinue, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordTry, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordReturn, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordThrow, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordDelete, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordDestruct, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordUse, CodeRangeTag::Keyword);
+					AssignAutocomplete(Lexic::KeywordTrap, CodeRangeTag::Keyword);
+					ExpressionAutocomplete(desc);
+				}
 				if (IsPunct(L"{")) {
 					ReadNextToken();
 					if (allow_new_regular_scope) {
@@ -1680,13 +1922,13 @@ namespace Engine
 						ReadNextToken();
 						bool create_local_enf_ref = false;
 						if (IsPunct(XL::OperatorReferInvert)) { ReadNextToken(); create_local_enf_ref = true; }
-						AssertIdent(); create_local_name = current_token.contents; ReadNextToken();
+						AssertIdent(); create_local_name = current_token.contents; auto def = current_token; ReadNextToken();
 						if (IsPunct(L":")) {
 							ReadNextToken();
 							VEnumerableDesc vdesc;
 							vdesc.iterator_name = create_local_name;
 							vdesc.iterator_enforce_ref = create_local_enf_ref;
-							ProcessForRange(fctx, inter, vdesc);
+							ProcessForRange(fctx, inter, vdesc, def);
 							init_statement = vdesc.init;
 							step_statement = vdesc.step;
 							cond_statement = vdesc.cond;
@@ -1697,6 +1939,7 @@ namespace Engine
 							create_local_type = init_statement->GetType();
 							if (create_local_enf_ref) create_local_type = ctx.QueryTypeReference(create_local_type);
 							SafePointer<XL::LObject> var = fctx.EncodeCreateVariable(create_local_type, init_statement);
+							AssignTokenInfo(def, var, true, true);
 							inter.current_namespace->AddMember(create_local_name, var);
 						}
 					} else {
@@ -1709,14 +1952,14 @@ namespace Engine
 								inter.namespace_search_list.Insert(inter_scope, 0);
 							}
 							create_local_type = expr;
-							AssertIdent(); create_local_name = current_token.contents; ReadNextToken();
+							AssertIdent(); create_local_name = current_token.contents; auto def = current_token; ReadNextToken();
 							if (IsPunct(L":")) {
 								ReadNextToken();
 								VEnumerableDesc vdesc;
 								vdesc.iterator_name = create_local_name;
 								vdesc.iterator_enforce_ref = false;
 								vdesc.iterator = create_local_type;
-								ProcessForRange(fctx, inter, vdesc);
+								ProcessForRange(fctx, inter, vdesc, def);
 								init_statement = vdesc.init;
 								step_statement = vdesc.step;
 								cond_statement = vdesc.cond;
@@ -1724,9 +1967,11 @@ namespace Engine
 								ReadNextToken();
 								init_statement = ProcessExpression(inter);
 								SafePointer<XL::LObject> var = fctx.EncodeCreateVariable(create_local_type, init_statement);
+								AssignTokenInfo(def, var, true, true);
 								inter.current_namespace->AddMember(create_local_name, var);
 							} else {
 								SafePointer<XL::LObject> var = fctx.EncodeCreateVariable(create_local_type);
+								AssignTokenInfo(def, var, true, true);
 								inter.current_namespace->AddMember(create_local_name, var);
 							}
 						} else {
@@ -1736,7 +1981,7 @@ namespace Engine
 								VEnumerableDesc vdesc;
 								vdesc.iterator_enforce_ref = false;
 								vdesc.iterator = init_statement;
-								ProcessForRange(fctx, inter, vdesc);
+								ProcessForRange(fctx, inter, vdesc, current_token);
 								init_statement = vdesc.init;
 								step_statement = vdesc.step;
 								cond_statement = vdesc.cond;
@@ -2122,13 +2367,27 @@ namespace Engine
 			virtual string ToString(void) const override { return L"OutputModule"; }
 		};
 		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback) { return new ListCompilerCallback(res_pv, res_pc, mdl_pv, mdl_pc, dropback); }
-		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status)
+		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta)
 		{
 			try {
 				XL::LContext lctx(module_name);
 				lctx.MakeSubsystemConsole();
-				SafePointer<TokenStream> input_stream = new TokenStream(input.GetBuffer(), input.Length());
+				if (meta) {
+					SafePointer<TokenStream> input_stream_test = new TokenStream(input.GetBuffer(), input.Length(), meta);
+					Token token;
+					while (input_stream_test->ReadToken(token) && token.type != TokenType::EOF);
+					if (meta->autocomplete_at >= 0) {
+						int token_offset = -1;
+						for (auto & r : meta->info) if (r.value.from >= 0 && r.value.from + r.value.length > meta->autocomplete_at) {
+							token_offset = r.value.from;
+							break;
+						}
+						meta->autocomplete_at = token_offset;
+					}
+				}
+				SafePointer<TokenStream> input_stream = new TokenStream(input.GetBuffer(), input.Length(), 0);
 				VContext vctx(lctx, callback, status, input_stream);
+				vctx.meta_info = meta;
 				status.status = CompilerStatus::Success;
 				vctx.Process();
 				if (status.status == CompilerStatus::Success) {

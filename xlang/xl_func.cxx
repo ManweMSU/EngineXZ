@@ -101,6 +101,7 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetType(void) override { return _parent->GetType(); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				if (_parent->GetFlags() & XI::Module::Function::FunctionInstance) {
@@ -277,6 +278,7 @@ namespace Engine
 				return CreateType(XI::Module::TypeReference::MakePointer(_cn), _ctx);
 			}
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				if (_flags & XI::Module::Function::FunctionInstance) throw ObjectHasNoSuchOverloadException(this, argc, argv);
@@ -374,6 +376,7 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetType(void) override { return _parent->GetType(); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				SafePointer<XMethodOverload> over = GetOverloadV(argc, argv);
@@ -418,6 +421,7 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetType(void) override { if (_singular) return _singular->GetType(); else throw ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				SafePointer<XFunctionOverload> over = GetOverloadV(argc, argv);

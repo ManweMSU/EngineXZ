@@ -6,13 +6,13 @@ Attachments {
 	}
 }
 CompileList {
-	AAAAAA = "..\\xasm\\xa_compiler.cxx"
-	AAAAAB = "..\\xasm\\xa_type_helper.cxx"
-	AAAAAC = "..\\xasm\\xa_types.cxx"
 	AAAAA = "..\\xasm\\xa_trans.cxx"
 	AAAAA1 = "..\\xasm\\xa_t_i386.cxx"
 	AAAAA2 = "..\\xasm\\xa_t_x64.cxx"
 	AAAAA3 = "..\\xasm\\xa_t_armv8.cxx"
+	AAAAAA = "..\\xasm\\xa_compiler.cxx"
+	AAAAAB = "..\\xasm\\xa_type_helper.cxx"
+	AAAAAC = "..\\xasm\\xa_types.cxx"
 	AAAAAD = "..\\xenv\\xe_conapi.cxx"
 	AAAAAE = "..\\xenv\\xe_ctx.cxx"
 	AAAAAF = "..\\xenv\\xe_filesys.cxx"
@@ -37,6 +37,7 @@ CompileList {
 	AAAAAY = "..\\xlang\\xl_types.cxx"
 	AAAAAZ = "..\\xlang\\xl_var.cxx"
 	AAAABA = "xv.cxx"
+	AAAAB_ = "xv_mi.cxx"
 	AAAABB = "..\\xv\\xv_compiler.cxx"
 	AAAABC = "..\\xv\\xv_lexical.cxx"
 	AAAABD = "..\\xv\\xv_oapi.cxx"

@@ -39,6 +39,7 @@ namespace Engine
 			virtual string GetFullName(void) override { return L""; }
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw LException(this); }
 			virtual void EncodeSymbols(XI::Module & dest, Class parent) override {}

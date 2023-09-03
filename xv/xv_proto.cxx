@@ -63,6 +63,7 @@ namespace Engine
 			virtual XL::Class GetClass(void) override { return XL::Class::Internal; }
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { return _proto->Instantiate(argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
@@ -358,6 +359,7 @@ namespace Engine
 				if (name == XL::OperatorSubscript) return new OperatorInstantiate(this);
 				else throw XL::ObjectHasNoSuchMemberException(this, name);
 			}
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override { list.Append(XL::OperatorSubscript, XL::Class::Internal); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw XL::ObjectMemberRedefinitionException(this, key); }
@@ -590,6 +592,7 @@ namespace Engine
 			virtual XL::Class GetClass(void) override { return XL::Class::Prototype; }
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
@@ -630,6 +633,7 @@ namespace Engine
 			BlockPrototype(ICompilationContext & ctx, const string & name, const string & path, bool local, const DataBlock & data) : BasePrototype(ctx, name, path, local, data) {}
 			virtual ~BlockPrototype(void) override {}
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				if (argc != _args.Length()) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
@@ -658,6 +662,7 @@ namespace Engine
 			virtual XL::Class GetClass(void) override { return XL::Class::Internal; }
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { return _proto->PartialInvoke(_argc, _argv, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
@@ -719,6 +724,7 @@ namespace Engine
 			virtual XL::Class GetClass(void) override { return XL::Class::Internal; }
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override
 			{
 				if (_name == TraitSameTypes) {

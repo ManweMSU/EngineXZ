@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <EngineRuntime.h>
+#include "xv_compiler.h"
 
 namespace Engine
 {
@@ -36,10 +36,11 @@ namespace Engine
 		};
 		class TokenStream : public ITokenStream
 		{
+			CodeMetaInfo * _meta;
 			const uint32 * _data;
 			int _current, _override_base, _length;
 		public:
-			TokenStream(const uint32 * data, int length, int override_base = 0);
+			TokenStream(const uint32 * data, int length, CodeMetaInfo * meta, int override_base = 0);
 			virtual ~TokenStream(void) override;
 
 			virtual bool ReadToken(Token & dest) override;
@@ -66,5 +67,6 @@ namespace Engine
 		};
 
 		void SerializeToken(DataBlock & into, const Token & token);
+		bool IsReservedPunctuation(uint32 ucs);
 	}
 }

@@ -40,6 +40,7 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return true; }
 			virtual LObject * GetType(void) override { return CreateType(_type_cn, _cls->GetContext()); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw ObjectMemberRedefinitionException(this, key); }
@@ -127,6 +128,7 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return true; }
 			virtual LObject * GetType(void) override { return CreateType(_type_cn, _cls->GetContext()); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw ObjectMemberRedefinitionException(this, key); }

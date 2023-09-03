@@ -196,13 +196,13 @@ namespace Engine
 			return true;
 		}
 
-		TokenStream::TokenStream(const uint32 * data, int length, int override_base) : _data(data), _override_base(override_base), _length(length), _current(0) {}
+		TokenStream::TokenStream(const uint32 * data, int length, CodeMetaInfo * meta, int override_base) : _meta(meta), _data(data), _override_base(override_base), _length(length), _current(0) {}
 		TokenStream::~TokenStream(void) {}
 		bool TokenStream::ReadToken(Token & dest)
 		{
 			begin_read_token:
 			while (_current < _length && IsWhitespace(_data[_current])) _current++;
-			if (_current == _length) {
+			if (_current == _length || _data[_current] == 0) {
 				dest.type = TokenType::EOF;
 				dest.range_from = _override_base + _current;
 				dest.range_length = dest.ex_data = 0;
@@ -220,7 +220,7 @@ namespace Engine
 						try {
 							dest.type = TokenType::Literal;
 							dest.range_from = _override_base + from - 2;
-							dest.range_length = _current - dest.range_from;
+							dest.range_length = _current - dest.range_from + _override_base;
 							dest.ex_data = TokenLiteralInteger;
 							dest.contents = L"";
 							dest.contents_i = string(_data + from, _current - from, Encoding::UTF32).ToUInt64(HexadecimalBase);
@@ -233,7 +233,7 @@ namespace Engine
 						try {
 							dest.type = TokenType::Literal;
 							dest.range_from = _override_base + from - 2;
-							dest.range_length = _current - dest.range_from;
+							dest.range_length = _current - dest.range_from + _override_base;
 							dest.ex_data = TokenLiteralInteger;
 							dest.contents = L"";
 							dest.contents_i = string(_data + from, _current - from, Encoding::UTF32).ToUInt64(OctalBase);
@@ -246,7 +246,7 @@ namespace Engine
 						try {
 							dest.type = TokenType::Literal;
 							dest.range_from = _override_base + from - 2;
-							dest.range_length = _current - dest.range_from;
+							dest.range_length = _current - dest.range_from + _override_base;
 							dest.ex_data = TokenLiteralInteger;
 							dest.contents = L"";
 							dest.contents_i = string(_data + from, _current - from, Encoding::UTF32).ToUInt64(BinaryBase);
@@ -262,7 +262,7 @@ namespace Engine
 							(_data[_current] == L'-' && _data[_current - 1] == L'e'))) _current++;
 						dest.type = TokenType::Literal;
 						dest.range_from = _override_base + from;
-						dest.range_length = _current - dest.range_from;
+						dest.range_length = _current - dest.range_from + _override_base;
 						dest.contents = L"";
 						auto contents = string(_data + from, _current - from, Encoding::UTF32);
 						if (contents.FindFirst(L'.') >= 0 || contents.FindFirst(L'e') >= 0 || contents.FindFirst(L'E') >= 0) {
@@ -330,14 +330,32 @@ namespace Engine
 					dest.contents_i = 0;
 					dest.contents_f = 0.0;
 				} else if (_current < _length - 1 && _data[_current] == L'/' && _data[_current + 1] == L'/') {
+					int com_begin = _current;
 					_current += 2;
 					while (_current < _length && _data[_current] != L'\n') _current++;
+					if (_meta) {
+						CodeRangeInfo range;
+						range.from = com_begin + _override_base;
+						range.length = _current - com_begin;
+						range.tag = CodeRangeTag::Comment;
+						range.flags = 0;
+						_meta->info.Append(range.from, range);
+					}
 					goto begin_read_token;
 				} else if (_current < _length - 1 && _data[_current] == L'/' && _data[_current + 1] == L'*') {
+					int com_begin = _current;
 					_current += 2;
 					while (_current < _length - 1 && (_data[_current] != L'*' || _data[_current + 1] != L'/')) _current++;
 					_current += 2;
 					if (_current > _length) _current = _length;
+					if (_meta) {
+						CodeRangeInfo range;
+						range.from = com_begin + _override_base;
+						range.length = _current - com_begin;
+						range.tag = CodeRangeTag::Comment;
+						range.flags = 0;
+						_meta->info.Append(range.from, range);
+					}
 					goto begin_read_token;
 				} else if (IsValidPunctuation(_data[_current])) {
 					int from = _current;
@@ -386,6 +404,27 @@ namespace Engine
 					else dest.type = TokenType::Identifier;
 				}
 			}
+			if (_meta && dest.range_length > 0) {
+				CodeRangeInfo range;
+				range.from = dest.range_from;
+				range.length = dest.range_length;
+				range.tag = CodeRangeTag::NoData;
+				if (dest.type == TokenType::Keyword) range.tag = CodeRangeTag::Keyword;
+				else if (dest.type == TokenType::Punctuation) range.tag = CodeRangeTag::Punctuation;
+				else if (dest.type == TokenType::PrototypeSymbol || dest.type == TokenType::PrototypeCommand) range.tag = CodeRangeTag::Prototype;
+				else if (dest.type == TokenType::Identifier) range.tag = CodeRangeTag::IdentifierUnknown;
+				else if (dest.type == TokenType::Literal) {
+					if (dest.ex_data == TokenLiteralLogicalY || dest.ex_data == TokenLiteralLogicalN) range.tag = CodeRangeTag::LiteralBoolean;
+					else if (dest.ex_data == TokenLiteralInteger || dest.ex_data == TokenLiteralFloat) range.tag = CodeRangeTag::LiteralNumeric;
+					else if (dest.ex_data == TokenLiteralString) range.tag = CodeRangeTag::LiteralString;
+				}
+				if (range.tag != CodeRangeTag::NoData) {
+					range.flags = 0;
+					if (dest.type == TokenType::Punctuation && dest.contents == L"{") range.flags |= CodeRangeClauseOpen;
+					if (dest.type == TokenType::Punctuation && dest.contents == L"}") range.flags |= CodeRangeClauseClose;
+					_meta->info.Append(range.from, range);
+				}
+			}
 			return true;
 		}
 		bool TokenStream::ReadBlock(ITokenStream ** deferred_stream)
@@ -401,7 +440,7 @@ namespace Engine
 				else if (token.type == TokenType::Punctuation && token.contents == L"{") level++;
 				else if (token.type == TokenType::Punctuation && token.contents == L"}") { level--; if (level < 0) break; }
 			}
-			*deferred_stream = new TokenStream(_data + from, end - from, _override_base + from);
+			*deferred_stream = new TokenStream(_data + from, end - from, 0, _override_base + from);
 			return true;
 		}
 		void TokenStream::ExtractRange(int from, int length, string & line, int & line_no, int & line_from, int & line_length) const

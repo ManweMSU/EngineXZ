@@ -41,6 +41,36 @@ namespace Engine
 			string error_line;
 			int error_line_no, error_line_pos, error_line_len;
 		};
+
+		enum class CodeRangeTag {
+			NoData, Comment, Keyword, Punctuation, Prototype,
+			LiteralBoolean, LiteralNumeric, LiteralString, LiteralNull,
+			IdentifierUnknown, IdentifierNamespace,
+			IdentifierType, IdentifierPrototype,
+			IdentifierFunction, IdentifierConstant, IdentifierVariable,
+			IdentifierProperty, IdentifierField
+		};
+		enum CodeRangeFlags {
+			CodeRangeSymbolDefinition	= 0x01,
+			CodeRangeSymbolLocal		= 0x02,
+			CodeRangeClauseOpen			= 0x04,
+			CodeRangeClauseClose		= 0x08
+		};
+		struct CodeRangeInfo
+		{
+			int from, length;
+			CodeRangeTag tag;
+			string identifier, type, value;
+			uint flags;
+		};
+		struct CodeMetaInfo
+		{
+			Volumes::Dictionary<int, CodeRangeInfo> info;
+			Volumes::Dictionary<string, CodeRangeTag> autocomplete;
+			int autocomplete_at;
+			int error_absolute_from;
+		};
+
 		class ICompilerCallback : public Object
 		{
 		public:
@@ -55,7 +85,7 @@ namespace Engine
 			virtual Streaming::Stream * GetOutputModuleData(void) const = 0;
 		};
 		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback);
-		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status);
+		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta = 0);
 		void CompileModule(const string & input, string & output_path, ICompilerCallback * callback, CompilerStatusDesc & status);
 	}
 }

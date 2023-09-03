@@ -26,5 +26,9 @@ namespace Engine
 		void BeginContextCapture(XL::LObject * base_class, XL::LObject ** vlist, int vlen, XL::LObject ** capture, XL::LObject ** function);
 		void ConfigureContextCapture(XL::LObject * capture, XL::LObject * function, XL::LFunctionContext ** fctx);
 		void EndContextCapture(XL::LObject * capture, ObjectArray<XL::LObject> & vft_init, XL::LObject ** task);
+
+		string GetObjectFullName(XL::LContext & ctx, XL::LObject * object);
+		string GetTypeFullName(XL::LContext & ctx, XL::LObject * object);
+		string GetLiteralValue(XL::LContext & ctx, XL::LObject * object);
 	}
 }

@@ -49,6 +49,7 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
@@ -67,6 +68,7 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
@@ -268,6 +270,7 @@ namespace Engine
 				}
 				if (member) { member->Retain(); return member; } else throw ObjectHasNoSuchMemberException(this, name);
 			}
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override { for (auto & m : _members) list.Append(m.key, m.value->GetClass()); }
 			virtual void AddMember(const string & name, LObject * child) override { if (!_members.Append(name, child)) throw ObjectMemberRedefinitionException(this, name); }
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw ObjectMemberRedefinitionException(this, key); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return MakeAddressOf(MakeSymbolReference(func, _path), XA::TH::MakeSize(0, 1)); }
@@ -811,6 +814,15 @@ namespace Engine
 					return CreateStaticArrayRoutine(this, CreateMethodAssign);
 				} else throw ObjectHasNoSuchMemberException(this, name);
 			}
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override
+			{
+				list.Append(OperatorSubscript, Class::FunctionOverload);
+				list.Append(IteratorBegin, Class::FunctionOverload);
+				list.Append(IteratorEnd, Class::FunctionOverload);
+				list.Append(IteratorPreBegin, Class::FunctionOverload);
+				list.Append(IteratorPostEnd, Class::FunctionOverload);
+				list.Append(OperatorAssign, Class::FunctionOverload);
+			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
@@ -1014,6 +1026,13 @@ namespace Engine
 					name == OperatorAssign) return new _pointer_operator(this, name);
 				throw ObjectHasNoSuchMemberException(this, name);
 			}
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override
+			{
+				list.Append(OperatorInvoke, Class::FunctionOverload);
+				list.Append(OperatorSubscript, Class::FunctionOverload);
+				list.Append(OperatorFollow, Class::FunctionOverload);
+				list.Append(OperatorAssign, Class::FunctionOverload);
+			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
@@ -1167,6 +1186,7 @@ namespace Engine
 			virtual string GetFullName(void) override { return L""; }
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
@@ -1205,6 +1225,7 @@ namespace Engine
 			virtual string GetFullName(void) override { return L""; }
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }

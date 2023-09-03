@@ -31,6 +31,15 @@ namespace Engine
 				throw ObjectHasNoSuchMemberException(this, name);
 			} catch (...) { throw ObjectHasNoSuchMemberException(this, name); }
 		}
+		void XComputable::ListMembers(Volumes::Dictionary<string, Class> & list)
+		{
+			try {
+				SafePointer<LObject> type = GetType();
+				ObjectArray<XType> conf(0x20);
+				static_cast<XType *>(type.Inner())->GetTypesConformsTo(conf);
+				for (auto & c : conf) try { c.ListMembers(list); } catch (...) {}
+			} catch (...) {}
+		}
 		LObject * XComputable::Invoke(int argc, LObject ** argv)
 		{
 			SafePointer<LObject> inv = GetMember(OperatorInvoke);

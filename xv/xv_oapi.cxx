@@ -20,6 +20,7 @@ namespace Engine
 			virtual bool IsDefinedLocally(void) override { return false; }
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
@@ -809,6 +810,15 @@ namespace Engine
 				}
 				throw XL::ObjectHasNoSuchMemberException(this, name);
 			}
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override
+			{
+				Volumes::Dictionary<string, XL::Class> il;
+				_fctx->GetInstance()->ListMembers(il);
+				for (auto & m : il) if (m.key.Fragment(0, string(Lexic::IdentifierTVPP).Length()) == Lexic::IdentifierTVPP) {
+					list.Append(m.key.Fragment(string(Lexic::IdentifierTVPP).Length(), -1), m.value);
+				}
+				for (auto & v : _vlist) v->ListMembers(list);
+			}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
@@ -986,6 +996,92 @@ namespace Engine
 			if (signals) xcapt->CreateSignalGetter();
 			xcapt->CreateConstructor(vft_init);
 			*task = xcapt->CreateInstance();
+		}
+
+		string RegularizeTypeName(const XI::Module::TypeReference & tr);
+		string RegularizeObjectName(const string & name)
+		{
+			string n;
+			if (name.Fragment(0, 12) == L"@praeformae.") {
+				int i = 12, l = 0;
+				while (i < name.Length()) {
+					if (name[i] == L'(') l++;
+					else if (name[i] == L')') l--;
+					else if (name[i] == L'.' && l == 0) break;
+					i++;
+				}
+				auto pcn = name.Fragment(12, i - 12);
+				auto ref = XI::Module::TypeReference(pcn);
+				Array<string> args_inv(0x10);
+				DynamicString base;
+				while (ref.GetReferenceClass() == XI::Module::TypeReference::Class::AbstractInstance) {
+					auto param = ref.GetAbstractInstanceParameterType();
+					auto base = ref.GetAbstractInstanceBase();
+					args_inv << RegularizeTypeName(param);
+					MemoryCopy(&ref, &base, sizeof(base));
+				}
+				base += RegularizeTypeName(ref) + L"[";
+				for (int i = args_inv.Length() - 1; i >= 0; i--) {
+					base += args_inv[i];
+					if (i) base += L", ";
+				}
+				base += "]";
+				n = base.ToString() + name.Fragment(i, -1);
+			} else n = name;
+			int index = n.FindFirst(L':');
+			return n.Fragment(0, index);
+		}
+		string RegularizeTypeName(const XI::Module::TypeReference & tr)
+		{
+			if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Class) {
+				return RegularizeObjectName(tr.GetClassName());
+			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Array) {
+				return L"ordo [" + string(tr.GetArrayVolume()) + L"] " + RegularizeTypeName(tr.GetArrayElement());
+			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Pointer) {
+				return L"@" + RegularizeTypeName(tr.GetPointerDestination());
+			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Reference) {
+				return L"~" + RegularizeTypeName(tr.GetReferenceDestination());
+			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Function) {
+				SafePointer< Array<XI::Module::TypeReference> > sgn = tr.GetFunctionSignature();
+				DynamicString result;
+				result += L"functio " + RegularizeTypeName(sgn->ElementAt(0)) + L"(";
+				for (int i = 1; i < sgn->Length(); i++) {
+					if (i > 1) result += L", ";
+					result += RegularizeTypeName(sgn->ElementAt(i));
+				}
+				result += L")";
+				return result.ToString();
+			} else return L"";
+		}
+		string GetObjectFullName(XL::LContext & ctx, XL::LObject * object) { return RegularizeObjectName(object->GetFullName()); }
+		string GetTypeFullName(XL::LContext & ctx, XL::LObject * object)
+		{
+			auto & tr = static_cast<XL::XType *>(object)->GetTypeReference();
+			return RegularizeTypeName(tr);
+		}
+		string GetLiteralValue(XL::LContext & ctx, XL::LObject * object)
+		{
+			auto & lit = static_cast<XL::XLiteral *>(object)->Expose();
+			if (lit.contents == XI::Module::Literal::Class::Boolean) {
+				if (lit.data_boolean) return Lexic::LiteralYes;
+				else return Lexic::LiteralNo;
+			} else if (lit.contents == XI::Module::Literal::Class::UnsignedInteger) {
+				if (lit.length == 8) return string(lit.data_uint64);
+				else if (lit.length == 4) return string(lit.data_uint32);
+				else if (lit.length == 2) return string(lit.data_uint16);
+				else if (lit.length == 1) return string(lit.data_uint8);
+			} else if (lit.contents == XI::Module::Literal::Class::SignedInteger) {
+				if (lit.length == 8) return string(lit.data_sint64);
+				else if (lit.length == 4) return string(lit.data_sint32);
+				else if (lit.length == 2) return string(lit.data_sint16);
+				else if (lit.length == 1) return string(lit.data_sint8);
+			} else if (lit.contents == XI::Module::Literal::Class::FloatingPoint) {
+				if (lit.length == 8) return string(lit.data_double);
+				else if (lit.length == 4) return string(lit.data_float);
+			} else if (lit.contents == XI::Module::Literal::Class::String) {
+				return lit.data_string;
+			}
+			return L"";
 		}
 	}
 }

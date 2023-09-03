@@ -2,6 +2,7 @@
 
 #include "../xexec/xx_com.h"
 #include "../xv/xv_compiler.h"
+#include "xv_mi.h"
 
 using namespace Engine;
 using namespace Engine::IO;
@@ -16,9 +17,12 @@ struct {
 	Array<string> module_search_paths = Array<string>(0x10);
 	bool silent = false;
 	bool nologo = false;
+	bool launch = false;
+	bool interactive = false;
 	string input;
 	string output;
 	string output_path;
+	Array<string> launch_args = Array<string>(0x10);
 } state;
 
 string Localized(int id)
@@ -42,7 +46,9 @@ void ProcessCommandLine(void)
 		auto & arg = args->ElementAt(i);
 		if (arg[0] == L':' || arg[0] == L'-') {
 			for (int j = 1; j < arg.Length(); j++) {
-				if (arg[j] == L'N') {
+				if (arg[j] == L'I') {
+					state.interactive = true;
+				} else if (arg[j] == L'N') {
 					state.nologo = true;
 				} else if (arg[j] == L'O') {
 					i++; if (i >= args->Length()) {
@@ -72,6 +78,13 @@ void ProcessCommandLine(void)
 						throw Exception();
 					}
 					state.output = ExpandPath(args->ElementAt(i));
+				} else if (arg[j] == L'r') {
+					state.launch = true;
+					while (true) {
+						i++;
+						if (i >= args->Length()) break;
+						state.launch_args << args->ElementAt(i);
+					}
 				} else {
 					console << TextColor(12) << Localized(204) << TextColorDefault() << LineFeed();
 					throw Exception();
@@ -148,8 +161,38 @@ int Main(void)
 	}
 	if (state.input.Length()) {
 		try {
-			string output;
 			SafePointer<XV::ICompilerCallback> callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths.GetBuffer(), state.module_search_paths.Length(), 0);
+			if (state.interactive) {
+				SafePointer<Stream> file;
+				try { file = new FileStream(state.input, AccessReadWrite, OpenAlways); }
+				catch (...) {
+					XV::CompilerStatusDesc desc;
+					desc.status = XV::CompilerStatus::FileAccessFailure;
+					desc.error_line = state.input;
+					desc.error_line_len = desc.error_line_no = desc.error_line_pos = -1;
+					if (!state.silent) PrintCompilerError(desc);
+					return int(desc.status);
+				}
+				Encoding enc = Encoding::UTF8;
+				string code_string;
+				if (file->Length()) {
+					SafePointer<TextReader> reader = new TextReader(file);
+					code_string = reader->ReadAll();
+					enc = reader->GetEncoding();
+				}
+				SafePointer< Array<uint32> > code = new Array<uint32>(0x1000);
+				code->SetLength(code_string.GetEncodedLength(Encoding::UTF32) + 1);
+				code_string.Encode(code->GetBuffer(), Encoding::UTF32, true);
+				string root = Path::GetDirectory(state.input);
+				SafePointer<XV::ICompilerCallback> callback2 = XV::CreateCompilerCallback(&root, 1, &root, 1, callback);
+				if (!LaunchInteractiveEditor(state.input, code, callback2, console)) return 0;
+				file->SetLength(0);
+				file->Seek(0, Begin);
+				SafePointer<TextWriter> writer = new TextWriter(file, enc);
+				writer->WriteEncodingSignature();
+				writer->Write(string(code->GetBuffer(), -1, Encoding::UTF32));
+			}
+			string output;
 			if (state.output.Length()) output = L"?" + state.output;
 			else if (state.output_path.Length()) output = state.output_path;
 			else output = Path::GetDirectory(state.input);
@@ -158,8 +201,18 @@ int Main(void)
 			if (desc.status != XV::CompilerStatus::Success) {
 				if (!state.silent) PrintCompilerError(desc);
 				return int(desc.status);
-			}
-			return 0;
+			} else if (state.launch) {
+				Array<string> args(0x10);
+				args << output;
+				args << state.launch_args;
+				SafePointer<Process> process = CreateCommandProcess(L"xx", &args);
+				if (!process) {
+					if (!state.silent) console << TextColor(12) << Localized(205) << TextColorDefault() << LineFeed();
+					return 1;
+				}
+				process->Wait();
+				return process->GetExitCode();
+			} else return 0;
 		} catch (...) { return 0x3F; }
 	} else {
 		if (!state.silent) try {
