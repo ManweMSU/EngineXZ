@@ -53,6 +53,23 @@ string TagDescription(XV::CodeRangeTag tag)
 typedef Array<uint32> Code;
 void AbsoluteToLineColumn(Code & code, uint abs, uint & line, uint & chr);
 void LineColumnToAbsolute(Code & code, uint line, uint chr, uint & abs);
+string UncoverURI(const string & uri)
+{
+	#ifdef ENGINE_WINDOWS
+	auto path = uri.Fragment(8, -1);
+	#else
+	auto path = uri.Fragment(7, -1);
+	#endif
+	Array<char> result(0x100);
+	for (int i = 0; i < path.Length(); i++) {
+		if (path[i] == L'%') {
+			auto digits = path.Fragment(i + 1, 2);
+			i += 2;
+			result << digits.ToUInt32(HexadecimalBase);
+		} else result << path[i];
+	}
+	return string(result.GetBuffer(), result.Length(), Encoding::UTF8);
+}
 
 struct CodeAnalyzeDesc
 {
@@ -192,11 +209,7 @@ class CodeDocument : public Object
 				SafePointer<XV::ICompilerCallback> callback;
 				self->GetCurrentVersion(version, uri, code);
 				if (uri.Fragment(0, 7) == L"file://") {
-					#ifdef ENGINE_WINDOWS
-					auto path = uri.Fragment(8, -1);
-					#else
-					auto path = uri.Fragment(7, -1);
-					#endif
+					auto path = UncoverURI(uri);
 					auto src_dir = Path::GetDirectory(path);
 					name = Path::GetFileNameWithoutExtension(path);
 					SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
@@ -702,11 +715,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 			SafePointer<XV::ICompilerCallback> callback;
 			document->GetCurrentVersion(version, uri, code);
 			if (uri.Fragment(0, 7) == L"file://") {
-				#ifdef ENGINE_WINDOWS
-				auto path = uri.Fragment(8, -1);
-				#else
-				auto path = uri.Fragment(7, -1);
-				#endif
+				auto path = UncoverURI(uri);
 				auto src_dir = Path::GetDirectory(path);
 				name = Path::GetFileNameWithoutExtension(path);
 				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);

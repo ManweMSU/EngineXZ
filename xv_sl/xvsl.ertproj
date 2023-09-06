@@ -1,26 +1,6 @@
 ﻿NoDockIcon = true
 Subsystem = "silent"
 UseVersionDefines = true
-"-debug" {
-	Attachments {
-		AAMAAA {
-			From = "store.ecs"
-			To = "store.ecs"
-		}
-		AAMAAB {
-			From = "xe.debug.ini"
-			To = "xe.ini"
-		}
-	}
-}
-"-release" {
-	Attachments {
-		AALAAA {
-			From = "xe.ini"
-			To = "xe.ini"
-		}
-	}
-}
 Attachments {
 	AAAAAA {
 		From = "xv.ini"
@@ -64,12 +44,32 @@ CompileList {
 	AAAABH = "../xv/xv_proto.cxx"
 	AAAABI = "xvsl.cxx"
 }
+"-debug" {
+	Attachments {
+		AAMAAA {
+			From = "store.ecs"
+			To = "store.ecs"
+		}
+		AAMAAB {
+			From = "xe.debug.ini"
+			To = "xe.ini"
+		}
+	}
+}
 EngineStore {
 	ShellPath = "."
 	StoreLinkFile = "store.ecs"
 }
 LinkWith {
 	AAAAAA = "ECFC"
+}
+"-release" {
+	Attachments {
+		AALAAA {
+			From = "xe.ini"
+			To = "xe.ini"
+		}
+	}
 }
 VersionInformation {
 	ApplicationIdentifier = "XVSL"
