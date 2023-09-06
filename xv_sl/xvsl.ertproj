@@ -1,0 +1,82 @@
+﻿NoDockIcon = true
+Subsystem = "silent"
+UseVersionDefines = true
+"-debug" {
+	Attachments {
+		AAMAAA {
+			From = "store.ecs"
+			To = "store.ecs"
+		}
+		AAMAAB {
+			From = "xe.debug.ini"
+			To = "xe.ini"
+		}
+	}
+}
+"-release" {
+	Attachments {
+		AALAAA {
+			From = "xe.ini"
+			To = "xe.ini"
+		}
+	}
+}
+Attachments {
+	AAAAAA {
+		From = "xv.ini"
+		To = "xv.ini"
+	}
+}
+CompileList {
+	AAAAAA = "../xasm/xa_compiler.cxx"
+	AAAAAB = "../xasm/xa_t_armv8.cxx"
+	AAAAAC = "../xasm/xa_t_i386.cxx"
+	AAAAAD = "../xasm/xa_t_x64.cxx"
+	AAAAAE = "../xasm/xa_trans.cxx"
+	AAAAAF = "../xasm/xa_type_helper.cxx"
+	AAAAAG = "../xasm/xa_types.cxx"
+	AAAAAH = "../xenv/xe_conapi.cxx"
+	AAAAAI = "../xenv/xe_ctx.cxx"
+	AAAAAJ = "../xenv/xe_filesys.cxx"
+	AAAAAK = "../xenv/xe_interfaces.cxx"
+	AAAAAL = "../xenv/xe_loader.cxx"
+	AAAAAM = "../xenv/xe_logger.cxx"
+	AAAAAN = "../xenv/xe_rtss.cxx"
+	AAAAAO = "../xenv/xe_stdext.cxx"
+	AAAAAP = "../xexec/xx_com.cxx"
+	AAAAAQ = "../ximg/xi_function.cxx"
+	AAAAAR = "../ximg/xi_module.cxx"
+	AAAAAS = "../ximg/xi_resources.cxx"
+	AAAAAT = "../xlang/xl_base.cxx"
+	AAAAAU = "../xlang/xl_code.cxx"
+	AAAAAV = "../xlang/xl_com.cxx"
+	AAAAAW = "../xlang/xl_func.cxx"
+	AAAAAX = "../xlang/xl_inline.cxx"
+	AAAAAY = "../xlang/xl_lal.cxx"
+	AAAAAZ = "../xlang/xl_lit.cxx"
+	AAAABA = "../xlang/xl_prop.cxx"
+	AAAABB = "../xlang/xl_synth.cxx"
+	AAAABC = "../xlang/xl_types.cxx"
+	AAAABD = "../xlang/xl_var.cxx"
+	AAAABE = "../xv/xv_compiler.cxx"
+	AAAABF = "../xv/xv_lexical.cxx"
+	AAAABG = "../xv/xv_oapi.cxx"
+	AAAABH = "../xv/xv_proto.cxx"
+	AAAABI = "xvsl.cxx"
+}
+EngineStore {
+	ShellPath = "."
+	StoreLinkFile = "store.ecs"
+}
+LinkWith {
+	AAAAAA = "ECFC"
+}
+VersionInformation {
+	ApplicationIdentifier = "XVSL"
+	ApplicationName = "Engine XV Servus Linguae"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2023"
+	InternalName = "xvsl"
+	Version = "1.0.0.1"
+}
