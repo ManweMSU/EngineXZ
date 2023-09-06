@@ -307,36 +307,23 @@ public:
 	{
 		bool result;
 		_sync->Wait();
-		if (forver == _latest_version) {
-			auto current = _tasks.GetFirst();
-			while (current) {
-				auto next = current->GetNext();
-				if (current->GetValue().desc->version == forver) {
-					auto & value = current->GetValue();
-					_execute_task(value);
-					_tasks.Remove(current);
-				}
-				current = next;
+		result = forver == _latest_version;
+		auto current = _tasks.GetFirst();
+		while (current) {
+			auto next = current->GetNext();
+			if (current->GetValue().desc->version == forver) {
+				auto & value = current->GetValue();
+				_execute_task(value);
+				_tasks.Remove(current);
 			}
+			current = next;
+		}
+		if (result) {
 			_com_status = status;
 			_com_meta = meta;
-			result = true;
 			_update_diagnostics(false);
-		} else {
-			auto current = _tasks.GetFirst();
-			while (current) {
-				auto next = current->GetNext();
-				if (current->GetValue().desc->version == forver) {
-					auto & value = current->GetValue();
-					value.desc->ok = false;
-					value.task->DoTask(0);
-					_tasks.Remove(current);
-				}
-				current = next;
-			}
-			result = false;
+			_analyze_in_progress = false;
 		}
-		if (result) _analyze_in_progress = false;
 		_sync->Open();
 		return result;
 	}
