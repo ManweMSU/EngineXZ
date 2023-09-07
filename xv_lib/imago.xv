@@ -298,7 +298,7 @@ spatium graphicum {
 		functio adl[pictura] crea_picturam(int lat, int alt, ~imago.color clr) virtualis pura;
 		functio adl[pictura] onera_picturam(@imago.replum) virtualis pura;
 		functio adl[typographica] onera_typographicae(~linea nomen, int alt, int magn, logicum cursiva, logicum sublinea, logicum plancta) virtualis pura;
-		functio adl[dordo_linearum] para_typographicarum() virtualis pura;
+		functio adl[dordo_linearum] para_typographicas() virtualis pura;
 		functio adl[contextus_picturae] crea_contextum_picturae() virtualis pura;
 	}
 
