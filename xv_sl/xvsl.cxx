@@ -224,14 +224,14 @@ class CodeDocument : public Object
 				meta.autocomplete_at = -1;
 				meta.error_absolute_from = -1;
 				XV::CompileModule(name, *code, output.InnerRef(), callback, desc, &meta);
-				if (self->CommitMeta(version, desc, meta)) break;
+				if (self->CommitMeta(version, code, desc, meta)) break;
 			}
 		}));
 	}
-	void _execute_task(_code_task & task)
+	void _execute_task(_code_task & task, Code * code)
 	{
 		task.desc->ok = true;
-		task.desc->code = _current_version;
+		task.desc->code.SetRetain(code);
 		task.desc->meta = &_com_meta;
 		task.desc->status = &_com_status;
 		task.task->DoTask(0);
@@ -303,24 +303,24 @@ public:
 		_launch_analyzer();
 		_sync->Open();
 	}
-	bool CommitMeta(int64 forver, const XV::CompilerStatusDesc & status, const XV::CodeMetaInfo & meta)
+	bool CommitMeta(int64 forver, Code * code, const XV::CompilerStatusDesc & status, const XV::CodeMetaInfo & meta)
 	{
 		bool result;
 		_sync->Wait();
 		result = forver == _latest_version;
+		_com_status = status;
+		_com_meta = meta;
 		auto current = _tasks.GetFirst();
 		while (current) {
 			auto next = current->GetNext();
 			if (current->GetValue().desc->version <= forver) {
 				auto & value = current->GetValue();
-				_execute_task(value);
+				_execute_task(value, code);
 				_tasks.Remove(current);
 			}
 			current = next;
 		}
 		if (result) {
-			_com_status = status;
-			_com_meta = meta;
 			_update_diagnostics(false);
 			_analyze_in_progress = false;
 		}
@@ -342,7 +342,7 @@ public:
 		t.task.SetRetain(task);
 		_sync->Wait();
 		desc->version = _latest_version;
-		if (_analyze_in_progress) _tasks.InsertLast(t); else _execute_task(t);
+		if (_analyze_in_progress) _tasks.InsertLast(t); else _execute_task(t, _current_version);
 		_sync->Open();
 	}
 };
