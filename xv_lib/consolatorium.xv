@@ -28,7 +28,7 @@ genus consolatorium hereditat objectum_dynamicum {
 		albus					= 15
 	}
 	enumeratio codex_eventi {
-		finis			= 0,
+		finis_fluminis	= 0,
 		character_in	= 1,
 		tactus_in		= 2,
 		cressatus_est	= 3

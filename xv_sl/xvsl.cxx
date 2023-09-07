@@ -311,7 +311,7 @@ public:
 		auto current = _tasks.GetFirst();
 		while (current) {
 			auto next = current->GetNext();
-			if (current->GetValue().desc->version == forver) {
+			if (current->GetValue().desc->version <= forver) {
 				auto & value = current->GetValue();
 				_execute_task(value);
 				_tasks.Remove(current);
