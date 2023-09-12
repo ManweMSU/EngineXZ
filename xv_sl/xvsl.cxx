@@ -1,6 +1,7 @@
 ﻿#include <ClusterClient.h>
 #include "../xexec/xx_com.h"
 #include "../xv/xv_compiler.h"
+#include "../ximg/xi_module.h"
 #include "xvsl_struct.h"
 
 using namespace Engine;
@@ -12,6 +13,7 @@ SafePointer<Cluster::Client> debug_client;
 SafePointer<Streaming::ITextWriter> debug_console;
 SafePointer<ThreadPool> pool;
 SafePointer<Semaphore> access_sync;
+SafePointer<XV::ManualVolume> manual;
 Array<string> module_search_paths;
 
 string Localized(int id)
@@ -49,10 +51,16 @@ string TagDescription(XV::CodeRangeTag tag)
 	else if (tag == XV::CodeRangeTag::IdentifierField) return Localized(177);
 	else return L"";
 }
+string ArgumentInfoToString(const XV::ArgumentInfo & inf)
+{
+	if (inf.type.Length()) return inf.type;
+	return TagDescription(inf.tag);
+}
 
 typedef Array<uint32> Code;
 void AbsoluteToLineColumn(Code & code, uint abs, uint & line, uint & chr);
 void LineColumnToAbsolute(Code & code, uint line, uint chr, uint & abs);
+string MarkdownEscape(const string & in);
 string UncoverURI(const string & uri)
 {
 	#ifdef ENGINE_WINDOWS
@@ -193,6 +201,7 @@ class CodeDocument : public Object
 	Volumes::List<_code_task> _tasks;
 	XV::CompilerStatusDesc _com_status;
 	XV::CodeMetaInfo _com_meta;
+	XV::CodeMetaInfo _func_meta;
 	bool _analyze_in_progress;
 
 	void _launch_analyzer(void)
@@ -222,6 +231,7 @@ class CodeDocument : public Object
 				XV::CompilerStatusDesc desc;
 				XV::CodeMetaInfo meta;
 				meta.autocomplete_at = -1;
+				meta.function_info_at = -1;
 				meta.error_absolute_from = -1;
 				XV::CompileModule(name, *code, output.InnerRef(), callback, desc, &meta);
 				if (self->CommitMeta(version, code, desc, meta)) break;
@@ -345,6 +355,18 @@ public:
 		if (_analyze_in_progress) _tasks.InsertLast(t); else _execute_task(t, _current_version);
 		_sync->Open();
 	}
+	void GetDocumentMetaStorage(XV::CodeMetaInfo & info)
+	{
+		_sync->Wait();
+		try { info = _func_meta; } catch (...) {}
+		_sync->Open();
+	}
+	void SetDocumentMetaStorage(const XV::CodeMetaInfo & info)
+	{
+		_sync->Wait();
+		try { _func_meta = info; } catch (...) {}
+		_sync->Open();
+	}
 };
 class CodeRepositorium : public Object
 {
@@ -392,6 +414,17 @@ public:
 		_sync->Open();
 		return code;
 	}
+};
+class MarkdownFormatter : public XV::IManualTextFormatter
+{
+public:
+	virtual string PlainText(const string & text) override { return MarkdownEscape(text);  }
+	virtual string BoldText(const string & inner) override { return L"**" + inner + L"**"; }
+	virtual string ItalicText(const string & inner) override { return L"_" + inner + L"_"; }
+	virtual string UnderlinedText(const string & inner) override { return inner; }
+	virtual string LinkedText(const string & inner, const string & to) override { return inner; }
+	virtual string Paragraph(const string & inner) override { return L"\n\n" + inner; }
+	virtual string ListItem(int index, const string & inner) override { return L"\n" + string(index) + L". " + inner; }
 };
 
 SafePointer<CodeRepositorium> code;
@@ -466,6 +499,21 @@ string MarkdownEscape(const string & in)
 		result << in[i];
 	}
 	return result.ToString();
+}
+string MarkdownFormat(const string & in)
+{
+	MarkdownFormatter fmt;
+	return XV::FormatRichText(in, &fmt);
+}
+string ExtractContents(const XV::ManualSection * section)
+{
+	auto loc = section->GetContents(Assembly::CurrentLocale);
+	if (loc.Length()) return MarkdownFormat(loc); else return MarkdownFormat(section->GetContents(L""));
+}
+string ExtractContents(const XV::ManualPage * page, XV::ManualSectionClass section)
+{
+	for (auto & s : page->GetSections()) if (s.GetClass() == section) return ExtractContents(&s);
+	return L"";
 }
 
 void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const IOData & data)
@@ -560,6 +608,13 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 						if (range.value.Length()) {
 							if (text.Length()) text += L"\n\n";
 							text += Localized(183) + L"**\'" + MarkdownEscape(range.value) + L"\'**";
+						}
+						if (manual) {
+							auto record = manual->FindPage(range.path);
+							if (record) {
+								if (text.Length()) text += L"\n\n";
+								text += ExtractContents(record, XV::ManualSectionClass::Summary);
+							}
 						}
 						result.result.contents.kind = L"markdown";
 						result.result.contents.value = text.ToString();
@@ -719,6 +774,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 			code->Append(0);
 			code->ElementAt(ac) = L'A';
 			meta.autocomplete_at = ac;
+			meta.function_info_at = -1;
 			meta.error_absolute_from = -1;
 			XV::CompileModule(name, *code, output.InnerRef(), callback, desc, &meta);
 			RPC::ResponseMessage_Success_CompletionItem responce;
@@ -735,6 +791,82 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				else if (a.value == XV::CodeRangeTag::IdentifierConstant) com.kind = 14;
 				else com.kind = 13;
 				responce.result.InnerArray << com;
+			}
+			RespondWithObject(channel_ref, info, responce);
+		}));
+	} else if (base.method == L"textDocument/signatureHelp") {
+		RPC::RequestMessage_SignatureHelpParams info;
+		RestoreObject(info, data);
+		SafePointer<CodeDocument> document;
+		SafePointer<IOChannel> channel_ref;
+		document.SetRetain(code->FindDocument(info.params.textDocument.uri));
+		channel_ref.SetRetain(channel);
+		if (document) pool->SubmitTask(CreateFunctionalTask([document, channel_ref, info]() {
+			int64 version;
+			string uri, name;
+			SafePointer<Code> code;
+			SafePointer<XV::ICompilerCallback> callback;
+			document->GetCurrentVersion(version, uri, code);
+			if (uri.Fragment(0, 7) == L"file://") {
+				auto path = UncoverURI(uri);
+				auto src_dir = Path::GetDirectory(path);
+				name = Path::GetFileNameWithoutExtension(path);
+				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
+				callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core);
+			} else {
+				name = L"novus";
+				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
+			}
+			SafePointer<XV::IOutputModule> output;
+			XV::CompilerStatusDesc desc;
+			XV::CodeMetaInfo meta;
+			uint ac;
+			LineColumnToAbsolute(*code, info.params.position.line, info.params.position.character, ac);
+			code->Append(0);
+			code->ElementAt(ac) = L'A';
+			meta.autocomplete_at = -1;
+			meta.function_info_at = ac;
+			meta.error_absolute_from = -1;
+			XV::CompileModule(name, *code, output.InnerRef(), callback, desc, &meta);
+			RPC::ResponseMessage_Success_SignatureHelp responce;
+			uint count = meta.overloads.Count();
+			if (count) {
+				responce.result.activeParameter = meta.function_info_argument;
+				responce.result.activeSignature = min(info.params.context.activeSignatureHelp.activeSignature, count - 1);
+				for (auto & o : meta.overloads) {
+					XV::ManualPage * page = manual ? manual->FindPage(o.path) : 0;
+					RPC::SignatureInformation inf;
+					inf.label = FormatString(L"%1 %0(", o.identifier, ArgumentInfoToString(o.retval));
+					inf.documentation.kind = L"markdown";
+					if (page) {
+						inf.documentation.value = ExtractContents(page, XV::ManualSectionClass::Summary);
+						auto rv = ExtractContents(page, XV::ManualSectionClass::ResultSection);
+						if (rv.Length()) inf.documentation.value += L"\n\n" + rv;
+						auto th = ExtractContents(page, XV::ManualSectionClass::ThrowRules);
+						if (th.Length()) inf.documentation.value += L"\n\n" + th;
+						auto cx = ExtractContents(page, XV::ManualSectionClass::ContextRules);
+						if (cx.Length()) inf.documentation.value += L"\n\n" + cx;
+					}
+					int index = 0;
+					for (auto & a : o.args) {
+						if (index) inf.label += L", "; index++;
+						RPC::ParameterInformation pi;
+						pi.documentation.kind = L"markdown";
+						pi.label[0] = inf.label.GetEncodedLength(Encoding::UTF16);
+						inf.label += ArgumentInfoToString(a);
+						if (page) {
+							for (auto & s : page->GetSections()) if (s.GetSubjectIndex() == index - 1 && s.GetClass() == XV::ManualSectionClass::ArgumentSection) {
+								inf.label += L" " + s.GetSubjectName();
+								pi.documentation.value = L"**" + ArgumentInfoToString(a) + L" " + MarkdownEscape(s.GetSubjectName()) + L"**: " + ExtractContents(&s);
+								break;
+							}
+						}
+						pi.label[1] = inf.label.GetEncodedLength(Encoding::UTF16);
+						inf.parameters.InnerArray.Append(pi);
+					}
+					inf.label += L")";
+					responce.result.signatures.InnerArray.Append(inf);
+				}
 			}
 			RespondWithObject(channel_ref, info, responce);
 		}));
@@ -801,6 +933,14 @@ int Main(void)
 							auto store = xv_conf->GetValueString(L"Entheca");
 							if (store.Length()) XX::IncludeStoreIntegration(module_search_paths, root + L"/" + store);
 						} catch (...) {}
+						for (auto & msp : module_search_paths) try {
+							SafePointer< Array<string> > files = Search::GetFiles(msp + L"/*." + string(XI::FileExtensionManual));
+							for (auto & f : *files) try {
+								SafePointer<Streaming::Stream> stream = new Streaming::FileStream(msp + "/" + f, Streaming::AccessRead, Streaming::OpenExisting);
+								SafePointer<XV::ManualVolume> volume = new XV::ManualVolume(stream);
+								if (manual) manual->Unify(volume); else manual = volume;
+							} catch (...) {}
+						} catch (...) {}
 						auto language_override = xv_conf->GetValueString(L"Lingua");
 						if (language_override.Length()) Assembly::CurrentLocale = language_override;
 						auto localizations = xv_conf->GetValueString(L"Locale");
@@ -828,6 +968,9 @@ int Main(void)
 						result.result.capabilities.documentSymbolProvider = true;
 						result.result.capabilities.foldingRangeProvider = true;
 						result.result.capabilities.semanticTokensProvider.full = true;
+						result.result.capabilities.signatureHelpProvider.triggerCharacters << L"(";
+						result.result.capabilities.signatureHelpProvider.triggerCharacters << L"[";
+						result.result.capabilities.signatureHelpProvider.triggerCharacters << L",";
 						auto & legend = result.result.capabilities.semanticTokensProvider.legend;
 						legend.tokenTypes << L"namespace";			// 0
 						legend.tokenTypes << L"type";				// 1

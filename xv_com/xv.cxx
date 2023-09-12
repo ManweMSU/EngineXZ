@@ -15,6 +15,7 @@ Console console;
 struct {
 	SafePointer<StringTable> localization;
 	Array<string> module_search_paths = Array<string>(0x10);
+	Array<string> documentation_list = Array<string>(0x10);
 	bool silent = false;
 	bool nologo = false;
 	bool launch = false;
@@ -68,6 +69,12 @@ void ProcessCommandLine(void)
 						throw Exception();
 					}
 					state.module_search_paths << ExpandPath(args->ElementAt(i));
+				} else if (arg[j] == L'm') {
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					state.documentation_list << ExpandPath(args->ElementAt(i));
 				} else if (arg[j] == L'o') {
 					i++; if (i >= args->Length()) {
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
@@ -198,6 +205,39 @@ int Main(void)
 			else output = Path::GetDirectory(state.input);
 			XV::CompilerStatusDesc desc;
 			XV::CompileModule(state.input, output, callback, desc);
+			if (state.documentation_list.Length()) {
+				XV::CompilerStatusDesc desc2;
+				SafePointer<XV::ManualVolume> volume;
+				XV::MakeManual(state.input, volume.InnerRef(), callback, desc2);
+				if (volume) {
+					SafePointer<XV::ManualVolume> base, deletes;
+					try {
+						SafePointer<Stream> base_stream = new FileStream(state.documentation_list[0], AccessRead, OpenExisting);
+						base = new XV::ManualVolume(base_stream);
+					} catch (...) {}
+					if (base) base->Update(volume, deletes.InnerRef()); else base = volume;
+					try {
+						SafePointer<Stream> output = new FileStream(state.documentation_list[0], AccessReadWrite, CreateAlways);
+						base->Save(output);
+					} catch (...) {
+						desc2.status = XV::CompilerStatus::FileAccessFailure;
+						desc2.error_line = state.documentation_list[0];
+						desc2.error_line_len = desc2.error_line_no = desc2.error_line_pos = 0;
+						if (!state.silent) PrintCompilerError(desc2);
+						return int(desc2.status);
+					}
+					if (deletes) try {
+						SafePointer<Stream> output = new FileStream(state.documentation_list[0] + L".deleta", AccessReadWrite, CreateAlways);
+						deletes->Save(output);
+					} catch (...) {}
+					for (int i = 1; i < state.documentation_list.Length(); i++) {
+						try {
+							SafePointer<Stream> output = new FileStream(state.documentation_list[i], AccessReadWrite, CreateAlways);
+							base->Save(output);
+						} catch (...) {}
+					}
+				}
+			}
 			if (desc.status != XV::CompilerStatus::Success) {
 				if (!state.silent) PrintCompilerError(desc);
 				return int(desc.status);

@@ -7,6 +7,7 @@
 #include "xenv/xe_imgapi.h"
 #include "ximg/xi_module.h"
 #include "ximg/xi_resources.h"
+#include "xv/xv_manual.h"
 
 using namespace Engine;
 using namespace Engine::XA;
@@ -27,13 +28,25 @@ public:
 	virtual Object * ExposeObject(void) noexcept override { return 0; }
 };
 
-bool CompileModule(const string & input, const string & output)
+string SetExtension(const string & path, const string & ext)
+{
+	return IO::ExpandPath(IO::Path::GetDirectory(path) + L"/" + IO::Path::GetFileNameWithoutExtension(path) + L"." + ext);
+}
+bool CompileModule(const string & input, const string & output, bool doc = true)
 {
 	Array<string> cmd(0x10);
 	cmd << IO::ExpandPath(input);
-	cmd << L"-NO";
+	cmd << (doc ? L"-NOmm" : L"-NO");
 	cmd << IO::ExpandPath(output);
+	if (doc) {
+		cmd << SetExtension(input, XI::FileExtensionManual);
+		cmd << IO::ExpandPath(output + L"/" + IO::Path::GetFileNameWithoutExtension(input) + L"." + string(XI::FileExtensionManual));
+	}
+	#ifdef ENGINE_WINDOWS
 	SafePointer<Process> process = CreateProcess(L"xv_com/_build/windows_x64_debug/xv.exe", &cmd);
+	#else
+	SafePointer<Process> process = CreateProcess(L"xv_com/_build/macosx_arm64_debug/xv", &cmd);
+	#endif
 	if (!process) return false;
 	process->Wait();
 	return process->GetExitCode() == 0;
@@ -51,9 +64,9 @@ int Main(void)
 	if (!CompileModule(L"xv_lib/limae.xv", output)) return 1;
 	if (!CompileModule(L"xv_lib/imago.xv", output)) return 1;
 	if (!CompileModule(L"xv_lib/consolatorium.xv", output)) return 1;
-	if (!CompileModule(L"xv_lib/errores.en.xv", output)) return 1;
-	if (!CompileModule(L"xv_lib/errores.ru.xv", output)) return 1;
-	if (!CompileModule(L"test.xv", output)) return 1;
+	if (!CompileModule(L"xv_lib/errores.en.xv", output, false)) return 1;
+	if (!CompileModule(L"xv_lib/errores.ru.xv", output, false)) return 1;
+	if (!CompileModule(L"test.xv", output, false)) return 1;
 
 	Logger logger;
 	SafePointer<XE::StandardLoader> ldr = XE::CreateStandardLoader(XE::UseStandard);
