@@ -19,6 +19,7 @@ namespace Engine
 			virtual LObject * GetMember(const string & name) override;
 			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override;
 			virtual LObject * Invoke(int argc, LObject ** argv) override;
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override;
 			virtual void AddMember(const string & name, LObject * child) override;
 			virtual bool GetWarpMode(void) = 0;
 			virtual LObject * UnwarpedGetType(void) = 0;

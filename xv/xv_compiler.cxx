@@ -68,6 +68,7 @@ namespace Engine
 			SafePointer<ITokenStream> input_override;
 			ICompilerCallback * callback;
 			CodeMetaInfo * meta_info;
+			SafePointer<ManualVolume> documentation;
 			CompilerStatusDesc & status;
 			Token current_token;
 			Volumes::List<VInitServiceDesc> init_list;
@@ -89,7 +90,9 @@ namespace Engine
 				auto _io = input_override;
 				auto _s = status;
 				auto _t = current_token;
+				auto _d = documentation;
 				try {
+					documentation.SetReference(0);
 					VObservationDesc desc;
 					desc.current_namespace = 0;
 					for (int i = 0; i < num_vns; i++) desc.namespace_search_list << vns[i];
@@ -101,6 +104,7 @@ namespace Engine
 				input_override = _io;
 				status = _s;
 				current_token = _t;
+				documentation = _d;
 				if (result) result->Retain();
 				return result;
 			}
@@ -133,7 +137,9 @@ namespace Engine
 				auto _io = input_override;
 				auto _s = status;
 				auto _t = current_token;
+				auto _d = documentation;
 				try {
+					documentation.SetReference(0);
 					VObservationDesc desc;
 					desc.current_namespace = dest_ns;
 					for (int i = 0; i < num_vns; i++) desc.namespace_search_list << vns[i];
@@ -143,6 +149,7 @@ namespace Engine
 				input_override = _io;
 				status = _s;
 				current_token = _t;
+				documentation = _d;
 				return result;
 			}
 			ITokenStream * ExposeInput(void) { return input_override ? input_override.Inner() : input.Inner(); }
@@ -270,6 +277,42 @@ namespace Engine
 				for (int i = 0; i < name.Length(); i++) if (IsReservedPunctuation(name[i])) return false;
 				return true;
 			}
+			ArgumentInfo ArgumentInfoFromPair(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class > & pair)
+			{
+				ArgumentInfo info;
+				if (pair.key) {
+					info.type = GetTypeFullName(ctx, pair.key);
+					info.tag = CodeRangeTag::IdentifierType;
+				} else {
+					info.type = L"";
+					info.tag = TagFromXLClass(pair.value);
+				}
+				return info;
+			}
+			void AssignFunctionSignature(XL::LObject * object, bool indirect, int range_begin, int argument_index, XL::LObject * arg0)
+			{
+				if (meta_info && meta_info->function_info_at >= 0 && meta_info->function_info_at >= range_begin && meta_info->function_info_at < current_token.range_from + current_token.range_length) {
+					try {
+						SafePointer<XL::LObject> invocation;
+						Volumes::List<XL::InvokationDesc> list;
+						if (indirect) invocation = object->GetType(); else invocation.SetRetain(object);
+						invocation->ListInvokations(arg0, list);
+						meta_info->overloads.Clear();
+						for (auto & o : list) {
+							FunctionOverloadInfo overload_info;
+							bool first = true;
+							for (auto & a : o.arglist) {
+								if (first) { overload_info.retval = ArgumentInfoFromPair(a); first = false; }
+								else overload_info.args.InsertLast(ArgumentInfoFromPair(a));
+							}
+							overload_info.identifier = GetObjectFullName(ctx, invocation);
+							overload_info.path = GetPurePath(ctx, o.path);
+							meta_info->overloads.InsertLast(overload_info);
+						}
+						meta_info->function_info_argument = argument_index;
+					} catch (...) {}
+				}
+			}
 			void AssignAutocomplete(const string & text, CodeRangeTag tag) { if (meta_info) meta_info->autocomplete.Append(text, tag); }
 			void AssignAutocomplete(XL::LObject * holder)
 			{
@@ -291,6 +334,7 @@ namespace Engine
 				auto info = meta_info->info[token.range_from];
 				if (info) {
 					auto cls = object->GetClass();
+					info->path = GetPurePath(ctx, object->GetFullName());
 					if (cls == XL::Class::Type) info->identifier = GetTypeFullName(ctx, object);
 					else info->identifier = GetObjectFullName(ctx, object);
 					if (cls == XL::Class::Literal) info->value = GetLiteralValue(ctx, object);
@@ -482,12 +526,16 @@ namespace Engine
 							Token end;
 							ObjectArray<XL::LObject> args(0x20);
 							ExpressionAutocomplete(ssl, ssc);
+							int index = 0, begin = current_token.range_from;
+							AssignFunctionSignature(object, false, begin, index, 0);
 							if (!IsPunct(L")")) {
 								while (true) {
 									SafePointer<XL::LObject> arg = ProcessExpression(ssl, ssc);
 									args.Append(arg);
+									AssignFunctionSignature(object, false, begin, index, &args[0]);
 									if (!IsPunct(L",")) break;
-									ReadNextToken();
+									ReadNextToken(); index++;
+									AssignFunctionSignature(object, false, begin, index, &args[0]);
 								}
 								end = current_token;
 								AssertPunct(L")"); ReadNextToken();
@@ -512,12 +560,16 @@ namespace Engine
 							catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
 							ObjectArray<XL::LObject> args(0x20);
 							ExpressionAutocomplete(ssl, ssc);
+							int index = 0, begin = current_token.range_from;
+							AssignFunctionSignature(subscript, false, begin, index, 0);
 							if (!IsPunct(L"]")) {
 								while (true) {
 									SafePointer<XL::LObject> arg = ProcessExpression(ssl, ssc);
 									args.Append(arg);
+									AssignFunctionSignature(subscript, false, begin, index, &args[0]);
 									if (!IsPunct(L",")) break;
-									ReadNextToken();
+									ReadNextToken(); index++;
+									AssignFunctionSignature(subscript, false, begin, index, &args[0]);
 								}
 								end = current_token;
 								AssertPunct(L"]"); ReadNextToken();
@@ -839,11 +891,14 @@ namespace Engine
 						ObjectArray<XL::LObject> args(0x10);
 						Array<XL::LObject *> argv(0x10);
 						ReadNextToken();
+						int index = 0, begin = current_token.range_from;
+						AssignFunctionSignature(var, true, begin, index, 0);
 						if (IsPunct(L")")) ReadNextToken(); else while (true) {
 							SafePointer<XL::LObject> arg = ProcessExpression(desc);
-							args.Append(arg); argv.Append(arg);
+							args.Append(arg); argv.Append(arg); AssignFunctionSignature(var, true, begin, index, argv[0]);
 							if (IsPunct(L")")) { ReadNextToken(); break; }
-							AssertPunct(L","); ReadNextToken(); 
+							AssertPunct(L","); ReadNextToken(); index++;
+							AssignFunctionSignature(var, true, begin, index, argv[0]);
 						}
 						try { init = ctx.InitInstance(var, argv.Length(), argv.GetBuffer()); }
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
@@ -857,6 +912,14 @@ namespace Engine
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					}
 					AssignTokenInfo(definition, var, true, false);
+					if (documentation) {
+						auto page = documentation->AddPage(var->GetFullName(), ManualPageClass::Variable);
+						page->SetTitle(GetObjectFullName(ctx, var));
+						page->AddSection(ManualSectionClass::Summary);
+						page->AddSection(ManualSectionClass::Details);
+						auto ts = page->AddSection(ManualSectionClass::ObjectType);
+						ts->SetContents(L"", GetTypeCanonicalName(ctx, type));
+					}
 					sdwn = ctx.DestroyInstance(var);
 					if (init) RegisterInitHandler(InitPriorityVar, init, sdwn);
 					else if (sdwn) RegisterInitHandler(InitPriorityVar, 0, sdwn);
@@ -875,6 +938,7 @@ namespace Engine
 					AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
 					AssignAutocomplete(Lexic::KeywordOperator, CodeRangeTag::Keyword);
 				}
+				auto prot_subtype = current_token.contents;
 				if (IsKeyword(Lexic::KeywordClass)) {
 					function = block = false;
 				} else if (IsKeyword(Lexic::KeywordFunction)) {
@@ -906,6 +970,17 @@ namespace Engine
 				attributes.Clear();
 				if (!block) SetPrototypeVisibility(prot, desc.namespace_search_list.GetBuffer(), desc.namespace_search_list.Length());
 				AssignTokenInfo(def, prot, true, false);
+				if (documentation) {
+					auto page = documentation->AddPage(prot->GetFullName(), ManualPageClass::Prototype);
+					int index = 0;
+					for (auto & a : arg_list) {
+						page->AddSection(ManualSectionClass::ArgumentSection, index, a);
+						index++;
+					}
+					page->SetTitle(GetObjectFullName(ctx, prot));
+					page->AddSection(ManualSectionClass::Summary);
+					page->AddSection(ManualSectionClass::Details);
+				}
 				AssertPunct(L"{");
 				SafePointer<ITokenStream> stream;
 				if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
@@ -1020,6 +1095,14 @@ namespace Engine
 				XL::LObject * func;
 				try {
 					auto dir = ctx.CreateFunction((is_operator && is_static) ? ctx.GetRootNamespace() : desc.current_namespace, name);
+					if (documentation) {
+						auto page = documentation->AddPage(dir->GetFullName(), ManualPageClass::Function);
+						if (page) {
+							page->SetTitle(GetObjectFullName(ctx, dir));
+							page->AddSection(ManualSectionClass::Summary);
+							page->AddSection(ManualSectionClass::Details);
+						}
+					}
 					func = ctx.CreateFunctionOverload(dir, retval, argv.Length(), argv.GetBuffer(), flags);
 				} catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
 				for (auto & attr : attributes) {
@@ -1057,6 +1140,30 @@ namespace Engine
 				if (org == 3 && !import_name.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 				attributes.Clear();
 				AssignTokenInfo(definition, func, true, false);
+				if (documentation && !is_dtor && !(flags & XL::FunctionOverride)) {
+					uint traits = 0;
+					if (flags & XL::FunctionThrows) traits |= ManualPageThrows;
+					if (!is_static) traits |= ManualPageInstance;
+					if (flags & XL::FunctionVirtual) traits |= ManualPageVirtual;
+					if (is_ctor) traits |= ManualPageConstructor;
+					if (is_operator) traits |= ManualPageOperator;
+					if (is_conv) traits |= ManualPageConvertor;
+					auto page = documentation->AddPage(func->GetFullName(), ManualPageClass::Function);
+					page->SetTitle(GetObjectFullName(ctx, func));
+					page->SetTraits(traits);
+					page->AddSection(ManualSectionClass::Summary);
+					page->AddSection(ManualSectionClass::Details);
+					page->AddSection(ManualSectionClass::ContextRules);
+					auto ot = page->AddSection(ManualSectionClass::ObjectType);
+					ot->SetContents(L"", GetTypeCanonicalName(ctx, func));
+					int index = 0;
+					for (auto & a : argv_names) {
+						page->AddSection(ManualSectionClass::ArgumentSection, index, a);
+						index++;
+					}
+					if (retval->GetFullName() != XL::NameVoid) page->AddSection(ManualSectionClass::ResultSection);
+					if (flags & XL::FunctionThrows) page->AddSection(ManualSectionClass::ThrowRules);
+				}
 				if (org == -1) {
 					AssertPunct(L";"); ReadNextToken();
 				} else if (org == 0) {
@@ -1112,6 +1219,7 @@ namespace Engine
 				ctx.LockClass(type, true);
 				if (is_interface) ctx.MarkClassAsInterface(type);
 				ReadNextToken();
+				ObjectArray<XL::LObject> parents(0x10);
 				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
 					AssignAutocomplete(Lexic::KeywordInherit, CodeRangeTag::Keyword);
 				}
@@ -1121,6 +1229,7 @@ namespace Engine
 					SafePointer<XL::LObject> parent = ProcessTypeExpression(desc);
 					try { ctx.AdoptParentClass(type, parent); }
 					catch (...) { Abort(CompilerStatus::InvalidParentClass, def); }
+					parents.Append(parent);
 				} else if (is_abstract) ctx.CreateClassVFT(type);
 				if (IsPunct(L":") && !is_interface) {
 					ReadNextToken();
@@ -1131,6 +1240,7 @@ namespace Engine
 						catch (...) { Abort(CompilerStatus::InvalidInterfaceClass, def); }
 						if (!IsPunct(L",")) break;
 						ReadNextToken();
+						parents.Append(interface);
 					}
 				}
 				for (auto & attr : attributes) {
@@ -1177,6 +1287,25 @@ namespace Engine
 					XL::CreateMethodAssign, vft_init_seq);
 				ctx.LockClass(type, false);
 				AssignTokenInfo(definition, type, true, false);
+				if (documentation) {
+					auto page = documentation->AddPage(type->GetFullName(), ManualPageClass::Class);
+					if (is_interface) page->SetTraits(ManualPageInterface);
+					page->SetTitle(GetObjectFullName(ctx, type));
+					page->AddSection(ManualSectionClass::Summary);
+					page->AddSection(ManualSectionClass::Details);
+					page->AddSection(ManualSectionClass::CastSection);
+					if (parents.Length()) {
+						DynamicString inh_text;
+						auto inh = page->AddSection(ManualSectionClass::Inheritance);
+						for (auto & p : parents) {
+							auto clsname = p.GetFullName();
+							auto cn = GetTypeCanonicalName(ctx, &p);
+							if (clsname == L"objectum_dynamicum" || clsname == L"dynamicum") page->AddSection(ManualSectionClass::DynamicCastSection);
+							inh_text += cn; inh_text += L"\33";
+						}
+						inh->SetContents(L"", inh_text);
+					}
+				}
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 			}
 			void ProcessAliasDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
@@ -1199,6 +1328,15 @@ namespace Engine
 				try { ctx.CreateAlias(desc.current_namespace, definition.contents, dest); }
 				catch (XL::ObjectMemberRedefinitionException &) { Abort(CompilerStatus::SymbolRedefinition, definition); }
 				catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+				if (documentation) {
+					auto page = documentation->AddPage(desc.current_namespace->GetFullName() + L"." + definition.contents, ManualPageClass::Alias);
+					page->SetTitle(desc.current_namespace->GetFullName() + L"." + definition.contents);
+					page->AddSection(ManualSectionClass::Summary);
+					page->AddSection(ManualSectionClass::Details);
+					if (dest->GetClass() == XL::Class::Type) {
+						page->AddSection(ManualSectionClass::ObjectType)->SetContents(L"", GetTypeCanonicalName(ctx, dest));
+					}
+				}
 			}
 			void ProcessConstantDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
@@ -1215,10 +1353,18 @@ namespace Engine
 					else value->AddAttribute(attr.key, attr.value);
 				}
 				attributes.Clear();
-				AssignTokenInfo(definition, value, true, false);
 				try { ctx.AttachLiteral(value, desc.current_namespace, definition.contents); }
 				catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+				AssignTokenInfo(definition, value, true, false);
 				string path = desc.current_namespace->GetFullName().Length() ? desc.current_namespace->GetFullName() + L"." + definition.contents : definition.contents;
+				if (documentation) {
+					auto page = documentation->AddPage(path, ManualPageClass::Constant);
+					page->SetTitle(GetObjectFullName(ctx, value));
+					page->AddSection(ManualSectionClass::Summary);
+					page->AddSection(ManualSectionClass::Details);
+					auto ts = page->AddSection(ManualSectionClass::ObjectType);
+					ts->SetContents(L"", GetTypeCanonicalName(ctx, value));
+				}
 				while (IsPunct(L"{")) {
 					ReadNextToken();
 					auto expr = current_token;
@@ -1302,7 +1448,7 @@ namespace Engine
 				ProcessClass(type, ctx.IsInterface(type), true, subdesc);
 				AssertPunct(L"}"); ReadNextToken();
 			}
-			void ProcessProperty(XL::LObject * prop, XL::LObject * prop_type, VObservationDesc & desc)
+			void ProcessProperty(XL::LObject * prop, XL::LObject * prop_type, VObservationDesc & desc, uint & doc_traits)
 			{
 				Volumes::Dictionary<string, string> attributes;
 				while (!IsPunct(L"}")) {
@@ -1371,6 +1517,10 @@ namespace Engine
 						if (org == 3 && !import_name.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 						attributes.Clear();
 						AssignTokenInfo(definition, func, true, false);
+						if (setter) doc_traits |= ManualPagePropWrite;
+						else doc_traits |= ManualPagePropRead;
+						if (flags & XL::FunctionThrows) doc_traits |= ManualPageThrows;
+						if (flags & XL::FunctionVirtual) doc_traits |= ManualPageVirtual;
 						if (org == -1) {
 							AssertPunct(L";"); ReadNextToken();
 						} else if (org == 0) {
@@ -1458,6 +1608,13 @@ namespace Engine
 					}
 					if (!CreateEnumerationValue(db, type, value_def.contents, value_init)) Abort(CompilerStatus::SymbolRedefinition, value_def);
 					if (!IsPunct(L"}")) { AssertPunct(L","); ReadNextToken(); }
+					if (documentation) {
+						auto page = documentation->AddPage(type->GetFullName() + L"." + value_def.contents, ManualPageClass::Constant);
+						page->SetTitle(GetObjectFullName(ctx, type) + L"." + value_def.contents);
+						page->AddSection(ManualSectionClass::Summary);
+						page->AddSection(ManualSectionClass::Details);
+						page->AddSection(ManualSectionClass::ObjectType)->SetContents(L"", GetTypeCanonicalName(ctx, base_class));
+					}
 				}
 				AssertPunct(L"}"); ReadNextToken();
 				ObjectArray<XL::LObject> vft_init_seq(0x40);
@@ -1467,6 +1624,19 @@ namespace Engine
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 				CreateEnumerationRoutines(db, type);
 				AssignTokenInfo(definition, type, true, false);
+				if (documentation) {
+					auto page = documentation->AddPage(type->GetFullName(), ManualPageClass::Class);
+					page->SetTitle(GetObjectFullName(ctx, type));
+					page->AddSection(ManualSectionClass::Summary);
+					page->AddSection(ManualSectionClass::Details);
+					if (base_class) {
+						DynamicString inh_text;
+						auto inh = page->AddSection(ManualSectionClass::Inheritance);
+						auto cn = GetTypeCanonicalName(ctx, base_class);
+						inh_text += cn; inh_text += L"\33";
+						inh->SetContents(L"", inh_text);
+					}
+				}
 			}
 			void ProcessClass(XL::LObject * cls, bool is_interface, bool is_continue, VObservationDesc & desc)
 			{
@@ -1550,6 +1720,14 @@ namespace Engine
 								} else field->AddAttribute(a.key, a.value);
 							}
 							AssignTokenInfo(def, field, true, false);
+							if (documentation) {
+								auto page = documentation->AddPage(field->GetFullName(), ManualPageClass::Field);
+								page->SetTraits(ManualPageInstance);
+								page->SetTitle(GetObjectFullName(ctx, field));
+								page->AddSection(ManualSectionClass::Summary);
+								page->AddSection(ManualSectionClass::Details);
+								page->AddSection(ManualSectionClass::ObjectType)->SetContents(L"", GetTypeCanonicalName(ctx, type));
+							}
 						} else {
 							AssertPunct(L"{"); ReadNextToken();
 							XL::LObject * prop;
@@ -1560,7 +1738,18 @@ namespace Engine
 								else prop->AddAttribute(a.key, a.value);
 							}
 							AssignTokenInfo(def, prop, true, false);
-							ProcessProperty(prop, type, desc);
+							uint trt = ManualPageInstance;
+							ProcessProperty(prop, type, desc, trt);
+							if (documentation) {
+								auto page = documentation->AddPage(prop->GetFullName(), ManualPageClass::Property);
+								page->SetTraits(trt);
+								page->SetTitle(GetObjectFullName(ctx, prop));
+								page->AddSection(ManualSectionClass::Summary);
+								page->AddSection(ManualSectionClass::Details);
+								page->AddSection(ManualSectionClass::ContextRules);
+								page->AddSection(ManualSectionClass::ObjectType)->SetContents(L"", GetTypeCanonicalName(ctx, type));
+								if (trt & ManualPageThrows) page->AddSection(ManualSectionClass::ThrowRules);
+							}
 							AssertPunct(L"}"); ReadNextToken();
 						}
 						attributes.Clear();
@@ -1602,6 +1791,14 @@ namespace Engine
 						subdesc.namespace_search_list << ns;
 						subdesc.namespace_search_list << desc.namespace_search_list;
 						ProcessNamespace(subdesc);
+						if (documentation) {
+							auto page = documentation->AddPage(ns->GetFullName(), ManualPageClass::Namespace);
+							if (page) {
+								page->SetTitle(GetObjectFullName(ctx, ns));
+								page->AddSection(ManualSectionClass::Summary);
+								page->AddSection(ManualSectionClass::Details);
+							}
+						}
 						AssertPunct(L"}"); ReadNextToken();
 					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface) || IsKeyword(Lexic::KeywordStructure)) {
 						ProcessClassDefinition(attributes, desc);
@@ -1737,11 +1934,15 @@ namespace Engine
 						ObjectArray<XL::LObject> args(0x10);
 						Array<XL::LObject *> argv(0x10);
 						ReadNextToken();
+						int index = 0, begin = current_token.range_from;
+						AssignFunctionSignature(type, false, begin, index, 0);
 						if (IsPunct(L")")) ReadNextToken(); else while (true) {
 							SafePointer<XL::LObject> arg = ProcessExpression(desc);
 							args.Append(arg); argv.Append(arg);
+							AssignFunctionSignature(type, false, begin, index, argv[0]);
 							if (IsPunct(L")")) { ReadNextToken(); break; }
-							AssertPunct(L","); ReadNextToken(); 
+							AssertPunct(L","); ReadNextToken(); index++;
+							AssignFunctionSignature(type, false, begin, index, argv[0]);
 						}
 						try { var = fctx.EncodeCreateVariable(type, argv.Length(), argv.GetBuffer()); }
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
@@ -2210,12 +2411,20 @@ namespace Engine
 					virtual void GetNextInit(XL::LObject * arguments_scope, XL::FunctionInitDesc & desc) override
 					{
 						desc.init.Clear();
+						if (_vctx.meta_info && _vctx.meta_info->autocomplete_at >= 0 && _vctx.current_token.range_from == _vctx.meta_info->autocomplete_at) {
+							_vctx.AssignAutocomplete(Lexic::KeywordInit, CodeRangeTag::Keyword);
+						}
 						if (_vctx.IsKeyword(Lexic::KeywordInit)) {
 							VObservationDesc vdesc;
 							vdesc.current_namespace = arguments_scope;
 							vdesc.namespace_search_list << arguments_scope;
 							vdesc.namespace_search_list << _pc.visibility.namespace_search_list;
 							_vctx.ReadNextToken();
+							if (_vctx.meta_info && _vctx.meta_info->autocomplete_at >= 0 && _vctx.current_token.range_from == _vctx.meta_info->autocomplete_at) {
+								Array<string> names(0x10);
+								GetFields(_pc.instance, names);
+								for (auto & n : names) _vctx.AssignAutocomplete(n, CodeRangeTag::IdentifierField);
+							}
 							if (_vctx.IsPunct(L"(") || _vctx.IsPunct(L"=")) {
 								desc.subject = _pc.instance;
 							} else {
@@ -2224,6 +2433,7 @@ namespace Engine
 								if (field->GetClass() != XL::Class::Field) throw InvalidArgumentException();
 								retain_list.Append(field);
 								desc.subject = field;
+								_vctx.AssignTokenInfo(_vctx.current_token, field, false, false);
 								_vctx.ReadNextToken();
 							}
 							if (_vctx.IsPunct(L"(")) {
@@ -2367,6 +2577,45 @@ namespace Engine
 			virtual string ToString(void) const override { return L"OutputModule"; }
 		};
 		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback) { return new ListCompilerCallback(res_pv, res_pc, mdl_pv, mdl_pc, dropback); }
+		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status)
+		{
+			try {
+				XL::LContext lctx(module_name);
+				lctx.MakeSubsystemConsole();
+				SafePointer<TokenStream> input_stream = new TokenStream(input.GetBuffer(), input.Length(), 0);
+				VContext vctx(lctx, callback, status, input_stream);
+				vctx.meta_info = 0;
+				vctx.documentation = new ManualVolume;
+				vctx.documentation->SetModule(module_name);
+				status.status = CompilerStatus::Success;
+				vctx.Process();
+				if (status.status == CompilerStatus::Success) {
+					*output = vctx.documentation.Inner();
+					vctx.documentation->Retain();
+					SetStatusError(status, CompilerStatus::Success);
+				}
+			} catch (...) { SetStatusError(status, CompilerStatus::InternalError); }
+		}
+		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status)
+		{
+			string input_path = IO::ExpandPath(input);
+			Array<uint32> input_string(0x1000);
+			SafePointer<ICompilerCallback> internal_callback;
+			try {
+				SafePointer<Streaming::Stream> stream = new Streaming::FileStream(input_path, Streaming::AccessRead, Streaming::OpenExisting);
+				SafePointer<Streaming::TextReader> reader = new Streaming::TextReader(stream);
+				while (!reader->EofReached()) {
+					auto code = reader->ReadChar();
+					if (code != 0xFFFFFFFF) input_string << code;
+				}
+				string src_dir = IO::Path::GetDirectory(input_path);
+				internal_callback = CreateCompilerCallback(&src_dir, 1, &src_dir, 1, callback);
+			} catch (...) {
+				SetStatusError(status, CompilerStatus::FileAccessFailure, input_path);
+				return;
+			}
+			MakeManual(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output, internal_callback, status);
+		}
 		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta)
 		{
 			try {
@@ -2383,6 +2632,14 @@ namespace Engine
 							break;
 						}
 						meta->autocomplete_at = token_offset;
+					}
+					if (meta->function_info_at >= 0) {
+						int token_offset = -1;
+						for (auto & r : meta->info) if (r.value.from >= 0 && r.value.from + r.value.length > meta->function_info_at) {
+							token_offset = r.value.from;
+							break;
+						}
+						meta->function_info_at = token_offset;
 					}
 				}
 				SafePointer<TokenStream> input_stream = new TokenStream(input.GetBuffer(), input.Length(), 0);

@@ -65,6 +65,16 @@ namespace Engine
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { return _proto->Instantiate(argc, argv); }
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override
+			{
+				XL::InvokationDesc result;
+				result.path = _proto->GetFullName();
+				result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(0, XL::Class::Null));
+				for (int i = 0; i < _proto->GetPrototypeArgumentCount(); i++) {
+					result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(0, XL::Class::Type));
+				}
+				list.InsertLast(result);
+			}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
@@ -361,6 +371,7 @@ namespace Engine
 			}
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override { list.Append(XL::OperatorSubscript, XL::Class::Internal); }
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw XL::ObjectMemberRedefinitionException(this, key); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
@@ -454,6 +465,7 @@ namespace Engine
 			FunctionPrototype(ICompilationContext & ctx, const string & name, const string & path, bool local, const DataBlock & data) : BasePrototype(ctx, name, path, local, data) {}
 			virtual ~FunctionPrototype(void) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { return PartialInvoke(0, 0, argc, argv); }
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual PrototypeClass GetPrototypeClass(void) { return PrototypeClass::Function; }
 			virtual LObject * PartialInvoke(int inst_argc, LObject ** inst_argv, int argc, LObject ** argv)
 			{
@@ -594,6 +606,7 @@ namespace Engine
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
@@ -639,6 +652,16 @@ namespace Engine
 				if (argc != _args.Length()) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
 				return new BlockAwaitPrototype(_ctx, _impl, _args, argc, argv);
 			}
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override
+			{
+				XL::InvokationDesc result;
+				result.path = GetFullName();
+				result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(0, XL::Class::Null));
+				for (int i = 0; i < GetPrototypeArgumentCount(); i++) {
+					result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(0, XL::Class::Null));
+				}
+				list.InsertLast(result);
+			}
 			virtual PrototypeClass GetPrototypeClass(void) override { return PrototypeClass::Block; }
 			virtual XL::LObject * Instantiate(int argc, XL::LObject ** argv) override { throw Exception(); }
 			virtual void SetVisibilityList(int argc, XL::LObject ** argv) override { throw Exception(); }
@@ -664,6 +687,7 @@ namespace Engine
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { return _proto->PartialInvoke(_argc, _argv, argc, argv); }
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
@@ -881,6 +905,7 @@ namespace Engine
 					return _create_literal(_ctx, static_cast<XL::XFunctionOverload *>(argv[0])->Throws());
 				} else throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
 			}
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }

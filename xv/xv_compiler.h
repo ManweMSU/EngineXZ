@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <EngineRuntime.h>
+#include "xv_manual.h"
 
 namespace Engine
 {
@@ -60,14 +60,27 @@ namespace Engine
 		{
 			int from, length;
 			CodeRangeTag tag;
-			string identifier, type, value;
+			string path, identifier, type, value;
 			uint flags;
+		};
+		struct ArgumentInfo
+		{
+			CodeRangeTag tag;
+			string type;
+		};
+		struct FunctionOverloadInfo
+		{
+			string identifier, path;
+			ArgumentInfo retval;
+			Volumes::List<ArgumentInfo> args;
 		};
 		struct CodeMetaInfo
 		{
 			Volumes::Dictionary<int, CodeRangeInfo> info;
 			Volumes::Dictionary<string, CodeRangeTag> autocomplete;
+			Volumes::List<FunctionOverloadInfo> overloads;
 			int autocomplete_at;
+			int function_info_at, function_info_argument;
 			int error_absolute_from;
 		};
 
@@ -85,6 +98,8 @@ namespace Engine
 			virtual Streaming::Stream * GetOutputModuleData(void) const = 0;
 		};
 		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback);
+		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status);
+		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status);
 		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta = 0);
 		void CompileModule(const string & input, string & output_path, ICompilerCallback * callback, CompilerStatusDesc & status);
 	}

@@ -12,6 +12,7 @@ namespace Engine
 			virtual Class GetClass(void) override;
 			virtual LObject * GetType(void) override;
 			virtual LObject * Invoke(int argc, LObject ** argv) override;
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override;
 			virtual LContext & GetContext(void) = 0;
 			virtual string GetCanonicalType(void) = 0;
 			virtual XI::Module::TypeReference::Class GetCanonicalTypeClass(void) = 0;

@@ -38,6 +38,42 @@ namespace Engine
 				}
 			} catch (...) { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
 		}
+		void XType::ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list)
+		{
+			bool regular = false;
+			try {
+				SafePointer<LObject> ctor = GetMember(NameConstructor);
+				ctor->ListInvokations(first, list);
+				regular = true;
+			} catch (...) {}
+			if (!regular) {
+				SafePointer<LObject> type_void = GetContext().QueryObject(NameVoid);
+				try {
+					SafePointer<LObject> ctor = GetConstructorInit();
+					InvokationDesc result;
+					Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(type_void, Class::Null);
+					result.arglist.InsertLast(rv);
+					list.InsertLast(result);
+				} catch (...) {}
+				try {
+					SafePointer<LObject> self_ref = GetContext().QueryTypeReference(this);
+					SafePointer<LObject> ctor = GetConstructorCopy();
+					InvokationDesc result;
+					Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(type_void, Class::Null);
+					Volumes::KeyValuePair< SafePointer<LObject>, Class > in(self_ref, Class::Null);
+					result.arglist.InsertLast(rv);
+					result.arglist.InsertLast(in);
+					list.InsertLast(result);
+				} catch (...) {}
+			}
+			for (auto & inv : list) {
+				inv.arglist.RemoveFirst();
+				SafePointer<LObject> self;
+				self.SetRetain(this);
+				Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(self, Class::Null);
+				inv.arglist.InsertFirst(rv);
+			}
+		}
 
 		enum class PointerConstructorClass { Init, Copy };
 		class TBaseMethodOverload : public XMethodOverload
@@ -132,6 +168,7 @@ namespace Engine
 				if (argc) com->_source = PerformTypeCast(static_cast<XType *>(type.Inner()), argv[0], CastPriorityConverter);
 				return CreateComputable(_ctx, com);
 			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override {}
 			virtual string ToString(void) const override { return L"instanced pointer built-in constructor"; }
 			virtual LContext & GetContext(void) override { return _ctx; }
 		};
@@ -142,6 +179,7 @@ namespace Engine
 		public:
 			PointerConstructor(LContext & ctx, PointerConstructorClass cls) : _ctx(ctx), _cls(cls) {}
 			virtual ~PointerConstructor(void) override {}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override {}
 			virtual string ToString(void) const override { return L"pointer built-in constructor"; }
 			virtual XMethodOverload * SetInstance(LObject * instance) override { return new PointerConstructorInstance(_ctx, _cls, instance); }
 			virtual LContext & GetContext(void) override { return _ctx; }
@@ -768,7 +806,7 @@ namespace Engine
 					if (_method == OperatorSubscript) {
 						if (!argc) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 						SafePointer<XType> element = _base->GetElementType();
-						SafePointer<XType> type_intptr = CreateType(XI::Module::TypeReference::MakeClassReference(NameIntPtr), GetContext());
+						SafePointer<XType> type_intptr = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), GetContext());
 						SafePointer<LObject> index = PerformTypeCast(type_intptr, argv[0], CastPriorityConverter);
 						SafePointer<OffsetComputable> com = new OffsetComputable(element, _instance, element->GetArgumentSpecification().size, index.Inner());
 						SafePointer<XComputable> offs = CreateComputable(GetContext(), com);
@@ -786,6 +824,41 @@ namespace Engine
 						return _internal_create_literal(-1);
 					} else throw ObjectHasNoSuchOverloadException(this, argc, argv);
 				}
+				virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override
+				{
+					if (_method == OperatorSubscript) {
+						SafePointer<LObject> type = _base->GetContext().QueryObject(NameUIntPtr);
+						SafePointer<LObject> element = _base->GetElementType();
+						InvokationDesc own;
+						Volumes::List<InvokationDesc> derived;
+						Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(element, Class::Null);
+						Volumes::KeyValuePair< SafePointer<LObject>, Class > in(type, Class::Null);
+						own.arglist.InsertLast(rv);
+						own.arglist.InsertLast(in);
+						list.InsertLast(own);
+						try {
+							SafePointer<LObject> fake_object = CreateComputable(_base->GetContext(), static_cast<XType *>(element.Inner()), XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceNull)));
+							SafePointer<LObject> ds = element->GetMember(OperatorSubscript);
+							if (ds->GetClass() == Class::Function) {
+								ds = static_cast<XFunction *>(ds.Inner())->SetInstance(fake_object);
+							} else if (ds->GetClass() == Class::FunctionOverload) {
+								ds = static_cast<XFunctionOverload *>(ds.Inner())->SetInstance(fake_object);
+							}
+							ds->ListInvokations(0, derived);
+						} catch (...) {}
+						for (auto & d : derived) {
+							auto local_rv = d.arglist.GetFirst();
+							d.arglist.InsertAfter(local_rv, in);
+							list.InsertLast(d);
+						}
+					} else if (_method == IteratorBegin || _method == IteratorEnd || _method == IteratorPostEnd || _method == IteratorPreBegin) {
+						SafePointer<LObject> type = _base->GetContext().QueryObject(NameInt32);
+						Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(type, Class::Null);
+						InvokationDesc result;
+						result.arglist.InsertLast(rv);
+						list.InsertLast(result);
+					}
+				}
 				virtual string ToString(void) const override { return L"instanced array built-in method " + _method; }
 				virtual LContext & GetContext(void) override { return _base->GetContext(); }
 			};
@@ -796,6 +869,7 @@ namespace Engine
 			public:
 				_array_method(XArray * base, const string & method) : _method(method) { _base.SetRetain(base); }
 				virtual ~_array_method(void) override {}
+				virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override {}
 				virtual string ToString(void) const override { return L"array built-in method " + _method; }
 				virtual XMethodOverload * SetInstance(LObject * instance) override { return new _array_instanced_method(_base, instance, _method); }
 				virtual LContext & GetContext(void) override { return _base->GetContext(); }
@@ -1000,6 +1074,27 @@ namespace Engine
 					} else throw ObjectHasNoSuchOverloadException(this, argc, argv);
 					return CreateComputable(_ptr_type->GetContext(), com);
 				}
+				virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override
+				{
+					auto & ref = _ptr_type->GetTypeReference();
+					if (_op == OperatorInvoke && ref.GetPointerDestination().GetReferenceClass() == XI::Module::TypeReference::Class::Function) {
+						SafePointer< Array<XI::Module::TypeReference> > sgn = ref.GetPointerDestination().GetFunctionSignature();
+						InvokationDesc result;
+						for (auto & t : *sgn) {
+							SafePointer<LObject> type = CreateType(t.QueryCanonicalName(), _ptr_type->GetContext());
+							Volumes::KeyValuePair< SafePointer<LObject>, Class > pair(type, Class::Null);
+							result.arglist.InsertLast(pair);
+						}
+						list.InsertLast(result);
+					} else if (_op == OperatorSubscript && ref.GetPointerDestination().GetReferenceClass() != XI::Module::TypeReference::Class::Function) {
+						SafePointer<LObject> type_result = _ptr_type->GetElementType();
+						SafePointer<LObject> type_index = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), _ptr_type->GetContext());
+						InvokationDesc result;
+						result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<LObject>, Class >(type_result, Class::Null));
+						result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<LObject>, Class >(type_index, Class::Null));
+						list.InsertLast(result);
+					}
+				}
 				virtual string ToString(void) const override { return L"instanced pointer built-in operator"; }
 				virtual LContext & GetContext(void) override { return _ptr_type->GetContext(); }
 			};
@@ -1010,6 +1105,7 @@ namespace Engine
 			public:
 				_pointer_operator(XPointer * ptr, const string & op) : _op(op) { _ptr_type.SetRetain(ptr); }
 				virtual ~_pointer_operator(void) override {}
+				virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override {}
 				virtual string ToString(void) const override { return L"pointer built-in operator"; }
 				virtual XMethodOverload * SetInstance(LObject * instance) override { return new _pointer_operator_instance(_op, _ptr_type, instance); }
 				virtual LContext & GetContext(void) override { return _ptr_type->GetContext(); }

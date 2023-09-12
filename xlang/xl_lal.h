@@ -26,7 +26,7 @@ namespace Engine
 			CreateMethodDestructor		= 0x010,
 			CreateMethodAssign			= 0x020,
 		};
-
+		
 		class LObject;
 		class LException : public Exception
 		{
@@ -86,7 +86,7 @@ namespace Engine
 			ObjectHasNoSuitableCast(LObject * reason, LObject * from, LObject * to);
 			virtual string ToString(void) const override;
 		};
-
+		
 		enum class Class {
 			Null, Namespace, Scope, Alias,
 			Type, Prototype,
@@ -94,6 +94,10 @@ namespace Engine
 			Literal, NullLiteral, Variable, Field,
 			Property, InstancedProperty,
 			Internal
+		};
+		struct InvokationDesc {
+			string path;
+			Volumes::List< Volumes::KeyValuePair< SafePointer<LObject>, Class > > arglist;
 		};
 
 		class IModuleLoadCallback
@@ -115,6 +119,7 @@ namespace Engine
 			virtual LObject * GetMember(const string & name) = 0;
 			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) = 0;
 			virtual LObject * Invoke(int argc, LObject ** argv) = 0;
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) = 0;
 			virtual void AddMember(const string & name, LObject * child) = 0;
 			virtual void AddAttribute(const string & key, const string & value) = 0;
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) = 0;

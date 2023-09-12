@@ -80,6 +80,7 @@ namespace Engine
 				com->_subject.SetRetain(argv[0]);
 				return CreateComputable(_ctx, com);
 			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override {}
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"address of"; }
 		};
@@ -120,6 +121,7 @@ namespace Engine
 				}
 				return CreateComputable(_ctx, com);
 			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override {}
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"logical or"; }
 		};
@@ -160,6 +162,7 @@ namespace Engine
 				}
 				return CreateComputable(_ctx, com);
 			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override {}
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"logical and"; }
 		};
@@ -173,6 +176,15 @@ namespace Engine
 			{
 				if (argc != 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 				return argv[0]->GetType();
+			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override
+			{
+				InvokationDesc result;
+				Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(0, Class::Type);
+				Volumes::KeyValuePair< SafePointer<LObject>, Class > in(0, Class::Null);
+				result.arglist.InsertLast(rv);
+				result.arglist.InsertLast(in);
+				list.InsertLast(result);
 			}
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"typeof"; }
@@ -220,6 +232,22 @@ namespace Engine
 					com->_retval = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), _ctx);
 					return CreateComputable(_ctx, com);
 				}
+			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override
+			{
+				InvokationDesc result;
+				if (_mx) {
+					SafePointer<LObject> type = _ctx.QueryObject(NameInt32);
+					Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(type, Class::Null);
+					result.arglist.InsertLast(rv);
+				} else {
+					SafePointer<LObject> type = _ctx.QueryObject(NameUIntPtr);
+					Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(type, Class::Null);
+					result.arglist.InsertLast(rv);
+				}
+				Volumes::KeyValuePair< SafePointer<LObject>, Class > in(0, Class::Null);
+				result.arglist.InsertLast(in);
+				list.InsertLast(result);
 			}
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"sizeof"; }

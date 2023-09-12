@@ -158,6 +158,7 @@ namespace Engine
 					return CreateComputable(GetContext(), provider);
 				} else return _parent->Invoke(argc, argv);
 			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override { _parent->ListInvokations(first, list); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return _parent->Evaluate(func, error_ctx); }
@@ -317,6 +318,18 @@ namespace Engine
 				if (provider->_throws) provider->_tree_node.input_specs << XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1);
 				return CreateComputable(GetContext(), provider);
 			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override
+			{
+				SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(_cn).GetFunctionSignature();
+				InvokationDesc result;
+				for (auto & t : *sgn) {
+					SafePointer<LObject> type = CreateType(t.QueryCanonicalName(), _ctx);
+					Volumes::KeyValuePair< SafePointer<LObject>, Class > pair(type, Class::Null);
+					result.arglist.InsertLast(pair);
+				}
+				result.path = _path;
+				list.InsertLast(result);
+			}
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw ObjectMemberRedefinitionException(this, key); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
@@ -382,6 +395,7 @@ namespace Engine
 				SafePointer<XMethodOverload> over = GetOverloadV(argc, argv);
 				return over->Invoke(argc, argv);
 			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override { _parent->ListInvokations(first, list); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { return _parent->Evaluate(func, error_ctx); }
@@ -427,6 +441,7 @@ namespace Engine
 				SafePointer<XFunctionOverload> over = GetOverloadV(argc, argv);
 				return over->Invoke(argc, argv);
 			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override { for (auto & v : _overloads) v.value->ListInvokations(first, list); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { if (_singular) return _singular->Evaluate(func, error_ctx); else throw ObjectIsNotEvaluatableException(this); }

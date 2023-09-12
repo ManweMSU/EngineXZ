@@ -30,6 +30,18 @@ namespace Engine
 		{
 			XL::LContext & _ctx;
 		public:
+			static void ListInitOverloads(SafePointer<XL::LObject> & type, SafePointer<XL::LObject> & rv, Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class > & a0,
+				Volumes::List<XL::InvokationDesc> & list)
+			{
+				Volumes::List<XL::InvokationDesc> internal;
+				type->ListInvokations(0, internal);
+				for (auto & i : internal) {
+					i.arglist.RemoveFirst();
+					i.arglist.InsertFirst(a0);
+					i.arglist.InsertFirst(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(rv, XL::Class::Null));
+					list.InsertLast(i);
+				}
+			}
 			VOperatorNew(XL::LContext & ctx) : _ctx(ctx) {}
 			virtual ~VOperatorNew(void) override {}
 			virtual LObject * Invoke(int argc, LObject ** argv) override
@@ -38,6 +50,21 @@ namespace Engine
 					if (argc < 1) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
 					return CreateNew(_ctx, argv[0], argc - 1, argv + 1);
 				} catch (...) { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			}
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override
+			{
+				if (first && first->GetClass() == XL::Class::Type) {
+					SafePointer<XL::LObject> type;
+					SafePointer<XL::LObject> rv = _ctx.QueryTypePointer(first);
+					type.SetRetain(first);
+					Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class > a0(0, XL::Class::Type);
+					ListInitOverloads(type, rv, a0, list);
+				} else {
+					XL::InvokationDesc result;
+					result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(0, XL::Class::Null));
+					result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(0, XL::Class::Type));
+					list.InsertLast(result);
+				}
 			}
 		};
 		class VOperatorConstruct : public VOperator
@@ -52,6 +79,22 @@ namespace Engine
 					if (argc < 1) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
 					return CreateConstruct(_ctx, argv[0], argc - 1, argv + 1);
 				} catch (...) { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			}
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override
+			{
+				if (first) {
+					SafePointer<XL::LObject> type;
+					SafePointer<XL::LObject> ptr = _ctx.QueryTypePointer(first);
+					SafePointer<XL::LObject> rv = _ctx.QueryObject(XL::NameVoid);
+					type.SetRetain(first);
+					Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class > a0(ptr, XL::Class::Null);
+					VOperatorNew::ListInitOverloads(type, rv, a0, list);
+				} else {
+					XL::InvokationDesc result;
+					result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(0, XL::Class::Null));
+					result.arglist.InsertLast(Volumes::KeyValuePair< SafePointer<XL::LObject>, XL::Class >(0, XL::Class::Variable));
+					list.InsertLast(result);
+				}
 			}
 		};
 
@@ -820,6 +863,7 @@ namespace Engine
 				for (auto & v : _vlist) v->ListMembers(list);
 			}
 			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
@@ -1053,7 +1097,94 @@ namespace Engine
 				return result.ToString();
 			} else return L"";
 		}
+		string RegularizeCanonicalName(const XI::Module::TypeReference & tr)
+		{
+			if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Class) {
+				auto clsname = tr.GetClassName();
+				if (clsname.Fragment(0, 12) == L"@praeformae.") {
+					int i = 12, l = 0;
+					while (i < clsname.Length()) {
+						if (clsname[i] == L'(') l++;
+						else if (clsname[i] == L')') l--;
+						else if (clsname[i] == L'.' && l == 0) break;
+						i++;
+					}
+					auto pcn = clsname.Fragment(12, i - 12);
+					auto ref = XI::Module::TypeReference(pcn);
+					Array<string> args_inv(0x10);
+					string base;
+					while (ref.GetReferenceClass() == XI::Module::TypeReference::Class::AbstractInstance) {
+						auto param = ref.GetAbstractInstanceParameterType();
+						auto base = ref.GetAbstractInstanceBase();
+						args_inv << RegularizeCanonicalName(param);
+						MemoryCopy(&ref, &base, sizeof(base));
+					}
+					base = RegularizeCanonicalName(ref);
+					for (int i = args_inv.Length() - 1; i >= 0; i--) {
+						base = XI::Module::TypeReference::MakeInstance(base, args_inv.Length() - 1 - i, args_inv[i]);
+					}
+					clsname = base + clsname.Fragment(i, -1);
+				}
+				return clsname;
+			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Array) {
+				return XI::Module::TypeReference::MakeArray(RegularizeCanonicalName(tr.GetArrayElement()), tr.GetArrayVolume());
+			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Pointer) {
+				return XI::Module::TypeReference::MakePointer(RegularizeCanonicalName(tr.GetPointerDestination()));
+			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Reference) {
+				return XI::Module::TypeReference::MakeReference(RegularizeCanonicalName(tr.GetReferenceDestination()));
+			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Function) {
+				SafePointer< Array<XI::Module::TypeReference> > sgn = tr.GetFunctionSignature();
+				Array<string> args(0x10);
+				string rv = RegularizeCanonicalName(sgn->ElementAt(0));
+				for (int i = 1; i < sgn->Length(); i++) args << RegularizeCanonicalName(sgn->ElementAt(1));
+				return XI::Module::TypeReference::MakeFunction(rv, &args);
+			} else return L"";
+		}
+		string GetPurePath(XL::LContext & ctx, XL::LObject * object)
+		{
+			string name = object->GetFullName();
+			return GetPurePath(ctx, name);
+		}
+		string GetPurePath(XL::LContext & ctx, const string & object)
+		{
+			string name = object;
+			if (name.Fragment(0, 12) == L"@praeformae.") {
+				int i = 12, l = 0;
+				while (i < name.Length()) {
+					if (name[i] == L'(') l++;
+					else if (name[i] == L')') l--;
+					else if (name[i] == L'.' && l == 0) break;
+					i++;
+				}
+				auto pcn = name.Fragment(12, i - 12);
+				auto ref = XI::Module::TypeReference(pcn);
+				while (ref.GetReferenceClass() == XI::Module::TypeReference::Class::AbstractInstance) {
+					auto base = ref.GetAbstractInstanceBase();
+					MemoryCopy(&ref, &base, sizeof(base));
+				}
+				string base = ref.GetClassName();
+				name = base + name.Fragment(i, -1);
+				return name.Fragment(0, name.FindFirst(L':'));
+			}
+			return name;
+		}
 		string GetObjectFullName(XL::LContext & ctx, XL::LObject * object) { return RegularizeObjectName(object->GetFullName()); }
+		string GetTypeCanonicalName(XL::LContext & ctx, XL::LObject * object)
+		{
+			if (object->GetClass() == XL::Class::Type) {
+				auto & tr = static_cast<XL::XType *>(object)->GetTypeReference();
+				return RegularizeCanonicalName(tr);
+			} else if (object->GetClass() == XL::Class::FunctionOverload || object->GetClass() == XL::Class::MethodOverload) {
+				auto path = object->GetFullName();
+				auto cn = path.Fragment(path.FindFirst(L':') + 1, -1);
+				return RegularizeCanonicalName(XI::Module::TypeReference(cn));
+			} else if (object->GetClass() == XL::Class::Function || object->GetClass() == XL::Class::Method) {
+				return L"";
+			} else {
+				SafePointer<XL::LObject> type = object->GetType();
+				return GetTypeCanonicalName(ctx, type);
+			}
+		}
 		string GetTypeFullName(XL::LContext & ctx, XL::LObject * object)
 		{
 			auto & tr = static_cast<XL::XType *>(object)->GetTypeReference();
@@ -1082,6 +1213,12 @@ namespace Engine
 				return lit.data_string;
 			}
 			return L"";
+		}
+		void GetFields(XL::LObject * cls, Array<string> & names)
+		{
+			ObjectArray<XL::LObject> result(0x10);
+			static_cast<XL::XClass *>(cls)->ListFields(result);
+			for (auto & f : result) names.Append(f.GetName());
 		}
 	}
 }

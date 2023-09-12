@@ -10,6 +10,8 @@ namespace Engine
 		constexpr const widechar * FileExtensionAssembly2		= L"xa";
 		constexpr const widechar * FileExtensionLanguage		= L"v";
 		constexpr const widechar * FileExtensionLanguage2		= L"xv";
+		constexpr const widechar * FileExtensionLanguage3		= L"vvv";
+		constexpr const widechar * FileExtensionManual			= L"xvm";
 		constexpr const widechar * FileExtensionModuleScheme	= L"xi";
 		constexpr const widechar * FileExtensionLibrary			= L"xo";
 		constexpr const widechar * FileExtensionExecutable		= L"xx";

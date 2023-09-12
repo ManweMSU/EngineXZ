@@ -45,6 +45,13 @@ namespace Engine
 			SafePointer<LObject> inv = GetMember(OperatorInvoke);
 			return inv->Invoke(argc, argv);
 		}
+		void XComputable::ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list)
+		{
+			try {
+				SafePointer<LObject> inv = GetMember(OperatorInvoke);
+				inv->ListInvokations(first, list);
+			} catch (...) {}
+		}
 		void XComputable::AddMember(const string & name, LObject * child) { throw LException(this); }
 
 		class Literal : public XLiteral
