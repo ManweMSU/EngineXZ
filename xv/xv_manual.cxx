@@ -170,6 +170,7 @@ namespace Engine
 			SafePointer<ManualPage> page = new ManualPage;
 			page->SetPath(path);
 			page->SetClass(cls);
+			page->SetModule(_module);
 			if (!_pages.Append(path, page)) return 0;
 			return page;
 		}

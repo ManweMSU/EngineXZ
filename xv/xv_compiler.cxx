@@ -912,7 +912,7 @@ namespace Engine
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					}
 					AssignTokenInfo(definition, var, true, false);
-					if (documentation) {
+					if (documentation && !NameIsPrivate(var->GetFullName())) {
 						auto page = documentation->AddPage(var->GetFullName(), ManualPageClass::Variable);
 						page->SetTitle(GetObjectFullName(ctx, var));
 						page->AddSection(ManualSectionClass::Summary);
@@ -970,7 +970,7 @@ namespace Engine
 				attributes.Clear();
 				if (!block) SetPrototypeVisibility(prot, desc.namespace_search_list.GetBuffer(), desc.namespace_search_list.Length());
 				AssignTokenInfo(def, prot, true, false);
-				if (documentation) {
+				if (documentation && !NameIsPrivate(prot->GetFullName())) {
 					auto page = documentation->AddPage(prot->GetFullName(), ManualPageClass::Prototype);
 					int index = 0;
 					for (auto & a : arg_list) {
@@ -1095,7 +1095,7 @@ namespace Engine
 				XL::LObject * func;
 				try {
 					auto dir = ctx.CreateFunction((is_operator && is_static) ? ctx.GetRootNamespace() : desc.current_namespace, name);
-					if (documentation) {
+					if (documentation && !is_dtor && !NameIsPrivate(dir->GetFullName())) {
 						auto page = documentation->AddPage(dir->GetFullName(), ManualPageClass::Function);
 						if (page) {
 							page->SetTitle(GetObjectFullName(ctx, dir));
@@ -1140,7 +1140,7 @@ namespace Engine
 				if (org == 3 && !import_name.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 				attributes.Clear();
 				AssignTokenInfo(definition, func, true, false);
-				if (documentation && !is_dtor && !(flags & XL::FunctionOverride)) {
+				if (documentation && !is_dtor && !(flags & XL::FunctionOverride) && !NameIsPrivate(func->GetFullName())) {
 					uint traits = 0;
 					if (flags & XL::FunctionThrows) traits |= ManualPageThrows;
 					if (!is_static) traits |= ManualPageInstance;
@@ -1287,7 +1287,7 @@ namespace Engine
 					XL::CreateMethodAssign, vft_init_seq);
 				ctx.LockClass(type, false);
 				AssignTokenInfo(definition, type, true, false);
-				if (documentation) {
+				if (documentation && !NameIsPrivate(type->GetFullName())) {
 					auto page = documentation->AddPage(type->GetFullName(), ManualPageClass::Class);
 					if (is_interface) page->SetTraits(ManualPageInterface);
 					page->SetTitle(GetObjectFullName(ctx, type));
@@ -1329,12 +1329,17 @@ namespace Engine
 				catch (XL::ObjectMemberRedefinitionException &) { Abort(CompilerStatus::SymbolRedefinition, definition); }
 				catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
 				if (documentation) {
-					auto page = documentation->AddPage(desc.current_namespace->GetFullName() + L"." + definition.contents, ManualPageClass::Alias);
-					page->SetTitle(desc.current_namespace->GetFullName() + L"." + definition.contents);
-					page->AddSection(ManualSectionClass::Summary);
-					page->AddSection(ManualSectionClass::Details);
-					if (dest->GetClass() == XL::Class::Type) {
-						page->AddSection(ManualSectionClass::ObjectType)->SetContents(L"", GetTypeCanonicalName(ctx, dest));
+					string fp;
+					if (desc.current_namespace->GetFullName().Length()) fp = desc.current_namespace->GetFullName() + L"." + definition.contents;
+					else fp = definition.contents;
+					if (!NameIsPrivate(fp)) {
+						auto page = documentation->AddPage(fp, ManualPageClass::Alias);
+						page->SetTitle(fp);
+						page->AddSection(ManualSectionClass::Summary);
+						page->AddSection(ManualSectionClass::Details);
+						if (dest->GetClass() == XL::Class::Type) {
+							page->AddSection(ManualSectionClass::ObjectType)->SetContents(L"", GetTypeCanonicalName(ctx, dest));
+						}
 					}
 				}
 			}
@@ -1357,7 +1362,7 @@ namespace Engine
 				catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
 				AssignTokenInfo(definition, value, true, false);
 				string path = desc.current_namespace->GetFullName().Length() ? desc.current_namespace->GetFullName() + L"." + definition.contents : definition.contents;
-				if (documentation) {
+				if (documentation && !NameIsPrivate(path)) {
 					auto page = documentation->AddPage(path, ManualPageClass::Constant);
 					page->SetTitle(GetObjectFullName(ctx, value));
 					page->AddSection(ManualSectionClass::Summary);
@@ -1608,7 +1613,7 @@ namespace Engine
 					}
 					if (!CreateEnumerationValue(db, type, value_def.contents, value_init)) Abort(CompilerStatus::SymbolRedefinition, value_def);
 					if (!IsPunct(L"}")) { AssertPunct(L","); ReadNextToken(); }
-					if (documentation) {
+					if (documentation && !NameIsPrivate(type->GetFullName()) && !NameIsPrivate(value_def.contents)) {
 						auto page = documentation->AddPage(type->GetFullName() + L"." + value_def.contents, ManualPageClass::Constant);
 						page->SetTitle(GetObjectFullName(ctx, type) + L"." + value_def.contents);
 						page->AddSection(ManualSectionClass::Summary);
@@ -1624,7 +1629,7 @@ namespace Engine
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 				CreateEnumerationRoutines(db, type);
 				AssignTokenInfo(definition, type, true, false);
-				if (documentation) {
+				if (documentation && !NameIsPrivate(type->GetFullName())) {
 					auto page = documentation->AddPage(type->GetFullName(), ManualPageClass::Class);
 					page->SetTitle(GetObjectFullName(ctx, type));
 					page->AddSection(ManualSectionClass::Summary);
@@ -1720,7 +1725,7 @@ namespace Engine
 								} else field->AddAttribute(a.key, a.value);
 							}
 							AssignTokenInfo(def, field, true, false);
-							if (documentation) {
+							if (documentation && !NameIsPrivate(field->GetFullName())) {
 								auto page = documentation->AddPage(field->GetFullName(), ManualPageClass::Field);
 								page->SetTraits(ManualPageInstance);
 								page->SetTitle(GetObjectFullName(ctx, field));
@@ -1740,7 +1745,7 @@ namespace Engine
 							AssignTokenInfo(def, prop, true, false);
 							uint trt = ManualPageInstance;
 							ProcessProperty(prop, type, desc, trt);
-							if (documentation) {
+							if (documentation && !NameIsPrivate(prop->GetFullName())) {
 								auto page = documentation->AddPage(prop->GetFullName(), ManualPageClass::Property);
 								page->SetTraits(trt);
 								page->SetTitle(GetObjectFullName(ctx, prop));
@@ -1791,7 +1796,7 @@ namespace Engine
 						subdesc.namespace_search_list << ns;
 						subdesc.namespace_search_list << desc.namespace_search_list;
 						ProcessNamespace(subdesc);
-						if (documentation) {
+						if (documentation && !NameIsPrivate(ns->GetFullName())) {
 							auto page = documentation->AddPage(ns->GetFullName(), ManualPageClass::Namespace);
 							if (page) {
 								page->SetTitle(GetObjectFullName(ctx, ns));

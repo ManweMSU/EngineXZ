@@ -34,5 +34,6 @@ namespace Engine
 		string GetTypeFullName(XL::LContext & ctx, XL::LObject * object);
 		string GetLiteralValue(XL::LContext & ctx, XL::LObject * object);
 		void GetFields(XL::LObject * cls, Array<string> & names);
+		bool NameIsPrivate(const string & name);
 	}
 }

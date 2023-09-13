@@ -1124,8 +1124,8 @@ namespace Engine
 						base = XI::Module::TypeReference::MakeInstance(base, args_inv.Length() - 1 - i, args_inv[i]);
 					}
 					clsname = base + clsname.Fragment(i, -1);
-				}
-				return clsname;
+					return clsname;
+				} else return XI::Module::TypeReference::MakeClassReference(clsname);
 			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Array) {
 				return XI::Module::TypeReference::MakeArray(RegularizeCanonicalName(tr.GetArrayElement()), tr.GetArrayVolume());
 			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Pointer) {
@@ -1136,7 +1136,7 @@ namespace Engine
 				SafePointer< Array<XI::Module::TypeReference> > sgn = tr.GetFunctionSignature();
 				Array<string> args(0x10);
 				string rv = RegularizeCanonicalName(sgn->ElementAt(0));
-				for (int i = 1; i < sgn->Length(); i++) args << RegularizeCanonicalName(sgn->ElementAt(1));
+				for (int i = 1; i < sgn->Length(); i++) args << RegularizeCanonicalName(sgn->ElementAt(i));
 				return XI::Module::TypeReference::MakeFunction(rv, &args);
 			} else return L"";
 		}
@@ -1219,6 +1219,12 @@ namespace Engine
 			ObjectArray<XL::LObject> result(0x10);
 			static_cast<XL::XClass *>(cls)->ListFields(result);
 			for (auto & f : result) names.Append(f.GetName());
+		}
+		bool NameIsPrivate(const string & name)
+		{
+			auto spl = name.Fragment(0, name.FindFirst(L':')).Split(L'.');
+			for (auto & s : spl) if (s[0] == L'_') return true;
+			return false;
 		}
 	}
 }
