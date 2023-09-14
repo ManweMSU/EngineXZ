@@ -642,6 +642,8 @@ public:
 					cont = cont.Replace(L'\n', L'\33');
 					current_section->SetContents(*lc, cont);
 				} else current_section->SetContents(*lc, FindControl(window, ID)->GetText());
+				alternated = true;
+				UpdateTitle();
 			}
 		}
 	}

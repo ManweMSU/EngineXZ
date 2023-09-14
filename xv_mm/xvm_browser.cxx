@@ -595,10 +595,12 @@ void CreateBrowser(const Engine::ImmutableString & path)
 		} catch (...) {}
 	} catch (...) {}
 	default_language = xv_conf->GetValueString(L"LinguaDefalta");
+	if (!manual) return;
 	new BrowserCallback(manual, default_language, path);
 }
 void CreateBrowser(const Engine::ImmutableString & path, Engine::XV::ManualVolume * volume)
 {
+	if (!volume) return;
 	string default_language;
 	auto root = IO::Path::GetDirectory(IO::GetExecutablePath());
 	SafePointer<Storage::Registry> xv_conf = XX::LoadConfiguration(root + L"/xv.ini");
@@ -610,7 +612,14 @@ void CreateBrowser(const Engine::ImmutableString & file, const Engine::Immutable
 	SafePointer<XV::ManualVolume> volume = new XV::ManualVolume;
 	auto page = volume->AddPage(file, XV::ManualPageClass::Sample);
 	auto sect = page->AddSection(XV::ManualSectionClass::Summary);
-	page->SetTitle(file);
+	DynamicString file_escaped;
+	for (int i = 0; i < file.Length(); i++) {
+		if (file[i] == L'\\') file_escaped << L"\\\\";
+		else if (file[i] == L'{') file_escaped << L"\\{";
+		else if (file[i] == L'}') file_escaped << L"\\}";
+		else file_escaped << file[i];
+	}
+	page->SetTitle(file_escaped);
 	sect->SetContents(L"", L"\\c{" + text + L"}");
 	CreateBrowser(file, volume);
 }

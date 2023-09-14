@@ -2,48 +2,6 @@
 Languages = "en,ru"
 Subsystem = "gui"
 UseVersionDefines = true
-"-debug" {
-	Attachments {
-		AAMAAA {
-			From = "xv.ini"
-			To = "xv.ini"
-		}
-	}
-}
-"-macosx" {
-	EngineStore {
-		ShellPath = "Contents/MacOS"
-		StoreLinkFile = "Contents/MacOS"
-	}
-	Resources {
-		COM = "@com_en.ecst"
-		ru {
-			COM = "@com_ru.ecst"
-		}
-	}
-}
-"-macosx-debug" {
-	Attachments {
-		CAMAAA {
-			From = "xe.debug.mac.ini"
-			To = "xe.ini"
-		}
-	}
-}
-"-windows" {
-	EngineStore {
-		ShellPath = "."
-		StoreLinkFile = "store.ecs"
-	}
-}
-"-windows-debug" {
-	Attachments {
-		BAMAAA {
-			From = "xe.debug.win.ini"
-			To = "xe.ini"
-		}
-	}
-}
 CompileList {
 	AAAAAA = "../xasm/xa_t_armv8.cxx"
 	AAAAAB = "../xasm/xa_t_i386.cxx"
@@ -66,6 +24,14 @@ CompileList {
 	AAAAAS = "xvm.uiml"
 	AAAAAT = "xvm_browser.cxx"
 	AAAAAU = "xvm_editor.cxx"
+}
+"-debug" {
+	Attachments {
+		AAMAAA {
+			From = "xv.ini"
+			To = "xv.ini"
+		}
+	}
 }
 FileFormats {
 	AAAAAA {
@@ -97,6 +63,26 @@ FileFormats {
 		Protocol = "xvmm"
 	}
 }
+"-macosx" {
+	EngineStore {
+		ShellPath = "Contents/MacOS"
+		StoreLinkFile = "Contents/MacOS"
+	}
+}
+Resources {
+	COM = "@com_en.ecst"
+	ru {
+		COM = "@com_ru.ecst"
+	}
+}
+"-macosx-debug" {
+	Attachments {
+		CAMAAA {
+			From = "xe.debug.mac.ini"
+			To = "xe.ini"
+		}
+	}
+}
 VersionInformation {
 	ApplicationIdentifier = "XVM"
 	ApplicationName = "XV Monstrans Manualis"
@@ -105,4 +91,18 @@ VersionInformation {
 	Copyright = "© Engine Software. 2023"
 	InternalName = "xvm"
 	Version = "1.0.0.1"
+}
+"-windows" {
+	EngineStore {
+		ShellPath = "."
+		StoreLinkFile = "store.ecs"
+	}
+}
+"-windows-debug" {
+	Attachments {
+		BAMAAA {
+			From = "xe.debug.win.ini"
+			To = "xe.ini"
+		}
+	}
 }
