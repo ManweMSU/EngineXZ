@@ -60,7 +60,9 @@ namespace Engine
 			SafePointer<ManualSection> section = new ManualSection;
 			section->SetSubject(subject, index);
 			section->SetClass(cls);
-			_sections.Append(section);
+			int pos = 0;
+			while (pos < _sections.Length() && (_sections[pos].GetClass() < cls || (_sections[pos].GetClass() == cls && _sections[pos].GetSubjectIndex() < index))) pos++;
+			_sections.Insert(section, pos);
 			return section;
 		}
 		ManualSection * ManualPage::FindSection(ManualSectionClass cls, int index)
@@ -80,6 +82,7 @@ namespace Engine
 				return;
 			}
 		}
+		ObjectArray<ManualSection> & ManualPage::GetSections(void) { return _sections; }
 		const ObjectArray<ManualSection> & ManualPage::GetSections(void) const { return _sections; }
 
 		ManualVolume::ManualVolume(void) {}
@@ -127,6 +130,7 @@ namespace Engine
 		}
 		void ManualVolume::Update(ManualVolume * newer, ManualVolume ** deletes)
 		{
+			_module = newer->_module;
 			SafePointer<ManualVolume> del = new ManualVolume;
 			auto current = _pages.GetFirst();
 			while (current) {
@@ -139,16 +143,14 @@ namespace Engine
 					current->GetValue().value->SetTraits(update->GetTraits());
 					for (auto & s : update->GetSections()) {
 						auto sect = current->GetValue().value->FindSection(s.GetClass(), s.GetSubjectIndex());
-						if (sect) {
-							sect->SetSubject(s.GetSubjectName(), s.GetSubjectIndex());
-							for (auto & c : s.GetContents()) if (c.value.Length()) sect->SetContents(c.key, c.value);
-						} else {
-							sect = current->GetValue().value->AddSection(s.GetClass(), s.GetSubjectIndex(), s.GetSubjectName());
-						}
+						if (!sect) sect = current->GetValue().value->AddSection(s.GetClass(), s.GetSubjectIndex(), s.GetSubjectName());
+						sect->SetSubject(s.GetSubjectName(), s.GetSubjectIndex());
+						for (auto & c : s.GetContents()) if (c.value.Length()) sect->SetContents(c.key, c.value);
 					}
 				} else {
 					bool keep = false;
-					for (auto & p : _pages) if (current->GetValue().key.Fragment(0, p.key.Length()) == p.key && p.value->GetClass() == ManualPageClass::Prototype) { keep = true; break; }
+					if (current->GetValue().key[0] == L'.') keep = true;
+					if (!keep) for (auto & p : _pages) if (current->GetValue().key.Fragment(0, p.key.Length()) == p.key && p.value->GetClass() == ManualPageClass::Prototype) { keep = true; break; }
 					if (!keep) {
 						del->_pages.Append(current->GetValue().key, current->GetValue().value);
 						_pages.Remove(current->GetValue().key);
@@ -179,6 +181,26 @@ namespace Engine
 		void ManualVolume::RemovePage(const string & path) { _pages.Remove(path); }
 		const Volumes::ObjectDictionary<string, ManualPage> & ManualVolume::GetPages(void) const { return _pages; }
 
+		string FormatCodeText(const string & text, int & pos)
+		{
+			DynamicString result;
+			bool scope = text[pos] == L'{';
+			if (scope) pos++;
+			while (text[pos] && (!scope || text[pos] != L'}')) {
+				if (text[pos] == L'\\') {
+					pos++;
+					if (text[pos] == L'{') {
+						result += text[pos]; pos++;
+					} else if (text[pos] == L'}') {
+						result += text[pos]; pos++;
+					} else if (text[pos] == L'\\') {
+						result += text[pos]; pos++;
+					} else return result;
+				} else { result << text[pos]; pos++; }
+			}
+			if (text[pos]) pos++;
+			return result;
+		}
 		string FormatRichText(const string & text, int & pos, IManualTextFormatter * formatter)
 		{
 			DynamicString result;
@@ -210,6 +232,15 @@ namespace Engine
 					} else if (text[pos] == L'q') {
 						pos++; index++;
 						result += formatter->ListItem(index, FormatRichText(text, pos, formatter));
+					} else if (text[pos] == L'c') {
+						pos++;
+						result += formatter->Code(FormatCodeText(text, pos));
+					} else if (text[pos] == L'{') {
+						result += text[pos]; pos++;
+					} else if (text[pos] == L'}') {
+						result += text[pos]; pos++;
+					} else if (text[pos] == L'\\') {
+						result += text[pos]; pos++;
 					} else return result;
 					begin = pos;
 				} else if (text[pos] == L'{') {

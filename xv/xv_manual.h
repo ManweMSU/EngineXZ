@@ -69,6 +69,7 @@ namespace Engine
 			ManualSection * FindSection(ManualSectionClass cls, int index = 0);
 			const ManualSection * FindSection(ManualSectionClass cls, int index = 0) const;
 			void RemoveSection(ManualSectionClass cls, int index = 0);
+			ObjectArray<ManualSection> & GetSections(void);
 			const ObjectArray<ManualSection> & GetSections(void) const;
 		};
 		class ManualVolume : public Object
@@ -103,6 +104,7 @@ namespace Engine
 			virtual string LinkedText(const string & inner, const string & to) = 0;
 			virtual string Paragraph(const string & inner) = 0;
 			virtual string ListItem(int index, const string & inner) = 0;
+			virtual string Code(const string & inner) = 0;
 		};
 		string FormatRichText(const string & text, IManualTextFormatter * formatter);
 	}

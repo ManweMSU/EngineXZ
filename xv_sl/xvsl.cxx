@@ -425,6 +425,7 @@ public:
 	virtual string LinkedText(const string & inner, const string & to) override { return inner; }
 	virtual string Paragraph(const string & inner) override { return L"\n\n" + inner; }
 	virtual string ListItem(int index, const string & inner) override { return L"\n" + string(index) + L". " + inner; }
+	virtual string Code(const string & inner) override { return MarkdownEscape(inner); }
 };
 
 SafePointer<CodeRepositorium> code;
@@ -514,6 +515,31 @@ string ExtractContents(const XV::ManualPage * page, XV::ManualSectionClass secti
 {
 	for (auto & s : page->GetSections()) if (s.GetClass() == section) return ExtractContents(&s);
 	return L"";
+}
+const XV::ManualPage * FindManualPage(const XV::ManualVolume * volume, const string & path)
+{
+	if (!volume) return 0;
+	auto result = volume->FindPage(path);
+	if (result) return result;
+	auto pure_path = path.Fragment(0, path.FindFirst(L':'));
+	auto del = pure_path.FindLast(L'.');
+	if (del >= 0) {
+		auto parent_class_path = pure_path.Fragment(0, del);
+		auto parent_class_page = volume->FindPage(parent_class_path);
+		if (parent_class_page && (parent_class_page->GetClass() == XV::ManualPageClass::Class || parent_class_page->GetClass() == XV::ManualPageClass::Prototype)) {
+			auto inh_list_sect = parent_class_page->FindSection(XV::ManualSectionClass::ObjectType);
+			if (inh_list_sect) {
+				auto inh_list = inh_list_sect->GetContents(L"").Split(L'\33');
+				auto postfix = path.Fragment(del, -1);
+				for (auto & inh : inh_list) try {
+					auto other_class_path = XI::Module::TypeReference(inh).GetClassName();
+					auto other_page = FindManualPage(volume, other_class_path + postfix);
+					if (other_page) return other_page;
+				} catch (...) {}
+				return 0;
+			} else return 0;
+		} else return 0;
+	} else return 0;
 }
 
 void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const IOData & data)
@@ -610,7 +636,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 							text += Localized(183) + L"**\'" + MarkdownEscape(range.value) + L"\'**";
 						}
 						if (manual) {
-							auto record = manual->FindPage(range.path);
+							auto record = FindManualPage(manual, range.path);
 							if (record) {
 								if (text.Length()) text += L"\n\n";
 								text += ExtractContents(record, XV::ManualSectionClass::Summary);
@@ -834,7 +860,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				responce.result.activeParameter = meta.function_info_argument;
 				responce.result.activeSignature = min(info.params.context.activeSignatureHelp.activeSignature, count - 1);
 				for (auto & o : meta.overloads) {
-					XV::ManualPage * page = manual ? manual->FindPage(o.path) : 0;
+					auto page = FindManualPage(manual, o.path);
 					RPC::SignatureInformation inf;
 					inf.label = FormatString(L"%1 %0(", o.identifier, ArgumentInfoToString(o.retval));
 					inf.documentation.kind = L"markdown";

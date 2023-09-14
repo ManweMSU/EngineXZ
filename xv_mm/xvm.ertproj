@@ -1,0 +1,108 @@
+﻿ApplicationIcon = "../artworks/xv_icon.eiwv"
+Languages = "en,ru"
+Subsystem = "gui"
+UseVersionDefines = true
+"-debug" {
+	Attachments {
+		AAMAAA {
+			From = "xv.ini"
+			To = "xv.ini"
+		}
+	}
+}
+"-macosx" {
+	EngineStore {
+		ShellPath = "Contents/MacOS"
+		StoreLinkFile = "Contents/MacOS"
+	}
+	Resources {
+		COM = "@com_en.ecst"
+		ru {
+			COM = "@com_ru.ecst"
+		}
+	}
+}
+"-macosx-debug" {
+	Attachments {
+		CAMAAA {
+			From = "xe.debug.mac.ini"
+			To = "xe.ini"
+		}
+	}
+}
+"-windows" {
+	EngineStore {
+		ShellPath = "."
+		StoreLinkFile = "store.ecs"
+	}
+}
+"-windows-debug" {
+	Attachments {
+		BAMAAA {
+			From = "xe.debug.win.ini"
+			To = "xe.ini"
+		}
+	}
+}
+CompileList {
+	AAAAAA = "../xasm/xa_t_armv8.cxx"
+	AAAAAB = "../xasm/xa_t_i386.cxx"
+	AAAAAC = "../xasm/xa_t_x64.cxx"
+	AAAAAD = "../xasm/xa_trans.cxx"
+	AAAAAE = "../xasm/xa_type_helper.cxx"
+	AAAAAF = "../xasm/xa_types.cxx"
+	AAAAAG = "../xenv/xe_ctx.cxx"
+	AAAAAH = "../xenv/xe_interfaces.cxx"
+	AAAAAI = "../xenv/xe_loader.cxx"
+	AAAAAJ = "../xenv/xe_logger.cxx"
+	AAAAAK = "../xenv/xe_rtss.cxx"
+	AAAAAL = "../xenv/xe_stdext.cxx"
+	AAAAAM = "../xexec/xx_com.cxx"
+	AAAAAN = "../ximg/xi_function.cxx"
+	AAAAAO = "../ximg/xi_module.cxx"
+	AAAAAP = "../ximg/xi_resources.cxx"
+	AAAAAQ = "../xv/xv_manual.cxx"
+	AAAAAR = "xvm.cxx"
+	AAAAAS = "xvm.uiml"
+	AAAAAT = "xvm_browser.cxx"
+	AAAAAU = "xvm_editor.cxx"
+}
+FileFormats {
+	AAAAAA {
+		CanCreate = false
+		Description = "Lingua XV"
+		Extension = "xv"
+		Icon = "../artworks/xv_icon_doc.eiwv"
+	}
+	AAAAAB {
+		CanCreate = false
+		Description = "Lingua XV"
+		Extension = "v"
+		Icon = "../artworks/xv_icon_doc.eiwv"
+	}
+	AAAAAC {
+		CanCreate = false
+		Description = "Lingua XV"
+		Extension = "vvv"
+		Icon = "../artworks/xv_icon_doc.eiwv"
+	}
+	AAAAAD {
+		CanCreate = true
+		Description = "Manualis Linguae XV"
+		Extension = "xvm"
+		Icon = "../artworks/xv_icon_manual.eiwv"
+	}
+	AAAAAE {
+		Description = "Manualis Linguae XV"
+		Protocol = "xvmm"
+	}
+}
+VersionInformation {
+	ApplicationIdentifier = "XVM"
+	ApplicationName = "XV Monstrans Manualis"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2023"
+	InternalName = "xvm"
+	Version = "1.0.0.1"
+}

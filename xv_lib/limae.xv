@@ -60,7 +60,7 @@ structura semita hereditat linea {
 	functio adl[dordo_linearum] collectoria() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, "*", 2); }
 	functio adl[dordo_linearum] collectoria(~linea filtrum) iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, filtrum, 2); }
 
-	logicum limae_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 0); } }
+	logicum lima_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 0); } }
 	logicum collectorium_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 1); } }
 	logicum adhaesio_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 2); } }
 

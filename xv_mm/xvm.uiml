@@ -1,0 +1,425 @@
+﻿## resource "UI"
+
+# Waffle
+
+resource font LocalFont { sans_serif height z 16 }
+
+application MenuBarItemNormal {
+	frame {
+		position parent
+		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @Text font @Font left vcenter color { 0, 0, 0 } }
+		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @RightText font @Font right vcenter color { 0, 0, 0 } }
+		texture { position { 1, 1, 1 z 20, 1 z 20 } texture @ImageNormal no_stretch }
+		bar { position { 0, 0, z 25, w 1.0 } color { 243, 247, 251 } }
+		bar { position { z 25, 0, 1 z 25, w 1.0 } color { 207, 219, 235 } }
+		bar { position { 0, 0, w 1.0, w 1.0 } color { 0xFF, 0xFF, 0xFF } }
+	}
+}
+application MenuBarItemHot {
+	frame {
+		position parent
+		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @Text font @Font left vcenter color { 0, 0, 0 } }
+		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @RightText font @Font right vcenter color { 0, 0, 0 } }
+		texture { position { 1, 1, 1 z 20, 1 z 20 } texture @ImageNormal no_stretch }
+		bar { position { 0, 0, w 1.0, 1 } color { 195, 237, 255 } }
+		bar { position { 0, -1 w 1.0, w 1.0, w 1.0 } color { 195, 237, 255 } }
+		bar { position { 0, 0, 1, w 1.0 } color { 195, 237, 255 } }
+		bar { position { -1 w 1.0, 0, w 1.0, w 1.0 } color { 195, 237, 255 } }
+		bar { position { 1, 1, -1 w 1.0, -1 w 1.0 } color { 230, 245, 255 } }
+	}
+}
+application MenuBarItemDisabled {
+	frame {
+		position parent
+		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @Text font @Font left vcenter color { 0x80, 0x80, 0x80 } }
+		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @RightText font @Font right vcenter color { 0x80, 0x80, 0x80 } }
+		texture { position { 1, 1, 1 z 20, 1 z 20 } texture @ImageGrayed no_stretch }
+		bar { position { 0, 0, z 25, w 1.0 } color { 243, 247, 251 } }
+		bar { position { z 25, 0, 1 z 25, w 1.0 } color { 207, 219, 235 } }
+		bar { position { 0, 0, w 1.0, w 1.0 } color { 0xFF, 0xFF, 0xFF } }
+	}
+}
+application MenuBarSeparator {
+	frame {
+		position parent
+		bar { position { 8 z 25, 1, w 1.0, 2 } color { 207, 219, 235 } }
+		bar { position { 0, 0, z 25, w 1.0 } color { 243, 247, 251 } }
+		bar { position { z 25, 0, 1 z 25, w 1.0 } color { 207, 219, 235 } }
+		bar { position { 0, 0, w 1.0, w 1.0 } color { 0xFF, 0xFF, 0xFF } }
+	}
+}
+
+style MenuBar MenuBar {
+	default
+	Font LocalFont
+	ViewBackground { bar { position parent color { 230, 230, 230 } } }
+	ViewElementNormal { text { position parent text @Text font @Font center vcenter color { 0, 0, 0 } } }
+	ViewElementHot { frame {
+		position parent
+		text { position parent text @Text font @Font center vcenter color { 0, 0, 0 } }
+		bar { position { 0, 0, w 1.0, 1 } color { 195, 237, 255 } }
+		bar { position { 0, -1 w 1.0, w 1.0, w 1.0 } color { 195, 237, 255 } }
+		bar { position { 0, 0, 1, w 1.0 } color { 195, 237, 255 } }
+		bar { position { -1 w 1.0, 0, w 1.0, w 1.0 } color { 195, 237, 255 } }
+		bar { position { 1, 1, -1 w 1.0, -1 w 1.0 } color { 230, 245, 255 } }
+	} }
+	ViewElementPressed { frame {
+		position parent
+		text { position parent text @Text font @Font center vcenter color { 0, 0, 0 } }
+		bar { position { 0, 0, w 1.0, 1 } color { 170, 212, 230 } }
+		bar { position { 0, -1 w 1.0, w 1.0, w 1.0 } color { 170, 212, 230 } }
+		bar { position { 0, 0, 1, w 1.0 } color { 170, 212, 230 } }
+		bar { position { -1 w 1.0, 0, w 1.0, w 1.0 } color { 170, 212, 230 } }
+		bar { position { 1, 1, -1 w 1.0, -1 w 1.0 } color { 215, 230, 240 } }
+	} }
+	ViewElementDisabled { text { position parent text @Text font @Font center vcenter color { 128, 128, 128 } } }
+	SizeLeftSpace z 5 SizeMenuBorder z 2 SizeMenuItem z 24 SizeMenuSeparator 3
+	ViewMenuShadow { bar {
+		position { z 4, z 4, w 1 z 4, w 1 z 4 }
+		color { 0, 0, 0, 40 }
+	} }
+	ViewMenuFrame { frame {
+		position parent
+		bar { position { z 1, z 1, w 1 z -1, w 1 z -1 } color { 255, 255, 255 } }
+		bar { position parent color { 192, 192, 192 } }
+	} }
+	ViewMenuSeparator MenuBarSeparator
+	ViewMenuItemNormal MenuBarItemNormal
+	ViewMenuItemNormalChecked MenuBarItemNormal
+	ViewMenuItemGrayed MenuBarItemDisabled
+	ViewMenuItemGrayedChecked MenuBarItemDisabled
+	ViewMenuItemHot MenuBarItemHot
+	ViewMenuItemHotChecked MenuBarItemHot
+}
+
+resource texture IconBack		{ & "icons/menu_back.eiwv" }
+resource texture IconForward	{ & "icons/menu_forward.eiwv" }
+resource texture IconHome		{ & "icons/menu_home.eiwv" }
+resource texture IconIndex		{ & "icons/menu_index.eiwv" }
+resource texture IconFind		{ & "icons/menu_find.eiwv" }
+
+resource texture IconBackI		{ & "icons/menu_back.eiwv" BlindGrayscale }
+resource texture IconForwardI	{ & "icons/menu_forward.eiwv" BlindGrayscale }
+resource texture IconHomeI		{ & "icons/menu_home.eiwv" BlindGrayscale }
+resource texture IconIndexI		{ & "icons/menu_index.eiwv" BlindGrayscale }
+resource texture IconFindI		{ & "icons/menu_find.eiwv" BlindGrayscale }
+
+resource string OpenFileFailure	[ _ ru ] { "Failed to load a file \"%0\"." "Не удалось загрузить файл \"%0\"." }
+resource string SearchTitle		[ _ ru ] { "Search..." "Поиск..." }
+resource string SearchText		[ _ ru ] { "Type an identifier to search" "Введите идентификатор для поиска" }
+resource string NoSuchPathTitle	[ _ ru ] { "Page not found" "Страница не найдена" }
+resource string NoSuchPathText	[ _ ru ] { "There is no pages by the request \"%0\"." "По запросу \"%0\" страниц не найдено." }
+resource string IndexTitle		[ _ ru ] { "Documentation Index" "Индекс документации" }
+resource string IndexModules	[ _ ru ] { "Modules" "Модули" }
+resource string IndexCommons	[ _ ru ] { "Common manuals" "Общие статьи" }
+resource string IndexObjects	[ _ ru ] { "Object index" "Индекс объектов" }
+resource string IndexOfModule	[ _ ru ] { "Module Index: %0" "Индекс модуля: %0" }
+resource string SymbolField		[ _ ru ] { "Field" "Поле" }
+resource string SymbolProperty	[ _ ru ] { "Property" "Свойство" }
+resource string SymbolElements	[ _ ru ] { "Elements" "Элементы" }
+resource string SymbolThrows	[ _ ru ] { "Throws exceptions" "Вызывает исключения" }
+resource string SymbolInstance	[ _ ru ] { "Instance function" "Функция экземпляра" }
+resource string SymbolRead		[ _ ru ] { "Read allowed" "Доступно для чтения" }
+resource string SymbolWrite		[ _ ru ] { "Write allowed" "Доступно для записи" }
+resource string SymbolVirtual	[ _ ru ] { "Virtual function" "Виртуальная функция" }
+resource string SymbolInterface	[ _ ru ] { "Interface" "Интерфейс" }
+resource string SymbolCtor		[ _ ru ] { "Constructor" "Конструктор" }
+resource string SymbolOperator	[ _ ru ] { "Operator" "Оператор" }
+resource string SymbolConvertor	[ _ ru ] { "Convertor" "Конвертор" }
+resource string SymbolModule	[ _ ru ] { "Module" "Модуль" }
+resource string SymbolInherits	[ _ ru ] { "Inherits classes and interfaces:" "Наследует классы и интерфейсы:" }
+resource string SymbolConforms	[ _ ru ] { "Convertible into:" "Преобразуем в:" }
+resource string SymbolDynamic	[ _ ru ] { "Dynamically convertible into:" "Динамически преобразуем в:" }
+resource string SymbolDetails	[ _ ru ] { "Details" "Описание" }
+resource string SymbolArguments	[ _ ru ] { "Input arguments:" "Входные параметры:" }
+resource string SymbolResult	[ _ ru ] { "Return value:" "Возвращаемое значение:" }
+resource string SymbolThRules	[ _ ru ] { "Throw rules" "Взаимодействие с исключениями" }
+resource string SymbolCxRules	[ _ ru ] { "Context rules" "Взаимодействие с контекстами" }
+
+resource string NewVolumeTitle	[ _ ru ] { "A new manual volume" "Новый том документации" }
+resource string SaveChangesConf	[ _ ru ] { "Document was changed. Do you want to save the changes?" "Документ был изменён. Вы хотите сохранить изменения?" }
+resource string SaveFileFailure	[ _ ru ] { "Failed to save a file \"%0\"." "Не удалось сохранить файл \"%0\"." }
+
+resource string MenuFile	[ _ ru ] { "File" "Файл" }
+resource string MenuNew		[ _ ru ] { "New file" "Новый файл" }
+resource string MenuOpen	[ _ ru ] { "Open" "Открыть" }
+resource string MenuSave	[ _ ru ] { "Save" "Сохранить" }
+resource string MenuSaveAs	[ _ ru ] { "Save as" "Сохранить как" }
+resource string MenuExit	[ _ ru ] { "Exit" "Выход" }
+resource string MenuEdit	[ _ ru ] { "Edit" "Правка" }
+resource string MenuAddPage	[ _ ru ] { "Add new page" "Добавить новую страницу" }
+resource string MenuAddSect	[ _ ru ] { "Add new section" "Добавить новую секцию" }
+resource string MenuAddLang	[ _ ru ] { "Add language" "Добавить язык" }
+resource string MenuRemPage	[ _ ru ] { "Remove page" "Удалить страницу" }
+resource string MenuRemSect	[ _ ru ] { "Remove section" "Удалить секцию" }
+resource string MenuRemLang	[ _ ru ] { "Remove language" "Удалить язык" }
+resource string MenuMdlName	[ _ ru ] { "Set module's name" "Задать имя модуля" }
+resource string MenuNextElm	[ _ ru ] { "Next empty element" "Следующий пустой элемент" }
+resource string MenuView	[ _ ru ] { "View" "Просмотр" }
+resource string MenuViewPg	[ _ ru ] { "View current page" "Показать текущую страницу" }
+resource string MenuViewAll	[ _ ru ] { "View index" "Показать индекс" }
+resource string MenuHelp	[ _ ru ] { "Help" "Справка" }
+resource string MenuHelpDoc	[ _ ru ] { "Common documentation" "Общая документация" }
+resource string TextTitle	[ _ ru ] { "Page title" "Заголовок страницы" }
+
+resource string FlagThrows	[ _ ru ] { "Throws" "Искл." }
+resource string FlagInst	[ _ ru ] { "Inst." "Экз." }
+resource string FlagRead	[ _ ru ] { "Read" "Чтение" }
+resource string FlagWrite	[ _ ru ] { "Write" "Запись" }
+resource string FlagVirtual	[ _ ru ] { "Virt." "Вирт." }
+resource string FlagInterf	[ _ ru ] { "Inter." "Интер." }
+resource string FlagCtor	[ _ ru ] { "Constr." "Констр." }
+resource string FlagOper	[ _ ru ] { "Oper." "Опер." }
+resource string FlagCast	[ _ ru ] { "Cast" "Преобр." }
+
+resource string PageConst	[ _ ru ] { "Constant" "Константа" }
+resource string PageVar		[ _ ru ] { "Variable" "Переменная" }
+resource string PageClass	[ _ ru ] { "Class" "Класс" }
+resource string PageFunc	[ _ ru ] { "Function" "Функция" }
+resource string PageSpace	[ _ ru ] { "Namespace" "Пространство" }
+resource string PageProto	[ _ ru ] { "Prototype" "Прототип" }
+resource string PageProp	[ _ ru ] { "Property" "Свойство" }
+resource string PageField	[ _ ru ] { "Field" "Поле" }
+resource string PageAlias	[ _ ru ] { "Alias" "Эквивалент" }
+resource string PageTech	[ _ ru ] { "Technique" "Техника" }
+resource string PageSyntax	[ _ ru ] { "Syntax" "Синтаксис" }
+resource string PageSample	[ _ ru ] { "Code sample" "Пример кода" }
+
+resource string SectUnk		[ _ ru ] { "Unknown" "Не известно" }
+resource string SectObjType	[ _ ru ] { "Object type" "Тип объекта" }
+resource string SectSummary	[ _ ru ] { "Summary" "Описание" }
+resource string SectDetails	[ _ ru ] { "Details" "Детали" }
+resource string SectArg		[ _ ru ] { "Argument: %0" "Аргумент: %0" }
+resource string SectArgCom	[ _ ru ] { "Argument" "Аргумент" }
+resource string SectRetVal	[ _ ru ] { "Result" "Результат" }
+resource string SectThRules	[ _ ru ] { "Throw rules" "Исключения" }
+resource string SectCxRules	[ _ ru ] { "Context rules" "Контекст" }
+resource string SectInherit	[ _ ru ] { "Inherits" "Наследования" }
+resource string SectCast	[ _ ru ] { "Convertible" "Преобразования" }
+resource string SectDynCast	[ _ ru ] { "Convertible (dynamic)" "Преобразования (динамические)" }
+
+resource string AddClass	[ _ ru ] { "Class:" "Категория:" }
+resource string AddPath		[ _ ru ] { "Path:" "Путь:" }
+resource string AddName		[ _ ru ] { "Name:" "Имя:" }
+resource string AddIndex	[ _ ru ] { "Index:" "Индекс:" }
+resource string AddLang		[ _ ru ] { "Language:" "Язык:" }
+resource string ButtonAdd	[ _ ru ] { "Add" "Добавить" }
+resource string ButtonAccpt	[ _ ru ] { "Accept" "Принять" }
+resource string ButtonCncl	[ _ ru ] { "Cancel" "Отменить" }
+resource string ButtonRmv	[ _ ru ] { "Remove" "Удалить" }
+resource string TitleModule	[ _ ru ] { "Module's name" "Имя модуля" }
+
+dialog AddPage { DialogFrame {
+	position { 0, 0, z 400, z 108 }
+	Captioned CloseButton Title MenuAddPage
+	ControlGroup {
+		style WaffleFrame
+		position { z 4, z 4, w 1 z -4, z 72 }
+		Static { position { z 4, z 4, z 100, z 32 } Text AddClass }
+		ComboBox { position { z 100, z 4, w 1 z -4, z 32 } ID 101 }
+		Static { position { z 4, z 36, z 100, z 64 } Text AddPath }
+		Edit { position { z 100, z 36, w 1 z -4, z 64 } ID 102 Text "." }
+	}
+	Button {
+		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		ID 2 Text ButtonCncl
+	}
+	Button {
+		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		ID 1 Text ButtonAdd
+	}
+} }
+dialog AddSect { DialogFrame {
+	position { 0, 0, z 400, z 140 }
+	Captioned CloseButton Title MenuAddSect
+	ControlGroup {
+		style WaffleFrame
+		position { z 4, z 4, w 1 z -4, z 104 }
+		Static { position { z 4, z 4, z 100, z 32 } Text AddClass }
+		ComboBox { position { z 100, z 4, w 1 z -4, z 32 } ID 101 }
+		Static { position { z 4, z 36, z 100, z 64 } Text AddName }
+		Edit { position { z 100, z 36, w 1 z -4, z 64 } ID 102 }
+		Static { position { z 4, z 68, z 100, z 96 } Text AddIndex }
+		Edit { position { z 100, z 68, w 1 z -4, z 96 } ID 103 CharactersEnabled "0123456789" Text "0" }
+	}
+	Button {
+		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		ID 2 Text ButtonCncl
+	}
+	Button {
+		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		ID 1 Text ButtonAdd
+	}
+} }
+dialog AddLang { DialogFrame {
+	position { 0, 0, z 400, z 76 }
+	Captioned CloseButton Title MenuAddLang
+	ControlGroup {
+		style WaffleFrame
+		position { z 4, z 4, w 1 z -4, z 40 }
+		Static { position { z 4, z 4, z 100, z 32 } Text AddLang }
+		Edit { position { z 100, z 4, w 1 z -4, z 32 } ID 101 }
+	}
+	Button {
+		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		ID 2 Text ButtonCncl
+	}
+	Button {
+		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		ID 1 Text ButtonAdd
+	}
+} }
+dialog SetModuleName { DialogFrame {
+	position { 0, 0, z 400, z 76 }
+	Captioned CloseButton Title TitleModule
+	ControlGroup {
+		style WaffleFrame
+		position { z 4, z 4, w 1 z -4, z 40 }
+		Edit { position { z 4, z 4, w 1 z -4, z 32 } ID 101 }
+	}
+	Button {
+		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		ID 2 Text ButtonCncl
+	}
+	Button {
+		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		ID 1 Text ButtonAccpt
+	}
+} }
+dialog RemoveLang { DialogFrame {
+	position { 0, 0, z 400, z 76 }
+	Captioned CloseButton Title MenuRemLang
+	ControlGroup {
+		style WaffleFrame
+		position { z 4, z 4, w 1 z -4, z 40 }
+		Static { position { z 4, z 4, z 100, z 32 } Text AddLang }
+		Edit { position { z 100, z 4, w 1 z -4, z 32 } ID 101 }
+	}
+	Button {
+		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		ID 2 Text ButtonCncl
+	}
+	Button {
+		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		ID 1 Text ButtonRmv
+	}
+} }
+dialog Editor { DialogFrame {
+	position { 0, 0, w 0.7, w 0.7 }
+	Captioned Sizeble CloseButton MaximizeButton MinimizeButton
+	MinimalWidth z 450 MinimalHeight z 300 Background null DefaultBackground
+	FrameExtendedData { MacEffectBackground MacUseLightTheme }
+	MenuBar {
+		position { 0, 0, w 1, z 24 }
+		MenuBarElement {
+			Text MenuFile Menu { PopupMenu {
+				MenuItem { SystemAppearance Text MenuNew RightText "Ctrl + Shift + N" ID 101 }
+				MenuItem { SystemAppearance Text MenuOpen RightText "Ctrl + O" ID 102 }
+				MenuItem { SystemAppearance Text MenuSave RightText "Ctrl + S" ID 103 }
+				MenuItem { SystemAppearance Text MenuSaveAs RightText "Ctrl + Shift + S" ID 104 }
+				MenuSeparator { SystemAppearance }
+				MenuItem { SystemAppearance Text MenuExit ID 2 }
+			} }
+		}
+		MenuBarElement {
+			Text MenuEdit Menu { PopupMenu {
+				MenuItem { SystemAppearance Text MenuAddPage ID 201 }
+				MenuItem { SystemAppearance Text MenuAddSect ID 202 }
+				MenuItem { SystemAppearance Text MenuAddLang ID 203 }
+				MenuSeparator { SystemAppearance }
+				MenuItem { SystemAppearance Text MenuRemPage ID 204 }
+				MenuItem { SystemAppearance Text MenuRemSect ID 205 }
+				MenuItem { SystemAppearance Text MenuRemLang ID 206 }
+				MenuSeparator { SystemAppearance }
+				MenuItem { SystemAppearance Text MenuMdlName ID 207 }
+				MenuSeparator { SystemAppearance }
+				MenuItem { SystemAppearance Text MenuNextElm RightText "F3" ID 208 }
+			} }
+		}
+		MenuBarElement {
+			Text MenuView Menu { PopupMenu {
+				MenuItem { SystemAppearance Text MenuViewPg RightText "F5" ID 501 }
+				MenuItem { SystemAppearance Text MenuViewAll RightText "Shift + F5" ID 502 }
+			} }
+		}
+		MenuBarElement {
+			Text MenuHelp Menu { PopupMenu {
+				MenuItem { SystemAppearance Text MenuHelpDoc RightText "F1" ID 901 }
+			} }
+		}
+	}
+	HorizontalSplitBox {
+		position { z 4, z 28, w 1 z -4, w 1 z -4 }
+		SplitBoxPart {
+			position { 0, 0, z 200, 0 }
+			MinimalSize z 150
+			TreeView { position parent ID 1001 }
+		}
+		SplitBoxPart {
+			position { 0, 0, z 200, 0 }
+			MinimalSize z 150 Stretch
+			Edit { position { 0, 0, w 1, z 28 } ID 1002 Placeholder TextTitle }
+			CheckBox { position { 0, z 32, z 80, z 60 } ID 1010 Text FlagThrows }
+			CheckBox { position { z 80, z 32, z 160, z 60 } ID 1011 Text FlagInst }
+			CheckBox { position { z 160, z 32, z 240, z 60 } ID 1012 Text FlagRead }
+			CheckBox { position { z 240, z 32, z 320, z 60 } ID 1013 Text FlagWrite }
+			CheckBox { position { z 320, z 32, z 400, z 60 } ID 1014 Text FlagVirtual }
+			CheckBox { position { 0, z 64, z 80, z 92 } ID 1015 Text FlagInterf }
+			CheckBox { position { z 80, z 64, z 160, z 92 } ID 1016 Text FlagCtor }
+			CheckBox { position { z 160, z 64, z 240, z 92 } ID 1017 Text FlagOper }
+			CheckBox { position { z 240, z 64, z 320, z 92 } ID 1018 Text FlagCast }
+			HorizontalSplitBox {
+				position { 0, z 96, w 1, w 1 }
+				SplitBoxPart {
+					position { 0, 0, z 150, 0 }
+					MinimalSize z 80
+					ListBox { position parent ID 1101 }
+				}
+				SplitBoxPart {
+					position { 0, 0, z 150, 0 }
+					MinimalSize z 60 Stretch
+					ScrollBox {
+						position parent ID 1201
+						VerticalLine z 30 HorizontalLine z 30
+					}
+				}
+			}
+		}
+	}
+} }
+dialog BaseMultiLine { MultiLineEdit {} }
+dialog BaseStatic { Static {} }
+dialog Browser { DialogFrame {
+	position { 0, 0, w 0.7, w 0.7 }
+	Captioned Sizeble CloseButton MaximizeButton MinimizeButton
+	MinimalWidth z 300 MinimalHeight z 150 Background null DefaultBackground
+	FrameExtendedData { MacEffectBackground MacUseLightTheme }
+	ToolButton { position { z 4, z 4, z 32, z 32 } ToolButtonPart {
+			position parent
+			ImageNormal IconBack ImageGrayed IconBackI ID 101
+	} }
+	ToolButton { position { z 36, z 4, z 64, z 32 } ToolButtonPart {
+			position parent
+			ImageNormal IconForward ImageGrayed IconForwardI ID 102
+	} }
+	Edit {
+		position { z 68, z 4, w 1 z - 100, z 32 }
+		ID 103 ReadOnly Placeholder SearchText
+	}
+	ToolButton { position { w 1 z -96, z 4, w 1 z -68, z 32 } ToolButtonPart {
+			position parent
+			ImageNormal IconHome ImageGrayed IconHomeI ID 104
+	} }
+	ToolButton { position { w 1 z -64, z 4, w 1 z -36, z 32 } ToolButtonPart {
+			position parent
+			ImageNormal IconIndex ImageGrayed IconIndexI ID 105
+	} }
+	ToolButton { position { w 1 z -32, z 4, w 1 z -4, z 32 } ToolButtonPart {
+			position parent
+			ImageNormal IconFind ImageGrayed IconFindI ID 106
+	} }
+	RichEdit {
+		position { z 4, z 36, w 1 z -4, w 1 z -4 }
+		DontCopyAttributes ReadOnly ID 201
+	}
+} }
