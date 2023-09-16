@@ -866,12 +866,6 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 					inf.documentation.kind = L"markdown";
 					if (page) {
 						inf.documentation.value = ExtractContents(page, XV::ManualSectionClass::Summary);
-						auto rv = ExtractContents(page, XV::ManualSectionClass::ResultSection);
-						if (rv.Length()) inf.documentation.value += L"\n\n" + rv;
-						auto th = ExtractContents(page, XV::ManualSectionClass::ThrowRules);
-						if (th.Length()) inf.documentation.value += L"\n\n" + th;
-						auto cx = ExtractContents(page, XV::ManualSectionClass::ContextRules);
-						if (cx.Length()) inf.documentation.value += L"\n\n" + cx;
 					}
 					int index = 0;
 					for (auto & a : o.args) {
