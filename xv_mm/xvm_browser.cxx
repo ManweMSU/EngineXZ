@@ -108,7 +108,7 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 			return result;
 		} else return L"";
 	}
-	string DecorateTypeLink(const string & tcn) { return DecorateTypeLink(XI::Module::TypeReference(tcn)); }
+	string DecorateTypeLink(const string & tcn) { try { return DecorateTypeLink(XI::Module::TypeReference(tcn)); } catch (...) { return L""; } }
 	string DecorateObjectLink(const string & object)
 	{
 		DynamicString result, unified;
@@ -129,47 +129,55 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 		}
 		return result;
 	}
+	string GetSectionContents(const XV::ManualSection * sect, const string & lang)
+	{
+		auto str = sect->GetContents(lang);
+		if (str.Length() || !lang.Length()) return str;
+		return sect->GetContents(def_lang);
+	}
 	string MakeCompleteTitle(XV::ManualPage * page)
 	{
-		auto cls = page->GetClass();
-		if (cls == XV::ManualPageClass::Alias) {
-			return string(XV::Lexic::KeywordAlias) + L" " + DecorateObjectLink(page->GetTitle());
-		} else if (cls == XV::ManualPageClass::Constant || cls == XV::ManualPageClass::Variable || cls == XV::ManualPageClass::Field || cls == XV::ManualPageClass::Property) {
-			DynamicString result;
-			auto type = page->FindSection(XV::ManualSectionClass::ObjectType);
-			if (type) result << DecorateTypeLink(type->GetContents(L"")) << L" ";
-			result << DecorateObjectLink(page->GetTitle());
-			if (cls == XV::ManualPageClass::Constant) return string(XV::Lexic::KeywordConst) + L" " + result.ToString();
-			else if (cls == XV::ManualPageClass::Variable) return string(XV::Lexic::KeywordVariable) + L" " + result.ToString();
-			else if (cls == XV::ManualPageClass::Field) return result.ToString() + L" (" + *interface.Strings[L"SymbolField"] + L")";
-			else if (cls == XV::ManualPageClass::Property) return result.ToString() + L" (" + *interface.Strings[L"SymbolProperty"] + L")";
-			else return result;
-		} else if (cls == XV::ManualPageClass::Class) {
-			if (page->GetTraits() & XV::ManualPageInterface) return string(XV::Lexic::KeywordInterface) + L" " + DecorateObjectLink(page->GetTitle());
-			else return string(XV::Lexic::KeywordClass) + L" " + DecorateObjectLink(page->GetTitle());
-		} else if (cls == XV::ManualPageClass::Namespace) {
-			return string(XV::Lexic::KeywordNamespace) + L" " + DecorateObjectLink(page->GetTitle());
-		} else if (cls == XV::ManualPageClass::Prototype) {
-			return string(XV::Lexic::KeywordPrototype) + L" " + DecorateObjectLink(page->GetTitle());
-		} else if (cls == XV::ManualPageClass::Function) {
-			DynamicString result;
-			result << string(XV::Lexic::KeywordFunction) << L" ";
-			auto type = page->FindSection(XV::ManualSectionClass::ObjectType);
-			if (type) {
-				auto cn = type->GetContents(L"");
-				auto ref = XI::Module::TypeReference(cn);
-				SafePointer< Array<XI::Module::TypeReference> > sgn = ref.GetFunctionSignature();
-				result << DecorateTypeLink(sgn->ElementAt(0)) << L" " << DecorateObjectLink(page->GetTitle()) << L"(";
-				for (int i = 1; i < sgn->Length(); i++) {
-					if (i > 1) result << L", ";
-					result << DecorateTypeLink(sgn->ElementAt(i));
-					auto ai = page->FindSection(XV::ManualSectionClass::ArgumentSection, i - 1);
-					if (ai) result << L" " << ai->GetSubjectName();
-				}
-				result << L")";
-			} else result << DecorateObjectLink(page->GetTitle());
-			return result;
-		} else return page->GetTitle();
+		try {
+			auto cls = page->GetClass();
+			if (cls == XV::ManualPageClass::Alias) {
+				return string(XV::Lexic::KeywordAlias) + L" " + DecorateObjectLink(page->GetTitle());
+			} else if (cls == XV::ManualPageClass::Constant || cls == XV::ManualPageClass::Variable || cls == XV::ManualPageClass::Field || cls == XV::ManualPageClass::Property) {
+				DynamicString result;
+				auto type = page->FindSection(XV::ManualSectionClass::ObjectType);
+				if (type) result << DecorateTypeLink(GetSectionContents(type, L"")) << L" ";
+				result << DecorateObjectLink(page->GetTitle());
+				if (cls == XV::ManualPageClass::Constant) return string(XV::Lexic::KeywordConst) + L" " + result.ToString();
+				else if (cls == XV::ManualPageClass::Variable) return string(XV::Lexic::KeywordVariable) + L" " + result.ToString();
+				else if (cls == XV::ManualPageClass::Field) return result.ToString() + L" (" + *interface.Strings[L"SymbolField"] + L")";
+				else if (cls == XV::ManualPageClass::Property) return result.ToString() + L" (" + *interface.Strings[L"SymbolProperty"] + L")";
+				else return result;
+			} else if (cls == XV::ManualPageClass::Class) {
+				if (page->GetTraits() & XV::ManualPageInterface) return string(XV::Lexic::KeywordInterface) + L" " + DecorateObjectLink(page->GetTitle());
+				else return string(XV::Lexic::KeywordClass) + L" " + DecorateObjectLink(page->GetTitle());
+			} else if (cls == XV::ManualPageClass::Namespace) {
+				return string(XV::Lexic::KeywordNamespace) + L" " + DecorateObjectLink(page->GetTitle());
+			} else if (cls == XV::ManualPageClass::Prototype) {
+				return string(XV::Lexic::KeywordPrototype) + L" " + DecorateObjectLink(page->GetTitle());
+			} else if (cls == XV::ManualPageClass::Function) {
+				DynamicString result;
+				result << string(XV::Lexic::KeywordFunction) << L" ";
+				auto type = page->FindSection(XV::ManualSectionClass::ObjectType);
+				if (type) {
+					auto cn = GetSectionContents(type, L"");
+					auto ref = XI::Module::TypeReference(cn);
+					SafePointer< Array<XI::Module::TypeReference> > sgn = ref.GetFunctionSignature();
+					result << DecorateTypeLink(sgn->ElementAt(0)) << L" " << DecorateObjectLink(page->GetTitle()) << L"(";
+					for (int i = 1; i < sgn->Length(); i++) {
+						if (i > 1) result << L", ";
+						result << DecorateTypeLink(sgn->ElementAt(i));
+						auto ai = page->FindSection(XV::ManualSectionClass::ArgumentSection, i - 1);
+						if (ai) result << L" " << ai->GetSubjectName();
+					}
+					result << L")";
+				} else result << DecorateObjectLink(page->GetTitle());
+				return result;
+			} else return page->GetTitle();
+		} catch (...) { return L""; }
 	}
 	string MakeCompleteTitle(XV::ManualPage * page, bool plain)
 	{
@@ -194,16 +202,16 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 	string MakeSectionContents(const XV::ManualSection * sect)
 	{
 		EngineTextFormatter fmt;
-		auto text = sect->GetContents(Assembly::CurrentLocale);
+		auto text = GetSectionContents(sect, Assembly::CurrentLocale);
 		if (text.Length()) return XV::FormatRichText(text, &fmt);
-		return XV::FormatRichText(sect->GetContents(L""), &fmt);
+		return XV::FormatRichText(GetSectionContents(sect, L""), &fmt);
 	}
 	string Format(const string & text)
 	{
 		EngineTextFormatter fmt;
 		return XV::FormatRichText(text, &fmt);
 	}
-	bool NotEmpty(const XV::ManualSection * sect) { return sect->GetContents(L"").Length() || sect->GetContents(Assembly::CurrentLocale).Length() || sect->GetSubjectName().Length(); }
+	bool NotEmpty(const XV::ManualSection * sect) { return GetSectionContents(sect, L"").Length() || GetSectionContents(sect, Assembly::CurrentLocale).Length() || sect->GetSubjectName().Length(); }
 	void LoadPage(void)
 	{
 		auto path_ctl = FindControl(window, 103)->As<Controls::Edit>();
@@ -310,11 +318,13 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 					}
 				}
 				if (page->GetClass() == XV::ManualPageClass::Function) {
-					auto type = page->FindSection(XV::ManualSectionClass::ObjectType);
-					if (type) {
-						fsgn_cn = type->GetContents(L"");
-						fsgn = XI::Module::TypeReference(fsgn_cn).GetFunctionSignature();
-					}
+					try {
+						auto type = page->FindSection(XV::ManualSectionClass::ObjectType);
+						if (type) {
+							fsgn_cn = GetSectionContents(type, L"");
+							fsgn = XI::Module::TypeReference(fsgn_cn).GetFunctionSignature();
+						}
+					} catch (...) {}
 				}
 				auto title_plain = MakeCompleteTitle(page, true);
 				auto title = MakeCompleteTitle(page, false);
@@ -347,7 +357,7 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 						rt << *interface.Strings[L"SymbolInherits"];
 						rt << L"\n\33e\33e";
 						rt << L"\33h0014\33a1";
-						auto tl = s.GetContents(L"").Split(L'\33');
+						auto tl = GetSectionContents(&s, L"").Split(L'\33');
 						for (auto & t : tl) if (t.Length()) rt << Format(DecorateTypeLink(t)) << L"\n";
 						rt << L"\33e\33e";
 					} else if (s.GetClass() == XV::ManualSectionClass::CastSection) {
@@ -355,7 +365,7 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 						rt << *interface.Strings[L"SymbolConforms"];
 						rt << L"\n\33e\33e";
 						rt << L"\33h0014\33a1";
-						auto tl = s.GetContents(L"").Split(L'\33');
+						auto tl = GetSectionContents(&s, L"").Split(L'\33');
 						for (auto & t : tl) if (t.Length()) rt << Format(DecorateTypeLink(t)) << L"\n";
 						rt << L"\33e\33e";
 					} else if (s.GetClass() == XV::ManualSectionClass::DynamicCastSection) {
@@ -363,7 +373,7 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 						rt << *interface.Strings[L"SymbolDynamic"];
 						rt << L"\n\33e\33e";
 						rt << L"\33h0014\33a1";
-						auto tl = s.GetContents(L"").Split(L'\33');
+						auto tl = GetSectionContents(&s, L"").Split(L'\33');
 						for (auto & t : tl) if (t.Length()) rt << Format(DecorateTypeLink(t)) << L"\n";
 						rt << L"\33e\33e";
 					} else if (s.GetClass() == XV::ManualSectionClass::Summary) {
