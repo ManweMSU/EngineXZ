@@ -11,40 +11,12 @@ constatus some_text = "suka ty pidor" { "ru", "сука ты пидор" };
 
 functio nihil primus() introitus iacit
 {
-	imago.color clr = nint(0x11223344);
-
 	var ~ cns = consolatorium.currens()^;
 	cns.titulus = some_text;
 	cns.color_primus = consolatorium.color.viridis;
 
-	linea impl;
-	nint vers, fl;
-	var fact = graphicum.crea_fabricationem_contextus();
-	var bitmap = fact^.onera_picturam(imago.replum.moduli(modulus(), 1, 256, 256));
-	var ctx = fact^.crea_contextum_picturae();
-	ctx^.para_implantationem(@impl, @vers, @fl);
-	cns << impl << ": " << vers << " - " << fl << "\n";
-	ctx^.exordi(bitmap);
-
-	var font = fact^.onera_typographicae(graphicum.typographica_systemae.serif, 16, 700, sic, non, non);
-	var brush = ctx^.crea_saetam_scriptionis(font, some_text, 1, 1, imago.color(128, 0, 255));
-	var brush_image = ctx^.crea_saetam_picturae(fact^.onera_picturam(imago.replum.moduli(modulus(), 1, 2.0)));
-
-	ordo [6] dfrac path;
-	path[0] = 0.0; path[1] = 0.0;
-	path[2] = 100.0; path[3] = 0.0;
-	path[4] = 100.0; path[5] = 100.0;
-
-	ctx^.exordi_tabulatum(0, 0, 100, 100, 0.5);
-	ctx^.redige(brush_image, 0, 0, 100, 100);
-	ctx^.redige_polygonum(path, 3, imago.color(255, 0, 0));
-	ctx^.redige_polylineam(path, 3, imago.color(0, 0, 255), 5.0);
-	ctx^.redige(brush, 0, 0, 100, 100, sic);
-	ctx^.ende_tabulatum();
-
-	ctx^.ende();
-	imago.codifica(semita("out.png").crea_limam(modus_limae.scribere_et_legere, modus_creatoris.crea_semper),
-		bitmap^.replum, imago.codex.PNG);
+	var limae = semita.currens().limae_cunctae("*.xv;*.xvm");
+	pro (var i : limae^) cns << limae^[i] << "\n";
 
 	cns.color_primus = consolatorium.color.defalta;
 	cns.scribe_lineam(some_text);

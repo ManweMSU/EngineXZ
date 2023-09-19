@@ -2522,7 +2522,7 @@ enumeratio tactus {
 	functio nint dimitte() virtualis { var nr = decrementum_securum(_num_ref); si (nr == nint(0)) perde ego; responde nr; }
 	destructor () virtualis {}
 	functio nihil _perde() virtualis { perde ego; }
-	functio linea_secura ad_linea() virtualis { proba { responde linea("objectum"); } responde linea_secura(); }
+	functio linea_secura ad_lineam() virtualis { proba { responde linea("objectum"); } responde linea_secura(); }
 }
 genus objectum_dynamicum hereditat objectum {
 	structor () {}
@@ -2648,7 +2648,7 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 	functio ~$V primus() { responde _data[0]; }
 	functio ~$V ultimus() { responde _data[_numerus - 1]; }
 
-	functio linea_secura ad_linea() redefini
+	functio linea_secura ad_lineam() redefini
 	{
 		proba {
 			linea resp = "ordo : [";
@@ -2706,11 +2706,11 @@ praeforma genus adl(O) { genus $_ {
 	functio @@$O valor_adl() { responde @_adl; }
 	functio nihil depura() { si (_adl != nullus) _adl^.dimitte(); _adl = nullus; }
 	functio nihil contine(@$O o) { si (_adl != nullus) _adl^.dimitte(); _adl = o; si (_adl != nullus) _adl^.contine(); }
-	functio linea_secura ad_linea()
+	functio linea_secura ad_lineam()
 	{
 		proba {
 			si (_adl == nullus) responde linea("nullus");
-			alioqui responde _adl^.ad_linea();
+			alioqui responde _adl^.ad_lineam();
 		}
 		responde linea_secura();
 	}
@@ -2734,15 +2734,15 @@ dura linea {
 			responde linea(t);
 		\fini\
 		\si !tractus.convertitur($T, linea)\
-			\si tractus.habet($T, "ad_linea")\
-				\si tractus.habet_vers($T.ad_linea)\
-					responde t.ad_linea();
+			\si tractus.habet($T, "ad_lineam")\
+				\si tractus.habet_vers($T.ad_lineam)\
+					responde t.ad_lineam();
 				\fini\
-				\si !tractus.habet_vers($T.ad_linea)\
+				\si !tractus.habet_vers($T.ad_lineam)\
 					responde "?";
 				\fini\
 			\fini\
-			\si !tractus.habet($T, "ad_linea")\
+			\si !tractus.habet($T, "ad_lineam")\
 				\si tractus.est_cls($T)\
 					linea r = "structura " + tractus.nomen($T) + " : [\n";
 					\replica F $T\
@@ -2809,8 +2809,8 @@ dura linea {
 	tempus tempus_universalus { [[thiscall_nullum]] [[importa] tmp_a_uni] adipisce; }
 	tempus tempus_localis { [[thiscall_nullum]] [[importa] tmp_a_loc] adipisce; }
 
-	[[thiscall_nullum]] [[importa] tmp_adl] functio linea ad_linea() iacit;
-	[[thiscall_nullum]] [[importa] tmp_alb] functio linea ad_linea_brevi() iacit;
+	[[thiscall_nullum]] [[importa] tmp_adl] functio linea ad_lineam() iacit;
+	[[thiscall_nullum]] [[importa] tmp_alb] functio linea ad_lineam_brevi() iacit;
 
 	[[thiscall_nullum]] [[importa] tmp_cur] classis functio tempus currens();
 	[[thiscall_nullum]] [[importa] tmp_dim] functio int dies_in_mense();
