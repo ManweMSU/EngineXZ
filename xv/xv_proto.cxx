@@ -316,7 +316,7 @@ namespace Engine
 							if (found) {
 								if (!input->ReadToken(token)) throw Exception();
 								SafePointer<XL::LObject> type = _ctx.ProcessLanguageExpression(input, token, view_list.GetBuffer(), view_list.Length());
-								if (type->GetClass() != XL::Class::Type) throw Exception();
+								if (!type || type->GetClass() != XL::Class::Type) throw Exception();
 								result = type;
 								if (token.type != TokenType::PrototypeCommand) throw Exception();
 								break;
