@@ -310,7 +310,7 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 				string fsgn_cn;
 				SafePointer< Array<XI::Module::TypeReference> > fsgn;
 				Volumes::Dictionary<string, XV::ManualPage *> children;
-				for (auto & page : volume->GetPages()) {
+				if (path[0] != L'.') for (auto & page : volume->GetPages()) {
 					if (page.key.Fragment(0, path.Length()) == path && page.key.Length() > path.Length() && (page.key[path.Length()] == L'.' || page.key[path.Length()] == L':')) {
 						bool add = true;
 						for (auto & c : children) if (page.key.Fragment(0, c.key.Length()) == c.key && (page.key[c.key.Length()] == L'.' || page.key[c.key.Length()] == L':')) { add = false; break; }
@@ -575,6 +575,9 @@ public:
 	{
 		if (resource.Fragment(0, 8) == L".impera:") {
 			try { HandleControlEvent(window, resource.Fragment(8, -1).ToUInt32(), ControlEvent::AcceleratorCommand, 0); } catch (...) {}
+		} else if (resource.Fragment(0, 9) == L".monstra:") {
+			auto path = IO::ExpandPath(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/" + resource.Fragment(9, -1));
+			Shell::ShowInBrowser(path, false);
 		} else MoveToPage(resource);
 	}
 	virtual void CaretPositionChanged(Controls::RichEdit * sender) override {}

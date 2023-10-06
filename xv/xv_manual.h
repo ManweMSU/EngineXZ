@@ -9,7 +9,7 @@ namespace Engine
 		enum class ManualPageClass {
 			Unknown = 0,
 			Constant = 1, Variable = 2, Class = 3, Function = 4, Namespace = 5, Prototype = 6, Property = 7, Field = 8, Alias = 9,
-			Technique = 9, Syntax = 10, Sample = 11
+			Technique = 10, Syntax = 11, Sample = 12
 		};
 		enum class ManualSectionClass {
 			Unknown = 0, ObjectType = 1, Summary = 2, Details = 30,

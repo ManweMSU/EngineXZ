@@ -769,37 +769,16 @@ namespace Engine
 				object->Retain();
 				return object;
 			}
-			XL::LObject * ProcessExpressionLogicalOr(XL::LObject ** ssl, int ssc)
+			XL::LObject * ProcessExpressionLogicalAnd(XL::LObject ** ssl, int ssc)
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionComparative(ssl, ssc);
 				ObjectArray<XL::LObject> args(0x10);
 				Array<XL::LObject *> argv(0x10);
 				args.Append(object); argv.Append(object);
 				auto definition = current_token;
-				while (IsPunct(L"||")) {
-					auto op = current_token; ReadNextToken();
-					SafePointer<XL::LObject> arg = ProcessExpressionComparative(ssl, ssc);
-					args.Append(arg); argv.Append(arg);
-				}
-				if (argv.Length() > 1) {
-					try {
-						SafePointer<XL::LObject> op = ctx.QueryLogicalOrOperator();
-						object = op->Invoke(argv.Length(), argv.GetBuffer());
-					} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
-				}
-				object->Retain();
-				return object;
-			}
-			XL::LObject * ProcessExpressionLogicalAnd(XL::LObject ** ssl, int ssc)
-			{
-				SafePointer<XL::LObject> object = ProcessExpressionLogicalOr(ssl, ssc);
-				ObjectArray<XL::LObject> args(0x10);
-				Array<XL::LObject *> argv(0x10);
-				args.Append(object); argv.Append(object);
-				auto definition = current_token;
 				while (IsPunct(L"&&")) {
 					auto op = current_token; ReadNextToken();
-					SafePointer<XL::LObject> arg = ProcessExpressionLogicalOr(ssl, ssc);
+					SafePointer<XL::LObject> arg = ProcessExpressionComparative(ssl, ssc);
 					args.Append(arg); argv.Append(arg);
 				}
 				if (argv.Length() > 1) {
@@ -811,9 +790,30 @@ namespace Engine
 				object->Retain();
 				return object;
 			}
+			XL::LObject * ProcessExpressionLogicalOr(XL::LObject ** ssl, int ssc)
+			{
+				SafePointer<XL::LObject> object = ProcessExpressionLogicalAnd(ssl, ssc);
+				ObjectArray<XL::LObject> args(0x10);
+				Array<XL::LObject *> argv(0x10);
+				args.Append(object); argv.Append(object);
+				auto definition = current_token;
+				while (IsPunct(L"||")) {
+					auto op = current_token; ReadNextToken();
+					SafePointer<XL::LObject> arg = ProcessExpressionLogicalAnd(ssl, ssc);
+					args.Append(arg); argv.Append(arg);
+				}
+				if (argv.Length() > 1) {
+					try {
+						SafePointer<XL::LObject> op = ctx.QueryLogicalOrOperator();
+						object = op->Invoke(argv.Length(), argv.GetBuffer());
+					} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+				}
+				object->Retain();
+				return object;
+			}
 			XL::LObject * ProcessExpressionTernary(XL::LObject ** ssl, int ssc)
 			{
-				SafePointer<XL::LObject> primary = ProcessExpressionLogicalAnd(ssl, ssc);
+				SafePointer<XL::LObject> primary = ProcessExpressionLogicalOr(ssl, ssc);
 				if (IsPunct(L"?")) {
 					auto definition = current_token; ReadNextToken();
 					SafePointer<XL::LObject> if_true = ProcessExpressionTernary(ssl, ssc);
