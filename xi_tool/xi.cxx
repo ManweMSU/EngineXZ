@@ -259,7 +259,7 @@ int Main(void)
 					auto dir = Path::GetDirectory(state.input);
 					auto name = Path::GetFileNameWithoutExtension(state.input);
 					auto ext = Path::GetExtension(state.input);
-					state.output = ExpandPath(dir + L"/" + name + L"-praet." + ext);
+					state.output = ExpandPath(dir + L"/" + name + L".praet." + ext);
 				}
 				try {
 					SafePointer<Stream> stream = new FileStream(state.output, AccessReadWrite, CreateAlways);
