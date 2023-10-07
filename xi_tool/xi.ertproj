@@ -1,0 +1,39 @@
+﻿UseVersionDefines = true
+Attachments {
+	AAAAAA {
+		From = "xi.ini"
+		To = "xi.ini"
+	}
+}
+CompileList {
+	AAAAAA = "../ximg/xi_pret.cxx"
+	AAAAAB = "../xasm/xa_compiler.cxx"
+	AAAAAC = "xi.cxx"
+	AAAAAD = "../xasm/xa_t_armv8.cxx"
+	AAAAAE = "../xasm/xa_t_i386.cxx"
+	AAAAAF = "../xasm/xa_t_x64.cxx"
+	AAAAAG = "../xasm/xa_trans.cxx"
+	AAAAAH = "../xasm/xa_type_helper.cxx"
+	AAAAAI = "../xasm/xa_types.cxx"
+	AAAAAJ = "../xenv/xe_conapi.cxx"
+	AAAAAK = "../xenv/xe_ctx.cxx"
+	AAAAAL = "../xenv/xe_filesys.cxx"
+	AAAAAM = "../xenv/xe_interfaces.cxx"
+	AAAAAN = "../xenv/xe_loader.cxx"
+	AAAAAO = "../xenv/xe_logger.cxx"
+	AAAAAP = "../xenv/xe_rtss.cxx"
+	AAAAAQ = "../xenv/xe_stdext.cxx"
+	AAAAAR = "../xexec/xx_com.cxx"
+	AAAAAS = "../ximg/xi_function.cxx"
+	AAAAAT = "../ximg/xi_module.cxx"
+	AAAAAU = "../ximg/xi_resources.cxx"
+}
+VersionInformation {
+	ApplicationIdentifier = "XIC"
+	ApplicationName = "Engine XI Conspector"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2023"
+	InternalName = "xi"
+	Version = "1.0.0.1"
+}
