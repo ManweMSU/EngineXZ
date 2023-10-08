@@ -378,8 +378,8 @@ namespace Engine
 				SafePointer< Volumes::Dictionary<string, string> > localization;
 				try { localization = XI::LoadModuleLocalization(data->resources, Assembly::CurrentLocale); } catch (...) {}
 				auto word_size = _trans->GetWordSize();
-				for (auto & l : data->literals) {
-					if (l.key[0] != L'.' && (local.FindSymbol(l.key, false) || _system.FindSymbol(l.key, false))) {
+				for (auto & l : data->literals) if (!_system.FindSymbol(l.key, false)) {
+					if (l.key[0] != L'.' && local.FindSymbol(l.key, false)) {
 						callback->HandleModuleLoadError(name, l.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -413,8 +413,8 @@ namespace Engine
 					} else throw InvalidArgumentException();
 					local.RegisterSymbol(lit, l.key);
 				}
-				for (auto & v : data->variables) {
-					if (v.key[0] != L'.' && (local.FindSymbol(v.key, false) || _system.FindSymbol(v.key, false))) {
+				for (auto & v : data->variables) if (!_system.FindSymbol(v.key, false)) {
+					if (v.key[0] != L'.' && local.FindSymbol(v.key, false)) {
 						callback->HandleModuleLoadError(name, v.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -425,9 +425,9 @@ namespace Engine
 						v.value.type_canonical_name, v.value.attributes);
 					local.RegisterSymbol(var, v.key);
 				}
-				for (auto & f : data->functions) {
+				for (auto & f : data->functions) if (!_system.FindSymbol(f.key, false)) {
 					if (f.value.code_flags & XI::Module::Function::FunctionPrototype) continue;
-					if (f.key[0] != L'.' && (local.FindSymbol(f.key, false) || _system.FindSymbol(f.key, false))) {
+					if (f.key[0] != L'.' && local.FindSymbol(f.key, false)) {
 						callback->HandleModuleLoadError(name, f.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -438,8 +438,8 @@ namespace Engine
 						return 0;
 					}
 				}
-				for (auto & c : data->classes) {
-					if (c.key[0] != L'.' && (local.FindSymbol(c.key, false) || _system.FindSymbol(c.key, false))) {
+				for (auto & c : data->classes) if (!_system.FindSymbol(c.key, false)) {
+					if (c.key[0] != L'.' && local.FindSymbol(c.key, false)) {
 						callback->HandleModuleLoadError(name, c.key, ModuleLoadError::DuplicateSymbol);
 						_sync->Open();
 						return 0;
@@ -472,16 +472,18 @@ namespace Engine
 						string m_fqn;
 						if ((m.value.code_flags & XI::Module::Function::FunctionClassMask) != XI::Module::Function::FunctionClassNull) {
 							m_fqn = c.key + L"." + m.key;
-							if (local.FindSymbol(m_fqn, false) || _system.FindSymbol(m_fqn, false)) {
-								callback->HandleModuleLoadError(name, m_fqn, ModuleLoadError::DuplicateSymbol);
-								_sync->Open();
-								return 0;
-							}
-							if (!class_discard) {
-								XI::LoadFunction(m_fqn, m.value, &loader);
-								if (!loader.ok) {
+							if (!_system.FindSymbol(m_fqn, false)) {
+								if (local.FindSymbol(m_fqn, false)) {
+									callback->HandleModuleLoadError(name, m_fqn, ModuleLoadError::DuplicateSymbol);
 									_sync->Open();
 									return 0;
+								}
+								if (!class_discard) {
+									XI::LoadFunction(m_fqn, m.value, &loader);
+									if (!loader.ok) {
+										_sync->Open();
+										return 0;
+									}
 								}
 							}
 						}

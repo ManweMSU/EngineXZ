@@ -374,20 +374,20 @@ namespace Engine
 			XI::Module module(input, XI::Module::ModuleLoadFlags::LoadLink);
 			Volumes::Dictionary<XClass *, XI::Module::Class *> cpp;
 			for (auto & d : module.modules_depends_on) if (!IncludeModule(d, callback)) return false;
-			for (auto & c : module.classes) {
+			for (auto & c : module.classes) try {
 				auto obj = ProvidePath(*this, c.key);
 				SafePointer<XClass> cls = XL::CreateClass(GetName(c.key), c.key, false, *this);
 				obj->AddMember(GetName(c.key), cls);
 				cls->OverrideLanguageSemantics(c.value.class_nature);
 				cls->OverrideArgumentSpecification(c.value.instance_spec);
 				cpp.Append(cls, &c.value);
-			}
-			for (auto & c : module.aliases) {
+			} catch (...) {}
+			for (auto & c : module.aliases) try {
 				auto obj = ProvidePath(*this, c.key);
 				SafePointer<XAlias> als = CreateAliasRaw(GetName(c.key), c.key, c.value, false);
 				obj->AddMember(GetName(c.key), als);
-			}
-			for (auto & c : module.functions) {
+			} catch (...) {}
+			for (auto & c : module.functions) try {
 				auto full_path = GetFuncPath(c.key);
 				auto sign = GetFuncSign(c.key);
 				auto name = GetName(full_path);
@@ -414,19 +414,19 @@ namespace Engine
 				uint flags = 0;
 				if (c.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
 				fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false);
-			}
-			for (auto & c : module.variables) {
+			} catch (...) {}
+			for (auto & c : module.variables) try {
 				auto obj = ProvidePath(*this, c.key);
 				SafePointer<XType> type = XL::CreateType(c.value.type_canonical_name, *this);
 				SafePointer<XComputable> var = XL::CreateVariable(*this, GetName(c.key), c.key, false, type, c.value.offset);
 				obj->AddMember(GetName(c.key), var);
-			}
-			for (auto & c : module.literals) {
+			} catch (...) {}
+			for (auto & c : module.literals) try {
 				auto obj = ProvidePath(*this, c.key);
 				SafePointer<XLiteral> lit = CreateLiteral(*this, c.value);
 				lit->Attach(GetName(c.key), c.key, false);
 				obj->AddMember(GetName(c.key), lit);
-			}
+			} catch (...) {}
 			for (auto & c : cpp) {
 				if (c.value->parent_class.interface_name.Length()) {
 					SafePointer<LObject> parent = QueryObject(c.value->parent_class.interface_name);
@@ -480,7 +480,7 @@ namespace Engine
 				}
 			}
 			for (auto & c : cpp) c.key->UpdateInternals();
-			if (_prot_hdlr) for (auto & p : module.prototypes) if (p.value.data) _prot_hdlr->HandlePrototype(p.key, p.value.target_language, *p.value.data, p.value.attributes);
+			if (_prot_hdlr) for (auto & p : module.prototypes) if (p.value.data) try { _prot_hdlr->HandlePrototype(p.key, p.value.target_language, *p.value.data, p.value.attributes); } catch (...) {}
 			return true;
 		}
 		void LContext::SetPrototypeHandler(LPrototypeHandler * hdlr) { _prot_hdlr.SetRetain(hdlr); }
