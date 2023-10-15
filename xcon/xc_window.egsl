@@ -1,0 +1,49 @@
+﻿## resource "SL"
+
+struct State
+{
+	int vp_width, vp_height;
+	int rect_left, rect_top, rect_right, rect_bottom;
+	int cell_x, cell_y;
+}
+struct Vertex
+{
+	float2 position;
+}
+
+vertex vertex_singulus(
+	in uint id : vertex,
+	in State state : constant[0],
+	out Vertex vert,
+	out float4 position : position
+) {
+	if (id == 0) vert.position = float2(state.rect_left, state.rect_top);
+	else if (id == 1 || id == 3) vert.position = float2(state.rect_right, state.rect_top);
+	else if (id == 2 || id == 4) vert.position = float2(state.rect_left, state.rect_bottom);
+	else vert.position = float2(state.rect_right, state.rect_bottom);
+	position.x = (2.0f * vert.position.x - state.vp_width) / float(state.vp_width);
+	position.y = -(2.0f * vert.position.y - state.vp_height) / float(state.vp_height);
+	position.z = 0.0f;
+	position.w = 1.0f;
+}
+pixel punctum_primum(
+	in Vertex vert,
+	in State state : constant[0],
+	in texture map : texture[0],
+	in texture text : texture[1],
+	out float4 color : color[0]
+) {
+	float4 clr = map[int3((vert.position.x - state.rect_left) / state.cell_x, (vert.position.y - state.rect_top) / state.cell_y, 0)];
+	float4 mask = text[int3(vert.position.x - state.rect_left, vert.position.y - state.rect_top, 0)];
+	color = clr * mask;
+	color.rgb *= clr.a;
+}
+pixel punctum_secundum(
+	in Vertex vert,
+	in State state : constant[0],
+	in texture map : texture[0],
+	out float4 color : color[0]
+) {
+	color = map[int3((vert.position.x - state.rect_left) / state.cell_x, (vert.position.y - state.rect_top) / state.cell_y, 0)];
+	color.rgb *= color.a;
+}

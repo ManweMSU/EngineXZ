@@ -1,0 +1,34 @@
+﻿ApplicationIcon = "../artworks/xc_icon.eiwv"
+Languages = "ru,en"
+Subsystem = "gui"
+UsesWindowEffects = true
+UseVersionDefines = true
+Attachments {
+	AAAAAA {
+		From = "xc.ini"
+		To = "xc.ini"
+	}
+}
+CompileList {
+	AAAAAA = "common\\xc_channel.cxx"
+	AAAAAB = "xc.cxx"
+	AAAAAC = "xc_buffer.cxx"
+	AAAAAD = "xc_io.cxx"
+	AAAAAE = "xc_window.cxx"
+	AAAAAF = "xc_window.egsl"
+}
+Resources {
+	COM = "@com_en.ecst"
+	ru {
+		COM = "@com_ru.ecst"
+	}
+}
+VersionInformation {
+	ApplicationIdentifier = "XC"
+	ApplicationName = "X Consolatorium"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2023"
+	InternalName = "xc"
+	Version = "1.0.0.1"
+}
