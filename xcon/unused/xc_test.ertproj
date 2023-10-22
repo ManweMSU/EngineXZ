@@ -1,0 +1,6 @@
+﻿OutputLocation = "_build_test"
+CompileList {
+	AAAAAA = "client\\xc_api.cxx"
+	AAAAAB = "common\\xc_channel.cxx"
+	AAAAAC = "xc_test.cxx"
+}
