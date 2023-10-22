@@ -411,7 +411,7 @@ namespace Engine
 						auto context = _device->GetDeviceContext();
 						ResourceInitDesc init;
 						init.Data = picture->GetData();
-						init.DataPitch = picture->GetScanLineLength();
+						init.DataPitch = picture->GetStride();
 						context->BeginMemoryManagementPass();
 						context->UpdateResourceData(_background_texture, SubresourceIndex(0, 0), VolumeIndex(0, 0, 0),
 							VolumeIndex(picture->GetWidth(), picture->GetHeight(), 1), init);
@@ -538,7 +538,7 @@ namespace Engine
 						desc.Usage = ResourceUsageShaderRead | ResourceUsageCPUWrite;
 						ResourceInitDesc init;
 						init.Data = picture->GetData();
-						init.DataPitch = picture->GetScanLineLength();
+						init.DataPitch = picture->GetStride();
 						_background_texture = _device->CreateTexture(desc, &init);
 						_background_brush = context_2d->CreateTextureBrush(_background_texture, TextureAlphaMode::Premultiplied);
 					}

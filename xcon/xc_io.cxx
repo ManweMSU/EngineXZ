@@ -32,14 +32,31 @@ namespace Engine
 		// 22 - character input
 		// 23 - keyboard input
 		// 24 - buffer size alternation input
-
-		// TODO: ADD
-		// caret shape control API (blinking, weight and shape)
-		// window attributes control API (color, margins, blur, font and font height)
-		// misc control (tab size, close on end-of-stream)
-		// text attribute control (palette, default colors, font attributes, reversion and defaulting)
-		// screen buffer extended control (caret position push/pop, scroll region control, background image positioning)
-		// background image API (create of size, remove, publish, sync)
+		// 25 - caret state control
+		// 26 - caret state revert
+		// 27 - set font attribute
+		// 28 - revert font attribute
+		// 29 - palette control
+		// 30 - set as default
+		// 31 - set close on detach
+		// 32 - set horizontal tabulation
+		// 33 - set vertical tabulation
+		// 34 - set window margins
+		// 35 - set window background
+		// 36 - set window blur behind
+		// 37 - set window font height
+		// 38 - set window font face and height
+		// 39 - push caret position
+		// 40 - pop caret position
+		// 41 - set scrolling region
+		// 42 - scroll region
+		// 43 - set backbuffer stretching mode
+		// 44 - create backbuffer
+		// 45 - load backbuffer
+		// 46 - reset backbuffer
+		// 47 - give backbuffer access
+		// 48 - give backbuffer access responce (shared memory object)
+		// 49 - backbuffer synchronize
 
 		class AttachIO : public IAttachIO, IOutputCallback
 		{
@@ -47,8 +64,23 @@ namespace Engine
 				SafePointer<IChannel> channel;
 				SafePointer<AttachIO> io;
 			};
+			struct _input_char
+			{
+				uint ucs;
+				Point pos;
+			};
 			struct _io_state {
 				IO::ConsoleInputMode _mode;
+				Array<_input_char> _buffer = Array<_input_char>(0x100);
+				int _caret_index;
+			};
+			struct _client_state {
+				SafePointer<IChannel> channel;
+				uint read_req;
+			};
+			struct _event {
+				uint code;
+				uint args[2];
 			};
 			_io_state _current_state;
 			string _title, _preset;
@@ -56,9 +88,10 @@ namespace Engine
 			SafePointer<IChannel> _attach_io;
 			SafePointer<IChannelServer> _io_server;
 			SafePointer<IChannel> _output_sink;
-			ObjectArray<IChannel> _clients;
 			SafePointer<Semaphore> _sync;
 			SafePointer<ConsoleState> _console;
+			Array<_client_state> _clients;
+			Volumes::Queue<_event> _events;
 		public:
 			static void _respond(IChannel * channel, uint verb, const void * data, int length)
 			{
@@ -70,6 +103,74 @@ namespace Engine
 					MemoryCopy(req.data->GetBuffer(), data, length);
 				}
 				channel->SendRequest(req);
+			}
+			void _send_event(IChannel * channel, const _event & e)
+			{
+				Request req;
+				req.verb = e.code;
+				req.data = new DataBlock(1);
+				req.data->SetLength(8);
+				MemoryCopy(req.data->GetBuffer(), &e.args, 8);
+				channel->SendRequest(req);
+			}
+			void _emit_event(const _event & e)
+			{
+				IChannel * cs = 0;
+				_sync->Wait();
+				for (auto & c : _clients) if (c.read_req) { cs = c.channel; c.read_req--; }
+				if (!cs) _events.Push(e);
+				_sync->Open();
+				if (cs) _send_event(cs, e);
+			}
+			void _set_io_mode(uint mode)
+			{
+				auto prev = _current_state._mode;
+				if (mode == 0) _current_state._mode = IO::ConsoleInputMode::Raw;
+				else if (mode == 1) _current_state._mode = IO::ConsoleInputMode::Echo;
+				if (prev != _current_state._mode) {
+					_current_state._caret_index = 0;
+					_current_state._buffer.Clear();
+				}
+			}
+			void _canonical_update_caret(void)
+			{
+				if (_current_state._caret_index < _current_state._buffer.Length()) {
+					_console->SetCaretPosition(_current_state._buffer[_current_state._caret_index].pos);
+				} else if (_current_state._buffer.Length()) {
+					auto pos = _current_state._buffer.LastElement().pos;
+					pos.x++;
+					if (pos.x >= _console->GetBufferWidth()) { pos.x = 0; pos.y++; }
+					_console->SetCaretPosition(pos);
+				}
+			}
+			void _reprint_chars(_input_char * chars, int count)
+			{
+				Point pn;
+				_console->GetCaretPosition(pn);
+				for (int i = 0; i < count; i++) if (chars[i].pos.x >= 0) {
+					auto & chr = chars[i];
+					uint spc = L' ';
+					_console->SetCaretPosition(chr.pos);
+					_console->Print(&spc, 1);
+				}
+				_console->SetCaretPosition(pn);
+				for (int i = 0; i < count; i++) {
+					auto & chr = chars[i];
+					_console->GetCaretPosition(pn);
+					if (pn.x >= _console->GetBufferWidth()) {
+						uint crlf[] = { L'\n', L'\r' };
+						_console->Print(crlf, 2);
+						_console->GetCaretPosition(pn);
+					}
+					chr.pos = pn;
+					_console->Print(&chr.ucs, 1);
+				}
+				_console->GetCaretPosition(pn);
+				if (pn.x >= _console->GetBufferWidth()) {
+					uint crlf[] = { L'\n', L'\r' };
+					_console->Print(crlf, 2);
+				}
+				_canonical_update_caret();
 			}
 			void _process_request(uint verb, DataBlock * data, IChannel * channel)
 			{
@@ -127,11 +228,129 @@ namespace Engine
 				} else if (verb == 19) {
 					_console->SwapScreenBuffers();
 				} else if (verb == 20 && data && data->Length() == 4) {
-					// TODO: IMPLEMENT
-					// 20 - set IO mode
+					_set_io_mode(*reinterpret_cast<uint *>(data->GetBuffer()));
 				} else if (verb == 21) {
-					// TODO: IMPLEMENT
-					// 21 - ready to accept an input
+					_event e;
+					_sync->Wait();
+					if (_events.IsEmpty()) {
+						e.code = 0;
+						for (auto & c : _clients) if (c.channel.Inner() == channel) { c.read_req++; break; }
+					} else e = _events.Pop();
+					_sync->Open();
+					if (e.code) _send_event(channel, e);
+				} else if (verb == 25 && data && data->Length() == 16) {
+					uint flags = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					uint shape = reinterpret_cast<uint *>(data->GetBuffer())[1];
+					double weight = reinterpret_cast<double *>(data->GetBuffer())[1];
+					if (flags & 0x01) {
+						if (flags & 0x08) _console->SetCaretBlinks(true);
+						else _console->SetCaretBlinks(false);
+					}
+					if (flags & 0x02) {
+						if (shape == 0) _console->SetCaretStyle(CaretStyle::Null);
+						else if (shape == 1) _console->SetCaretStyle(CaretStyle::Horizontal);
+						else if (shape == 2) _console->SetCaretStyle(CaretStyle::Vertical);
+						else if (shape == 3) _console->SetCaretStyle(CaretStyle::Cell);
+					}
+					if (flags & 0x04) _console->SetCaretWeight(weight);
+				} else if (verb == 26) {
+					_console->RevertCaretVisuals();
+				} else if (verb == 27 && data && data->Length() == 8) {
+					uint mask = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					uint set = reinterpret_cast<uint *>(data->GetBuffer())[1];
+					_console->SetAttributionFlags(mask, set);
+				} else if (verb == 28 && data && data->Length() == 4) {
+					uint mask = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					_console->RevertAttributionFlags(mask);
+				} else if (verb == 29 && data && data->Length() == 12) {
+					uint flags = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					uint index = reinterpret_cast<uint *>(data->GetBuffer())[1];
+					uint color = reinterpret_cast<uint *>(data->GetBuffer())[2];
+					_console->WritePalette(flags, index, color);
+				} else if (verb == 30) {
+					_console->OverrideDefaults();
+				} else if (verb == 31 && data && data->Length() > 0) {
+					_console->SetCloseOnEndOfStream(data->ElementAt(0) != 0);
+				} else if (verb == 32 && data && data->Length() == 4) {
+					int size = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					auto current = _console->GetTabulationSize();
+					_console->SetTabulationSize(Point(max(size, 1), current.y));
+				} else if (verb == 33 && data && data->Length() == 4) {
+					int size = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					auto current = _console->GetTabulationSize();
+					_console->SetTabulationSize(Point(current.x, max(size, 1)));
+				} else if (verb == 34 && data && data->Length() == 4) {
+					uint size = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					_console->SetMargin(size);
+				} else if (verb == 35 && data && data->Length() == 4) {
+					uint color = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					_console->SetWindowColor(color);
+				} else if (verb == 36 && data && data->Length() == 8) {
+					double blur = reinterpret_cast<double *>(data->GetBuffer())[0];
+					_console->SetBlurBehind(blur);
+				} else if (verb == 37 && data && data->Length() == 4) {
+					string face;
+					int height;
+					_console->GetFont(face, height);
+					uint new_height = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					_console->SetFont(face, new_height);
+				} else if (verb == 38 && data && data->Length() >= 4) {
+					uint height = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					auto face = string(data->GetBuffer() + 4, data->Length() - 4, Encoding::UTF8);
+					_console->SetFont(face, height);
+				} else if (verb == 39) {
+					_console->PushCaretPosition();
+				} else if (verb == 40) {
+					_console->PopCaretPosition();
+				} else if (verb == 41 && data && data->Length() == 8) {
+					int from = reinterpret_cast<int *>(data->GetBuffer())[0];
+					int lines = reinterpret_cast<int *>(data->GetBuffer())[1];
+					_console->SetScrollingRectangle(from, lines);
+				} else if (verb == 42 && data && data->Length() == 4) {
+					int lines = reinterpret_cast<int *>(data->GetBuffer())[0];
+					_console->ScrollCurrentRange(lines);
+				} else if (verb == 43 && data && data->Length() == 4) {
+					uint mode = reinterpret_cast<uint *>(data->GetBuffer())[0];
+					if (mode == 0) _console->SetPictureMode(Windows::ImageRenderMode::Blit);
+					else if (mode == 1) _console->SetPictureMode(Windows::ImageRenderMode::Stretch);
+					else if (mode == 2) _console->SetPictureMode(Windows::ImageRenderMode::FitKeepAspectRatio);
+					else if (mode == 3) _console->SetPictureMode(Windows::ImageRenderMode::CoverKeepAspectRatio);
+				} else if (verb == 44 && data && data->Length() == 8) {
+					try {
+						uint w = reinterpret_cast<uint *>(data->GetBuffer())[0];
+						uint h = reinterpret_cast<uint *>(data->GetBuffer())[1];
+						SafePointer<WrappedPicture> picture = new WrappedPicture(w, h);
+						_console->SetPicture(picture);
+					} catch (...) {}
+				} else if (verb == 45 && data && data->Length()) {
+					try {
+						auto path = string(data->GetBuffer(), data->Length(), Encoding::UTF8);
+						SafePointer<Streaming::Stream> input = new Streaming::FileStream(path, Streaming::AccessRead, Streaming::OpenExisting);
+						SafePointer<Codec::Frame> frame = Codec::DecodeFrame(input);
+						if (!frame) throw Exception();
+						SafePointer<WrappedPicture> picture = new WrappedPicture(frame);
+						_console->SetPicture(picture);
+					} catch (...) {}
+				} else if (verb == 46) {
+					_console->SetPicture(0);
+				} else if (verb == 47) {
+					int data[3] = { 0, 0, 0 };
+					try {
+						auto picture = _console->GetPicture();
+						if (picture) {
+							if (!picture->IsShared()) {
+								SafePointer<SharedMemoryPicture> shared = new SharedMemoryPicture(static_cast<WrappedPicture *>(picture)->GetFrame());
+								_console->SetPicture(shared);
+								picture = shared.Inner();
+							}
+							data[0] = static_cast<SharedMemoryPicture *>(picture)->ExposeMemoryIndex();
+							data[1] = picture->GetWidth();
+							data[2] = picture->GetHeight();
+						}
+					} catch (...) {}
+					_respond(channel, 48, &data, sizeof(data));
+				} else if (verb == 49) {
+					_console->NotifyPictureUpdated();
 				}
 			}
 			static int _io_thread(void * arg)
@@ -147,7 +366,7 @@ namespace Engine
 					Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([v = req.verb, d = req.data, channel, self]() { self->_process_request(v, d, channel); }));
 				}
 				self->_sync->Wait();
-				for (int i = 0; i < self->_clients.Length(); i++) if (self->_clients.ElementAt(i) == channel.Inner()) {
+				for (int i = 0; i < self->_clients.Length(); i++) if (self->_clients[i].channel.Inner() == channel.Inner()) {
 					self->_clients.Remove(i);
 					break;
 				}
@@ -163,8 +382,11 @@ namespace Engine
 				while (true) {
 					SafePointer<IChannel> channel = self->_io_server->Accept();
 					if (channel) {
+						_client_state client;
+						client.channel = channel;
+						client.read_req = 0;
 						self->_sync->Wait();
-						self->_clients.Append(channel);
+						self->_clients.Append(client);
 						self->_sync->Open();
 						auto data = new (std::nothrow) _new_io_struct;
 						if (data) {
@@ -182,6 +404,7 @@ namespace Engine
 			AttachIO(const string & path) : _clients(0x10)
 			{
 				_current_state._mode = IO::ConsoleInputMode::Echo;
+				_current_state._caret_index = 0;
 				_attach_io = ConnectChannel(path);
 				_sync = CreateSemaphore(1);
 			}
@@ -238,21 +461,134 @@ namespace Engine
 			}
 			virtual bool OutputKey(uint code, uint flags) noexcept override
 			{
-				// TODO: IMPLEMENT
+				if (_current_state._mode == IO::ConsoleInputMode::Raw) {
+					_event e;
+					e.code = 23;
+					e.args[0] = code;
+					e.args[1] = flags;
+					_emit_event(e);
+				} else {
+					if (code == KeyCodes::Return && (flags & ~IO::ConsoleKeyFlagShift) == 0) {
+						for (auto & c : _current_state._buffer) {
+							_event e;
+							e.code = 22;
+							e.args[0] = c.ucs;
+							e.args[1] = 0;
+							_emit_event(e);
+						}
+						_event e;
+						e.code = 22;
+						e.args[0] = L'\n';
+						e.args[1] = 0;
+						_emit_event(e);
+						_current_state._caret_index = _current_state._buffer.Length();
+						_canonical_update_caret();
+						_current_state._buffer.Clear();
+						_current_state._caret_index = 0;
+						uint crlf[] = { L'\n', L'\r' };
+						_console->Print(crlf, 2);
+						return true;
+					} else if (code == KeyCodes::Back && flags == 0) {
+						if (_current_state._caret_index > 0) {
+							uint spc = L' ';
+							_console->SetCaretPosition(_current_state._buffer[_current_state._caret_index - 1].pos);
+							_console->Print(&spc, 1);
+							_console->SetCaretPosition(_current_state._buffer[_current_state._caret_index - 1].pos);
+							_current_state._buffer.Remove(_current_state._caret_index - 1);
+							_current_state._caret_index--;
+							_reprint_chars(_current_state._buffer.GetBuffer() + _current_state._caret_index, _current_state._buffer.Length() - _current_state._caret_index);
+						}
+						return true;
+					} else if (code == KeyCodes::Delete && flags == 0) {
+						if (_current_state._caret_index < _current_state._buffer.Length()) {
+							uint spc = L' ';
+							_console->SetCaretPosition(_current_state._buffer[_current_state._caret_index].pos);
+							_console->Print(&spc, 1);
+							_console->SetCaretPosition(_current_state._buffer[_current_state._caret_index].pos);
+							_current_state._buffer.Remove(_current_state._caret_index);
+							_reprint_chars(_current_state._buffer.GetBuffer() + _current_state._caret_index, _current_state._buffer.Length() - _current_state._caret_index);
+						}
+						return true;
+					} else if (code == KeyCodes::Left && flags == 0) {
+						_current_state._caret_index = max(_current_state._caret_index - 1, 0);
+						_canonical_update_caret();
+						return true;
+					} else if (code == KeyCodes::Right && flags == 0) {
+						_current_state._caret_index = min(_current_state._caret_index + 1, _current_state._buffer.Length());
+						_canonical_update_caret();
+						return true;
+					} else if (code == KeyCodes::Home && flags == 0) {
+						_current_state._caret_index = 0;
+						_canonical_update_caret();
+						return true;
+					} else if (code == KeyCodes::End && flags == 0) {
+						_current_state._caret_index = _current_state._buffer.Length();
+						_canonical_update_caret();
+						return true;
+					} else if (code == KeyCodes::V && flags == IO::ConsoleKeyFlagControl) {
+						if (Clipboard::IsFormatAvailable(Clipboard::Format::Text)) {
+							string data;
+							if (Clipboard::GetData(data) && data.Length()) {
+								Array<uint> ucs(1);
+								ucs.SetLength(data.GetEncodedLength(Encoding::UTF32));
+								data.Encode(ucs.GetBuffer(), Encoding::UTF32, false);
+								for (auto & c : ucs) {
+									if (c >= 32) OutputText(c);
+									else if (c == L'\n') OutputKey(KeyCodes::Return, 0);
+								}
+							}
+						}
+						return true;
+					}
+				}
 				return false;
 			}
 			virtual void OutputText(uint ucs) noexcept override
 			{
-				// TODO: IMPLEMENT
+				if (_current_state._mode == IO::ConsoleInputMode::Raw) {
+					_event e;
+					e.code = 22;
+					e.args[0] = ucs;
+					e.args[1] = 0;
+					_emit_event(e);
+				} else {
+					if (ucs >= 32) {
+						_input_char in;
+						in.ucs = ucs;
+						in.pos = Point(-1, -1);
+						_current_state._buffer.Insert(in, _current_state._caret_index);
+						_current_state._caret_index++;
+						_reprint_chars(_current_state._buffer.GetBuffer() + _current_state._caret_index - 1, _current_state._buffer.Length() - _current_state._caret_index + 1);
+					}
+				}
 			}
 			virtual void WindowResize(int width, int height) noexcept override {}
 			virtual void ScreenBufferResize(int width, int height) noexcept override
 			{
-				// TODO: IMPLEMENT
+				if (_current_state._mode == IO::ConsoleInputMode::Raw) {
+					if (!_console->IsBufferScrollable()) {
+						_event e;
+						e.code = 24;
+						e.args[0] = width;
+						e.args[1] = height;
+						_sync->Wait();
+						for (auto & c : _clients) _send_event(c.channel, e);
+						_sync->Open();
+					}
+				} else {
+					if (_current_state._buffer.Length()) {
+						_console->SetCaretPosition(_current_state._buffer[0].pos);
+						_reprint_chars(_current_state._buffer.GetBuffer(), _current_state._buffer.Length());
+					}
+				}
 			}
 			virtual void Terminate(void) noexcept override
 			{
-				// TODO: IMPLEMENT
+				_event e;
+				e.code = e.args[0] = e.args[1] = 0;
+				_sync->Wait();
+				for (auto & c : _clients) _send_event(c.channel, e);
+				_sync->Open();
 			}
 		};
 

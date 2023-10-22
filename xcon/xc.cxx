@@ -10,10 +10,7 @@ using namespace Engine::XC;
 using namespace Engine::Streaming;
 
 struct {
-	bool enable_xmode = false;
-	bool exec_xmode = false;
 	string preset_file, attach_io_channel, title;
-	Array<string> exec = Array<string>(0x10);
 } state;
 
 int Main(void)
@@ -24,14 +21,9 @@ int Main(void)
 		SafePointer< Array<string> > args = GetCommandLine();
 		for (int i = 1; i < args->Length(); i++) {
 			auto & arg = args->ElementAt(i);
-			if (arg == L"--xx-modus") {
-				state.enable_xmode = state.exec_xmode = true;
-			} else if (arg == L"--xx-adnecte") {
+			if (arg == L"--xx-adnecte") {
 				i++; if (i >= args->Length()) throw InvalidArgumentException();
 				state.attach_io_channel = args->ElementAt(i);
-				state.enable_xmode = true;
-			} else if (arg == L"--exeque") {
-				i++; while (i < args->Length()) { state.exec << args->ElementAt(i); i++; }
 			} else if (arg == L"--forma") {
 				i++; if (i >= args->Length()) throw InvalidArgumentException();
 				state.preset_file = ExpandPath(args->ElementAt(i));

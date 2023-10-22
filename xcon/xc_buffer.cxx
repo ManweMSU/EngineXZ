@@ -508,16 +508,13 @@ namespace Engine
 			if (_presentation_callback) _presentation_callback->InvalidateLines(y, 1);
 		}
 
-		void ConsoleState::SetPicture(Codec::Frame * picture)
+		void ConsoleState::SetPicture(IPictureProvider * picture)
 		{
-			if (!picture || (picture->GetPixelFormat() == Codec::PixelFormat::B8G8R8A8 &&
-				picture->GetAlphaMode() == Codec::AlphaMode::Premultiplied && picture->GetScanOrigin() == Codec::ScanOrigin::TopDown)) {
-				_screen->_picture.SetRetain(picture);
-			} else _screen->_picture = picture->ConvertFormat(Codec::PixelFormat::B8G8R8A8, Codec::AlphaMode::Premultiplied, Codec::ScanOrigin::TopDown);
+			_screen->_picture.SetRetain(picture);
 			if (_presentation_callback) _presentation_callback->CommonEvent(CommonEventPictureReset);
 		}
 		void ConsoleState::NotifyPictureUpdated(void) const { if (_presentation_callback) _presentation_callback->CommonEvent(CommonEventPictureUpdate); }
-		Codec::Frame * ConsoleState::GetPicture(void) const { return _screen->_picture; }
+		IPictureProvider * ConsoleState::GetPicture(void) const { return _screen->_picture; }
 		void ConsoleState::SetPictureMode(Windows::ImageRenderMode mode) { _screen->_picture_mode = mode; if (_presentation_callback) _presentation_callback->CommonEvent(CommonEventPictureReshape); }
 		Windows::ImageRenderMode ConsoleState::GetPictureMode(void) const { return _screen->_picture_mode; }
 
@@ -527,6 +524,52 @@ namespace Engine
 		void ConsoleState::SetCallback(IPresentationCallback * callback) { _presentation_callback = callback; }
 		void ConsoleState::SetCallback(IOutputCallback * callback) { _output_callback = callback; }
 		void ConsoleState::Terminate(void) { if (_output_callback) _output_callback->Terminate(); }
+
+		WrappedPicture::WrappedPicture(int width, int height)
+		{
+			_frame = new Codec::Frame(width, height, Codec::PixelFormat::B8G8R8A8, Codec::AlphaMode::Premultiplied, Codec::ScanOrigin::TopDown);
+		}
+		WrappedPicture::WrappedPicture(Codec::Frame * frame)
+		{
+			if (frame->GetPixelFormat() == Codec::PixelFormat::B8G8R8A8 && frame->GetAlphaMode() == Codec::AlphaMode::Premultiplied && frame->GetScanOrigin() == Codec::ScanOrigin::TopDown) {
+				_frame.SetRetain(frame);
+			} else _frame = frame->ConvertFormat(Codec::PixelFormat::B8G8R8A8, Codec::AlphaMode::Premultiplied, Codec::ScanOrigin::TopDown);
+		}
+		WrappedPicture::~WrappedPicture(void) {}
+		int WrappedPicture::GetWidth(void) const noexcept { return _frame->GetWidth(); }
+		int WrappedPicture::GetHeight(void) const noexcept { return _frame->GetHeight(); }
+		int WrappedPicture::GetStride(void) const noexcept { return _frame->GetScanLineLength(); }
+		const void * WrappedPicture::GetData(void) const noexcept { return _frame->GetData(); }
+		void * WrappedPicture::GetData(void) noexcept { return _frame->GetData(); }
+		bool WrappedPicture::IsShared(void) const noexcept { return false; }
+		Codec::Frame * WrappedPicture::GetFrame(void) const noexcept { return _frame; }
+
+		SharedMemoryPicture::SharedMemoryPicture(int width, int height) : _width(width), _height(height)
+		{
+			_index = 0;
+			while (true) {
+				uint error;
+				_memory = IPC::CreateSharedMemory(L"xcmem" + string(_index), 4 * _width * _height, IPC::SharedMemoryCreateNew, &error);
+				if (error == IPC::ErrorSuccess) break;
+				else if (error != IPC::ErrorAlreadyExists) throw Exception();
+				_index++;
+			}
+			if (!_memory->Map(&_mapping, IPC::SharedMemoryMapReadWrite)) throw Exception();
+		}
+		SharedMemoryPicture::SharedMemoryPicture(Codec::Frame * frame) : SharedMemoryPicture(frame->GetWidth(), frame->GetHeight())
+		{
+			for (int y = 0; y < _height; y++) {
+				MemoryCopy(reinterpret_cast<char *>(_mapping) + 4 * y * _width, frame->GetData() + y * frame->GetScanLineLength(), 4 * _width);
+			}
+		}
+		SharedMemoryPicture::~SharedMemoryPicture(void) { _memory->Unmap(); }
+		int SharedMemoryPicture::GetWidth(void) const noexcept { return _width; }
+		int SharedMemoryPicture::GetHeight(void) const noexcept { return _height; }
+		int SharedMemoryPicture::GetStride(void) const noexcept { return _width * 4; }
+		const void * SharedMemoryPicture::GetData(void) const noexcept { return _mapping; }
+		void * SharedMemoryPicture::GetData(void) noexcept { return _mapping; }
+		bool SharedMemoryPicture::IsShared(void) const noexcept { return true; }
+		int SharedMemoryPicture::ExposeMemoryIndex(void) const noexcept { return _index; }
 
 		void LoadConsolePreset(const string & title, const string & preset_path, ConsoleState ** state, ConsoleCreateMode * mode)
 		{
@@ -543,7 +586,10 @@ namespace Engine
 			if (background.Length()) {
 				SafePointer<Streaming::Stream> image_stream = new Streaming::FileStream(background, Streaming::AccessRead, Streaming::OpenExisting);
 				SafePointer<Codec::Frame> image = Codec::DecodeFrame(image_stream);
-				(*state)->SetPicture(image);
+				if (image) {
+					SafePointer<IPictureProvider> provider = new WrappedPicture(image);
+					(*state)->SetPicture(provider);
+				}
 			}
 			mode->size.x = registry->GetValueInteger(L"Fenestra/Latitudo");
 			mode->size.y = registry->GetValueInteger(L"Fenestra/Altitudo");

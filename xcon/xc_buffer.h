@@ -6,7 +6,7 @@ namespace Engine
 {
 	namespace XC
 	{
-		enum class CaretStyle { Horizontal, Vertical, Cell, Null };
+		enum class CaretStyle : uint { Horizontal = 1, Vertical = 2, Cell = 3, Null = 0 };
 		enum CellFlags : uint {
 			CellFlagBold		= 0x01,
 			CellFlagItalic		= 0x02,
@@ -85,6 +85,16 @@ namespace Engine
 		class ScreenBuffer;
 		class ConsoleState;
 
+		class IPictureProvider : public Object
+		{
+		public:
+			virtual int GetWidth(void) const noexcept = 0;
+			virtual int GetHeight(void) const noexcept = 0;
+			virtual int GetStride(void) const noexcept = 0;
+			virtual const void * GetData(void) const noexcept = 0;
+			virtual void * GetData(void) noexcept = 0;
+			virtual bool IsShared(void) const noexcept = 0;
+		};
 		class ScreenBuffer : public Object
 		{
 			friend class ConsoleState;
@@ -94,7 +104,7 @@ namespace Engine
 			Array<Cell> _cells;
 			Array<Point> _caret_stack;
 			Windows::ImageRenderMode _picture_mode;
-			SafePointer<Codec::Frame> _picture;
+			SafePointer<IPictureProvider> _picture;
 			int _scroll_region_from, _scroll_region_num_lines, _scroll_offset;
 		public:
 			ScreenBuffer(const CellAttribute & attr);
@@ -181,9 +191,9 @@ namespace Engine
 			void UpdateLine(int y, const Cell * cells, int length);
 			void UpdateLine(int y, const uint * chars, int length, bool keep_attributes);
 
-			void SetPicture(Codec::Frame * picture);
+			void SetPicture(IPictureProvider * picture);
 			void NotifyPictureUpdated(void) const;
-			Codec::Frame * GetPicture(void) const;
+			IPictureProvider * GetPicture(void) const;
 			void SetPictureMode(Windows::ImageRenderMode mode);
 			Windows::ImageRenderMode GetPictureMode(void) const;
 
@@ -193,6 +203,39 @@ namespace Engine
 			void SetCallback(IPresentationCallback * callback);
 			void SetCallback(IOutputCallback * callback);
 			void Terminate(void);
+		};
+		class WrappedPicture : public IPictureProvider
+		{
+			SafePointer<Codec::Frame> _frame;
+		public:
+			WrappedPicture(int width, int height);
+			WrappedPicture(Codec::Frame * frame);
+			virtual ~WrappedPicture(void) override;
+			virtual int GetWidth(void) const noexcept override;
+			virtual int GetHeight(void) const noexcept override;
+			virtual int GetStride(void) const noexcept override;
+			virtual const void * GetData(void) const noexcept override;
+			virtual void * GetData(void) noexcept override;
+			virtual bool IsShared(void) const noexcept override;
+			Codec::Frame * GetFrame(void) const noexcept;
+		};
+		class SharedMemoryPicture : public IPictureProvider
+		{
+			int _width, _height;
+			int _index;
+			SafePointer<IPC::ISharedMemory> _memory;
+			void * _mapping;
+		public:
+			SharedMemoryPicture(int width, int height);
+			SharedMemoryPicture(Codec::Frame * frame);
+			virtual ~SharedMemoryPicture(void) override;
+			virtual int GetWidth(void) const noexcept override;
+			virtual int GetHeight(void) const noexcept override;
+			virtual int GetStride(void) const noexcept override;
+			virtual const void * GetData(void) const noexcept override;
+			virtual void * GetData(void) noexcept override;
+			virtual bool IsShared(void) const noexcept override;
+			int ExposeMemoryIndex(void) const noexcept;
 		};
 
 		void LoadConsolePreset(const string & title, const string & preset_path, ConsoleState ** state, ConsoleCreateMode * mode);

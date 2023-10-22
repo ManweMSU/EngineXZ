@@ -31,11 +31,41 @@ namespace Engine
 					self->_sys_counter->Open();
 					self->_sync->Open();
 				} else if (req.verb == 22) {
-					// TODO: PROCESS EVENT
+					IO::ConsoleEventDesc ce;
+					ce.Event = IO::ConsoleEvent::CharacterInput;
+					ce.CharacterCode = reinterpret_cast<int *>(req.data->GetBuffer())[0];
+					self->_sync->Wait();
+					self->_inputs.InsertLast(ce);
+					self->_counter->Open();
+					self->_sync->Open();
 				} else if (req.verb == 23) {
-					// TODO: PROCESS EVENT
+					IO::ConsoleEventDesc ce;
+					ce.Event = IO::ConsoleEvent::KeyInput;
+					ce.KeyCode = reinterpret_cast<int *>(req.data->GetBuffer())[0];
+					ce.KeyFlags = reinterpret_cast<int *>(req.data->GetBuffer())[1];
+					self->_sync->Wait();
+					self->_inputs.InsertLast(ce);
+					self->_counter->Open();
+					self->_sync->Open();
 				} else if (req.verb == 24) {
-					// TODO: PROCESS EVENT
+					IO::ConsoleEventDesc ce;
+					ce.Event = IO::ConsoleEvent::ConsoleResized;
+					ce.Width = reinterpret_cast<int *>(req.data->GetBuffer())[0];
+					ce.Height = reinterpret_cast<int *>(req.data->GetBuffer())[1];
+					self->_sync->Wait();
+					self->_inputs.InsertLast(ce);
+					self->_counter->Open();
+					self->_sync->Open();
+				} else if (req.verb == 48) {
+					_system_input_struct si;
+					si.designation = 48;
+					si.data[0] = reinterpret_cast<int *>(req.data->GetBuffer())[0];
+					si.data[1] = reinterpret_cast<int *>(req.data->GetBuffer())[1];
+					si.data[2] = reinterpret_cast<int *>(req.data->GetBuffer())[2];
+					self->_sync->Wait();
+					self->_sys_inputs.InsertLast(si);
+					self->_sys_counter->Open();
+					self->_sync->Open();
 				}
 			}
 			self->_sync->Wait();
@@ -229,6 +259,256 @@ namespace Engine
 		{
 			Request req;
 			req.verb = 19;
+			_channel->SendRequest(req);
+		}
+		void Console::SetIOMode(IO::ConsoleInputMode mode)
+		{
+			Request req;
+			req.verb = 20;
+			req.data = new DataBlock(sizeof(uint));
+			req.data->SetLength(sizeof(uint));
+			if (mode == IO::ConsoleInputMode::Raw) *reinterpret_cast<uint *>(req.data->GetBuffer()) = 0;
+			else if (mode == IO::ConsoleInputMode::Echo) *reinterpret_cast<uint *>(req.data->GetBuffer()) = 1;
+			else throw InvalidArgumentException();
+			_channel->SendRequest(req);
+		}
+		void Console::ReadEvent(IO::ConsoleEventDesc & event)
+		{
+			Request req;
+			req.verb = 21;
+			if (!_channel->SendRequest(req)) throw InvalidStateException();
+			_counter->Wait();
+			_sync->Wait();
+			event = _inputs.GetFirst()->GetValue();
+			if (event.Event == IO::ConsoleEvent::EndOfFile) _counter->Open();
+			else _inputs.RemoveFirst();
+			_sync->Open();
+		}
+		void Console::SetCaretState(const CaretStateDesc & desc)
+		{
+			Request req;
+			req.verb = 25;
+			req.data = new DataBlock(sizeof(desc));
+			req.data->SetLength(sizeof(desc));
+			*reinterpret_cast<CaretStateDesc *>(req.data->GetBuffer()) = desc;
+			_channel->SendRequest(req);
+		}
+		void Console::RevertCaretState(void)
+		{
+			Request req;
+			req.verb = 26;
+			_channel->SendRequest(req);
+		}
+		void Console::SetFontAttributes(uint mask, uint set)
+		{
+			Request req;
+			req.verb = 27;
+			req.data = new DataBlock(1);
+			req.data->SetLength(8);
+			reinterpret_cast<uint *>(req.data->GetBuffer())[0] = mask;
+			reinterpret_cast<uint *>(req.data->GetBuffer())[1] = set;
+			_channel->SendRequest(req);
+		}
+		void Console::RevertFontAttributes(uint mask)
+		{
+			Request req;
+			req.verb = 28;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			reinterpret_cast<uint *>(req.data->GetBuffer())[0] = mask;
+			_channel->SendRequest(req);
+		}
+		void Console::WritePalette(uint flags, int index, Color color)
+		{
+			Request req;
+			req.verb = 29;
+			req.data = new DataBlock(1);
+			req.data->SetLength(12);
+			reinterpret_cast<uint *>(req.data->GetBuffer())[0] = flags;
+			reinterpret_cast<uint *>(req.data->GetBuffer())[1] = index;
+			reinterpret_cast<uint *>(req.data->GetBuffer())[2] = color.Value;
+			_channel->SendRequest(req);
+		}
+		void Console::OverrideDefaults(void)
+		{
+			Request req;
+			req.verb = 30;
+			_channel->SendRequest(req);
+		}
+		void Console::SetCloseDetachedConsole(bool close)
+		{
+			Request req;
+			req.verb = 31;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			*reinterpret_cast<uint *>(req.data->GetBuffer()) = close;
+			_channel->SendRequest(req);
+		}
+		void Console::SetHorizontalTabulation(int size)
+		{
+			Request req;
+			req.verb = 32;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			*reinterpret_cast<uint *>(req.data->GetBuffer()) = size;
+			_channel->SendRequest(req);
+		}
+		void Console::SetVerticalTabulation(int size)
+		{
+			Request req;
+			req.verb = 33;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			*reinterpret_cast<uint *>(req.data->GetBuffer()) = size;
+			_channel->SendRequest(req);
+		}
+		void Console::SetWindowMargins(int size)
+		{
+			Request req;
+			req.verb = 34;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			*reinterpret_cast<uint *>(req.data->GetBuffer()) = size;
+			_channel->SendRequest(req);
+		}
+		void Console::SetWindowBackground(Color color)
+		{
+			Request req;
+			req.verb = 35;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			*reinterpret_cast<uint *>(req.data->GetBuffer()) = color.Value;
+			_channel->SendRequest(req);
+		}
+		void Console::SetWindowBlurBehind(double power)
+		{
+			Request req;
+			req.verb = 36;
+			req.data = new DataBlock(1);
+			req.data->SetLength(8);
+			*reinterpret_cast<double *>(req.data->GetBuffer()) = power;
+			_channel->SendRequest(req);
+		}
+		void Console::SetWindowFontHeight(int height)
+		{
+			Request req;
+			req.verb = 37;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			*reinterpret_cast<uint *>(req.data->GetBuffer()) = height;
+			_channel->SendRequest(req);
+		}
+		void Console::SetWindowFont(const string & font_face, int height)
+		{
+			Request req;
+			req.verb = 38;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4 + font_face.GetEncodedLength(Encoding::UTF8));
+			*reinterpret_cast<uint *>(req.data->GetBuffer()) = height;
+			font_face.Encode(req.data->GetBuffer() + 4, Encoding::UTF8, false);
+			_channel->SendRequest(req);
+		}
+		void Console::PushCaretPosition(void)
+		{
+			Request req;
+			req.verb = 39;
+			_channel->SendRequest(req);
+		}
+		void Console::PopCaretPosition(void)
+		{
+			Request req;
+			req.verb = 40;
+			_channel->SendRequest(req);
+		}
+		void Console::SetScrollingRange(int from_line, int num_lines)
+		{
+			Request req;
+			req.verb = 41;
+			req.data = new DataBlock(1);
+			req.data->SetLength(8);
+			reinterpret_cast<int *>(req.data->GetBuffer())[0] = from_line;
+			reinterpret_cast<int *>(req.data->GetBuffer())[1] = num_lines;
+			_channel->SendRequest(req);
+		}
+		void Console::ResetScrollingRange(void) { SetScrollingRange(-1, -1); }
+		void Console::ScrollContent(int lines)
+		{
+			Request req;
+			req.verb = 42;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			reinterpret_cast<int *>(req.data->GetBuffer())[0] = lines;
+			_channel->SendRequest(req);
+		}
+		void Console::SetBackbufferStretchMode(Windows::ImageRenderMode mode)
+		{
+			Request req;
+			req.verb = 43;
+			req.data = new DataBlock(1);
+			req.data->SetLength(4);
+			if (mode == Windows::ImageRenderMode::Blit) reinterpret_cast<uint *>(req.data->GetBuffer())[0] = 0;
+			else if (mode == Windows::ImageRenderMode::Stretch) reinterpret_cast<uint *>(req.data->GetBuffer())[0] = 1;
+			else if (mode == Windows::ImageRenderMode::FitKeepAspectRatio) reinterpret_cast<uint *>(req.data->GetBuffer())[0] = 2;
+			else if (mode == Windows::ImageRenderMode::CoverKeepAspectRatio) reinterpret_cast<uint *>(req.data->GetBuffer())[0] = 3;
+			else throw InvalidArgumentException();
+			_channel->SendRequest(req);
+		}
+		void Console::CreateBackbuffer(int width, int height)
+		{
+			Request req;
+			req.verb = 44;
+			req.data = new DataBlock(1);
+			req.data->SetLength(8);
+			reinterpret_cast<uint *>(req.data->GetBuffer())[0] = width;
+			reinterpret_cast<uint *>(req.data->GetBuffer())[1] = height;
+			_channel->SendRequest(req);
+		}
+		void Console::LoadBackbuffer(const string & path)
+		{
+			Request req;
+			req.verb = 45;
+			req.data = IO::ExpandPath(path).EncodeSequence(Encoding::UTF8, false);
+			_channel->SendRequest(req);
+		}
+		void Console::ResetBackbuffer(void)
+		{
+			Request req;
+			req.verb = 46;
+			_channel->SendRequest(req);
+		}
+		void Console::AccessBackbuffer(IPC::ISharedMemory ** memory, int * width, int * height)
+		{
+			Request req;
+			req.verb = 47;
+			if (!_channel->SendRequest(req)) throw InvalidStateException();
+			int result[3];
+			_sys_counter->Wait();
+			_sync->Wait();
+			auto & value = _sys_inputs.GetFirst()->GetValue();
+			if (value.designation == 48) {
+				result[0] = value.data[0];
+				result[1] = value.data[1];
+				result[2] = value.data[2];
+				_sys_inputs.RemoveFirst();
+			} else if (value.designation == 0) {
+				_sys_counter->Open();
+				result[0] = result[1] = result[2] = 0;
+			} else result[0] = result[1] = result[2] = 0;
+			_sync->Open();
+			if (result[1] && result[2]) {
+				if (memory) *memory = IPC::CreateSharedMemory(L"xcmem" + string(result[0]), 4 * result[1] * result[2], IPC::SharedMemoryOpenExisting);
+				if (width) *width = result[1];
+				if (height) *height = result[2];
+			} else {
+				if (memory) *memory = 0;
+				if (width) *width = 0;
+				if (height) *height = 0;
+			}
+		}
+		void Console::SynchronizeBackbuffer(void)
+		{
+			Request req;
+			req.verb = 49;
 			_channel->SendRequest(req);
 		}
 	}

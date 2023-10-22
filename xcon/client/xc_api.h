@@ -11,12 +11,38 @@ namespace Engine
 			CreateConsoleFlagSetIcon	= 0x02,
 			CreateConsoleFlagSetPreset	= 0x04
 		};
+		enum CaretControlFlags {
+			CaretControlFlagBlinking	= 0x01,
+			CaretControlFlagShape		= 0x02,
+			CaretControlFlagWeight		= 0x04,
+			CaretControlFlagSetBlinking	= 0x08
+		};
+		enum FontAttributes : uint {
+			FontAttributeBold		= 0x01,
+			FontAttributeItalic		= 0x02,
+			FontAttributeUnderline	= 0x04
+		};
+		enum WritePaletteFlags : uint {
+			WritePaletteFlagForeground	= 0x01,
+			WritePaletteFlagBackground	= 0x02,
+			WritePaletteFlagBothColors	= WritePaletteFlagForeground | WritePaletteFlagBackground,
+			WritePaletteFlagSetDefault	= 0x04,
+			WritePaletteFlagOverwrite	= 0x08,
+			WritePaletteFlagRevert		= 0x10
+		};
+		enum class CaretStyle : uint { Horizontal = 1, Vertical = 2, Cell = 3, Null = 0 };
 		struct ConsoleDesc
 		{
 			uint flags;
 			string xc_path;
 			string title;
 			SafePointer<DataBlock> preset, icon;
+		};
+		struct CaretStateDesc
+		{
+			uint flags;
+			CaretStyle style;
+			double weight;
 		};
 
 		class Console : public Object
@@ -56,6 +82,38 @@ namespace Engine
 			void CreateScreenBuffer(bool scrollable);
 			void CancelScreenBuffer(void);
 			void SwapScreenBuffers(void);
+
+			void SetIOMode(IO::ConsoleInputMode mode);
+			void ReadEvent(IO::ConsoleEventDesc & event);
+
+			void SetCaretState(const CaretStateDesc & desc);
+			void RevertCaretState(void);
+			void SetFontAttributes(uint mask, uint set);
+			void RevertFontAttributes(uint mask);
+			void WritePalette(uint flags, int index, Color color);
+			void OverrideDefaults(void);
+			
+			void SetCloseDetachedConsole(bool close);
+			void SetHorizontalTabulation(int size);
+			void SetVerticalTabulation(int size);
+			void SetWindowMargins(int size);
+			void SetWindowBackground(Color color);
+			void SetWindowBlurBehind(double power);
+			void SetWindowFontHeight(int height);
+			void SetWindowFont(const string & font_face, int height);
+
+			void PushCaretPosition(void);
+			void PopCaretPosition(void);
+			void SetScrollingRange(int from_line, int num_lines);
+			void ResetScrollingRange(void);
+			void ScrollContent(int lines);
+			void SetBackbufferStretchMode(Windows::ImageRenderMode mode);
+
+			void CreateBackbuffer(int width, int height);
+			void LoadBackbuffer(const string & path);
+			void ResetBackbuffer(void);
+			void AccessBackbuffer(IPC::ISharedMemory ** memory, int * width, int * height);
+			void SynchronizeBackbuffer(void);
 		};
 	}
 }
