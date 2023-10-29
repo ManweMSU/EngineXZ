@@ -57,6 +57,7 @@ namespace Engine
 		// 47 - give backbuffer access
 		// 48 - give backbuffer access responce (shared memory object)
 		// 49 - backbuffer synchronize
+		// 50 - set backbuffer
 
 		class AttachIO : public IAttachIO, IOutputCallback
 		{
@@ -70,6 +71,7 @@ namespace Engine
 				Point pos;
 			};
 			struct _io_state {
+				bool _eos;
 				IO::ConsoleInputMode _mode;
 				Array<_input_char> _buffer = Array<_input_char>(0x100);
 				int _caret_index;
@@ -351,6 +353,14 @@ namespace Engine
 					_respond(channel, 48, &data, sizeof(data));
 				} else if (verb == 49) {
 					_console->NotifyPictureUpdated();
+				} else if (verb == 50 && data) {
+					try {
+						SafePointer<Streaming::Stream> input = new Streaming::MemoryStream(data->GetBuffer(), data->Length());
+						SafePointer<Codec::Frame> frame = Codec::DecodeFrame(input);
+						if (!frame) throw Exception();
+						SafePointer<WrappedPicture> picture = new WrappedPicture(frame);
+						_console->SetPicture(picture);
+					} catch (...) {}
 				}
 			}
 			static int _io_thread(void * arg)
@@ -371,7 +381,10 @@ namespace Engine
 					break;
 				}
 				if (!self->_clients.Length()) {
-					Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([s = self]() { s->_console->SetEndOfStream(); }));
+					Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([s = self]() {
+						s->_current_state._eos = true;
+						s->_console->SetEndOfStream();
+					}));
 				}
 				self->_sync->Open();
 				return 0;
@@ -403,6 +416,7 @@ namespace Engine
 		public:
 			AttachIO(const string & path) : _clients(0x10)
 			{
+				_current_state._eos = false;
 				_current_state._mode = IO::ConsoleInputMode::Echo;
 				_current_state._caret_index = 0;
 				_attach_io = ConnectChannel(path);
@@ -461,6 +475,7 @@ namespace Engine
 			}
 			virtual bool OutputKey(uint code, uint flags) noexcept override
 			{
+				if (_current_state._eos) return false;
 				if (_current_state._mode == IO::ConsoleInputMode::Raw) {
 					_event e;
 					e.code = 23;
@@ -545,6 +560,7 @@ namespace Engine
 			}
 			virtual void OutputText(uint ucs) noexcept override
 			{
+				if (_current_state._eos) return;
 				if (_current_state._mode == IO::ConsoleInputMode::Raw) {
 					_event e;
 					e.code = 22;
@@ -565,6 +581,7 @@ namespace Engine
 			virtual void WindowResize(int width, int height) noexcept override {}
 			virtual void ScreenBufferResize(int width, int height) noexcept override
 			{
+				if (_current_state._eos) return;
 				if (_current_state._mode == IO::ConsoleInputMode::Raw) {
 					if (!_console->IsBufferScrollable()) {
 						_event e;
@@ -584,6 +601,7 @@ namespace Engine
 			}
 			virtual void Terminate(void) noexcept override
 			{
+				if (_current_state._eos) return;
 				_event e;
 				e.code = e.args[0] = e.args[1] = 0;
 				_sync->Wait();

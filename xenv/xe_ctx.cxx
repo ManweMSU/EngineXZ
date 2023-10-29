@@ -339,7 +339,14 @@ namespace Engine
 			SafePointer<Streaming::Stream> input = callback->OpenModule(name);
 			if (!input) callback->HandleModuleLoadError(name, L"", ModuleLoadError::NoSuchModule);
 			_sync->Open();
+			return LoadModule(name, input);
+		}
+		const Module * ExecutionContext::LoadModule(const string & name, Streaming::Stream * input) noexcept
+		{
 			if (!input) return 0;
+			_sync->Wait();
+			ILoaderCallback * callback = _callback;
+			_sync->Open();
 			SafePointer<XI::Module> data;
 			SafePointer<Module> result;
 			try {
@@ -360,7 +367,7 @@ namespace Engine
 				result->_rsrc = data->resources;
 			} catch (...) {
 				_sync->Wait();
-				callback->HandleModuleLoadError(name, L"", ModuleLoadError::InvalidImageFormat);
+				callback->HandleModuleLoadError(L"", L"", ModuleLoadError::InvalidImageFormat);
 				_sync->Open();
 				return 0;
 			}

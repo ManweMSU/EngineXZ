@@ -79,7 +79,8 @@ namespace Engine
 					mode.size.x = mode.size.y = 1;
 					auto rect = window->GetPosition();
 					window->Destroy();
-					CreateConsoleWindow(console, mode, rect);
+					if (rect.Right > rect.Left && rect.Bottom > rect.Top) CreateConsoleWindow(console, mode, rect);
+					else CreateConsoleWindow(console, mode);
 				}
 			}
 			void _align(void)
@@ -93,7 +94,7 @@ namespace Engine
 				if (visible_height < cell_height && scrollable) {
 					_scroll->Show(true);
 					_scroll->SetPosition(Box(size.x - ss, 0, size.x, size.y));
-					_scroll->SetRange(0, cell_height - 1);
+					_scroll->SetRange(0, max(cell_height - 1, 0));
 					_scroll->SetPage(visible_height);
 					_scroll->Line = 1;
 					_view->SetPosition(Box(marg, marg, size.x - ss - marg, size.y - marg));
@@ -171,6 +172,7 @@ namespace Engine
 						_callback._caret_moved = false;
 						device->SetCaretReferenceTime(device->GetAnimationTime());
 					}
+					if (cw <= 0 || ch <= 0) return;
 					if (!_lines.Length()) _lines.SetLength(_callback._console->GetBufferHeight());
 					int line_from = min(max(scroll_delta, 0), _lines.Length() - 1);
 					int line_to = min(line_from + ch, _lines.Length());
@@ -354,8 +356,10 @@ namespace Engine
 					int height = box.Bottom - box.Top;
 					int cw = width / _callback._cell.x;
 					int ch = height / _callback._cell.y;
-					_callback._console->ResizeBuffer(cw, ch);
-					_callback._console->HandleWindowResize(cw, ch);
+					if (cw > 0 && ch > 0) {
+						_callback._console->ResizeBuffer(cw, ch);
+						_callback._console->HandleWindowResize(cw, ch);
+					}
 				}
 				virtual void FocusChanged(bool got_focus) override { Invalidate(); }
 				virtual void ScrollVertically(double delta) override { _callback._scroll->SetScrollerPosition(_callback._scroll->Position + delta); }
@@ -544,52 +548,54 @@ namespace Engine
 					}
 				}
 				if (_background_brush) {
-					Box box;
 					auto mode = _console->GetPictureMode();
 					auto client = window->GetClientSize();
-					if (mode == ImageRenderMode::Stretch) {
-						box = Box(0, 0, client.x, client.y);
-					} else if (mode == ImageRenderMode::Blit) {
-						int w = _background_texture->GetWidth();
-						int h = _background_texture->GetHeight();
-						box.Left = (client.x - w) / 2;
-						box.Top = (client.y - h) / 2;
-						box.Right = box.Left + w;
-						box.Bottom = box.Top + h;
-					} else if (mode == ImageRenderMode::FitKeepAspectRatio) {
-						int w = _background_texture->GetWidth();
-						int h = _background_texture->GetHeight();
-						double sa = double(client.x) / double(client.y);
-						double pa = double(w) / double(h);
-						if (pa > sa) {
-							w = client.x;
-							h = w / pa;
-						} else {
-							h = client.y;
-							w = h * pa;
+					if (client.x && client.y) {
+						Box box;
+						if (mode == ImageRenderMode::Stretch) {
+							box = Box(0, 0, client.x, client.y);
+						} else if (mode == ImageRenderMode::Blit) {
+							int w = _background_texture->GetWidth();
+							int h = _background_texture->GetHeight();
+							box.Left = (client.x - w) / 2;
+							box.Top = (client.y - h) / 2;
+							box.Right = box.Left + w;
+							box.Bottom = box.Top + h;
+						} else if (mode == ImageRenderMode::FitKeepAspectRatio) {
+							int w = _background_texture->GetWidth();
+							int h = _background_texture->GetHeight();
+							double sa = double(client.x) / double(client.y);
+							double pa = double(w) / double(h);
+							if (pa > sa) {
+								w = client.x;
+								h = w / pa;
+							} else {
+								h = client.y;
+								w = h * pa;
+							}
+							box.Left = (client.x - w) / 2;
+							box.Top = (client.y - h) / 2;
+							box.Right = box.Left + w;
+							box.Bottom = box.Top + h;
+						} else if (mode == ImageRenderMode::CoverKeepAspectRatio) {
+							int w = _background_texture->GetWidth();
+							int h = _background_texture->GetHeight();
+							double sa = double(client.x) / double(client.y);
+							double pa = double(w) / double(h);
+							if (pa < sa) {
+								w = client.x;
+								h = w / pa;
+							} else {
+								h = client.y;
+								w = h * pa;
+							}
+							box.Left = (client.x - w) / 2;
+							box.Top = (client.y - h) / 2;
+							box.Right = box.Left + w;
+							box.Bottom = box.Top + h;
 						}
-						box.Left = (client.x - w) / 2;
-						box.Top = (client.y - h) / 2;
-						box.Right = box.Left + w;
-						box.Bottom = box.Top + h;
-					} else if (mode == ImageRenderMode::CoverKeepAspectRatio) {
-						int w = _background_texture->GetWidth();
-						int h = _background_texture->GetHeight();
-						double sa = double(client.x) / double(client.y);
-						double pa = double(w) / double(h);
-						if (pa < sa) {
-							w = client.x;
-							h = w / pa;
-						} else {
-							h = client.y;
-							w = h * pa;
-						}
-						box.Left = (client.x - w) / 2;
-						box.Top = (client.y - h) / 2;
-						box.Right = box.Left + w;
-						box.Bottom = box.Top + h;
+						context_2d->Render(_background_brush, box);
 					}
-					context_2d->Render(_background_brush, box);
 				}
 				GetControlSystem(window)->SetRenderingDevice(context_2d);
 				GetControlSystem(window)->Render(context_2d);
@@ -609,8 +615,9 @@ namespace Engine
 			}
 			virtual void WindowSize(IWindow * window) override
 			{
-				_align();
 				auto size = window->GetClientSize();
+				if (size.x <= 0 || size.y <= 0) return;
+				_align();
 				_layer->ResizeSurface(size.x, size.y);
 			}
 			virtual void HandleControlEvent(Windows::IWindow * window, int ID, ControlEvent event, Control * sender) override

@@ -137,7 +137,7 @@ int Main(void)
 		SafePointer<Registry> xv_conf = XX::LoadConfiguration(root + L"/xv.ini");
 		try {
 			auto core = xv_conf->GetValueString(L"XE");
-			if (core) XX::IncludeComponent(state.module_search_paths, root + L"/" + core);
+			if (core.Length()) XX::IncludeComponent(state.module_search_paths, root + L"/" + core);
 		} catch (...) {}
 		try {
 			auto store = xv_conf->GetValueString(L"Entheca");

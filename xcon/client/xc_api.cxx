@@ -81,6 +81,17 @@ namespace Engine
 			self->_sync->Open();
 			return 0;
 		}
+		Console::Console(const string & channel_path)
+		{
+			_server_ipc = channel_path;
+			_channel = ConnectChannel(_server_ipc);
+			_sync = CreateSemaphore(1);
+			_counter = CreateSemaphore(0);
+			_sys_counter = CreateSemaphore(0);
+			if (!_sync || !_counter || !_sys_counter) throw OutOfMemoryException();
+			_thread = CreateThread(_input_thread, this);
+			if (!_thread) throw OutOfMemoryException();
+		}
 		Console::Console(const ConsoleDesc & desc)
 		{
 			Array<string> args(4);
@@ -109,8 +120,8 @@ namespace Engine
 			if (!attach_channel->SendRequest(req)) throw IO::FileAccessException(IO::Error::WriteFailure);
 			if (!attach_channel->ReadRequest(req)) throw IO::FileAccessException(IO::Error::ReadFailure);
 			if (req.verb != 5) throw InvalidStateException();
-			auto con_path = string(req.data->GetBuffer(), req.data->Length(), Encoding::UTF8);
-			_channel = ConnectChannel(con_path);
+			_server_ipc = string(req.data->GetBuffer(), req.data->Length(), Encoding::UTF8);
+			_channel = ConnectChannel(_server_ipc);
 			attach_io.SetReference(0);
 			attach_channel.SetReference(0);
 			_sync = CreateSemaphore(1);
@@ -121,6 +132,7 @@ namespace Engine
 			if (!_thread) throw OutOfMemoryException();
 		}
 		Console::~Console(void) { Request req; req.verb = 0; _channel->SendRequest(req); _thread->Wait(); }
+		string Console::GetSharedConsolePath(void) { return _server_ipc; }
 		void Console::SetWindowTitle(const string & text)
 		{
 			Request req;
@@ -468,6 +480,13 @@ namespace Engine
 			Request req;
 			req.verb = 45;
 			req.data = IO::ExpandPath(path).EncodeSequence(Encoding::UTF8, false);
+			_channel->SendRequest(req);
+		}
+		void Console::SetBackbuffer(DataBlock * image)
+		{
+			Request req;
+			req.verb = 50;
+			req.data.SetRetain(image);
 			_channel->SendRequest(req);
 		}
 		void Console::ResetBackbuffer(void)

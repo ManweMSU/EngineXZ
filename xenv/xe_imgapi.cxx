@@ -508,5 +508,7 @@ namespace Engine
 			SafePointer<IAPIExtension> ext = new ImageExtension;
 			if (!ldr.RegisterAPIExtension(ext)) throw Exception();
 		}
+		Codec::Frame * ExtractFrameFromXFrame(handle xframe) { return reinterpret_cast<XFrame *>(xframe)->ExposeFrame(); }
+		Codec::Image * ExtractImageFromXImage(handle ximage) { return reinterpret_cast<XImage *>(ximage)->ExposeImage(); }
 	}
 }

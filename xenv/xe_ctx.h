@@ -85,6 +85,7 @@ namespace Engine
 			const SymbolObject * GetEntryPoint(void) const noexcept;
 
 			const Module * LoadModule(const string & name) noexcept;
+			const Module * LoadModule(const string & name, Streaming::Stream * stream) noexcept;
 		};
 
 		struct ErrorContext

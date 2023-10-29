@@ -1457,6 +1457,10 @@ namespace Engine
 			{
 				Volumes::Dictionary<string, string> attributes;
 				while (!IsPunct(L"}")) {
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						AssignAutocomplete(Lexic::IdentifierGet, CodeRangeTag::IdentifierFunction);
+						AssignAutocomplete(Lexic::IdentifierSet, CodeRangeTag::IdentifierFunction);
+					}
 					if (IsPunct(L"[")) {
 						ProcessAttributeDefinition(attributes);
 					} else {
@@ -1566,7 +1570,6 @@ namespace Engine
 							AssertPunct(L";"); ReadNextToken();
 							ctx.SupplyFunctionImplementation(func, import_name, import_lib);
 						}
-
 					}
 				}
 			}
@@ -2099,6 +2102,9 @@ namespace Engine
 					subdesc.namespace_search_list << scope;
 					subdesc.namespace_search_list << desc.namespace_search_list;
 					ProcessStatement(fctx, subdesc, false);
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						AssignAutocomplete(Lexic::KeywordElse, CodeRangeTag::Keyword);
+					}
 					if (IsKeyword(Lexic::KeywordElse)) {
 						ReadNextToken();
 						fctx.OpenElseBlock(&scope);
@@ -2240,6 +2246,9 @@ namespace Engine
 					subdesc.namespace_search_list << scope;
 					subdesc.namespace_search_list << desc.namespace_search_list;
 					ProcessStatement(fctx, subdesc, false);
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						AssignAutocomplete(Lexic::KeywordWhile, CodeRangeTag::Keyword);
+					}
 					AssertKeyword(Lexic::KeywordWhile); ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 					auto expr = current_token;
 					SafePointer<XL::LObject> cond = ProcessExpression(desc);
@@ -2287,6 +2296,9 @@ namespace Engine
 					subdesc.namespace_search_list << scope;
 					subdesc.namespace_search_list << desc.namespace_search_list;
 					ProcessStatement(fctx, subdesc, false);
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						AssignAutocomplete(Lexic::KeywordCatch, CodeRangeTag::Keyword);
+					}
 					if (IsKeyword(Lexic::KeywordCatch)) {
 						ReadNextToken();
 						if (IsPunct(L"(")) {

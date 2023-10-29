@@ -59,10 +59,13 @@ namespace Engine
 			SafePointer<Thread> _thread;
 			Volumes::Queue<IO::ConsoleEventDesc> _inputs;
 			Volumes::Queue<_system_input_struct> _sys_inputs;
+			string _server_ipc;
 		public:
+			Console(const string & channel_path);
 			Console(const ConsoleDesc & desc);
 			virtual ~Console(void) override;
 
+			string GetSharedConsolePath(void);
 			void SetWindowTitle(const string & text);
 			void SetWindowIcon(DataBlock * icon);
 			void Print(const string & text);
@@ -111,6 +114,7 @@ namespace Engine
 
 			void CreateBackbuffer(int width, int height);
 			void LoadBackbuffer(const string & path);
+			void SetBackbuffer(DataBlock * image);
 			void ResetBackbuffer(void);
 			void AccessBackbuffer(IPC::ISharedMemory ** memory, int * width, int * height);
 			void SynchronizeBackbuffer(void);
