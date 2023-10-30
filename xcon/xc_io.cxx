@@ -473,6 +473,7 @@ namespace Engine
 				if (!listener) { Release(); return false; }
 				return true;
 			}
+			virtual void CloseService(void) noexcept override { _io_server->Close(); }
 			virtual bool OutputKey(uint code, uint flags) noexcept override
 			{
 				if (_current_state._eos) return false;

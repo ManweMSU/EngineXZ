@@ -53,5 +53,6 @@ int Main(void)
 		if (attach) Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([attach]() { attach->LaunchService(); }));
 	} catch (...) { return 3; }
 	RunConsoleWindow();
+	if (attach) attach->CloseService();
 	return 0;
 }

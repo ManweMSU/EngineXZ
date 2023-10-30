@@ -68,6 +68,15 @@ namespace Engine
 				_cell.x = _primary_font->GetWidth();
 				_cell.y = _primary_font->GetLineSpacing();
 			}
+			void _update_cursor(void)
+			{
+				auto cs = GetControlSystem(_window);
+				if (_fullscreen) {
+					cs->OverrideSystemCursor(SystemCursorClass::Arrow, GetWindowSystem()->GetSystemCursor(SystemCursorClass::Null));
+				} else {
+					cs->OverrideSystemCursor(SystemCursorClass::Arrow, GetWindowSystem()->GetSystemCursor(SystemCursorClass::Arrow));
+				}
+			}
 			void _recreate(void)
 			{
 				if (_window) {
@@ -499,7 +508,7 @@ namespace Engine
 				accels << Accelerators::AcceleratorCommand(100, KeyCodes::Return, false, false, true);
 				_window = window;
 				auto size = window->GetClientSize();
-				if (_fullscreen) GetControlSystem(window)->OverrideSystemCursor(SystemCursorClass::Arrow, GetControlSystem(window)->GetSystemCursor(SystemCursorClass::Null));
+				_update_cursor();
 				_layer = _device->CreateWindowLayer(window, CreateWindowLayerDesc(size.x, size.y,
 					PixelFormat::B8G8R8A8_unorm, ResourceUsageRenderTarget | ResourceUsageShaderRead));
 				root->AddChild(_view);
@@ -604,13 +613,18 @@ namespace Engine
 				_layer->Present();
 			}
 			virtual void WindowClose(IWindow * window) override { _console->Terminate(); _window->Destroy(); GetWindowSystem()->ExitMainLoop(); }
-			virtual void WindowActivate(IWindow * window) override { _view->SetFocus(); }
+			virtual void WindowActivate(IWindow * window) override { GetWindowSystem()->SubmitTask(CreateFunctionalTask([v = _view]() { v->SetFocus(); })); }
 			virtual void WindowDeactivate(IWindow * window) override
 			{
 				if (_fullscreen) {
 					_layer->SwitchToWindow();
 					_fullscreen = false;
+					#ifdef ENGINE_WINDOWS
 					_recreate();
+					#endif
+					#ifdef ENGINE_MACOSX
+					_update_cursor();
+					#endif
 				}
 			}
 			virtual void WindowSize(IWindow * window) override
@@ -624,7 +638,14 @@ namespace Engine
 			{
 				if (ID == 100) {
 					_fullscreen = !_fullscreen;
+					#ifdef ENGINE_WINDOWS
 					_recreate();
+					#endif
+					#ifdef ENGINE_MACOSX
+					if (_fullscreen) _layer->SwitchToFullscreen();
+					else _layer->SwitchToWindow();
+					_update_cursor();
+					#endif
 				} else if (ID == 102 && event == ControlEvent::ValueChange) {
 					_console->SetBufferOffset(_scroll->Position);
 				}
@@ -646,6 +667,7 @@ namespace Engine
 		void CreateConsoleWindow(ConsoleState * state, ConsoleCreateMode & desc, const Box & at)
 		{
 			if (state->GetWindowIcon()) GetWindowSystem()->SetApplicationIcon(state->GetWindowIcon());
+			GetWindowSystem()->SetApplicationIconVisibility(true);
 			SafePointer<IScreen> primary = GetDefaultScreen();
 			auto callback = new WindowCallback(state);
 			Point min_size;
@@ -676,6 +698,7 @@ namespace Engine
 		void CreateConsoleWindow(ConsoleState * state, ConsoleCreateMode & desc)
 		{
 			if (state->GetWindowIcon()) GetWindowSystem()->SetApplicationIcon(state->GetWindowIcon());
+			GetWindowSystem()->SetApplicationIconVisibility(true);
 			SafePointer<IScreen> primary = GetDefaultScreen();
 			auto callback = new WindowCallback(state);
 			Point size, min_size;

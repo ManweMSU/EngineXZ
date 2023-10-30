@@ -1,5 +1,6 @@
 ﻿ApplicationIcon = "../artworks/xc_icon.eiwv"
 Languages = "ru,en"
+NoDockIcon = true
 Subsystem = "gui"
 UsesWindowEffects = true
 UseVersionDefines = true

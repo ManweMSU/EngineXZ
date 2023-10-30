@@ -12,6 +12,7 @@ namespace Engine
 			virtual bool Communicate(const string & init_title, const string & init_preset) noexcept = 0;
 			virtual bool CreateConsole(ConsoleState ** state, ConsoleCreateMode * mode) noexcept = 0;
 			virtual bool LaunchService(void) noexcept = 0;
+			virtual void CloseService(void) noexcept = 0;
 		};
 
 		IAttachIO * CreateAttachIO(const string & io);

@@ -23,6 +23,7 @@ namespace Engine
 		public:
 			virtual void GetChannelPath(string & path) noexcept = 0;
 			virtual IChannel * Accept(void) noexcept = 0;
+			virtual void Close(void) noexcept = 0;
 		};
 
 		IChannelServer * CreateChannelServer(void);
