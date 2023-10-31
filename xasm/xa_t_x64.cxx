@@ -1192,7 +1192,10 @@ namespace Engine
 										while (scope && !scope->GetValue().shift_rsp) scope = scope->GetPrevious();
 										if (scope) encode_lea(Reg::RSP, Reg::RBP, scope->GetValue().frame_base);
 										else encode_lea(Reg::RSP, Reg::RBP, _scope_frame_base);
+										int _preserve_oddity = _stack_oddity;
+										_stack_oddity = 0;
 										encode_scope_unroll(_current_instruction, _current_instruction + 1 + int(node.input_specs[2].size.num_bytes));
+										_stack_oddity = _preserve_oddity;
 										_dest.code << 0xE9; // JMP
 										_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
 										_jump_reloc_struct rs;

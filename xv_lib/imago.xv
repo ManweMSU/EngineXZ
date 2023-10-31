@@ -86,21 +86,21 @@ spatium imago {
 		}
 
 		[[importa] im_al_0] classis functio adl[replum] alloca(int x, int y, formatus form) iacit;
-		[[importa] im_al_1] classis functio adl[replum] alloca(int x, int y, formatus form, modus_alpha alpha) iacit;
-		[[importa] im_al_2] classis functio adl[replum] alloca(int x, int y, formatus form, modus_convisendi conv) iacit;
+		[[importa] im_al_1] classis functio adl[replum] alloca_cum_alpha(int x, int y, formatus form, modus_alpha alpha) iacit;
+		[[importa] im_al_2] classis functio adl[replum] alloca_cum_modo(int x, int y, formatus form, modus_convisendi conv) iacit;
 		[[importa] im_al_3] classis functio adl[replum] alloca(int x, int y, formatus form, modus_alpha alpha, modus_convisendi conv) iacit;
 		[[importa] im_al_4] classis functio adl[replum] alloca_cum_linea(int x, int y, int linea, formatus form) iacit;
-		[[importa] im_al_5] classis functio adl[replum] alloca_cum_linea(int x, int y, int linea, formatus form, modus_alpha alpha) iacit;
-		[[importa] im_al_6] classis functio adl[replum] alloca_cum_linea(int x, int y, int linea, formatus form, modus_convisendi conv) iacit;
+		[[importa] im_al_5] classis functio adl[replum] alloca_cum_linea_et_alpha(int x, int y, int linea, formatus form, modus_alpha alpha) iacit;
+		[[importa] im_al_6] classis functio adl[replum] alloca_cum_linea_et_modo(int x, int y, int linea, formatus form, modus_convisendi conv) iacit;
 		[[importa] im_al_7] classis functio adl[replum] alloca_cum_linea(int x, int y, int linea, formatus form, modus_alpha alpha, modus_convisendi conv) iacit;
 		[[importa] im_md_2] classis functio adl[replum] moduli(@nihil mdl, int id, int lat, int alt) iacit;
 		[[importa] im_md_1] classis functio adl[replum] moduli(@nihil mdl, int id, dfrac consc) iacit;
 
 		functio adl[replum] exscribe() iacit virtualis pura;
-		functio adl[replum] converte(formatus form) iacit virtualis pura;
-		functio adl[replum] converte(modus_alpha alpha) iacit virtualis pura;
-		functio adl[replum] converte(modus_convisendi conv) iacit virtualis pura;
-		functio adl[replum] converte_linea(int linea) iacit virtualis pura;
+		functio adl[replum] converte_formatum(formatus form) iacit virtualis pura;
+		functio adl[replum] converte_alpham(modus_alpha alpha) iacit virtualis pura;
+		functio adl[replum] converte_modum(modus_convisendi conv) iacit virtualis pura;
+		functio adl[replum] converte_lineam(int linea) iacit virtualis pura;
 
 		int latitudo { adipisce virtualis pura; }
 		int altitudo { adipisce virtualis pura; }

@@ -528,10 +528,10 @@ namespace Engine
 				RenderTargetViewDesc rtvd;
 				auto clr = _console->GetWindowColor();
 				rtvd.LoadAction = TextureLoadAction::Clear;
-				rtvd.ClearValue[0] = float(clr.r) / 255.0f;
-				rtvd.ClearValue[1] = float(clr.g) / 255.0f;
-				rtvd.ClearValue[2] = float(clr.b) / 255.0f;
 				rtvd.ClearValue[3] = float(clr.a) / 255.0f;
+				rtvd.ClearValue[0] = float(clr.r) / 255.0f * rtvd.ClearValue[3];
+				rtvd.ClearValue[1] = float(clr.g) / 255.0f * rtvd.ClearValue[3];
+				rtvd.ClearValue[2] = float(clr.b) / 255.0f * rtvd.ClearValue[3];
 				rtvd.Texture = _primary_surface;
 				context->BeginRenderingPass(1, &rtvd, 0);
 				context->EndCurrentPass();
@@ -681,14 +681,19 @@ namespace Engine
 			wd.Callback = callback;
 			wd.Screen = primary;
 			wd.ParentWindow = 0;
+			#ifdef ENGINE_WINDOWS
 			if (!desc.fullscreen) {
+			#endif
 				auto blur = state->GetBlurBehind();
 				wd.Flags |= WindowFlagTransparent;
 				if (blur) {
 					wd.Flags |= WindowFlagBlurBehind | WindowFlagBlurFactor;
 					wd.BlurFactor = blur;
 				}
-			} else callback->MarkAsFullscreen();
+			#ifdef ENGINE_WINDOWS
+			}
+			#endif
+			if (desc.fullscreen) callback->MarkAsFullscreen();
 			wd.MinimalConstraints = GetWindowSystem()->ConvertClientToWindow(min_size, wd.Flags);
 			wd.Position = at;
 			auto window = CreateWindow(wd, DeviceClass::Null);
@@ -713,14 +718,19 @@ namespace Engine
 			wd.Callback = callback;
 			wd.Screen = primary;
 			wd.ParentWindow = 0;
+			#ifdef ENGINE_WINDOWS
 			if (!desc.fullscreen) {
+			#endif
 				auto blur = state->GetBlurBehind();
 				wd.Flags |= WindowFlagTransparent;
 				if (blur) {
 					wd.Flags |= WindowFlagBlurBehind | WindowFlagBlurFactor;
 					wd.BlurFactor = blur;
 				}
-			} else callback->MarkAsFullscreen();
+			#ifdef ENGINE_WINDOWS
+			}
+			#endif
+			if (desc.fullscreen) callback->MarkAsFullscreen();
 			size = GetWindowSystem()->ConvertClientToWindow(size, wd.Flags);
 			wd.MinimalConstraints = GetWindowSystem()->ConvertClientToWindow(min_size, wd.Flags);
 			wd.Position = Box(Rectangle(Coordinate(0, 0.0, 0.5), Coordinate(0, 0.0, 0.5), Coordinate(0, 0.0, 0.5), Coordinate(0, 0.0, 0.5)), primary->GetUserRectangle());

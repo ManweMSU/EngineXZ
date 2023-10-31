@@ -1,0 +1,41 @@
+﻿importa canonicalis;
+importa limae;
+
+structura rec {
+	linea nomen;
+	linea func;
+}
+
+functio nihil sort(~ordo rec r) iacit
+{
+	pro (var i : [0, r.longitudo - 2]) pro (var j : [i + 1, r.longitudo - 1]) si (r[j].nomen < r[i].nomen) r.permuta(i, j);
+}
+functio nihil generate(~ordo rec r, ~linea prefix, int first, int length) iacit
+{
+	int med = first + length / 2;
+	si (length > 1) {
+		actuarius.scribe(prefix + "if (string::Compare(routine_name, L\"" + r[med].nomen + "\") < 0) {");
+		generate(r, prefix + "    ", first, med - first);
+		actuarius.scribe(prefix + "} else {");
+		generate(r, prefix + "    ", med, first + length - med);
+		actuarius.scribe(prefix + "}");
+	} alioqui {
+		actuarius.scribe(prefix + "if (string::Compare(routine_name, L\"" + r[med].nomen + "\") == 0) return reinterpret_cast<const void *>(" + r[med].func + ");");
+	}
+}
+
+functio nihil primus() introitus iacit
+{
+	var in = scriptio.decodifica(semita("code.txt").crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens));
+	ordo rec flist;
+	dum (!in^.finis) {
+		var ln = in^.lege_lineam();
+		var pt = ln.scinde(' ');
+		rec r;
+		r.nomen = pt^[0];
+		r.func = pt^[1];
+		flist << r;
+	}
+	sort(flist);
+	generate(flist, "", 0, flist.longitudo);
+}

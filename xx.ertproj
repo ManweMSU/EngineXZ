@@ -1,0 +1,66 @@
+﻿UseVersionDefines = true
+AccessRequirements {
+	Camera = "Video recording."
+	Microphone = "Audio recording."
+}
+CompileList {
+	AAAAAA = "xasm\\xa_t_armv8.cxx"
+	AAAAAB = "xasm\\xa_t_i386.cxx"
+	AAAAAC = "xasm\\xa_t_x64.cxx"
+	AAAAAD = "xasm\\xa_trans.cxx"
+	AAAAAE = "xasm\\xa_type_helper.cxx"
+	AAAAAF = "xasm\\xa_types.cxx"
+	AAAAAG = "xcon\\client\\xc_api.cxx"
+	AAAAAH = "xcon\\common\\xc_channel.cxx"
+	AAAAAI = "xenv\\xe_conapi.cxx"
+	AAAAAJ = "xenv\\xe_ctx.cxx"
+	AAAAAK = "xenv\\xe_filesys.cxx"
+	AAAAAL = "xenv\\xe_imgapi.cxx"
+	AAAAAM = "xenv\\xe_interfaces.cxx"
+	AAAAAN = "xenv\\xe_loader.cxx"
+	AAAAAO = "xenv\\xe_logger.cxx"
+	AAAAAP = "xenv\\xe_rtss.cxx"
+	AAAAAQ = "xenv\\xe_stdext.cxx"
+	AAAAAR = "xexec\\xx_com.cxx"
+	AAAAAS = "xexec\\xx_machine.cxx"
+	AAAAAT = "ximg\\xi_function.cxx"
+	AAAAAU = "ximg\\xi_module.cxx"
+	AAAAAV = "ximg\\xi_resources.cxx"
+	AAAAAW = "xx.cxx"
+}
+LinkWith {
+	AAAAAA = "ECFC"
+}
+VersionInformation {
+	ApplicationIdentifier = "XX"
+	ApplicationName = "Engine XX"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2023"
+	InternalName = "xx"
+	Version = "1.0.0.1"
+}
+"-windows-x64-debug" {
+	Attachments {
+		BEMAAA {
+			From = "xcon\\_build\\windows_x64_release\\xc.exe"
+			To = "xc.exe"
+		}
+		BEMAAB {
+			From = "xcon\\_build\\windows_x64_release\\xc.ini"
+			To = "xc.ini"
+		}
+		BEMAAC {
+			From = "xcon\\_build\\windows_x64_release\\ertwndfx.dll"
+			To = "ertwndfx.dll"
+		}
+		BEMAAD {
+			From = "xe.ini"
+			To = "xe.ini"
+		}
+		BEMAAE {
+			From = "xx.ini"
+			To = "xx.ini"
+		}
+	}
+}

@@ -153,6 +153,9 @@ namespace Engine
 		class X2DContext : public DynamicObject
 		{
 			SafePointer<Graphics::I2DDeviceContext> _context;
+		protected:
+			X2DContext(void) {}
+			void SetContext(Graphics::I2DDeviceContext * context) { _context.SetRetain(context); }
 		public:
 			X2DContext(Graphics::I2DDeviceContext * context) { _context.SetRetain(context); }
 			virtual ~X2DContext(void) override {}
@@ -238,6 +241,102 @@ namespace Engine
 			virtual bool BeginRendering(XBitmap * dest) noexcept { return _dc->BeginRendering(dest->ExposeBitmap()); }
 			virtual bool BeginRenderingAndClear(XBitmap * dest, const XColor & color) noexcept { return _dc->BeginRendering(dest->ExposeBitmap(), color.value); }
 			virtual bool EndRendering(void) noexcept { return _dc->EndRendering(); }
+		};
+		class XDirectContext : public X2DContext
+		{
+			SafePointer<Graphics::IDevice> _device;
+			SafePointer<Graphics::ITexture> _backbuffer;
+			SafePointer<Object> _owner;
+			void * _data;
+			int _width, _height, _stride;
+			SynchronizeRoutine _sync;
+		public:
+			XDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync)
+			{
+				_owner.SetRetain(owner);
+				_data = data;
+				_width = width;
+				_height = height;
+				_stride = stride;
+				_sync = sync;
+				SafePointer<Graphics::IDeviceFactory> factory = Graphics::CreateDeviceFactory();
+				if (!factory) throw OutOfMemoryException();
+				_device = factory->CreateDefaultDevice();
+				if (!_device) throw OutOfMemoryException();
+				Graphics::TextureDesc desc;
+				Graphics::ResourceInitDesc init;
+				desc.Type = Graphics::TextureType::Type2D;
+				desc.Format = Graphics::PixelFormat::B8G8R8A8_unorm;
+				desc.Width = _width;
+				desc.Height = _height;
+				desc.MipmapCount = 1;
+				desc.Usage = Graphics::ResourceUsageRenderTarget | Graphics::ResourceUsageShaderRead | Graphics::ResourceUsageCPURead;
+				desc.MemoryPool = Graphics::ResourceMemoryPool::Default;
+				init.Data = _data;
+				init.DataPitch = _stride;
+				init.DataSlicePitch = 0;
+				_backbuffer = _device->CreateTexture(desc, &init);
+				if (!_backbuffer) throw OutOfMemoryException();
+				auto context = _device->GetDeviceContext();
+				if (context->Begin2DRenderingPass(_backbuffer)) {
+					auto ctx_2d = context->Get2DContext();
+					SetContext(ctx_2d);
+					if (!context->EndCurrentPass()) throw InvalidStateException();
+				} else throw InvalidStateException();
+			}
+			virtual ~XDirectContext(void) override { SetContext(0); }
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.contextus_machinae") {
+					Retain(); return static_cast<X2DContext *>(this);
+				} else if (cls->GetClassName() == L"xx.contextus_consolatorii") {
+					Retain(); return static_cast<XDirectContext *>(this);
+				} else if (cls->GetClassName() == L"graphicum.fabricatio_contextus") {
+					try { return CreateX2DFactory(); }
+					catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual int GetWidth(void) noexcept { return _width; }
+			virtual int GetHeight(void) noexcept { return _height; }
+			virtual bool BeginRendering(void) noexcept
+			{
+				auto context = _device->GetDeviceContext();
+				return context->Begin2DRenderingPass(_backbuffer);
+			}
+			virtual bool BeginRenderingAndClear(const XColor & color) noexcept
+			{
+				auto context = _device->GetDeviceContext();
+				Color clr(color.value);
+				Graphics::RenderTargetViewDesc rtvd;
+				rtvd.Texture = _backbuffer;
+				rtvd.LoadAction = Graphics::TextureLoadAction::Clear;
+				rtvd.ClearValue[3] = float(clr.a) / 255.0f;
+				rtvd.ClearValue[0] = float(clr.r) / 255.0f * rtvd.ClearValue[3];
+				rtvd.ClearValue[1] = float(clr.g) / 255.0f * rtvd.ClearValue[3];
+				rtvd.ClearValue[2] = float(clr.b) / 255.0f * rtvd.ClearValue[3];
+				if (!context->BeginRenderingPass(1, &rtvd, 0)) return false;
+				if (!context->EndCurrentPass()) return false;
+				return BeginRendering();
+			}
+			virtual bool EndRendering(void) noexcept
+			{
+				auto context = _device->GetDeviceContext();
+				if (!context->EndCurrentPass()) return false;
+				if (!context->BeginMemoryManagementPass()) return false;
+				Graphics::ResourceDataDesc desc;
+				desc.Data = _data;
+				desc.DataPitch = _stride;
+				desc.DataSlicePitch = 0;
+				context->QueryResourceData(desc, _backbuffer, Graphics::SubresourceIndex(0, 0),
+					Graphics::VolumeIndex(0, 0, 0), Graphics::VolumeIndex(_width, _height, 1));
+				if (!context->EndCurrentPass()) return false;
+				return _sync(_owner);
+			}
 		};
 		class XDeviceContextFactory : public DynamicObject
 		{
@@ -510,5 +609,7 @@ namespace Engine
 		}
 		Codec::Frame * ExtractFrameFromXFrame(handle xframe) { return reinterpret_cast<XFrame *>(xframe)->ExposeFrame(); }
 		Codec::Image * ExtractImageFromXImage(handle ximage) { return reinterpret_cast<XImage *>(ximage)->ExposeImage(); }
+		Object * CreateXFrame(Codec::Frame * frame) { return new XFrame(frame); }
+		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync) { return new XDirectContext(data, width, height, stride, owner, sync); }
 	}
 }

@@ -1,0 +1,161 @@
+﻿importa consolatorium;
+importa limae;
+importa imago;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber XX";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2023";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium xx {
+	spatium attributa {
+		constatus xc			= "XC";
+		constatus xc_praeordo	= 1;
+		constatus xc_imago		= 2;
+		constatus xc_sine		= "sic";
+		constatus xc_deni		= "non";
+	}
+	enumeratio genus_moduli hereditat nint {
+		xe_excorporalis	= 0x1,
+		xe_incorporalis	= 0x2,
+		nativus			= 0x4
+	}
+	enumeratio modus_creandi_processi hereditat nint {
+		non_nativus				= 0x001,
+		non_xe					= 0x002,
+		imperatum				= 0x004,
+		administrans			= 0x008,
+		xc_trahe_non			= 0x010,
+		actuarius_defaltus		= 0x000,
+		actuarius_nullus		= 0x020,
+		actuarius_consolatorium	= 0x040,
+		actuarius_lima			= 0x080,
+		actuarius_cluster		= 0x100,
+		actuarius_parentis		= 0x200
+	}
+
+	genus contextus_consolatorii hereditat graphicum.contextus_machinae {
+		int latitudo { adipisce virtualis pura; }
+		int altitudo { adipisce virtualis pura; }
+
+		functio logicum exordi() virtualis pura;
+		functio logicum exordi(~imago.color clr) virtualis pura;
+		functio logicum ende() virtualis pura;
+	}
+	genus fundus_consolatorii hereditat objectum {
+		int latitudo { adipisce virtualis pura; }
+		int altitudo { adipisce virtualis pura; }
+		@nint32 data { adipisce virtualis pura; }
+		functio nihil synchroniza() iacit virtualis pura;
+
+		functio adl[contextus_consolatorii] ad_contextum() iacit virtualis pura;
+		functio adl[imago.replum] ad_replum(int32 linea, imago.formatus form, imago.modus_alpha alpha, imago.modus_convisendi conv) iacit virtualis pura;
+		functio nihil synchroniza_cum_replo(@imago.replum rpl) iacit virtualis pura;
+	}
+	genus xc hereditat consolatorium {
+		enumeratio stylus_cursoris hereditat nint {
+			vacuus			= 0x00,
+			horizontalis	= 0x01,
+			verticalis		= 0x02,
+			cellularis		= 0x03
+		}
+		enumeratio stylus_typographicae hereditat nint {
+			lata		= 0x01,
+			italica		= 0x02,
+			sublinea	= 0x04
+		}
+		enumeratio modus_imaginem_fundi hereditat nint {
+			contendere	= 0x00,
+			exscribere	= 0x01,
+			adtemperare	= 0x02,
+			occulere	= 0x03
+		}
+
+		functio nihil defini_iconem(@imago.collectus icon) iacit virtualis pura;
+
+		imago.color color_primus_verus { loca iacit virtualis pura; }
+		imago.color color_secundus_verus { loca iacit virtualis pura; }
+
+		functio nihil crea_culicare(logicum evolutivus) iacit virtualis pura;
+		functio nihil retexe_culicare() iacit virtualis pura;
+		functio nihil permuta_culicaria() iacit virtualis pura;
+
+		functio nihil rectifica_cursore(stylus_cursoris stl, dfrac magn, logicum nict) iacit virtualis pura;
+		functio nihil rectifica_cursore_salva_nictandum(stylus_cursoris stl, dfrac magn) iacit virtualis pura;
+		functio nihil rectifica_cursore_salva_magnitudinem(stylus_cursoris stl, logicum nict) iacit virtualis pura;
+		functio nihil rectifica_cursore_salva_stylum(dfrac magn, logicum nict) iacit virtualis pura;
+		functio nihil rectifica_stylum_cursoris(stylus_cursoris stl) iacit virtualis pura;
+		functio nihil rectifica_magnitudinem_cursoris(dfrac magn) iacit virtualis pura;
+		functio nihil rectifica_nictandum_cursoris(logicum nict) iacit virtualis pura;
+		functio nihil conturba_cursorem() iacit virtualis pura;
+
+		functio nihil defini_stylum_typographicae(nint id, nint valor) iacit virtualis pura;
+		functio nihil conturba_stylum_typographicae(nint id) iacit virtualis pura;
+
+		functio nihil scribe_crabatum(int numerus, ~imago.color valor) iacit virtualis pura;
+		functio nihil conturba_crabatum(int numerus) iacit virtualis pura;
+		functio nihil scribe_crabatum(logicum secundus, int numerus, ~imago.color valor) iacit virtualis pura;
+		functio nihil conturba_crabatum(logicum secundus, int numerus) iacit virtualis pura;
+		functio nihil scribe_defaltae_crabati(logicum secundus, int numerus) iacit virtualis pura;
+		functio nihil conturba_defaltae_crabati(logicum secundus) iacit virtualis pura;
+		functio nihil redefini_defaltas() iacit virtualis pura;
+
+		logicum clode_fenestram { loca iacit virtualis pura; }
+		int tabulatio_horizontalis { loca iacit virtualis pura; }
+		int tabulatio_verticalis { loca iacit virtualis pura; }
+		int margines_fenestrae { loca iacit virtualis pura; }
+		imago.color fundus_fenestrae { loca iacit virtualis pura; }
+		dfrac macula_fenestrae { loca iacit virtualis pura; }
+		functio nihil defini_typographicam(int alt) iacit virtualis pura;
+		functio nihil defini_typographicam(~linea nomen, int alt) iacit virtualis pura;
+
+		functio nihil salva_cursorem() iacit virtualis pura;
+		functio nihil repone_cursorem() iacit virtualis pura;
+		functio nihil defini_dorsum_rotandi(int ab, int num) iacit virtualis pura;
+		functio nihil conturba_dorsum_rotandi() iacit virtualis pura;
+		functio nihil rota(int num) iacit virtualis pura;
+
+		functio nihil defini_modum_imaginem_fundi(modus_imaginem_fundi modus) iacit virtualis pura;
+		functio nihil defini_imaginem_fundi(int lat, int alt) iacit virtualis pura;
+		functio nihil defini_imaginem_fundi(~semita sem) iacit virtualis pura;
+		functio nihil defini_imaginem_fundi(@imago.replum rpl) iacit virtualis pura;
+		functio nihil retexe_imaginem_fundi() iacit virtualis pura;
+	}
+	genus processus hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		functio nihil siste() virtualis pura;
+		logicum activus { adipisce virtualis pura; }
+		int numerus_exitus { adipisce virtualis pura; }
+	}
+	genus modulus_dynamicus hereditat objectum {
+		structor () {}
+		functio @nihil symbolus(~linea nomen) virtualis pura;
+		genus_moduli genus_moduli { adipisce virtualis pura; }
+	}
+
+	structura descriptio_processi {
+		linea imago;
+		semita lima_act;
+		@linea argumenta;
+		adl[processus] processus;
+		nint modus;
+		int numerus_argumentorum;
+
+		structor (~linea im) iacit { funda imago = im; funda argumenta = nullus; funda modus = 0; funda numerus_argumentorum = 0; }
+		structor (~linea im, @linea arg, int num_arg) iacit { funda imago = im; funda argumenta = arg; funda modus = 0; funda numerus_argumentorum = num_arg; }
+		structor (~linea im, ~dordo_linearum arg) iacit { funda imago = im; funda argumenta = arg.data; funda modus = 0; funda numerus_argumentorum = arg.longitudo; }
+
+		functio ~descriptio_processi impone(nint md) { modus |= md; responde ego^; }
+		functio ~descriptio_processi lima_actuarii(~semita sem) iacit { lima_act = sem; responde ego^; }
+		functio logicum exequi() { responde crea_processum(ego^); }
+	}
+
+	[[importa] xx_crpr] functio logicum _crea_processum(@nihil xx, ~descriptio_processi desc);
+	[[importa] xx_onmd] functio adl[modulus_dynamicus] _onera_modulum_dynamicum(@nihil xx, ~semita imago, nint modus);
+
+	functio logicum crea_processum(~descriptio_processi desc) { responde _crea_processum(protocollum(xx), desc); }
+	functio adl[modulus_dynamicus] onera_modulum_dynamicum(~semita imago, nint modus) { responde _onera_modulum_dynamicum(protocollum(xx), imago, modus); }
+}
