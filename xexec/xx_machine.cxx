@@ -7,6 +7,7 @@
 #include "../xenv/xe_conapi.h"
 #include "../xenv/xe_filesys.h"
 #include "../xenv/xe_imgapi.h"
+#include "../xenv/xe_rtff.h"
 
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
@@ -704,7 +705,10 @@ namespace Engine
 				virtual void * GetSymbol(const string & name) noexcept override
 				{
 					auto smbl = _ctx->GetSymbol(name);
-					if (!smbl) return 0;
+					if (!smbl) {
+						smbl = _ctx->GetSymbol(XE::SymbolType::Function, L"exporta", name);
+						if (!smbl) return 0;
+					}
 					return smbl->GetSymbolEntity();
 				}
 				virtual uint GetTypeOfModule(void) noexcept override { return _class; }
@@ -800,8 +804,7 @@ namespace Engine
 						proc = CreateCommandProcess(real_image, &args);
 						success = proc.Inner() != 0;
 					} else if (desc.flags & 8) {
-						// TODO: USE THIS
-						// if (is_xe) real_image = self._ec.xxf_path;
+						if (is_xe) real_image = self._ec.xxf_path;
 						success = CreateProcessElevated(real_image, &args);
 					} else {
 						proc = CreateProcess(real_image, &args);
@@ -861,6 +864,7 @@ namespace Engine
 		void PlatformErrorReport(const string & message) noexcept
 		{
 			try {
+				Windows::GetWindowSystem()->SetApplicationIconVisibility(true);
 				Windows::GetWindowSystem()->MessageBox(0, message, L"XX", 0, Windows::MessageBoxButtonSet::Ok, Windows::MessageBoxStyle::Error, 0);
 			} catch (...) {}
 		}
@@ -1014,6 +1018,7 @@ namespace Engine
 				}
 				XE::ActivateConsoleIO(*loader, console, console_allocator);
 				XE::ActivateImageIO(*loader);
+				XE::ActivateFileFormatIO(*loader);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;
 				if (environment_configuration.locale_override.Length()) Assembly::CurrentLocale = environment_configuration.locale_override;

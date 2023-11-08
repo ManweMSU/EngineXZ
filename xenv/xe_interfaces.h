@@ -49,5 +49,6 @@ namespace Engine
 		Streaming::Stream * WrapFromXStream(XStream * stream);
 		XTextEncoder * WrapToEncoder(Streaming::TextWriter * writer);
 		XTextDecoder * WrapToDecoder(Streaming::TextReader * reader);
+		Object * CreateMetadataDictionary(Volumes::Dictionary<string, string> * dict);
 	}
 }

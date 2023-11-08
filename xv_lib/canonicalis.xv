@@ -2812,7 +2812,7 @@ dura linea {
 	[[thiscall_nullum]] [[importa] tmp_adl] functio linea ad_lineam() iacit;
 	[[thiscall_nullum]] [[importa] tmp_alb] functio linea ad_lineam_brevi() iacit;
 
-	[[thiscall_nullum]] [[importa] tmp_cur] classis functio tempus currens();
+	[[importa] tmp_cur] classis functio tempus currens();
 	[[thiscall_nullum]] [[importa] tmp_dim] functio int dies_in_mense();
 }
 

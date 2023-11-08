@@ -246,6 +246,43 @@ namespace Engine
 			virtual bool IsAtEOS(void) noexcept override { return _rdr->EofReached(); }
 			virtual int GetEncoding(void) noexcept override { return int(_rdr->GetEncoding()); }
 		};
+		class MetadataDictionary : public Object
+		{
+			SafePointer< Volumes::Dictionary<string, string> > _meta;
+			Volumes::BinaryTree< Volumes::KeyValuePair<string, string> >::Element * _current;
+			int _current_index, _length;
+		public:
+			MetadataDictionary(Volumes::Dictionary<string, string> * meta) : _current(0), _current_index(-1) { _meta.SetRetain(meta); _length = _meta->Count(); }
+			virtual ~MetadataDictionary(void) override {}
+			virtual string ToString(void) const override { try { return _meta->ToString(); } catch (...) { return L""; } }
+			virtual int Begin(void) noexcept { return 0; }
+			virtual int End(void) noexcept { return _length - 1; }
+			virtual int PreBegin(void) noexcept { return -1; }
+			virtual int PostEnd(void) noexcept { return _length; }
+			virtual string KeyByIndex(int index, ErrorContext & ectx) noexcept
+			{
+				try {
+					if (index < 0 || index >= _length) { ectx.error_code = 3; ectx.error_subcode = 0; return L""; }
+					if (index != _current_index) {
+						if (index == _current_index + 1 && _current) _current = _current->GetNext();
+						else if (index == _current_index - 1 && _current) _current = _current->GetPrevious();
+						else if (index == 0) _current = _meta->GetFirst();
+						else if (index == _length - 1) _current = _meta->GetLast();
+						else _current = _meta->ElementAt(index);
+						_current_index = index;
+					}
+					return _current->GetValue().key;
+				} catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return L""; }
+			}
+			virtual string ValueByKey(const string & key, ErrorContext & ectx) noexcept
+			{
+				try {
+					auto element = _meta->GetElementByKey(key);
+					if (!element) { ectx.error_code = 6; ectx.error_subcode = 2; return L""; }
+					return *element;
+				} catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return L""; }
+			}
+		};
 
 		XDispatchContext::XDispatchContext(IDispatchQueue * queue) { _queue.SetRetain(queue); }
 		XDispatchContext::~XDispatchContext(void) {}
@@ -279,5 +316,6 @@ namespace Engine
 		}
 		XTextEncoder * WrapToEncoder(Streaming::TextWriter * writer) { return new TextEncoder(writer); }
 		XTextDecoder * WrapToDecoder(Streaming::TextReader * reader) { return new TextDecoder(reader); }
+		Object * CreateMetadataDictionary(Volumes::Dictionary<string, string> * dict) { return new MetadataDictionary(dict); }
 	}
 }

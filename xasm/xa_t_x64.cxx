@@ -183,7 +183,7 @@ namespace Engine
 					result->Retain();
 					return result;
 				}
-				int _allocate_temporary(const ObjectSize & size, const FinalizerReference & final, int * rbp_offs = 0)
+				int _allocate_temporary(const ObjectSize & size, int * rbp_offs = 0)
 				{
 					auto current_scope_ptr = _scopes.GetLast();
 					if (!current_scope_ptr) throw InvalidArgumentException();
@@ -192,13 +192,22 @@ namespace Engine
 					_local_disposition new_var;
 					new_var.size = size.num_bytes + WordSize * size.num_words;
 					new_var.rbp_offset = scope.frame_base + scope.frame_size_unused - size_padded;
-					new_var.finalizer = final;
+					new_var.finalizer = TH::MakeFinal();
 					scope.frame_size_unused -= size_padded;
 					if (scope.frame_size_unused < 0) throw InvalidArgumentException();
 					auto index = scope.first_local_no + scope.locals.Length();
 					scope.locals << new_var;
 					if (rbp_offs) *rbp_offs = new_var.rbp_offset;
 					return index;
+				}
+				void _assign_finalizer(int local_index, const FinalizerReference & final)
+				{
+					for (auto & scp : _scopes) if (scp.first_local_no <= local_index && local_index < scp.first_local_no + scp.locals.Length()) {
+						auto & local = scp.locals[local_index - scp.first_local_no];
+						local.finalizer = final;
+						return;
+					}
+					throw InvalidArgumentException();
 				}
 				void _relocate_code_at(int offset) { _dest.code_reloc << offset; }
 				void _relocate_data_at(int offset) { _dest.data_reloc << offset; }
@@ -668,7 +677,7 @@ namespace Engine
 						(*mem_load) += _word_align(TH::MakeSize(size, 0));
 						if (!idle) {
 							int offs;
-							_allocate_temporary(TH::MakeSize(size, 0), TH::MakeFinal(), &offs);
+							_allocate_temporary(TH::MakeSize(size, 0), &offs);
 							encode_mov_mem_reg(size, Reg::RBP, offs, disp->reg);
 							encode_lea(disp->reg, Reg::RBP, offs);
 						}
@@ -699,7 +708,7 @@ namespace Engine
 						if (!idle) {
 							int local_mem_load = 0, ssoffs;
 							_encode_tree_node(node.inputs[1], true, &local_mem_load, &none, reg_in_use);
-							_allocate_temporary(TH::MakeSize(local_mem_load, 0), TH::MakeFinal(), &ssoffs);
+							_allocate_temporary(TH::MakeSize(local_mem_load, 0), &ssoffs);
 							_encode_open_scope(local_mem_load, true, ssoffs);
 							_encode_tree_node(node.inputs[1], false, &local_mem_load, &none, reg_in_use);
 							_encode_close_scope(reg_in_use);
@@ -711,7 +720,7 @@ namespace Engine
 						if (!idle) {
 							int local_mem_load = 0, ssoffs;
 							_encode_tree_node(node.inputs[2], true, &local_mem_load, &none, reg_in_use);
-							_allocate_temporary(TH::MakeSize(local_mem_load, 0), TH::MakeFinal(), &ssoffs);
+							_allocate_temporary(TH::MakeSize(local_mem_load, 0), &ssoffs);
 							_encode_open_scope(local_mem_load, true, ssoffs);
 							_encode_tree_node(node.inputs[2], false, &local_mem_load, &none, reg_in_use);
 							_encode_close_scope(reg_in_use);
@@ -740,7 +749,7 @@ namespace Engine
 							if (!idle) {
 								int local_mem_load = 0, ssoffs;
 								_encode_tree_node(n, true, &local_mem_load, &ld, reg_in_use | uint(local));
-								_allocate_temporary(TH::MakeSize(local_mem_load, 0), TH::MakeFinal(), &ssoffs);
+								_allocate_temporary(TH::MakeSize(local_mem_load, 0), &ssoffs);
 								_encode_open_scope(local_mem_load, true, ssoffs);
 								_encode_tree_node(n, false, &local_mem_load, &ld, reg_in_use | uint(local));
 								_encode_close_scope(reg_in_use | uint(local));
@@ -774,7 +783,7 @@ namespace Engine
 							*mem_load += 8;
 							if (!idle) {
 								int offs;
-								_allocate_temporary(TH::MakeSize(0, 1), TH::MakeFinal(), &offs);
+								_allocate_temporary(TH::MakeSize(0, 1), &offs);
 								encode_mov_mem_reg(8, Reg::RBP, offs, local);
 								encode_lea(disp->reg, Reg::RBP, offs);
 							}
@@ -824,6 +833,7 @@ namespace Engine
 					uint current_stack_index = 0;
 					int rv_offset = 0;
 					Reg rv_reg = Reg::NO;
+					int rv_mem_index = -1;
 					for (int i = 0; i < layout->Length(); i++) {
 						auto & info = layout->ElementAt(i);
 						if (info.index >= 0) {
@@ -841,7 +851,7 @@ namespace Engine
 							if (_conv == CallingConvention::Windows) current_stack_index += 8;
 							*mem_load += _word_align(node.retval_spec.size);
 							rv_reg = info.reg;
-							if (!idle) _allocate_temporary(node.retval_spec.size, node.retval_final, &rv_offset);
+							if (!idle) rv_mem_index = _allocate_temporary(node.retval_spec.size, &rv_offset);
 						}
 					}
 					if (_conv == CallingConvention::Unix) for (auto & info : layout->Elements()) if (info.index >= 0 && _is_xmm_register(info.reg)) {
@@ -912,7 +922,7 @@ namespace Engine
 							*mem_load += WordSize;
 							if (!idle) {
 								int offs;
-								_allocate_temporary(TH::MakeSize(0, 1), node.retval_final, &offs);
+								rv_mem_index = _allocate_temporary(TH::MakeSize(0, 1), &offs);
 								encode_mov_mem_reg(8, Reg::RBP, offs, Reg::RAX);
 							}
 						}
@@ -922,7 +932,7 @@ namespace Engine
 						*mem_load += WordSize;
 						if (!idle) {
 							int offs;
-							_allocate_temporary(TH::MakeSize(0, 1), node.retval_final, &offs);
+							rv_mem_index = _allocate_temporary(TH::MakeSize(0, 1), &offs);
 							encode_mov_mem_reg(8, Reg::RBP, offs, Reg::RAX);
 							encode_lea(disp->reg, Reg::RBP, offs);
 						}
@@ -944,6 +954,7 @@ namespace Engine
 						disp->flags = DispositionDiscard;
 					}
 					_encode_restore(Reg::RAX, reg_in_use, !idle && preserve_rax);
+					if (rv_mem_index >= 0) _assign_finalizer(rv_mem_index, node.retval_final);
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
 				{
@@ -993,7 +1004,7 @@ namespace Engine
 										*mem_load += _word_align(TH::MakeSize(0, 1));
 										if (!idle) {
 											int offset;
-											_allocate_temporary(TH::MakeSize(0, 1), TH::MakeFinal(), &offset);
+											_allocate_temporary(TH::MakeSize(0, 1), &offset);
 											encode_mov_mem_reg(8, Reg::RBP, offset, src.reg);
 											encode_lea(src.reg, Reg::RBP, offset);
 										}
@@ -1155,16 +1166,19 @@ namespace Engine
 									ld.flags = DispositionDiscard;
 									ld.reg = Reg::NO;
 									ld.size = 0;
-									int offset;
+									int offset, index;
 									if (!idle) {
-										_allocate_temporary(node.retval_spec.size, node.retval_final, &offset);
+										index = _allocate_temporary(node.retval_spec.size, &offset);
 										_local_disposition local;
 										local.rbp_offset = offset;
 										local.size = size;
 										_init_locals.Push(local);
 									}
 									_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use);
-									if (!idle) _init_locals.Pop();
+									if (!idle) {
+										_assign_finalizer(index, node.retval_final);
+										_init_locals.Pop();
+									}
 									if (disp->flags & DispositionPointer) {
 										if (!idle) encode_lea(disp->reg, Reg::RBP, offset);
 										disp->flags = DispositionPointer;
@@ -1221,7 +1235,7 @@ namespace Engine
 									Reg dest = ld.reg == Reg::RDI ? Reg::RDX : Reg::RDI;
 									if (!idle) {
 										int offset;
-										_allocate_temporary(node.input_specs[0].size, XA::TH::MakeFinal(), &offset);
+										_allocate_temporary(node.input_specs[0].size, &offset);
 										_scopes.GetLast()->GetValue().current_split_offset = offset;
 										_encode_preserve(dest, reg_in_use | uint(ld.reg), true);
 										encode_lea(dest, Reg::RBP, offset);

@@ -1,0 +1,271 @@
+﻿importa canonicalis;
+importa imago;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Formatorum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2023";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium formati {
+	enumeratio genus_valoris_tabularii hereditat nint {
+		ignotus = 0, integer = 1, fractus = 2, logicum = 3, textum = 4,
+		integer_longus = 5, fractus_longus = 6, color = 7, tempus = 8, data = 9
+	}
+	genus nodus_tabularii hereditat objectum {
+		dordo_linearum subnodi { adipisce iacit virtualis pura; }
+		dordo_linearum valores { adipisce iacit virtualis pura; }
+
+		functio nihil crea_nodum(~linea semita) iacit virtualis pura;
+		functio nihil remove_nodum(~linea semita) iacit virtualis pura;
+		functio nihil renomina_nodum(~linea nomen, ~linea novus) iacit virtualis pura;
+		functio adl[nodus_tabularii] aperi_nodum(~linea semita) iacit virtualis pura;
+
+		functio nihil crea_valorem(~linea semita, genus_valoris_tabularii gns) iacit virtualis pura;
+		functio nihil crea_valorem(~linea semita, @nihil gns) iacit virtualis pura;
+		functio nihil remove_valorem(~linea semita) iacit virtualis pura;
+		functio nihil renomina_valorem(~linea nomen, ~linea novus) iacit virtualis pura;
+		functio genus_valoris_tabularii genus_valoris(~linea semita) iacit virtualis pura;
+
+		functio adl[objectum_dynamicum] lege_valorem(~linea semita) iacit virtualis pura;
+
+		functio nihil scribe_valorem(~linea semita, int valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, frac valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, logicum valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, ~linea valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, @char valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, int64 valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, frac64 valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, ~imago.color valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, ~tempus valor) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, @nihil valor, int longitudo) iacit virtualis pura;
+		functio nihil scribe_valorem(~linea semita, ~dordo_datorum valor) iacit virtualis pura;
+
+		[[importa] fo_mt] classis functio adl[nodus_tabularii] merge(@@nodus_tabularii nodi, int num) iacit;
+
+		functio adl[objectum_dynamicum] operator [] (~linea semita) iacit { responde lege_valorem(semita); }
+	}
+	genus tabularium hereditat nodus_tabularii {
+		[[importa] fo_at1] classis functio adl[tabularium] alloca() iacit;
+		[[importa] fo_at2] classis functio adl[tabularium] ex_nodo(@nodus_tabularii nodus) iacit;
+
+		[[importa] fo_ot1] classis functio adl[tabularium] onera(@flumen fl) iacit;
+		[[importa] fo_ot2] classis functio adl[tabularium] onera_ex_scriptione(@flumen fl) iacit;
+		[[importa] fo_ot3] classis functio adl[tabularium] onera_ex_scriptione(@flumen fl, linea.codex cdx) iacit;
+		[[importa] fo_ot4] classis functio adl[tabularium] onera_ex_scriptione(@scriptio.decodificator dec) iacit;
+		[[importa] fo_ot5] classis functio adl[tabularium] onera_ex_scriptione(~linea ln) iacit;
+		[[importa] fo_ot6] classis functio adl[tabularium] onera_ex_datibus(@flumen fl) iacit;
+
+		functio nihil salva(@flumen fl) iacit virtualis pura;
+		functio nihil salva_in_scriptionem(@flumen fl) iacit virtualis pura;
+		functio nihil salva_in_scriptionem(@flumen fl, linea.codex cdx) iacit virtualis pura;
+		functio nihil salva_in_scriptionem(@scriptio.codificator cdx) iacit virtualis pura;
+		functio linea salva_in_scriptionem() iacit virtualis pura;
+
+		functio adl[tabularium] cloniza() iacit virtualis pura;
+	}
+	genus compressor hereditat objectum {
+		structura compressio {
+			enumeratio methodus hereditat nint { huffman = 1, lzw = 3, rle8 = 9, rle16 = 10, rle32 = 11, rle64 = 12, rle128 = 13 }
+			constatus qualitas_maxima = nint(4);
+	
+			nint series_methodorum;
+			nint qualitas;
+			nint talea;
+			int fila_compressoris;
+	
+			structor () { funda series_methodorum(0); funda qualitas(2); funda talea(0x10000); funda fila_compressoris(1); }
+			functio nihil adde_methodum(methodus meth)
+			{
+				nint com = 0, fil = 0xF;
+				dum (series_methodorum & fil != 0) { com += 4; fil <<= 4; }
+				series_methodorum |= meth << com;
+			}
+		}
+
+		[[importa] fo_ac1] classis functio adl[compressor] alloca(~compressio desc) iacit;
+		[[importa] fo_ac2] classis functio adl[compressor] alloca(int fila_dec) iacit;
+
+		functio nihil lege_informationem(~compressio desc) virtualis pura;
+		functio nihil procede(@flumen in, @flumen ex) iacit virtualis pura;
+	}
+	genus lima_archivi hereditat objectum {
+		enumeratio modus_flumeni hereditat nint {
+			defalta			= 0,
+			nativus			= 1,
+			decompressatus	= 2
+		}
+
+		functio adl[flumen] lege(modus_flumeni modus) iacit virtualis pura;
+
+		nint index { adipisce virtualis pura; }
+		linea nomen { adipisce iacit virtualis pura; }
+		linea genu { adipisce iacit virtualis pura; }
+		nint indentitas { adipisce iacit virtualis pura; }
+		nint moderatoris { adipisce iacit virtualis pura; }
+		tempus tempus_creaturae { adipisce iacit virtualis pura; }
+		tempus tempus_apertionis { adipisce iacit virtualis pura; }
+		tempus tempus_alternationis { adipisce iacit virtualis pura; }
+		logicum compressatus_est { adipisce iacit virtualis pura; }
+		adl[meta] attributa { adipisce iacit virtualis pura; }
+		adl[flumen] data { adipisce iacit { responde lege(modus_flumeni.defalta); } }
+	}
+	genus archivum hereditat objectum {
+		[[importa] fo_oa1] classis functio adl[archivum] onera(@flumen fl) iacit;
+		[[importa] fo_oa2] classis functio adl[archivum] onera(@flumen fl, logicum onera_metam) iacit;
+
+		functio nint initus() virtualis pura;
+		functio nint finis() virtualis pura;
+		functio nint prae_initus() virtualis pura;
+		functio nint post_finis() virtualis pura;
+
+		int numerus_limarum { adipisce virtualis pura; }
+		logicum metam_possidet { adipisce virtualis pura; }
+
+		functio adl[lima_archivi] lima(nint index) iacit virtualis pura;
+		functio adl[lima_archivi] lima(~linea nomen) iacit virtualis pura;
+		functio adl[lima_archivi] lima(~linea gns, nint ident) iacit virtualis pura;
+
+		functio adl[lima_archivi] operator [] (nint index) iacit { responde lima(index); }
+		functio adl[lima_archivi] operator [] (~linea nomen) iacit { responde lima(nomen); }
+		functio adl[lima_archivi] operator [] (~linea gns, nint ident) iacit { responde lima(gns, ident); }
+	}
+	genus archivum_novum hereditat objectum {
+		enumeratio formatus hereditat nint {
+			ecsa_antica		= 1,
+			ecsa_64			= 0,
+			ecsa_meta		= 2,
+			ecsa_meta_nulla	= 0
+		}
+		enumeratio indumenta_limae hereditat nint {
+			data					= 0x0001,
+			flumen_datorum			= 0x0002,
+			nomen					= 0x0004,
+			genu_et_indentitas		= 0x0008,
+			moderatoris				= 0x0010,
+			tempus_creaturae		= 0x0020,
+			tempus_apertionis		= 0x0040,
+			tempus_alternationis	= 0x0080,
+			attributa				= 0x0100,
+			compressio				= 0x0200,
+			compressatus_est		= 0x0400,
+		}
+		structura descriptio {
+			int numerus_limarum;
+			nint formatus;
+		}
+		structura lima {
+			linea nomen;
+			linea genu;
+			nint indentitas;
+			nint moderatoris;
+			tempus tempus_creaturae;
+			tempus tempus_apertionis;
+			tempus tempus_alternationis;
+			@linea attributa;
+			@flumen flumen_datorum;
+			@nihil data;
+			@compressor.compressio compressio;
+			int numerus_attributorum;
+			int longitudo_datorum;
+			nint indumentum;
+		}
+		[[importa] fo_aa1] classis functio adl[archivum_novum] alloca(@flumen fl, ~descriptio desc) iacit;
+
+		functio nihil lege_informationem(~descriptio desc) virtualis pura;
+		functio nihil scribe_limam(nint index, ~lima lima) iacit virtualis pura;
+		functio nihil ende() iacit virtualis pura;
+	}
+	genus paginae_linearum hereditat objectum {
+		[[importa] fo_al] classis functio adl[paginae_linearum] alloca() iacit;
+		[[importa] fo_ol] classis functio adl[paginae_linearum] onera(@flumen fl) iacit;
+
+		functio ~linea lege(int indent) iacit virtualis pura;
+		functio nihil adde(~linea ln, int indent) iacit virtualis pura;
+		functio nihil remove(int indent) iacit virtualis pura;
+		adl[ordo int] index { adipisce iacit virtualis pura; }
+
+		functio nihil salva(@flumen fl) iacit virtualis pura;
+
+		functio ~linea operator [] (int indent) iacit { responde lege(indent); }
+	}
+	genus paginae_datorum hereditat objectum {
+		structura descriptio {
+			char punctum;
+			char limitans;
+			linea.codex codex;
+
+			structor () { funda punctum('.'); funda limitans(','); funda codex(linea.codex.utf8); }
+		}
+
+		int _latitudo;
+		int _altitudo;
+		descriptio _desc;
+		ordo ordo linea _cellulae;
+
+		structor () { funda _latitudo(0); funda _altitudo(0); funda _cellulae(0x100); }
+
+		classis functio adl[paginae_datorum] alloca() iacit { responde crea(paginae_datorum); }
+		classis functio adl[paginae_datorum] alloca(~descriptio desc) iacit
+		{
+			var resp = crea(paginae_datorum);
+			resp^._desc = desc;
+			responde resp;
+		}
+		classis functio adl[paginae_datorum] onera(@flumen fl, ~descriptio desc) iacit
+		{
+			var resp = crea(paginae_datorum);
+			resp^._desc = desc;
+			var dex = scriptio.decodifica(fl, resp^._desc.codex);
+			resp^._desc.codex = dex^.codex;
+			dum (!dex^.finis) {
+				var ln = dex^.lege_lineam();
+				si (ln.longitudo > 0) {
+					resp^._altitudo++;
+					var dec = ln.scinde(resp^._desc.limitans);
+					si (dec^.longitudo > resp^._latitudo) resp^._latitudo = dec^.longitudo;
+					resp^._cellulae << dec^;
+				}
+			}
+			responde resp;
+		}
+
+		functio linea lege(int x, int y) iacit
+		{
+			si (y < 0 || x < 0) iace errores.argumentum_falsum;
+			si (y >= _cellulae.longitudo || x >= _cellulae[y].longitudo) responde "";
+			responde _cellulae[y][x];
+		}
+		functio nihil scribe(int x, int y, ~linea valor) iacit
+		{
+			si (y < 0 || x < 0) iace errores.argumentum_falsum;
+			si (y >= _cellulae.longitudo) _cellulae.longitudo = _altitudo = y + 1;
+			si (x >= _cellulae[y].longitudo) {
+				_cellulae[y].longitudo = x + 1;
+				si (x >= _latitudo) _latitudo = x + 1;
+			}
+			_cellulae[y][x] = valor;
+		}
+		functio nihil scribe(int x, int y, frac valor) iacit { scribe(x, y, linea(valor, _desc.punctum)); }
+		functio nihil scribe(int x, int y, dfrac valor) iacit { scribe(x, y, linea(valor, _desc.punctum)); }
+
+		functio nihil salva(@flumen fl) iacit
+		{
+			var cdx = scriptio.codifica(fl, _desc.codex);
+			cdx^.scribe_subscriptionem();
+			pro (var y : [0, _altitudo - 1]) {
+				pro (var x : [0, _latitudo - 1]) {
+					si (x > 0) cdx^.scribe(linea(_desc.limitans, 1));
+					cdx^.scribe(lege(x, y));
+				}
+				cdx^.scribe_lineam();
+			}
+		}
+
+		functio linea operator [] (int x, int y) iacit { responde lege(x, y); }
+		int latitudo { adipisce { responde _latitudo; } }
+		int altitudo { adipisce { responde _altitudo; } }
+		descriptio informatio { adipisce { responde _desc; } }
+	}
+}

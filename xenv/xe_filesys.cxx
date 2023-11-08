@@ -85,11 +85,11 @@ namespace Engine
 			}
 			virtual void Flush(void) noexcept override { try { _stream->Flush(); } catch (...) {} }
 			virtual bool IsXV(void) noexcept override { return false; }
-			virtual Time GetCreationTime(ErrorContext & ectx) noexcept { XE_TRY_INTRO return IO::DateTime::GetFileCreationTime(_stream->Handle()); XE_TRY_OUTRO(0) }
+			virtual uint64 GetCreationTime(ErrorContext & ectx) noexcept { XE_TRY_INTRO return IO::DateTime::GetFileCreationTime(_stream->Handle()).Ticks; XE_TRY_OUTRO(0) }
 			virtual void SetCreationTime(const Time & time, ErrorContext & ectx) noexcept { XE_TRY_INTRO IO::DateTime::SetFileCreationTime(_stream->Handle(), time); XE_TRY_OUTRO() }
-			virtual Time GetAccessTime(ErrorContext & ectx) noexcept { XE_TRY_INTRO return IO::DateTime::GetFileAccessTime(_stream->Handle()); XE_TRY_OUTRO(0) }
+			virtual uint64 GetAccessTime(ErrorContext & ectx) noexcept { XE_TRY_INTRO return IO::DateTime::GetFileAccessTime(_stream->Handle()).Ticks; XE_TRY_OUTRO(0) }
 			virtual void SetAccessTime(const Time & time, ErrorContext & ectx) noexcept { XE_TRY_INTRO IO::DateTime::SetFileAccessTime(_stream->Handle(), time); XE_TRY_OUTRO() }
-			virtual Time GetAlterTime(ErrorContext & ectx) noexcept { XE_TRY_INTRO return IO::DateTime::GetFileAlterTime(_stream->Handle()); XE_TRY_OUTRO(0) }
+			virtual uint64 GetAlterTime(ErrorContext & ectx) noexcept { XE_TRY_INTRO return IO::DateTime::GetFileAlterTime(_stream->Handle()).Ticks; XE_TRY_OUTRO(0) }
 			virtual void SetAlterTime(const Time & time, ErrorContext & ectx) noexcept { XE_TRY_INTRO IO::DateTime::SetFileAlterTime(_stream->Handle(), time); XE_TRY_OUTRO() }
 			virtual int GetUserAccess(ErrorContext & ectx) noexcept { XE_TRY_INTRO return IO::Unix::GetFileUserAccessRights(_stream->Handle()); XE_TRY_OUTRO(0) }
 			virtual void SetUserAccess(const int & value, ErrorContext & ectx) noexcept

@@ -586,6 +586,7 @@ public:
 				auto summary = p.value->FindSection(XV::ManualSectionClass::Summary);
 				if (summary) {
 					for (auto & l : summary->GetContents()) if (!l.value.Length()) { select = p.value; break; }
+					if (summary->GetContents().IsEmpty()) select = p.value;
 					if (select) break;
 				} else { select = p.value; break; }
 			}
