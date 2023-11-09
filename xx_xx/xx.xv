@@ -1,0 +1,35 @@
+﻿importa lxx;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "XX";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2023";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium lingua "ru";
+auxilium lingua "en";
+
+constatus linea_1 =	"XX Execution Environment"
+{ "ru",				"Среда исполнения XX" }
+{ "en",				"XX Execution Environment" };
+constatus linea_2 =	"In order to launch an XX/XE application,"
+{ "ru",				"Для запуска приложения XX/XE," }
+{ "en",				"In order to launch an XX/XE application," };
+constatus linea_3 =	"  open it within a file explorer, or"
+{ "ru",				"  откройте его в файловом проводнике, или" }
+{ "en",				"  open it within a file explorer, or" };
+constatus linea_4 =	"  use the 'xx' command-line with the following syntax:"
+{ "ru",				"  или используйте команду командной строки 'xx' с синтаксисом:" }
+{ "en",				"  use the 'xx' command-line with the following syntax:" };
+constatus linea_5 =	"xx <image file.xx> { <command-line arguments> }"
+{ "ru",				"xx <файл образа.xx> { <аргументы командной строки> }" }
+{ "en",				"xx <image file.xx> { <command-line arguments> }" };
+
+functio nihil primus() introitus iacit {
+	var ~ cns = consolatorium.currens()^;
+	cns.scribe_lineam(linea_1);
+	cns.scribe_lineam(linea_2);
+	cns.scribe_lineam(linea_3);
+	cns.scribe_lineam(linea_4);
+	cns.scribe_lineam(linea_5);
+	proba cns acsi (xx.xc)^.clode_fenestram = non;
+}

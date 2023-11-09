@@ -1025,8 +1025,19 @@ namespace Engine
 				try { XE::LoadErrorLocalization(*xctx, L"errores." + Assembly::CurrentLocale); }
 				catch (...) { XE::LoadErrorLocalization(*xctx, L"errores." + environment_configuration.locale_default); }
 				loader->AddModuleSearchPath(IO::Path::GetDirectory(environment_configuration.xi_executable));
-				SafePointer<Streaming::Stream> module_stream = new Streaming::FileStream(environment_configuration.xi_executable,
-					Streaming::AccessRead, Streaming::OpenExisting);
+				SafePointer<Streaming::Stream> module_stream;
+				try {
+					module_stream = new Streaming::FileStream(environment_configuration.xi_executable, Streaming::AccessRead, Streaming::OpenExisting);
+				} catch (IO::FileAccessException & e) {
+					XE::ErrorContext ectx;
+					ectx.error_code = 6;
+					ectx.error_subcode = e.code;
+					string er, ser;
+					XE::GetErrorDescription(ectx, *xctx, er, ser);
+					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.\n%3", environment_configuration.xi_executable,
+						er, ser, loader->GetLastErrorSubject()));
+					return 7;
+				}
 				xctx->LoadModule(environment_configuration.xi_executable, module_stream);
 				module_stream.SetReference(0);
 				if (!loader->IsAlive()) {

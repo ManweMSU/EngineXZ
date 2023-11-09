@@ -1116,7 +1116,7 @@ namespace Engine
 					_encode_tree_node(tree, true, &_temp_storage, &disp, uint(retval_copy) | 0xFFFC0000);
 					_encode_open_scope(_temp_storage, true, 0);
 					_encode_tree_node(tree, false, &_temp_storage, &disp, uint(retval_copy) | 0xFFFC0000);
-					_encode_close_scope();
+					_encode_close_scope(uint(retval_copy));
 				}
 			public:
 				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src) : _conv(conv), _dest(dest), _src(src), _org_inst_offsets(0x200), _global_refs(0x100)
