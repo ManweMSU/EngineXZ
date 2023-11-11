@@ -149,6 +149,13 @@ namespace Engine
 		public:
 			FileSystemExtension(const string & exec_path, const string * argv, int argc) : _exec_path(exec_path), _args(argc) { _args.Append(argv, argc); }
 			virtual ~FileSystemExtension(void) override {}
+			void CopyAttributes(handle from, handle to)
+			{
+				IO::Unix::SetFileAccessRights(to, IO::Unix::GetFileUserAccessRights(from), IO::Unix::GetFileGroupAccessRights(from), IO::Unix::GetFileOtherAccessRights(from));
+				IO::DateTime::SetFileCreationTime(to, IO::DateTime::GetFileCreationTime(from));
+				IO::DateTime::SetFileAlterTime(to, IO::DateTime::GetFileAlterTime(from));
+				IO::DateTime::SetFileAccessTime(to, IO::DateTime::GetFileAccessTime(from));
+			}
 			void Copy(const string & from, const string & to, int mode)
 			{
 				if (mode < 1 || mode > 4) throw InvalidArgumentException();
@@ -163,16 +170,19 @@ namespace Engine
 						Streaming::FileStream from_stream(from_full, Streaming::AccessRead, Streaming::OpenExisting);
 						Streaming::FileStream to_stream(to_full, Streaming::AccessWrite, Streaming::CreateNew);
 						from_stream.CopyTo(&to_stream);
+						CopyAttributes(from_stream.Handle(), to_stream.Handle());
 					} else if (mode == 3) {
 						Streaming::FileStream from_stream(from_full, Streaming::AccessRead, Streaming::OpenExisting);
 						try {
 							Streaming::FileStream to_stream(to_full, Streaming::AccessWrite, Streaming::CreateNew);
 							from_stream.CopyTo(&to_stream);
+							CopyAttributes(from_stream.Handle(), to_stream.Handle());
 						} catch (...) {}
 					} else {
 						Streaming::FileStream from_stream(from_full, Streaming::AccessRead, Streaming::OpenExisting);
 						Streaming::FileStream to_stream(to_full, Streaming::AccessWrite, Streaming::CreateAlways);
 						from_stream.CopyTo(&to_stream);
+						CopyAttributes(from_stream.Handle(), to_stream.Handle());
 					}
 				} else if (CheckFileStatus(from_full, 1)) {
 					SafePointer< Array<string> > files = IO::Search::GetFiles(from_full + L"/*");
