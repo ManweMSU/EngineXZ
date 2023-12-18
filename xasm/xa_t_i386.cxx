@@ -1727,7 +1727,7 @@ namespace Engine
 				}
 				void _encode_expression_evaluation(const ExpressionTree & tree, Reg retval_copy)
 				{
-					if (retval_copy != Reg::NO && _is_out_pass_by_reference(tree.retval_spec)) throw InvalidArgumentException();
+					if (retval_copy != Reg::NO && (tree.self.ref_flags & ReferenceFlagInvoke) && _is_out_pass_by_reference(tree.retval_spec)) throw InvalidArgumentException();
 					int _temp_storage = 0;
 					_internal_disposition disp;
 					disp.reg = retval_copy;

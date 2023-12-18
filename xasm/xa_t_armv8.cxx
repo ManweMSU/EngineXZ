@@ -1102,7 +1102,7 @@ namespace Engine
 				}
 				void _encode_expression_evaluation(const ExpressionTree & tree, Reg retval_copy)
 				{
-					if (retval_copy != Reg::NO && _is_pass_by_ref(tree.retval_spec)) throw InvalidArgumentException();
+					if (retval_copy != Reg::NO && (tree.self.ref_flags & ReferenceFlagInvoke) && _is_pass_by_ref(tree.retval_spec)) throw InvalidArgumentException();
 					int _temp_storage = 0;
 					_internal_disposition disp;
 					disp.reg = retval_copy;
@@ -1561,7 +1561,7 @@ namespace Engine
 							_jump_reloc_struct rs;
 							_arm_reference jz;
 							_encode_expression_evaluation(inst.tree, Reg::X15);
-							encode_extend(Reg::X15, Reg::X15, _size_eval(inst.tree.retval_spec.size), false);
+							encode_extend(Reg::X15, Reg::X15, 1, false);
 							encode_and(Reg::XZ, Reg::X15, Reg::X15, true);
 							encode_branch_jcc(Cond::Z, jz);
 							encode_scope_unroll(i, i + 1 + int(inst.attachment.num_bytes));
