@@ -170,7 +170,7 @@ namespace Engine
 		ExecutionSubsystem Module::GetSubsystem(void) const noexcept { return _xss; }
 		const ExecutionContext & Module::GetExecutionContext(void) const noexcept { return _xc; }
 		
-		ExecutionContext::ExecutionContext(void) : _callback(0), _nameless_counter(0)
+		ExecutionContext::ExecutionContext(void) : _callback(0), _nameless_counter(0), _allow_embedded_modules(false)
 		{
 			_sync = CreateSemaphore(1);
 			if (!_sync) throw Exception();
@@ -178,7 +178,7 @@ namespace Engine
 			_linker = XA::CreateLinker();
 			if (!_trans || !_linker) throw Exception();
 		}
-		ExecutionContext::ExecutionContext(ILoaderCallback * callback) : _callback(callback), _nameless_counter(0)
+		ExecutionContext::ExecutionContext(ILoaderCallback * callback) : _callback(callback), _nameless_counter(0), _allow_embedded_modules(false)
 		{
 			_sync = CreateSemaphore(1);
 			if (!_sync) throw Exception();
@@ -213,6 +213,19 @@ namespace Engine
 			_sync->Wait();
 			_callback = callback;
 			if (_callback) _callback_object.SetRetain(_callback->ExposeObject()); else _callback_object.SetReference(0);
+			_sync->Open();
+		}
+		bool ExecutionContext::EmbeddedModulesAllowed(void) const noexcept
+		{
+			_sync->Wait();
+			auto result = _allow_embedded_modules;
+			_sync->Open();
+			return result;
+		}
+		void ExecutionContext::AllowEmbeddedModules(bool allow) noexcept
+		{
+			_sync->Wait();
+			_allow_embedded_modules = allow;
 			_sync->Open();
 		}
 		const Module * ExecutionContext::GetModule(const string & name) const noexcept
@@ -367,9 +380,21 @@ namespace Engine
 				result->_rsrc = data->resources;
 			} catch (...) {
 				_sync->Wait();
-				callback->HandleModuleLoadError(L"", L"", ModuleLoadError::InvalidImageFormat);
+				callback->HandleModuleLoadError(name, L"", ModuleLoadError::InvalidImageFormat);
 				_sync->Open();
 				return 0;
+			}
+			if (EmbeddedModulesAllowed()) for (auto & rsrc : data->resources) if (rsrc.key.Fragment(0, 4) == L"XDL:") {
+				try {
+					auto mpn = result->_name + L":" + rsrc.key;
+					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(rsrc.value->GetBuffer(), rsrc.value->Length());
+					if (!LoadModule(mpn, stream)) return 0;
+				} catch (...) {
+					_sync->Wait();
+					callback->HandleModuleLoadError(name, L"", ModuleLoadError::AllocationFailure);
+					_sync->Open();
+					return 0;
+				}	
 			}
 			for (auto & md : data->modules_depends_on) if (!LoadModule(md)) return 0;
 			SymbolSystem local;
@@ -510,7 +535,7 @@ namespace Engine
 				resolver.global = &_system;
 				resolver.local = &local;
 				resolver.modules = &_modules;
-				resolver.current_module_name = name;
+				resolver.current_module_name = result->_name;
 				resolver.current_module = result.Inner();
 				Volumes::Dictionary<string, XA::TranslatedFunction *> funcs;
 				for (auto & l : loader.to_link) funcs.Append(L"S:" + l.key, &l.value.function);
@@ -532,7 +557,7 @@ namespace Engine
 				return 0;
 			}
 			try {
-				_modules.Append(name, result);
+				_modules.Append(result->_name, result);
 				for (auto & smbl : local.GetSymbolTable()) {
 					if (smbl.key[0] == L'.') {
 						string rename = L"." + string(_nameless_counter);

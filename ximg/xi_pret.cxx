@@ -40,6 +40,16 @@ namespace Engine
 		{
 			for (auto & f : subject.functions) PretranslateFunction(f.value, sys_list, sys_list_length);
 			for (auto & c : subject.classes) for (auto & f : c.value.methods) PretranslateFunction(f.value, sys_list, sys_list_length);
+			for (auto & r : subject.resources) if (r.key.Fragment(0, 4) == L"XDL:") {
+				SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(r.value->GetBuffer(), r.value->Length());
+				Module submodule(stream);
+				PretranslateModule(submodule, sys_list, sys_list_length);
+				stream->SetLength(0);
+				stream->Seek(0, Streaming::Begin);
+				submodule.Save(stream);
+				stream->Seek(0, Streaming::Begin);
+				r.value = stream->ReadAll();
+			}
 		}
 	}
 }

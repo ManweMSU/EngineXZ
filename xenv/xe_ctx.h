@@ -67,6 +67,7 @@ namespace Engine
 			SafePointer<XA::IAssemblyTranslator> _trans;
 			SafePointer<XA::IExecutableLinker> _linker;
 			uint _nameless_counter;
+			bool _allow_embedded_modules;
 		public:
 			ExecutionContext(void);
 			ExecutionContext(ILoaderCallback * callback);
@@ -74,6 +75,8 @@ namespace Engine
 
 			ILoaderCallback * GetLoaderCallback(void) const noexcept;
 			void SetLoaderCallback(ILoaderCallback * callback) noexcept;
+			bool EmbeddedModulesAllowed(void) const noexcept;
+			void AllowEmbeddedModules(bool allow) noexcept;
 
 			const Module * GetModule(const string & name) const noexcept;
 			Volumes::Dictionary<string, const Module *> * GetLoadedModules(void) const noexcept;

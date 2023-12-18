@@ -11,11 +11,12 @@ auxilium attributum (meta.attributum_versio) = "1.0.0.1";
 
 spatium xx {
 	spatium attributa {
-		constatus xc			= "XC";
-		constatus xc_praeordo	= 1;
-		constatus xc_imago		= 2;
-		constatus xc_sine		= "sic";
-		constatus xc_deni		= "non";
+		constatus modulus_internus	= "XDL";
+		constatus xc				= "XC";
+		constatus xc_praeordo		= 1;
+		constatus xc_imago			= 2;
+		constatus xc_sine			= "sic";
+		constatus xc_deni			= "non";
 	}
 	enumeratio genus_moduli hereditat nint {
 		xe_excorporalis	= 0x1,
