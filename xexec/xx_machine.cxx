@@ -8,6 +8,7 @@
 #include "../xenv/xe_filesys.h"
 #include "../xenv/xe_imgapi.h"
 #include "../xenv/xe_rtff.h"
+#include "../xenv/xe_powerapi.h"
 
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
@@ -694,13 +695,15 @@ namespace Engine
 			public:
 				virtual void * GetSymbol(const string & name) noexcept = 0;
 				virtual uint GetTypeOfModule(void) noexcept = 0;
+				virtual handle GetHandleOfModule(void) noexcept = 0;
 			};
 			class _xx_xe_dynamic_library : public _xx_library_interface
 			{
 				SafePointer<XE::ExecutionContext> _ctx;
+				const XE::Module * _module;
 				uint _class;
 			public:
-				_xx_xe_dynamic_library(XE::ExecutionContext * ctx, uint cls) : _class(cls) { _ctx.SetRetain(ctx); }
+				_xx_xe_dynamic_library(XE::ExecutionContext * ctx, uint cls, const XE::Module * module) : _class(cls), _module(module) { _ctx.SetRetain(ctx); }
 				virtual ~_xx_xe_dynamic_library(void) override {}
 				virtual void * GetSymbol(const string & name) noexcept override
 				{
@@ -712,6 +715,17 @@ namespace Engine
 					return smbl->GetSymbolEntity();
 				}
 				virtual uint GetTypeOfModule(void) noexcept override { return _class; }
+				virtual handle GetHandleOfModule(void) noexcept override { return const_cast<XE::Module *>(_module); }
+			};
+			class _xx_xe_resource_library : public _xx_library_interface
+			{
+				SafePointer<XE::Module> _module;
+			public:
+				_xx_xe_resource_library(XE::Module * module) { _module.SetRetain(module); }
+				virtual ~_xx_xe_resource_library(void) override {}
+				virtual void * GetSymbol(const string & name) noexcept override { return 0; }
+				virtual uint GetTypeOfModule(void) noexcept override { return 8; }
+				virtual handle GetHandleOfModule(void) noexcept override { return _module.Inner(); }
 			};
 			class _xx_native_dynamic_library : public _xx_library_interface
 			{
@@ -729,6 +743,7 @@ namespace Engine
 					} catch (...) { return 0; }
 				}
 				virtual uint GetTypeOfModule(void) noexcept override { return 4; }
+				virtual handle GetHandleOfModule(void) noexcept override { return 0; }
 			};
 			struct _create_process_desc {
 				string image;
@@ -820,15 +835,18 @@ namespace Engine
 					string image = path;
 					bool is_xe, is_command;
 					self._check_image(image, false, is_xe, is_command);
-					if (is_xe && (flags & 3)) {
+					if (is_xe && (flags & 0xB)) {
 						SafePointer<Streaming::Stream> stream = new Streaming::FileStream(path, Streaming::AccessRead, Streaming::OpenExisting);
 						if (flags & 1) {
 							SafePointer<XE::ExecutionContext> subctx = new XE::ExecutionContext(self._lc.primary_context->GetLoaderCallback());
 							auto mdl = subctx->LoadModule(path, stream);
-							return new _xx_xe_dynamic_library(subctx, 1);
-						} else {
+							return new _xx_xe_dynamic_library(subctx, 1, mdl);
+						} else if (flags & 2) {
 							auto mdl = self._lc.primary_context->LoadModule(path, stream);
-							return new _xx_xe_dynamic_library(self._lc.primary_context, 2);
+							return new _xx_xe_dynamic_library(self._lc.primary_context, 2, mdl);
+						} else {
+							SafePointer<XE::Module> mdl = self._lc.primary_context->LoadModuleResources(stream);
+							return new _xx_xe_resource_library(mdl);
 						}
 					}
 					if (!is_xe && (flags & 4)) {
@@ -966,6 +984,7 @@ namespace Engine
 				try { if (environment_configuration.store_file.Length()) IncludeStoreIntegration(*loader, environment_configuration.store_file); } catch (...) {}
 				SafePointer<XLoggerSink> logger;
 				SafePointer<XE::ExecutionContext> xctx = new XE::ExecutionContext(loader);
+				xctx->AllowEmbeddedModules(true);
 				environment_configuration.logger_type = desc.flags_default & EnvironmentLoggerMask;
 				CommandLineInterpret(*args, environment_configuration, loader);
 				environment_configuration.logger_type &= desc.flags_allow & EnvironmentLoggerMask;
@@ -1019,6 +1038,7 @@ namespace Engine
 				XE::ActivateConsoleIO(*loader, console, console_allocator);
 				XE::ActivateImageIO(*loader);
 				XE::ActivateFileFormatIO(*loader);
+				XE::ActivatePowerControl(*loader);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;
 				if (environment_configuration.locale_override.Length()) Assembly::CurrentLocale = environment_configuration.locale_override;

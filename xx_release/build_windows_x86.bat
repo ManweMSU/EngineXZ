@@ -27,6 +27,7 @@ xv xv_lib\imago.xv -NO xx_release\_build\com
 xv xv_lib\consolatorium.xv -NO xx_release\_build\com
 xv xv_lib\lxx.xv -NO xx_release\_build\com
 xv xv_lib\formati.xv -NO xx_release\_build\com
+xv xv_lib\potentia.xv -NO xx_release\_build\com
 xv xv_lib\errores.ru.xv -NO xx_release\_build\com
 xv xv_lib\errores.en.xv -NO xx_release\_build\com
 xv xx_xx\xx.xv -NOl xx_release\_build\com xx_release\_build\com
@@ -37,6 +38,7 @@ xi xx_release\_build\com\imago.xo -Nto win-x86 xx_release\_build\windows_x86\xxc
 xi xx_release\_build\com\consolatorium.xo -Nto win-x86 xx_release\_build\windows_x86\xxcl\consolatorium.xo
 xi xx_release\_build\com\lxx.xo -Nto win-x86 xx_release\_build\windows_x86\xxcl\lxx.xo
 xi xx_release\_build\com\formati.xo -Nto win-x86 xx_release\_build\windows_x86\xxcl\formati.xo
+xi xx_release\_build\com\potentia.xo -Nto win-x86 xx_release\_build\windows_x86\xxcl\potentia.xo
 xi xx_release\_build\com\errores.ru.xo -Nto win-x86 xx_release\_build\windows_x86\xxcl\errores.ru.xo
 xi xx_release\_build\com\errores.en.xo -Nto win-x86 xx_release\_build\windows_x86\xxcl\errores.en.xo
 xi xx_release\_build\com\xx.xx -Nto win-x86 xx_release\_build\windows_x86\xxi\xx.xx

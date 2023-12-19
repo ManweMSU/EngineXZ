@@ -26,6 +26,7 @@ xv xv_lib/imago.xv -NO xx_release/_build/com
 xv xv_lib/consolatorium.xv -NO xx_release/_build/com
 xv xv_lib/lxx.xv -NO xx_release/_build/com
 xv xv_lib/formati.xv -NO xx_release/_build/com
+xv xv_lib/potentia.xv -NO xx_release/_build/com
 xv xv_lib/errores.ru.xv -NO xx_release/_build/com
 xv xv_lib/errores.en.xv -NO xx_release/_build/com
 xv xx_xx/xx.xv -NOl xx_release/_build/com xx_release/_build/com
@@ -36,6 +37,7 @@ xi xx_release/_build/com/imago.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.a
 xi xx_release/_build/com/consolatorium.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxcl/consolatorium.xo
 xi xx_release/_build/com/lxx.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxcl/lxx.xo
 xi xx_release/_build/com/formati.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxcl/formati.xo
+xi xx_release/_build/com/potentia.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxcl/potentia.xo
 xi xx_release/_build/com/errores.ru.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxcl/errores.ru.xo
 xi xx_release/_build/com/errores.en.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxcl/errores.en.xo
 xi xx_release/_build/com/xx.xx -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxi/xx.xx

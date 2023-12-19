@@ -21,7 +21,8 @@ spatium xx {
 	enumeratio genus_moduli hereditat nint {
 		xe_excorporalis	= 0x1,
 		xe_incorporalis	= 0x2,
-		nativus			= 0x4
+		nativus			= 0x4,
+		xe_auxilia		= 0x8
 	}
 	enumeratio modus_creandi_processi hereditat nint {
 		non_nativus				= 0x001,
@@ -135,6 +136,7 @@ spatium xx {
 		structor () {}
 		functio @nihil symbolus(~linea nomen) virtualis pura;
 		genus_moduli genus_moduli { adipisce virtualis pura; }
+		@nihil manubrium { adipisce virtualis pura; }
 	}
 
 	structura descriptio_processi {

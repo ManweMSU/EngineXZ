@@ -89,6 +89,7 @@ namespace Engine
 
 			const Module * LoadModule(const string & name) noexcept;
 			const Module * LoadModule(const string & name, Streaming::Stream * stream) noexcept;
+			Module * LoadModuleResources(Streaming::Stream * stream) const noexcept;
 		};
 
 		struct ErrorContext

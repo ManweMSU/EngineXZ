@@ -598,5 +598,29 @@ namespace Engine
 			}
 			return result;
 		}
+		Module * ExecutionContext::LoadModuleResources(Streaming::Stream * input) const noexcept
+		{
+			if (!input) return 0;
+			SafePointer<XI::Module> data;
+			SafePointer<Module> result;
+			try {
+				data = new XI::Module(input, XI::Module::ModuleLoadFlags::LoadResources);
+				result = new Module(*this);
+				if (data->subsystem == XI::Module::ExecutionSubsystem::NoUI) result->_xss = ExecutionSubsystem::NoUI;
+				else if (data->subsystem == XI::Module::ExecutionSubsystem::ConsoleUI) result->_xss = ExecutionSubsystem::ConsoleUI;
+				else if (data->subsystem == XI::Module::ExecutionSubsystem::GUI) result->_xss = ExecutionSubsystem::GUI;
+				else if (data->subsystem == XI::Module::ExecutionSubsystem::Library) result->_xss = ExecutionSubsystem::Library;
+				else throw InvalidArgumentException();
+				result->_name = data->module_import_name;
+				result->_tool = data->assembler_name;
+				result->_v1 = data->assembler_version.major;
+				result->_v2 = data->assembler_version.minor;
+				result->_v3 = data->assembler_version.subver;
+				result->_v4 = data->assembler_version.build;
+				result->_rsrc = data->resources;
+			} catch (...) { return 0; }
+			result->Retain();
+			return result;
+		}
 	}
 }

@@ -1,0 +1,37 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Potentiae";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2023";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium potentia {
+	enumeratio modus_sistendi {
+		siste	= 0x00,
+		recipe	= 0x01,
+		linque	= 0x02
+	}
+	enumeratio modus_suspendendi {
+		dormi	= 0x00,
+		hiberna	= 0x01
+	}
+	enumeratio status_altilii {
+		ignotus			= 0x00,
+		absens			= 0x01,
+		praecipiens		= 0x02,
+		depraecipiens	= 0x03
+	}
+	structura status_potentiae {
+		dfrac valor_praecipiendi;
+		status_altilii altilium;
+	}
+
+	[[importa] pt_siste] functio logicum siste_machinam(modus_sistendi modus, logicum coactive);
+	[[importa] pt_spnde] functio logicum suspende_machinam(modus_suspendendi modus, logicum sine_excitandum);
+
+	[[importa] pt_vtspn] functio nihil veta_suspendendum(logicum dormi_nulle, logicum suspende_culicare_nulle);
+
+	[[importa] pt_lstpt] functio nihil lege_statum_potentiae(~status_potentiae status);
+}
