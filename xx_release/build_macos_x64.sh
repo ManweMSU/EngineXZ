@@ -20,16 +20,16 @@ cp xx_xx/_build/macosx_x64_release/xx xx_release/_build/macosx_x64/XX.app/xx/xx
 cp xx_xx/xx_mac.ini xx_release/_build/macosx_x64/XX.app/xx/xx.ini
 cp xx_xx/xe.ini xx_release/_build/macosx_x64/XX.app/xe.ini
 
-xv xv_lib/canonicalis.xv -NO xx_release/_build/com
-xv xv_lib/limae.xv -NO xx_release/_build/com
-xv xv_lib/imago.xv -NO xx_release/_build/com
-xv xv_lib/consolatorium.xv -NO xx_release/_build/com
-xv xv_lib/lxx.xv -NO xx_release/_build/com
-xv xv_lib/formati.xv -NO xx_release/_build/com
-xv xv_lib/potentia.xv -NO xx_release/_build/com
-xv xv_lib/errores.ru.xv -NO xx_release/_build/com
-xv xv_lib/errores.en.xv -NO xx_release/_build/com
-xv xx_xx/xx.xv -NOl xx_release/_build/com xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/canonicalis.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/limae.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/imago.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/consolatorium.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/lxx.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/formati.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/potentia.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/errores.ru.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/errores.en.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xx_xx/xx.xv -NOl xx_release/_build/com xx_release/_build/com
 
 xi xx_release/_build/com/canonicalis.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxcl/canonicalis.xo
 xi xx_release/_build/com/limae.xo -Nto mac-x64 xx_release/_build/macosx_x64/XX.app/xxcl/limae.xo

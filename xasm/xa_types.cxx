@@ -6,44 +6,79 @@ namespace Engine
 	{
 		namespace Encoder
 		{
+			void EncodeALInt(Streaming::Stream * stream, uint64 value)
+			{
+				bool inverted = false;
+				uint64 venc = ~value;
+				if (venc < value) inverted = true; else venc = value;
+				uint8 write = venc & 0x3F;
+				if (inverted) write |= 0x40;
+				if (venc & ~0x3FULL) write |= 0x80;
+				stream->Write(&write, 1);
+				venc >>= 6;
+				while (venc) {
+					write = venc & 0x7F;
+					if (venc & ~0x7FULL) write |= 0x80;
+					stream->Write(&write, 1);
+					venc >>= 7;
+				}
+			}
+			void EncodeALInt(Streaming::Stream * stream, int64 value) { EncodeALInt(stream, uint64(value)); }
+			void EncodeALInt(Streaming::Stream * stream, int32 value) { EncodeALInt(stream, int64(value)); }
+			void EncodeALInt(Streaming::Stream * stream, uint32 value) { EncodeALInt(stream, int32(value)); }
+			uint64 DecodeALInt(Streaming::Stream * stream)
+			{
+				bool invert = false;
+				uint64 result;
+				uint64 offset;
+				uint8 read;
+				stream->Read(&read, 1);
+				if (read & 0x40) invert = true;
+				result = read & 0x3F;
+				offset = 6;
+				while (read & 0x80) {
+					if (offset >= 64) throw InvalidFormatException();
+					stream->Read(&read, 1);
+					result |= uint64(read & 0x7F) << offset;
+					offset += 7;
+				}
+				return invert ? ~result : result;
+			}
 			void EncodeSize(Streaming::Stream * stream, const ObjectSize & size)
 			{
-				stream->Write(&size.num_bytes, 4);
-				stream->Write(&size.num_words, 4);
+				EncodeALInt(stream, size.num_bytes);
+				EncodeALInt(stream, size.num_words);
 			}
 			ObjectSize DecodeSize(Streaming::Stream * stream)
 			{
 				ObjectSize result;
-				stream->Read(&result.num_bytes, 4);
-				stream->Read(&result.num_words, 4);
+				result.num_bytes = DecodeALInt(stream);
+				result.num_words = DecodeALInt(stream);
 				return result;
 			}
 			void EncodeSpec(Streaming::Stream * stream, const ArgumentSpecification & spec)
 			{
-				uint sem = uint(spec.semantics);
 				EncodeSize(stream, spec.size);
-				stream->Write(&sem, 4);
+				EncodeALInt(stream, uint(spec.semantics));
 			}
 			ArgumentSpecification DecodeSpec(Streaming::Stream * stream)
 			{
 				ArgumentSpecification result;
-				uint sem;
 				result.size = DecodeSize(stream);
-				stream->Read(&sem, 4);
-				result.semantics = static_cast<ArgumentSemantics>(sem);
+				result.semantics = static_cast<ArgumentSemantics>(DecodeALInt(stream));
 				return result;
 			}
 			void EncodeString(Streaming::Stream * stream, const string & str)
 			{
 				int length = str.GetEncodedLength(Encoding::UTF8);
 				SafePointer<DataBlock> data = str.EncodeSequence(Encoding::UTF8, false);
-				stream->Write(&length, 4);
+				EncodeALInt(stream, length);
 				stream->WriteArray(data);
 			}
 			string DecodeString(Streaming::Stream * stream)
 			{
 				int length;
-				stream->Read(&length, 4);
+				length = DecodeALInt(stream);
 				SafePointer<DataBlock> data = stream->ReadBlock(length);
 				return string(data->GetBuffer(), length, Encoding::UTF8);
 			}
@@ -51,13 +86,12 @@ namespace Engine
 			{
 				int length = 0;
 				for (auto & e : volume) length++;
-				stream->Write(&length, 4);
+				EncodeALInt(stream, length);
 				for (auto & e : volume) f(e);
 			}
 			template<class F> void DecodeVolume(Streaming::Stream * stream, F f)
 			{
-				int length;
-				stream->Read(&length, 4);
+				int length = DecodeALInt(stream);
 				for (int i = 0; i < length; i++) f();
 			}
 			void EncodeData(Streaming::Stream * stream, const DataBlock & data)
@@ -88,23 +122,23 @@ namespace Engine
 			}
 			void EncodeFinalizer(Streaming::Stream * stream, const FinalizerReference & final)
 			{
-				stream->Write(&final.final.qword, 8);
+				EncodeALInt(stream, final.final.qword);
 				EncodeVolume(stream, final.final_args, [stream](const ObjectReference & ref) {
-					stream->Write(&ref.qword, 8);
+					EncodeALInt(stream, ref.qword);
 				});
 			}
 			void DecodeFinalizer(Streaming::Stream * stream, FinalizerReference & final)
 			{
-				stream->Read(&final.final.qword, 8);
+				final.final.qword = DecodeALInt(stream);
 				DecodeVolume(stream, [stream, f = &final]() {
 					ObjectReference ref;
-					stream->Read(&ref.qword, 8);
+					ref.qword = DecodeALInt(stream);
 					f->final_args << ref;
 				});
 			}
 			void EncodeTree(Streaming::Stream * stream, const ExpressionTree & tree)
 			{
-				stream->Write(&tree.self.qword, 8);
+				EncodeALInt(stream, tree.self.qword);
 				if (tree.self.ref_flags & ReferenceFlagInvoke) {
 					EncodeVolume(stream, tree.inputs, [stream](const ExpressionTree & st) {
 						EncodeTree(stream, st);
@@ -118,7 +152,7 @@ namespace Engine
 			}
 			void DecodeTree(Streaming::Stream * stream, ExpressionTree & tree)
 			{
-				stream->Read(&tree.self.qword, 8);
+				tree.self.qword = DecodeALInt(stream);
 				if (tree.self.ref_flags & ReferenceFlagInvoke) {
 					DecodeVolume(stream, [stream, t = &tree]() {
 						ExpressionTree st;

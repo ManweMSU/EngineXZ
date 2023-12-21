@@ -20,24 +20,24 @@ cp xx_xx/_build/macosx_arm64_release/xx xx_release/_build/macosx_arm64/XX.app/xx
 cp xx_xx/xx_mac.ini xx_release/_build/macosx_arm64/XX.app/xx/xx.ini
 cp xx_xx/xe.ini xx_release/_build/macosx_arm64/XX.app/xe.ini
 
-xv xv_lib/canonicalis.xv -NO xx_release/_build/com
-xv xv_lib/limae.xv -NO xx_release/_build/com
-xv xv_lib/imago.xv -NO xx_release/_build/com
-xv xv_lib/consolatorium.xv -NO xx_release/_build/com
-xv xv_lib/lxx.xv -NO xx_release/_build/com
-xv xv_lib/formati.xv -NO xx_release/_build/com
-xv xv_lib/potentia.xv -NO xx_release/_build/com
-xv xv_lib/errores.ru.xv -NO xx_release/_build/com
-xv xv_lib/errores.en.xv -NO xx_release/_build/com
-xv xx_xx/xx.xv -NOl xx_release/_build/com xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/canonicalis.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/limae.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/imago.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/consolatorium.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/lxx.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/formati.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/potentia.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/errores.ru.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/errores.en.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xx_xx/xx.xv -NOl xx_release/_build/com xx_release/_build/com
 
-xi xx_release/_build/com/canonicalis.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/canonicalis.xo
-xi xx_release/_build/com/limae.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/limae.xo
-xi xx_release/_build/com/imago.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/imago.xo
-xi xx_release/_build/com/consolatorium.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/consolatorium.xo
-xi xx_release/_build/com/lxx.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/lxx.xo
-xi xx_release/_build/com/formati.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/formati.xo
-xi xx_release/_build/com/potentia.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/potentia.xo
-xi xx_release/_build/com/errores.ru.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/errores.ru.xo
-xi xx_release/_build/com/errores.en.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/errores.en.xo
-xi xx_release/_build/com/xx.xx -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxi/xx.xx
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/canonicalis.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/canonicalis.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/limae.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/limae.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/imago.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/imago.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/consolatorium.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/consolatorium.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/lxx.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/lxx.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/formati.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/formati.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/potentia.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/potentia.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.ru.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/errores.ru.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.en.xo -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxcl/errores.en.xo
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/xx.xx -Nto mac-arm64 xx_release/_build/macosx_arm64/XX.app/xxi/xx.xx

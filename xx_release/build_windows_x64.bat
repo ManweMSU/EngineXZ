@@ -21,24 +21,24 @@ copy /B xx_xxf\_build\windows_x64_release\xxf.exe xx_release\_build\windows_x64\
 copy /B xx_xxf\_build\windows_x64_release\ertwndfx.dll xx_release\_build\windows_x64\xx\ertwndfx.dll
 copy /B xx_xxsc\_build\windows_x64_release\xxsc.exe xx_release\_build\windows_x64\xxsc.exe
 
-xv xv_lib\canonicalis.xv -NO xx_release\_build\com
-xv xv_lib\limae.xv -NO xx_release\_build\com
-xv xv_lib\imago.xv -NO xx_release\_build\com
-xv xv_lib\consolatorium.xv -NO xx_release\_build\com
-xv xv_lib\lxx.xv -NO xx_release\_build\com
-xv xv_lib\formati.xv -NO xx_release\_build\com
-xv xv_lib\potentia.xv -NO xx_release\_build\com
-xv xv_lib\errores.ru.xv -NO xx_release\_build\com
-xv xv_lib\errores.en.xv -NO xx_release\_build\com
-xv xx_xx\xx.xv -NOl xx_release\_build\com xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\canonicalis.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\limae.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\imago.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\consolatorium.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\lxx.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\formati.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\potentia.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\errores.ru.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\errores.en.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xx_xx\xx.xv -NOl xx_release\_build\com xx_release\_build\com
 
-xi xx_release\_build\com\canonicalis.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\canonicalis.xo
-xi xx_release\_build\com\limae.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\limae.xo
-xi xx_release\_build\com\imago.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\imago.xo
-xi xx_release\_build\com\consolatorium.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\consolatorium.xo
-xi xx_release\_build\com\lxx.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\lxx.xo
-xi xx_release\_build\com\formati.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\formati.xo
-xi xx_release\_build\com\potentia.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\potentia.xo
-xi xx_release\_build\com\errores.ru.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\errores.ru.xo
-xi xx_release\_build\com\errores.en.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\errores.en.xo
-xi xx_release\_build\com\xx.xx -Nto win-x64 xx_release\_build\windows_x64\xxi\xx.xx
+xv_release\_build\windows_x64\xi xx_release\_build\com\canonicalis.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\canonicalis.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\limae.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\limae.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\imago.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\imago.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\consolatorium.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\consolatorium.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\lxx.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\lxx.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\formati.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\formati.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\potentia.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\potentia.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\errores.ru.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\errores.ru.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\errores.en.xo -Nto win-x64 xx_release\_build\windows_x64\xxcl\errores.en.xo
+xv_release\_build\windows_x64\xi xx_release\_build\com\xx.xx -Nto win-x64 xx_release\_build\windows_x64\xxi\xx.xx
