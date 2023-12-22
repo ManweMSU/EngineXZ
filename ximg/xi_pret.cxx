@@ -10,11 +10,12 @@ namespace Engine
 		{
 		public:
 			bool empty;
+			bool error;
 			XA::Function function;
-			PretranslationLoader(void) : empty(true) {}
+			PretranslationLoader(void) : empty(true), error(false) {}
 			virtual Platform GetArchitecture(void) noexcept override { return Platform::Unknown; }
 			virtual XA::CallingConvention GetCallingConvention(void) noexcept override { return XA::CallingConvention::Unknown; }
-			virtual void HandleAbstractFunction(const string & symbol, const Module::Function & fin, Streaming::Stream * fout) noexcept override { function.Load(fout); empty = false; }
+			virtual void HandleAbstractFunction(const string & symbol, const Module::Function & fin, Streaming::Stream * fout) noexcept override { try { function.Load(fout); empty = false; } catch (...) { error = true; } }
 			virtual void HandlePlatformFunction(const string & symbol, const Module::Function & fin, Streaming::Stream * fout) noexcept override {}
 			virtual void HandleNearImport(const string & symbol, const Module::Function & fin, const string & func_name) noexcept override {}
 			virtual void HandleFarImport(const string & symbol, const Module::Function & fin, const string & func_name, const string & lib_name) noexcept override {}
@@ -24,6 +25,7 @@ namespace Engine
 		{
 			PretranslationLoader loader;
 			LoadFunction(L"", subject, &loader);
+			if (loader.error) throw InvalidFormatException();
 			if (!loader.empty) {
 				MakeFunction(subject);
 				for (int i = 0; i < sys_list_length; i++) {

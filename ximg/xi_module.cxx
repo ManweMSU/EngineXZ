@@ -118,13 +118,13 @@ namespace Engine
 			uint32 EnplaceString(DataBlock & data, const string & text)
 			{
 				auto offset = data.Length();
-				SafePointer<DataBlock> enc = text.EncodeSequence(Encoding::UTF16, true);
+				SafePointer<DataBlock> enc = text.EncodeSequence(Encoding::UTF8, true);
 				data.SetLength(offset + enc->Length());
 				MemoryCopy(data.GetBuffer() + offset, enc->GetBuffer(), enc->Length());
 				return offset;
 			}
 			template<class T> const T * ReadObjects(const DataBlock & data, uint32 at) { return reinterpret_cast<const T *>(data.GetBuffer() + at); }
-			string ReadString(const DataBlock & data, uint32 offset) { return string(data.GetBuffer() + offset, -1, Encoding::UTF16); }
+			string ReadString(const DataBlock & data, uint32 offset) { return string(data.GetBuffer() + offset, -1, Encoding::UTF8); }
 			void EncodeImports(DataBlock & info, DS::XI_Header & hdr, const Array<string> & list)
 			{
 				Array<uint32> names(0x10);
