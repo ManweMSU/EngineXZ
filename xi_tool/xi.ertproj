@@ -33,7 +33,7 @@ VersionInformation {
 	ApplicationName = "Engine XI Conspector"
 	CompanyIdentifier = "EngineSoftware"
 	CompanyName = "Engine Software"
-	Copyright = "© Engine Software. 2023"
+	Copyright = "© Engine Software. 2024"
 	InternalName = "xi"
 	Version = "1.0.0.1"
 }

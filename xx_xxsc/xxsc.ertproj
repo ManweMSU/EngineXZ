@@ -38,7 +38,7 @@ VersionInformation {
 	ApplicationName = "Engine XX Servus Creandi"
 	CompanyIdentifier = "EngineSoftware"
 	CompanyName = "Engine Software"
-	Copyright = "© Engine Software. 2023"
+	Copyright = "© Engine Software. 2024"
 	InternalName = "xxsc"
 	Version = "1.0.0.1"
 }
