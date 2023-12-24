@@ -1,0 +1,35 @@
+﻿importa canonicalis;
+importa consolatorium;
+importa limae;
+
+functio nihil patch() introitus iacit
+{
+	var ~ con = consolatorium.currens()^;
+	proba {
+		var arg = para_argumenta();
+		si (arg^.longitudo == 2 || arg^.longitudo == 3) {
+			var bpatch = semita(arg^[1]);
+			var info_file = semita(bpatch, "Contents/Info.plist");
+			var info = scriptio.decodifica(info_file.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens), linea.codex.utf8)^.lege_cunctos();
+			var ref1 = info.reperi_primus("<key>CFBundleDocumentTypes</key>");
+			var ref2 = info.reperi_ultimus("</array>");
+			var ref3 = ref2 + 8;
+			info = info.fragmentum(0, ref3) +
+				"\n\t<key>NSAppleEventsUsageDescription</key>\n\t<string>Application scripting.</string>" +
+				info.fragmentum(ref3, -1);
+			si (arg^.longitudo == 3) {
+				var bpatch_with = semita(arg^[2]);
+				var ffpatch = scriptio.decodifica(semita(semita.modulus_primus().parens, "patch.txt").crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens), linea.codex.utf8)^.lege_cunctos();
+				info = info.fragmentum(0, ref1) + ffpatch.fragmentum(1, -1) + info.fragmentum(ref3, -1);
+				var plugins_path = semita(bpatch, "Contents/Library/QuickLook");
+				plugins_path.crea_arborem_collectoriorum();
+				bpatch_with.exscribe(semita(plugins_path, "XXQL.qlgenerator"), modus_exscribendum.rescribe_ultime);
+			}
+			scriptio.codifica(info_file.crea_limam(modus_limae.scribere, modus_creatoris.trunca_praesens), linea.codex.utf8)^.scribe(info);
+			con.scribe_lineam("Patch done!");
+		}
+	} cape (nintadl e) {
+		con.scribe_lineam("PATCH FAILED.");
+		iace e;
+	}
+}

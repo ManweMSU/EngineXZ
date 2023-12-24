@@ -20,6 +20,10 @@ cp xx_xx/_build/macosx_arm64_release/xx xx_release/_build/macosx_arm64/XX.app/xx
 cp xx_xx/xx_mac.ini xx_release/_build/macosx_arm64/XX.app/xx/xx.ini
 cp xx_xx/xe.ini xx_release/_build/macosx_arm64/XX.app/xe.ini
 
+./shellex_macos/assembly.sh
+xx shellex_macos/patch.xx xx_release/_build/macosx_arm64/XX.app shellex_macos/_build/plugin/XX-arm64.qlgenerator
+xx shellex_macos/patch.xx xx_release/_build/macosx_arm64/XX.app/XX.app
+
 ./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/canonicalis.xv -NO xx_release/_build/com
 ./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/limae.xv -NO xx_release/_build/com
 ./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/imago.xv -NO xx_release/_build/com

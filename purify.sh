@@ -9,3 +9,4 @@ rm -rf xi_tool/_build
 rm -rf xx_xxsc/_build
 rm -rf xv_release/_build
 rm -rf xx_release/_build
+rm -rf shellex_macos/_build

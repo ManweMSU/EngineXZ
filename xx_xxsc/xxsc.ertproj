@@ -2,6 +2,10 @@
 NoDockIcon = true
 Subsystem = "gui"
 UseVersionDefines = true
+AccessRequirements {
+	Camera = "Video recording."
+	Microphone = "Audio recording."
+}
 CompileList {
 	AAAAAA = "xxsc.cxx"
 }

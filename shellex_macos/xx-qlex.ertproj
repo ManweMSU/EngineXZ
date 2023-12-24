@@ -1,0 +1,7 @@
+﻿Subsystem = "library"
+CompileList {
+	AAAAAA = "../xasm/xa_types.cxx"
+	AAAAAB = "../ximg/xi_module.cxx"
+	AAAAAC = "../ximg/xi_resources.cxx"
+	AAAAAD = "xx-qlex.cxx"
+}
