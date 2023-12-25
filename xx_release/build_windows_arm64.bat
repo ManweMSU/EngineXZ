@@ -3,6 +3,8 @@ ertbuild xcon\xc.ertproj -Nar arm64
 ertbuild xx_xx\xx.ertproj -Nar arm64
 ertbuild xx_xxf\xxf.ertproj -Nar arm64
 ertbuild xx_xxsc\xxsc.ertproj -Nar arm64
+ertbuild shellex_windows\extension\xxcomex.ertproj -Nar arm64
+ertbuild shellex_windows\installer\es_installer.ertproj -Nar arm64
 mkdir xx_release\_build
 mkdir xx_release\_build\com
 del /S /Q xx_release\_build\windows_arm64\*
@@ -20,6 +22,8 @@ copy /B xx_xx\xe.ini xx_release\_build\windows_arm64\xe.ini
 copy /B xx_xxf\_build\windows_arm64_release\xxf.exe xx_release\_build\windows_arm64\xx\xxf.exe
 copy /B xx_xxf\_build\windows_arm64_release\ertwndfx.dll xx_release\_build\windows_arm64\xx\ertwndfx.dll
 copy /B xx_xxsc\_build\windows_arm64_release\xxsc.exe xx_release\_build\windows_arm64\xxsc.exe
+copy /B shellex_windows\extension\_build\windows_arm64_release\xxcomex.dll xx_release\_build\windows_arm64\xxcomex.dll
+copy /B shellex_windows\installer\_build\windows_arm64_release\es_installer.exe xx_release\_build\windows_arm64\es_installer.exe
 
 xv_release\_build\windows_x64\xv xv_lib\canonicalis.xv -NO xx_release\_build\com
 xv_release\_build\windows_x64\xv xv_lib\limae.xv -NO xx_release\_build\com

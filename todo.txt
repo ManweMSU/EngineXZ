@@ -6,7 +6,7 @@ BETA-3:
  + XI Format Revision
  + XX Library Handle Extraction
  + XX Library Resource Mode
- - Shell Extensions for file formats
+ + Shell Extensions for file formats
  + [Mac OS] Apple Event Support
  - OS Power API
 

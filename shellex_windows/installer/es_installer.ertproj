@@ -1,0 +1,12 @@
+﻿CompileAll = true
+Subsystem = "silent"
+UseVersionDefines = true
+VersionInformation {
+	ApplicationIdentifier = "XX.COM.Conformator"
+	ApplicationName = "XX Conformator Extensionis COM"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2024"
+	InternalName = "es_installer"
+	Version = "1.0.0.1"
+}

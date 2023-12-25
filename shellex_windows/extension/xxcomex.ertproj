@@ -1,0 +1,26 @@
+﻿Subsystem = "library"
+UseVersionDefines = true
+CompileList {
+	AAAAAA = "..\\..\\xasm\\xa_types.cxx"
+	AAAAAB = "..\\..\\ximg\\xi_module.cxx"
+	AAAAAC = "..\\..\\ximg\\xi_resources.cxx"
+	AAAAAD = "xxcomex.cxx"
+}
+FileFormats {
+	AAAAAA {
+		CanCreate = false
+		Description = "T"
+		Extension = "T"
+		Icon = "..\\..\\artworks\\xx_xx_icon.eiwv"
+	}
+}
+VersionInformation {
+	ApplicationIdentifier = "XX.COM"
+	ApplicationName = "XX Extensio COM"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2024"
+	Description = "XX Extensio COM"
+	InternalName = "xxcomex"
+	Version = "1.0.0.1"
+}

@@ -495,11 +495,9 @@ namespace Engine
 				if (MemoryCompare(&hdr.signature, "xximago", 8) || hdr.format_version) throw InvalidFormatException();
 				dest.subsystem = static_cast<Module::ExecutionSubsystem>(hdr.target_subsystem);
 				SafePointer<DataBlock> info, rsrc;
-				if (flags == Module::ModuleLoadFlags::LoadAll || flags == Module::ModuleLoadFlags::LoadExecute || flags == Module::ModuleLoadFlags::LoadLink) {
-					if (hdr.info_segment_size) {
-						src->Seek(hdr.info_segment_offset, Streaming::Begin);
-						info = src->ReadBlock(hdr.info_segment_size);
-					}
+				if (hdr.info_segment_size) {
+					src->Seek(hdr.info_segment_offset, Streaming::Begin);
+					info = src->ReadBlock(hdr.info_segment_size);
 				}
 				if (flags == Module::ModuleLoadFlags::LoadAll || flags == Module::ModuleLoadFlags::LoadExecute) {
 					if (hdr.data_segment_size) {
@@ -524,7 +522,7 @@ namespace Engine
 					dest.assembler_version.major = dest.assembler_version.minor = 0;
 					dest.assembler_version.subver = dest.assembler_version.build = 0;
 				}
-				if (info) {
+				if (flags == Module::ModuleLoadFlags::LoadAll || flags == Module::ModuleLoadFlags::LoadExecute || flags == Module::ModuleLoadFlags::LoadLink) if (info) {
 					DecodeImports(dest, hdr, *info);
 					DecodeSymbols(dest, hdr, *info, flags);
 				}
