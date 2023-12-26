@@ -2,6 +2,9 @@
 
 #include "xe_ctx.h"
 
+#define ENGINE_XE_DL_INIT_ROUTINE_NAME		InitiaXE
+#define ENGINE_XE_DL_INIT_ROUTINE(PATH)		ENGINE_EXPORT_API bool ENGINE_XE_DL_INIT_ROUTINE_NAME(const char * PATH)
+
 namespace Engine
 {
 	namespace XE
@@ -54,5 +57,6 @@ namespace Engine
 		};
 
 		StandardLoader * CreateStandardLoader(uint flags);
+		handle LoadLibraryXE(const string & path);
 	}
 }

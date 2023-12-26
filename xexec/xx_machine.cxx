@@ -850,7 +850,7 @@ namespace Engine
 						}
 					}
 					if (!is_xe && (flags & 4)) {
-						handle library = LoadLibrary(path);
+						handle library = XE::LoadLibraryXE(IO::ExpandPath(path));
 						if (!library) return 0;
 						return new _xx_native_dynamic_library(library);
 					}
@@ -1045,6 +1045,7 @@ namespace Engine
 				try { XE::LoadErrorLocalization(*xctx, L"errores." + Assembly::CurrentLocale); }
 				catch (...) { XE::LoadErrorLocalization(*xctx, L"errores." + environment_configuration.locale_default); }
 				loader->AddModuleSearchPath(IO::Path::GetDirectory(environment_configuration.xi_executable));
+				loader->AddDynamicLibrarySearchPath(IO::Path::GetDirectory(environment_configuration.xi_executable));
 				SafePointer<Streaming::Stream> module_stream;
 				try {
 					module_stream = new Streaming::FileStream(environment_configuration.xi_executable, Streaming::AccessRead, Streaming::OpenExisting);

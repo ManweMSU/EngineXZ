@@ -7,9 +7,10 @@
 #undef GetCommandLine
 
 using namespace Engine;
-using namespace Engine::WindowsSpecific;
 using namespace Engine::IO;
+using namespace Engine::WindowsSpecific;
 
+bool runs_natively;
 const uint8 self_guid_data[] = { 0xA1, 0x94, 0x8B, 0xFB, 0x80, 0x4D, 0x7A, 0xCA, 0xE3, 0x42, 0x75, 0x92, 0xE1, 0x46, 0x7C, 0x0D };
 string self_guid;
 
@@ -27,15 +28,17 @@ void CreateFileClass(const string & cls, const string & desc, const string & ico
 		SafePointer<RegistryKey> command_key = open_key->CreateKey(L"command");
 		command_key->SetValue(L"", L"\"" + exec + L"\" \"%1\"");
 	} else fmt_key->SetValue(L"NoOpen", L"");
-	SafePointer<RegistryKey> sex_key = fmt_key->CreateKey(L"ShellEx");
 	if (!icon.Length()) {
 		icon_key->SetValue(L"", L"%1");
+		SafePointer<RegistryKey> sex_key = fmt_key->CreateKey(L"ShellEx");
 		SafePointer<RegistryKey> icon_hdlr_key = sex_key->CreateKey(L"IconHandler");
 		icon_hdlr_key->SetValue(L"", self_guid);
 	} else icon_key->SetValue(L"", icon);
-	fmt_key->SetValue(L"InfoTip", L"prop:System.Title;System.Author;System.Document.Version;System.Size;System.DateCreated");
-	fmt_key->SetValue(L"FullDetails", L"prop:System.Title;System.Author;System.Copyright;System.Document.Version;System.ApplicationName;System.PropGroup.FileSystem;System.ItemNameDisplay;System.ItemTypeText;System.ItemFolderPathDisplay;System.Size;System.DateCreated;System.DateModified;System.FileAttributes;*System.StorageProviderState;*System.OfflineAvailability;*System.OfflineStatus;*System.SharedWith;*System.FileOwner;*System.ComputerName");
-	fmt_key->SetValue(L"PreviewTitle", L"prop:System.Title;System.Author;System.Document.Version");
+	if (runs_natively) {
+		fmt_key->SetValue(L"InfoTip", L"prop:System.Title;System.Author;System.Document.Version;System.Size;System.DateCreated");
+		fmt_key->SetValue(L"FullDetails", L"prop:System.Title;System.Author;System.Copyright;System.Document.Version;System.ApplicationName;System.PropGroup.FileSystem;System.ItemNameDisplay;System.ItemTypeText;System.ItemFolderPathDisplay;System.Size;System.DateCreated;System.DateModified;System.FileAttributes;*System.StorageProviderState;*System.OfflineAvailability;*System.OfflineStatus;*System.SharedWith;*System.FileOwner;*System.ComputerName");
+		fmt_key->SetValue(L"PreviewTitle", L"prop:System.Title;System.Author;System.Document.Version");
+	}
 }
 void AssignFileClass(const string & cls, const string & ext)
 {
@@ -84,6 +87,7 @@ int Main(void)
 {
 	SafePointer< Array<string> > args = GetCommandLine();
 	if (args->Length() == 2) {
+		runs_natively = ApplicationPlatform == GetSystemPlatform();
 		auto dll_path = ExpandPath(Path::GetDirectory(GetExecutablePath()) + L"\\xxcomex.dll");
 		auto exe_path = ExpandPath(Path::GetDirectory(GetExecutablePath()) + L"\\xxsc.exe");
 		CLSID self;
@@ -98,23 +102,25 @@ int Main(void)
 			if (!CreateProcessElevated(GetExecutablePath(), &a2)) return 3;
 			Engine::Sleep(1000);
 		} else if (args->ElementAt(1) == L"+A") {
-			SafePointer<RegistryKey> root = OpenRootRegistryKey(RegistryRootKey::LocalMachine);
-			root = root->OpenKey(L"Software\\Classes", RegistryKeyAccess::Full);
-			SafePointer<RegistryKey> clsid_root = root->OpenKey(L"CLSID", RegistryKeyAccess::Full);
-			SafePointer<RegistryKey> clsid = clsid_root->CreateKey(self_guid);
-			SafePointer<RegistryKey> server = clsid->CreateKey(L"InprocServer32");
-			clsid->SetValue(L"", L"Engine XX Extensio COM");
-			server->SetValue(L"", dll_path);
-			server->SetValue(L"ThreadingModel", L"Apartment");
-			root = OpenRootRegistryKey(RegistryRootKey::LocalMachine);
-			root = root->OpenKey(L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", RegistryKeyAccess::Full);
-			SafePointer<RegistryKey> ext_key = root->CreateKey(L".xx");
-			ext_key->SetValue(L"", self_guid);
-			ext_key = root->CreateKey(L".xex");
-			ext_key->SetValue(L"", self_guid);
-			ext_key = root->CreateKey(L".xo");
-			ext_key->SetValue(L"", self_guid);
-			CreateFileClass(L"Engine.XX", L"Applicatio XX", L"", exe_path);
+			if (runs_natively) {
+				SafePointer<RegistryKey> root = OpenRootRegistryKey(RegistryRootKey::LocalMachine);
+				root = root->OpenKey(L"Software\\Classes", RegistryKeyAccess::Full);
+				SafePointer<RegistryKey> clsid_root = root->OpenKey(L"CLSID", RegistryKeyAccess::Full);
+				SafePointer<RegistryKey> clsid = clsid_root->CreateKey(self_guid);
+				SafePointer<RegistryKey> server = clsid->CreateKey(L"InprocServer32");
+				clsid->SetValue(L"", L"Engine XX Extensio COM");
+				server->SetValue(L"", dll_path);
+				server->SetValue(L"ThreadingModel", L"Apartment");
+				root = OpenRootRegistryKey(RegistryRootKey::LocalMachine);
+				root = root->OpenKey(L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", RegistryKeyAccess::Full);
+				SafePointer<RegistryKey> ext_key = root->CreateKey(L".xx");
+				ext_key->SetValue(L"", self_guid);
+				ext_key = root->CreateKey(L".xex");
+				ext_key->SetValue(L"", self_guid);
+				ext_key = root->CreateKey(L".xo");
+				ext_key->SetValue(L"", self_guid);
+			}
+			CreateFileClass(L"Engine.XX", L"Applicatio XX", runs_natively ? L"" : exe_path + L",1", exe_path);
 			CreateFileClass(L"Engine.XO", L"Liber XX", exe_path + L",2", L"");
 			AssignFileClass(L"Engine.XX", L"xx");
 			AssignFileClass(L"Engine.XX", L"xex");
@@ -132,16 +138,18 @@ int Main(void)
 			Engine::Sleep(1000);
 		} else if (args->ElementAt(1) == L"-A") {
 			SafePointer<RegistryKey> root = OpenRootRegistryKey(RegistryRootKey::LocalMachine);
-			RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xx");
-			RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xex");
-			RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xo");
+			if (runs_natively) {
+				RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xx");
+				RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xex");
+				RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xo");
+			}
 			root = root->OpenKey(L"Software\\Classes", RegistryKeyAccess::Full);
 			RemoveRegistryValue(root, L".xx\\OpenWithProgids\\Engine.XX");
 			RemoveRegistryValue(root, L".xex\\OpenWithProgids\\Engine.XX");
 			RemoveRegistryValue(root, L".xo\\OpenWithProgids\\Engine.XO");
 			RemoveRegistryKey(root, L"Engine.XX");
 			RemoveRegistryKey(root, L"Engine.XO");
-			RemoveRegistryKey(root, string(L"CLSID\\") + self_guid);
+			if (runs_natively) RemoveRegistryKey(root, string(L"CLSID\\") + self_guid);
 			SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0);
 			DynamicString self_move_to, dll_move_to, temp_path;
 			self_move_to.ReserveLength(MAX_PATH + 1);

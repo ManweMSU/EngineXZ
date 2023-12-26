@@ -56,11 +56,11 @@ namespace Engine
 			virtual handle LoadDynamicLibrary(const string & library_name) noexcept override
 			{
 				for (auto & p : _dl_paths) {
-					auto dl = LoadLibrary(IO::ExpandPath(p + L"/" + library_name + L"." + string(ENGINE_LIBRARY_EXTENSION)));
+					auto dl = LoadLibraryXE(IO::ExpandPath(p + L"/" + library_name + L"." + string(ENGINE_LIBRARY_EXTENSION)));
 					if (dl) return dl;
-					dl = LoadLibrary(IO::ExpandPath(p + L"/" + library_name + L"_" + string(XE_CURRENT_MACHINE) + L"." + string(ENGINE_LIBRARY_EXTENSION)));
+					dl = LoadLibraryXE(IO::ExpandPath(p + L"/" + library_name + L"_" + string(XE_CURRENT_MACHINE) + L"." + string(ENGINE_LIBRARY_EXTENSION)));
 					if (dl) return dl;
-					dl = LoadLibrary(IO::ExpandPath(p + L"/" + library_name));
+					dl = LoadLibraryXE(IO::ExpandPath(p + L"/" + library_name));
 					if (dl) return dl;
 				}
 				return 0;
@@ -149,6 +149,21 @@ namespace Engine
 			}
 			result->Retain();
 			return result;
+		}
+		handle LoadLibraryXE(const string & path)
+		{
+			auto library = LoadLibrary(path);
+			if (!library) return 0;
+			auto init_routine = reinterpret_cast<InitializerRoutine>(GetLibraryRoutine(library, "InitiaXE"));
+			if (init_routine) {
+				try {
+					Array<char> utf8(1);
+					utf8.SetLength(path.GetEncodedLength(Encoding::UTF8) + 1);
+					path.Encode(utf8, Encoding::UTF8, true);
+					if (!init_routine(utf8)) throw Exception();
+				} catch (...) { ReleaseLibrary(library); return 0; }
+			}
+			return library;
 		}
 	}
 }

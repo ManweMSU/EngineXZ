@@ -8,7 +8,8 @@ BETA-3:
  + XX Library Resource Mode
  + Shell Extensions for file formats
  + [Mac OS] Apple Event Support
- - OS Power API
+ + OS Power API
+ + DLL Loading improved
 
 BETA-4:
  - Graphics API

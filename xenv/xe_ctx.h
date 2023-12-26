@@ -98,5 +98,6 @@ namespace Engine
 			uintptr error_subcode;
 		};
 		typedef void (* StandardRoutine) (ErrorContext * ectx);
+		typedef bool (* InitializerRoutine) (const char * path);
 	}
 }
