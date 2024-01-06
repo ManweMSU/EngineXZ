@@ -13,6 +13,7 @@ BETA-3:
 
 BETA-4:
  + XC icon override error
+ + Improved file path API
  - XE Reflection
  - Graphics API
  - Windows and Clipboard API

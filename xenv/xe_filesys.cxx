@@ -199,7 +199,12 @@ namespace Engine
 				else return 0;
 			}
 			virtual SafePointer< Array<string> > GetArguments(ErrorContext & ectx) noexcept override { XE_TRY_INTRO return new Array<string>(_args); XE_TRY_OUTRO(0) }
-			virtual string ExpandPath(const string & value, ErrorContext & ectx) noexcept override { XE_TRY_INTRO return IO::ExpandPath(value); XE_TRY_OUTRO(L"") }
+			virtual string ExpandPath(const string & value, ErrorContext & ectx) noexcept override
+			{
+				XE_TRY_INTRO
+				if (value.Length()) return IO::ExpandPath(value); else return L"";
+				XE_TRY_OUTRO(L"")
+			}
 			virtual string ExpandPathRelative(const string & base, const string & value, ErrorContext & ectx) noexcept override
 			{
 				XE_TRY_INTRO
@@ -215,7 +220,19 @@ namespace Engine
 			virtual string GetWorkingDirectory(ErrorContext & ectx) noexcept override { XE_TRY_INTRO return IO::GetCurrentDirectory(); XE_TRY_OUTRO(L"") }
 			virtual void SetWorkingDirectory(const string & value, ErrorContext & ectx) noexcept override { XE_TRY_INTRO IO::SetCurrentDirectory(value); XE_TRY_OUTRO() }
 			virtual string GetExecutablePath(ErrorContext & ectx) noexcept override { XE_TRY_INTRO return _exec_path; XE_TRY_OUTRO(L"") }
-			virtual string GetParentPath(const string & value, ErrorContext & ectx) noexcept override { XE_TRY_INTRO return IO::Path::GetDirectory(value); XE_TRY_OUTRO(L"") }
+			virtual string GetParentPath(const string & value, ErrorContext & ectx) noexcept override
+			{
+				XE_TRY_INTRO
+				if (value.Length()) {
+					int fs = value.FindFirst(IO::PathDirectorySeparator);
+					int ls = value.FindLast(IO::PathDirectorySeparator);
+					if (fs == ls) {
+						if (fs == value.Length() - 1) throw Exception();
+						return IO::Path::GetDirectory(value) + string(IO::PathDirectorySeparator);
+					} else return IO::Path::GetDirectory(value);
+				} else throw Exception();
+				XE_TRY_OUTRO(L"")
+			}
 			virtual string GetPathPart(const string & value, int part, ErrorContext & ectx) noexcept override
 			{
 				XE_TRY_INTRO
@@ -225,7 +242,14 @@ namespace Engine
 				else throw InvalidArgumentException();
 				XE_TRY_OUTRO(L"")
 			}
-			virtual SafePointer< Array<IO::Search::Volume> > GetVolumes(ErrorContext & ectx) noexcept override { XE_TRY_INTRO return IO::Search::GetVolumes(); XE_TRY_OUTRO(0) }
+			virtual SafePointer< Array<IO::Search::Volume> > GetVolumes(ErrorContext & ectx) noexcept override
+			{
+				XE_TRY_INTRO
+				SafePointer< Array<IO::Search::Volume> > result = IO::Search::GetVolumes();
+				for (auto & v : *result) if (v.Path.FindFirst(IO::PathDirectorySeparator) < 0) v.Path += string(IO::PathDirectorySeparator);
+				return result;
+				XE_TRY_OUTRO(0)
+			}
 			virtual uint64 GetVolumeMemory(const string & vol, int index, ErrorContext & ectx) noexcept override
 			{
 				XE_TRY_INTRO
