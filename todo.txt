@@ -12,6 +12,8 @@ BETA-3:
  + DLL Loading improved
 
 BETA-4:
+ + XC icon override error
+ - XE Reflection
  - Graphics API
  - Windows and Clipboard API
 
@@ -25,7 +27,6 @@ OTHER RELEASES:
  - Block Transforms: Cryptography and Compression
  - Extended Mathematics: Complex, Vector, Matrix and Color
  - XA FPU and VPU extensions
- - XE Reflection
  - Serialization API: ECSO, JSON
  - Remote Procedure Call
  - GUI and CUI libraries

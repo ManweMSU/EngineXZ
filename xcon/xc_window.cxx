@@ -666,7 +666,6 @@ namespace Engine
 		}
 		void CreateConsoleWindow(ConsoleState * state, ConsoleCreateMode & desc, const Box & at)
 		{
-			if (state->GetWindowIcon()) GetWindowSystem()->SetApplicationIcon(state->GetWindowIcon());
 			GetWindowSystem()->SetApplicationIconVisibility(true);
 			SafePointer<IScreen> primary = GetDefaultScreen();
 			auto callback = new WindowCallback(state);
@@ -697,12 +696,12 @@ namespace Engine
 			wd.MinimalConstraints = GetWindowSystem()->ConvertClientToWindow(min_size, wd.Flags);
 			wd.Position = at;
 			auto window = CreateWindow(wd, DeviceClass::Null);
+			if (state->GetWindowIcon()) GetWindowSystem()->SetApplicationIcon(state->GetWindowIcon());
 			_application_callback.SetWindowBeingHosted(window);
 			window->Show(true);
 		}
 		void CreateConsoleWindow(ConsoleState * state, ConsoleCreateMode & desc)
 		{
-			if (state->GetWindowIcon()) GetWindowSystem()->SetApplicationIcon(state->GetWindowIcon());
 			GetWindowSystem()->SetApplicationIconVisibility(true);
 			SafePointer<IScreen> primary = GetDefaultScreen();
 			auto callback = new WindowCallback(state);
@@ -739,6 +738,7 @@ namespace Engine
 			wd.Position.Right = wd.Position.Left + size.x;
 			wd.Position.Bottom = wd.Position.Top + size.y;
 			auto window = CreateWindow(wd, DeviceClass::Null);
+			if (state->GetWindowIcon()) GetWindowSystem()->SetApplicationIcon(state->GetWindowIcon());
 			_application_callback.SetWindowBeingHosted(window);
 			window->Show(true);
 		}
