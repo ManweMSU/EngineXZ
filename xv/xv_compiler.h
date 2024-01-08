@@ -6,6 +6,15 @@ namespace Engine
 {
 	namespace XV
 	{
+		enum CompilerFlags : uint {
+			CompilerFlagMakeModule		= 0x001,
+			CompilerFlagMakeMetadata	= 0x002,
+			CompilerFlagMakeManual		= 0x004,
+			CompilerFlagSystemConsole	= 0x010,
+			CompilerFlagSystemGUI		= 0x020,
+			CompilerFlagSystemNull		= 0x040,
+			CompilerFlagSystemLibrary	= 0x080,
+		};
 		enum class CompilerStatus : uint {
 			Success					= 0x0000,
 			FileAccessFailure		= 0x0001,
@@ -98,6 +107,23 @@ namespace Engine
 			virtual Streaming::Stream * GetOutputModuleData(void) const = 0;
 		};
 		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback);
+
+		struct CompileDesc
+		{
+			// Input data
+			uint flags;
+			string module_name;
+			const Array<uint32> * input;
+			ICompilerCallback * callback;
+			CodeMetaInfo * meta;
+			// Output data
+			CompilerStatusDesc status;
+			SafePointer<IOutputModule> output_module;
+			SafePointer<ManualVolume> output_volume;
+		};
+
+		void Compile(CompileDesc & desc);
+
 		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status);
 		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status);
 		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta = 0);

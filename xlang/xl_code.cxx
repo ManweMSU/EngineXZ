@@ -423,16 +423,18 @@ namespace Engine
 				_current_catch_serial--;
 			}
 			_subj.instset << XA::TH::MakeStatementReturn();
-			OptimizeCode(_subj, _acorr);
-			for (int index = 0; index < _subj.instset.Length(); index++) {
-				auto & i = _subj.instset[index];
-				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
-					int abs_offs = _acorr[i.attachment.num_bytes];
-					i.attachment = XA::TH::MakeSize(abs_offs - index - 1, 0);
+			if (!ctx.IsIdle()) {
+				OptimizeCode(_subj, _acorr);
+				for (int index = 0; index < _subj.instset.Length(); index++) {
+					auto & i = _subj.instset[index];
+					if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
+						int abs_offs = _acorr[i.attachment.num_bytes];
+						i.attachment = XA::TH::MakeSize(abs_offs - index - 1, 0);
+					}
+					ThrowAddressCorrect(i.tree, _acorr, index);
 				}
-				ThrowAddressCorrect(i.tree, _acorr, index);
+				_ctx.SupplyFunctionImplementation(_func, _subj);
 			}
-			_ctx.SupplyFunctionImplementation(_func, _subj);
 		}
 		LFunctionContext::LFunctionContext(LContext & ctx, LObject * dest, const SimpifiedFunctionContextDesc & desc) :
 			_ctx(ctx), _acorr(0x1000), _flags(desc.flags), _local_counter(0), _current_catch_serial(-1)
@@ -471,16 +473,18 @@ namespace Engine
 				_current_catch_serial--;
 			}
 			_subj.instset << XA::TH::MakeStatementReturn();
-			OptimizeCode(_subj, _acorr);
-			for (int index = 0; index < _subj.instset.Length(); index++) {
-				auto & i = _subj.instset[index];
-				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
-					int abs_offs = _acorr[i.attachment.num_bytes];
-					i.attachment = XA::TH::MakeSize(abs_offs - index - 1, 0);
+			if (!ctx.IsIdle()) {
+				OptimizeCode(_subj, _acorr);
+				for (int index = 0; index < _subj.instset.Length(); index++) {
+					auto & i = _subj.instset[index];
+					if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
+						int abs_offs = _acorr[i.attachment.num_bytes];
+						i.attachment = XA::TH::MakeSize(abs_offs - index - 1, 0);
+					}
+					ThrowAddressCorrect(i.tree, _acorr, index);
 				}
-				ThrowAddressCorrect(i.tree, _acorr, index);
+				_ctx.SupplyFunctionImplementation(_func, _subj);
 			}
-			_ctx.SupplyFunctionImplementation(_func, _subj);
 		}
 		LFunctionContext::~LFunctionContext(void) {}
 		LObject * LFunctionContext::GetRootScope(void) { return _root; }
@@ -896,16 +900,18 @@ namespace Engine
 				}
 				if (_void_retval) _subj.instset << XA::TH::MakeStatementReturn();
 			}
-			OptimizeCode(_subj, _acorr);
-			for (int index = 0; index < _subj.instset.Length(); index++) {
-				auto & i = _subj.instset[index];
-				if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
-					int abs_offs = _acorr[i.attachment.num_bytes];
-					i.attachment = XA::TH::MakeSize(abs_offs - index - 1, 0);
+			if (!_ctx.IsIdle()) {
+				OptimizeCode(_subj, _acorr);
+				for (int index = 0; index < _subj.instset.Length(); index++) {
+					auto & i = _subj.instset[index];
+					if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {
+						int abs_offs = _acorr[i.attachment.num_bytes];
+						i.attachment = XA::TH::MakeSize(abs_offs - index - 1, 0);
+					}
+					ThrowAddressCorrect(i.tree, _acorr, index);
 				}
-				ThrowAddressCorrect(i.tree, _acorr, index);
+				_ctx.SupplyFunctionImplementation(_func, _subj);
 			}
-			_ctx.SupplyFunctionImplementation(_func, _subj);
 		}
 	}
 }

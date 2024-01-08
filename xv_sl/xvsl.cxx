@@ -227,13 +227,12 @@ class CodeDocument : public Object
 					name = L"novus";
 					callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
 				}
-				SafePointer<XV::IOutputModule> output;
 				XV::CompilerStatusDesc desc;
 				XV::CodeMetaInfo meta;
 				meta.autocomplete_at = -1;
 				meta.function_info_at = -1;
 				meta.error_absolute_from = -1;
-				XV::CompileModule(name, *code, output.InnerRef(), callback, desc, &meta);
+				XV::CompileModule(name, *code, 0, callback, desc, &meta);
 				if (self->CommitMeta(version, code, desc, meta)) break;
 			}
 		}));
@@ -792,7 +791,6 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				name = L"novus";
 				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
 			}
-			SafePointer<XV::IOutputModule> output;
 			XV::CompilerStatusDesc desc;
 			XV::CodeMetaInfo meta;
 			uint ac;
@@ -802,7 +800,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 			meta.autocomplete_at = ac;
 			meta.function_info_at = -1;
 			meta.error_absolute_from = -1;
-			XV::CompileModule(name, *code, output.InnerRef(), callback, desc, &meta);
+			XV::CompileModule(name, *code, 0, callback, desc, &meta);
 			RPC::ResponseMessage_Success_CompletionItem responce;
 			for (auto & a : meta.autocomplete) {
 				RPC::CompletionItem com;
@@ -843,7 +841,6 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				name = L"novus";
 				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
 			}
-			SafePointer<XV::IOutputModule> output;
 			XV::CompilerStatusDesc desc;
 			XV::CodeMetaInfo meta;
 			uint ac;
@@ -853,7 +850,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 			meta.autocomplete_at = -1;
 			meta.function_info_at = ac;
 			meta.error_absolute_from = -1;
-			XV::CompileModule(name, *code, output.InnerRef(), callback, desc, &meta);
+			XV::CompileModule(name, *code, 0, callback, desc, &meta);
 			RPC::ResponseMessage_Success_SignatureHelp responce;
 			uint count = meta.overloads.Count();
 			if (count) {

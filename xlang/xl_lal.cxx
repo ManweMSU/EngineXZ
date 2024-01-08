@@ -353,13 +353,15 @@ namespace Engine
 			return ns;
 		}
 
-		LContext::LContext(const string & module) : _module_name(module), _import_list(0x10), _private_counter(0)
+		LContext::LContext(const string & module) : _idle_mode(false), _module_name(module), _import_list(0x10), _private_counter(0)
 		{
 			_root_ns = XL::CreateNamespace(L"", L"", *this);
 			_subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI);
 			_data = new DataBlock(0x1000);
 		}
 		LContext::~LContext(void) {}
+		bool LContext::IsIdle(void) { return _idle_mode; }
+		void LContext::SetIdleMode(bool set) { _idle_mode = set; }
 		void LContext::MakeSubsystemConsole(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI); }
 		void LContext::MakeSubsystemGUI(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::GUI); }
 		void LContext::MakeSubsystemNone(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::NoUI); }

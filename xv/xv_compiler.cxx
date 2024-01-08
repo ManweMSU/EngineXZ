@@ -1867,7 +1867,7 @@ namespace Engine
 									SafePointer<Streaming::Stream> stream = callback->QueryResourceFileStream(file);
 									if (!stream) throw Exception();
 									if (stream->Length() > 0x1000000) throw Exception();
-									data = stream->ReadAll();
+									if (!ctx.IsIdle()) data = stream->ReadAll();
 								} catch (...) { Abort(CompilerStatus::ResourceFileNotFound, file_expr); }
 								if (type.Length() > 4) Abort(CompilerStatus::InvalidResourceType, type_expr);
 								for (int i = 0; i < type.Length(); i++) if (type[i] < 32 || type[i] > 127) Abort(CompilerStatus::InvalidResourceType, type_expr);
@@ -1893,7 +1893,7 @@ namespace Engine
 									stream = callback->QueryResourceFileStream(file);
 									if (!stream) throw Exception();
 								} catch (...) { Abort(CompilerStatus::ResourceFileNotFound, file_expr); }
-								try {
+								if (!ctx.IsIdle()) try {
 									picture = Codec::DecodeImage(stream);
 									if (!picture) throw Exception();
 									stream.SetReference(0);
@@ -2544,8 +2544,10 @@ namespace Engine
 						XL::LFunctionContext fctx(ctx, func, XL::FunctionFinalizer, perform, revert);
 					}
 					init_list.Clear();
-					if (!metadata.IsEmpty()) XI::AddModuleMetadata(ctx.QueryResources(), metadata);
-					for (auto & loc : localizations) if (!loc.value->IsEmpty()) XI::AddModuleLocalization(ctx.QueryResources(), loc.key, *loc.value);
+					if (!ctx.IsIdle()) {
+						if (!metadata.IsEmpty()) XI::AddModuleMetadata(ctx.QueryResources(), metadata);
+						for (auto & loc : localizations) if (!loc.value->IsEmpty()) XI::AddModuleLocalization(ctx.QueryResources(), loc.key, *loc.value);
+					}
 				} catch (...) { if (status.status == CompilerStatus::Success) SetStatusError(status, CompilerStatus::InternalError); }
 			}
 		};
@@ -2594,24 +2596,75 @@ namespace Engine
 			virtual string ToString(void) const override { return L"OutputModule"; }
 		};
 		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback) { return new ListCompilerCallback(res_pv, res_pc, mdl_pv, mdl_pc, dropback); }
-		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status)
+		void Compile(CompileDesc & desc)
 		{
 			try {
-				XL::LContext lctx(module_name);
-				lctx.MakeSubsystemConsole();
-				SafePointer<TokenStream> input_stream = new TokenStream(input.GetBuffer(), input.Length(), 0);
-				VContext vctx(lctx, callback, status, input_stream);
-				vctx.meta_info = 0;
-				vctx.documentation = new ManualVolume;
-				vctx.documentation->SetModule(module_name);
-				status.status = CompilerStatus::Success;
-				vctx.Process();
-				if (status.status == CompilerStatus::Success) {
-					*output = vctx.documentation.Inner();
-					vctx.documentation->Retain();
-					SetStatusError(status, CompilerStatus::Success);
+				XL::LContext lctx(desc.module_name);
+				if (desc.flags & CompilerFlagSystemGUI) lctx.MakeSubsystemGUI();
+				else if (desc.flags & CompilerFlagSystemNull) lctx.MakeSubsystemNone();
+				else if (desc.flags & CompilerFlagSystemLibrary) lctx.MakeSubsystemLibrary();
+				else lctx.MakeSubsystemConsole();
+				lctx.SetIdleMode((desc.flags & CompilerFlagMakeModule) == 0);
+				if (!(desc.flags & CompilerFlagMakeMetadata)) desc.meta = 0; else if (!desc.meta) throw Exception();
+				if (!desc.input) throw Exception();
+				if (desc.meta) {
+					SafePointer<TokenStream> input_stream_test = new TokenStream(desc.input->GetBuffer(), desc.input->Length(), desc.meta);
+					Token token;
+					while (input_stream_test->ReadToken(token) && token.type != TokenType::EOF);
+					if (desc.meta->autocomplete_at >= 0) {
+						int token_offset = -1;
+						for (auto & r : desc.meta->info) if (r.value.from >= 0 && r.value.from + r.value.length > desc.meta->autocomplete_at) {
+							token_offset = r.value.from;
+							break;
+						}
+						desc.meta->autocomplete_at = token_offset;
+					}
+					if (desc.meta->function_info_at >= 0) {
+						int token_offset = -1;
+						for (auto & r : desc.meta->info) if (r.value.from >= 0 && r.value.from + r.value.length > desc.meta->function_info_at) {
+							token_offset = r.value.from;
+							break;
+						}
+						desc.meta->function_info_at = token_offset;
+					}
 				}
-			} catch (...) { SetStatusError(status, CompilerStatus::InternalError); }
+				SafePointer<TokenStream> input_stream = new TokenStream(desc.input->GetBuffer(), desc.input->Length(), 0);
+				VContext vctx(lctx, desc.callback, desc.status, input_stream);
+				if (desc.flags & CompilerFlagSystemLibrary) vctx.module_is_library = true;
+				vctx.meta_info = desc.meta;
+				if (desc.flags & CompilerFlagMakeManual) {
+					vctx.documentation = new ManualVolume;
+					vctx.documentation->SetModule(desc.module_name);
+				}
+				desc.status.status = CompilerStatus::Success;
+				vctx.Process();
+				if (desc.status.status == CompilerStatus::Success) {
+					if (desc.flags & CompilerFlagMakeManual) desc.output_volume = vctx.documentation;
+					if (desc.flags & CompilerFlagMakeModule) {
+						SafePointer<Streaming::MemoryStream> data = new Streaming::MemoryStream(0x10000);
+						lctx.ProduceModule(Meta::Stamp, Meta::VersionMajor, Meta::VersionMinor, Meta::Subversion, Meta::BuildNumber, data);
+						data->Seek(0, Streaming::Begin);
+						if (vctx.module_is_library) desc.output_module = new OutputModule(desc.module_name, XI::FileExtensionLibrary, data);
+						else desc.output_module = new OutputModule(desc.module_name, XI::FileExtensionExecutable, data);
+					}
+					SetStatusError(desc.status, CompilerStatus::Success);
+				}
+			} catch (...) { SetStatusError(desc.status, CompilerStatus::InternalError); }
+		}
+		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status)
+		{
+			CompileDesc desc;
+			desc.flags = CompilerFlagMakeManual | CompilerFlagSystemConsole;
+			desc.module_name = module_name;
+			desc.input = &input;
+			desc.callback = callback;
+			desc.meta = 0;
+			Compile(desc);
+			status = desc.status;
+			if (desc.status.status == CompilerStatus::Success) {
+				*output = desc.output_volume.Inner();
+				desc.output_volume->Retain();
+			}
 		}
 		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status)
 		{
@@ -2635,44 +2688,20 @@ namespace Engine
 		}
 		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta)
 		{
-			try {
-				XL::LContext lctx(module_name);
-				lctx.MakeSubsystemConsole();
-				if (meta) {
-					SafePointer<TokenStream> input_stream_test = new TokenStream(input.GetBuffer(), input.Length(), meta);
-					Token token;
-					while (input_stream_test->ReadToken(token) && token.type != TokenType::EOF);
-					if (meta->autocomplete_at >= 0) {
-						int token_offset = -1;
-						for (auto & r : meta->info) if (r.value.from >= 0 && r.value.from + r.value.length > meta->autocomplete_at) {
-							token_offset = r.value.from;
-							break;
-						}
-						meta->autocomplete_at = token_offset;
-					}
-					if (meta->function_info_at >= 0) {
-						int token_offset = -1;
-						for (auto & r : meta->info) if (r.value.from >= 0 && r.value.from + r.value.length > meta->function_info_at) {
-							token_offset = r.value.from;
-							break;
-						}
-						meta->function_info_at = token_offset;
-					}
-				}
-				SafePointer<TokenStream> input_stream = new TokenStream(input.GetBuffer(), input.Length(), 0);
-				VContext vctx(lctx, callback, status, input_stream);
-				vctx.meta_info = meta;
-				status.status = CompilerStatus::Success;
-				vctx.Process();
-				if (status.status == CompilerStatus::Success) {
-					SafePointer<Streaming::MemoryStream> data = new Streaming::MemoryStream(0x10000);
-					lctx.ProduceModule(Meta::Stamp, Meta::VersionMajor, Meta::VersionMinor, Meta::Subversion, Meta::BuildNumber, data);
-					data->Seek(0, Streaming::Begin);
-					if (vctx.module_is_library) *output = new OutputModule(module_name, XI::FileExtensionLibrary, data);
-					else *output = new OutputModule(module_name, XI::FileExtensionExecutable, data);
-					SetStatusError(status, CompilerStatus::Success);
-				}
-			} catch (...) { SetStatusError(status, CompilerStatus::InternalError); }
+			CompileDesc desc;
+			desc.flags = CompilerFlagSystemConsole;
+			if (output) desc.flags |= CompilerFlagMakeModule;
+			if (meta) desc.flags |= CompilerFlagMakeMetadata;
+			desc.module_name = module_name;
+			desc.input = &input;
+			desc.callback = callback;
+			desc.meta = meta;
+			Compile(desc);
+			status = desc.status;
+			if (desc.status.status == CompilerStatus::Success && output) {
+				*output = desc.output_module.Inner();
+				desc.output_module->Retain();
+			}
 		}
 		void CompileModule(const string & input, string & output_path, ICompilerCallback * callback, CompilerStatusDesc & status)
 		{

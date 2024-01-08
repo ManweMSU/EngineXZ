@@ -202,6 +202,9 @@ namespace Engine
 			virtual string ExpandPath(const string & value, ErrorContext & ectx) noexcept override
 			{
 				XE_TRY_INTRO
+				#ifdef ENGINE_WINDOWS
+					if (value.Length() == 2 && value[1] == L':') return value.UpperCase() + L"\\";
+				#endif
 				if (value.Length()) return IO::ExpandPath(value); else return L"";
 				XE_TRY_OUTRO(L"")
 			}
@@ -209,6 +212,7 @@ namespace Engine
 			{
 				XE_TRY_INTRO
 				#ifdef ENGINE_WINDOWS
+					if (value.Length() == 2 && value[1] == L':') return value.UpperCase() + L"\\";
 					if (value.Length() > 1 && value[1] == L':') return IO::ExpandPath(value);
 					else return IO::ExpandPath(base + L"\\" + value);
 				#else

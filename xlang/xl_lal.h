@@ -131,6 +131,7 @@ namespace Engine
 		};
 		class LContext : public Object
 		{
+			bool _idle_mode;
 			string _module_name;
 			uint _subsystem, _private_counter;
 			SafePointer<LObject> _root_ns, _private_ns;
@@ -142,6 +143,8 @@ namespace Engine
 			LContext(const string & module);
 			virtual ~LContext(void) override;
 
+			bool IsIdle(void);
+			void SetIdleMode(bool set);
 			void MakeSubsystemConsole(void);
 			void MakeSubsystemGUI(void);
 			void MakeSubsystemNone(void);
