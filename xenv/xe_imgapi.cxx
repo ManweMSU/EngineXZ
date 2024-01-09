@@ -195,6 +195,19 @@ namespace Engine
 			virtual SafePointer<Graphics::IBlurEffectBrush> CreateBlurBrush(double value) noexcept { return _context->CreateBlurEffectBrush(value); }
 			virtual SafePointer<Graphics::IInversionEffectBrush> CreateInversionBrush(void) noexcept { return _context->CreateInversionEffectBrush(); }
 			virtual SafePointer<Graphics::IBitmapBrush> CreateBitmapBrush(XBitmap * bitmap, int left, int top, int right, int bottom, bool tile) noexcept { return _context->CreateBitmapBrush(bitmap->ExposeBitmap(), Box(left, top, right, bottom), tile); }
+			virtual SafePointer<Graphics::IBitmapBrush> CreateTextureBrush(VisualObject * texture, uint alpha_mode) noexcept
+			{
+				Graphics::TextureAlphaMode mode;
+				SafePointer<Graphics::ITexture> surface;
+				ErrorContext ectx;
+				ectx.error_code = ectx.error_subcode = 0;
+				if (alpha_mode == 0) mode = Graphics::TextureAlphaMode::Ignore;
+				else if (alpha_mode == 1) mode = Graphics::TextureAlphaMode::Premultiplied;
+				else return 0;
+				texture->ExposeInterface(VisualObjectInterfaceTexture, surface.InnerRef(), ectx);
+				if (ectx.error_code) return 0;
+				return _context->CreateTextureBrush(surface, mode);
+			}
 			virtual SafePointer<Graphics::ITextBrush> CreateTextBrush(Graphics::IFont * font, const string & text, int horz, int vert, const XColor & color) noexcept { return _context->CreateTextBrush(font, text, horz, vert, color.value); }
 			virtual void ClearCache(void) noexcept { _context->ClearInternalCache(); }
 			virtual void PushClip(int left, int top, int right, int bottom) noexcept { _context->PushClip(Box(left, top, right, bottom)); }

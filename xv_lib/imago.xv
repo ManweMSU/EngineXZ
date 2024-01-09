@@ -221,8 +221,11 @@ spatium graphicum {
 		dextrus		= 2,
 		subsutus	= 2
 	}
-	enumeratio modus_alpha_pingendi { neclegere = 0, praemultiplicatus = 1 }
+	enumeratio modus_alpha_pingendi { neglectus = 0, praemultiplicatus = 1 }
 
+	genus objectum_visificum hereditat objectum_dynamicum {
+		functio nihil _expone(nint proto, @nihil data) iacit virtualis pura;
+	}
 	genus pictura hereditat objectum {
 		int latitudo { adipisce virtualis pura; }
 		int altitudo { adipisce virtualis pura; }
@@ -264,6 +267,7 @@ spatium graphicum {
 		functio adl[saeta_maculae] crea_saetam_maculae(dfrac pot) virtualis pura;
 		functio adl[saeta_inversionis] crea_saetam_inversionis() virtualis pura;
 		functio adl[saeta_picturae] crea_saetam_picturae(@pictura pict, int sin, int sup, int dex, int sub, logicum test) virtualis pura;
+		functio adl[saeta_picturae] crea_saetam_texturae(@objectum_visificum tex, modus_alpha_pingendi alpha) virtualis pura;
 		functio adl[saeta_scriptionis] crea_saetam_scriptionis(@typographica typ, ~linea ln, positus_scriptionis hori, positus_scriptionis vert, ~imago.color clr) virtualis pura;
 		functio nihil depura() virtualis pura;
 
