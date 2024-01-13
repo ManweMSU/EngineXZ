@@ -1898,7 +1898,7 @@ namespace Engine
 									if (!picture) throw Exception();
 									stream.SetReference(0);
 								} catch (...) { Abort(CompilerStatus::InvalidPictureFormat, file_expr); }
-								XI::AddModuleIcon(ctx.QueryResources(), id, picture);
+								if (!ctx.IsIdle()) XI::AddModuleIcon(ctx.QueryResources(), id, picture);
 							} else if (current_token.contents == Lexic::ResourceMeta) {
 								ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 								auto key_expr = current_token;
