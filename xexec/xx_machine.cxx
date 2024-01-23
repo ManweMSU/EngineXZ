@@ -9,6 +9,7 @@
 #include "../xenv/xe_imgapi.h"
 #include "../xenv/xe_rtff.h"
 #include "../xenv/xe_powerapi.h"
+#include "../xenv/xe_wndapi.h"
 
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
@@ -998,6 +999,7 @@ namespace Engine
 				SafePointer<LauncherServices> launcher_services = new LauncherServices(environment_configuration, launch_configuration);
 				SafePointer<ConsoleAllocator> console_allocator = new ConsoleAllocator(environment_configuration, launch_configuration);
 				SafePointer<XE::IConsoleDevice> console;
+				bool windows_enabled = false;
 				if (launch_configuration.subsystem == XI::Module::ExecutionSubsystem::ConsoleUI) {
 					uint con_type = desc.flags_default & EnvironmentConsoleMask;
 					if (!con_type) con_type = EnvironmentConsoleXC;
@@ -1028,9 +1030,7 @@ namespace Engine
 						InvalidSubsystemErrorReport();
 						return 7;
 					}
-
-					// TODO: INIT GUI ENVIRONMENT
-
+					windows_enabled = true;
 				} else if (launch_configuration.subsystem == XI::Module::ExecutionSubsystem::Library) {
 					InvalidSubsystemErrorReport();
 					return 7;
@@ -1039,6 +1039,7 @@ namespace Engine
 				XE::ActivateImageIO(*loader);
 				XE::ActivateFileFormatIO(*loader);
 				XE::ActivatePowerControl(*loader);
+				XE::ActivateWindowsIO(*loader);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;
 				if (environment_configuration.locale_override.Length()) Assembly::CurrentLocale = environment_configuration.locale_override;
@@ -1059,7 +1060,7 @@ namespace Engine
 						er, ser, loader->GetLastErrorSubject()));
 					return 7;
 				}
-				xctx->LoadModule(environment_configuration.xi_executable, module_stream);
+				auto main_module = xctx->LoadModule(environment_configuration.xi_executable, module_stream);
 				module_stream.SetReference(0);
 				if (!loader->IsAlive()) {
 					XE::ErrorContext ectx;
@@ -1071,6 +1072,7 @@ namespace Engine
 						er, ser, loader->GetLastErrorSubject()));
 					return 7;
 				}
+				if (windows_enabled) XE::ControlWindowsIO(*loader, main_module);
 				auto main = xctx->GetEntryPoint();
 				if (!main) {
 					NoEntryPointErrorReport();

@@ -1,0 +1,458 @@
+﻿importa imago;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Fenestrarum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium fenestrae {
+	structura positus {
+		int x; int y;
+		structor (int xv, int yv) { funda x(xv); funda y(yv); }
+	}
+	structura quadrum {
+		int sinistrus; int superus; int dextrus; int infernus;
+		structor (int sin, int sup, int dex, int inf) { funda sinistrus(sin); funda superus(sup); funda dextrus(dex); funda infernus(inf); }
+	}
+
+	enumeratio formatus_tabulae hereditat nint { scriptio = 0, imago = 1, scriptio_extensa = 2, data = 3 }
+	enumeratio modus_progressionis hereditat nint { occulta = 0, naturalis = 1, suspensa = 2, falsa = 3, indeterminata = 4 }
+	enumeratio modus_tactus_clodendi hereditat nint { debilis = 0, naturalis = 1, vigil = 2 }
+	enumeratio materia_fundi hereditat nint {
+		titulus = 0, selectio = 1, minutus = 2, fluitatus = 3, auxiliaris = 4,
+		prospectus_tituli = 5, cartus = 6, fundus = 7,
+		informatio_moderatoris = 8, culicare_ultimum = 9, suggestio = 10
+	}
+	enumeratio modus_imaginem_fundi hereditat nint { contendere = 0, exscribere = 1, adtemperare = 2, occulere = 3 }
+	enumeratio classis_machinationis hereditat nint { ignota = 0, machina = 1, bacilis = 2, nulla = 3 }
+	enumeratio eventum_fenestae_globale hereditat nint {
+		salve = 0, salve_acsi = 1, exporta = 2, imprime = 3,
+		cancella = 4, decancella = 5, seca = 6, exscribe = 7, insere = 8,
+		duplica = 9, dele = 10, reperi = 11, surroga = 12, selege = 13
+	}
+	enumeratio eventum_applicationis hereditat nint {
+		crea_documentum = 0, aperi_aliquot_documentum = 1, aperi_hoc_documentum = 2,
+		suppetia = 3, monstra_informationem = 4, monstra_possessiones = 5, linque = 6
+	}
+	enumeratio cursor_systemae hereditat nint {
+		vacivus = 0, spiculum = 1, temo = 2, adhaesio = 3,
+		cressa_sin_dex = 4, cressa_sup_inf = 5, cressa_ss_di = 6, cressa_si_ds = 7, move = 8
+	}
+	enumeratio modus_iconis hereditat nint { invisibilis = 0, visibilis = 1, automatica = 2 }
+	enumeratio responsum_dialogi hereditat nint { cancella = 0, accipe = 1, vero = 2, nulle = 3 }
+	enumeratio stylus_dialogi hereditat nint { informatio = 0, ammonitum = 1, error = 2 }
+	enumeratio modus_dialogi hereditat nint { accipe = 0, accipe_et_cancella = 1, vero_et_nulle = 2, vero_nulle_et_cancella = 3 }
+	enumeratio stylus_iconis hereditat nint { naturalis = 0, monochromaticus = 1 }
+	enumeratio status_communicationis hereditat nint { ignotus = 0, acceptus = 1, repuatus = 2, closus = 3, error = 4 }
+
+	genus thema_visifica hereditat objectum {
+		logicum albens { adipisce virtualis pura; }
+		logicum tenebrosa { adipisce virtualis pura; }
+
+		imago.color color_accentus { adipisce virtualis pura; }
+		imago.color color_fundi_fenestrae { adipisce virtualis pura; }
+		imago.color color_scriptionis_fenestrae { adipisce virtualis pura; }
+		imago.color color_fundi_selectionis { adipisce virtualis pura; }
+		imago.color color_scriptionis_selectionis { adipisce virtualis pura; }
+		imago.color color_fundi_minuti { adipisce virtualis pura; }
+		imago.color color_scriptionis_minuti { adipisce virtualis pura; }
+		imago.color color_fundi_minuti_activi { adipisce virtualis pura; }
+		imago.color color_scriptionis_minuti_activi { adipisce virtualis pura; }
+		imago.color color_scriptionis_clausae { adipisce virtualis pura; }
+		imago.color color_scriptionis_adhaesionis { adipisce virtualis pura; }
+	}
+	genus culicare hereditat graphicum.objectum_visificum {
+		linea nomen { adipisce iacit virtualis pura; }
+		quadrum positus_ultimus { adipisce virtualis pura; }
+		quadrum positus_regularis { adipisce virtualis pura; }
+		positus dimensio { adipisce virtualis pura; }
+		dfrac conscendens { adipisce virtualis pura; }
+		adl[imago.replum] imago { adipisce iacit virtualis pura; }
+	}
+	genus tabula_permutationis hereditat objectum {
+		functio logicum proba_formatum(formatus_tabulae form) virtualis pura;
+		functio logicum lege_scriptionem(~linea data) virtualis pura;
+		functio logicum lege_imaginem(~adl[imago.replum] data) virtualis pura;
+		functio logicum lege_scriptionem_extensam(~linea data) virtualis pura;
+		functio logicum lege_data(~linea subformatus, ~adl[dordo_datorum] data) virtualis pura;
+		functio linea lege_subformatum_datorum() iacit virtualis pura;
+		functio logicum scribe_scriptionem(~linea data) virtualis pura;
+		functio logicum scribe_imaginem(@imago.replum data) virtualis pura;
+		functio logicum scribe_scriptionem_extensam(~linea ordinaria, ~linea extensa) virtualis pura;
+		functio logicum scribe_data(~linea subformatus, @nihil data, int magn) virtualis pura;
+	}
+	genus cursor hereditat objectum {}
+
+	genus contextus_fenestrae hereditat graphicum.contextus_machinae {
+		functio logicum exordi() virtualis pura;
+		functio logicum ende() virtualis pura;
+	}
+	genus fenestra hereditat graphicum.objectum_visificum {
+		@nihil _responsor;
+
+		logicum visibilis { adipisce virtualis pura; loca virtualis pura; }
+		linea titulus { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		quadrum positus { adipisce virtualis pura; loca virtualis pura; }
+		fenestrae.positus dimensiones_internae { adipisce virtualis pura; }
+		fenestrae.positus dimensiones_minimae { adipisce virtualis pura; loca virtualis pura; }
+		fenestrae.positus dimensiones_maximae { adipisce virtualis pura; loca virtualis pura; }
+
+		logicum activa { adipisce virtualis pura; }
+		logicum minima { adipisce virtualis pura; }
+		logicum maxima { adipisce virtualis pura; }
+		functio nihil age_active() virtualis pura;
+		functio nihil age_minime() virtualis pura;
+		functio nihil age_maxime() virtualis pura;
+		functio nihil age_normative() virtualis pura;
+		functio nihil require_attentionem() virtualis pura;
+		dfrac opacum { loca virtualis pura; }
+		modus_tactus_clodendi modus_tactus_clodendi { loca virtualis pura; }
+
+		@fenestra parens { adipisce virtualis pura; }
+		int numerus_liberorum { adipisce virtualis pura; }
+		functio @fenestra liberus(int num) virtualis pura;
+
+		modus_progressionis modus_progressionis { loca virtualis pura; }
+		dfrac valor_progressionis { loca virtualis pura; }
+		materia_fundi materia_fundi { loca virtualis pura; }
+
+		functio logicum intenta_fenestram(~fenestrae.positus pos) virtualis pura;
+		functio fenestrae.positus positus_internus_ad_universali(~fenestrae.positus pos) virtualis pura;
+		functio fenestrae.positus positus_universalis_ad_interno(~fenestrae.positus pos) virtualis pura;
+		
+		adl[cursor] cursor { adipisce virtualis pura; loca virtualis pura; }
+		logicum capiens_tactus { adipisce virtualis pura; }
+		logicum capiens_mures { adipisce virtualis pura; loca virtualis pura; }
+		functio nihil cape_tactus() virtualis pura;
+		functio nihil erige_chronometrum(nint indent, nint tempus) virtualis pura;
+
+		functio nihil crea_fundum(@imago.replum rpl) virtualis pura;
+		functio nihil crea_fundum(@imago.replum rpl, modus_imaginem_fundi modus) virtualis pura;
+		functio nihil crea_fundum(@imago.replum rpl, modus_imaginem_fundi modus, imago.color color) virtualis pura;
+		functio adl[contextus_fenestrae] crea_fundum() virtualis pura;
+		functio adl[contextus_fenestrae] crea_fundum(classis_machinationis cls) virtualis pura;
+		functio nihil invalida() virtualis pura;
+
+		dfrac conscendens { adipisce virtualis pura; }
+		adl[culicare] culicare { adipisce virtualis pura; }
+		adl[thema_visifica] thema { adipisce virtualis pura; }
+		nint modus_fundi { adipisce virtualis pura; }
+		logicum modalis { adipisce virtualis pura; }
+
+		functio nihil dele() virtualis pura;
+	}
+	protocollum responsor_fenestrae {
+		functio nihil fenestra_creata_est(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_deleta_est(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_revelata_est(@fenestra fen, logicum visibilis) iacit virtualis {}
+
+		functio nihil expone_fenestram(@fenestra fen) iacit virtualis {}
+
+		functio nihil fenestra_closa_est(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_minima_est(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_maxima_est(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_normativa_est(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_suppetia(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_activa_est(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_inactiva_est(@fenestra fen) iacit virtualis {}
+
+		functio nihil fenestra_mota_est(@fenestra fen) iacit virtualis {}
+		functio nihil fenestra_cressata_est(@fenestra fen) iacit virtualis {}
+
+		functio nihil fenestra_tactus_capiebat(@fenestra fen, logicum cap) iacit virtualis {}
+		functio logicum tactus_pressatus_est(@fenestra fen, tactus tact) iacit virtualis { responde non; }
+		functio nihil tactus_depressatus_est(@fenestra fen, tactus tact) iacit virtualis {}
+		functio nihil character_pressatus_est(@fenestra fen, char chr) iacit virtualis {}
+
+		functio nihil fenestra_mures_capiebat(@fenestra fen, logicum cap) iacit virtualis {}
+		functio nihil mus_mota_est(@fenestra fen, positus pos) iacit virtualis {}
+		functio nihil tactus_sinistrus_pressatus_est(@fenestra fen, positus pos) iacit virtualis {}
+		functio nihil tactus_sinistrus_depressatus_est(@fenestra fen, positus pos) iacit virtualis {}
+		functio nihil tactus_sinistrus_duplicatus_est(@fenestra fen, positus pos) iacit virtualis {}
+		functio nihil tactus_dextrus_pressatus_est(@fenestra fen, positus pos) iacit virtualis {}
+		functio nihil tactus_dextrus_depressatus_est(@fenestra fen, positus pos) iacit virtualis {}
+		functio nihil tactus_dextrus_duplicatus_est(@fenestra fen, positus pos) iacit virtualis {}
+
+		functio nihil rota_fenestram_verticaliter(@fenestra fen, dfrac valor) iacit virtualis {}
+		functio nihil rota_fenestram_horizontaliter(@fenestra fen, dfrac valor) iacit virtualis {}
+
+		functio nihil chronometrus_fierit(@fenestra fen, nint indent) iacit virtualis {}
+		functio nihil thema_mutata_est(@fenestra fen) iacit virtualis {}
+		functio logicum eventum_servabile_est(@fenestra fen, eventum_fenestae_globale eve) iacit virtualis { responde non; }
+		functio nihil procede_eventum(@fenestra fen, eventum_fenestae_globale eve) iacit virtualis {}
+	}
+	dura fenestra {
+		@responsor_fenestrae responsor {
+			adipisce { responde (@responsor_fenestrae)(_responsor); }
+			loca { _responsor = valor; }
+		}
+	}
+	spatium styli_fenestrae {
+		constatus habet_titulum			= nint(0x00000001);
+		constatus cressata				= nint(0x00000002);
+		constatus tactus_clode			= nint(0x00000004);
+		constatus tactus_minima			= nint(0x00000008);
+		constatus tactus_maxima			= nint(0x00000010);
+		constatus tactus_suppetia		= nint(0x00000020);
+		constatus auxiliata				= nint(0x00000040);
+		constatus fluitata				= nint(0x00000080);
+		constatus opaca_non				= nint(0x00000100);
+		constatus redefini_themam		= nint(0x00000200);
+		constatus fundus_translucidus	= nint(0x00000400);
+		constatus fundus_maculatus		= nint(0x00000800);
+		constatus redefini_maculam		= nint(0x00001000);
+
+		constatus os_windows_extende_margines	= nint(0x00010000);
+		constatus os_windows_titulus_naturalis	= nint(0x00000000);
+		constatus os_windows_titulus_tabularii	= nint(0x00400000);
+		constatus os_windows_titulus_seculis	= nint(0x00800000);
+		constatus os_windows_titulus_colatus	= nint(0x00C00000);
+
+		constatus os_macos_titulus_translucidus	= nint(0x00020000);
+		constatus os_macos_fundus_effectus		= nint(0x00040000);
+		constatus os_macos_inumbrosa			= nint(0x00080000);
+		constatus os_macos_completa				= nint(0x00100000);
+		constatus os_macos_redefini_fundo		= nint(0x00200000);
+	}
+	structura crea_fenestram_desc {
+		quadrum positus;
+		fenestrae.positus dimensiones_minimae;
+		fenestrae.positus dimensiones_maximae;
+		quadrum margines_extensi;
+		dfrac opacum;
+		dfrac macula;
+		nint stylus;
+		imago.color fundus;
+		linea titulus;
+		@responsor_fenestrae responsor;
+		@fenestra parens;
+		adl[culicare] culicare;
+		logicum thema_tenebrosa;
+	}
+
+	genus celula_minuti hereditat objectum {
+		@nihil _responsor { adipisce virtualis pura; loca virtualis pura; }
+		adl[objectum] _subminutus { adipisce virtualis pura; loca virtualis pura; }
+		nintadl moderatoris { adipisce virtualis pura; loca virtualis pura; }
+		int indentitas { adipisce virtualis pura; loca virtualis pura; }
+		linea scriptio { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		linea scriptio_dextra { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		logicum separator { adipisce virtualis pura; loca virtualis pura; }
+		logicum abilis { adipisce virtualis pura; loca virtualis pura; }
+		logicum designata { adipisce virtualis pura; loca virtualis pura; }
+	}
+	genus minutus hereditat objectum {
+		functio nihil adde(@celula_minuti cel) iacit virtualis pura;
+		functio nihil insere(@celula_minuti cel, int pos) iacit virtualis pura;
+		functio nihil remove(int pos) virtualis pura;
+		int longitudo { adipisce virtualis pura; }
+		functio adl[celula_minuti] celula(int pos) virtualis pura;
+		functio adl[celula_minuti] reperi(int indent) virtualis pura;
+		functio int exeque(@fenestra fen, ~positus pos) virtualis pura;
+	}
+	protocollum responsor_celulae_minuti {
+		functio positus mensura_celulam(@celula_minuti celula, @graphicum.contextus_machinae ctx) iacit virtualis { responde positus(0, 0); }
+		functio nihil expone_celulam(@celula_minuti celula, @graphicum.contextus_machinae ctx, ~quadrum pos, logicum sel) iacit virtualis {}
+		functio nihil celula_closa_est(@celula_minuti celula) iacit virtualis {}
+		functio nihil celula_deleta_est(@celula_minuti celula) iacit virtualis {}
+	}
+	dura celula_minuti {
+		@responsor_celulae_minuti responsor { adipisce { responde (@responsor_celulae_minuti)(_responsor); } loca { _responsor = valor; } }
+		adl[minutus] subminutus {
+			adipisce { adl[minutus] resp; resp.contine((@minutus)(_subminutus.valor())); responde resp; }
+			loca { adl[objectum] obj; obj.contine(valor.valor()); _subminutus = obj; }
+		}
+	}
+
+	genus icon_status hereditat objectum {
+		@nihil _responsor { adipisce virtualis pura; loca virtualis pura; }
+		positus dimensiones_iconis { adipisce virtualis pura; }
+		adl[imago.collectus] icon { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		stylus_iconis stylus { adipisce virtualis pura; loca virtualis pura; }
+		linea informatio { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		int eventum { adipisce virtualis pura; loca virtualis pura; }
+		adl[minutus] minutus { adipisce virtualis pura; loca virtualis pura; }
+		logicum visibilis { adipisce virtualis pura; loca iacit virtualis pura; }
+	}
+	protocollum responsor_iconis_status {
+		functio nihil procede_eventum_iconis(@icon_status icon, int indent) iacit virtualis {}
+	}
+	dura icon_status {
+		@responsor_iconis_status responsor { adipisce { responde (@responsor_iconis_status)(_responsor); } loca { _responsor = valor; } }
+	}
+
+	genus communicatio hereditat objectum {
+		functio nihil mitte(~linea verbum, @dordo_datorum data, @status_communicationis resp, @contextus.labos lab) iacit virtualis pura;
+		functio nihil admitte(~linea verbum, @status_communicationis resp, @adl[dordo_datorum] resp_data, @contextus.labos lab) iacit virtualis pura;
+		status_communicationis status { adipisce virtualis pura; }
+	}
+
+	structura formatus_dialogi {
+		linea descriptio;
+		linea extensiones;
+	}
+	structura descriptio_limam_aperiendi {
+		linea titulus;
+		logicum multiplicabilis;
+		int formatus_defaltus;
+		ordo formatus_dialogi formati;
+		structor () iacit { funda multiplicabilis = non; funda formatus_defaltus = -1; funda formati(0x10); }
+	}
+	structura descriptio_limam_salvendi {
+		linea titulus;
+		logicum adde_extensionem;
+		int formatus_defaltus;
+		ordo formatus_dialogi formati;
+		structor () iacit { funda adde_extensionem = sic; funda formatus_defaltus = -1; funda formati(0x10); }
+	}
+	structura responsum_limam_aperiendi {
+		ordo linea limae;
+		structor () iacit { funda limae(0x10); }
+	}
+	structura responsum_limam_salvendi {
+		linea lima;
+		int formatus;
+	}
+	spatium modi_tactuum_globalium {
+		constatus shift		= nint(0x01);
+		constatus ctrl		= nint(0x02);
+		constatus alt		= nint(0x04);
+		constatus system	= nint(0x08);
+	}
+
+	genus systema_fenestrarum hereditat contextus.cauda {
+		adl[thema_visifica] thema { adipisce iacit virtualis pura; }
+		adl[culicare] culicare_primum { adipisce iacit virtualis pura; }
+		adl[ordo adl[culicare]] culicaria { adipisce iacit virtualis pura; }
+		adl[tabula_permutationis] tabula_permutationis { adipisce iacit virtualis pura; }
+
+		functio @fenestra crea_fenestram(~crea_fenestram_desc desc) iacit virtualis pura;
+		functio @fenestra crea_fenestram_modalem(~crea_fenestram_desc desc) iacit virtualis pura;
+		functio positus dimensiones_cum_style(~positus basis, nint stylus) virtualis pura;
+		functio quadrum dimensiones_cum_style(~quadrum basis, nint stylus) virtualis pura;
+		adl[ordo @fenestra] fenestrae_capitales { adipisce iacit virtualis pura; }
+
+		functio nihil exeque() virtualis pura;
+		functio nihil exeque(logicum dum_fenestrae_exsistunt) virtualis pura;
+		functio nihil linque() virtualis pura;
+		functio nihil linque_modalem(@fenestra fen) virtualis pura;
+
+		positus positus_cursoris { adipisce virtualis pura; loca virtualis pura; }
+		functio adl[cursor] onera_cursorem(@imago.replum rpl) iacit virtualis pura;
+		functio adl[cursor] onera_cursorem(cursor_systemae crs) iacit virtualis pura;
+
+		@nihil _responsor { adipisce virtualis pura; loca virtualis pura; }
+
+		adl[ordo positus] dimensiones_iconis { adipisce iacit virtualis pura; }
+		@imago.collectus icon { loca virtualis pura; }
+		linea subscriptio_iconis { loca virtualis pura; }
+		modus_iconis modus_iconis { loca virtualis pura; }
+
+		functio nihil aperi_limam_recte(~descriptio_limam_aperiendi desc, @responsum_limam_aperiendi resp, @fenestra parens, @contextus.labos lab) iacit virtualis pura;
+		functio nihil salve_limam_recte(~descriptio_limam_salvendi desc, @responsum_limam_salvendi resp, @fenestra parens, @contextus.labos lab) iacit virtualis pura;
+		functio nihil selege_collectorium_recte(~linea ttl, @linea resp, @fenestra parens, @contextus.labos lab) iacit virtualis pura;
+		functio nihil quaere_recte(~linea scr, ~linea ttl, modus_dialogi md, stylus_dialogi st, @responsum_dialogi resp, @fenestra parens, @contextus.labos lab) iacit virtualis pura;
+
+		functio adl[minutus] crea_minutum() iacit virtualis pura;
+		functio adl[celula_minuti] crea_celulam_minuti() iacit virtualis pura;
+
+		positus dimensiones_iconis_notificationis { adipisce virtualis pura; }
+		functio nihil note(~linea titulus, ~linea scriptio, @imago.collectus icon) virtualis pura;
+
+		functio adl[icon_status] crea_iconem_status() iacit virtualis pura;
+
+		functio nihil crea_eventum_tactus_globalis(nint eventum, tactus tact, nint modi) iacit virtualis pura;
+		functio nihil remove_eventum_tactus_globalis(nint eventum) virtualis pura;
+
+		functio nihil age_servum_communicationis(~linea nomen_app, ~linea nomen_crt) iacit virtualis pura;
+		functio adl[communicatio] junge_ad_servum_communicationis(~linea nomen_app, ~linea nomen_crt) iacit virtualis pura;
+	}
+	protocollum responsor_applicationis {
+		functio logicum applicatio_eventum_servabile_est(eventum_applicationis eve) iacit virtualis { responde non; }
+		functio logicum applicatio_eventum_fenestrae_servabile_est(eventum_fenestae_globale eve) iacit virtualis { responde non; }
+		functio logicum applicatio_procede_eventum(eventum_applicationis eve, ~linea arg) iacit virtualis { iace errores.implantatio_nulla; }
+
+		functio nihil applicatio_procede_tactum_globalem(nint indent) iacit virtualis {}
+
+		functio nihil applicatio_recepta_data(nintadl contr, ~linea verbum, @dordo_datorum data) iacit virtualis { iace errores.implantatio_nulla; }
+		functio adl[dordo_datorum] applicatio_responde_data(nintadl contr, ~linea verbum) iacit virtualis { iace errores.implantatio_nulla; }
+		functio nihil applicatio_dejuga_data(nintadl contr) iacit virtualis {}
+	}
+	dura systema_fenestrarum {
+		protocollum _fabricatio_systemae_fenestrarum {
+			functio ~systema_fenestrarum aediface() iacit virtualis pura;
+			functio ~systema_fenestrarum aediface(@responsor_applicationis resp) iacit virtualis pura;
+			functio ~systema_fenestrarum aediface(@dordo_datorum lineae) iacit virtualis pura;
+			functio ~systema_fenestrarum aediface(@responsor_applicationis resp, @dordo_datorum lineae) iacit virtualis pura;
+			functio ~systema_fenestrarum currens() iacit virtualis pura;
+		}
+		classis functio ~systema_fenestrarum aediface() iacit { responde (@_fabricatio_systemae_fenestrarum)(protocollum(sysfen))^.aediface(); }
+		classis functio ~systema_fenestrarum aediface(@responsor_applicationis resp) iacit { responde (@_fabricatio_systemae_fenestrarum)(protocollum(sysfen))^.aediface(resp); }
+		classis functio ~systema_fenestrarum aediface(@dordo_datorum lineae) iacit { responde (@_fabricatio_systemae_fenestrarum)(protocollum(sysfen))^.aediface(lineae); }
+		classis functio ~systema_fenestrarum aediface(@responsor_applicationis resp, @dordo_datorum lineae) iacit { responde (@_fabricatio_systemae_fenestrarum)(protocollum(sysfen))^.aediface(resp, lineae); }
+		classis functio ~systema_fenestrarum currens() iacit { responde (@_fabricatio_systemae_fenestrarum)(protocollum(sysfen))^.currens(); }
+		@responsor_applicationis responsor {
+			adipisce { responde (@responsor_applicationis)(_responsor); }
+			loca { _responsor = valor; }
+		}
+	}
+
+	genus _labos_limam_aperiendi hereditat contextus.labos {
+		responsum_limam_aperiendi valor_publicus_responsum;
+		structor () iacit {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_limam_aperiendi lab, ~descriptio_limam_aperiendi desc, @fenestra fen) iacit {
+			systema_fenestrarum.currens().aperi_limam_recte(desc, @lab^.valor_publicus_responsum, fen, lab);
+		}
+	}
+	genus _labos_limam_salvendi hereditat contextus.labos {
+		responsum_limam_salvendi valor_publicus_responsum;
+		structor () iacit {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_limam_salvendi lab, ~descriptio_limam_salvendi desc, @fenestra fen) iacit {
+			systema_fenestrarum.currens().salve_limam_recte(desc, @lab^.valor_publicus_responsum, fen, lab);
+		}
+	}
+	genus _labos_collectorium_selegendi hereditat contextus.labos {
+		linea valor_publicus_responsum;
+		structor () iacit {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_collectorium_selegendi lab, ~linea desc, @fenestra fen) iacit {
+			systema_fenestrarum.currens().selege_collectorium_recte(desc, @lab^.valor_publicus_responsum, fen, lab);
+		}
+	}
+	genus _labos_quaerendi hereditat contextus.labos {
+		responsum_dialogi valor_publicus_responsum;
+		structor () iacit {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_quaerendi lab, ~linea scr, ~linea ttl, modus_dialogi md, stylus_dialogi st, @fenestra parens) iacit {
+			systema_fenestrarum.currens().quaere_recte(scr, ttl, md, st, @lab^.valor_publicus_responsum, parens, lab);
+		}
+	}
+	genus _labos_mittendi hereditat contextus.labos {
+		status_communicationis valor_publicus_status;
+		structor () iacit {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_mittendi lab, @communicatio com, ~linea verbum, @dordo_datorum data) iacit {
+			com^.mitte(verbum, data, @lab^.valor_publicus_status, lab);
+		}
+	}
+	genus _labos_admittendi hereditat contextus.labos {
+		status_communicationis valor_publicus_status;
+		adl[dordo_datorum] valor_publicus_responsum;
+		structor () iacit {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_admittendi lab, @communicatio com, ~linea verbum) iacit {
+			com^.admitte(verbum, @lab^.valor_publicus_status, @lab^.valor_publicus_responsum, lab);
+		}
+	}
+
+	praeforma operator aperi_limam(D, F) { .fenestrae._labos_limam_aperiendi.age(.fenestrae._labos_limam_aperiendi ## { $_ }, $D, $F) }
+	praeforma operator salve_limam(D, F) { .fenestrae._labos_limam_salvendi.age(.fenestrae._labos_limam_salvendi ## { $_ }, $D, $F) }
+	praeforma operator selege_collectorium(D, F) { .fenestrae._labos_collectorium_selegendi.age(.fenestrae._labos_collectorium_selegendi ## { $_ }, $D, $F) }
+	praeforma operator quaere(S, T, MD, ST, F) { .fenestrae._labos_quaerendi.age(.fenestrae._labos_quaerendi ## { $_ }, $S, $T, $MD, $ST, $F) }
+	praeforma operator mitte_data(COM, V, D) { .fenestrae._labos_mittendi.age(.fenestrae._labos_mittendi ## { $_ }, $COM, $V, $D) }
+	praeforma operator admitte_data(COM, V) { .fenestrae._labos_admittendi.age(.fenestrae._labos_admittendi ## { $_ }, $COM, $V) }
+}

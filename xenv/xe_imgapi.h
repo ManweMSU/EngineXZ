@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "xe_loader.h"
+#include "xe_conapi.h"
 
 namespace Engine
 {
@@ -20,10 +20,20 @@ namespace Engine
 			virtual void ExposeInterface(uint intid, void * data, ErrorContext & ectx) noexcept = 0;
 		};
 
+		struct XColor
+		{
+			uint32 value;
+			XColor(void);
+			XColor(uint v);
+			~XColor(void);
+		};
+
 		void ActivateImageIO(StandardLoader & ldr);
 		Codec::Frame * ExtractFrameFromXFrame(handle xframe);
 		Codec::Image * ExtractImageFromXImage(handle ximage);
 		Object * CreateXFrame(Codec::Frame * frame);
 		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync);
+		DynamicObject * CreateWindowContext(Windows::I2DPresentationEngine * pres);
+		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context);
 	}
 }

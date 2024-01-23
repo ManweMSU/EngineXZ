@@ -1,7 +1,6 @@
 ﻿#include "xe_imgapi.h"
 
 #include "xe_interfaces.h"
-#include "xe_conapi.h"
 #include "../ximg/xi_resources.h"
 
 #define XE_TRY_INTRO try {
@@ -19,12 +18,10 @@ namespace Engine
 	{
 		void * CreateX2DFactory(void);
 
-		struct XColor
-		{
-			uint32 value;
-			XColor(void) {}
-			~XColor(void) {}
-		};
+		XColor::XColor(void) {}
+		XColor::XColor(uint v) : value(v) {}
+		XColor::~XColor(void) {}
+
 		class XFrame : public Object
 		{
 			SafePointer<Codec::Frame> _frame;
@@ -351,6 +348,33 @@ namespace Engine
 				return _sync(_owner);
 			}
 		};
+		class XWindowContext : public X2DContext
+		{
+			SafePointer<Windows::I2DPresentationEngine> _pres;
+		public:
+			XWindowContext(Windows::I2DPresentationEngine * pres) { _pres.SetRetain(pres); SetContext(pres->GetContext()); }
+			virtual ~XWindowContext(void) override { SetContext(0); }
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.contextus_machinae") {
+					Retain(); return static_cast<X2DContext *>(this);
+				} else if (cls->GetClassName() == L"fenestrae.contextus_fenestrae") {
+					Retain(); return static_cast<XWindowContext *>(this);
+				} else if (cls->GetClassName() == L"graphicum.fabricatio_contextus") {
+					try { return CreateX2DFactory(); }
+					catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+
+					// TODO: ADD 3D DEVICE CAST
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual bool BeginRendering(void) noexcept { return _pres->BeginRenderingPass(); }
+			virtual bool EndRendering(void) noexcept { return _pres->EndRenderingPass(); }
+		};
 		class XDeviceContextFactory : public DynamicObject
 		{
 			SafePointer<Graphics::I2DDeviceContextFactory> _factory;
@@ -624,5 +648,7 @@ namespace Engine
 		Codec::Image * ExtractImageFromXImage(handle ximage) { return reinterpret_cast<XImage *>(ximage)->ExposeImage(); }
 		Object * CreateXFrame(Codec::Frame * frame) { return new XFrame(frame); }
 		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync) { return new XDirectContext(data, width, height, stride, owner, sync); }
+		DynamicObject * CreateWindowContext(Windows::I2DPresentationEngine * pres) { return new XWindowContext(pres); }
+		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context) { return new X2DContext(context); }
 	}
 }

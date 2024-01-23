@@ -623,7 +623,7 @@ namespace Engine
 				SafePointer<XL::LObject> internal_scope = XL::CreateScope();
 				Array<string> equiv(0x10);
 				for (int i = 0; i < _args_names.Length(); i++) {
-					auto name = FormatString(L"@A@", i);
+					auto name = FormatString(L"@A@%0", i);
 					internal_scope->AddMember(name, _args.ElementAt(i));
 					equiv << name;
 				}

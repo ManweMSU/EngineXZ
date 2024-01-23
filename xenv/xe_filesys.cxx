@@ -359,5 +359,14 @@ namespace Engine
 			SafePointer<FileSystemExtension> ext = new FileSystemExtension(exec_path, argv, argc);
 			if (!ldr.RegisterAPIExtension(ext)) throw Exception();
 		}
+		SafePointer< Array<string> > GetCommandLineFileIO(StandardLoader & ldr)
+		{
+			ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+			auto fs = reinterpret_cast<IFileSystemExtension *>(ldr.ExposeInterface(L"syslim"));
+			if (!fs) throw InvalidStateException();
+			auto result = fs->GetArguments(ectx);
+			if (ectx.error_code) throw OutOfMemoryException();
+			return result;
+		}
 	}
 }
