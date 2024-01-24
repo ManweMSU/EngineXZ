@@ -26,7 +26,7 @@ copy /B xv_lib\consolatorium.xvm xv_release\_build\windows_arm64\xvcl\
 copy /B xv_lib\formati.xvm xv_release\_build\windows_arm64\xvcl\
 copy /B xv_lib\lxx.xvm xv_release\_build\windows_arm64\xvcl\
 copy /B xv_lib\potentia.xvm xv_release\_build\windows_arm64\xvcl\
-.\xv_release\_build\windows_x64\xv.exe xv_lib\canonicalis.xv -NO xv_release\_build\windows_arm64\xvcl
+.\xv_release\_build\windows_x64\xv.exe xv_lib\canonicalis.xv -NOP xv_release\_build\windows_arm64\xvcl
 .\xv_release\_build\windows_x64\xv.exe xv_lib\limae.xv -NO xv_release\_build\windows_arm64\xvcl
 .\xv_release\_build\windows_x64\xv.exe xv_lib\imago.xv -NO xv_release\_build\windows_arm64\xvcl
 .\xv_release\_build\windows_x64\xv.exe xv_lib\consolatorium.xv -NO xv_release\_build\windows_arm64\xvcl

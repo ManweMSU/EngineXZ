@@ -24,7 +24,7 @@ cp xx_xx/xe.ini xx_release/_build/macosx_x64/XX.app/xe.ini
 xx shellex_macos/patch.xx xx_release/_build/macosx_x64/XX.app shellex_macos/_build/plugin/XX-x64.qlgenerator
 xx shellex_macos/patch.xx xx_release/_build/macosx_x64/XX.app/XX.app
 
-./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/canonicalis.xv -NO xx_release/_build/com
+./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/canonicalis.xv -NOP xx_release/_build/com
 ./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/limae.xv -NO xx_release/_build/com
 ./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/imago.xv -NO xx_release/_build/com
 ./xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/consolatorium.xv -NO xx_release/_build/com

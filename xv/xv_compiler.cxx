@@ -71,6 +71,7 @@ namespace Engine
 			SafePointer<ManualVolume> documentation;
 			CompilerStatusDesc & status;
 			Token current_token;
+			Volumes::Set<string> autoimports;
 			Volumes::List<VInitServiceDesc> init_list;
 			Volumes::List<VPostCompileDesc> post_compile;
 			Volumes::Dictionary<string, string> metadata;
@@ -1828,6 +1829,11 @@ namespace Engine
 						ProcessPrototypeDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordImport)) {
 						ReadNextToken();
+						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+							Volumes::Set<string> modules;
+							if (callback) callback->QueryAvailableModules(modules);
+							for (auto & m : modules) AssignAutocomplete(m, CodeRangeTag::IdentifierUnknown);
+						}
 						AssertGenericIdent();
 						try { if (!ctx.IncludeModule(current_token.contents, this)) throw Exception(); }
 						catch (...) { Abort(CompilerStatus::ReferenceAccessFailure, current_token); }
@@ -2511,6 +2517,10 @@ namespace Engine
 			{
 				try {
 					EnablePrototypes(this);
+					for (auto & i : autoimports) {
+						try { if (!ctx.IncludeModule(i, this)) throw Exception(); }
+						catch (...) { Abort(CompilerStatus::ReferenceAccessFailure, i); }
+					}
 					ReadNextToken();
 					VObservationDesc desc;
 					desc.current_namespace = ctx.GetRootNamespace();
@@ -2581,6 +2591,14 @@ namespace Engine
 				if (_dropback) return _dropback->QueryResourceFileStream(resource_file_name);
 				throw IO::FileAccessException(IO::Error::FileNotFound);
 			}
+			virtual void QueryAvailableModules(Volumes::Set<string> & set) override
+			{
+				for (auto & path : _mdl) try {
+					SafePointer< Array<string> > mdls = IO::Search::GetFiles(path + L"/*." + XI::FileExtensionLibrary);
+					if (mdls) for (auto & mdl : mdls->Elements()) set.AddElement(IO::Path::GetFileNameWithoutExtension(mdl));
+				} catch (...) {}
+				if (_dropback) _dropback->QueryAvailableModules(set);
+			}
 			virtual string ToString(void) const override { return L"ListCompilerCallback"; }
 		};
 		class OutputModule : public IOutputModule
@@ -2632,6 +2650,7 @@ namespace Engine
 				VContext vctx(lctx, desc.callback, desc.status, input_stream);
 				if (desc.flags & CompilerFlagSystemLibrary) vctx.module_is_library = true;
 				vctx.meta_info = desc.meta;
+				vctx.autoimports = desc.imports;
 				if (desc.flags & CompilerFlagMakeManual) {
 					vctx.documentation = new ManualVolume;
 					vctx.documentation->SetModule(desc.module_name);
@@ -2651,7 +2670,7 @@ namespace Engine
 				}
 			} catch (...) { SetStatusError(desc.status, CompilerStatus::InternalError); }
 		}
-		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status)
+		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports)
 		{
 			CompileDesc desc;
 			desc.flags = CompilerFlagMakeManual | CompilerFlagSystemConsole;
@@ -2659,6 +2678,8 @@ namespace Engine
 			desc.input = &input;
 			desc.callback = callback;
 			desc.meta = 0;
+			if (imports) desc.imports = *imports;
+			else desc.imports.AddElement(L"canonicalis");
 			Compile(desc);
 			status = desc.status;
 			if (desc.status.status == CompilerStatus::Success) {
@@ -2666,7 +2687,7 @@ namespace Engine
 				desc.output_volume->Retain();
 			}
 		}
-		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status)
+		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports)
 		{
 			string input_path = IO::ExpandPath(input);
 			Array<uint32> input_string(0x1000);
@@ -2684,9 +2705,9 @@ namespace Engine
 				SetStatusError(status, CompilerStatus::FileAccessFailure, input_path);
 				return;
 			}
-			MakeManual(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output, internal_callback, status);
+			MakeManual(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output, internal_callback, status, imports);
 		}
-		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta)
+		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta, const Volumes::Set<string> * imports)
 		{
 			CompileDesc desc;
 			desc.flags = CompilerFlagSystemConsole;
@@ -2696,6 +2717,8 @@ namespace Engine
 			desc.input = &input;
 			desc.callback = callback;
 			desc.meta = meta;
+			if (imports) desc.imports = *imports;
+			else desc.imports.AddElement(L"canonicalis");
 			Compile(desc);
 			status = desc.status;
 			if (desc.status.status == CompilerStatus::Success && output) {
@@ -2703,7 +2726,7 @@ namespace Engine
 				desc.output_module->Retain();
 			}
 		}
-		void CompileModule(const string & input, string & output_path, ICompilerCallback * callback, CompilerStatusDesc & status)
+		void CompileModule(const string & input, string & output_path, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports)
 		{
 			string input_path = IO::ExpandPath(input);
 			Array<uint32> input_string(0x1000);
@@ -2722,7 +2745,7 @@ namespace Engine
 				SetStatusError(status, CompilerStatus::FileAccessFailure, input_path);
 				return;
 			}
-			CompileModule(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output.InnerRef(), internal_callback, status);
+			CompileModule(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output.InnerRef(), internal_callback, status, 0, imports);
 			if (status.status != CompilerStatus::Success) return;
 			if (output_path[0] == L'?') output_path = output_path.Fragment(1, -1);
 			else output_path = IO::ExpandPath(output_path + L"/" + output->GetOutputModuleName() + L"." + output->GetOutputModuleExtension());

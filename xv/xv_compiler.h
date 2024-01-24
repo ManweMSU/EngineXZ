@@ -98,6 +98,7 @@ namespace Engine
 		public:
 			virtual Streaming::Stream * QueryModuleFileStream(const string & module_name) = 0;
 			virtual Streaming::Stream * QueryResourceFileStream(const string & resource_file_name) = 0;
+			virtual void QueryAvailableModules(Volumes::Set<string> & set) = 0;
 		};
 		class IOutputModule : public Object
 		{
@@ -115,6 +116,7 @@ namespace Engine
 			string module_name;
 			const Array<uint32> * input;
 			ICompilerCallback * callback;
+			Volumes::Set<string> imports;
 			CodeMetaInfo * meta;
 			// Output data
 			CompilerStatusDesc status;
@@ -124,9 +126,9 @@ namespace Engine
 
 		void Compile(CompileDesc & desc);
 
-		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status);
-		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status);
-		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta = 0);
-		void CompileModule(const string & input, string & output_path, ICompilerCallback * callback, CompilerStatusDesc & status);
+		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports = 0);
+		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports = 0);
+		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta = 0, const Volumes::Set<string> * imports = 0);
+		void CompileModule(const string & input, string & output_path, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports = 0);
 	}
 }

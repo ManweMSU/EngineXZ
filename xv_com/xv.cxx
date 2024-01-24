@@ -16,6 +16,7 @@ struct {
 	SafePointer<StringTable> localization;
 	Array<string> module_search_paths = Array<string>(0x10);
 	Array<string> documentation_list = Array<string>(0x10);
+	Volumes::Set<string> import_list;
 	bool silent = false;
 	bool nologo = false;
 	bool launch = false;
@@ -61,8 +62,16 @@ void ProcessCommandLine(void)
 						throw Exception();
 					}
 					state.output_path = ExpandPath(args->ElementAt(i));
+				} else if (arg[j] == L'P') {
+					state.import_list.RemoveElement(L"canonicalis");
 				} else if (arg[j] == L'S') {
 					state.silent = true;
+				} else if (arg[j] == L'i') {
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					state.import_list.AddElement(args->ElementAt(i));
 				} else if (arg[j] == L'l') {
 					i++; if (i >= args->Length()) {
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
@@ -131,6 +140,7 @@ void PrintCompilerError(XV::CompilerStatusDesc & desc)
 int Main(void)
 {
 	try {
+		state.import_list.AddElement(L"canonicalis");
 		Codec::InitializeDefaultCodecs();
 		Assembly::CurrentLocale = Assembly::GetCurrentUserLocale();
 		auto root = Path::GetDirectory(GetExecutablePath());
@@ -204,7 +214,7 @@ int Main(void)
 			else if (state.output_path.Length()) output = state.output_path;
 			else output = Path::GetDirectory(state.input);
 			XV::CompilerStatusDesc desc;
-			XV::CompileModule(state.input, output, callback, desc);
+			XV::CompileModule(state.input, output, callback, desc, &state.import_list);
 			if (state.documentation_list.Length()) {
 				XV::CompilerStatusDesc desc2;
 				SafePointer<XV::ManualVolume> volume;

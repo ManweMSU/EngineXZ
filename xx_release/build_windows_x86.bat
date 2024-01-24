@@ -25,7 +25,7 @@ copy /B xx_xxsc\_build\windows_x86_release\xxsc.exe xx_release\_build\windows_x8
 copy /B shellex_windows\extension\_build\windows_x86_release\xxcomex.dll xx_release\_build\windows_x86\xxcomex.dll
 copy /B shellex_windows\installer\_build\windows_x86_release\es_installer.exe xx_release\_build\windows_x86\es_installer.exe
 
-xv_release\_build\windows_x64\xv xv_lib\canonicalis.xv -NO xx_release\_build\com
+xv_release\_build\windows_x64\xv xv_lib\canonicalis.xv -NOP xx_release\_build\com
 xv_release\_build\windows_x64\xv xv_lib\limae.xv -NO xx_release\_build\com
 xv_release\_build\windows_x64\xv xv_lib\imago.xv -NO xx_release\_build\com
 xv_release\_build\windows_x64\xv xv_lib\consolatorium.xv -NO xx_release\_build\com
