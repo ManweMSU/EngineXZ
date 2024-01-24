@@ -792,6 +792,12 @@ namespace Engine
 				SafePointer<XL::LObject> capture_from;
 				string field_name;
 			};
+			struct _object_request_info {
+				SafePointer<XL::LObject> object;
+				SafePointer<XL::LObject> holder;
+				uint object_origin_class; // 0 - static, 1 - capture by copying, 2 - capture field by capturing instance
+			};
+			
 
 			XL::LContext & _ctx;
 			XL::LObject * _cls;
@@ -812,38 +818,58 @@ namespace Engine
 				if (oc == XL::Class::InstancedProperty) return false;
 				return true;
 			}
-		public:
-			ContextCaptureProxy(XL::LContext & ctx, XL::LObject * cls, XL::LObject ** vlist, int vlen) : _ctx(ctx), _cls(cls), _vlist(0x10) { _counter = 0; _vlist.Append(vlist, vlen); }
-			virtual ~ContextCaptureProxy(void) override {}
-			virtual XL::Class GetClass(void) override { return XL::Class::Internal; }
-			virtual string GetName(void) override { return L""; }
-			virtual string GetFullName(void) override { return L""; }
-			virtual bool IsDefinedLocally(void) override { return false; }
-			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
-			virtual LObject * GetMember(const string & name) override
+			static bool _is_object_capture_proxy(XL::LObject * object) { return object->GetClass() == XL::Class::Internal && object->ToString() == L"VContextCaptureProxy"; }
+			void _get_member_ex(const string & name, _object_request_info & info)
 			{
-				try { return _fctx->GetInstance()->GetMember(Lexic::IdentifierTVPP + name); } catch (...) {}
+				try {
+					SafePointer<XL::LObject> object = _fctx->GetInstance()->GetMember(Lexic::IdentifierTVPP + name);
+					info.object = object;
+					info.holder.SetRetain(_fctx->GetInstance());
+					info.object_origin_class = 1;
+					return;
+				} catch (...) {}
 				auto cpt = _capture.GetElementByKey(name);
-				if (cpt) return _fctx->GetInstance()->GetMember(cpt->field_name);
+				if (cpt) {
+					info.object = _fctx->GetInstance()->GetMember(cpt->field_name);
+					info.holder.SetRetain(_fctx->GetInstance());
+					info.object_origin_class = 1;
+					return;
+				}
 				for (auto & v : _vlist) {
 					try {
-						SafePointer<XL::LObject> local = v->GetMember(name);
-						if (v->GetClass() == XL::Class::Namespace || v->GetClass() == XL::Class::Type || _is_object_static(local)) {
-							local->Retain();
-							return local;
-						} else if (v->GetClass() == XL::Class::Scope) {
-							_object_capture_info info;
-							info.capture_from = local;
-							info.field_name = L"_@" + name;
-							_capture.Append(name, info);
-							SafePointer<XL::LObject> type = local->GetType();
-							_ctx.CreateField(_cls, info.field_name, type, true);
-							return _fctx->GetInstance()->GetMember(info.field_name);
+						_object_request_info intinfo;
+						if (_is_object_capture_proxy(v)) {
+							static_cast<ContextCaptureProxy *>(v)->_get_member_ex(name, intinfo);
 						} else {
+							intinfo.object = v->GetMember(name);
+							intinfo.holder.SetRetain(v);
+							if (v->GetClass() == XL::Class::Namespace || v->GetClass() == XL::Class::Type || _is_object_static(intinfo.object)) {
+								intinfo.object_origin_class = 0;
+							} else if (v->GetClass() == XL::Class::Scope) {
+								intinfo.object_origin_class = 1;
+							} else {
+								intinfo.object_origin_class = 2;
+							}
+						}
+						if (intinfo.object_origin_class == 0) {
+							info = intinfo;
+							return;
+						} else if (intinfo.object_origin_class == 1) {
+							_object_capture_info cptinfo;
+							cptinfo.capture_from = intinfo.object;
+							cptinfo.field_name = L"_@" + name;
+							_capture.Append(name, cptinfo);
+							SafePointer<XL::LObject> type = intinfo.object->GetType();
+							_ctx.CreateField(_cls, cptinfo.field_name, type, true);
+							info.object = _fctx->GetInstance()->GetMember(cptinfo.field_name);
+							info.holder.SetRetain(_fctx->GetInstance());
+							info.object_origin_class = 1;
+							return;
+						} else if (intinfo.object_origin_class == 2) {		
 							if (!_self_capture.capture_from) {
-								_self_capture.capture_from.SetRetain(v);
+								_self_capture.capture_from = intinfo.holder;
 								_self_capture.field_name = L"_@@ego";
-								SafePointer<XL::LObject> base_type = v->GetType();
+								SafePointer<XL::LObject> base_type = intinfo.holder->GetType();
 								SafePointer<XL::LObject> type;
 								if (ClassImplements(base_type, L"objectum")) {
 									SafePointer<XL::LObject> safe_ptr = _ctx.QueryObject(L"adl");
@@ -859,12 +885,25 @@ namespace Engine
 							SafePointer<XL::LObject> self_ptr = _fctx->GetInstance()->GetMember(_self_capture.field_name);
 							SafePointer<XL::LObject> self_ptr_follow = self_ptr->GetMember(XL::OperatorFollow);
 							SafePointer<XL::LObject> self = self_ptr_follow->Invoke(0, 0);
-							return self->GetMember(name);
+							info.object = self->GetMember(name);
+							info.holder = self;
+							info.object_origin_class = 2;
+							return;
 						}
 					} catch (...) {}
 				}
 				throw XL::ObjectHasNoSuchMemberException(this, name);
 			}
+		public:
+			ContextCaptureProxy(XL::LContext & ctx, XL::LObject * cls, XL::LObject ** vlist, int vlen) : _ctx(ctx), _cls(cls), _vlist(0x10) { _counter = 0; _vlist.Append(vlist, vlen); }
+			virtual ~ContextCaptureProxy(void) override {}
+			virtual string ToString(void) const override { return L"VContextCaptureProxy"; }
+			virtual XL::Class GetClass(void) override { return XL::Class::Internal; }
+			virtual string GetName(void) override { return L""; }
+			virtual string GetFullName(void) override { return L""; }
+			virtual bool IsDefinedLocally(void) override { return false; }
+			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
+			virtual LObject * GetMember(const string & name) override { _object_request_info info; _get_member_ex(name, info); info.object->Retain(); return info.object; }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override
 			{
 				Volumes::Dictionary<string, XL::Class> il;
