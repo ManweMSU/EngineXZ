@@ -116,6 +116,7 @@ namespace Engine
 					FunctionThrows		= 0x00001000,
 					FunctionThisCall	= 0x00002000,
 					FunctionPrototype	= 0x00004000,
+					FunctionInline		= 0x00008000,
 
 					FunctionMiscMask	= 0xFFFFFF00,
 				};
@@ -176,7 +177,7 @@ namespace Engine
 			Volumes::Dictionary<string, Function> functions;		// FQN:SCN
 			Volumes::Dictionary<string, string> aliases;			// FQN
 			Volumes::Dictionary<string, Prototype> prototypes;		// FQN
-			Volumes::ObjectDictionary<string, DataBlock> resources;	// TYPE:ID
+			Volumes::ObjectDictionary<uint64, DataBlock> resources;	// TYPE:ID
 			SafePointer<DataBlock> data;
 		public:
 			Module(void);
@@ -185,5 +186,7 @@ namespace Engine
 			virtual ~Module(void) override;
 			void Save(Streaming::Stream * dest);
 		};
+		uint64 MakeResourceID(const string & type, int id);
+		void ReadResourceID(uint64 rid, string & type, int & id);
 	}
 }

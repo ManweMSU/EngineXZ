@@ -239,10 +239,11 @@ int Main(void)
 				ids << Localized(418);
 				sizes << Localized(419);
 				for (auto & r : module->resources) {
-					auto prt = r.key.Split(L':');
-					if (prt.Length() != 2) continue;
-					types << prt[0];
-					ids << prt[1];
+					string type;
+					int id;
+					XI::ReadResourceID(r.key, type, id);
+					types << type;
+					ids << string(id);
 					sizes << string(r.value->Length());
 				}
 				const string * table[] = { types.GetBuffer(), ids.GetBuffer(), sizes.GetBuffer() };

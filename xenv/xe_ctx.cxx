@@ -164,7 +164,7 @@ namespace Engine
 
 		Module::Module(const ExecutionContext & xc) : _xc(xc) {}
 		Module::~Module(void) { for (auto & dl : _resident_dl) ReleaseLibrary(dl.value); }
-		const Volumes::ObjectDictionary<string, DataBlock> & Module::GetResources(void) const noexcept { return _rsrc; }
+		const Volumes::ObjectDictionary<uint64, DataBlock> & Module::GetResources(void) const noexcept { return _rsrc; }
 		void Module::GetName(string & name) const noexcept { try { name = _name; } catch (...) { } }
 		void Module::GetAssembler(string & name, uint & vmajor, uint & vminor, uint & subver, uint & build) const noexcept { try { name = _tool; vmajor = _v1; vminor = _v2; subver = _v3; build = _v4; } catch (...) {} }
 		ExecutionSubsystem Module::GetSubsystem(void) const noexcept { return _xss; }
@@ -384,9 +384,13 @@ namespace Engine
 				_sync->Open();
 				return 0;
 			}
-			if (EmbeddedModulesAllowed()) for (auto & rsrc : data->resources) if (rsrc.key.Fragment(0, 4) == L"XDL:") {
+			auto typexdl = XI::MakeResourceID(L"XDL", 0);
+			if (EmbeddedModulesAllowed()) for (auto & rsrc : data->resources) if (rsrc.key & 0xFFFFFFFF == typexdl) {
 				try {
-					auto mpn = result->_name + L":" + rsrc.key;
+					string type;
+					int id;
+					XI::ReadResourceID(rsrc.key, type, id);
+					auto mpn = result->_name + L":" + type + L":" + string(id);
 					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(rsrc.value->GetBuffer(), rsrc.value->Length());
 					if (!LoadModule(mpn, stream)) return 0;
 				} catch (...) {

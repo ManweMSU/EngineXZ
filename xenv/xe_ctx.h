@@ -43,7 +43,7 @@ namespace Engine
 			Module(const ExecutionContext & xc);
 			const ExecutionContext & _xc;
 			Volumes::Dictionary<string, handle> _resident_dl;
-			Volumes::ObjectDictionary<string, DataBlock> _rsrc;
+			Volumes::ObjectDictionary<uint64, DataBlock> _rsrc;
 			string _name, _tool;
 			uint _v1, _v2, _v3, _v4;
 			ExecutionSubsystem _xss;
@@ -51,7 +51,7 @@ namespace Engine
 			SafePointer<XA::IExecutable> _code;
 		public:
 			virtual ~Module(void) override;
-			const Volumes::ObjectDictionary<string, DataBlock> & GetResources(void) const noexcept;
+			const Volumes::ObjectDictionary<uint64, DataBlock> & GetResources(void) const noexcept;
 			void GetName(string & name) const noexcept;
 			void GetAssembler(string & name, uint & vmajor, uint & vminor, uint & subver, uint & build) const noexcept;
 			ExecutionSubsystem GetSubsystem(void) const noexcept;

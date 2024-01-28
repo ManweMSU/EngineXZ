@@ -52,6 +52,7 @@ namespace Engine
 			if (fn->GetValueBoolean(L"Instance")) func.code_flags |= Module::Function::FunctionInstance;
 			if (fn->GetValueBoolean(L"ThisCall")) func.code_flags |= Module::Function::FunctionThisCall;
 			if (fn->GetValueBoolean(L"Prototype")) func.code_flags |= Module::Function::FunctionPrototype;
+			if (fn->GetValueBoolean(L"Inline")) func.code_flags |= Module::Function::FunctionInline;
 			SafePointer<Storage::RegistryNode> attrs = fn->OpenNode(L"Attributes");
 			if (attrs) if (!BuildAttributes(attrs, func.attributes, status)) return false;
 			return true;
@@ -195,7 +196,7 @@ namespace Engine
 			for (auto & v : node->GetValues()) dest.Append(v, node->GetValueString(v));
 			return true;
 		}
-		bool BuildResources(Storage::RegistryNode * node, Volumes::ObjectDictionary<string, DataBlock> & dest, BuilderStatusDesc & status, const string & wd)
+		bool BuildResources(Storage::RegistryNode * node, Volumes::ObjectDictionary<uint64, DataBlock> & dest, BuilderStatusDesc & status, const string & wd)
 		{
 			SafePointer<Storage::RegistryNode> meta_node = node->OpenNode(L"Metadata");
 			SafePointer<Storage::RegistryNode> icon_node = node->OpenNode(L"Icons");
@@ -224,10 +225,11 @@ namespace Engine
 			if (data_node) {
 				for (auto & v : data_node->GetValues()) {
 					auto path = IO::ExpandPath(wd + L"/" + data_node->GetValueString(v));
-					try {
+					auto spl = v.Split(L':');
+					if (spl.Length() == 2) try {
 						SafePointer<Streaming::Stream> stream = new Streaming::FileStream(path, Streaming::AccessRead, Streaming::OpenExisting);
 						SafePointer<DataBlock> data = stream->ReadAll();
-						dest.Append(v, data);
+						dest.Append(MakeResourceID(spl[0], spl[1].ToInt32()), data);
 					} catch (...) {
 						status.status = BuilderStatus::FileReadError;
 						status.file = path;

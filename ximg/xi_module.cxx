@@ -331,12 +331,8 @@ namespace Engine
 				for (int i = 0; i < rlist.Length(); i++) {
 					auto & ri = rlist[i];
 					auto & rs = current->GetValue();
-					auto rnp = rs.key.Split(L':');
-					if (rnp.Length() != 2) throw InvalidArgumentException();
-					SafePointer<DataBlock> tdata = rnp[0].EncodeSequence(Encoding::ANSI, false);
-					ri.resource_type = 0;
-					ri.resource_id = rnp[1].ToUInt32();
-					MemoryCopy(&ri.resource_type, tdata->GetBuffer(), min(tdata->Length(), 4));
+					ri.resource_type = rs.key;
+					ri.resource_id = rs.key >> 32;
 					ri.resource_data_offset = PreserveSpace(rsrc, rs.value->GetBuffer(), rs.value->Length());
 					ri.resource_data_size = rs.value->Length();
 					EnplaceObject(rsrc, ri.resource_data_offset, rs.value->GetBuffer(), rs.value->Length());
@@ -479,7 +475,7 @@ namespace Engine
 				auto rtable = ReadObjects<DS::XI_Resource>(rsrc, hdr.resource_list_offset);
 				for (uint i = 0; i < hdr.resource_list_size; i++) {
 					auto & ri = rtable[i];
-					auto key = string(&ri.resource_type, 4, Encoding::ANSI) + L":" + string(ri.resource_id);
+					uint64 key = (uint64(ri.resource_id) << 32) | uint64(ri.resource_type);
 					SafePointer<DataBlock> rd = new DataBlock(1);
 					rd->SetLength(ri.resource_data_size);
 					MemoryCopy(rd->GetBuffer(), rsrc.GetBuffer() + ri.resource_data_offset, ri.resource_data_size);
@@ -731,5 +727,16 @@ namespace Engine
 		Module::Module(Streaming::Stream * source, ModuleLoadFlags flags) : modules_depends_on(0x10) { Format::RestoreModule(*this, source, flags); }
 		Module::~Module(void) {}
 		void Module::Save(Streaming::Stream * dest) { Format::EncodeModule(dest, *this); }
+		uint64 MakeResourceID(const string & type, int id)
+		{
+			uint64 result = uint64(id) << 32;
+			type.Fragment(0, 4).Encode(&result, Encoding::ANSI, false);
+			return result;
+		}
+		void ReadResourceID(uint64 rid, string & type, int & id)
+		{
+			type = string(&rid, 4, Encoding::ANSI);
+			id = rid >> 32;
+		}
 	}
 }

@@ -936,7 +936,7 @@ namespace Engine
 			if (!literal || literal->GetClass() != Class::Literal) throw InvalidArgumentException();
 			return static_cast<XLiteral *>(literal)->QueryValueAsString();
 		}
-		Volumes::ObjectDictionary<string, DataBlock> & LContext::QueryResources(void) { return _rsrc; }
+		Volumes::ObjectDictionary<uint64, DataBlock> & LContext::QueryResources(void) { return _rsrc; }
 		void LContext::ProduceModule(const string & asm_name, int v1, int v2, int v3, int v4, Streaming::Stream * dest)
 		{
 			XI::Module module;

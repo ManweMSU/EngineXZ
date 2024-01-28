@@ -902,8 +902,8 @@ namespace Engine
 				} else conf.require_xc = conf.require_native_console = false;
 				auto title = metadata->GetElementByKey(XI::MetadataKeyModuleName);
 				conf.xc_title = title ? *title : module;
-				conf.xc_preset.SetRetain(mdl.resources.GetObjectByKey(L"XC:1"));
-				conf.xc_backbuffer.SetRetain(mdl.resources.GetObjectByKey(L"XC:2"));
+				conf.xc_preset.SetRetain(mdl.resources.GetObjectByKey(XI::MakeResourceID(L"XC", 1)));
+				conf.xc_backbuffer.SetRetain(mdl.resources.GetObjectByKey(XI::MakeResourceID(L"XC", 2)));
 				SafePointer<Codec::Image> icon = XI::LoadModuleIcon(mdl.resources, 1);
 				if (icon->Frames.Length()) {
 					Streaming::MemoryStream ms(0x10000);

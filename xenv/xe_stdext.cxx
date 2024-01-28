@@ -1642,11 +1642,11 @@ namespace Engine
 					return WrapToXStream(stream);
 				} catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
 			}
-			static SafePointer<XStream> _create_resource_stream(const Module * mdl, const string & type, int count, ErrorContext & ectx)
+			static SafePointer<XStream> _create_resource_stream(const Module * mdl, const string & type, int id, ErrorContext & ectx)
 			{
 				try {
 					auto & rsrc = mdl->GetResources();
-					auto res = rsrc.GetElementByKey(type + L":" + string(count));
+					auto res = rsrc.GetElementByKey(XI::MakeResourceID(type, id));
 					if (!res || !res->Inner()) { ectx.error_code = 6; ectx.error_subcode = 2; return 0; }
 					SafePointer<_resource_stream> stream = new _resource_stream(res->Inner());
 					return WrapToXStream(stream);

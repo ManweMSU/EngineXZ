@@ -1877,7 +1877,7 @@ namespace Engine
 								} catch (...) { Abort(CompilerStatus::ResourceFileNotFound, file_expr); }
 								if (type.Length() > 4) Abort(CompilerStatus::InvalidResourceType, type_expr);
 								for (int i = 0; i < type.Length(); i++) if (type[i] < 32 || type[i] > 127) Abort(CompilerStatus::InvalidResourceType, type_expr);
-								if (!ctx.QueryResources().Append(type + L":" + string(id), data)) Abort(CompilerStatus::SymbolRedefinition, type_expr);
+								if (!ctx.QueryResources().Append(XI::MakeResourceID(type, id), data)) Abort(CompilerStatus::SymbolRedefinition, type_expr);
 							} else if (current_token.contents == Lexic::ResourceIcon) {
 								ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 								auto id_expr = current_token;

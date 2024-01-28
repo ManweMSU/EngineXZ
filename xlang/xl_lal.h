@@ -138,7 +138,7 @@ namespace Engine
 			SafePointer<LPrototypeHandler> _prot_hdlr;
 			Array<string> _import_list;
 			SafePointer<DataBlock> _data;
-			Volumes::ObjectDictionary<string, DataBlock> _rsrc;
+			Volumes::ObjectDictionary<uint64, DataBlock> _rsrc;
 		public:
 			LContext(const string & module);
 			virtual ~LContext(void) override;
@@ -215,7 +215,7 @@ namespace Engine
 			void AttachLiteral(LObject * literal, LObject * attach_under, const string & name);
 			int QueryLiteralValue(LObject * literal);
 			string QueryLiteralString(LObject * literal);
-			Volumes::ObjectDictionary<string, DataBlock> & QueryResources(void);
+			Volumes::ObjectDictionary<uint64, DataBlock> & QueryResources(void);
 			void ProduceModule(const string & asm_name, int v1, int v2, int v3, int v4, Streaming::Stream * dest);
 		};
 	}

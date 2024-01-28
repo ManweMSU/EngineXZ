@@ -11,9 +11,9 @@ namespace Engine
 			uint32 index;
 		ENGINE_END_PACKED_STRUCTURE
 		
-		void LoadIconDirectory(const Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id, const XI_Icon ** ppdir, int * pcount)
+		void LoadIconDirectory(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, int id, const XI_Icon ** ppdir, int * pcount)
 		{
-			auto icon_data = rsrc.GetElementByKey(L"ICD:" + string(id));
+			auto icon_data = rsrc.GetElementByKey(MakeResourceID(L"ICD", id));
 			if (!icon_data || !*icon_data) {
 				*ppdir = 0;
 				*pcount = 0;
@@ -22,9 +22,9 @@ namespace Engine
 			*ppdir = reinterpret_cast<const XI_Icon *>((*icon_data)->GetBuffer());
 			*pcount = (*icon_data)->Length() / sizeof(XI_Icon);
 		}
-		Codec::Frame * LoadIcon(const Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id)
+		Codec::Frame * LoadIcon(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, int id)
 		{
-			auto icon_data = rsrc.GetElementByKey(L"ICO:" + string(id));
+			auto icon_data = rsrc.GetElementByKey(MakeResourceID(L"ICO", id));
 			if (!icon_data || !*icon_data) return 0;
 			Streaming::MemoryStream stream((*icon_data)->GetBuffer(), (*icon_data)->Length());
 			return Codec::DecodeFrame(&stream);
@@ -71,7 +71,7 @@ namespace Engine
 			return result;
 		}
 
-		void AddModuleMetadata(Volumes::ObjectDictionary<string, DataBlock> & rsrc, const Volumes::Dictionary<string, string> & meta)
+		void AddModuleMetadata(Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, const Volumes::Dictionary<string, string> & meta)
 		{
 			SafePointer<Storage::Registry> registry = Storage::CreateRegistry();
 			SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(0x1000);
@@ -82,16 +82,16 @@ namespace Engine
 			registry->Save(stream);
 			stream->Seek(0, Streaming::Begin);
 			SafePointer<DataBlock> data = stream->ReadAll();
-			rsrc.Update(L"REG:1", data);
+			rsrc.Update(MakeResourceID(L"REG", 1), data);
 		}
-		void AddModuleIcon(Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id, Codec::Image * image)
+		void AddModuleIcon(Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, int id, Codec::Image * image)
 		{
 			SafePointer<DataBlock> icon_dir_data = new DataBlock(1);
 			icon_dir_data->SetLength(image->Frames.Length() * sizeof(XI_Icon));
 			auto icon_dir = reinterpret_cast<XI_Icon *>(icon_dir_data->GetBuffer());
 			int index = 1;
 			for (int i = 0; i < image->Frames.Length(); i++) {
-				while (rsrc.ElementExists(L"ICO:" + string(index))) index++;
+				while (rsrc.ElementExists(MakeResourceID(L"ICO", index))) index++;
 				auto & f = image->Frames[i];
 				icon_dir[i].width = f.GetWidth();
 				icon_dir[i].height = f.GetHeight();
@@ -101,21 +101,21 @@ namespace Engine
 				Codec::EncodeFrame(stream, &f, Codec::ImageFormatEngine);
 				stream->Seek(0, Streaming::Begin);
 				SafePointer<DataBlock> data = stream->ReadAll();
-				rsrc.Update(L"ICO:" + string(index), data);
+				rsrc.Update(MakeResourceID(L"ICO", index), data);
 				index++;
 			}
-			rsrc.Update(L"ICD:" + string(id), icon_dir_data);
+			rsrc.Update(MakeResourceID(L"ICD", id), icon_dir_data);
 		}
-		void AddModuleLocalization(Volumes::ObjectDictionary<string, DataBlock> & rsrc, const string & language, const Volumes::Dictionary<string, string> & localization)
+		void AddModuleLocalization(Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, const string & language, const Volumes::Dictionary<string, string> & localization)
 		{
-			auto name = L"LOC:" + string(LanguageToIndex(language));
+			auto name = MakeResourceID(L"LOC", LanguageToIndex(language));
 			SafePointer<DataBlock> data = EncodeDictionary(localization);
 			rsrc.Append(name, data);
 		}
-		Volumes::Dictionary<string, string> * LoadModuleMetadata(const Volumes::ObjectDictionary<string, DataBlock> & rsrc)
+		Volumes::Dictionary<string, string> * LoadModuleMetadata(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc)
 		{
 			SafePointer< Volumes::Dictionary<string, string> > result = new Volumes::Dictionary<string, string>;
-			auto data = rsrc.GetElementByKey(L"REG:1");
+			auto data = rsrc.GetElementByKey(MakeResourceID(L"REG", 1));
 			if (data && *data) {
 				Streaming::MemoryStream stream((*data)->GetBuffer(), (*data)->Length());
 				SafePointer<Storage::Registry> reg = Storage::LoadRegistry(&stream);
@@ -124,7 +124,7 @@ namespace Engine
 			result->Retain();
 			return result;
 		}
-		Codec::Image * LoadModuleIcon(const Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id)
+		Codec::Image * LoadModuleIcon(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, int id)
 		{
 			SafePointer<Codec::Image> result = new Codec::Image;
 			const XI_Icon * dir;
@@ -137,7 +137,7 @@ namespace Engine
 			result->Retain();
 			return result;
 		}
-		Codec::Frame * LoadModuleIcon(const Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id, Point size)
+		Codec::Frame * LoadModuleIcon(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, int id, Point size)
 		{
 			const XI_Icon * dir;
 			int count;
@@ -151,7 +151,7 @@ namespace Engine
 			}
 			return LoadIcon(rsrc, dir[best_index].index);
 		}
-		Codec::Frame * LoadModuleIcon(const Volumes::ObjectDictionary<string, DataBlock> & rsrc, int id, double dpi)
+		Codec::Frame * LoadModuleIcon(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, int id, double dpi)
 		{
 			const XI_Icon * dir;
 			int count;
@@ -165,10 +165,10 @@ namespace Engine
 			}
 			return LoadIcon(rsrc, dir[best_index].index);
 		}
-		Volumes::Dictionary<string, string> * LoadModuleLocalization(Volumes::ObjectDictionary<string, DataBlock> & rsrc, const string & language)
+		Volumes::Dictionary<string, string> * LoadModuleLocalization(Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, const string & language)
 		{
 			if (!language.Length()) return 0;
-			auto name = L"LOC:" + string(LanguageToIndex(language));
+			auto name = MakeResourceID(L"LOC", LanguageToIndex(language));
 			auto data = rsrc.GetObjectByKey(name);
 			if (!data) return 0;
 			return DecodeDictionary(data);
