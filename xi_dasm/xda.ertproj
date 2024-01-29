@@ -1,0 +1,28 @@
+﻿UseVersionDefines = true
+Attachments {
+	AAAAAA {
+		From = "xda.ini"
+		To = "xda.ini"
+	}
+}
+CompileList {
+	AAAAAA = "../xasm/xa_dasm.cxx"
+	AAAAAB = "../xasm/xa_t_armv8.cxx"
+	AAAAAC = "../xasm/xa_t_i386.cxx"
+	AAAAAD = "../xasm/xa_t_x64.cxx"
+	AAAAAE = "../xasm/xa_trans.cxx"
+	AAAAAF = "../xasm/xa_type_helper.cxx"
+	AAAAAG = "../xasm/xa_types.cxx"
+	AAAAAH = "../ximg/xi_function.cxx"
+	AAAAAI = "../ximg/xi_module.cxx"
+	AAAAAJ = "xda.cxx"
+}
+VersionInformation {
+	ApplicationIdentifier = "XDA"
+	ApplicationName = "Engine XA Deassimilator"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2024"
+	InternalName = "xda"
+	Version = "1.0.0.1"
+}

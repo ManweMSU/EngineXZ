@@ -3,6 +3,7 @@ ertbuild xv_com/xv.ertproj -Nar x64
 ertbuild xv_sl/xvsl.ertproj -Nar x64
 ertbuild xv_mm/xvm.ertproj -Nar x64
 ertbuild xi_tool/xi.ertproj -Nar x64
+ertbuild xi_dasm/xda.ertproj -Nar x64
 mkdir xv_release/_build
 rm -r xv_release/_build/macosx_x64
 mkdir xv_release/_build/macosx_x64
@@ -11,12 +12,15 @@ mkdir xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv
 mkdir xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/vscx
 mkdir xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc
 mkdir xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc
+mkdir xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc
 cp xv_com/xv.ini xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.ini
 cp xv_com/xe.ini xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xe.ini
 cp xi_tool/xi.ini xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.ini
+cp xi_dasm/xda.ini xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.ini
 cp xv_com/_build/macosx_x64_release/xv xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv
 cp xv_sl/_build/macosx_x64_release/xvsl xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvsl
 cp xi_tool/_build/macosx_x64_release/xi xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi
+cp xi_dasm/_build/macosx_x64_release/xda xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda
 cp xv_release/engine-xv-vscx-1.0.0.vsix xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/vscx/xv-vscx.vsix
 cp xv_lib/manualis.xvm xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
 cp xv_lib/canonicalis.xvm xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
@@ -37,3 +41,5 @@ estrtab xv_com/locale/ru.txt :binary xv_release/_build/macosx_x64/XV\ Monstrans\
 estrtab xv_com/locale/en.txt :binary xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/en.ecst
 estrtab xi_tool/locale/ru.txt :binary xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/ru.ecst
 estrtab xi_tool/locale/en.txt :binary xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/en.ecst
+estrtab xi_dasm/locale/ru.txt :binary xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc/ru.ecst
+estrtab xi_dasm/locale/en.txt :binary xv_release/_build/macosx_x64/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc/en.ecst

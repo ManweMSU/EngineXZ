@@ -81,17 +81,19 @@ namespace Engine
 					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(func.code->GetBuffer(), func.code->Length());
 					loader->HandleAbstractFunction(symbol, func, stream);
 				} else if (ftyp == Module::Function::FunctionXA_Platform) {
-					uint32 abi = EncodeABI(loader->GetArchitecture(), loader->GetCallingConvention());
-					int pos = 0;
-					while (pos + 8 <= func.code->Length()) {
-						uint32 abi_cmp = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos);
-						uint32 length = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos + 4);
-						if (abi_cmp == abi) {
-							SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(func.code->GetBuffer() + pos + 8, length);
-							loader->HandlePlatformFunction(symbol, func, stream);
-							return;
-						} else pos += length + 8;
-					}
+					try {
+						uint32 abi = EncodeABI(loader->GetArchitecture(), loader->GetCallingConvention());
+						int pos = 0;
+						while (pos + 8 <= func.code->Length()) {
+							uint32 abi_cmp = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos);
+							uint32 length = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos + 4);
+							if (abi_cmp == abi) {
+								SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(func.code->GetBuffer() + pos + 8, length);
+								loader->HandlePlatformFunction(symbol, func, stream);
+								return;
+							} else pos += length + 8;
+						}
+					} catch (...) {}
 					loader->HandleLoadError(symbol, func, LoadFunctionError::NoTargetPlatform);
 				} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
 			} else if (fcls == Module::Function::FunctionClassImport) {
@@ -109,6 +111,34 @@ namespace Engine
 					loader->HandleFarImport(symbol, func, name, lib);
 				} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
 			} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
+		}
+		Array<uint32> * LoadFunctionABI(const Module::Function & func)
+		{
+			SafePointer< Array<uint32> > result = new Array<uint32>(0x10);
+			auto fcls = func.code_flags & Module::Function::FunctionClassMask;
+			auto ftyp = func.code_flags & Module::Function::FunctionTypeMask;
+			if (func.code && fcls == Module::Function::FunctionClassXA && ftyp == Module::Function::FunctionXA_Platform) {
+				int pos = 0;
+				while (pos + 8 <= func.code->Length()) {
+					uint32 abi = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos);
+					uint32 length = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos + 4);
+					result->Append(abi);
+					pos += length + 8;
+				}
+			}
+			result->Retain();
+			return result;
+		}
+		void ReadFunctionABI(uint32 word, Platform & arch, XA::CallingConvention & cc)
+		{
+			if ((word & 0xFFFF) == 1) arch = Platform::X86;
+			else if ((word & 0xFFFF) == 2) arch = Platform::X64;
+			else if ((word & 0xFFFF) == 3) arch = Platform::ARM;
+			else if ((word & 0xFFFF) == 4) arch = Platform::ARM64;
+			else arch = Platform::Unknown;
+			if ((word & 0xFFFF0000) == 0x10000) cc = XA::CallingConvention::Windows;
+			else if ((word & 0xFFFF0000) == 0x20000) cc = XA::CallingConvention::Unix;
+			else cc = XA::CallingConvention::Unknown;
 		}
 	}
 }

@@ -17,6 +17,7 @@ BETA-4:
  + Compiler idle mode
  + Sequential context capture error
  + Added "importa" advices, automatic imports
+ + Disassembler added
  - XE Reflection
  - Graphics API
  + Windows and Clipboard API

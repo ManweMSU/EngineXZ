@@ -27,5 +27,8 @@ namespace Engine
 		void MakeFunction(Module::Function & dest, const string & import_name, const string & dl_name);
 
 		void LoadFunction(const string & symbol, const Module::Function & func, IFunctionLoader * loader);
+
+		Array<uint32> * LoadFunctionABI(const Module::Function & func);
+		void ReadFunctionABI(uint32 word, Platform & arch, XA::CallingConvention & cc);
 	}
 }
