@@ -8,6 +8,7 @@
 #include "xl_prop.h"
 #include "xl_synth.h"
 #include "../ximg/xi_resources.h"
+#include "../ximg/xi_function.h"
 
 namespace Engine
 {
@@ -318,6 +319,26 @@ namespace Engine
 				return create;
 			}
 		};
+		class FunctionLoader : XI::IFunctionLoader
+		{
+			XFunctionOverload * _dest;
+			FunctionLoader(XFunctionOverload * dest) : _dest(dest) {}
+			virtual Platform GetArchitecture(void) noexcept override { return Platform::Unknown; }
+			virtual XA::CallingConvention GetCallingConvention(void) noexcept override { return XA::CallingConvention::Unknown; }
+			virtual void HandleAbstractFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override
+			{
+				try {
+					auto & impl = _dest->GetImplementationDesc();
+					impl._xa.Load(fout);
+				} catch (...) {}
+			}
+			virtual void HandlePlatformFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override {}
+			virtual void HandleNearImport(const string & symbol, const XI::Module::Function & fin, const string & func_name) noexcept override {}
+			virtual void HandleFarImport(const string & symbol, const XI::Module::Function & fin, const string & func_name, const string & lib_name) noexcept override {}
+			virtual void HandleLoadError(const string & symbol, const XI::Module::Function & fin, XI::LoadFunctionError error) noexcept override {}
+		public:
+			static void Load(XFunctionOverload * dest, XI::Module::Function & src) { FunctionLoader ldr(dest); XI::LoadFunction(L"", src, &ldr); }
+		};
 
 		string GetPath(const string & symbol)
 		{
@@ -415,7 +436,9 @@ namespace Engine
 				}
 				uint flags = 0;
 				if (c.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
-				fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false);
+				if (c.value.code_flags & XI::Module::Function::FunctionInline) flags |= FunctionInline;
+				auto fver = fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false);
+				FunctionLoader::Load(fver, c.value);
 			} catch (...) {}
 			for (auto & c : module.variables) try {
 				auto obj = ProvidePath(*this, c.key);
@@ -472,7 +495,9 @@ namespace Engine
 					if (m.value.code_flags & XI::Module::Function::FunctionInstance) flags |= FunctionMethod;
 					if (m.value.code_flags & XI::Module::Function::FunctionThisCall) flags |= FunctionThisCall;
 					if (m.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
-					fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false, m.value.vft_index);
+					if (m.value.code_flags & XI::Module::Function::FunctionInline) flags |= FunctionInline;
+					auto fver = fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false, m.value.vft_index);
+					FunctionLoader::Load(fver, m.value);
 				}
 				for (auto & p : c.value->properties) {
 					SafePointer<XType> type = CreateType(p.value.type_canonical_name, *this);

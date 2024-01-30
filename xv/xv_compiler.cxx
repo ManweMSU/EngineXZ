@@ -1089,9 +1089,17 @@ namespace Engine
 						flags |= XL::FunctionOverride;
 					}
 					ReadNextToken();
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						AssignAutocomplete(Lexic::KeywordEntry, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
+					}
 				}
 				for (auto & attr : attributes) {
 					if (attr.key == Lexic::AttributeNoTC) flags &= ~XL::FunctionThisCall;
+					else if (attr.key == Lexic::AttributeInline) flags |= XL::FunctionInline;
 				}
 				XL::LObject * func;
 				try {
@@ -1134,6 +1142,8 @@ namespace Engine
 							org = 3;
 							import_lib = attr.value;
 						} else if (attr.key == Lexic::AttributeNoTC) {
+							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+						} else if (attr.key == Lexic::AttributeInline) {
 							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 						} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 					} else func->AddAttribute(attr.key, attr.value);
@@ -1495,9 +1505,16 @@ namespace Engine
 								flags |= XL::FunctionOverride;
 							}
 							ReadNextToken();
+							if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+								AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
+								AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
+								AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
+								AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
+							}
 						}
 						for (auto & attr : attributes) {
 							if (attr.key == Lexic::AttributeNoTC) flags &= ~XL::FunctionThisCall;
+							else if (attr.key == Lexic::AttributeInline) flags |= XL::FunctionInline;
 						}
 						XL::LObject * func;
 						try {
@@ -1520,6 +1537,8 @@ namespace Engine
 									org = 3;
 									import_lib = attr.value;
 								} else if (attr.key == Lexic::AttributeNoTC) {
+									if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+								} else if (attr.key == Lexic::AttributeInline) {
 									if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 								} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 							} else func->AddAttribute(attr.key, attr.value);

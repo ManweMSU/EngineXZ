@@ -17,6 +17,7 @@ namespace Engine
 			FunctionThisCall	= 0x040,
 			FunctionPureCall	= 0x080,
 			FunctionOverride	= 0x100,
+			FunctionInline		= 0x200,
 		};
 		enum CreateMethodsFlags {
 			CreateMethodConstructorInit	= 0x001,

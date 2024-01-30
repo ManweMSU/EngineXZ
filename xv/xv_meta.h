@@ -75,6 +75,7 @@ namespace Engine
 			constexpr const widechar * AttributeNoTC	= L"[thiscall_nullum]";
 			constexpr const widechar * AttributeFinal	= L"[finis]";
 			constexpr const widechar * AttributeAsm		= L"[xa]";
+			constexpr const widechar * AttributeInline	= L"[inline]";
 			constexpr const widechar * AttributeImport	= L"[importa]";
 			constexpr const widechar * AttributeImpLib	= L"[importa_de]";
 			constexpr const widechar * AttributeOffset	= L"[positus]";

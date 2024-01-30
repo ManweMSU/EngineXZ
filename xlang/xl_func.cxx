@@ -21,8 +21,9 @@ namespace Engine
 				XA::ExpressionTree _tree_node;
 				XA::ObjectSize _instance_rebase;
 				string _self_ref, _dtor_ref;
-				bool _throws;
+				bool _throws, _allow_inline;
 				SafePointer<XMethodOverload> _self;
+				SafePointer<XFunctionOverload> _self_base;
 				SafePointer<XType> _retval;
 				SafePointer<LObject> _instance, _vcptr;
 				ObjectArray<LObject> _args;
@@ -52,6 +53,7 @@ namespace Engine
 					}
 					for (auto & a : _args) _tree_node.inputs << a.Evaluate(func, error_ctx);
 					if (_throws) _tree_node.inputs << MakeAddressOf(*error_ctx, XA::TH::MakeSize(0, 2));
+					if (_allow_inline && TryForCanonicalInline(func, _tree_node, _self_base)) return _tree_node;
 					if (!_vcptr) {
 						_tree_node.self = MakeSymbolReferenceL(func, _self_ref);
 						_tree_node.self.ref_flags = XA::ReferenceFlagInvoke;
@@ -129,10 +131,12 @@ namespace Engine
 					SafePointer<_invoke_provider> provider = new _invoke_provider;
 					bool use_thiscall = (_parent->GetFlags() & XI::Module::Function::FunctionThisCall);
 					provider->_throws = (_parent->GetFlags() & XI::Module::Function::FunctionThrows);
+					provider->_allow_inline = (_parent->GetFlags() & XI::Module::Function::FunctionInline);
 					provider->_instance = _instance;
 					provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
 					provider->_self_ref = _parent->GetFullName();
 					provider->_self.SetRetain(this);
+					provider->_self_base.SetRetain(_parent);
 					if (vfd.vf_index >= 0 && vfd.vft_index >= 0) {
 						if (_is_invalid(vfd.base_offset) || _is_invalid(vfd.vftp_offset) || _is_invalid(vfd.vfp_offset)) {
 							throw InvalidStateException();
@@ -140,6 +144,7 @@ namespace Engine
 						SafePointer<_virtual_call_provider> vc = new _virtual_call_provider(GetContext(),
 							_parent->GetInstanceType()->GetArgumentSpecification(), _instance, vfd.vftp_offset, vfd.vfp_offset);
 						provider->_vcptr = CreateComputable(GetContext(), vc);
+						provider->_allow_inline = false;
 						provider->_tree_node.input_specs << XA::TH::MakeSpec(0, 1);
 						provider->_instance_rebase = vfd.base_offset;
 					} else provider->_instance_rebase = XA::TH::MakeSize(0, 0);
@@ -190,10 +195,12 @@ namespace Engine
 					if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 					bool use_thiscall = (_parent->GetFlags() & XI::Module::Function::FunctionThisCall);
 					provider->_throws = (_parent->GetFlags() & XI::Module::Function::FunctionThrows);
+					provider->_allow_inline = (_parent->GetFlags() & XI::Module::Function::FunctionInline);
 					provider->_instance = _instance;
 					provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
 					provider->_self_ref = _parent->GetFullName();
 					provider->_self.SetRetain(this);
+					provider->_self_base.SetRetain(_parent);
 					provider->_instance_rebase = XA::TH::MakeSize(0, 0);
 					SafePointer<LObject> dtor = provider->_retval->GetDestructor();
 					if (dtor->GetClass() != Class::Null) provider->_dtor_ref = dtor->GetFullName();
@@ -227,8 +234,8 @@ namespace Engine
 			public:
 				XA::ExpressionTree _tree_node;
 				string _self_ref, _dtor_ref;
-				bool _throws;
-				SafePointer<LObject> _self;
+				bool _throws, _allow_inline;
+				SafePointer<XFunctionOverload> _self;
 				SafePointer<XType> _retval;
 				ObjectArray<LObject> _args;
 			public:
@@ -242,6 +249,7 @@ namespace Engine
 					_tree_node.inputs.Clear();
 					for (auto & a : _args) _tree_node.inputs << a.Evaluate(func, error_ctx);
 					if (_throws) _tree_node.inputs << MakeAddressOf(*error_ctx, XA::TH::MakeSize(0, 2));
+					if (_allow_inline && TryForCanonicalInline(func, _tree_node, _self)) return _tree_node;
 					_tree_node.self = MakeSymbolReferenceL(func, _self_ref);
 					_tree_node.self.ref_flags = XA::ReferenceFlagInvoke;
 					_tree_node.retval_final.final = _dtor_ref.Length() ? MakeSymbolReferenceL(func, _dtor_ref) : XA::TH::MakeRef();
@@ -302,6 +310,7 @@ namespace Engine
 				}
 				SafePointer<_invoke_provider> provider = new _invoke_provider;
 				provider->_throws = (_flags & XI::Module::Function::FunctionThrows);
+				provider->_allow_inline = (_flags & XI::Module::Function::FunctionInline);
 				provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
 				provider->_self_ref = _path;
 				provider->_self.SetRetain(this);
@@ -522,6 +531,7 @@ namespace Engine
 					overload = new FunctionOverload(_ctx, local_name, local_path, fcn, local, _instance_type);
 					overload->GetFlags() |= XI::Module::Function::FunctionInstance;
 					if (flags & FunctionThrows) overload->GetFlags() |= XI::Module::Function::FunctionThrows;
+					if (flags & FunctionInline) overload->GetFlags() |= XI::Module::Function::FunctionInline;
 					if (flags & FunctionThisCall) overload->GetFlags() |= XI::Module::Function::FunctionThisCall;
 					uint base_flags;
 					auto probe_vfd = _instance_type->FindVirtualFunctionInfo(_name, fcn, base_flags);
@@ -579,6 +589,7 @@ namespace Engine
 					if (flags & FunctionFinalizer) overload->GetFlags() |= XI::Module::Function::FunctionShutdown;
 					if (flags & FunctionMain) overload->GetFlags() |= XI::Module::Function::FunctionEntryPoint;
 					if (flags & FunctionThrows) overload->GetFlags() |= XI::Module::Function::FunctionThrows;
+					if (flags & FunctionInline) overload->GetFlags() |= XI::Module::Function::FunctionInline;
 					auto & func = overload->GetImplementationDesc()._xa;
 					func.retval = static_cast<XType *>(retval)->GetArgumentSpecification();
 					for (int i = 0; i < argc; i++) func.inputs << static_cast<XType *>(argv[i])->GetArgumentSpecification();

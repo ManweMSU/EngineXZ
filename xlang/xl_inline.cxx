@@ -314,5 +314,65 @@ namespace Engine
 				} else return false;
 			} catch (...) { return false; }
 		}
+		bool InlineRegisterCorrect(XA::Function & func, XA::ObjectReference & ref, const XA::Function & org)
+		{
+			if (ref.ref_class == XA::ReferenceNull) return true;
+			else if (ref.ref_class == XA::ReferenceInit) return true;
+			else if (ref.ref_class == XA::ReferenceSplitter) return true;
+			else if (ref.ref_class == XA::ReferenceLiteral) return true;
+			else if (ref.ref_class == XA::ReferenceCode) return false;
+			else if (ref.ref_class == XA::ReferenceArgument) return false;
+			else if (ref.ref_class == XA::ReferenceRetVal) return false;
+			else if (ref.ref_class == XA::ReferenceLocal) return false;
+			else if (ref.ref_class == XA::ReferenceExternal) {
+				if (ref.index < 0 || ref.index >= org.extrefs.Length()) return false;
+				int reindex = -1;
+				for (int i = 0; i < func.extrefs.Length(); i++) if (func.extrefs[i] == org.extrefs[ref.index]) { reindex = i; break; }
+				if (reindex < 0) { reindex = func.extrefs.Length(); func.extrefs << org.extrefs[ref.index]; }
+				ref.index = reindex;
+				return true;
+			} else if (ref.ref_class == XA::ReferenceData) {
+				auto dconst = MakeConstant(func, org.data.GetBuffer(), org.data.Length(), 8);
+				ref.index += dconst.self.index;
+				return true;
+			} else if (ref.ref_class == XA::ReferenceTransform) {
+				if (ref.index == XA::TransformBreakIf) return false;
+				else return true;
+			} else return false;
+		}
+		bool InlineNodeCorrect(XA::Function & func, XA::ExpressionTree & corr, XA::ExpressionTree & src, const XA::Function & org)
+		{
+			if (corr.self.ref_class == XA::ReferenceArgument) {
+				if (corr.self.ref_flags & XA::ReferenceFlagInvoke) return false;
+				if (corr.self.index < 0 || corr.self.index >= src.inputs.Length()) return false;
+				auto index = corr.self.index;
+				corr = src.inputs[index];
+			} else {
+				if (!InlineRegisterCorrect(func, corr.self, org)) return false;
+				for (auto & i : corr.inputs) if (!InlineNodeCorrect(func, i, src, org)) return false;
+				if (!InlineRegisterCorrect(func, corr.retval_final.final, org)) return false;
+				for (auto & i : corr.retval_final.final_args) if (!InlineRegisterCorrect(func, i, org)) return false;
+			}
+			return true;
+		}
+		bool TryForCanonicalInline(XA::Function & func, XA::ExpressionTree & node, LObject * fver)
+		{
+			if (fver->GetClass() != Class::FunctionOverload) return false;
+			auto fx = static_cast<XFunctionOverload *>(fver);
+			if (fx->GetFlags() & XI::Module::Function::FunctionThrows) return false;
+			auto & src_xa = fx->GetImplementationDesc()._xa;
+			if (src_xa.instset.Length() == 0) return false;
+			if (src_xa.instset[0].opcode != XA::OpcodeOpenScope && src_xa.instset[0].opcode != XA::OpcodeControlReturn) return false;
+			if (src_xa.instset[0].opcode == XA::OpcodeOpenScope && src_xa.instset.Length() == 1) return false;
+			if (src_xa.instset[0].opcode == XA::OpcodeOpenScope && src_xa.instset[1].opcode != XA::OpcodeControlReturn) return false;
+			auto & src_node = src_xa.instset[0].opcode == XA::OpcodeOpenScope ? src_xa.instset[1].tree : src_xa.instset[0].tree;
+			if (src_node.self.qword != XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke).qword) return false;
+			if (src_node.inputs.Length() != 2) return false;
+			if (src_node.inputs[0].self.qword != XA::TH::MakeRef(XA::ReferenceRetVal).qword) return false;
+			auto substitute = src_node.inputs[1];
+			if (!InlineNodeCorrect(func, substitute, node, src_xa)) return false;
+			node = substitute;
+			return true;
+		}
 	}
 }
