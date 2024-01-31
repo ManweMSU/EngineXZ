@@ -10,6 +10,8 @@ using namespace Engine;
 using namespace Engine::UI;
 using namespace Engine::Windows;
 
+constexpr int num_elements_per_page = 100;
+
 class EngineTextFormatter : public XV::IManualTextFormatter
 {
 public:
@@ -67,6 +69,8 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 	string def_lang, path;
 	Array<string> history;
 	int current_page;
+	string page_query;
+	int page_subindex;
 	
 	string DecorateTypeLink(const XI::Module::TypeReference & ref)
 	{
@@ -212,17 +216,68 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 		return XV::FormatRichText(text, &fmt);
 	}
 	bool NotEmpty(const XV::ManualSection * sect) { return GetSectionContents(sect, L"").Length() || GetSectionContents(sect, Assembly::CurrentLocale).Length() || sect->GetSubjectName().Length(); }
-	void LoadPage(void)
+	void MakeSubindexSelector(DynamicString & rt, int volume)
+	{
+		if (volume > num_elements_per_page) {
+			int pages = (volume + num_elements_per_page - 1) / num_elements_per_page;
+			for (int i = 0; i < pages; i++) {
+				if (i == page_subindex) rt << L"\33b- " << string(i + 1) << L" -\33e ";
+				else rt << L"\33l.move:" << string(i) << L"\33- " << string(i + 1) << L" -\33e "; 
+			}
+			rt << L"\n\n";
+		}
+	}
+	void LoadPage(bool reset = true)
 	{
 		auto path_ctl = FindControl(window, 103)->As<Controls::Edit>();
 		auto edit = FindControl(window, 201)->As<Controls::RichEdit>();
 		path_ctl->ReadOnly = true;
+		if (reset) {
+			page_query = L"";
+			page_subindex = 0;
+		}
 		if (path == L".quaere") {
 			path_ctl->ReadOnly = false;
-			path_ctl->SetText(L"");
-			path_ctl->SetFocus();
-			window->SetText(*interface.Strings[L"SearchTitle"]);
-			edit->SetAttributedText(L"");
+			if (page_query.Length()) {
+				auto words = page_query.Split(L' ');
+				Volumes::Dictionary<string, XV::ManualPage *> results;
+				for (auto & page : volume->GetPages()) {
+					auto title = MakeCompleteTitle(page.value, true);
+					bool ok = false;
+					for (auto & w : words) if (w.Length()) {
+						if (title.FindFirst(w) >= 0) ok = true;
+						else { ok = false; break; }
+					}
+					if (ok) results.Append(page.key, page.value);
+				}
+				DynamicString rt;
+				rt << L"\33n*\33e\33n" << Graphics::SystemMonoSansSerifFont << L"\33e\33f00\33c********";
+				if (!results.IsEmpty()) {
+					int volume = results.Count();
+					int num = 0;
+					rt << L"\33h0014\33a1";
+					MakeSubindexSelector(rt, volume);
+					for (auto & o : results) {
+						if (num >= (page_subindex + 1) * num_elements_per_page) break;
+						else if (num >= page_subindex * num_elements_per_page) {
+							auto com = MakeCompleteTitle(o.value, true);
+							rt << L"\33l" << o.value->GetPath() << L"\33" << com << L"\33e";
+							auto summary = o.value->FindSection(XV::ManualSectionClass::Summary);
+							if (summary) rt << L"\n" << MakeSectionContents(summary);
+							rt << L"\n\n";
+						}
+						num++;
+					}
+					rt << L"\33e\33e";
+				}
+				rt << L"\33e\33e";
+				edit->SetAttributedText(rt);
+			} else {
+				path_ctl->SetText(L"");
+				path_ctl->SetFocus();
+				window->SetText(*interface.Strings[L"SearchTitle"]);
+				edit->SetAttributedText(L"");
+			}
 		} else if (path == L".categoriae" && volume) {
 			Volumes::Set<string> mdl;
 			Volumes::Dictionary<string, XV::ManualPage *> common;
@@ -263,15 +318,22 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 				rt << L"\33e\33e";
 			}
 			if (!all.IsEmpty()) {
+				int volume = all.Count();
+				int num = 0;
 				rt << L"\33h001E\33a1";
 				rt << *interface.Strings[L"IndexObjects"];
 				rt << L"\n\33e\33e";
 				rt << L"\33h0014\33a1";
+				MakeSubindexSelector(rt, volume);
 				for (auto & o : all) {
-					auto com = MakeCompleteTitle(o.value, true);
-					rt << L"\33l" << o.value->GetPath() << L"\33" << MakeBriefTitle(o.value, true) << L"\33e";
-					if (com != MakeBriefTitle(o.value, true)) rt << L" (" << com << L")";
-					rt << L"\n";
+					if (num >= (page_subindex + 1) * num_elements_per_page) break;
+					else if (num >= page_subindex * num_elements_per_page) {
+						auto com = MakeCompleteTitle(o.value, true);
+						rt << L"\33l" << o.value->GetPath() << L"\33" << MakeBriefTitle(o.value, true) << L"\33e";
+						if (com != MakeBriefTitle(o.value, true)) rt << L" (" << com << L")";
+						rt << L"\n";
+					}
+					num++;
 				}
 				rt << L"\33e\33e";
 			}
@@ -292,12 +354,19 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 			rt << title;
 			rt << L"\n\33e\33e";
 			if (!smbl.IsEmpty()) {
+				int volume = smbl.Count();
+				int num = 0;
 				rt << L"\33h0014\33a1";
+				MakeSubindexSelector(rt, volume);
 				for (auto & o : smbl) {
-					auto com = MakeCompleteTitle(o.value, true);
-					rt << L"\33l" << o.value->GetPath() << L"\33" << MakeBriefTitle(o.value, true) << L"\33e";
-					if (com != MakeBriefTitle(o.value, true)) rt << L" (" << com << L")";
-					rt << L"\n";
+					if (num >= (page_subindex + 1) * num_elements_per_page) break;
+					else if (num >= page_subindex * num_elements_per_page) {
+						auto com = MakeCompleteTitle(o.value, true);
+						rt << L"\33l" << o.value->GetPath() << L"\33" << MakeBriefTitle(o.value, true) << L"\33e";
+						if (com != MakeBriefTitle(o.value, true)) rt << L" (" << com << L")";
+						rt << L"\n";
+					}
+					num++;
 				}
 				rt << L"\33e\33e";
 			}
@@ -526,34 +595,9 @@ public:
 			}
 		} else if (ID == 103 && event == ControlEvent::ValueChange && path == L".quaere") {
 			auto path_ctl = FindControl(window, 103)->As<Controls::Edit>();
-			auto edit = FindControl(window, 201)->As<Controls::RichEdit>();
-			auto request = path_ctl->GetText();
-			auto words = request.Split(L' ');
-			Volumes::Dictionary<string, XV::ManualPage *> results;
-			for (auto & page : volume->GetPages()) {
-				auto title = MakeCompleteTitle(page.value, true);
-				bool ok = false;
-				for (auto & w : words) if (w.Length()) {
-					if (title.FindFirst(w) >= 0) ok = true;
-					else { ok = false; break; }
-				}
-				if (ok) results.Append(page.key, page.value);
-			}
-			DynamicString rt;
-			rt << L"\33n*\33e\33n" << Graphics::SystemMonoSansSerifFont << L"\33e\33f00\33c********";
-			if (!results.IsEmpty()) {
-				rt << L"\33h0014\33a1";
-				for (auto & o : results) {
-					auto com = MakeCompleteTitle(o.value, true);
-					rt << L"\33l" << o.value->GetPath() << L"\33" << com << L"\33e";
-					auto summary = o.value->FindSection(XV::ManualSectionClass::Summary);
-					if (summary) rt << L"\n" << MakeSectionContents(summary);
-					rt << L"\n\n";
-				}
-				rt << L"\33e\33e";
-			}
-			rt << L"\33e\33e";
-			edit->SetAttributedText(rt);
+			page_query = path_ctl->GetText();
+			page_subindex = 0;
+			LoadPage(false);
 		} else if (ID == 104) {
 			MoveToPage(L".primus");
 		} else if (ID == 105) {
@@ -567,7 +611,7 @@ public:
 		} else if (ID == 303) {
 			CreateEditor();
 		} else if (ID == 401) {
-			LoadPage();
+			LoadPage(false);
 		}
 	}
 	virtual void InitializeContextMenu(Windows::IMenu * menu, Controls::RichEdit * sender) override {}
@@ -575,6 +619,11 @@ public:
 	{
 		if (resource.Fragment(0, 8) == L".impera:") {
 			try { HandleControlEvent(window, resource.Fragment(8, -1).ToUInt32(), ControlEvent::AcceleratorCommand, 0); } catch (...) {}
+		} else if (resource.Fragment(0, 6) == L".move:") {
+			try {
+				page_subindex = resource.Fragment(6, -1).ToUInt32();
+				LoadPage(false);
+			} catch (...) {}
 		} else if (resource.Fragment(0, 9) == L".monstra:") {
 			auto path = IO::ExpandPath(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/" + resource.Fragment(9, -1));
 			Shell::ShowInBrowser(path, false);
