@@ -23,7 +23,7 @@ BETA-4:
  + '!' operator on types (autopointer creation)
  + '(,,)' operator
  + Waitable tasks rework
- - XVM search improvements
+ + XVM search improvements
  - XE Reflection
  - Graphics API
  + Windows and Clipboard API
