@@ -438,7 +438,7 @@ namespace Engine
 				if (c.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
 				if (c.value.code_flags & XI::Module::Function::FunctionInline) flags |= FunctionInline;
 				auto fver = fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false);
-				FunctionLoader::Load(fver, c.value);
+				if (!_idle_mode) FunctionLoader::Load(fver, c.value);
 			} catch (...) {}
 			for (auto & c : module.variables) try {
 				auto obj = ProvidePath(*this, c.key);
@@ -497,7 +497,7 @@ namespace Engine
 					if (m.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
 					if (m.value.code_flags & XI::Module::Function::FunctionInline) flags |= FunctionInline;
 					auto fver = fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false, m.value.vft_index);
-					FunctionLoader::Load(fver, m.value);
+					if (!_idle_mode) FunctionLoader::Load(fver, m.value);
 				}
 				for (auto & p : c.value->properties) {
 					SafePointer<XType> type = CreateType(p.value.type_canonical_name, *this);

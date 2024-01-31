@@ -798,12 +798,10 @@ namespace Engine
 				uint object_origin_class; // 0 - static, 1 - capture by copying, 2 - capture field by capturing instance
 			};
 			
-
 			XL::LContext & _ctx;
 			XL::LObject * _cls;
 			XL::LFunctionContext * _fctx;
 			Array<XL::LObject *> _vlist;
-			SafePointer<XL::LObject> _signal_create, _signal_type;
 			Volumes::Dictionary<string, _object_capture_info> _capture;
 			_object_capture_info _self_capture;
 			bool _self_capture_object;
@@ -937,29 +935,6 @@ namespace Engine
 				SafePointer<XL::LObject> raise = signal->GetMember(L"erige");
 				return raise->Invoke(0, 0);
 			}
-			void CreateSignalField(void)
-			{
-				SafePointer<XL::LObject> create_signal = _ctx.QueryObject(L"contextus.crea_signale");
-				SafePointer<XL::LObject> create_signal_inv = create_signal->Invoke(0, 0);
-				_signal_create = create_signal_inv;
-				_signal_type = _signal_create->GetType();
-				_ctx.CreateField(_cls, L"_@@signale", _signal_type, true);
-			}
-			void CreateSignalGetter(void)
-			{
-				auto fd = _ctx.CreateFunction(_cls, L"para_signale");
-				auto func = _ctx.CreateFunctionOverload(fd, _signal_type, 0, 0, XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionOverride);
-				XL::FunctionContextDesc desc;
-				desc.retval = _signal_type; desc.instance = _cls;
-				desc.argc = 0; desc.argvt = 0; desc.argvn = 0;
-				desc.flags = XL::FunctionMethod | XL::FunctionThisCall | XL::FunctionOverride;
-				desc.vft_init = 0; desc.vft_init_seq = 0; desc.init_callback = 0;
-				desc.create_init_sequence = desc.create_shutdown_sequence = false;
-				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(_ctx, func, desc);
-				SafePointer<XL::LObject> field = fctx->GetInstance()->GetMember(L"_@@signale");
-				fctx->EncodeReturn(field);
-				fctx->EndEncoding();
-			}
 			void CreateConstructor(ObjectArray<XL::LObject> & vft_init)
 			{
 				SafePointer<XL::LObject> type_void = _ctx.QueryObject(XL::NameVoid);
@@ -1004,12 +979,6 @@ namespace Engine
 						SafePointer<XL::LObject> expr = self_asgn->Invoke(1, self_src.InnerRef());
 						fctx->EncodeExpression(expr);
 					}
-				}
-				if (ClassImplements(_cls, L"contextus.labos_opperitus")) {
-					SafePointer<XL::LObject> field = fctx->GetInstance()->GetMember(L"_@@signale");
-					SafePointer<XL::LObject> field_asgn = field->GetMember(XL::OperatorAssign);
-					SafePointer<XL::LObject> expr = field_asgn->Invoke(1, _signal_create.InnerRef());
-					fctx->EncodeExpression(expr);
 				}
 				fctx->EndEncoding();
 			}
@@ -1060,11 +1029,6 @@ namespace Engine
 			auto & ctx = xcapt->GetContext();
 			auto cls = xcapt->GetClassObject();
 			ctx.CreateClassDefaultMethods(xcapt->GetClassObject(), XL::CreateMethodDestructor, vft_init);
-			bool signals = false;
-			if (ClassImplements(xcapt->GetClassObject(), L"contextus.labos_opperitus")) {
-				signals = true;
-				xcapt->CreateSignalField();
-			}
 			try {
 				string name = L"";
 				SafePointer<XL::LObject> void_type = ctx.QueryObject(XL::NameVoid);
@@ -1082,13 +1046,8 @@ namespace Engine
 				SafePointer<XL::LObject> delegate = fctx->GetInstance()->GetMember(L"_exeque");
 				SafePointer<XL::LObject> delegate_inv = delegate->Invoke(0, 0);
 				fctx->EncodeExpression(delegate_inv);
-				if (signals) {
-					SafePointer<XL::LObject> raise = xcapt->RaiseSignal(fctx);
-					fctx->EncodeExpression(raise);
-				}
 				fctx->EndEncoding();
 			} catch (...) { throw; }
-			if (signals) xcapt->CreateSignalGetter();
 			xcapt->CreateConstructor(vft_init);
 			*task = xcapt->CreateInstance();
 		}

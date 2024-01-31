@@ -2890,8 +2890,9 @@ spatium contextus {
 		functio nihil exeque(@objectum ctx) virtualis pura;
 	}
 	genus labos_opperitus hereditat labos {
-		structor () {}
-		functio adl[signale] para_signale() virtualis pura;
+		adl[signale] valor_publicus_signale_opperirendi;
+		structor () iacit { valor_publicus_signale_opperirendi = crea_signale(); si (!valor_publicus_signale_opperirendi) iace errores.memoria_nulla; }
+		functio nihil exeque(@objectum ctx) redefini {}
 	}
 	genus filum hereditat objectum {
 		structor () {}
@@ -2930,7 +2931,7 @@ spatium contextus {
 	[[importa] ctx_crfil] functio adl[filum] exeque(@labos lab);
 
 	functio nihil exeque_in_contextu(@cauda ctx, @labos lab) { ctx^.adde(lab); }
-	functio adl[signale] exeque_in_contextu_et_opperire(@cauda ctx, @labos_opperitus lab) { ctx^.adde(lab); responde lab^.para_signale(); }
+	functio adl[signale] exeque_in_contextu_et_opperire(@cauda ctx, @labos_opperitus lab) { ctx^.adde(lab); responde lab^.valor_publicus_signale_opperirendi; }
 }
 
 praeforma operator muta_contextum(C) { .contextus.exeque_in_contextu($C, .contextus.labos ## { $_ }) }

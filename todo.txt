@@ -18,6 +18,12 @@ BETA-4:
  + Sequential context capture error
  + Added "importa" advices, automatic imports
  + Disassembler added
+ + Added function inlining
+ - Tuples
+ - '!' operator on types (autopointer creation)
+ - '(,,)' operator
+ + Waitable tasks rework
+ - XVM search improvements
  - XE Reflection
  - Graphics API
  + Windows and Clipboard API

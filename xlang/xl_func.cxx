@@ -131,7 +131,7 @@ namespace Engine
 					SafePointer<_invoke_provider> provider = new _invoke_provider;
 					bool use_thiscall = (_parent->GetFlags() & XI::Module::Function::FunctionThisCall);
 					provider->_throws = (_parent->GetFlags() & XI::Module::Function::FunctionThrows);
-					provider->_allow_inline = (_parent->GetFlags() & XI::Module::Function::FunctionInline);
+					provider->_allow_inline = (_parent->GetFlags() & XI::Module::Function::FunctionInline) && !_parent->GetContext().IsIdle();
 					provider->_instance = _instance;
 					provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
 					provider->_self_ref = _parent->GetFullName();
@@ -195,7 +195,7 @@ namespace Engine
 					if (sgn->Length() != argc + 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 					bool use_thiscall = (_parent->GetFlags() & XI::Module::Function::FunctionThisCall);
 					provider->_throws = (_parent->GetFlags() & XI::Module::Function::FunctionThrows);
-					provider->_allow_inline = (_parent->GetFlags() & XI::Module::Function::FunctionInline);
+					provider->_allow_inline = (_parent->GetFlags() & XI::Module::Function::FunctionInline) && !_parent->GetContext().IsIdle();
 					provider->_instance = _instance;
 					provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
 					provider->_self_ref = _parent->GetFullName();
@@ -310,7 +310,7 @@ namespace Engine
 				}
 				SafePointer<_invoke_provider> provider = new _invoke_provider;
 				provider->_throws = (_flags & XI::Module::Function::FunctionThrows);
-				provider->_allow_inline = (_flags & XI::Module::Function::FunctionInline);
+				provider->_allow_inline = (_flags & XI::Module::Function::FunctionInline) && !_ctx.IsIdle();
 				provider->_retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), GetContext());
 				provider->_self_ref = _path;
 				provider->_self.SetRetain(this);
