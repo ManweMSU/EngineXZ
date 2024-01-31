@@ -399,6 +399,41 @@ namespace Engine
 					auto start = current_token;
 					ReadNextToken();
 					object = ProcessExpressionAssignation(ssl, ssc);
+					if (IsPunct(L",")) {
+						ObjectArray<XL::LObject> list(0x10);
+						list.Append(object);
+						while (IsPunct(L",")) {
+							ReadNextToken();
+							object = ProcessExpressionAssignation(ssl, ssc);
+							list.Append(object);
+						}
+						try {
+							if (list.Length() == 4) object = ctx.QueryObject(L"quadriplex");
+							else if (list.Length() == 3) object = ctx.QueryObject(L"triplex");
+							else if (list.Length() == 2) object = ctx.QueryObject(L"duplex");
+							else Abort(CompilerStatus::NoSuchOverload, start);
+							object = object->GetMember(XL::OperatorSubscript);
+							bool type_mode = true;
+							for (auto & obj : list) if (obj.GetClass() != XL::Class::Type) { type_mode = false; break; }
+							if (type_mode) {
+								Array<XL::LObject *> argv(0x10);
+								for (auto & obj : list) argv << &obj;
+								object = object->Invoke(argv.Length(), argv);
+							} else {
+								Array<XL::LObject *> argv(0x10);
+								ObjectArray<XL::LObject> type_list(0x10);
+								for (auto & obj : list) {
+									SafePointer<XL::LObject> type = obj.GetType();
+									type_list.Append(type);
+									argv.Append(type);
+								}
+								object = object->Invoke(argv.Length(), argv);
+								argv.Clear();
+								for (auto & obj : list) argv << &obj;
+								object = object->Invoke(argv.Length(), argv);
+							}
+						} catch (...) { Abort(CompilerStatus::NoSuchOverload, start); }
+					}
 					AssignTokenInfo(start, object, false, false);
 					AssignTokenInfo(current_token, object, false, false);
 					AssertPunct(L")"); ReadNextToken();
@@ -656,12 +691,24 @@ namespace Engine
 					auto op = current_token;
 					ReadNextToken();
 					auto definition = current_token;
-					SafePointer<XL::LObject> object = ProcessExpressionUnary(ssl, ssc), method;
-					try { method = object->GetMember(op.contents); }
-					catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-					AssignTokenInfo(op, method, false, false);
-					try { return method->Invoke(0, 0); }
-					catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+					SafePointer<XL::LObject> object = ProcessExpressionUnary(ssl, ssc);
+					if (object->GetClass() == XL::Class::Type) {
+						try {
+							SafePointer<XL::LObject> autoptr = ctx.QueryObject(L"adl");
+							SafePointer<XL::LObject> operator_instantiate = autoptr->GetMember(XL::OperatorSubscript);
+							object = operator_instantiate->Invoke(1, object.InnerRef());
+						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
+						AssignTokenInfo(op, object, false, false);
+						object->Retain();
+						return object;
+					} else {
+						SafePointer<XL::LObject> method;
+						try { method = object->GetMember(op.contents); }
+						catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
+						AssignTokenInfo(op, method, false, false);
+						try { return method->Invoke(0, 0); }
+						catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+					}
 				} else if (IsPunct(XL::OperatorNegative)) {
 					auto op = current_token;
 					ReadNextToken();

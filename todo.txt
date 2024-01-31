@@ -19,9 +19,9 @@ BETA-4:
  + Added "importa" advices, automatic imports
  + Disassembler added
  + Added function inlining
- - Tuples
- - '!' operator on types (autopointer creation)
- - '(,,)' operator
+ + Tuples
+ + '!' operator on types (autopointer creation)
+ + '(,,)' operator
  + Waitable tasks rework
  - XVM search improvements
  - XE Reflection

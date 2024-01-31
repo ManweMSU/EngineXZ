@@ -2721,6 +2721,24 @@ praeforma genus adl(O) { genus $_ {
 	classis functio logicum operator == (@$O a, ~adl[$O] b) { responde a == b._adl; }
 	classis functio logicum operator != (@$O a, ~adl[$O] b) { responde a != b._adl; }
 } }
+praeforma genus duplex(A, B) { structura $_ {
+	$A primus;
+	$B secundus;
+	structor (~$A a, ~$B b) iacit { funda primus(a); funda secundus(b); }
+} }
+praeforma genus triplex(A, B, C) { structura $_ {
+	$A primus;
+	$B secundus;
+	$C tertius;
+	structor (~$A a, ~$B b, ~$C c) iacit { funda primus(a); funda secundus(b); funda tertius(c); }
+} }
+praeforma genus quadriplex(A, B, C, D) { structura $_ {
+	$A primus;
+	$B secundus;
+	$C tertius;
+	$D quartus;
+	structor (~$A a, ~$B b, ~$C c, ~$D d) iacit { funda primus(a); funda secundus(b); funda tertius(c); funda quartus(d); }
+} }
 
 nomen_alternum dordo_linearum = dordo[linea];
 nomen_alternum dordo_datorum = dordo[nint8];
