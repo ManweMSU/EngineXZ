@@ -1,0 +1,60 @@
+﻿importa canonicalis;
+importa limae;
+importa consolatorium;
+
+var ~ consolatorium con = consolatorium.currens()^;
+
+structura informatio {
+	linea nomen;
+	linea func;
+	structor (~linea n, ~linea f) iacit { funda nomen(n); funda func(f); }
+}
+
+functio nihil dirime(~ordo informatio inf) iacit
+{
+	pro (var i : [0, inf.longitudo - 2]) pro (var j : [i + 1, inf.longitudo - 1]) si (inf[j].nomen < inf[i].nomen) inf.permuta(i, j);
+}
+functio nihil genera(~ordo informatio inf, ~linea praev, int primus, int long, ~scriptio.codificator cdx) iacit
+{
+	int med = primus + long / 2;
+	si (long > 1) {
+		cdx.scribe_lineam(praev + "if (string::Compare(routine_name, L\"" + inf[med].nomen + "\") < 0) {");
+		genera(inf, praev + "    ", primus, med - primus, cdx);
+		cdx.scribe_lineam(praev + "} else {");
+		genera(inf, praev + "    ", med, primus + long - med, cdx);
+		cdx.scribe_lineam(praev + "}");
+	} alioqui {
+		cdx.scribe_lineam(praev + "if (string::Compare(routine_name, L\"" + inf[med].nomen + "\") == 0) return reinterpret_cast<const void *>(&" + inf[med].func + ");");
+	}
+}
+
+functio nihil primus() introitus iacit
+{
+	var args = para_argumenta();
+	si (args^.longitudo < 3) iace errores.argumentum_falsum;
+	var in = scriptio.decodifica(semita(args^[1]).crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens));
+	var out = scriptio.codifica(semita(args^[2]).crea_limam(modus_limae.scribere, modus_creatoris.crea_semper));
+	ordo linea lineae;
+	dum (!in^.finis) { lineae << in^.lege_lineam(); }
+	int ini = -1, fin = -1;
+	pro (var i : lineae) {
+		si (lineae[i].reperi_primus("ExposeRoutine") >= 0) ini = i;
+		alioqui si (lineae[i].reperi_primus("ExposeInterface") >= 0) fin = i;
+	}
+	si (ini < 0 || fin < 0) iace errores.efformatio_falsa;
+	ordo linea selecti;
+	pro (var i : [ini + 1, fin - 1]) si (lineae[i].reperi_primus("==") >= 0) selecti << lineae[i];
+	ordo informatio inf;
+	pro (var i : selecti) {
+		var ~ ln = selecti[i];
+		int nds = ln.reperi_primus("\"");
+		int ndd = ln.reperi_ultimus("\"");
+		int fds = ln.reperi_ultimus("(");
+		int fdd = ln.reperi_ultimus(")");
+		si (nds < 0 || ndd < 0 || fds < 0 || fdd < 0) dura;
+		inf << informatio(ln.fragmentum(nds + 1, ndd - nds - 1), ln.fragmentum(fds + 1, fdd - fds - 1));
+	}
+	dirime(inf);
+	genera(inf, "", 0, inf.longitudo, out^);
+	pro (var i : inf) con.scribe_lineam(linea.ex(inf[i]));
+}
