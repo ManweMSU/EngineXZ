@@ -147,14 +147,491 @@ namespace Engine
 			}
 			Graphics::IBitmap * ExposeBitmap(void) noexcept { return _bitmap; }
 		};
+		class XPipelineState : public DynamicObject
+		{
+			SafePointer<Graphics::IPipelineState> _state;
+			Object * _device;
+		public:
+			XPipelineState(Graphics::IPipelineState * state, Object * device) : _device(device) { _state.SetRetain(state); }
+			virtual ~XPipelineState(void) override {}
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.machinatio") {
+					_device->Retain(); return _device;
+				} else if (cls->GetClassName() == L"graphicum.status_oleiductus") {
+					Retain(); return this;
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual void * GetType(void) noexcept override { return 0; }
+			Graphics::IPipelineState * Expose(void) noexcept { return _state; }
+		};
+		class XSamplerState : public DynamicObject
+		{
+			SafePointer<Graphics::ISamplerState> _state;
+			Object * _device;
+		public:
+			XSamplerState(Graphics::ISamplerState * state, Object * device) : _device(device) { _state.SetRetain(state); }
+			virtual ~XSamplerState(void) override {}
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.machinatio") {
+					_device->Retain(); return _device;
+				} else if (cls->GetClassName() == L"graphicum.status_exceptandi") {
+					Retain(); return this;
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual void * GetType(void) noexcept override { return 0; }
+			Graphics::ISamplerState * Expose(void) noexcept { return _state; }
+		};
+		class XResource : public VisualObject
+		{
+			SafePointer<Graphics::IDeviceResource> _resource;
+			Object * _device;
+		protected:
+			void UpdateResource(Graphics::IDeviceResource * resource) { _resource.SetRetain(resource); }
+		public:
+			XResource(Graphics::IDeviceResource * resource, Object * device) : _device(device) { _resource.SetRetain(resource); }
+			virtual ~XResource(void) override {}
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.machinatio") {
+					_device->Retain(); return _device;
+				} else if (cls->GetClassName() == L"graphicum.auxilium_machinationis") {
+					Retain(); return this;
+				} else if (cls->GetClassName() == L"graphicum.series" && _resource->GetResourceType() == Graphics::ResourceType::Buffer) {
+					Retain(); return this;
+				} else if (cls->GetClassName() == L"graphicum.textura" && _resource->GetResourceType() == Graphics::ResourceType::Texture) {
+					Retain(); return this;
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual void * GetType(void) noexcept override { return 0; }
+			virtual void ExposeInterface(uint intid, void * data, ErrorContext & ectx) noexcept override
+			{
+				if (!data) { ectx.error_code = 3; return; }
+				if (intid == VisualObjectInterfaceBuffer && _resource->GetResourceType() == Graphics::ResourceType::Buffer) {
+					*reinterpret_cast<Graphics::IDeviceResource **>(data) = _resource.Inner();
+					_resource->Retain();
+				} else if (intid == VisualObjectInterfaceTexture && _resource->GetResourceType() == Graphics::ResourceType::Texture) {
+					*reinterpret_cast<Graphics::IDeviceResource **>(data) = _resource.Inner();
+					_resource->Retain();
+				} else ectx.error_code = 1;
+			}
+			virtual uint GetResourceClass(void) noexcept { return uint(_resource->GetResourceType()); }
+			virtual uint GetResourceMemory(void) noexcept { return uint(_resource->GetMemoryPool()); }
+			virtual uint GetResourceFlags(void) noexcept { return uint(_resource->GetResourceUsage()); }
+			Graphics::IDeviceResource * Expose(void) noexcept { return _resource; }
+		};
+		class XBuffer : public XResource
+		{
+			Graphics::IBuffer * _buffer;
+		public:
+			XBuffer(Graphics::IBuffer * resource, Object * device) : XResource(resource, device), _buffer(resource) {}
+			virtual ~XBuffer(void) override {}
+			virtual int GetLength(void) noexcept { return _buffer->GetLength(); }
+			Graphics::IBuffer * Expose(void) noexcept { return _buffer; }
+		};
+		class XTexture : public XResource
+		{
+			Graphics::ITexture * _texture;
+		public:
+			XTexture(Graphics::ITexture * resource, Object * device) : XResource(resource, device), _texture(resource) {}
+			virtual ~XTexture(void) override {}
+			virtual uint GetTextureClass(void) noexcept { return uint(_texture->GetTextureType()); }
+			virtual uint GetTextureFormat(void) noexcept { return uint(_texture->GetPixelFormat()); }
+			virtual int GetWidth(void) noexcept { return _texture->GetWidth(); }
+			virtual int GetHeight(void) noexcept { return _texture->GetHeight(); }
+			virtual int GetDepth(void) noexcept { return _texture->GetDepth(); }
+			virtual int GetSubdetailLevel(void) noexcept { return _texture->GetMipmapCount(); }
+			virtual int GetVolume(void) noexcept { return _texture->GetArraySize(); }
+			Graphics::ITexture * Expose(void) noexcept { return _texture; }
+			void UpdateTexture(Graphics::ITexture * resource) { _texture = resource; UpdateResource(resource); }
+		};
+		class XWindowSurface : public DynamicObject
+		{
+			SafePointer<Graphics::IWindowLayer> _surface;
+			SafePointer<XTexture> _texture;
+			Object * _device;
+		public:
+			XWindowSurface(Graphics::IWindowLayer * surface, Object * device) : _device(device) { _surface.SetRetain(surface); }
+			virtual ~XWindowSurface(void) override {}
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.machinatio") {
+					_device->Retain(); return _device;
+				} else if (cls->GetClassName() == L"graphicum.fundus_fenestrae") {
+					Retain(); return this;
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual void * GetType(void) noexcept override { return 0; }
+			virtual bool Present(void) noexcept
+			{
+				if (!_texture || _texture->GetReferenceCount() > 1) return false;
+				_texture->UpdateTexture(0);
+				return _surface->Present();
+			}
+			virtual bool Resize(int width, int height) noexcept
+			{
+				if (!_texture || _texture->GetReferenceCount() > 1) return false;
+				_texture->UpdateTexture(0);
+				return _surface->ResizeSurface(width, height);
+			}
+			virtual SafePointer<XTexture> GetSurface(void) noexcept
+			{
+				if (!_texture) {
+					SafePointer<Graphics::ITexture> surface = _surface->QuerySurface();
+					if (!surface) return 0;
+					try { _texture = new XTexture(surface, _device); } catch (...) { return 0; }
+					return _texture;
+				} else {
+					SafePointer<Graphics::ITexture> surface = _surface->QuerySurface();
+					_texture->UpdateTexture(surface);
+					if (surface) return _texture; else return 0;
+				}
+			}
+			virtual bool IsFullscreen(void) noexcept { return _surface->IsFullscreen(); }
+			virtual void SetFullscreen(const bool & set, ErrorContext & ectx) noexcept
+			{
+				if (set) { if (!_surface->SwitchToFullscreen()) ectx.error_code = 5; }
+				else { if (!_surface->SwitchToWindow()) ectx.error_code = 5; }
+			}
+		};
+		class XDeviceContext : public DynamicObject
+		{
+			SafePointer<DynamicObject> _context_2d;
+			Graphics::IDeviceContext * _context;
+			Object * _device;
+		public:
+			XDeviceContext(Object * wrapper, Graphics::IDevice * device) : _device(wrapper), _context(device->GetDeviceContext()) {}
+			virtual ~XDeviceContext(void) override {}
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.contextus_machinae") {
+					if (_context_2d) return _context_2d->DynamicCast(cls, ectx);
+					else { ectx.error_code = 5; ectx.error_subcode = 0; return 0; }
+				} else if (cls->GetClassName() == L"graphicum.fabricatio_contextus") {
+					try { return CreateX2DFactory(); }
+					catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+				} else if (cls->GetClassName() == L"graphicum.machinatio") {
+					_device->Retain(); return _device;
+				} else if (cls->GetClassName() == L"graphicum.contextus_machinationis") {
+					Retain(); return static_cast<XDeviceContext *>(this);
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual void * GetType(void) noexcept override { return 0; }
+			virtual bool BeginRegularPass(int num_dest, const uint8 * color_desc, const Graphics::DepthStencilViewDesc * depth_desc) noexcept
+			{
+				Graphics::RenderTargetViewDesc rtvd[8];
+				Graphics::DepthStencilViewDesc dsvd;
+				if (!color_desc) return false;
+				uint word_size = sizeof(handle);
+				uint desc_size = word_size + 20;
+				for (int i = 0; i < num_dest; i++) {
+					auto desc = reinterpret_cast<const Graphics::RenderTargetViewDesc *>(color_desc + desc_size * i);
+					auto texture = reinterpret_cast<XTexture *>(desc->Texture);
+					if (!texture) return false;
+					rtvd[i].Texture = texture->Expose();
+					rtvd[i].LoadAction = desc->LoadAction;
+					MemoryCopy(&rtvd[i].ClearValue, &desc->ClearValue, sizeof(rtvd[i].ClearValue));
+				}
+				if (depth_desc) {
+					auto texture = reinterpret_cast<XTexture *>(depth_desc->Texture);
+					if (!texture) return false;
+					dsvd.Texture = texture->Expose();
+					dsvd.DepthLoadAction = depth_desc->DepthLoadAction;
+					dsvd.StencilLoadAction = depth_desc->StencilLoadAction;
+					dsvd.DepthClearValue = depth_desc->DepthClearValue;
+					dsvd.StencilClearValue = depth_desc->StencilClearValue;
+				} else dsvd.Texture = 0;
+				return _context->BeginRenderingPass(num_dest, rtvd, dsvd.Texture ? &dsvd : 0);
+			}
+			virtual bool BeginPlanarPass(XTexture * dest) noexcept
+			{
+				if (!dest) return false;
+				bool result = _context->Begin2DRenderingPass(dest->Expose());
+				if (result && !_context_2d) try { _context_2d = WrapContext(_context->Get2DContext(), this); } catch (...) { _context->EndCurrentPass(); return false; }
+				return result;
+			}
+			virtual bool BeginMemoryPass(void) noexcept { return _context->BeginMemoryManagementPass(); }
+			virtual bool EndPass(void) noexcept { return _context->EndCurrentPass(); }
+			virtual void Flush(void) noexcept { _context->Flush(); }
+			virtual void SetPipelineState(XPipelineState * state) noexcept { if (state) _context->SetRenderingPipelineState(state->Expose()); }
+			virtual void SetViewport(float left, float top, float width, float height, float mindepth, float maxdepth) noexcept { _context->SetViewport(left, top, width, height, mindepth, maxdepth); }
+			virtual void SetVResource(int selector, XResource * rsrc) noexcept { _context->SetVertexShaderResource(selector, rsrc ? rsrc->Expose() : 0); }
+			virtual void SetVConstantR(int selector, XBuffer * rsrc) noexcept { _context->SetVertexShaderConstant(selector, rsrc ? rsrc->Expose() : 0); }
+			virtual void SetVConstantD(int selector, const void * data, int length) noexcept { _context->SetVertexShaderConstant(selector, data, length); }
+			virtual void SetVSamplerState(int selector, XSamplerState * state) noexcept { _context->SetVertexShaderSamplerState(selector, state ? state->Expose() : 0); }
+			virtual void SetPResource(int selector, XResource * rsrc) noexcept { _context->SetPixelShaderResource(selector, rsrc ? rsrc->Expose() : 0); }
+			virtual void SetPConstantR(int selector, XBuffer * rsrc) noexcept { _context->SetPixelShaderConstant(selector, rsrc ? rsrc->Expose() : 0); }
+			virtual void SetPConstantD(int selector, const void * data, int length) noexcept { _context->SetPixelShaderConstant(selector, data, length); }
+			virtual void SetPSamplerState(int selector, XSamplerState * state) noexcept { _context->SetPixelShaderSamplerState(selector, state ? state->Expose() : 0); }
+			virtual void SetIndexBuffer(XBuffer * rsrc, Graphics::IndexBufferFormat format) noexcept { _context->SetIndexBuffer(rsrc ? rsrc->Expose() : 0, format); }
+			virtual void SetStencilValue(uint8 value) noexcept { _context->SetStencilReferenceValue(value); }
+			virtual void RenderV(int numvert, int first) noexcept { _context->DrawPrimitives(numvert, first); }
+			virtual void RenderVI(int numvert, int first, int numinst, int first_inst) noexcept { _context->DrawInstancedPrimitives(numvert, first, numinst, first_inst); }
+			virtual void RenderI(int numind, int first, int base) noexcept { _context->DrawIndexedPrimitives(numind, first, base); }
+			virtual void RenderII(int numind, int first, int base, int numinst, int first_inst) noexcept { _context->DrawIndexedInstancedPrimitives(numind, first, base, numinst, first_inst); }
+			virtual DynamicObject * Get2DContext(void) noexcept { return _context_2d; }
+			virtual void GenerateMIPs(XTexture * texture) noexcept { if (texture) _context->GenerateMipmaps(texture->Expose()); }
+			virtual void BlockTransferA(XResource * dest, XResource * src) noexcept { if (dest && src) _context->CopyResourceData(dest->Expose(), src->Expose()); }
+			virtual void BlockTransferB(XResource * dest, const int * dest_sr, const int * dest_org, XResource * src, const int * src_sr, const int * src_org, const int * size) noexcept
+			{
+				if (dest && src) _context->CopySubresourceData(
+					dest->Expose(), Graphics::SubresourceIndex(dest_sr[0], dest_sr[1]), Graphics::VolumeIndex(dest_org[0], dest_org[1], dest_org[2]),
+					src->Expose(), Graphics::SubresourceIndex(src_sr[0], src_sr[1]), Graphics::VolumeIndex(src_org[0], src_org[1], src_org[2]),
+					Graphics::VolumeIndex(size[0], size[1], size[2]));
+			}
+			virtual void MemoryUpdate(XResource * dest, const int * dest_sr, const int * dest_org, const int * size, const Graphics::ResourceInitDesc & src) noexcept
+			{
+				if (dest) _context->UpdateResourceData(
+					dest->Expose(), Graphics::SubresourceIndex(dest_sr[0], dest_sr[1]), Graphics::VolumeIndex(dest_org[0], dest_org[1], dest_org[2]),
+					Graphics::VolumeIndex(size[0], size[1], size[2]), src);
+			}
+			virtual void MemoryQuery(const Graphics::ResourceDataDesc & dest, XResource * src, const int * src_sr, const int * src_org, const int * size) noexcept
+			{
+				if (src) _context->QueryResourceData(dest,
+					src->Expose(), Graphics::SubresourceIndex(src_sr[0], src_sr[1]), Graphics::VolumeIndex(src_org[0], src_org[1], src_org[2]),
+					Graphics::VolumeIndex(size[0], size[1], size[2]));
+			}
+		};
+		class XFunction : public DynamicObject
+		{
+			SafePointer<Graphics::IShader> _function;
+			Object * _parent;
+		public:
+			XFunction(Object * parent, Graphics::IShader * function) : _parent(parent) { _function.SetRetain(function); }
+			virtual ~XFunction(void) override {}
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.machinatio") {
+					_parent->Retain(); return _parent;
+				} else if (cls->GetClassName() == L"graphicum.functio_machinationis") {
+					Retain(); return this;
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual void * GetType(void) noexcept override { return 0; }
+			virtual string GetName(ErrorContext & ectx) noexcept { XE_TRY_INTRO return _function->GetName(); XE_TRY_OUTRO(L"") }
+			virtual uint GetClass(void) noexcept { return uint(_function->GetType()); }
+			Graphics::IShader * Expose(void) noexcept { return _function; }
+		};
+		class XFunctionLibrary : public DynamicObject
+		{
+			SafePointer<Graphics::IShaderLibrary> _library;
+			Object * _parent;
+		public:
+			XFunctionLibrary(Object * parent, Graphics::IShaderLibrary * library) : _parent(parent) { _library.SetRetain(library); }
+			virtual ~XFunctionLibrary(void) override {}
+			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
+			{
+				if (!cls) { ectx.error_code = 3; ectx.error_subcode = 0; return 0; }
+				if (cls->GetClassName() == L"objectum") {
+					Retain(); return static_cast<Object *>(this);
+				} else if (cls->GetClassName() == L"objectum_dynamicum") {
+					Retain(); return static_cast<DynamicObject *>(this);
+				} else if (cls->GetClassName() == L"graphicum.machinatio") {
+					_parent->Retain(); return _parent;
+				} else if (cls->GetClassName() == L"graphicum.liber_functionum") {
+					Retain(); return this;
+				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+			}
+			virtual void * GetType(void) noexcept override { return 0; }
+			virtual SafePointer< Array<string> > GetFunctions(ErrorContext & ectx) noexcept
+			{
+				XE_TRY_INTRO
+				SafePointer< Array<string> > result = _library->GetShaderNames();
+				if (!result) throw OutOfMemoryException();
+				return result;
+				XE_TRY_OUTRO(0)
+			}
+			virtual SafePointer<XFunction> GetFunction(const string & name, ErrorContext & ectx) noexcept
+			{
+				XE_TRY_INTRO
+				SafePointer<Graphics::IShader> func = _library->CreateShader(name);
+				if (!func) throw InvalidStateException();
+				return new XFunction(_parent, func);
+				XE_TRY_OUTRO(0)
+			}
+		};
+		class XDevice : public Object
+		{
+			SafePointer<Graphics::IDevice> _device;
+			SafePointer<XDeviceContext> _context;
+		public:
+			XDevice(Graphics::IDevice * device) { _device.SetRetain(device); _context = new XDeviceContext(this, _device); }
+			virtual ~XDevice(void) override {}
+			virtual string GetName(ErrorContext & ectx) noexcept { XE_TRY_INTRO return _device->GetDeviceName(); XE_TRY_OUTRO(0) }
+			virtual uint64 GetID(void) noexcept { return _device->GetDeviceIdentifier(); }
+			virtual bool IsValid(void) noexcept { return _device->DeviceIsValid(); }
+			virtual XDeviceContext * GetContext(void) noexcept { return _context; }
+			virtual void GetImplementation(string * tech, uint * version) noexcept
+			{
+				try {
+					string t; uint v;
+					_device->GetImplementationInfo(t, v);
+					if (version) *version = v;
+					if (tech) *tech = t;
+				} catch (...) {}
+			}
+			virtual SafePointer<XFunctionLibrary> LoadFunctions(XStream * xstream) noexcept
+			{
+				try {
+					if (!xstream) return 0;
+					SafePointer<Streaming::Stream> stream = WrapFromXStream(xstream);
+					SafePointer<Graphics::IShaderLibrary> library = _device->LoadShaderLibrary(stream);
+					if (!library) return 0;
+					return new XFunctionLibrary(this, library);
+				} catch (...) { return 0; }
+			}
+			virtual SafePointer<XFunctionLibrary> CompileFunctions(XStream * xstream, ErrorContext & ectx) noexcept
+			{
+				XE_TRY_INTRO
+				if (!xstream) throw InvalidArgumentException();
+				Graphics::ShaderError error;
+				SafePointer<Streaming::Stream> stream = WrapFromXStream(xstream);
+				SafePointer<Graphics::IShaderLibrary> library = _device->CompileShaderLibrary(stream, &error);
+				if (error == Graphics::ShaderError::Success) {
+					if (!library) throw InvalidStateException();
+					return new XFunctionLibrary(this, library);
+				} else if (error == Graphics::ShaderError::IO) {
+					throw IO::FileAccessException(IO::Error::Unknown);
+				} else if (error == Graphics::ShaderError::InvalidContainerData) {
+					throw InvalidFormatException();
+				} else if (error == Graphics::ShaderError::NoCompiler) {
+					ectx.error_code = 7; ectx.error_subcode = 10; return 0;
+				} else if (error == Graphics::ShaderError::NoPlatformVersion) {
+					ectx.error_code = 7; ectx.error_subcode = 4; return 0;
+				} else if (error == Graphics::ShaderError::Compilation) {
+					ectx.error_code = 7; ectx.error_subcode = 3; return 0;
+				} else throw InvalidStateException();
+				XE_TRY_OUTRO(0)
+			}
+			virtual SafePointer<XPipelineState> CreatePipelineState(const uint8 * src) noexcept
+			{
+				try {
+					XFunction * vertex = reinterpret_cast<XFunction * const *>(src)[0];
+					XFunction * pixel = reinterpret_cast<XFunction * const *>(src)[1];
+					if (!vertex || !pixel) return 0;
+					Graphics::PipelineStateDesc desc;
+					desc.VertexShader = vertex->Expose();
+					desc.PixelShader = pixel->Expose();
+					desc.RenderTargetCount = *reinterpret_cast<const uint *>(src + 2 * sizeof(handle));
+					MemoryCopy(&desc.RenderTarget, src + 2 * sizeof(handle) + 8, sizeof(desc.RenderTarget));
+					MemoryCopy(&desc.DepthStencil, src + 2 * sizeof(handle) + 8 + sizeof(desc.RenderTarget), sizeof(desc.DepthStencil));
+					MemoryCopy(&desc.Rasterization, src + 2 * sizeof(handle) + 8 + sizeof(desc.RenderTarget) + sizeof(desc.DepthStencil), sizeof(desc.Rasterization));
+					MemoryCopy(&desc.Topology, src + 2 * sizeof(handle) + 8 + sizeof(desc.RenderTarget) + sizeof(desc.DepthStencil) + sizeof(desc.Rasterization), sizeof(desc.Topology));
+					SafePointer<Graphics::IPipelineState> state = _device->CreateRenderingPipelineState(desc);
+					if (!state) return 0;
+					return new XPipelineState(state, this);
+				} catch (...) { return 0; }
+			}
+			virtual SafePointer<XSamplerState> CreateSamplerState(const Graphics::SamplerDesc & desc) noexcept
+			{
+				try {
+					SafePointer<Graphics::ISamplerState> state = _device->CreateSamplerState(desc);
+					if (!state) return 0;
+					return new XSamplerState(state, this);
+				} catch (...) { return 0; }
+			}
+			virtual SafePointer<XBuffer> CreateBufferA(const Graphics::BufferDesc & desc) noexcept
+			{
+				try {
+					SafePointer<Graphics::IBuffer> rsrc = _device->CreateBuffer(desc);
+					if (!rsrc) return 0;
+					return new XBuffer(rsrc, this);
+				} catch (...) { return 0; }
+			}
+			virtual SafePointer<XBuffer> CreateBufferB(const Graphics::BufferDesc & desc, const Graphics::ResourceInitDesc & init) noexcept
+			{
+				try {
+					SafePointer<Graphics::IBuffer> rsrc = _device->CreateBuffer(desc, init);
+					if (!rsrc) return 0;
+					return new XBuffer(rsrc, this);
+				} catch (...) { return 0; }
+			}
+			virtual SafePointer<XTexture> CreateTextureA(const Graphics::TextureDesc & desc) noexcept
+			{
+				try {
+					#ifdef ENGINE_MACOSX
+					if (desc.Format == Graphics::PixelFormat::D24S8_unorm) return 0;
+					#endif
+					SafePointer<Graphics::ITexture> rsrc = _device->CreateTexture(desc);
+					if (!rsrc) return 0;
+					return new XTexture(rsrc, this);
+				} catch (...) { return 0; }
+			}
+			virtual SafePointer<XTexture> CreateTextureB(const Graphics::TextureDesc & desc, const Graphics::ResourceInitDesc * init) noexcept
+			{
+				try {
+					#ifdef ENGINE_MACOSX
+					if (desc.Format == Graphics::PixelFormat::D24S8_unorm) return 0;
+					#endif
+					SafePointer<Graphics::ITexture> rsrc = _device->CreateTexture(desc, init);
+					if (!rsrc) return 0;
+					return new XTexture(rsrc, this);
+				} catch (...) { return 0; }
+			}
+			virtual SafePointer<XTexture> CreateTextureView(XTexture * texture, uint mip, uint depth) noexcept
+			{
+				try {
+					if (!texture) return 0;
+					SafePointer<Graphics::ITexture> rsrc = _device->CreateRenderTargetView(texture->Expose(), mip, depth);
+					if (!rsrc) return 0;
+					return new XTexture(rsrc, this);
+				} catch (...) { return 0; }
+			}
+			virtual SafePointer<XWindowSurface> CreateSurface(VisualObject * xwindow, const Graphics::WindowLayerDesc & desc) noexcept
+			{
+				try {
+					ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+					Windows::IWindow * window;
+					if (!xwindow) return 0;
+					xwindow->ExposeInterface(VisualObjectInterfaceWindow, &window, ectx);
+					if (ectx.error_code) return 0;
+					SafePointer<Graphics::IWindowLayer> layer = _device->CreateWindowLayer(window, desc);
+					if (!layer) return 0;
+					return new XWindowSurface(layer, this);
+				} catch (...) { return 0; }
+			}
+		};
 		class X2DContext : public DynamicObject
 		{
 			SafePointer<Graphics::I2DDeviceContext> _context;
+			DynamicObject * _supercontext;
 		protected:
 			X2DContext(void) {}
 			void SetContext(Graphics::I2DDeviceContext * context) { _context.SetRetain(context); }
 		public:
 			X2DContext(Graphics::I2DDeviceContext * context) { _context.SetRetain(context); }
+			X2DContext(Graphics::I2DDeviceContext * context, DynamicObject * super) : _supercontext(super) { _context.SetRetain(context); }
 			virtual ~X2DContext(void) override {}
 			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
 			{
@@ -168,6 +645,10 @@ namespace Engine
 				} else if (cls->GetClassName() == L"graphicum.fabricatio_contextus") {
 					try { return CreateX2DFactory(); }
 					catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+				} else if (cls->GetClassName() == L"graphicum.machinatio" && _supercontext) {
+					return _supercontext->DynamicCast(cls, ectx);
+				} else if (cls->GetClassName() == L"graphicum.contextus_machinationis" && _supercontext) {
+					return _supercontext->DynamicCast(cls, ectx);
 				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
 			}
 			virtual void * GetType(void) noexcept override { return 0; }
@@ -351,6 +832,7 @@ namespace Engine
 		class XWindowContext : public X2DContext
 		{
 			SafePointer<Windows::I2DPresentationEngine> _pres;
+			SafePointer<XDevice> _own_device;
 		public:
 			XWindowContext(Windows::I2DPresentationEngine * pres) { _pres.SetRetain(pres); SetContext(pres->GetContext()); }
 			virtual ~XWindowContext(void) override { SetContext(0); }
@@ -368,8 +850,21 @@ namespace Engine
 				} else if (cls->GetClassName() == L"graphicum.fabricatio_contextus") {
 					try { return CreateX2DFactory(); }
 					catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
-
-					// TODO: ADD 3D DEVICE CAST
+				} else if (cls->GetClassName() == L"graphicum.machinatio") {
+					if (!_own_device) {
+						auto device = _pres->GetContext()->GetParentDevice();
+						if (!device) { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+						try { _own_device = new XDevice(device); } catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+					}
+					_own_device->Retain(); return _own_device.Inner();
+				} else if (cls->GetClassName() == L"graphicum.contextus_machinationis") {
+					if (!_own_device) {
+						auto device = _pres->GetContext()->GetParentDevice();
+						if (!device) { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
+						try { _own_device = new XDevice(device); } catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return 0; }
+					}
+					auto context = _own_device->GetContext();
+					context->Retain(); return context;
 				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
 			}
 			virtual bool BeginRendering(void) noexcept { return _pres->BeginRenderingPass(); }
@@ -420,6 +915,50 @@ namespace Engine
 					if (!context) return 0;
 					return new XBitmapContext(context);
 				} catch (...) { return 0; }
+			}
+		};
+		class XDeviceFactory : public Object
+		{
+		public:
+			ENGINE_PACKED_STRUCTURE(desc)
+				uint64 id;
+				string name;
+			ENGINE_END_PACKED_STRUCTURE
+		private:
+			SafePointer<Graphics::IDeviceFactory> _factory;
+		public:
+			XDeviceFactory(void) { _factory = Graphics::CreateDeviceFactory(); if (!_factory) throw OutOfMemoryException(); }
+			virtual ~XDeviceFactory(void) override {}
+			virtual SafePointer< Array<desc> > GetDevices(ErrorContext & ectx) noexcept
+			{
+				XE_TRY_INTRO
+				SafePointer< Volumes::Dictionary<uint64, string> > list = _factory->GetAvailableDevices();
+				if (!list) throw OutOfMemoryException();
+				SafePointer< Array<desc> > result = new Array<desc>(0x10);
+				for (auto & d : list->Elements()) {
+					desc dev;
+					dev.id = d.key;
+					dev.name = d.value;
+					result->Append(dev);
+				}
+				return result;
+				XE_TRY_OUTRO(0)
+			}
+			virtual SafePointer<XDevice> CreateDeviceA(ErrorContext & ectx) noexcept
+			{
+				XE_TRY_INTRO
+				SafePointer<Graphics::IDevice> device = _factory->CreateDefaultDevice();
+				if (!device) throw InvalidStateException();
+				return new XDevice(device);
+				XE_TRY_OUTRO(0)
+			}
+			virtual SafePointer<XDevice> CreateDeviceB(uint64 id, ErrorContext & ectx) noexcept
+			{
+				XE_TRY_INTRO
+				SafePointer<Graphics::IDevice> device = _factory->CreateDevice(id);
+				if (!device) throw InvalidArgumentException();
+				return new XDevice(device);
+				XE_TRY_OUTRO(0)
 			}
 		};
 
@@ -559,6 +1098,7 @@ namespace Engine
 				XE_TRY_OUTRO()
 			}
 			static SafePointer<XDeviceContextFactory> _create_dc_factory(void) noexcept { try { return new XDeviceContextFactory; } catch (...) { return 0; } }
+			static SafePointer<XDeviceFactory> _create_factory(void) noexcept { try { return new XDeviceFactory; } catch (...) { return 0; } }
 		public:
 			ImageExtension(void) {}
 			virtual ~ImageExtension(void) override {}
@@ -568,66 +1108,70 @@ namespace Engine
 					if (string::Compare(routine_name, L"im_al_4") < 0) {
 						if (string::Compare(routine_name, L"im_al_2") < 0) {
 							if (string::Compare(routine_name, L"im_al_1") < 0) {
-								if (string::Compare(routine_name, L"im_al_0") == 0) return reinterpret_cast<const void *>(_allocate_frame_0);
+								if (string::Compare(routine_name, L"im_al_0") == 0) return reinterpret_cast<const void *>(&_allocate_frame_0);
 							} else {
-								if (string::Compare(routine_name, L"im_al_1") == 0) return reinterpret_cast<const void *>(_allocate_frame_1);
+								if (string::Compare(routine_name, L"im_al_1") == 0) return reinterpret_cast<const void *>(&_allocate_frame_1);
 							}
 						} else {
 							if (string::Compare(routine_name, L"im_al_3") < 0) {
-								if (string::Compare(routine_name, L"im_al_2") == 0) return reinterpret_cast<const void *>(_allocate_frame_2);
+								if (string::Compare(routine_name, L"im_al_2") == 0) return reinterpret_cast<const void *>(&_allocate_frame_2);
 							} else {
-								if (string::Compare(routine_name, L"im_al_3") == 0) return reinterpret_cast<const void *>(_allocate_frame_3);
+								if (string::Compare(routine_name, L"im_al_3") == 0) return reinterpret_cast<const void *>(&_allocate_frame_3);
 							}
 						}
 					} else {
 						if (string::Compare(routine_name, L"im_al_6") < 0) {
 							if (string::Compare(routine_name, L"im_al_5") < 0) {
-								if (string::Compare(routine_name, L"im_al_4") == 0) return reinterpret_cast<const void *>(_allocate_frame_4);
+								if (string::Compare(routine_name, L"im_al_4") == 0) return reinterpret_cast<const void *>(&_allocate_frame_4);
 							} else {
-								if (string::Compare(routine_name, L"im_al_5") == 0) return reinterpret_cast<const void *>(_allocate_frame_5);
+								if (string::Compare(routine_name, L"im_al_5") == 0) return reinterpret_cast<const void *>(&_allocate_frame_5);
 							}
 						} else {
 							if (string::Compare(routine_name, L"im_al_7") < 0) {
-								if (string::Compare(routine_name, L"im_al_6") == 0) return reinterpret_cast<const void *>(_allocate_frame_6);
+								if (string::Compare(routine_name, L"im_al_6") == 0) return reinterpret_cast<const void *>(&_allocate_frame_6);
 							} else {
 								if (string::Compare(routine_name, L"im_ccol") < 0) {
-									if (string::Compare(routine_name, L"im_al_7") == 0) return reinterpret_cast<const void *>(_allocate_frame_7);
+									if (string::Compare(routine_name, L"im_al_7") == 0) return reinterpret_cast<const void *>(&_allocate_frame_7);
 								} else {
-									if (string::Compare(routine_name, L"im_ccol") == 0) return reinterpret_cast<const void *>(_encode_image);
+									if (string::Compare(routine_name, L"im_ccol") == 0) return reinterpret_cast<const void *>(&_encode_image);
 								}
 							}
 						}
 					}
 				} else {
 					if (string::Compare(routine_name, L"im_dr_1") < 0) {
-						if (string::Compare(routine_name, L"im_dc_1") < 0) {
+						if (string::Compare(routine_name, L"im_crfm") < 0) {
 							if (string::Compare(routine_name, L"im_crfc") < 0) {
-								if (string::Compare(routine_name, L"im_crep") == 0) return reinterpret_cast<const void *>(_encode_frame);
+								if (string::Compare(routine_name, L"im_crep") == 0) return reinterpret_cast<const void *>(&_encode_frame);
 							} else {
-								if (string::Compare(routine_name, L"im_crfc") == 0) return reinterpret_cast<const void *>(_create_dc_factory);
+								if (string::Compare(routine_name, L"im_crfc") == 0) return reinterpret_cast<const void *>(&_create_dc_factory);
 							}
 						} else {
-							if (string::Compare(routine_name, L"im_dc_2") < 0) {
-								if (string::Compare(routine_name, L"im_dc_1") == 0) return reinterpret_cast<const void *>(_decode_image_1);
+							if (string::Compare(routine_name, L"im_dc_1") < 0) {
+								if (string::Compare(routine_name, L"im_crfm") == 0) return reinterpret_cast<const void *>(&_create_factory);
 							} else {
-								if (string::Compare(routine_name, L"im_dc_2") == 0) return reinterpret_cast<const void *>(_decode_image_2);
+								if (string::Compare(routine_name, L"im_dc_2") < 0) {
+									if (string::Compare(routine_name, L"im_dc_1") == 0) return reinterpret_cast<const void *>(&_decode_image_1);
+								} else {
+									if (string::Compare(routine_name, L"im_dc_2") == 0) return reinterpret_cast<const void *>(&_decode_image_2);
+								}
 							}
 						}
 					} else {
 						if (string::Compare(routine_name, L"im_md_0") < 0) {
 							if (string::Compare(routine_name, L"im_dr_2") < 0) {
-								if (string::Compare(routine_name, L"im_dr_1") == 0) return reinterpret_cast<const void *>(_decode_frame_1);
+								if (string::Compare(routine_name, L"im_dr_1") == 0) return reinterpret_cast<const void *>(&_decode_frame_1);
 							} else {
-								if (string::Compare(routine_name, L"im_dr_2") == 0) return reinterpret_cast<const void *>(_decode_frame_2);
+								if (string::Compare(routine_name, L"im_dr_2") == 0) return reinterpret_cast<const void *>(&_decode_frame_2);
 							}
 						} else {
 							if (string::Compare(routine_name, L"im_md_1") < 0) {
-								if (string::Compare(routine_name, L"im_md_0") == 0) return reinterpret_cast<const void *>(_query_of_module_0);
+								if (string::Compare(routine_name, L"im_md_0") == 0) return reinterpret_cast<const void *>(&_query_of_module_0);
 							} else {
 								if (string::Compare(routine_name, L"im_md_2") < 0) {
-									if (string::Compare(routine_name, L"im_md_1") == 0) return reinterpret_cast<const void *>(_query_of_module_1);
+									if (string::Compare(routine_name, L"im_md_1") == 0) return reinterpret_cast<const void *>(&_query_of_module_1);
 								} else {
-									if (string::Compare(routine_name, L"im_md_2") == 0) return reinterpret_cast<const void *>(_query_of_module_2);
+									if (string::Compare(routine_name, L"im_md_2") == 0) return reinterpret_cast<const void *>(&_query_of_module_2);
 								}
 							}
 						}
@@ -650,5 +1194,6 @@ namespace Engine
 		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync) { return new XDirectContext(data, width, height, stride, owner, sync); }
 		DynamicObject * CreateWindowContext(Windows::I2DPresentationEngine * pres) { return new XWindowContext(pres); }
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context) { return new X2DContext(context); }
+		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context, DynamicObject * supercontext) { return new X2DContext(context, supercontext); }
 	}
 }

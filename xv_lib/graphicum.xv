@@ -1,0 +1,284 @@
+﻿importa imago;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Graphici";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium graphicum {
+	enumeratio formatus_puncti hereditat nint32 {
+		ignotus = 0x00000000,
+		A8_norm = 0x81100001,
+		R8_norm = 0x81100002, R8_snorm = 0x81100003, R8_int = 0x81100004, R8_sint = 0x81100005,
+		R16_norm = 0x82100001, R16_snorm = 0x82100002, R16_int = 0x82100003, R16_sint = 0x82100004, R16_frac = 0x82100005,
+		R8G8_norm = 0x82200001, R8G8_snorm = 0x82200002, R8G8_int = 0x82200003, R8G8_sint = 0x82200004,
+		B5G6R5_norm = 0x82300001,
+		B5G5R5A1_norm = 0x82400001,
+		R32_int = 0x83100001, R32_sint = 0x83100002, R32_frac = 0x83100003,
+		R16G16_norm = 0x83200001, R16G16_snorm = 0x83200002, R16G16_int = 0x83200003, R16G16_sint = 0x83200004, R16G16_frac = 0x83200005,
+		B8G8R8A8_norm = 0x83400001,
+		R8G8B8A8_norm = 0x83400002, R8G8B8A8_snorm = 0x83400003, R8G8B8A8_int = 0x83400004, R8G8B8A8_sint = 0x83400005,
+		R10G10B10A2_norm = 0x83400006, R10G10B10A2_int = 0x83400007,
+		R11G11B10_frac = 0x83300001,
+		R9G9B9E5_frac = 0x83300002,
+		R32G32_int = 0x84200001, R32G32_sint = 0x84200002, R32G32_frac = 0x84200003,
+		R16G16B16A16_norm = 0x84400001, R16G16B16A16_snorm = 0x84400002, R16G16B16A16_int = 0x84400003, R16G16B16A16_sint = 0x84400004, R16G16B16A16_frac = 0x84400005,
+		R32G32B32A32_int = 0x85400001, R32G32B32A32_sint = 0x85400002, R32G32B32A32_frac = 0x85400003,
+		D16_norm = 0x42100001, D32_frac = 0x43100001, D24S8_norm = 0x43200001, D32S8_frac = 0x44200001
+	}
+	enumeratio formatus_indecis hereditat nint32 { I16_int = 0, I32_int = 1 }
+	enumeratio filtrum_exceptandi hereditat nint32 { punctum = 0, linitum = 1, anisotropus = 2 }
+	enumeratio modus_alloquendi_exceptandi hereditat nint32 { circumnecte = 0, refulge = 1, explica = 2, attermina = 3 }
+	enumeratio classis_functionis hereditat nint32 { ignota = 0, vertex = 1, punctum = 2 }
+	enumeratio factor_miscendi hereditat nint32 {
+		zerum = 0, unus = 1,
+		color_miscendi = 2, color_miscendi_conversus = 3, alpha_miscendi = 4, alpha_miscendi_conversa = 5,
+		color_fundi = 6, color_fundi_conversus = 7, alpha_fundi = 8, alpha_fundi_conversa = 9,
+		color_miscendi_secundus = 10, color_miscendi_secundus_conversus = 11, alpha_miscendi_secunda = 12, alpha_miscendi_secunda_conversa = 13,
+		alpha_miscendi_saturata = 14
+	}
+	enumeratio functio_miscendi hereditat nint32 {
+		summa = 0, subtrahe_ex_fundo = 1, subtrahe_fundum = 2, minimum = 3, maximum = 4
+	}
+	enumeratio functio_consimilandi hereditat nint32 {
+		veritas = 0, minutior = 1, maior = 2, par = 3, minutior_aut_par = 4, maior_aut_par = 5, impar = 6, falsum = 7
+	}
+	enumeratio functio_praeformae hereditat nint32 {
+		conserva = 0, depura = 1, surroga = 2,
+		increma_et_circumnecte = 3, decrema_et_circumnecte = 4, increma_et_explica = 5, decrema_et_explica = 6,
+		interverte = 7
+	}
+	enumeratio modus_implendi hereditat nint32 { solidus = 0, corporatura = 1 }
+	enumeratio modus_decerpendi hereditat nint32 { nulle = 0, princeps = 1, dorsualis = 2 }
+	enumeratio classis_auxilii hereditat nint32 { series = 0, textura = 1 }
+	enumeratio classis_memoriae hereditat nint32 { defalta = 0, immuta = 1 }
+	enumeratio classis_texturae hereditat nint32 {
+		singularis_una_dimensio = 0, ordo_una_dimensio = 1,
+		singularis_duo_dimensiones = 2, ordo_duo_dimensiones = 3,
+		singularis_cubica = 4, ordo_cubica = 5,
+		singularis_tria_dimensiones = 6
+	}
+	enumeratio ordo_primitivi hereditat nint32 { ordo_punctorum = 0, ordo_linearum = 1, ina_linearum = 2, ordo_triangulorum = 3, ina_triangulorum = 4 }
+	enumeratio modus_onerandi hereditat nint32 { derelinque = 0, onera = 1, depura = 2 }
+
+	spatium modus_redigendi_coloris {
+		constatus habilita_miscendum	= nint(0x00000001);
+		constatus offirma_rubrum		= nint(0x00000002);
+		constatus offirma_viridem		= nint(0x00000004);
+		constatus offirma_blavum		= nint(0x00000008);
+		constatus offirma_alpham		= nint(0x00000010);
+	}
+	spatium modus_redigendi_altitudinis {
+		constatus habilita_probandum_altitudinis	= nint(0x00000001);
+		constatus habilita_scribendum_altitudinis	= nint(0x00000002);
+		constatus habilita_probandum_praeformae		= nint(0x00000004);
+	}
+	spatium modus_auxilii {
+		constatus habilita_legendum_functionis		= nint(0x00000001);
+		constatus habilita_scribendum_functionis	= nint(0x00000002);
+		constatus habilita_operandum_functionis		= habilita_legendum_functionis | habilita_scribendum_functionis;
+		constatus habilita_legendum_processoris		= nint(0x00000040);
+		constatus habilita_scribendum_processoris	= nint(0x00000080);
+		constatus habilita_operandum_processoris	= habilita_legendum_processoris | habilita_scribendum_processoris;
+		constatus habilita_legendum_visificum		= nint(0x00000100);
+		constatus habilita_scribendum_visificum		= nint(0x00000200);
+		constatus habilita_operandum_visificum		= habilita_legendum_visificum | habilita_scribendum_visificum;
+		constatus habilita_redigendum_coloris		= nint(0x00000010);
+		constatus habilita_redigendum_altitudinis	= nint(0x00000020);
+		constatus habilita_legendum_constatus		= nint(0x00000004);
+		constatus habilita_legendum_indecis			= nint(0x00000008);
+
+		constatus modi_serierum		=	habilita_operandum_functionis | habilita_operandum_processoris |
+										habilita_legendum_constatus | habilita_legendum_indecis;
+		constatus modi_texturarum	=	habilita_operandum_functionis | habilita_operandum_processoris | habilita_operandum_visificum |
+										habilita_redigendum_coloris | habilita_redigendum_altitudinis;
+	}
+
+	genus functio_machinationis hereditat objectum_dynamicum {
+		linea nomen { adipisce iacit virtualis pura; }
+		classis_functionis genu { adipisce virtualis pura; }
+	}
+	genus liber_functionum hereditat objectum_dynamicum {
+		!ordo linea functiones { adipisce iacit virtualis pura; }
+		functio !functio_machinationis crea_functionem(~linea nomen) iacit virtualis pura;
+	}
+	genus auxilium_machinationis hereditat objectum_visificum {
+		classis_auxilii genu { adipisce virtualis pura; }
+		classis_memoriae memoria { adipisce virtualis pura; }
+		nint modus { adipisce virtualis pura; }
+	}
+	genus series hereditat auxilium_machinationis {
+		int longitudo { adipisce virtualis pura; }
+	}
+	genus textura hereditat auxilium_machinationis {
+		classis_texturae dimensiones { adipisce virtualis pura; }
+		formatus_puncti formatus { adipisce virtualis pura; }
+		int latitudo { adipisce virtualis pura; }
+		int altitudo { adipisce virtualis pura; }
+		int amplitudo { adipisce virtualis pura; }
+		int numerus_subtilitatum { adipisce virtualis pura; }
+		int numerus_singularium { adipisce virtualis pura; }
+	}
+	genus status_oleiductus hereditat objectum_dynamicum {}
+	genus status_exceptandi hereditat objectum_dynamicum {}
+	genus fundus_fenestrae hereditat objectum_dynamicum {
+		functio logicum exhibe() virtualis pura;
+		functio logicum cressa(int lat, int alt) virtualis pura;
+		!textura textura { adipisce virtualis pura; }
+		logicum culicare_ultimum { adipisce virtualis pura; loca iacit virtualis pura; }
+	}
+
+	structura descriptio_exceptandi {
+		filtrum_exceptandi filtrum_deminuendi;
+		filtrum_exceptandi filtrum_augificandi;
+		filtrum_exceptandi filtrum_subtilitatis;
+		modus_alloquendi_exceptandi alloquere_u;
+		modus_alloquendi_exceptandi alloquere_v;
+		modus_alloquendi_exceptandi alloquere_w;
+		int anisotropia_maxima;
+		frac subtilitas_minima;
+		frac subtilitas_maxima;
+		[[non_polire]] ordo [4] frac color_atterminandi;
+	}
+	structura descriptio_redigendi {
+		formatus_puncti formatus;
+		nint modus_redigendi;
+		functio_miscendi miscere_colorum;
+		functio_miscendi miscere_alpharum;
+		factor_miscendi	factor_coloris_fundi;
+		factor_miscendi factor_alphae_fundi;
+		factor_miscendi factor_coloris_miscendi;
+		factor_miscendi factor_alphae_miscendi;
+	}
+	structura descriptio_praeformae {
+		functio_consimilandi simile_praeformae;
+		functio_praeformae probare_praeformae_falsum;
+		functio_praeformae probare_altitudinis_falsum;
+		functio_praeformae probare_verum;
+	}
+	structura descriptio_altitudinis {
+		formatus_puncti formatus;
+		nint modus_redigendi;
+		functio_consimilandi simile_altitudinis;
+		nint8 filtrum_scribendi_praeformae;
+		nint8 filtrum_legendi_praeformae;
+		descriptio_praeformae praeformae_principis;
+		descriptio_praeformae praeformae_dorsualis;
+	}
+	structura descriptio_discreti {
+		modus_implendi modus_implendi;
+		modus_decerpendi modus_decerpendi;
+		logicum princeps_positivus_est;
+		int favor_altitudinis;
+		frac termen_favoris_altitudinis;
+		frac favor_altitudinis_clinatus;
+		logicum habilita_decerpendum_altitudinis;
+	}
+	structura descriptio_oleiductus {
+		!functio_machinationis functio_verticum;
+		!functio_machinationis functio_punctorum;
+		int numerus_destinatorum;
+		ordo [8] descriptio_redigendi destinata;
+		descriptio_altitudinis altitudo_et_praeforma;
+		descriptio_discreti discretus;
+		ordo_primitivi ordo_primitivi;
+	}
+	structura descriptio_seriei {
+		int longitudo;
+		int longitudo_celulae;
+		nint modus;
+		classis_memoriae memoria;
+	}
+	structura descriptio_texturae {
+		classis_texturae dimensiones;
+		formatus_puncti formatus;
+		int latitudo;
+		int altitudo;
+		int amplitudo;
+		int numerus_subtilitatum;
+		nint modus;
+		classis_memoriae memoria;
+	}
+	structura descriptio_fundi_fenestrae {
+		formatus_puncti formatus;
+		int latitudo;
+		int altitudo;
+		nint modus;
+	}
+	structura descriptio_datorum {
+		@nihil data;
+		nintadl magnitudo_lineae;
+		nintadl magnitudo_planae;
+	}
+	structura prospectus_destinati_coloris {
+		@textura textura;
+		modus_onerandi modus_onerandi;
+		[[non_polire]] ordo [4] frac color_depurandi;
+	}
+	structura prospectus_destinati_altitudinis {
+		@textura textura;
+		modus_onerandi modus_onerandi_altitudinis;
+		modus_onerandi modus_onerandi_praeformae;
+		frac valor_depurandi_altitudinis;
+		nint8 valor_depurandi_praeformae;
+	}
+
+	genus contextus_machinationis hereditat objectum_dynamicum {
+		functio logicum exordi_redigendum(int num_dest, @prospectus_destinati_coloris dc, @prospectus_destinati_altitudinis da) virtualis pura;
+		functio logicum exordi_redigendum_planum(@textura dest) virtualis pura;
+		functio logicum exordi_regimen_memoriae() virtualis pura;
+		functio logicum ende() virtualis pura;
+		functio nihil annoda() virtualis pura;
+
+		functio nihil loca_statum_oleiductus(@status_oleiductus status) virtualis pura;
+		functio nihil loca_adspectabilem(frac ssx, frac ssy, frac latitudo, frac altitudo, frac mindist, frac maxdist) virtualis pura;
+		functio nihil loca_auxilium_verticis(int ind, @auxilium_machinationis aux) virtualis pura;
+		functio nihil loca_constatum_verticis(int ind, @series aux) virtualis pura;
+		functio nihil loca_constatum_verticis(int ind, @nihil data, int lon) virtualis pura;
+		functio nihil loca_statum_exceptandi_verticis(int ind, @status_exceptandi aux) virtualis pura;
+		functio nihil loca_auxilium_puncti(int ind, @auxilium_machinationis aux) virtualis pura;
+		functio nihil loca_constatum_puncti(int ind, @series aux) virtualis pura;
+		functio nihil loca_constatum_puncti(int ind, @nihil data, int lon) virtualis pura;
+		functio nihil loca_statum_exceptandi_puncti(int ind, @status_exceptandi aux) virtualis pura;
+		functio nihil loca_indicis(@series aux, formatus_indecis fmt) virtualis pura;
+		functio nihil loca_valorem_praeformae(nint8 valor) virtualis pura;
+		functio nihil redige(int numerus_verticum, int vertex_primus) virtualis pura;
+		functio nihil redige(int numerus_verticum, int vertex_primus, int numerus_exemplorum, int exemplum_primum) virtualis pura;
+		functio nihil redige(int numerus_indicum, int index_primus, int basis_verticum) virtualis pura;
+		functio nihil redige(int numerus_indicum, int index_primus, int basis_verticum, int numerus_exemplorum, int exemplum_primum) virtualis pura;
+
+		@contextus_machinae contextus_planus { adipisce virtualis pura; }
+
+		functio nihil genera_subtilitates(@textura aux) virtualis pura;
+		functio nihil exscribe_datorum(@auxilium_machinationis ad, @auxilium_machinationis ex) virtualis pura;
+		functio nihil exscribe_datorum(@auxilium_machinationis ad, (int, int) ad_sing, (int, int, int) ad_basis, @auxilium_machinationis ex, (int, int) ex_sing, (int, int, int) ex_basis, (int, int, int) magnitudines) virtualis pura;
+		functio nihil loca_datorum(@auxilium_machinationis ad, (int, int) ad_sing, (int, int, int) ad_basis, (int, int, int) magnitudines, ~descriptio_datorum ex) virtualis pura;
+		functio nihil quere_datorum(~descriptio_datorum ad, @auxilium_machinationis ex, (int, int) ex_sing, (int, int, int) ex_basis, (int, int, int) magnitudines) virtualis pura;
+	}
+	genus machinatio hereditat objectum {
+		linea nomen { adipisce iacit virtualis pura; }
+		nint64 indentitas { adipisce virtualis pura; }
+		logicum valida { adipisce virtualis pura; }
+		@contextus_machinationis contextus { adipisce virtualis pura; }
+		functio nihil para_implantationem(@linea tech, @nint versio) virtualis pura;
+		functio !liber_functionum onera_functiones(@flumen fl) virtualis pura;
+		functio !liber_functionum compila_functiones(@flumen fl) iacit virtualis pura;
+		functio !status_oleiductus crea_statum_oleiductus(~descriptio_oleiductus desc) virtualis pura;
+		functio !status_exceptandi crea_statum_exceptandi(~descriptio_exceptandi desc) virtualis pura;
+		functio !series crea_seriem(~descriptio_seriei desc) virtualis pura;
+		functio !series crea_seriem(~descriptio_seriei desc, ~descriptio_datorum data) virtualis pura;
+		functio !textura crea_texturam(~descriptio_texturae desc) virtualis pura;
+		functio !textura crea_texturam(~descriptio_texturae desc, @descriptio_datorum data) virtualis pura;
+		functio !textura crea_destinatum(@textura ex, nint subtilitas, nint dimensio) virtualis pura;
+		functio !fundus_fenestrae crea_fundum_fenestrae(@objectum_visificum fenestra, ~descriptio_fundi_fenestrae desc) virtualis pura;
+	}
+	genus fabricatio_machinationis hereditat objectum {
+		!ordo (nint64, linea) machinationes { adipisce iacit virtualis pura; }
+		functio !machinatio crea_machinationem() iacit virtualis pura;
+		functio !machinatio crea_machinationem(nint64 indent) iacit virtualis pura;
+	}
+
+	[[importa] im_crfm] functio !fabricatio_machinationis crea_fabricationem_machinationis();
+}

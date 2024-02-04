@@ -665,6 +665,7 @@ namespace Engine
 			{
 				if (_callback) {
 					ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+					_item->SetCallback(0);
 					_callback->MenuItemDestroyed(this, ectx);
 				}
 			}

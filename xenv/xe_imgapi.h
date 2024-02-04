@@ -35,5 +35,6 @@ namespace Engine
 		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync);
 		DynamicObject * CreateWindowContext(Windows::I2DPresentationEngine * pres);
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context);
+		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context, DynamicObject * supercontext);
 	}
 }
