@@ -25,7 +25,7 @@ BETA-4:
  + Waitable tasks rework
  + XVM search improvements
  - XE Reflection
- - Graphics API
+ + Graphics API
  + Windows and Clipboard API
 
 BETA-5:

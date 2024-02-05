@@ -1,6 +1,7 @@
 ﻿#include "xv_proto.h"
 
 #include "xv_meta.h"
+#include "xv_oapi.h"
 #include "../xlang/xl_base.h"
 #include "../xlang/xl_com.h"
 #include "../xlang/xl_types.h"
@@ -799,7 +800,7 @@ namespace Engine
 					if (argv[0]->GetClass() == XL::Class::Type) {
 						if (static_cast<XL::XType *>(argv[0])->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
 						auto cls = static_cast<XL::XClass *>(argv[0]);
-						return _create_literal(cls->GetContext(), cls->GetFullName());
+						return _create_literal(cls->GetContext(), GetTypeFullName(cls->GetContext(), cls));
 					} else if (argv[0]->GetClass() == XL::Class::Field) {
 						return _create_literal(_ctx, argv[0]->GetName());
 					} else throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
