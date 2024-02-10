@@ -2097,7 +2097,7 @@ spatium math {
 		constatus pi = 3.14159265358979323846;
 		constatus e = 2.71828182845904523536;
 	}
-	spatium casualis {
+	spatium caecus {
 		[[importa] fpu_ncg_1]	functio nihil data(@nihil data, int long);
 		[[importa] fpu_ncg_2]	functio int integer(int min, int max);
 		[[importa] fpu_ncg_3]	functio dfrac fractus();
@@ -2109,10 +2109,10 @@ spatium math {
 	[[importa] fpu_f64_pi]	functio dfrac inf_pos_d();
 	[[importa] fpu_f64_ni]	functio dfrac inf_neg_d();
 	[[importa] fpu_f64_nn]	functio dfrac nn_d();
-	[[importa] fpu_ei_32]	functio logicum est_inf(frac valor);
-	[[importa] fpu_ei_64]	functio logicum est_inf(dfrac valor);
-	[[importa] fpu_enn_32]	functio logicum est_nn(frac valor);
-	[[importa] fpu_enn_64]	functio logicum est_nn(dfrac valor);
+	[[importa] fpu_ei_32]	functio logicum inf_est(frac valor);
+	[[importa] fpu_ei_64]	functio logicum inf_est(dfrac valor);
+	[[importa] fpu_enn_32]	functio logicum nn_est(frac valor);
+	[[importa] fpu_enn_64]	functio logicum nn_est(dfrac valor);
 
 	[[importa] fpu_abs_i8]	functio int8	abs(int8 valor);
 	[[importa] fpu_abs_i16]	functio int16	abs(int16 valor);
@@ -2192,21 +2192,21 @@ spatium errores {
 	[sub_error ie_falsum] constatus ie_error_ignotus				= 0x01;
 	[sub_error ie_falsum] constatus ie_lima_nulla					= 0x02;
 	[sub_error ie_falsum] constatus ie_semita_nulla					= 0x03;
-	[sub_error ie_falsum] constatus ie_nimium_limae_apertae			= 0x04;
+	[sub_error ie_falsum] constatus ie_limae_apertae_nimium			= 0x04;
 	[sub_error ie_falsum] constatus ie_permissio_nulla				= 0x05;
 	[sub_error ie_falsum] constatus ie_manubrium_defectum			= 0x06;
 	[sub_error ie_falsum] constatus ie_memoria_nulla				= 0x07;
 	[sub_error ie_falsum] constatus ie_machinatio_defecta			= 0x08;
-	[sub_error ie_falsum] constatus ie_sole_legere					= 0x09;
+	[sub_error ie_falsum] constatus ie_legere_sole					= 0x09;
 	[sub_error ie_falsum] constatus ie_spatium_disci_nullum			= 0x0A;
 	[sub_error ie_falsum] constatus ie_lima_preexistat				= 0x0B;
 	[sub_error ie_falsum] constatus ie_implantatio_nulla			= 0x0C;
-	[sub_error ie_falsum] constatus ie_collectorium_non_vacuum		= 0x0D;
-	[sub_error ie_falsum] constatus ie_collectorium_est_currens		= 0x0E;
-	[sub_error ie_falsum] constatus ie_machinatio_non_idem			= 0x0F;
+	[sub_error ie_falsum] constatus ie_collectorium_vacuum_non		= 0x0D;
+	[sub_error ie_falsum] constatus ie_collectorium_currens_est		= 0x0E;
+	[sub_error ie_falsum] constatus ie_machinatio_idem_non			= 0x0F;
 	[sub_error ie_falsum] constatus ie_nomen_semitae_defectum		= 0x10;
-	[sub_error ie_falsum] constatus ie_nomen_limae_nimium_largum	= 0x11;
-	[sub_error ie_falsum] constatus ie_lima_nimium_larga			= 0x12;
+	[sub_error ie_falsum] constatus ie_nomen_limae_largum_nimium	= 0x11;
+	[sub_error ie_falsum] constatus ie_lima_larga_nimium			= 0x12;
 	[sub_error ie_falsum] constatus ie_legere_falsum				= 0x13;
 	[sub_error ie_falsum] constatus ie_scribere_falsum				= 0x14;
 	[sub_error ie_falsum] constatus ie_creare_falsum				= 0x15;
@@ -2298,8 +2298,8 @@ genus linea {
 	classis functio logicum operator < (~linea a, ~linea b) iacit { responde a <=> b < 0; }
 	classis functio logicum operator > (~linea a, ~linea b) iacit { responde a <=> b > 0; }
 
-	[[importa] "spu_reperi_primus"]		[[thiscall_nullum]] functio int reperi_primus(~linea valor);
-	[[importa] "spu_reperi_ultimus"]	[[thiscall_nullum]] functio int reperi_ultimus(~linea valor);
+	[[importa] "spu_reperi_primus"]		[[thiscall_nullum]] functio int reperi_primum(~linea valor);
+	[[importa] "spu_reperi_ultimus"]	[[thiscall_nullum]] functio int reperi_ultimum(~linea valor);
 	[[importa] "spu_fragmentum"]		[[thiscall_nullum]] functio linea fragmentum(int primus, int long) iacit;
 	[[importa] "spu_surroga"]			[[thiscall_nullum]] functio linea surroga(~linea sublinea, ~linea cum) iacit;
 	[[importa] "spu_codex_long"]		[[thiscall_nullum]] functio int longitudo_codicis(codex cdx) iacit;
@@ -2372,8 +2372,8 @@ spatium systema {
 		operans systema_machinae;
 		architectura architectura_machinae;
 		architectura architectura_processi;
-		int32 numerus_corda_corporalia;
-		int32 numerus_corda_virtualia;
+		int32 numerus_cordium_corporalium;
+		int32 numerus_cordium_virtualium;
 		int32 versio_systemae_supera;
 		int32 versio_systemae_inferna;
 	}
@@ -2636,8 +2636,8 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 		pro (int i = pos; i < _numerus - 1; i++) .permuta(_data[i], _data[i + 1]);
 		_numerus--; _realloca_secura(_numerus);
 	}
-	functio nihil remove_primus() { remove(0); }
-	functio nihil remove_ultimus() { remove(_numerus - 1); }
+	functio nihil remove_primum() { remove(0); }
+	functio nihil remove_ultimum() { remove(_numerus - 1); }
 	functio nihil depura()
 	{
 		pro (int i = 0; i < _numerus; i++) fini(_data[i]);
@@ -2828,7 +2828,7 @@ dura linea {
 	tempus tempus_localis { [[thiscall_nullum]] [[importa] tmp_a_loc] adipisce; }
 
 	[[thiscall_nullum]] [[importa] tmp_adl] functio linea ad_lineam() iacit;
-	[[thiscall_nullum]] [[importa] tmp_alb] functio linea ad_lineam_brevi() iacit;
+	[[thiscall_nullum]] [[importa] tmp_alb] functio linea ad_lineam_brevem() iacit;
 
 	[[importa] tmp_cur] classis functio tempus currens();
 	[[thiscall_nullum]] [[importa] tmp_dim] functio int dies_in_mense();
@@ -2857,12 +2857,12 @@ genus flumen hereditat objectum {
 	[[thiscall_nullum]] [[importa] flumen_so_1] functio nihil scribe_ordinem(@dordo_datorum ord) iacit;
 }
 
-[[importa] flumen_mem_0] functio adl[flumen] crea_flumen_in_memoriae() iacit;
-[[importa] flumen_mem_2] functio adl[flumen] crea_flumen_in_memoriae(@nihil data, intadl long) iacit;
+[[importa] flumen_mem_0] functio adl[flumen] crea_flumen_in_memoria() iacit;
+[[importa] flumen_mem_2] functio adl[flumen] crea_flumen_in_memoria(@nihil data, intadl long) iacit;
 [[importa] flumen_auxil] functio adl[flumen] para_auxilium(@nihil mod, ~linea aux_genus, int aux_num) iacit;
 
 spatium scriptio {
-	constatus finis_char = 0xFFFFFFFF;
+	constatus character_finis = 0xFFFFFFFF;
 	genus codificator hereditat objectum {
 		structor () {}
 		functio nihil scribe(~linea ln) iacit virtualis pura;
@@ -2927,7 +2927,7 @@ spatium contextus {
 		structor () {}
 		functio nihil exeque() virtualis pura;
 		functio logicum exeque_semel() virtualis pura;
-		functio adl[filum] exeque_in_fili() virtualis pura;
+		functio adl[filum] exeque_in_filo() virtualis pura;
 		functio nihil siste() virtualis pura;
 		functio nihil linque() virtualis pura;
 		int longitudo { adipisce virtualis pura; }
@@ -2941,7 +2941,7 @@ spatium contextus {
 	[[importa] ctx_dormi] functio nihil dormi(nint ms);
 	[[importa] ctx_siste] functio nihil siste(nint valor);
 
-	[[importa] ctx_ccsim] functio adl[cauda_simplex] crea_caudam_simplex();
+	[[importa] ctx_ccsim] functio adl[cauda_simplex] crea_caudam_simplicem();
 	[[importa] ctx_ccfl0] functio adl[cauda_filorum] crea_caudam_filorum();
 	[[importa] ctx_ccfl1] functio adl[cauda_filorum] crea_caudam_filorum(int num);
 	[[importa] ctx_crsem] functio adl[semaphorum] crea_semaphorum(int valor);
