@@ -228,6 +228,28 @@ namespace Engine
 			_allow_embedded_modules = allow;
 			_sync->Open();
 		}
+		bool ExecutionContext::TranslateFunctions(const Array<XA::Function> & src, Array<XA::TranslatedFunction> & dest) const noexcept
+		{
+			_sync->Wait();
+			try {
+				for (auto & f : src) {
+					dest << XA::TranslatedFunction();
+					if (!_trans->Translate(dest.LastElement(), f)) throw Exception();
+				}
+				_sync->Open();
+				return true;
+			} catch (...) {
+				_sync->Open();
+				return false;
+			}
+		}
+		XA::IExecutable * ExecutionContext::LinkFunctions(const Volumes::Dictionary<string, XA::TranslatedFunction *> & src, XA::IReferenceResolver * resolver) const noexcept
+		{
+			_sync->Wait();
+			auto result = _linker->LinkFunctions(src, resolver);
+			_sync->Open();
+			return result;
+		}
 		const Module * ExecutionContext::GetModule(const string & name) const noexcept
 		{
 			_sync->Wait();
@@ -485,11 +507,11 @@ namespace Engine
 						c.value.instance_spec.size.num_bytes + c.value.instance_spec.size.num_words * word_size, c.value.attributes);
 					if (c.value.parent_class.vft_pointer_offset.num_bytes != 0xFFFFFFFF && c.value.parent_class.vft_pointer_offset.num_words != 0xFFFFFFFF) {
 						int offset = c.value.parent_class.vft_pointer_offset.num_bytes + c.value.parent_class.vft_pointer_offset.num_words * word_size;
-						if (c.value.parent_class.interface_name.Length()) cls->AddInterface(c.value.parent_class.interface_name, offset, 0);
-						else cls->AddInterface(c.key, offset, 0);
+						if (c.value.parent_class.interface_name.Length()) cls->AddParentClass(c.value.parent_class.interface_name, offset, 0);
+						else cls->AddParentClass(L"", offset, 0);
 					} else {
-						if (c.value.parent_class.interface_name.Length()) cls->AddInterface(c.value.parent_class.interface_name, -1, 0);
-						else cls->AddInterface(c.key, -1, 0);
+						if (c.value.parent_class.interface_name.Length()) cls->AddParentClass(c.value.parent_class.interface_name, -1, 0);
+						else cls->AddParentClass(L"", -1, 0);
 					}
 					for (auto & i : c.value.interfaces_implements) {
 						int offset = i.vft_pointer_offset.num_bytes + i.vft_pointer_offset.num_words * word_size;

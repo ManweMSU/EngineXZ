@@ -25,19 +25,26 @@ CompileList {
 	AAAAAN = "..\\xenv\\xe_loader.cxx"
 	AAAAAO = "..\\xenv\\xe_logger.cxx"
 	AAAAAP = "..\\xenv\\xe_powerapi.cxx"
-	AAAAAQ = "..\\xenv\\xe_rtff.cxx"
-	AAAAAR = "..\\xenv\\xe_rtss.cxx"
-	AAAAAS = "..\\xenv\\xe_stdext.cxx"
-	AAAAAT = "..\\xenv\\xe_wndapi.cxx"
-	AAAAAU = "..\\xexec\\xx_com.cxx"
-	AAAAAV = "..\\xexec\\xx_machine.cxx"
-	AAAAAW = "..\\ximg\\xi_function.cxx"
-	AAAAAX = "..\\ximg\\xi_module.cxx"
-	AAAAAY = "..\\ximg\\xi_resources.cxx"
-	AAAAAZ = "xxf.cxx"
+	AAAAAQ = "..\\xenv\\xe_reflapi.cxx"
+	AAAAAR = "..\\xenv\\xe_rtff.cxx"
+	AAAAAS = "..\\xenv\\xe_rtss.cxx"
+	AAAAAT = "..\\xenv\\xe_stdext.cxx"
+	AAAAAU = "..\\xenv\\xe_wndapi.cxx"
+	AAAAAV = "..\\xexec\\xx_com.cxx"
+	AAAAAW = "..\\xexec\\xx_machine.cxx"
+	AAAAAX = "..\\ximg\\xi_function.cxx"
+	AAAAAY = "..\\ximg\\xi_module.cxx"
+	AAAAAZ = "..\\ximg\\xi_resources.cxx"
+	AAAABA = "xxf.cxx"
 }
 LinkWith {
 	AAAAAA = "ECFC"
+}
+Resources {
+	COM = "@com_en.ecst"
+	ru {
+		COM = "@com_ru.ecst"
+	}
 }
 VersionInformation {
 	ApplicationIdentifier = "XXF"

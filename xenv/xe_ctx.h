@@ -78,6 +78,9 @@ namespace Engine
 			bool EmbeddedModulesAllowed(void) const noexcept;
 			void AllowEmbeddedModules(bool allow) noexcept;
 
+			bool TranslateFunctions(const Array<XA::Function> & src, Array<XA::TranslatedFunction> & dest) const noexcept;
+			XA::IExecutable * LinkFunctions(const Volumes::Dictionary<string, XA::TranslatedFunction *> & src, XA::IReferenceResolver * resolver = 0) const noexcept;
+
 			const Module * GetModule(const string & name) const noexcept;
 			Volumes::Dictionary<string, const Module *> * GetLoadedModules(void) const noexcept;
 			Volumes::Dictionary<string, const SymbolObject *> * GetSymbols(SymbolType of_type, const string & with_attr) const noexcept;

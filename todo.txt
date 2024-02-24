@@ -24,9 +24,13 @@ BETA-4:
  + '(,,)' operator
  + Waitable tasks rework
  + XVM search improvements
- - XE Reflection
+ + XE Reflection
  + Graphics API
  + Windows and Clipboard API
+ - XV: Definitions
+ - XV: Static IF statement
+ - XV: Static string processing
+ - XV: Extension redefinition attribute
 
 BETA-5:
  - Engine Runtime 1.9 ???
@@ -42,3 +46,6 @@ OTHER RELEASES:
  - Remote Procedure Call
  - GUI and CUI libraries
  - XB framework: XX to native bundle wrapper
+ - XU framework: XV extension for UI
+ - XW framework: XV extension for GPU
+ - Module version control

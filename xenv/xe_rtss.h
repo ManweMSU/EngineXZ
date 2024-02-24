@@ -66,6 +66,7 @@ namespace Engine
 			string _class_name;
 			XA::ArgumentSemantics _semantics;
 			uint _instance_size;
+			_interface_desc _parent_class;
 			Array<_interface_desc> _interface_list;
 			Array<_field_desc> _field_list;
 			Array<_prop_desc> _prop_list;
@@ -77,6 +78,7 @@ namespace Engine
 			virtual SymbolType GetSymbolType(void) const noexcept override;
 			virtual void * GetSymbolEntity(void) const noexcept override;
 			virtual const Volumes::Dictionary<string, string> * GetAttributes(void) const noexcept override;
+			void AddParentClass(const string & name, int vft_offset, int cast_offset);
 			void AddInterface(const string & name, int vft_offset, int cast_offset);
 			void AddField(const string & name, const string & type, uint offset, uint size, const Volumes::Dictionary<string, string> & attrs);
 			void AddProperty(const string & name, const string & type, const string & setter, const string & getter, const Volumes::Dictionary<string, string> & attrs);
@@ -84,6 +86,8 @@ namespace Engine
 			const string & GetClassName(void) const noexcept;
 			XA::ArgumentSemantics GetClassSemantics(void) const noexcept;
 			uint GetInstanceSize(void) const noexcept;
+			uint GetVFTOffset(void) const noexcept;
+			const string & GetParentClassName(void) const noexcept;
 			Array<string> * ListInterfaces(void) const noexcept;
 			Array<string> * ListFields(void) const noexcept;
 			Array<string> * ListFields(const string & with_attr) const noexcept;

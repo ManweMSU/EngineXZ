@@ -46,11 +46,22 @@ namespace Engine
 		Reflection::PropertyType LiteralSymbol::GetValueType(void) const noexcept { return _type; }
 
 		ClassSymbol::ClassSymbol(const string & name, XA::ArgumentSemantics semantics, uint size, const Volumes::Dictionary<string, string> & attrs) :
-			_class_name(name), _semantics(semantics), _instance_size(size), _interface_list(0x10), _field_list(0x10), _prop_list(0x10), _method_list(0x10), _attributes(attrs) {}
+			_class_name(name), _semantics(semantics), _instance_size(size), _interface_list(0x10), _field_list(0x10), _prop_list(0x10), _method_list(0x10), _attributes(attrs)
+		{
+			_parent_class.name = L"";
+			_parent_class.vft_offset = -1;
+			_parent_class.cast_to_offset = 0;
+		}
 		ClassSymbol::~ClassSymbol(void) {}
 		SymbolType ClassSymbol::GetSymbolType(void) const noexcept { return SymbolType::Class; }
 		void * ClassSymbol::GetSymbolEntity(void) const noexcept { return const_cast<ClassSymbol *>(this); }
 		const Volumes::Dictionary<string, string> * ClassSymbol::GetAttributes(void) const noexcept { return &_attributes; }
+		void ClassSymbol::AddParentClass(const string & name, int vft_offset, int cast_offset)
+		{
+			_parent_class.name = name;
+			_parent_class.vft_offset = vft_offset;
+			_parent_class.cast_to_offset = cast_offset;
+		}
 		void ClassSymbol::AddInterface(const string & name, int vft_offset, int cast_offset)
 		{
 			_interface_desc desc;
@@ -92,6 +103,8 @@ namespace Engine
 		const string & ClassSymbol::GetClassName(void) const noexcept { return _class_name; }
 		XA::ArgumentSemantics ClassSymbol::GetClassSemantics(void) const noexcept { return _semantics; }
 		uint ClassSymbol::GetInstanceSize(void) const noexcept { return _instance_size; }
+		uint ClassSymbol::GetVFTOffset(void) const noexcept { return _parent_class.vft_offset; }
+		const string & ClassSymbol::GetParentClassName(void) const noexcept { return _parent_class.name; }
 		Array<string> * ClassSymbol::ListInterfaces(void) const noexcept
 		{
 			try {

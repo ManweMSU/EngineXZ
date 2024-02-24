@@ -9,6 +9,7 @@
 #include "../xenv/xe_imgapi.h"
 #include "../xenv/xe_rtff.h"
 #include "../xenv/xe_powerapi.h"
+#include "../xenv/xe_reflapi.h"
 #include "../xenv/xe_wndapi.h"
 
 #include "../ximg/xi_module.h"
@@ -978,6 +979,13 @@ namespace Engine
 				Engine::Video::InitializeDefaultCodecs();
 				Engine::Subtitles::InitializeDefaultCodecs();
 				Engine::Assembly::CurrentLocale = Assembly::GetCurrentUserLocale();
+				#ifdef ENGINE_SUBSYSTEM_GUI
+				{
+					SafePointer<Streaming::Stream> coms = Assembly::QueryLocalizedResource(L"COM");
+					SafePointer<Storage::StringTable> com = new Storage::StringTable(coms);
+					Assembly::SetLocalizedCommonStrings(com);
+				}
+				#endif
 				SafePointer< Array<string> > args = GetCommandLine();
 				SafePointer<XE::StandardLoader> loader = XE::CreateStandardLoader(XE::UseStandard);
 				LoadEnvironmentConfiguration(desc, environment_configuration);
@@ -1039,6 +1047,7 @@ namespace Engine
 				XE::ActivateImageIO(*loader);
 				XE::ActivateFileFormatIO(*loader);
 				XE::ActivatePowerControl(*loader);
+				XE::ActivateReflectionAPI(*loader);
 				XE::ActivateWindowsIO(*loader);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;

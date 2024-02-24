@@ -1,0 +1,197 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Repulsuum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium repulsus {
+	genus moduli hereditat objectum {
+		@nihil manubrium { adipisce virtualis pura; }
+		linea nomen { adipisce iacit virtualis pura; }
+		linea creator { adipisce iacit virtualis pura; }
+		(nint, nint, nint, nint) versio_creatoris { adipisce virtualis pura; }
+		!ordo (linea, nintadl) auxilia { adipisce iacit virtualis pura; }
+	}
+	genus generis hereditat objectum {
+		logicum classis_est { adipisce virtualis pura; }
+		logicum praeforma_est { adipisce virtualis pura; }
+		logicum functio_est { adipisce virtualis pura; }
+		logicum ordo_est { adipisce virtualis pura; }
+		logicum adloquium_est { adipisce virtualis pura; }
+		logicum referens_est { adipisce virtualis pura; }
+
+		@nihil contextus { adipisce virtualis pura; }
+		@nihil manubrium { adipisce iacit virtualis pura; }
+		!generis indivisio { adipisce iacit virtualis pura; }
+		int longitudo { adipisce iacit virtualis pura; }
+		!ordo !generis argumenta { adipisce iacit virtualis pura; }
+		linea basis { adipisce iacit virtualis pura; }
+	}
+	genus symboli hereditat objectum_dynamicum {
+		nint classis_symboli { adipisce virtualis pura; }
+		@nihil contextus { adipisce virtualis pura; }
+		@nihil manubrium { adipisce virtualis pura; }
+		!meta attributa { adipisce iacit virtualis pura; }
+	}
+	genus symbolum_valoris hereditat symboli {
+		@nihil adloquium { adipisce virtualis pura; }
+		!generis genu { adipisce iacit virtualis pura; }
+		logicum constatus_est { adipisce virtualis pura; }
+	}
+	genus symbolum_functionis hereditat symboli {
+		@nihil adloquium { adipisce virtualis pura; }
+		!generis genu { adipisce iacit virtualis pura; }
+		logicum iaciens_est { adipisce virtualis pura; }
+		logicum privata_est { adipisce virtualis pura; }
+		logicum protocollum_privatum_utat { adipisce virtualis pura; }
+	}
+	genus symbolum_generis hereditat symboli {
+		genus methodus hereditat objectum {
+			linea nomen { adipisce iacit virtualis pura; }
+			!meta attributa { adipisce iacit virtualis pura; }
+			!symbolum_functionis implantatio { adipisce iacit virtualis pura; }
+			functio nihil implantatio_virtualis(~nintadl relocatio, ~nintadl positus_adloquii) iacit virtualis pura;
+		}
+		genus valor_situs hereditat objectum {
+			linea nomen { adipisce iacit virtualis pura; }
+			!meta attributa { adipisce iacit virtualis pura; }
+			!generis genu { adipisce iacit virtualis pura; }
+			functio @nihil adloquium(@nihil objectum) virtualis pura;
+		}
+		genus valor_functionalis hereditat objectum {
+			linea nomen { adipisce iacit virtualis pura; }
+			!meta attributa { adipisce iacit virtualis pura; }
+			!generis genu { adipisce iacit virtualis pura; }
+			!methodus methodus_legendi { adipisce iacit virtualis pura; }
+			!methodus methodus_scribendi { adipisce iacit virtualis pura; }
+		}
+
+		linea nomen { adipisce iacit virtualis pura; }
+		nint destinatio { adipisce virtualis pura; }
+		nintadl longitudo { adipisce virtualis pura; }
+		
+		!symbolum_generis parens { adipisce iacit virtualis pura; }
+		!ordo !symbolum_generis parentes { adipisce iacit virtualis pura; }
+		functio !ordo !symbolum_generis protocolla(logicum omnes) iacit virtualis pura;
+
+		functio @nihil converte_ad(@symbolum_generis genu, @nihil objectum) iacit virtualis pura;
+		functio @nihil converte_ex(@symbolum_generis genu, @nihil objectum) iacit virtualis pura;
+
+		functio !ordo !valor_situs valores_siti() iacit virtualis pura;
+		functio !ordo !valor_situs valores_siti(~linea attr) iacit virtualis pura;
+		functio !ordo !valor_situs valores_siti(~linea attr, ~linea valor) iacit virtualis pura;
+
+		functio !ordo !valor_functionalis valores_functionales() iacit virtualis pura;
+		functio !ordo !valor_functionalis valores_functionales(~linea attr) iacit virtualis pura;
+		functio !ordo !valor_functionalis valores_functionales(~linea attr, ~linea valor) iacit virtualis pura;
+
+		functio !ordo !methodus methodi() iacit virtualis pura;
+		functio !ordo !methodus methodi(~linea attr) iacit virtualis pura;
+		functio !ordo !methodus methodi(~linea attr, ~linea valor) iacit virtualis pura;
+	}
+	dura generis {
+		!symbolum_generis symbolum { adipisce iacit { responde expone_symbolum(contextus, manubrium); } }
+	}
+
+	spatium symbola {
+		constatus generis		= nint(0x01);
+		constatus valoris		= nint(0x02);
+		constatus functionis	= nint(0x04);
+	}
+
+	[[importa] rp_mx0] functio !moduli expone_modulum(@nihil manubrium) iacit;
+	[[importa] rp_mr0] functio !moduli reperi_modulum(@nihil contextus, ~linea nomen) iacit;
+	[[importa] rp_mp0] functio !ordo !moduli para_modulos(@nihil contextus) iacit;
+
+	[[importa] rp_gx0] functio !generis expone_genus(@nihil contextus, @nihil manubrium) iacit;
+
+	[[importa] rp_sx0] functio !symbolum_generis expone_symbolum(@nihil contextus, @nihil manubrium) iacit;
+	[[importa] rp_sp0] functio !symboli para_symbolum(@nihil contextus, ~linea nomen) iacit;
+	[[importa] rp_sr0] functio !symboli reperi_symbolum(@nihil contextus, nint cls, ~linea attr) iacit;
+	[[importa] rp_sr1] functio !symboli reperi_symbolum(@nihil contextus, nint cls, ~linea attr, ~linea valor) iacit;
+	[[importa] rp_sp1] functio !ordo !symboli para_symbola(@nihil contextus, nint cls, ~linea attr) iacit;
+	[[importa] rp_sp2] functio !ordo !symboli para_symbola(@nihil contextus, nint cls, ~linea attr, ~linea valor) iacit;
+
+	genus invocator hereditat objectum {
+		functio nihil invoca(@nihil responsum, @nihil objectum, @@nihil argumenta) iacit virtualis pura;
+	}
+
+	[[importa] rp_ci0] functio !ordo !invocator crea_invocatores(@!symbolum_functionis of, int num) iacit;
+	[[importa] rp_ci1] functio !ordo !invocator crea_invocatores(@!symbolum_generis.methodus om, int num) iacit;
+
+	genus fabricatio hereditat objectum
+	{
+		!invocator _structor;
+		!invocator _destructor;
+		nintadl _relocatio;
+		nintadl _magnitudo;
+		structor (@symbolum_generis objectum_classis, @nihil manubrium_destinationis) iacit
+		{
+			si (objectum_classis == nullus || manubrium_destinationis == nullus) iace errores.argumentum_falsum;
+			var destinatio = expone_symbolum(objectum_classis^.manubrium, manubrium_destinationis);
+			_relocatio = nintadl(objectum_classis^.converte_ad(destinatio, nullus));
+			_magnitudo = objectum_classis^.longitudo;
+			ordo [2] !symbolum_generis.methodus meth;
+			var methodi = objectum_classis^.methodi();
+			pro (var i : methodi^) {
+				si (methodi^[i]^.nomen == "@crea:F(Cnihil)") meth[0] = methodi^[i];
+				alioqui si (methodi^[i]^.nomen == "@perde:F(Cnihil)") meth[1] = methodi^[i];
+			}
+			si (!meth[0] || !meth[1]) iace errores.implantatio_nulla;
+			var inv = crea_invocatores(meth, 2);
+			_structor = inv^[0];
+			_destructor = inv^[1];
+		}
+		functio @nihil crea_exemplar() iacit
+		{
+			var mem = memoria.alloca(_magnitudo);
+			si (mem == nullus) iace errores.memoria_nulla;
+			proba { _structor^.invoca(nullus, mem, nullus); } cape (nintadl e, nintadl se) {
+				memoria.dimitte(mem);
+				iace e, se;
+			}
+			responde (@nihil)(nintadl(mem) + _relocatio);
+		}
+		functio nihil perde_exemplar(@nihil exemplar)
+		{
+			si (exemplar == nullus) responde;
+			var mem = (@nihil)(nintadl(exemplar) - _relocatio);
+			proba _destructor^.invoca(nullus, mem, nullus);
+			memoria.dimitte(mem);
+		}
+	}
+	genus fabricatio_objectorum hereditat objectum
+	{
+		!invocator _structor;
+		nintadl _magnitudo;
+		structor (@symbolum_generis objectum_classis) iacit
+		{
+			si (objectum_classis == nullus) iace errores.argumentum_falsum;
+			var destinatio = expone_symbolum(modulus(), objectum);
+			objectum_classis^.converte_ad(destinatio, nullus);
+			_magnitudo = objectum_classis^.longitudo;
+			!symbolum_generis.methodus meth;
+			var methodi = objectum_classis^.methodi();
+			pro (var i : methodi^) {
+				si (methodi^[i]^.nomen == "@crea:F(Cnihil)") meth = methodi^[i];
+			}
+			si (!meth) iace errores.implantatio_nulla;
+			var inv = crea_invocatores(@meth, 1);
+			_structor = inv^[0];
+		}
+		functio !objectum crea_exemplar() iacit
+		{
+			var mem = memoria.alloca(_magnitudo);
+			si (mem == nullus) iace errores.memoria_nulla;
+			proba { _structor^.invoca(nullus, mem, nullus); } cape (nintadl e, nintadl se) {
+				memoria.dimitte(mem);
+				iace e, se;
+			}
+			!objectum responsum = (@objectum)(mem);
+			responde responsum;
+		}
+	}
+}
