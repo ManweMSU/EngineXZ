@@ -27,10 +27,9 @@ BETA-4:
  + XE Reflection
  + Graphics API
  + Windows and Clipboard API
- - XV: Definitions
- - XV: Static IF statement
- - XV: Static string processing
- - XV: Extension redefinition attribute
+ + XV: Definitions
+ + XV: Extension redefinition attribute
+ + XV: Added version control
 
 BETA-5:
  - Engine Runtime 1.9 ???

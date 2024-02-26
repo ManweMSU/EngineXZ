@@ -67,10 +67,11 @@ namespace Engine
 			constexpr const widechar * KeywordAs		= L"acsi";
 			constexpr const widechar * KeywordTrap		= L"__decipula__";
 
+			constexpr const widechar * AttributeSystem	= L"[systema]";
+			constexpr const widechar * AttributeExtens	= L"[extensio]";
 			constexpr const widechar * AttributeSemant	= L"[significatio]";
 			constexpr const widechar * AttributeSize	= L"[magnitudo]";
 			constexpr const widechar * AttributeCore	= L"[innatum]";
-			constexpr const widechar * AttributeSystem	= L"[systema]";
 			constexpr const widechar * AttributeInit	= L"[initium]";
 			constexpr const widechar * AttributeNoTC	= L"[thiscall_nullum]";
 			constexpr const widechar * AttributeFinal	= L"[finis]";
@@ -101,6 +102,7 @@ namespace Engine
 			constexpr const widechar * IdentifierGet	= L"adipisce";
 			constexpr const widechar * IdentifierValue	= L"valor";
 			constexpr const widechar * IdentifierTVPP	= L"valor_publicus_";
+			constexpr const widechar * IdentifierDefs	= L"xvdefinitiones";
 
 			constexpr const widechar * ResourceData	= L"data";
 			constexpr const widechar * ResourceIcon	= L"icon";

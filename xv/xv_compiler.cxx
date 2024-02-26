@@ -63,6 +63,7 @@ namespace Engine
 		struct VContext : public XL::IModuleLoadCallback, public ICompilationContext
 		{
 			bool module_is_library;
+			string extension_redefinition;
 			XL::LContext & ctx;
 			SafePointer<TokenStream> input;
 			SafePointer<ITokenStream> input_override;
@@ -1495,6 +1496,8 @@ namespace Engine
 						ctx.MakeSubsystemLibrary();
 						module_is_library = true;
 					} else Abort(CompilerStatus::InvalidSubsystem, definition);
+				} else if (key == Lexic::AttributeExtens) {
+					extension_redefinition = value;
 				} else attributes.Append(key, value);
 			}
 			void ProcessContinue(VObservationDesc & desc)
@@ -2689,6 +2692,8 @@ namespace Engine
 				else if (desc.flags & CompilerFlagSystemLibrary) lctx.MakeSubsystemLibrary();
 				else lctx.MakeSubsystemConsole();
 				lctx.SetIdleMode((desc.flags & CompilerFlagMakeModule) == 0);
+				SafePointer<XL::LObject> dns = CreateDefinitionNamespace(lctx, desc.defines);
+				lctx.GetRootNamespace()->AddMember(Lexic::IdentifierDefs, dns);
 				if (!(desc.flags & CompilerFlagMakeMetadata)) desc.meta = 0; else if (!desc.meta) throw Exception();
 				if (!desc.input) throw Exception();
 				if (desc.meta) {
@@ -2729,8 +2734,11 @@ namespace Engine
 						SafePointer<Streaming::MemoryStream> data = new Streaming::MemoryStream(0x10000);
 						lctx.ProduceModule(Meta::Stamp, Meta::VersionMajor, Meta::VersionMinor, Meta::Subversion, Meta::BuildNumber, data);
 						data->Seek(0, Streaming::Begin);
-						if (vctx.module_is_library) desc.output_module = new OutputModule(desc.module_name, XI::FileExtensionLibrary, data);
-						else desc.output_module = new OutputModule(desc.module_name, XI::FileExtensionExecutable, data);
+						string extension;
+						if (vctx.extension_redefinition.Length()) extension = vctx.extension_redefinition;
+						else if (vctx.module_is_library) extension = XI::FileExtensionLibrary;
+						else extension = XI::FileExtensionExecutable;
+						desc.output_module = new OutputModule(desc.module_name, extension, data);
 					}
 					SetStatusError(desc.status, CompilerStatus::Success);
 				}

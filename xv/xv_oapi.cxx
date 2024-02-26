@@ -97,6 +97,31 @@ namespace Engine
 				}
 			}
 		};
+		class VNamespace : public XL::XObject
+		{
+			XL::LContext & _ctx;
+			Volumes::Dictionary<string, string> _dict;
+		public:
+			VNamespace(XL::LContext & ctx, const Volumes::Dictionary<string, string> & dict) : _ctx(ctx), _dict(dict) {}
+			virtual ~VNamespace(void) override {}
+			virtual XL::Class GetClass(void) override { return XL::Class::Namespace; }
+			virtual string GetName(void) override { return Lexic::IdentifierDefs; }
+			virtual string GetFullName(void) override { return Lexic::IdentifierDefs; }
+			virtual bool IsDefinedLocally(void) override { return false; }
+			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
+			virtual LObject * GetMember(const string & name) override
+			{
+				auto value = _dict.GetElementByKey(name);
+				if (value) return _ctx.QueryLiteral(*value); else return _ctx.QueryLiteral(string(L""));
+			}
+			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
+			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
+			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
+			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw XL::ObjectIsNotEvaluatableException(this); }
+			virtual void EncodeSymbols(XI::Module & dest, XL::Class parent) override {}
+		};
 
 		XL::LObject * CreateOperatorNew(XL::LContext & ctx) { return new VOperatorNew(ctx); }
 		XL::LObject * CreateOperatorConstruct(XL::LContext & ctx) { return new VOperatorConstruct(ctx); }
@@ -321,6 +346,7 @@ namespace Engine
 			catch (...) {}
 			return static_cast<XL::XType *>(src_type.Inner())->TransformTo(instance, dest_type, true);
 		}
+		XL::LObject * CreateDefinitionNamespace(XL::LContext & ctx, const Volumes::Dictionary<string, string> & dict) { return new VNamespace(ctx, dict); }
 
 		void EncodeSelectorRetval(XA::Function & xa, int rv, const XA::ArgumentSpecification & rv_spec)
 		{

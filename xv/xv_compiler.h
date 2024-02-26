@@ -117,6 +117,7 @@ namespace Engine
 			const Array<uint32> * input;
 			ICompilerCallback * callback;
 			Volumes::Set<string> imports;
+			Volumes::Dictionary<string, string> defines;
 			CodeMetaInfo * meta;
 			// Output data
 			CompilerStatusDesc status;

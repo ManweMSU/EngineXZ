@@ -17,6 +17,8 @@ namespace Engine
 		XL::LObject * CreateDestruct(XL::LObject * object);
 		XL::LObject * CreateDynamicCast(XL::LObject * object, XL::LObject * type_into);
 
+		XL::LObject * CreateDefinitionNamespace(XL::LContext & ctx, const Volumes::Dictionary<string, string> & dict);
+
 		bool ClassImplements(XL::LObject * cls, const string & impl);
 		bool IsValidEnumerationBase(XL::LObject * type);
 		bool CreateEnumerationValue(Volumes::ObjectDictionary<string, XL::LObject> & enum_db, XL::LObject * enum_type, const string & name, XL::LObject * value);

@@ -14,6 +14,7 @@ Console console;
 
 struct {
 	SafePointer<StringTable> localization;
+	Volumes::Dictionary<string, string> defines;
 	Array<string> module_search_paths = Array<string>(0x10);
 	Array<string> documentation_list = Array<string>(0x10);
 	Volumes::Set<string> import_list;
@@ -21,6 +22,7 @@ struct {
 	bool nologo = false;
 	bool launch = false;
 	bool interactive = false;
+	bool version_control = false;
 	string input;
 	string output;
 	string output_path;
@@ -48,7 +50,55 @@ void ProcessCommandLine(void)
 		auto & arg = args->ElementAt(i);
 		if (arg[0] == L':' || arg[0] == L'-') {
 			for (int j = 1; j < arg.Length(); j++) {
-				if (arg[j] == L'I') {
+				if (arg[j] == L'D') {
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					auto defname = args->ElementAt(i);
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					auto defvalue = args->ElementAt(i);
+					auto defvaluepref = defvalue.Fragment(0, 2);
+					if (defvaluepref == L"C:") {
+						state.defines.Append(defname, defvalue.Fragment(2, -1));
+					} else if (defvaluepref == L"T:") {
+						int sep = defvalue.FindLast(L':');
+						auto fn = defvalue.Fragment(2, sep - 2);
+						try {
+							SafePointer<Registry> reg = XX::LoadConfiguration(fn);
+							auto key = defvalue.Fragment(sep + 1, -1);
+							state.defines.Append(defname, reg->GetValueString(key));
+						} catch (...) {
+							console << TextColor(12) << Localized(401) << L": " << fn << TextColorDefault() << LineFeed();
+							throw Exception();
+						}
+					} else if (defvaluepref == L"S:") {
+						int sep = defvalue.FindLast(L':');
+						auto fn = defvalue.Fragment(2, sep - 2);
+						try {
+							SafePointer<Stream> stream = new FileStream(fn, AccessRead, OpenExisting);
+							SafePointer<TextReader> rdr = new TextReader(stream);
+							int no = defvalue.Fragment(sep + 1, -1).ToUInt32();
+							int current = 0;
+							string value;
+							while (!rdr->EofReached()) {
+								auto line = rdr->ReadLine();
+								current++;
+								if (current == no) { value = line; break; }
+							}
+							state.defines.Append(defname, value);
+						} catch (...) {
+							console << TextColor(12) << Localized(401) << L": " << fn << TextColorDefault() << LineFeed();
+							throw Exception();
+						}
+					} else {
+						console << TextColor(12) << Localized(204) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+				} else if (arg[j] == L'I') {
 					state.interactive = true;
 				} else if (arg[j] == L'N') {
 					state.nologo = true;
@@ -66,6 +116,8 @@ void ProcessCommandLine(void)
 					state.import_list.RemoveElement(L"canonicalis");
 				} else if (arg[j] == L'S') {
 					state.silent = true;
+				} else if (arg[j] == L'V') {
+					state.version_control = true;
 				} else if (arg[j] == L'i') {
 					i++; if (i >= args->Length()) {
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
@@ -213,44 +265,84 @@ int Main(void)
 			if (state.output.Length()) output = L"?" + state.output;
 			else if (state.output_path.Length()) output = state.output_path;
 			else output = Path::GetDirectory(state.input);
-			XV::CompilerStatusDesc desc;
-			XV::CompileModule(state.input, output, callback, desc, &state.import_list);
-			if (state.documentation_list.Length()) {
-				XV::CompilerStatusDesc desc2;
-				SafePointer<XV::ManualVolume> volume;
-				XV::MakeManual(state.input, volume.InnerRef(), callback, desc2);
-				if (volume) {
-					SafePointer<XV::ManualVolume> base, deletes;
-					try {
-						SafePointer<Stream> base_stream = new FileStream(state.documentation_list[0], AccessRead, OpenExisting);
-						base = new XV::ManualVolume(base_stream);
-					} catch (...) {}
-					if (base) base->Update(volume, deletes.InnerRef()); else base = volume;
-					try {
-						SafePointer<Stream> output = new FileStream(state.documentation_list[0], AccessReadWrite, CreateAlways);
-						base->Save(output);
-					} catch (...) {
-						desc2.status = XV::CompilerStatus::FileAccessFailure;
-						desc2.error_line = state.documentation_list[0];
-						desc2.error_line_len = desc2.error_line_no = desc2.error_line_pos = 0;
-						if (!state.silent) PrintCompilerError(desc2);
-						return int(desc2.status);
-					}
-					if (deletes) try {
-						SafePointer<Stream> output = new FileStream(state.documentation_list[0] + L".deleta", AccessReadWrite, CreateAlways);
-						deletes->Save(output);
-					} catch (...) {}
-					for (int i = 1; i < state.documentation_list.Length(); i++) {
-						try {
-							SafePointer<Stream> output = new FileStream(state.documentation_list[i], AccessReadWrite, CreateAlways);
-							base->Save(output);
-						} catch (...) {}
-					}
+			XV::CompileDesc desc;
+			Array<uint32> input_module_string(0x1000);
+			SafePointer<XV::ICompilerCallback> local_callback;
+			try {
+				SafePointer<Streaming::FileStream> stream = new Streaming::FileStream(state.input, Streaming::AccessRead, Streaming::OpenExisting);
+				if (state.version_control && state.output.Length()) try {
+					SafePointer<Streaming::FileStream> dest = new Streaming::FileStream(state.output, Streaming::AccessRead, Streaming::OpenExisting);
+					if (DateTime::GetFileAlterTime(stream->Handle()) <= DateTime::GetFileAlterTime(dest->Handle())) return 0;
+				} catch (...) {}
+				SafePointer<Streaming::TextReader> reader = new Streaming::TextReader(stream);
+				while (!reader->EofReached()) {
+					auto code = reader->ReadChar();
+					if (code != 0xFFFFFFFF) input_module_string << code;
+				}
+				string src_dir = IO::Path::GetDirectory(state.input);
+				local_callback = CreateCompilerCallback(&src_dir, 1, &src_dir, 1, callback);
+			} catch (...) {
+				desc.status.status = XV::CompilerStatus::FileAccessFailure;
+				desc.status.error_line = state.input;
+				desc.status.error_line_pos = desc.status.error_line_no = desc.status.error_line_len = 0;
+				if (!state.silent) PrintCompilerError(desc.status);
+				return int(desc.status.status);
+			}
+			desc.flags = XV::CompilerFlagSystemConsole | XV::CompilerFlagMakeModule;
+			if (state.documentation_list.Length()) desc.flags |= XV::CompilerFlagMakeManual;
+			desc.module_name = IO::Path::GetFileNameWithoutExtension(state.input);
+			desc.input = &input_module_string;
+			desc.meta = 0;
+			desc.callback = local_callback;
+			desc.imports = state.import_list;
+			desc.defines = state.defines;
+			XV::Compile(desc);
+			if (desc.status.status == XV::CompilerStatus::Success) {
+				if (output[0] == L'?') output = output.Fragment(1, -1);
+				else output = IO::ExpandPath(output + L"/" + desc.output_module->GetOutputModuleName() + L"." + desc.output_module->GetOutputModuleExtension());
+				try {
+					SafePointer<Streaming::Stream> stream = new Streaming::FileStream(output, Streaming::AccessWrite, Streaming::CreateAlways);
+					auto data = desc.output_module->GetOutputModuleData();
+					data->CopyTo(stream);
+				} catch (...) {
+					desc.status.status = XV::CompilerStatus::FileAccessFailure;
+					desc.status.error_line = output;
+					desc.status.error_line_pos = desc.status.error_line_no = desc.status.error_line_len = 0;
+					if (!state.silent) PrintCompilerError(desc.status);
+					return int(desc.status.status);
 				}
 			}
-			if (desc.status != XV::CompilerStatus::Success) {
-				if (!state.silent) PrintCompilerError(desc);
-				return int(desc.status);
+			if (state.documentation_list.Length() && desc.output_volume) {
+				SafePointer<XV::ManualVolume> base, deletes;
+				try {
+					SafePointer<Stream> base_stream = new FileStream(state.documentation_list[0], AccessRead, OpenExisting);
+					base = new XV::ManualVolume(base_stream);
+				} catch (...) {}
+				if (base) base->Update(desc.output_volume, deletes.InnerRef()); else base = desc.output_volume;
+				try {
+					SafePointer<Stream> output = new FileStream(state.documentation_list[0], AccessReadWrite, CreateAlways);
+					base->Save(output);
+				} catch (...) {
+					desc.status.status = XV::CompilerStatus::FileAccessFailure;
+					desc.status.error_line = state.documentation_list[0];
+					desc.status.error_line_len = desc.status.error_line_no = desc.status.error_line_pos = 0;
+					if (!state.silent) PrintCompilerError(desc.status);
+					return int(desc.status.status);
+				}
+				if (deletes) try {
+					SafePointer<Stream> output = new FileStream(state.documentation_list[0] + L".deleta", AccessReadWrite, CreateAlways);
+					deletes->Save(output);
+				} catch (...) {}
+				for (int i = 1; i < state.documentation_list.Length(); i++) {
+					try {
+						SafePointer<Stream> output = new FileStream(state.documentation_list[i], AccessReadWrite, CreateAlways);
+						base->Save(output);
+					} catch (...) {}
+				}
+			}
+			if (desc.status.status != XV::CompilerStatus::Success) {
+				if (!state.silent) PrintCompilerError(desc.status);
+				return int(desc.status.status);
 			} else if (state.launch) {
 				Array<string> args(0x10);
 				args << output;
