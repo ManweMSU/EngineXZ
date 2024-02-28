@@ -1,24 +1,359 @@
 ﻿importa canonicalis;
-importa consolatorium;
-importa limae;
-importa imago;
+importa fenestrae;
+importa lxx;
+importa graphicum;
+importa repulsus;
 
-auxilium lingua "ru";
+auxilium attributum (meta.attributum_nomen_moduli) = "Test XX Application";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "0.0.0.0";
 
 auxilium icon (1) = "icon.eiwv";
+auxilium data ("XW", 2) = "test.egsu";
 
-constatus some_text = "suka ty pidor" { "ru", "сука ты пидор" };
+[[systema] graphica]
 
-functio nihil primus() introitus iacit
+ute fenestrae;
+
+functio frac dot(ordo [3] frac a, ordo [3] frac b) { responde a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+functio ordo [3] frac operator * (ordo [3] frac a, ordo [3] frac b)
 {
-	var ~ cns = consolatorium.currens()^;
-	cns.titulus = some_text;
-	cns.color_primus = consolatorium.color.viridis;
+	ordo [3] frac r;
+	r[0] = a[1] * b[2] - a[2] * b[1];
+	r[1] = a[2] * b[0] - a[0] * b[2];
+	r[2] = a[0] * b[1] - a[1] * b[0];
+	responde r;
+}
+functio frac abs(ordo [3] frac a) { responde math.radix(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]); }
+functio ordo [3] frac norm(ordo [3] frac a)
+{
+	frac v = abs(a);
+	ordo [3] frac r = a;
+	r[0] /= v; r[1] /= v; r[2] /= v;
+	responde r;
+}
+functio ordo [3] frac vector(frac x, frac y, frac z)
+{
+	ordo [3] frac r;
+	r[0] = x; r[1] = y; r[2] = z;
+	responde r;
+}
+functio ordo [9] frac matrix(frac a11, frac a12, frac a13, frac a21, frac a22, frac a23, frac a31, frac a32, frac a33)
+{
+	ordo [9] frac r;
+	r[0] = a11; r[1] = a12; r[2] = a13;
+	r[3] = a21; r[4] = a22; r[5] = a23;
+	r[6] = a31; r[7] = a32; r[8] = a33;
+	responde r;
+}
+functio ordo [9] frac interverte(ordo [9] frac m) { responde matrix(m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]); }
+functio ordo [9] frac operator * (ordo [9] frac a, ordo [9] frac b)
+{
+	ordo [9] frac r;
+	pro (var i : [0, 2]) pro (var j : [0, 2]) {
+		frac s = 0.0;
+		pro (var k : [0, 2]) s += a[3 * i + k] * b[3 * k + j];
+		r[3 * i + j] = s;
+	}
+	responde r;
+}
+functio ordo [16] frac operator * (ordo [16] frac a, ordo [16] frac b)
+{
+	ordo [16] frac r;
+	pro (var i : [0, 3]) pro (var j : [0, 3]) {
+		frac s = 0.0;
+		pro (var k : [0, 3]) s += a[4 * i + k] * b[4 * k + j];
+		r[4 * i + j] = s;
+	}
+	responde r;
+}
+functio ordo [16] frac expande(ordo [9] frac m)
+{
+	ordo [16] frac r;
+	r[0] = m[0]; r[1] = m[1]; r[2] = m[2]; r[3] = 0.0;
+	r[4] = m[3]; r[5] = m[4]; r[6] = m[5]; r[7] = 0.0;
+	r[8] = m[6]; r[9] = m[7]; r[10] = m[8]; r[11] = 0.0;
+	r[12] = 0.0; r[13] = 0.0; r[14] = 0.0; r[15] = 1.0;
+	responde r;
+}
 
-	var limae = semita.currens().limae_cunctae("*.xv;*.xvm");
-	pro (var i : limae^) cns << limae^[i] << "\n";
+functio ordo [16] frac rota(frac anglus, ordo [3] frac axis)
+{
+	var c = math.cos(anglus);
+	var s = math.sin(anglus);
+	var z = norm(axis);
+	ordo [3] frac orth;
+	si (math.abs(z[0]) > frac(0.5)) { orth[0] = 0.0; orth[1] = 1.0; orth[2] = 0.0; }
+	alioqui { orth[0] = 1.0; orth[1] = 0.0; orth[2] = 0.0; }
+	var x = norm(z * orth);
+	var y = z * x;
+	var trans = matrix(x[0], x[1], x[2], y[0], y[1], y[2], z[0], z[1], z[2]);
+	var rev = interverte(trans);
+	var rot = matrix(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0);
+	responde expande(rev * rot * trans);
+}
+functio ordo [16] frac specta(ordo [3] frac oculus, ordo [3] frac dir, ordo [3] frac sup)
+{
+	var z = norm(dir);
+	z[0] *= -1.0; z[1] *= -1.0; z[2] *= -1.0;
+	var x = norm(sup * z);
+	var y = z * x;
+	ordo [16] frac r;
+	r[0] = x[0]; r[1] = x[1]; r[2] = x[2]; r[3] = -dot(x, oculus);
+	r[4] = y[0]; r[5] = y[1]; r[6] = y[2]; r[7] = -dot(y, oculus);
+	r[8] = z[0]; r[9] = z[1]; r[10] = z[2]; r[11] = -dot(z, oculus);
+	r[12] = 0.0; r[13] = 0.0; r[14] = 0.0; r[15] = 1.0;
+	responde r;
+}
+functio ordo [16] frac pers(frac anglus, frac ratio, frac prox, frac ult)
+{
+	var alt = frac(1.0) / (prox - ult);
+	var asc_y = math.ctg(anglus / frac(2.0));
+	var asc_x = asc_y / ratio;
+	ordo [16] frac r;
+	r[0] = asc_x; r[1] = 0.0; r[2] = 0.0; r[3] = 0.0;
+	r[4] = 0.0; r[5] = asc_y; r[6] = 0.0; r[7] = 0.0;
+	r[8] = 0.0; r[9] = 0.0; r[10] = alt * ult; r[11] = alt * ult * prox;
+	r[12] = 0.0; r[13] = 0.0; r[14] = -1.0; r[15] = 0.0;
+	responde r;
+}
 
-	cns.color_primus = consolatorium.color.defalta;
-	cns.scribe_lineam(some_text);
-	iace 666;
+structura indutrix hereditat objectum {
+	ordo frac vertices;
+	ordo nint16 indices;
+
+	!graphicum.series data_vertices;
+	!graphicum.series data_indices;
+
+	functio nihil adde_verticem((dfrac, dfrac, dfrac) pos, (dfrac, dfrac, dfrac) color, (dfrac, dfrac, dfrac) norm) iacit
+	{
+		vertices << pos.primus << pos.secundus << pos.tertius;
+		vertices << color.primus << color.secundus << color.tertius;
+		vertices << norm.primus << norm.secundus << norm.tertius;
+	}
+	functio nihil adde_triangulum(int i1, int i2, int i3) iacit
+	{
+		indices << nint16(vertices.longitudo / 9 + i1) << nint16(vertices.longitudo / 9 + i2) << nint16(vertices.longitudo / 9 + i3);
+	}
+	functio nihil ende(@graphicum.machinatio mach) iacit
+	{
+		graphicum.descriptio_seriei desc;
+		graphicum.descriptio_datorum data;
+		desc.longitudo = vertices.longitudo * int(magnitudo(frac));
+		desc.longitudo_celulae = 9 * int(magnitudo(frac));
+		desc.memoria = graphicum.classis_memoriae.immuta;
+		desc.modus = graphicum.modus_auxilii.habilita_legendum_functionis;
+		data.data = vertices.data;
+		data_vertices = mach^.crea_seriem(desc, data);
+		desc.longitudo = indices.longitudo * int(magnitudo(nint16));
+		desc.longitudo_celulae = int(magnitudo(nint16));
+		desc.modus = graphicum.modus_auxilii.habilita_legendum_indecis;
+		data.data = indices.data;
+		data_indices = mach^.crea_seriem(desc, data);
+		si (!data_vertices || !data_indices) iace errores.memoria_nulla;
+	}
+}
+structura configuratio {
+	ordo [16] frac proj;
+	ordo [16] frac trans;
+	ordo [3] frac lt;
+	frac amb;
+	frac diff;
+}
+
+structura callback : responsor_fenestrae, responsor_applicationis {
+	!graphicum.machinatio mach;
+	!graphicum.status_oleiductus oles;
+	!graphicum.fundus_fenestrae fund;
+	!graphicum.textura altitudo;
+	!indutrix cubus;
+	configuratio conf;
+
+	functio nihil crea_texturam_altitudinis(int x, int y) iacit
+	{
+		graphicum.descriptio_texturae desc;
+		desc.dimensiones = graphicum.classis_texturae.singularis_duo_dimensiones;
+		desc.formatus = graphicum.formatus_puncti.D32_frac;
+		desc.latitudo = x;
+		desc.altitudo = y;
+		desc.numerus_subtilitatum = 1;
+		desc.modus = graphicum.modus_auxilii.habilita_reddendum_altitudinis;
+		desc.memoria = graphicum.classis_memoriae.defalta;
+		altitudo = mach^.crea_texturam(desc);
+	}
+	functio nihil crea_statum() iacit
+	{
+		var liber = mach^.compila_functiones(para_auxilium(modulus(), "XW", 2));
+		graphicum.descriptio_oleiductus desc;
+		desc.functio_verticum = liber^.crea_functionem("VertexShader");
+		desc.functio_punctorum = liber^.crea_functionem("PixelShader");
+		desc.numerus_destinatorum = 1;
+		desc.destinata[0].formatus = graphicum.formatus_puncti.B8G8R8A8_norm;
+		desc.destinata[0].modus_reddendi = 0;
+		desc.altitudo_et_praeforma.modus_reddendi =
+			graphicum.modus_reddendi_altitudinis.habilita_probandum_altitudinis |
+			graphicum.modus_reddendi_altitudinis.habilita_scribendum_altitudinis;
+		desc.altitudo_et_praeforma.formatus = graphicum.formatus_puncti.D32_frac;
+		desc.altitudo_et_praeforma.simile_altitudinis = graphicum.functio_consimilandi.minutior;
+		desc.altitudo_et_praeforma.filtrum_scribendi_praeformae = 0;
+		desc.altitudo_et_praeforma.filtrum_legendi_praeformae = 0;
+		desc.discretus.modus_implendi = graphicum.modus_implendi.solidus;
+		desc.discretus.modus_decerpendi = graphicum.modus_decerpendi.dorsualis;
+		desc.discretus.favor_altitudinis = 0;
+		desc.discretus.favor_altitudinis_clinatus = 0.0;
+		desc.discretus.princeps_positivus_est = sic;
+		desc.discretus.termen_favoris_altitudinis = 0.0;
+		desc.discretus.habilita_decerpendum_altitudinis = sic;
+		desc.ordo_primitivi = graphicum.ordo_primitivi.ordo_triangulorum;
+		oles = mach^.crea_statum_oleiductus(desc);
+	}
+	functio nihil crea_cubus() iacit
+	{
+		cubus = crea(indutrix);
+		cubus^.adde_verticem((-0.5, -0.5, -0.5), (0.0, 0.0, 0.0), (0.0, 0.0, -1.0));
+		cubus^.adde_verticem((0.5, -0.5, -0.5), (1.0, 0.0, 0.0), (0.0, 0.0, -1.0));
+		cubus^.adde_verticem((-0.5, 0.5, -0.5), (0.0, 1.0, 0.0), (0.0, 0.0, -1.0));
+		cubus^.adde_verticem((0.5, 0.5, -0.5), (1.0, 1.0, 0.0), (0.0, 0.0, -1.0));
+		cubus^.adde_triangulum(-4, -2, -3);
+		cubus^.adde_triangulum(-3, -2, -1);
+		cubus^.adde_verticem((-0.5, -0.5, -0.5), (0.0, 0.0, 0.0), (0.0, -1.0, 0.0));
+		cubus^.adde_verticem((0.5, -0.5, -0.5), (1.0, 0.0, 0.0), (0.0, -1.0, 0.0));
+		cubus^.adde_verticem((-0.5, -0.5, 0.5), (0.0, 0.0, 1.0), (0.0, -1.0, 0.0));
+		cubus^.adde_verticem((0.5, -0.5, 0.5), (1.0, 0.0, 1.0), (0.0, -1.0, 0.0));
+		cubus^.adde_triangulum(-4, -3, -2);
+		cubus^.adde_triangulum(-2, -3, -1);
+		cubus^.adde_verticem((-0.5, 0.5, -0.5), (0.0, 1.0, 0.0), (0.0, 1.0, 0.0));
+		cubus^.adde_verticem((0.5, 0.5, -0.5), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0));
+		cubus^.adde_verticem((-0.5, 0.5, 0.5), (0.0, 1.0, 1.0), (0.0, 1.0, 0.0));
+		cubus^.adde_verticem((0.5, 0.5, 0.5), (1.0, 1.0, 1.0), (0.0, 1.0, 0.0));
+		cubus^.adde_triangulum(-4, -2, -3);
+		cubus^.adde_triangulum(-3, -2, -1);
+		cubus^.adde_verticem((-0.5, -0.5, 0.5), (0.0, 0.0, 1.0), (0.0, 0.0, 1.0));
+		cubus^.adde_verticem((0.5, -0.5, 0.5), (1.0, 0.0, 1.0), (0.0, 0.0, 1.0));
+		cubus^.adde_verticem((-0.5, 0.5, 0.5), (0.0, 1.0, 1.0), (0.0, 0.0, 1.0));
+		cubus^.adde_verticem((0.5, 0.5, 0.5), (1.0, 1.0, 1.0), (0.0, 0.0, 1.0));
+		cubus^.adde_triangulum(-4, -3, -2);
+		cubus^.adde_triangulum(-2, -3, -1);
+		cubus^.adde_verticem((0.5, -0.5, -0.5), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0));
+		cubus^.adde_verticem((0.5, 0.5, -0.5), (1.0, 1.0, 0.0), (1.0, 0.0, 0.0));
+		cubus^.adde_verticem((0.5, -0.5, 0.5), (1.0, 0.0, 1.0), (1.0, 0.0, 0.0));
+		cubus^.adde_verticem((0.5, 0.5, 0.5), (1.0, 1.0, 1.0), (1.0, 0.0, 0.0));
+		cubus^.adde_triangulum(-4, -3, -2);
+		cubus^.adde_triangulum(-2, -3, -1);
+		cubus^.adde_verticem((-0.5, -0.5, -0.5), (0.0, 0.0, 0.0), (-1.0, 0.0, 0.0));
+		cubus^.adde_verticem((-0.5, 0.5, -0.5), (0.0, 1.0, 0.0), (-1.0, 0.0, 0.0));
+		cubus^.adde_verticem((-0.5, -0.5, 0.5), (0.0, 0.0, 1.0), (-1.0, 0.0, 0.0));
+		cubus^.adde_verticem((-0.5, 0.5, 0.5), (0.0, 1.0, 1.0), (-1.0, 0.0, 0.0));
+		cubus^.adde_triangulum(-4, -2, -3);
+		cubus^.adde_triangulum(-3, -2, -1);
+		cubus^.ende(mach);
+	}
+	functio nihil fenestra_creata_est(@fenestra fen) iacit redefini
+	{
+		var ~ con = consolatorium.currens()^;
+		con.scribe_lineam("CREATED");
+		fen^.erige_chronometrum(1, 30);
+		var fab = graphicum.crea_fabricationem_machinationis();
+		var dim = fen^.dimensiones_internae;
+		mach = fab^.crea_machinationem();
+		graphicum.descriptio_fundi_fenestrae dff;
+		dff.latitudo = dim.x;
+		dff.altitudo = dim.y;
+		dff.formatus = graphicum.formatus_puncti.B8G8R8A8_norm;
+		dff.modus = graphicum.modus_auxilii.habilita_reddendum_coloris | graphicum.modus_auxilii.habilita_legendum_functionis;
+		fund = mach^.crea_fundum_fenestrae(fen, dff);
+		crea_texturam_altitudinis(dim.x, dim.y);
+		crea_statum();
+		crea_cubus();
+	}
+	functio nihil fenestra_deleta_est(@fenestra fen) iacit redefini
+	{
+		var ~ con = consolatorium.currens()^;
+		con.scribe_lineam("DESTROYED");
+	}
+	functio nihil expone_fenestram(@fenestra fen) iacit redefini
+	{
+		var dest = fund^.textura;
+		var ctx = mach^.contextus;
+		graphicum.prospectus_destinati_coloris rtvd;
+		graphicum.prospectus_destinati_altitudinis dsvd;
+		rtvd.textura = dest;
+		rtvd.modus_onerandi = graphicum.modus_onerandi.depura;
+		rtvd.color_depurandi[0] = 0.2;
+		rtvd.color_depurandi[1] = 0.2;
+		rtvd.color_depurandi[2] = 0.2;
+		rtvd.color_depurandi[3] = 1.0;
+		dsvd.textura = altitudo;
+		dsvd.modus_onerandi_altitudinis = graphicum.modus_onerandi.depura;
+		dsvd.modus_onerandi_praeformae = graphicum.modus_onerandi.derelinque;
+		dsvd.valor_depurandi_altitudinis = 1.0;
+		dsvd.valor_depurandi_praeformae = 0;
+		si (ctx^.exordi_reddendum(1, @rtvd, @dsvd)) {
+			var a1 = frac(systema.para_tempus_systemae() % nint(10000)) * frac.pi / frac(5000);
+			var c = math.cos(a1);
+			var s = math.sin(a1);
+			var a2 = frac(systema.para_tempus_systemae() % nint(15000)) * frac.pi / frac(7500);
+			var o = vector(frac(4.0) * c, frac(4.0) * s, 8.0);
+			conf.proj = pers(frac.pi / frac(4.0), frac(dest^.latitudo) / frac(dest^.altitudo), 0.01, 100.0) *
+				specta(o, vector(-o[0], -o[1], -o[2]), vector(0.0, 0.0, 1.0));
+			conf.trans = rota(a2, vector(1.0, 0.0, 0.0));
+			conf.lt = vector(1.0, 1.0, -1.0);
+			conf.amb = 0.6;
+			conf.diff = 0.4;
+			ctx^.loca_adspectabilem(0.0, 0.0, dest^.latitudo, dest^.altitudo, 0.0, 1.0);
+			ctx^.loca_statum_oleiductus(oles);
+			ctx^.loca_auxilium_verticis(1, cubus^.data_vertices);
+			ctx^.loca_constatum_verticis(0, @conf, magnitudo(conf));
+			ctx^.loca_constatum_puncti(0, @conf, magnitudo(conf));
+			ctx^.loca_indicis(cubus^.data_indices, graphicum.formatus_indecis.I16_int);
+			ctx^.redde(cubus^.indices.longitudo, 0, 0, 9, 0);
+			ctx^.ende();
+		}
+		dest.depura();
+		fund^.exhibe();
+	}
+	functio nihil fenestra_closa_est(@fenestra fen) iacit redefini
+	{
+		var ~ con = consolatorium.currens()^;
+		con.scribe_lineam("CLOSE");
+		fen^.dele();
+	}
+	functio nihil fenestra_cressata_est(@fenestra fen) iacit redefini
+	{
+		var dim = fen^.dimensiones_internae;
+		fund^.cressa(dim.x, dim.y);
+		crea_texturam_altitudinis(dim.x, dim.y);
+	}
+	functio nihil chronometrus_fierit(@fenestra fen, nint indent) iacit redefini { fen^.invalida(); }
+}
+
+functio nihil primus() introitus iacit {
+	proba {
+		callback cb;
+
+		var ~ con = consolatorium.alloca() acsi (xx.xc)^;
+		var ~ sys = fenestrae.systema_fenestrarum.aediface(@cb);
+		var ref_con = @con;
+		var ref_sys = @sys;
+		con.depura_cunctum();
+
+		fenestrae.crea_fenestram_desc desc;
+		desc.stylus = fenestrae.styli_fenestrae.cressata | fenestrae.styli_fenestrae.habet_titulum |
+			fenestrae.styli_fenestrae.tactus_clode | fenestrae.styli_fenestrae.tactus_minima | fenestrae.styli_fenestrae.tactus_maxima;
+		desc.dimensiones_maximae = fenestrae.positus(0, 0);
+		desc.dimensiones_minimae = fenestrae.positus(200, 200);
+		desc.parens = nullus;
+		desc.positus = fenestrae.quadrum(100, 100, 500, 500);
+		desc.responsor = @cb;
+		desc.thema_tenebrosa = sic;
+		desc.titulus = "ТЕСТ ГРАФИКИ";
+		var fen = sys.crea_fenestram(desc);
+		fen^.visibilis = sic;
+		sys.exeque(sic);
+	} cape (nintadl e1, nintadl e2) {
+		linea E1, E2;
+		errores.descriptio(e1, e2, E1, E2);
+		actuarius.scribe(linea.forma("ERROR: %0 - %1", E1, E2));
+	}
 }
