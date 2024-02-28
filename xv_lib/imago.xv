@@ -276,14 +276,14 @@ spatium graphicum {
 		functio nihil exordi_tabulatum(int sin, int sup, int dex, int sub, dfrac opc) virtualis pura;
 		functio nihil ende_tabulatum() virtualis pura;
 
-		functio nihil redige(@saeta_coloris sae, int sin, int sup, int dex, int sub) virtualis pura;
-		functio nihil redige(@saeta_picturae sae, int sin, int sup, int dex, int sub) virtualis pura;
-		functio nihil redige(@saeta_scriptionis sae, int sin, int sup, int dex, int sub, logicum marg) virtualis pura;
-		functio nihil redige(@saeta_maculae sae, int sin, int sup, int dex, int sub) virtualis pura;
-		functio nihil redige(@saeta_inversionis sae, int sin, int sup, int dex, int sub, logicum nict) virtualis pura;
+		functio nihil redde(@saeta_coloris sae, int sin, int sup, int dex, int sub) virtualis pura;
+		functio nihil redde(@saeta_picturae sae, int sin, int sup, int dex, int sub) virtualis pura;
+		functio nihil redde(@saeta_scriptionis sae, int sin, int sup, int dex, int sub, logicum marg) virtualis pura;
+		functio nihil redde(@saeta_maculae sae, int sin, int sup, int dex, int sub) virtualis pura;
+		functio nihil redde(@saeta_inversionis sae, int sin, int sup, int dex, int sub, logicum nict) virtualis pura;
 
-		functio nihil redige_polygonum(@dfrac puncta, int num, ~imago.color clr) virtualis pura;
-		functio nihil redige_polylineam(@dfrac puncta, int num, ~imago.color clr, dfrac magn) virtualis pura;
+		functio nihil redde_polygonum(@dfrac puncta, int num, ~imago.color clr) virtualis pura;
+		functio nihil redde_polylineam(@dfrac puncta, int num, ~imago.color clr, dfrac magn) virtualis pura;
 
 		nint tempus { adipisce virtualis pura; loca virtualis pura; }
 		nint tempus_cursoris { adipisce virtualis pura; loca virtualis pura; }

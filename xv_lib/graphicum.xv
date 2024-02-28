@@ -63,14 +63,14 @@ spatium graphicum {
 	enumeratio ordo_primitivi hereditat nint32 { ordo_punctorum = 0, ordo_linearum = 1, ina_linearum = 2, ordo_triangulorum = 3, ina_triangulorum = 4 }
 	enumeratio modus_onerandi hereditat nint32 { derelinque = 0, onera = 1, depura = 2 }
 
-	spatium modus_redigendi_coloris {
+	spatium modus_reddendi_coloris {
 		constatus habilita_miscendum	= nint(0x00000001);
 		constatus offirma_rubrum		= nint(0x00000002);
 		constatus offirma_viridem		= nint(0x00000004);
 		constatus offirma_blavum		= nint(0x00000008);
 		constatus offirma_alpham		= nint(0x00000010);
 	}
-	spatium modus_redigendi_altitudinis {
+	spatium modus_reddendi_altitudinis {
 		constatus habilita_probandum_altitudinis	= nint(0x00000001);
 		constatus habilita_scribendum_altitudinis	= nint(0x00000002);
 		constatus habilita_probandum_praeformae		= nint(0x00000004);
@@ -85,15 +85,15 @@ spatium graphicum {
 		constatus habilita_legendum_visificum		= nint(0x00000100);
 		constatus habilita_scribendum_visificum		= nint(0x00000200);
 		constatus habilita_operandum_visificum		= habilita_legendum_visificum | habilita_scribendum_visificum;
-		constatus habilita_redigendum_coloris		= nint(0x00000010);
-		constatus habilita_redigendum_altitudinis	= nint(0x00000020);
+		constatus habilita_reddendum_coloris		= nint(0x00000010);
+		constatus habilita_reddendum_altitudinis	= nint(0x00000020);
 		constatus habilita_legendum_constatus		= nint(0x00000004);
 		constatus habilita_legendum_indecis			= nint(0x00000008);
 
 		constatus modi_serierum		=	habilita_operandum_functionis | habilita_operandum_processoris |
 										habilita_legendum_constatus | habilita_legendum_indecis;
 		constatus modi_texturarum	=	habilita_operandum_functionis | habilita_operandum_processoris | habilita_operandum_visificum |
-										habilita_redigendum_coloris | habilita_redigendum_altitudinis;
+										habilita_reddendum_coloris | habilita_reddendum_altitudinis;
 	}
 
 	genus functio_machinationis hereditat objectum_dynamicum {
@@ -142,9 +142,9 @@ spatium graphicum {
 		frac subtilitas_maxima;
 		[[non_polire]] ordo [4] frac color_atterminandi;
 	}
-	structura descriptio_redigendi {
+	structura descriptio_reddendi {
 		formatus_puncti formatus;
-		nint modus_redigendi;
+		nint modus_reddendi;
 		functio_miscendi miscere_colorum;
 		functio_miscendi miscere_alpharum;
 		factor_miscendi	factor_coloris_fundi;
@@ -160,7 +160,7 @@ spatium graphicum {
 	}
 	structura descriptio_altitudinis {
 		formatus_puncti formatus;
-		nint modus_redigendi;
+		nint modus_reddendi;
 		functio_consimilandi simile_altitudinis;
 		nint8 filtrum_scribendi_praeformae;
 		nint8 filtrum_legendi_praeformae;
@@ -180,7 +180,7 @@ spatium graphicum {
 		!functio_machinationis functio_verticum;
 		!functio_machinationis functio_punctorum;
 		int numerus_destinatorum;
-		ordo [8] descriptio_redigendi destinata;
+		ordo [8] descriptio_reddendi destinata;
 		descriptio_altitudinis altitudo_et_praeforma;
 		descriptio_discreti discretus;
 		ordo_primitivi ordo_primitivi;
@@ -226,8 +226,8 @@ spatium graphicum {
 	}
 
 	genus contextus_machinationis hereditat objectum_dynamicum {
-		functio logicum exordi_redigendum(int num_dest, @prospectus_destinati_coloris dc, @prospectus_destinati_altitudinis da) virtualis pura;
-		functio logicum exordi_redigendum_planum(@textura dest) virtualis pura;
+		functio logicum exordi_reddendum(int num_dest, @prospectus_destinati_coloris dc, @prospectus_destinati_altitudinis da) virtualis pura;
+		functio logicum exordi_reddendum_planum(@textura dest) virtualis pura;
 		functio logicum exordi_regimen_memoriae() virtualis pura;
 		functio logicum ende() virtualis pura;
 		functio nihil annoda() virtualis pura;
@@ -244,10 +244,10 @@ spatium graphicum {
 		functio nihil loca_statum_exceptandi_puncti(int ind, @status_exceptandi aux) virtualis pura;
 		functio nihil loca_indicis(@series aux, formatus_indecis fmt) virtualis pura;
 		functio nihil loca_valorem_praeformae(nint8 valor) virtualis pura;
-		functio nihil redige(int numerus_verticum, int vertex_primus) virtualis pura;
-		functio nihil redige(int numerus_verticum, int vertex_primus, int numerus_exemplorum, int exemplum_primum) virtualis pura;
-		functio nihil redige(int numerus_indicum, int index_primus, int basis_verticum) virtualis pura;
-		functio nihil redige(int numerus_indicum, int index_primus, int basis_verticum, int numerus_exemplorum, int exemplum_primum) virtualis pura;
+		functio nihil redde(int numerus_verticum, int vertex_primus) virtualis pura;
+		functio nihil redde(int numerus_verticum, int vertex_primus, int numerus_exemplorum, int exemplum_primum) virtualis pura;
+		functio nihil redde(int numerus_indicum, int index_primus, int basis_verticum) virtualis pura;
+		functio nihil redde(int numerus_indicum, int index_primus, int basis_verticum, int numerus_exemplorum, int exemplum_primum) virtualis pura;
 
 		@contextus_machinae contextus_planus { adipisce virtualis pura; }
 
