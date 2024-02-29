@@ -182,6 +182,7 @@ namespace Engine
 								info.reg_min = info.reg_max = Reg::NO;
 								info.vreg = VReg::NO;
 								info.stack_offset = spo;
+								spo += 8;
 							}
 						} else {
 							if (gri < 8 && (info.indirect || _word_align(spec.size) <= 8)) {
@@ -211,6 +212,7 @@ namespace Engine
 								info.reg_min = info.reg_max = Reg::NO;
 								info.vreg = VReg::NO;
 								info.stack_offset = spo;
+								spo += size;
 							}
 						}
 						result->Append(info);
@@ -692,7 +694,10 @@ namespace Engine
 					retval_byref = _is_pass_by_ref(node.retval_spec);
 					retval_final = node.retval_final.final.ref_class != ReferenceNull;
 					SafePointer< Array<_argument_passage_info> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no);
+					bool preserve_x19 = false;
+					if (disp->reg != Reg::X19) for (auto & info : *layout) if (!info.indirect && info.vreg != VReg::NO) { preserve_x19 = true; break; }
 					_encode_preserve(0x3FFFF, reg_in_use, uint(disp->reg), !idle);
+					if (preserve_x19 && !idle) _encode_push(Reg::X19);
 					uint stack_usage = 0;
 					for (auto & info : *layout) if (info.stack_offset < 0) {
 						ArgumentSpecification spec;
@@ -727,6 +732,7 @@ namespace Engine
 									if (info.vreg != VReg::NO) {
 										ld.flags = DispositionPointer;
 										ld.reg = _make_reg(_reg_code(info.vreg) + 9);
+										if (ld.reg == Reg::X16) ld.reg = Reg::X19;
 										_vector_argument_reload rl;
 										rl.reg = info.vreg;
 										rl.size = ld.size;
@@ -828,6 +834,7 @@ namespace Engine
 						disp->flags = DispositionDiscard;
 					}
 					if (rv_mem_index >= 0) _assign_finalizer(rv_mem_index, node.retval_final);
+					if (preserve_x19 && !idle) _encode_pop(Reg::X19);
 					_encode_restore(0x3FFFF, reg_in_use, uint(disp->reg), !idle);
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
