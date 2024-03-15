@@ -252,10 +252,10 @@ spatium graphicum {
 		@contextus_machinae contextus_planus { adipisce virtualis pura; }
 
 		functio nihil genera_subtilitates(@textura aux) virtualis pura;
-		functio nihil exscribe_datorum(@auxilium_machinationis ad, @auxilium_machinationis ex) virtualis pura;
-		functio nihil exscribe_datorum(@auxilium_machinationis ad, (int, int) ad_sing, (int, int, int) ad_basis, @auxilium_machinationis ex, (int, int) ex_sing, (int, int, int) ex_basis, (int, int, int) magnitudines) virtualis pura;
-		functio nihil loca_datorum(@auxilium_machinationis ad, (int, int) ad_sing, (int, int, int) ad_basis, (int, int, int) magnitudines, ~descriptio_datorum ex) virtualis pura;
-		functio nihil quere_datorum(~descriptio_datorum ad, @auxilium_machinationis ex, (int, int) ex_sing, (int, int, int) ex_basis, (int, int, int) magnitudines) virtualis pura;
+		functio nihil exscribe_data(@auxilium_machinationis ad, @auxilium_machinationis ex) virtualis pura;
+		functio nihil exscribe_data(@auxilium_machinationis ad, (int, int) ad_sing, (int, int, int) ad_basis, @auxilium_machinationis ex, (int, int) ex_sing, (int, int, int) ex_basis, (int, int, int) magnitudines) virtualis pura;
+		functio nihil loca_data(@auxilium_machinationis ad, (int, int) ad_sing, (int, int, int) ad_basis, (int, int, int) magnitudines, ~descriptio_datorum ex) virtualis pura;
+		functio nihil quere_data(~descriptio_datorum ad, @auxilium_machinationis ex, (int, int) ex_sing, (int, int, int) ex_basis, (int, int, int) magnitudines) virtualis pura;
 	}
 	genus machinatio hereditat objectum {
 		linea nomen { adipisce iacit virtualis pura; }
