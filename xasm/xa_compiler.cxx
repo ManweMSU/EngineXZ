@@ -154,6 +154,153 @@ namespace Engine
 				_pos++;
 				ProcessSpecification(output);
 			}
+			bool ProcessStandardTransform(ObjectReference & ref)
+			{
+				auto & i = _text[_pos].Content;
+				// General purpose
+				if (i == L"PTR_FOLLOW") ref.index = TransformFollowPointer;
+				else if (i == L"PTR_TAKE") ref.index = TransformTakePointer;
+				else if (i == L"OFFSET") ref.index = TransformAddressOffset;
+				else if (i == L"BLT") ref.index = TransformBlockTransfer;
+				else if (i == L"CALL") ref.index = TransformInvoke;
+				else if (i == L"NEW") ref.index = TransformTemporary;
+				else if (i == L"BREAKIF") ref.index = TransformBreakIf;
+				else if (i == L"SPLIT") ref.index = TransformSplit;
+				// Logical
+				else if (i == L"ALL") ref.index = TransformLogicalAnd;
+				else if (i == L"ANY") ref.index = TransformLogicalOr;
+				else if (i == L"FORK") ref.index = TransformLogicalFork;
+				else if (i == L"NOT") ref.index = TransformLogicalNot;
+				else if (i == L"SAME") ref.index = TransformLogicalSame;
+				else if (i == L"NOTSAME") ref.index = TransformLogicalNotSame;
+				// Vector
+				else if (i == L"AND") ref.index = TransformVectorAnd;
+				else if (i == L"OR") ref.index = TransformVectorOr;
+				else if (i == L"XOR") ref.index = TransformVectorXor;
+				else if (i == L"INVERSE") ref.index = TransformVectorInverse;
+				else if (i == L"SHL") ref.index = TransformVectorShiftL;
+				else if (i == L"SHR") ref.index = TransformVectorShiftR;
+				else if (i == L"SAL") ref.index = TransformVectorShiftAL;
+				else if (i == L"SAR") ref.index = TransformVectorShiftAR;
+				else if (i == L"ZERO") ref.index = TransformVectorIsZero;
+				else if (i == L"NOTZERO") ref.index = TransformVectorNotZero;
+				// Arithmetics - comparison
+				else if (i == L"EQ") ref.index = TransformIntegerEQ;
+				else if (i == L"NEQ") ref.index = TransformIntegerNEQ;
+				else if (i == L"U_LE") ref.index = TransformIntegerULE;
+				else if (i == L"U_GE") ref.index = TransformIntegerUGE;
+				else if (i == L"U_L") ref.index = TransformIntegerUL;
+				else if (i == L"U_G") ref.index = TransformIntegerUG;
+				else if (i == L"S_LE") ref.index = TransformIntegerSLE;
+				else if (i == L"S_GE") ref.index = TransformIntegerSGE;
+				else if (i == L"S_L") ref.index = TransformIntegerSL;
+				else if (i == L"S_G") ref.index = TransformIntegerSG;
+				// Arithmetics - transforms
+				else if (i == L"U_RESIZE") ref.index = TransformIntegerUResize;
+				else if (i == L"S_RESIZE") ref.index = TransformIntegerSResize;
+				else if (i == L"NEG") ref.index = TransformIntegerInverse;
+				else if (i == L"ABS") ref.index = TransformIntegerAbs;
+				// Arithmetics - main
+				else if (i == L"ADD") ref.index = TransformIntegerAdd;
+				else if (i == L"SUB") ref.index = TransformIntegerSubt;
+				else if (i == L"U_MUL") ref.index = TransformIntegerUMul;
+				else if (i == L"S_MUL") ref.index = TransformIntegerSMul;
+				else if (i == L"U_DIV") ref.index = TransformIntegerUDiv;
+				else if (i == L"S_DIV") ref.index = TransformIntegerSDiv;
+				else if (i == L"U_MOD") ref.index = TransformIntegerUMod;
+				else if (i == L"S_MOD") ref.index = TransformIntegerSMod;
+				// Else there is a failure
+				else return false;
+				return true;
+			}
+			bool ProcessFloatingTransform(ObjectReference & ref)
+			{
+				auto & i = _text[_pos].Content;
+				// FPU: Manipulation
+				if (i == L"FP_RESIZE_16") { ref.index = TransformFloatResize; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_RESIZE_32") { ref.index = TransformFloatResize; }
+				else if (i == L"FP_RESIZE_64") { ref.index = TransformFloatResize; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_GATHER_16") { ref.index = TransformFloatGather; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_GATHER_32") { ref.index = TransformFloatGather; }
+				else if (i == L"FP_GATHER_64") { ref.index = TransformFloatGather; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_SCATTER_16") { ref.index = TransformFloatScatter; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_SCATTER_32") { ref.index = TransformFloatScatter; }
+				else if (i == L"FP_SCATTER_64") { ref.index = TransformFloatScatter; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_REORDER_16") { ref.index = TransformFloatRecombine; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_REORDER_32") { ref.index = TransformFloatRecombine; }
+				else if (i == L"FP_REORDER_64") { ref.index = TransformFloatRecombine; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_INTEGER_16") { ref.index = TransformFloatInteger; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_INTEGER_32") { ref.index = TransformFloatInteger; }
+				else if (i == L"FP_INTEGER_64") { ref.index = TransformFloatInteger; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_RND_N_16") { ref.index = TransformFloatRoundTN; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_RND_N_32") { ref.index = TransformFloatRoundTN; }
+				else if (i == L"FP_RND_N_64") { ref.index = TransformFloatRoundTN; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_RND_Z_16") { ref.index = TransformFloatRoundTZ; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_RND_Z_32") { ref.index = TransformFloatRoundTZ; }
+				else if (i == L"FP_RND_Z_64") { ref.index = TransformFloatRoundTZ; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_RND_PI_16") { ref.index = TransformFloatRoundTPI; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_RND_PI_32") { ref.index = TransformFloatRoundTPI; }
+				else if (i == L"FP_RND_PI_64") { ref.index = TransformFloatRoundTPI; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_RND_NI_16") { ref.index = TransformFloatRoundTNI; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_RND_NI_32") { ref.index = TransformFloatRoundTNI; }
+				else if (i == L"FP_RND_NI_64") { ref.index = TransformFloatRoundTNI; ref.ref_flags |= ReferenceFlagLong; }
+				// FPU: Comparison
+				else if (i == L"FP_ZERO_16") { ref.index = TransformFloatIsZero; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_ZERO_32") { ref.index = TransformFloatIsZero; }
+				else if (i == L"FP_ZERO_64") { ref.index = TransformFloatIsZero; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_NOTZERO_16") { ref.index = TransformFloatNotZero; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_NOTZERO_32") { ref.index = TransformFloatNotZero; }
+				else if (i == L"FP_NOTZERO_64") { ref.index = TransformFloatNotZero; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_EQ_16") { ref.index = TransformFloatEQ; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_EQ_32") { ref.index = TransformFloatEQ; }
+				else if (i == L"FP_EQ_64") { ref.index = TransformFloatEQ; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_NEQ_16") { ref.index = TransformFloatNEQ; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_NEQ_32") { ref.index = TransformFloatNEQ; }
+				else if (i == L"FP_NEQ_64") { ref.index = TransformFloatNEQ; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_LE_16") { ref.index = TransformFloatLE; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_LE_32") { ref.index = TransformFloatLE; }
+				else if (i == L"FP_LE_64") { ref.index = TransformFloatLE; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_GE_16") { ref.index = TransformFloatGE; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_GE_32") { ref.index = TransformFloatGE; }
+				else if (i == L"FP_GE_64") { ref.index = TransformFloatGE; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_L_16") { ref.index = TransformFloatL; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_L_32") { ref.index = TransformFloatL; }
+				else if (i == L"FP_L_64") { ref.index = TransformFloatL; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_G_16") { ref.index = TransformFloatG; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_G_32") { ref.index = TransformFloatG; }
+				else if (i == L"FP_G_64") { ref.index = TransformFloatG; ref.ref_flags |= ReferenceFlagLong; }
+				// FPU: Arithmetics
+				else if (i == L"FP_ADD_16") { ref.index = TransformFloatAdd; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_ADD_32") { ref.index = TransformFloatAdd; }
+				else if (i == L"FP_ADD_64") { ref.index = TransformFloatAdd; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_SUB_16") { ref.index = TransformFloatSubt; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_SUB_32") { ref.index = TransformFloatSubt; }
+				else if (i == L"FP_SUB_64") { ref.index = TransformFloatSubt; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_MUL_16") { ref.index = TransformFloatMul; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_MUL_32") { ref.index = TransformFloatMul; }
+				else if (i == L"FP_MUL_64") { ref.index = TransformFloatMul; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_MADD_16") { ref.index = TransformFloatMulAdd; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_MADD_32") { ref.index = TransformFloatMulAdd; }
+				else if (i == L"FP_MADD_64") { ref.index = TransformFloatMulAdd; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_MSUB_16") { ref.index = TransformFloatMulSubt; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_MSUB_32") { ref.index = TransformFloatMulSubt; }
+				else if (i == L"FP_MSUB_64") { ref.index = TransformFloatMulSubt; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_DIV_16") { ref.index = TransformFloatDiv; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_DIV_32") { ref.index = TransformFloatDiv; }
+				else if (i == L"FP_DIV_64") { ref.index = TransformFloatDiv; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_ABS_16") { ref.index = TransformFloatAbs; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_ABS_32") { ref.index = TransformFloatAbs; }
+				else if (i == L"FP_ABS_64") { ref.index = TransformFloatAbs; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_NEG_16") { ref.index = TransformFloatInverse; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_NEG_32") { ref.index = TransformFloatInverse; }
+				else if (i == L"FP_NEG_64") { ref.index = TransformFloatInverse; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_SQRT_16") { ref.index = TransformFloatSqrt; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_SQRT_32") { ref.index = TransformFloatSqrt; }
+				else if (i == L"FP_SQRT_64") { ref.index = TransformFloatSqrt; ref.ref_flags |= ReferenceFlagLong; }
+				// Else there is a failure
+				else return false;
+				return true;
+			}
 			void ProcessReference(ObjectReference & ref, bool allow_literals, bool allow_intrinsic)
 			{
 				if (_text[_pos].Class == TokenClass::Keyword && _text[_pos].Content == L"NULL") {
@@ -182,61 +329,7 @@ namespace Engine
 				_pos++;
 				if (ref.ref_class == ReferenceTransform) {
 					if (_text[_pos].Class != TokenClass::Identifier) throw CompilerException(CompilerStatus::AnotherTokenExpected, _pos);
-					auto & i = _text[_pos].Content;
-					// General purpose
-					if (i == L"PTR_FOLLOW") ref.index = TransformFollowPointer;
-					else if (i == L"PTR_TAKE") ref.index = TransformTakePointer;
-					else if (i == L"OFFSET") ref.index = TransformAddressOffset;
-					else if (i == L"BLT") ref.index = TransformBlockTransfer;
-					else if (i == L"CALL") ref.index = TransformInvoke;
-					else if (i == L"NEW") ref.index = TransformTemporary;
-					else if (i == L"BREAKIF") ref.index = TransformBreakIf;
-					else if (i == L"SPLIT") ref.index = TransformSplit;
-					// Logical
-					else if (i == L"ALL") ref.index = TransformLogicalAnd;
-					else if (i == L"ANY") ref.index = TransformLogicalOr;
-					else if (i == L"FORK") ref.index = TransformLogicalFork;
-					else if (i == L"NOT") ref.index = TransformLogicalNot;
-					else if (i == L"SAME") ref.index = TransformLogicalSame;
-					else if (i == L"NOTSAME") ref.index = TransformLogicalNotSame;
-					// Vector
-					else if (i == L"AND") ref.index = TransformVectorAnd;
-					else if (i == L"OR") ref.index = TransformVectorOr;
-					else if (i == L"XOR") ref.index = TransformVectorXor;
-					else if (i == L"INVERSE") ref.index = TransformVectorInverse;
-					else if (i == L"SHL") ref.index = TransformVectorShiftL;
-					else if (i == L"SHR") ref.index = TransformVectorShiftR;
-					else if (i == L"SAL") ref.index = TransformVectorShiftAL;
-					else if (i == L"SAR") ref.index = TransformVectorShiftAR;
-					else if (i == L"ZERO") ref.index = TransformVectorIsZero;
-					else if (i == L"NOTZERO") ref.index = TransformVectorNotZero;
-					// Arithmetics - comparison
-					else if (i == L"EQ") ref.index = TransformIntegerEQ;
-					else if (i == L"NEQ") ref.index = TransformIntegerNEQ;
-					else if (i == L"U_LE") ref.index = TransformIntegerULE;
-					else if (i == L"U_GE") ref.index = TransformIntegerUGE;
-					else if (i == L"U_L") ref.index = TransformIntegerUL;
-					else if (i == L"U_G") ref.index = TransformIntegerUG;
-					else if (i == L"S_LE") ref.index = TransformIntegerSLE;
-					else if (i == L"S_GE") ref.index = TransformIntegerSGE;
-					else if (i == L"S_L") ref.index = TransformIntegerSL;
-					else if (i == L"S_G") ref.index = TransformIntegerSG;
-					// Arithmetics - transforms
-					else if (i == L"U_RESIZE") ref.index = TransformIntegerUResize;
-					else if (i == L"S_RESIZE") ref.index = TransformIntegerSResize;
-					else if (i == L"NEG") ref.index = TransformIntegerInverse;
-					else if (i == L"ABS") ref.index = TransformIntegerAbs;
-					// Arithmetics - main
-					else if (i == L"ADD") ref.index = TransformIntegerAdd;
-					else if (i == L"SUB") ref.index = TransformIntegerSubt;
-					else if (i == L"U_MUL") ref.index = TransformIntegerUMul;
-					else if (i == L"S_MUL") ref.index = TransformIntegerSMul;
-					else if (i == L"U_DIV") ref.index = TransformIntegerUDiv;
-					else if (i == L"S_DIV") ref.index = TransformIntegerSDiv;
-					else if (i == L"U_MOD") ref.index = TransformIntegerUMod;
-					else if (i == L"S_MOD") ref.index = TransformIntegerSMod;
-					// Else there is a failure
-					else throw CompilerException(CompilerStatus::UnknownInrinsic, _pos);
+					if (!ProcessStandardTransform(ref) && !ProcessFloatingTransform(ref)) throw CompilerException(CompilerStatus::UnknownInrinsic, _pos);
 					_pos++;
 				} else {
 					if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"[") {

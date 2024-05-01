@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "xi_module.h"
-#include "../xasm/xa_trans.h"
+#include "../xasm/xa_trans_sel.h"
 
 namespace Engine
 {

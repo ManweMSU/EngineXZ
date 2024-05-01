@@ -37,6 +37,8 @@ namespace Engine
 			ReferenceFlagRefer		= 0x00,
 			ReferenceFlagInvoke		= 0x01,
 			ReferenceFlagUnaligned	= 0x02,
+			ReferenceFlagShort		= 0x04,
+			ReferenceFlagLong		= 0x08,
 		};
 		enum ReferenceTransforms : uint32
 		{
@@ -87,6 +89,33 @@ namespace Engine
 			TransformIntegerSDiv	= 0x0045, // 2 arguments - integers; retval - integer
 			TransformIntegerUMod	= 0x0046, // 2 arguments - integers; retval - integer
 			TransformIntegerSMod	= 0x0047, // 2 arguments - integers; retval - integer
+			// FPU/VPU Extension, may be affected by the SHORT/LONG flags
+			TransformFloatResize	= 0x0080, // 1 argument - a vector to resize; retval - vector; the flag specifies the source precision
+			TransformFloatGather	= 0x0081, // N arguments - creates a vector from scalar inputs; retval - vector; type specification matters
+			TransformFloatScatter	= 0x0082, // 1 argument - a vector to split, N arguments - the destinations; retval - the source; type specification matters
+			TransformFloatRecombine	= 0x0083, // 2 arguments - a vector to recombine, a recombination mask literal; retval - vector;
+			TransformFloatInteger	= 0x0084, // 1 argument - a vector; retval - an integer array; type specification matters
+			TransformFloatRoundTN	= 0x0085, // 1 argument - a vector; retval - vector
+			TransformFloatRoundTZ	= 0x0086, // 1 argument - a vector; retval - vector
+			TransformFloatRoundTPI	= 0x0087, // 1 argument - a vector; retval - vector
+			TransformFloatRoundTNI	= 0x0088, // 1 argument - a vector; retval - vector
+			TransformFloatIsZero	= 0x0090, // 1 argument - a vector; retval - integer
+			TransformFloatNotZero	= 0x0091, // 1 argument - a vector; retval - integer
+			TransformFloatEQ		= 0x0092, // 2 arguments - vectors; retval - integer
+			TransformFloatNEQ		= 0x0093, // 2 arguments - vectors; retval - integer
+			TransformFloatLE		= 0x0094, // 2 arguments - vectors; retval - integer
+			TransformFloatGE		= 0x0095, // 2 arguments - vectors; retval - integer
+			TransformFloatL			= 0x0096, // 2 arguments - vectors; retval - integer
+			TransformFloatG			= 0x0097, // 2 arguments - vectors; retval - integer
+			TransformFloatAdd		= 0x00A0, // 2 arguments - vectors; retval - vector
+			TransformFloatSubt		= 0x00A1, // 2 arguments - vectors; retval - vector
+			TransformFloatMul		= 0x00A2, // 2 arguments - vectors; retval - vector
+			TransformFloatMulAdd	= 0x00A3, // 3 arguments - vectors; retval - vector
+			TransformFloatMulSubt	= 0x00A4, // 3 arguments - vectors; retval - vector
+			TransformFloatDiv		= 0x00A5, // 2 arguments - vectors; retval - vector
+			TransformFloatAbs		= 0x00A6, // 1 argument - a vector; retval - vector
+			TransformFloatInverse	= 0x00A7, // 1 argument - a vector; retval - vector
+			TransformFloatSqrt		= 0x00A8, // 1 argument - a vector; retval - vector
 		};
 		enum StatementOpcodes : uint32
 		{

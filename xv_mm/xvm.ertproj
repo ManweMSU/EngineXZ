@@ -2,29 +2,6 @@
 Languages = "en,ru"
 Subsystem = "gui"
 UseVersionDefines = true
-CompileList {
-	AAAAAA = "../xasm/xa_t_armv8.cxx"
-	AAAAAB = "../xasm/xa_t_i386.cxx"
-	AAAAAC = "../xasm/xa_t_x64.cxx"
-	AAAAAD = "../xasm/xa_trans.cxx"
-	AAAAAE = "../xasm/xa_type_helper.cxx"
-	AAAAAF = "../xasm/xa_types.cxx"
-	AAAAAG = "../xenv/xe_ctx.cxx"
-	AAAAAH = "../xenv/xe_interfaces.cxx"
-	AAAAAI = "../xenv/xe_loader.cxx"
-	AAAAAJ = "../xenv/xe_logger.cxx"
-	AAAAAK = "../xenv/xe_rtss.cxx"
-	AAAAAL = "../xenv/xe_stdext.cxx"
-	AAAAAM = "../xexec/xx_com.cxx"
-	AAAAAN = "../ximg/xi_function.cxx"
-	AAAAAO = "../ximg/xi_module.cxx"
-	AAAAAP = "../ximg/xi_resources.cxx"
-	AAAAAQ = "../xv/xv_manual.cxx"
-	AAAAAR = "xvm.cxx"
-	AAAAAS = "xvm.uiml"
-	AAAAAT = "xvm_browser.cxx"
-	AAAAAU = "xvm_editor.cxx"
-}
 "-debug" {
 	Attachments {
 		AAMAAA {
@@ -32,6 +9,48 @@ CompileList {
 			To = "xv.ini"
 		}
 	}
+}
+"-macosx" {
+	EngineStore {
+		ShellPath = "Contents/MacOS"
+		StoreLinkFile = "Contents/MacOS"
+	}
+}
+"-macosx-debug" {
+	Attachments {
+		CAMAAA {
+			From = "xe.debug.mac.ini"
+			To = "xe.ini"
+		}
+	}
+}
+"-windows" {
+	EngineStore {
+		ShellPath = "."
+		StoreLinkFile = "store.ecs"
+	}
+}
+"-windows-debug" {
+	Attachments {
+		BAMAAA {
+			From = "xe.debug.win.ini"
+			To = "xe.ini"
+		}
+	}
+}
+CompileList {
+	AAAAAA = "../xasm/xa_trans.cxx"
+	AAAAAB = "../xasm/xa_type_helper.cxx"
+	AAAAAC = "../xasm/xa_types.cxx"
+	AAAAAD = "../xexec/xx_com.cxx"
+	AAAAAE = "../ximg/xi_function.cxx"
+	AAAAAF = "../ximg/xi_module.cxx"
+	AAAAAG = "../ximg/xi_resources.cxx"
+	AAAAAH = "../xv/xv_manual.cxx"
+	AAAAAI = "xvm_browser.cxx"
+	AAAAAJ = "xvm_editor.cxx"
+	AAAAAK = "xvm.cxx"
+	AAAAAL = "xvm.uiml"
 }
 FileFormats {
 	AAAAAA {
@@ -63,24 +82,10 @@ FileFormats {
 		Protocol = "xvmm"
 	}
 }
-"-macosx" {
-	EngineStore {
-		ShellPath = "Contents/MacOS"
-		StoreLinkFile = "Contents/MacOS"
-	}
-}
 Resources {
 	COM = "@com_en.ecst"
 	ru {
 		COM = "@com_ru.ecst"
-	}
-}
-"-macosx-debug" {
-	Attachments {
-		CAMAAA {
-			From = "xe.debug.mac.ini"
-			To = "xe.ini"
-		}
 	}
 }
 VersionInformation {
@@ -91,18 +96,4 @@ VersionInformation {
 	Copyright = "© Engine Software. 2024"
 	InternalName = "xvm"
 	Version = "1.0.0.1"
-}
-"-windows" {
-	EngineStore {
-		ShellPath = "."
-		StoreLinkFile = "store.ecs"
-	}
-}
-"-windows-debug" {
-	Attachments {
-		BAMAAA {
-			From = "xe.debug.win.ini"
-			To = "xe.ini"
-		}
-	}
 }

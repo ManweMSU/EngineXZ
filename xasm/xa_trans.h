@@ -42,8 +42,6 @@ namespace Engine
 		};
 
 		CallingConvention GetApplicationCallingConvention(void);
-		IAssemblyTranslator * CreatePlatformTranslator(void);
-		IAssemblyTranslator * CreatePlatformTranslator(Platform platform, CallingConvention conv);
 		IExecutableLinker * CreateLinker(void);
 	}
 }

@@ -154,7 +154,39 @@ namespace Engine
 					else if (ref.index == TransformIntegerSDiv) output << L"S_DIV";
 					else if (ref.index == TransformIntegerUMod) output << L"U_MOD";
 					else if (ref.index == TransformIntegerSMod) output << L"S_MOD";
-					else throw InvalidArgumentException();
+					else if (ref.index >= 0x80 && ref.index <= 0xFF) {
+						output << L"FP_";
+						if (ref.index == TransformFloatResize) output << L"RESIZE";
+						else if (ref.index == TransformFloatGather) output << L"GATHER";
+						else if (ref.index == TransformFloatScatter) output << L"SCATTER";
+						else if (ref.index == TransformFloatRecombine) output << L"REORDER";
+						else if (ref.index == TransformFloatInteger) output << L"INTEGER";
+						else if (ref.index == TransformFloatRoundTN) output << L"RND_N";
+						else if (ref.index == TransformFloatRoundTZ) output << L"RND_Z";
+						else if (ref.index == TransformFloatRoundTPI) output << L"RND_PI";
+						else if (ref.index == TransformFloatRoundTNI) output << L"RND_NI";
+						else if (ref.index == TransformFloatIsZero) output << L"ZERO";
+						else if (ref.index == TransformFloatNotZero) output << L"NOTZERO";
+						else if (ref.index == TransformFloatEQ) output << L"EQ";
+						else if (ref.index == TransformFloatNEQ) output << L"NEQ";
+						else if (ref.index == TransformFloatLE) output << L"LE";
+						else if (ref.index == TransformFloatGE) output << L"GE";
+						else if (ref.index == TransformFloatL) output << L"L";
+						else if (ref.index == TransformFloatG) output << L"G";
+						else if (ref.index == TransformFloatAdd) output << L"ADD";
+						else if (ref.index == TransformFloatSubt) output << L"SUB";
+						else if (ref.index == TransformFloatMul) output << L"MUL";
+						else if (ref.index == TransformFloatMulAdd) output << L"MADD";
+						else if (ref.index == TransformFloatMulSubt) output << L"MSUB";
+						else if (ref.index == TransformFloatDiv) output << L"DIV";
+						else if (ref.index == TransformFloatAbs) output << L"ABS";
+						else if (ref.index == TransformFloatInverse) output << L"NEG";
+						else if (ref.index == TransformFloatSqrt) output << L"SQRT";
+						else throw InvalidArgumentException();
+						if (ref.ref_flags & ReferenceFlagShort) output << L"_16";
+						else if (ref.ref_flags & ReferenceFlagLong) output << L"_64";
+						else output << L"_32";
+					} else throw InvalidArgumentException();
 				} else if (ref.ref_class == ReferenceLiteral) {
 				} else if (ref.index) {
 					output << L"[" << string(ref.index) << L"]";
