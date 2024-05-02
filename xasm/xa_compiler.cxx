@@ -75,6 +75,7 @@ namespace Engine
 							} else {
 								if (quant == 1 || quant == 2) throw CompilerException(CompilerStatus::DataSizeNotSupported, _pos);
 								auto num = _text[_pos].AsDouble();
+								if (sign) num = -num;
 								if (quant == 4) *reinterpret_cast<float *>(_output.data.GetBuffer() + _output.data.Length() - quant) = num;
 								else if (quant == 8) *reinterpret_cast<double *>(_output.data.GetBuffer() + _output.data.Length() - quant) = num;
 							}
@@ -213,39 +214,11 @@ namespace Engine
 				else return false;
 				return true;
 			}
-			bool ProcessFloatingTransform(ObjectReference & ref)
+			bool ProcessFloatingComparisonTransform(ObjectReference & ref)
 			{
 				auto & i = _text[_pos].Content;
-				// FPU: Manipulation
-				if (i == L"FP_RESIZE_16") { ref.index = TransformFloatResize; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_RESIZE_32") { ref.index = TransformFloatResize; }
-				else if (i == L"FP_RESIZE_64") { ref.index = TransformFloatResize; ref.ref_flags |= ReferenceFlagLong; }
-				else if (i == L"FP_GATHER_16") { ref.index = TransformFloatGather; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_GATHER_32") { ref.index = TransformFloatGather; }
-				else if (i == L"FP_GATHER_64") { ref.index = TransformFloatGather; ref.ref_flags |= ReferenceFlagLong; }
-				else if (i == L"FP_SCATTER_16") { ref.index = TransformFloatScatter; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_SCATTER_32") { ref.index = TransformFloatScatter; }
-				else if (i == L"FP_SCATTER_64") { ref.index = TransformFloatScatter; ref.ref_flags |= ReferenceFlagLong; }
-				else if (i == L"FP_REORDER_16") { ref.index = TransformFloatRecombine; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_REORDER_32") { ref.index = TransformFloatRecombine; }
-				else if (i == L"FP_REORDER_64") { ref.index = TransformFloatRecombine; ref.ref_flags |= ReferenceFlagLong; }
-				else if (i == L"FP_INTEGER_16") { ref.index = TransformFloatInteger; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_INTEGER_32") { ref.index = TransformFloatInteger; }
-				else if (i == L"FP_INTEGER_64") { ref.index = TransformFloatInteger; ref.ref_flags |= ReferenceFlagLong; }
-				else if (i == L"FP_RND_N_16") { ref.index = TransformFloatRoundTN; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_RND_N_32") { ref.index = TransformFloatRoundTN; }
-				else if (i == L"FP_RND_N_64") { ref.index = TransformFloatRoundTN; ref.ref_flags |= ReferenceFlagLong; }
-				else if (i == L"FP_RND_Z_16") { ref.index = TransformFloatRoundTZ; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_RND_Z_32") { ref.index = TransformFloatRoundTZ; }
-				else if (i == L"FP_RND_Z_64") { ref.index = TransformFloatRoundTZ; ref.ref_flags |= ReferenceFlagLong; }
-				else if (i == L"FP_RND_PI_16") { ref.index = TransformFloatRoundTPI; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_RND_PI_32") { ref.index = TransformFloatRoundTPI; }
-				else if (i == L"FP_RND_PI_64") { ref.index = TransformFloatRoundTPI; ref.ref_flags |= ReferenceFlagLong; }
-				else if (i == L"FP_RND_NI_16") { ref.index = TransformFloatRoundTNI; ref.ref_flags |= ReferenceFlagShort; }
-				else if (i == L"FP_RND_NI_32") { ref.index = TransformFloatRoundTNI; }
-				else if (i == L"FP_RND_NI_64") { ref.index = TransformFloatRoundTNI; ref.ref_flags |= ReferenceFlagLong; }
-				// FPU: Comparison
-				else if (i == L"FP_ZERO_16") { ref.index = TransformFloatIsZero; ref.ref_flags |= ReferenceFlagShort; }
+				// Scalar forms
+				if (i == L"FP_ZERO_16") { ref.index = TransformFloatIsZero; ref.ref_flags |= ReferenceFlagShort; }
 				else if (i == L"FP_ZERO_32") { ref.index = TransformFloatIsZero; }
 				else if (i == L"FP_ZERO_64") { ref.index = TransformFloatIsZero; ref.ref_flags |= ReferenceFlagLong; }
 				else if (i == L"FP_NOTZERO_16") { ref.index = TransformFloatNotZero; ref.ref_flags |= ReferenceFlagShort; }
@@ -269,6 +242,56 @@ namespace Engine
 				else if (i == L"FP_G_16") { ref.index = TransformFloatG; ref.ref_flags |= ReferenceFlagShort; }
 				else if (i == L"FP_G_32") { ref.index = TransformFloatG; }
 				else if (i == L"FP_G_64") { ref.index = TransformFloatG; ref.ref_flags |= ReferenceFlagLong; }
+				// Vector forms
+				else if (i == L"FP_ZEROV_16") { ref.index = TransformFloatIsZero; ref.ref_flags |= ReferenceFlagShort | ReferenceFlagVectorCom; }
+				else if (i == L"FP_ZEROV_32") { ref.index = TransformFloatIsZero; ref.ref_flags |= ReferenceFlagVectorCom; }
+				else if (i == L"FP_ZEROV_64") { ref.index = TransformFloatIsZero; ref.ref_flags |= ReferenceFlagLong | ReferenceFlagVectorCom; }
+				else if (i == L"FP_NOTZEROV_16") { ref.index = TransformFloatNotZero; ref.ref_flags |= ReferenceFlagShort | ReferenceFlagVectorCom; }
+				else if (i == L"FP_NOTZEROV_32") { ref.index = TransformFloatNotZero; ref.ref_flags |= ReferenceFlagVectorCom; }
+				else if (i == L"FP_NOTZEROV_64") { ref.index = TransformFloatNotZero; ref.ref_flags |= ReferenceFlagLong | ReferenceFlagVectorCom; }
+				else if (i == L"FP_EQV_16") { ref.index = TransformFloatEQ; ref.ref_flags |= ReferenceFlagShort | ReferenceFlagVectorCom; }
+				else if (i == L"FP_EQV_32") { ref.index = TransformFloatEQ; ref.ref_flags |= ReferenceFlagVectorCom; }
+				else if (i == L"FP_EQV_64") { ref.index = TransformFloatEQ; ref.ref_flags |= ReferenceFlagLong | ReferenceFlagVectorCom; }
+				else if (i == L"FP_NEQV_16") { ref.index = TransformFloatNEQ; ref.ref_flags |= ReferenceFlagShort | ReferenceFlagVectorCom; }
+				else if (i == L"FP_NEQV_32") { ref.index = TransformFloatNEQ; ref.ref_flags |= ReferenceFlagVectorCom; }
+				else if (i == L"FP_NEQV_64") { ref.index = TransformFloatNEQ; ref.ref_flags |= ReferenceFlagLong | ReferenceFlagVectorCom; }
+				else if (i == L"FP_LEV_16") { ref.index = TransformFloatLE; ref.ref_flags |= ReferenceFlagShort | ReferenceFlagVectorCom; }
+				else if (i == L"FP_LEV_32") { ref.index = TransformFloatLE; ref.ref_flags |= ReferenceFlagVectorCom; }
+				else if (i == L"FP_LEV_64") { ref.index = TransformFloatLE; ref.ref_flags |= ReferenceFlagLong | ReferenceFlagVectorCom; }
+				else if (i == L"FP_GEV_16") { ref.index = TransformFloatGE; ref.ref_flags |= ReferenceFlagShort | ReferenceFlagVectorCom; }
+				else if (i == L"FP_GEV_32") { ref.index = TransformFloatGE; ref.ref_flags |= ReferenceFlagVectorCom; }
+				else if (i == L"FP_GEV_64") { ref.index = TransformFloatGE; ref.ref_flags |= ReferenceFlagLong | ReferenceFlagVectorCom; }
+				else if (i == L"FP_LV_16") { ref.index = TransformFloatL; ref.ref_flags |= ReferenceFlagShort | ReferenceFlagVectorCom; }
+				else if (i == L"FP_LV_32") { ref.index = TransformFloatL; ref.ref_flags |= ReferenceFlagVectorCom; }
+				else if (i == L"FP_LV_64") { ref.index = TransformFloatL; ref.ref_flags |= ReferenceFlagLong | ReferenceFlagVectorCom; }
+				else if (i == L"FP_GV_16") { ref.index = TransformFloatG; ref.ref_flags |= ReferenceFlagShort | ReferenceFlagVectorCom; }
+				else if (i == L"FP_GV_32") { ref.index = TransformFloatG; ref.ref_flags |= ReferenceFlagVectorCom; }
+				else if (i == L"FP_GV_64") { ref.index = TransformFloatG; ref.ref_flags |= ReferenceFlagLong | ReferenceFlagVectorCom; }
+				// Otherwise
+				else return false;
+				return true;
+			}
+			bool ProcessFloatingTransform(ObjectReference & ref)
+			{
+				auto & i = _text[_pos].Content;
+				// FPU: Manipulation
+				if (i == L"FP_RESIZE_16") { ref.index = TransformFloatResize; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_RESIZE_32") { ref.index = TransformFloatResize; }
+				else if (i == L"FP_RESIZE_64") { ref.index = TransformFloatResize; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_GATHER_16") { ref.index = TransformFloatGather; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_GATHER_32") { ref.index = TransformFloatGather; }
+				else if (i == L"FP_GATHER_64") { ref.index = TransformFloatGather; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_SCATTER_16") { ref.index = TransformFloatScatter; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_SCATTER_32") { ref.index = TransformFloatScatter; }
+				else if (i == L"FP_SCATTER_64") { ref.index = TransformFloatScatter; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_REORDER_16") { ref.index = TransformFloatRecombine; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_REORDER_32") { ref.index = TransformFloatRecombine; }
+				else if (i == L"FP_REORDER_64") { ref.index = TransformFloatRecombine; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_INTEGER_16") { ref.index = TransformFloatInteger; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_INTEGER_32") { ref.index = TransformFloatInteger; }
+				else if (i == L"FP_INTEGER_64") { ref.index = TransformFloatInteger; ref.ref_flags |= ReferenceFlagLong; }
+				// FPU: Comparison
+				else if (ProcessFloatingComparisonTransform(ref)) {}
 				// FPU: Arithmetics
 				else if (i == L"FP_ADD_16") { ref.index = TransformFloatAdd; ref.ref_flags |= ReferenceFlagShort; }
 				else if (i == L"FP_ADD_32") { ref.index = TransformFloatAdd; }

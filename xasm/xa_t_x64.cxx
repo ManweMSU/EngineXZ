@@ -1,5 +1,8 @@
 ﻿#include "xa_t_x64.h"
+#include "xa_t_x86.h"
 #include "xa_type_helper.h"
+
+using namespace Engine::XA::X86;
 
 namespace Engine
 {
@@ -9,451 +12,162 @@ namespace Engine
 		{
 			constexpr int WordSize = 8;
 
-			enum class Reg : uint {
-				NO = 0,
-				RAX = 0x0001, RCX = 0x0002, RDX = 0x0004, RBX = 0x0008,
-				RSP = 0x0010, RBP = 0x0020, RSI = 0x0040, RDI = 0x0080,
-				R8 = 0x0100, R9 = 0x0200, R10 = 0x0400, R11 = 0x0800,
-				R12 = 0x1000, R13 = 0x2000, R14 = 0x4000, R15 = 0x8000,
-				XMM0 = 0x00010000, XMM1 = 0x00020000, XMM2 = 0x00040000, XMM3 = 0x00080000,
-				XMM4 = 0x00100000, XMM5 = 0x00200000, XMM6 = 0x00400000, XMM7 = 0x00800000,
-			};
-			enum class Op : uint8 { add = 0x02, sub = 0x2A, _and = 0x22, _or = 0x0A, _xor = 0x32, cmp = 0x3A };
-			enum class mdOp : uint8 { mul = 0x4, div = 0x6, imul = 0x5, idiv = 0x7 };
-			enum class shOp : uint8 { shl, shr, sal, sar };
-
-			enum DispositionFlags {
-				DispositionRegister	= 0x01,
-				DispositionPointer	= 0x02,
-				DispositionDiscard	= 0x04,
-				DispositionAny		= DispositionRegister | DispositionPointer
-			};
-
-			class EncoderContext
+			class EncoderContext : public X86::EncoderContext
 			{
-				struct _argument_passage_info {
-					int index;		// 0, 1, ... - real arguments; -1 - retval
-					Reg reg;		// holder register; NO for stack storage;
-					bool indirect;	// pass-by-reference
-				};
-				struct _argument_storage_spec {
-					Reg bound_to;
-					int rbp_offset;
-					bool indirect;
-				};
-				struct _local_disposition {
-					int rbp_offset;
-					int size;
-					FinalizerReference finalizer;
-				};
-				struct _internal_disposition {
-					int flags;
-					Reg reg;
-					int size;
-				};
-				struct _local_scope {
-					int frame_base; // RBP + frame_base = real frame base
-					int frame_size;
-					int frame_size_unused;
-					int first_local_no;
-					int current_split_offset;
-					Array<_local_disposition> locals = Array<_local_disposition>(0x20);
-					bool shift_rsp, temporary;
-				};
-				struct _jump_reloc_struct {
-					uint machine_offset_at;
-					uint machine_offset_relative_to;
-					uint xasm_offset_jump_to;
-				};
-
-				CallingConvention _conv;
-				TranslatedFunction & _dest;
-				const Function & _src;
-				Array<uint> _org_inst_offsets;
-				Array<_jump_reloc_struct> _jump_reloc;
-				_argument_storage_spec _retval;
-				Array<_argument_storage_spec> _inputs;
-				int _scope_frame_base, _unroll_base, _current_instruction, _stack_oddity;
-				Volumes::Stack<_local_scope> _scopes;
-				Volumes::Stack<_local_disposition> _init_locals;
-
-				static bool _is_xmm_register(Reg reg) { return uint(reg) & 0xFFFF0000; }
+				static bool _is_xmm_register(Reg reg) { return uint(reg) & 0x00FF0000; }
 				static bool _is_pass_by_reference(const ArgumentSpecification & spec) { return _word_align(spec.size) > 8 || spec.semantics == ArgumentSemantics::Object; }
-				static bool _needs_stack_storage(const ArgumentSpecification & spec)
-				{
-					if (_word_align(spec.size) > WordSize) return true;
-					return false;
-				}
-				static uint8 _regular_register_code(Reg reg)
-				{
-					if (reg == Reg::RAX) return 0;
-					else if (reg == Reg::RCX) return 1;
-					else if (reg == Reg::RDX) return 2;
-					else if (reg == Reg::RBX) return 3;
-					else if (reg == Reg::RSP) return 4;
-					else if (reg == Reg::RBP) return 5;
-					else if (reg == Reg::RSI) return 6;
-					else if (reg == Reg::RDI) return 7;
-					else if (reg == Reg::R8) return 8;
-					else if (reg == Reg::R9) return 9;
-					else if (reg == Reg::R10) return 10;
-					else if (reg == Reg::R11) return 11;
-					else if (reg == Reg::R12) return 12;
-					else if (reg == Reg::R13) return 13;
-					else if (reg == Reg::R14) return 14;
-					else if (reg == Reg::R15) return 15;
-					else return 16;
-				}
-				static uint8 _xmm_register_code(Reg reg)
-				{
-					if (reg == Reg::XMM0) return 0;
-					else if (reg == Reg::XMM1) return 1;
-					else if (reg == Reg::XMM2) return 2;
-					else if (reg == Reg::XMM3) return 3;
-					else if (reg == Reg::XMM4) return 4;
-					else if (reg == Reg::XMM5) return 5;
-					else if (reg == Reg::XMM6) return 6;
-					else if (reg == Reg::XMM7) return 7;
-					else return 16;
-				}
-				static uint8 _make_rex(bool size64_W, bool reg_ext_R, bool index_ext_X, bool opt_ext_B)
-				{
-					uint8 result = 0x40;
-					if (opt_ext_B) result |= 0x01;
-					if (index_ext_X) result |= 0x02;
-					if (reg_ext_R) result |= 0x04;
-					if (size64_W) result |= 0x08;
-					return result;
-				}
-				static uint8 _make_mod(uint8 reg_lo_3, uint8 mod, uint8 reg_mem_lo_3) { return (mod << 6) | (reg_lo_3 << 3) | reg_mem_lo_3; }
+				static bool _needs_stack_storage(const ArgumentSpecification & spec) { if (_word_align(spec.size) > WordSize) return true; return false; }
 				static uint32 _word_align(const ObjectSize & size) { uint full_size = size.num_bytes + WordSize * size.num_words; return (uint64(full_size) + 7) / 8 * 8; }
-				Array<_argument_passage_info> * _make_interface_layout(const ArgumentSpecification & output, const ArgumentSpecification * inputs, int in_cnt)
+				Array<ArgumentPassageInfo> * _make_interface_layout(const ArgumentSpecification & output, const ArgumentSpecification * inputs, int in_cnt)
 				{
-					SafePointer< Array<_argument_passage_info> > result = new Array<_argument_passage_info>(0x40);
+					SafePointer< Array<ArgumentPassageInfo> > result = new Array<ArgumentPassageInfo>(0x40);
 					if (_conv == CallingConvention::Windows) {
 						for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This) {
-							_argument_passage_info info;
+							ArgumentPassageInfo info;
 							info.index = i;
-							info.reg = Reg::NO;
+							info.reg = Reg64::NO;
 							info.indirect = _is_pass_by_reference(inputs[i]);
 							result->Append(info);
 						}
 					}
 					if (_is_pass_by_reference(output)) {
-						_argument_passage_info info;
+						ArgumentPassageInfo info;
 						info.index = -1;
-						info.reg = Reg::NO;
+						info.reg = Reg64::NO;
 						info.indirect = true;
 						result->Append(info);
 					}
 					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics != ArgumentSemantics::This || _conv == CallingConvention::Unix) {
-						_argument_passage_info info;
+						ArgumentPassageInfo info;
 						info.index = i;
-						info.reg = Reg::NO;
+						info.reg = Reg64::NO;
 						info.indirect = _is_pass_by_reference(inputs[i]);
 						result->Append(info);
 					}
 					int cmr = 0, cfr = 0;
-					Reg unix_mr[] = { Reg::RDI, Reg::RSI, Reg::RDX, Reg::RCX, Reg::R8, Reg::R9, Reg::NO };
-					Reg unix_fr[] = { Reg::XMM0, Reg::XMM1, Reg::XMM2, Reg::XMM3, Reg::XMM4, Reg::XMM5, Reg::XMM6, Reg::XMM7, Reg::NO };
+					Reg unix_mr[] = { Reg64::RDI, Reg64::RSI, Reg64::RDX, Reg64::RCX, Reg64::R8, Reg64::R9, Reg64::NO };
+					Reg unix_fr[] = { Reg64::XMM0, Reg64::XMM1, Reg64::XMM2, Reg64::XMM3, Reg64::XMM4, Reg64::XMM5, Reg64::XMM6, Reg64::XMM7, Reg64::NO };
 					for (int i = 0; i < result->Length(); i++) {
 						auto & info = result->ElementAt(i);
 						if (!info.indirect && inputs[info.index].semantics == ArgumentSemantics::FloatingPoint) {
 							if (_conv == CallingConvention::Windows) {
-								if (i == 0) info.reg = Reg::XMM0;
-								else if (i == 1) info.reg = Reg::XMM1;
-								else if (i == 2) info.reg = Reg::XMM2;
-								else if (i == 3) info.reg = Reg::XMM3;
+								if (i == 0) info.reg = Reg64::XMM0;
+								else if (i == 1) info.reg = Reg64::XMM1;
+								else if (i == 2) info.reg = Reg64::XMM2;
+								else if (i == 3) info.reg = Reg64::XMM3;
 							} else if (_conv == CallingConvention::Unix) {
 								info.reg = unix_fr[cfr];
-								if (info.reg != Reg::NO) cfr++;
+								if (info.reg != Reg64::NO) cfr++;
 							}
 						} else {
 							if (_conv == CallingConvention::Windows) {
-								if (i == 0) info.reg = Reg::RCX;
-								else if (i == 1) info.reg = Reg::RDX;
-								else if (i == 2) info.reg = Reg::R8;
-								else if (i == 3) info.reg = Reg::R9;
+								if (i == 0) info.reg = Reg64::RCX;
+								else if (i == 1) info.reg = Reg64::RDX;
+								else if (i == 2) info.reg = Reg64::R8;
+								else if (i == 3) info.reg = Reg64::R9;
 							} else if (_conv == CallingConvention::Unix) {
 								info.reg = unix_mr[cmr];
-								if (info.reg != Reg::NO) cmr++;
+								if (info.reg != Reg64::NO) cmr++;
 							}
 						}
 					}
 					result->Retain();
 					return result;
 				}
-				int _allocate_temporary(const ObjectSize & size, int * rbp_offs = 0)
+				virtual void encode_finalize_scope(const LocalScope & scope, uint reg_in_use = 0) override
 				{
-					auto current_scope_ptr = _scopes.GetLast();
-					if (!current_scope_ptr) throw InvalidArgumentException();
-					auto & scope = current_scope_ptr->GetValue();
-					auto size_padded = _word_align(size);
-					_local_disposition new_var;
-					new_var.size = size.num_bytes + WordSize * size.num_words;
-					new_var.rbp_offset = scope.frame_base + scope.frame_size_unused - size_padded;
-					new_var.finalizer = TH::MakeFinal();
-					scope.frame_size_unused -= size_padded;
-					if (scope.frame_size_unused < 0) throw InvalidArgumentException();
-					auto index = scope.first_local_no + scope.locals.Length();
-					scope.locals << new_var;
-					if (rbp_offs) *rbp_offs = new_var.rbp_offset;
-					return index;
-				}
-				void _assign_finalizer(int local_index, const FinalizerReference & final)
-				{
-					for (auto & scp : _scopes) if (scp.first_local_no <= local_index && local_index < scp.first_local_no + scp.locals.Length()) {
-						auto & local = scp.locals[local_index - scp.first_local_no];
-						local.finalizer = final;
-						return;
-					}
-					throw InvalidArgumentException();
-				}
-				void _relocate_code_at(int offset) { _dest.code_reloc << offset; }
-				void _relocate_data_at(int offset) { _dest.data_reloc << offset; }
-				void _refer_object_at(const string & name, int offset)
-				{
-					auto ent = _dest.extrefs[name];
-					if (!ent) {
-						_dest.extrefs.Append(name, Array<uint32>(0x100));
-						ent = _dest.extrefs[name];
-						if (!ent) return;
-					}
-					ent->Append(offset);
-				}
-				void _encode_preserve(Reg reg, uint reg_in_use, bool cond_if)
-				{
-					if (cond_if && (reg_in_use & uint(reg))) {
-						encode_push(reg);
-						_stack_oddity += 8;
-					}
-				}
-				void _encode_restore(Reg reg, uint reg_in_use, bool cond_if)
-				{
-					if (cond_if && (reg_in_use & uint(reg))) {
-						encode_pop(reg);
-						_stack_oddity -= 8;
-					}
-				}
-				void _encode_open_scope(int of_size, bool temporary, int enf_base)
-				{
-					if (!enf_base) {
-						of_size = _word_align(TH::MakeSize(of_size, 0));
-						if (of_size & 0xF) of_size += WordSize;
-					}
-					auto prev = _scopes.GetLast();
-					_local_scope ls;
-					ls.frame_base = enf_base ? enf_base : (prev ? prev->GetValue().frame_base - of_size : _scope_frame_base - of_size);
-					ls.frame_size = of_size;
-					ls.frame_size_unused = of_size;
-					ls.current_split_offset = 0;
-					ls.first_local_no = prev ? prev->GetValue().first_local_no + prev->GetValue().locals.Length() : 0;
-					ls.shift_rsp = of_size && !enf_base;
-					ls.temporary = temporary;
-					_scopes.Push(ls);
-					if (ls.shift_rsp) encode_add(Reg::RSP, -of_size);
-				}
-				void _encode_finalize_scope(const _local_scope & scope, uint reg_in_use = 0)
-				{
-					_encode_preserve(Reg::RAX, reg_in_use, true);
+					encode_preserve(Reg64::RAX, reg_in_use, 0, true);
 					if (_conv == CallingConvention::Windows) {
-						_encode_preserve(Reg::RCX, reg_in_use, true);
-						_encode_preserve(Reg::RDX, reg_in_use, true);
-						_encode_preserve(Reg::R8, reg_in_use, true);
-						_encode_preserve(Reg::R9, reg_in_use, true);
+						encode_preserve(Reg64::RCX, reg_in_use, 0, true);
+						encode_preserve(Reg64::RDX, reg_in_use, 0, true);
+						encode_preserve(Reg64::R8, reg_in_use, 0, true);
+						encode_preserve(Reg64::R9, reg_in_use, 0, true);
 					} else if (_conv == CallingConvention::Unix) {
-						_encode_preserve(Reg::RDI, reg_in_use, true);
-						_encode_preserve(Reg::RSI, reg_in_use, true);
-						_encode_preserve(Reg::RDX, reg_in_use, true);
-						_encode_preserve(Reg::RCX, reg_in_use, true);
-						_encode_preserve(Reg::R8, reg_in_use, true);
-						_encode_preserve(Reg::R9, reg_in_use, true);
+						encode_preserve(Reg64::RDI, reg_in_use, 0, true);
+						encode_preserve(Reg64::RSI, reg_in_use, 0, true);
+						encode_preserve(Reg64::RDX, reg_in_use, 0, true);
+						encode_preserve(Reg64::RCX, reg_in_use, 0, true);
+						encode_preserve(Reg64::R8, reg_in_use, 0, true);
+						encode_preserve(Reg64::R9, reg_in_use, 0, true);
 					}
 					for (auto & l : scope.locals) if (l.finalizer.final.ref_class != ReferenceNull) {
 						bool skip = false;
-						for (auto & i : _init_locals) if (i.rbp_offset == l.rbp_offset) { skip = true; break; }
+						for (auto & i : _init_locals) if (i.bp_offset == l.bp_offset) { skip = true; break; }
 						if (skip) continue;
 						int stack_growth = 0;
 						if (_conv == CallingConvention::Windows) {
 							stack_growth = max(1 + l.finalizer.final_args.Length(), 4) * 8;
 							if ((stack_growth + _stack_oddity) & 0xF) {
-								encode_add(Reg::RSP, -8);
+								encode_add(Reg64::RSP, -8);
 								stack_growth += 8;
 							}
 							for (int i = l.finalizer.final_args.Length() - 1; i >= 0; i--) {
 								auto & arg = l.finalizer.final_args[i];
-								if (i == 0) encode_put_addr_of(Reg::RDX, arg);
-								else if (i == 1) encode_put_addr_of(Reg::R8, arg);
-								else if (i == 2) encode_put_addr_of(Reg::R9, arg);
-								else { encode_put_addr_of(Reg::RCX, arg); encode_push(Reg::RCX); }
+								if (i == 0) encode_put_addr_of(Reg64::RDX, arg);
+								else if (i == 1) encode_put_addr_of(Reg64::R8, arg);
+								else if (i == 2) encode_put_addr_of(Reg64::R9, arg);
+								else { encode_put_addr_of(Reg64::RCX, arg); encode_push(Reg64::RCX); }
 							}
-							encode_lea(Reg::RCX, Reg::RBP, l.rbp_offset);
-							encode_add(Reg::RSP, -32);
+							encode_lea(Reg64::RCX, Reg64::RBP, l.bp_offset);
+							encode_add(Reg64::RSP, -32);
 						} else if (_conv == CallingConvention::Unix) {
 							stack_growth = max(l.finalizer.final_args.Length() - 5, 0) * 8;
 							if ((stack_growth + _stack_oddity) & 0xF) {
-								encode_add(Reg::RSP, -8);
+								encode_add(Reg64::RSP, -8);
 								stack_growth += 8;
 							}
 							for (int i = l.finalizer.final_args.Length() - 1; i >= 0; i--) {
 								auto & arg = l.finalizer.final_args[i];
-								if (i == 0) encode_put_addr_of(Reg::RSI, arg);
-								else if (i == 1) encode_put_addr_of(Reg::RDX, arg);
-								else if (i == 2) encode_put_addr_of(Reg::RCX, arg);
-								else if (i == 3) encode_put_addr_of(Reg::R8, arg);
-								else if (i == 4) encode_put_addr_of(Reg::R9, arg);
-								else { encode_put_addr_of(Reg::RDI, arg); encode_push(Reg::RDI); }
+								if (i == 0) encode_put_addr_of(Reg64::RSI, arg);
+								else if (i == 1) encode_put_addr_of(Reg64::RDX, arg);
+								else if (i == 2) encode_put_addr_of(Reg64::RCX, arg);
+								else if (i == 3) encode_put_addr_of(Reg64::R8, arg);
+								else if (i == 4) encode_put_addr_of(Reg64::R9, arg);
+								else { encode_put_addr_of(Reg64::RDI, arg); encode_push(Reg64::RDI); }
 							}
-							encode_lea(Reg::RDI, Reg::RBP, l.rbp_offset);
+							encode_lea(Reg64::RDI, Reg64::RBP, l.bp_offset);
 						}
-						encode_put_addr_of(Reg::RAX, l.finalizer.final);
-						encode_call(Reg::RAX, false);
-						if (stack_growth) encode_add(Reg::RSP, stack_growth);
+						encode_put_addr_of(Reg64::RAX, l.finalizer.final);
+						encode_call(Reg64::RAX, false);
+						if (stack_growth) encode_add(Reg64::RSP, stack_growth);
 					}
 					if (_conv == CallingConvention::Windows) {
-						_encode_restore(Reg::R9, reg_in_use, true);
-						_encode_restore(Reg::R8, reg_in_use, true);
-						_encode_restore(Reg::RDX, reg_in_use, true);
-						_encode_restore(Reg::RCX, reg_in_use, true);
+						encode_restore(Reg64::R9, reg_in_use, 0, true);
+						encode_restore(Reg64::R8, reg_in_use, 0, true);
+						encode_restore(Reg64::RDX, reg_in_use, 0, true);
+						encode_restore(Reg64::RCX, reg_in_use, 0, true);
 					} else if (_conv == CallingConvention::Unix) {
-						_encode_restore(Reg::R9, reg_in_use, true);
-						_encode_restore(Reg::R8, reg_in_use, true);
-						_encode_restore(Reg::RCX, reg_in_use, true);
-						_encode_restore(Reg::RDX, reg_in_use, true);
-						_encode_restore(Reg::RSI, reg_in_use, true);
-						_encode_restore(Reg::RDI, reg_in_use, true);
+						encode_restore(Reg64::R9, reg_in_use, 0, true);
+						encode_restore(Reg64::R8, reg_in_use, 0, true);
+						encode_restore(Reg64::RCX, reg_in_use, 0, true);
+						encode_restore(Reg64::RDX, reg_in_use, 0, true);
+						encode_restore(Reg64::RSI, reg_in_use, 0, true);
+						encode_restore(Reg64::RDI, reg_in_use, 0, true);
 					}
-					_encode_restore(Reg::RAX, reg_in_use, true);
-					if (scope.shift_rsp) encode_add(Reg::RSP, scope.frame_size);
+					encode_restore(Reg64::RAX, reg_in_use, 0, true);
+					if (scope.shift_sp) encode_add(Reg64::RSP, scope.frame_size);
 				}
-				void _encode_close_scope(uint reg_in_use = 0)
-				{
-					auto scope = _scopes.Pop();
-					_encode_finalize_scope(scope, reg_in_use);
-				}
-				void _encode_blt(Reg dest, bool dest_indirect, Reg src, bool src_indirect, int size, uint reg_in_use)
-				{
-					Reg ir;
-					if (dest != Reg::RDX && src != Reg::RDX) ir = Reg::RDX;
-					else if (dest != Reg::RAX && src != Reg::RAX) ir = Reg::RAX;
-					else ir = Reg::RBX;
-					if (dest_indirect && src_indirect) {
-						_encode_preserve(ir, reg_in_use, true);
-						int blt_ofs = 0;
-						while (blt_ofs < size) {
-							if (blt_ofs + 8 <= size) {
-								encode_mov_reg_mem(8, ir, src, blt_ofs);
-								encode_mov_mem_reg(8, dest, blt_ofs, ir);
-								blt_ofs += 8;
-							} else if (blt_ofs + 4 <= size) {
-								encode_mov_reg_mem(4, ir, src, blt_ofs);
-								encode_mov_mem_reg(4, dest, blt_ofs, ir);
-								blt_ofs += 4;
-							} else if (blt_ofs + 2 <= size) {
-								encode_mov_reg_mem(2, ir, src, blt_ofs);
-								encode_mov_mem_reg(2, dest, blt_ofs, ir);
-								blt_ofs += 2;
-							} else {
-								encode_mov_reg_mem(1, ir, src, blt_ofs);
-								encode_mov_mem_reg(1, dest, blt_ofs, ir);
-								blt_ofs++;
-							}
-						}
-						_encode_restore(ir, reg_in_use, true);
-					} else if (dest_indirect) {
-						if (size == 8) {
-							encode_mov_mem_reg(8, dest, src);
-						} else if (size == 7) {
-							_encode_preserve(ir, reg_in_use, true);
-							encode_mov_reg_reg(8, ir, src);
-							encode_shr(ir, 48);
-							encode_mov_mem_reg(1, dest, 6, ir);
-							encode_mov_reg_reg(8, ir, src);
-							encode_shr(ir, 32);
-							encode_mov_mem_reg(2, dest, 4, ir);
-							encode_mov_mem_reg(4, dest, src);
-							_encode_restore(ir, reg_in_use, true);
-						} else if (size == 6) {
-							_encode_preserve(ir, reg_in_use, true);
-							encode_mov_reg_reg(8, ir, src);
-							encode_shr(ir, 32);
-							encode_mov_mem_reg(2, dest, 4, ir);
-							encode_mov_mem_reg(4, dest, src);
-							_encode_restore(ir, reg_in_use, true);
-						} else if (size == 5) {
-							_encode_preserve(ir, reg_in_use, true);
-							encode_mov_reg_reg(8, ir, src);
-							encode_shr(ir, 32);
-							encode_mov_mem_reg(1, dest, 4, ir);
-							encode_mov_mem_reg(4, dest, src);
-							_encode_restore(ir, reg_in_use, true);
-						} else if (size == 4) {
-							encode_mov_mem_reg(4, dest, src);
-						} else if (size == 3) {
-							_encode_preserve(ir, reg_in_use, true);
-							encode_mov_reg_reg(8, ir, src);
-							encode_shr(ir, 16);
-							encode_mov_mem_reg(1, dest, 2, ir);
-							encode_mov_mem_reg(2, dest, src);
-							_encode_restore(ir, reg_in_use, true);
-						} else if (size == 2) {
-							encode_mov_mem_reg(2, dest, src);
-						} else if (size == 1) {
-							encode_mov_mem_reg(1, dest, src);
-						}
-					} else if (src_indirect) {
-						if (size == 8) {
-							encode_mov_reg_mem(8, dest, src);
-						} else if (size == 7) {
-							encode_mov_reg_mem(1, dest, src, 6);
-							encode_shl(dest, 16);
-							encode_mov_reg_mem(2, dest, src, 4);
-							encode_shl(dest, 32);
-							encode_mov_reg_mem(4, dest, src);
-						} else if (size == 6) {
-							encode_mov_reg_mem(2, dest, src, 4);
-							encode_shl(dest, 32);
-							encode_mov_reg_mem(4, dest, src);
-						} else if (size == 5) {
-							encode_mov_reg_mem(1, dest, src, 4);
-							encode_shl(dest, 32);
-							encode_mov_reg_mem(4, dest, src);
-						} else if (size == 4) {
-							encode_mov_reg_mem(4, dest, src);
-						} else if (size == 3) {
-							encode_mov_reg_mem(1, dest, src, 2);
-							encode_shl(dest, 16);
-							encode_mov_reg_mem(2, dest, src);
-						} else if (size == 2) {
-							encode_mov_reg_mem(2, dest, src);
-						} else if (size == 1) {
-							encode_mov_reg_mem(1, dest, src);
-						}
-					} else {
-						encode_mov_reg_reg(8, dest, src);
-					}
-				}
-				void _encode_arithmetics(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
+				void _encode_arithmetics(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{
 					if (node.inputs.Length() > 2 || node.inputs.Length() < 1) throw InvalidArgumentException();
 					auto size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
 					if (size != 1 && size != 2 && size != 4 && size != 8) throw InvalidArgumentException();
 					auto opcode = node.self.index;
-					_internal_disposition core;
+					InternalDisposition core;
 					core.flags = DispositionRegister;
 					core.size = size;
-					core.reg = (disp->reg != Reg::NO) ? disp->reg : Reg::RAX;
+					core.reg = (disp->reg != Reg64::NO) ? disp->reg : Reg64::RAX;
 					Array<Reg> fsave(2);
-					Reg rreg = Reg::NO;
+					Reg rreg = Reg64::NO;
 					if (opcode == TransformIntegerSResize || opcode == TransformVectorShiftL || opcode == TransformVectorShiftR || opcode == TransformVectorShiftAL || opcode == TransformVectorShiftAR) {
-						core.reg = Reg::RAX;
-						if (disp->reg != Reg::RAX) fsave << Reg::RAX;
+						core.reg = Reg64::RAX;
+						if (disp->reg != Reg64::RAX) fsave << Reg64::RAX;
 					} if (opcode >= TransformIntegerUMul && opcode <= TransformIntegerSMod) {
-						core.reg = Reg::RAX;
-						if (disp->reg != Reg::RAX) fsave << Reg::RAX;
-						if (disp->reg != Reg::RDX) fsave << Reg::RDX;
-					} else if (disp->reg == Reg::NO) fsave << Reg::RAX;
-					for (auto & r : fsave.Elements()) _encode_preserve(r, reg_in_use, !idle);
+						core.reg = Reg64::RAX;
+						if (disp->reg != Reg64::RAX) fsave << Reg64::RAX;
+						if (disp->reg != Reg64::RDX) fsave << Reg64::RDX;
+					} else if (disp->reg == Reg64::NO) fsave << Reg64::RAX;
+					for (auto & r : fsave.Elements()) encode_preserve(r, reg_in_use, 0, !idle);
 					if (opcode == TransformVectorInverse || opcode == TransformVectorIsZero || opcode == TransformVectorNotZero || opcode == TransformIntegerUResize ||
 						opcode == TransformIntegerSResize || opcode == TransformIntegerInverse || opcode == TransformIntegerAbs) {
 						_encode_tree_node(node.inputs[0], idle, mem_load, &core, reg_in_use | uint(core.reg));
@@ -498,31 +212,31 @@ namespace Engine
 								if (size_from < size) {
 									if (size_from < 2 && size >= 2) { _dest.code << 0x66; _dest.code << 0x98; }
 									if (size_from < 4 && size >= 4) { _dest.code << 0x98; }
-									if (size_from < 8 && size >= 8) { _dest.code << _make_rex(true, false, false, false); _dest.code << 0x98; }
+									if (size_from < 8 && size >= 8) { _dest.code << make_rex(true, false, false, false); _dest.code << 0x98; }
 								}
-								rreg = Reg::RAX;
+								rreg = Reg64::RAX;
 							} else if (opcode == TransformIntegerInverse) {
 								encode_negative(size, core.reg);
 							} else if (opcode == TransformIntegerAbs) {
-								Reg sec = core.reg == Reg::RDX ? Reg::RCX : Reg::RDX;
-								_encode_preserve(sec, reg_in_use, true);
+								Reg sec = core.reg == Reg64::RDX ? Reg64::RCX : Reg64::RDX;
+								encode_preserve(sec, reg_in_use, 0, true);
 								encode_mov_reg_reg(size, sec, core.reg);
-								if (size == 1) encode_shift(size, shOp::sar, sec, 7);
-								else if (size == 2) encode_shift(size, shOp::sar, sec, 15);
-								else if (size == 4) encode_shift(size, shOp::sar, sec, 31);
-								else if (size == 8) encode_shift(size, shOp::sar, sec, 63);
-								encode_operation(size, Op::_xor, core.reg, sec);
-								encode_operation(size, Op::sub, core.reg, sec);
-								_encode_restore(sec, reg_in_use, true);
+								if (size == 1) encode_shift(size, shOp::SAR, sec, 7);
+								else if (size == 2) encode_shift(size, shOp::SAR, sec, 15);
+								else if (size == 4) encode_shift(size, shOp::SAR, sec, 31);
+								else if (size == 8) encode_shift(size, shOp::SAR, sec, 63);
+								encode_operation(size, arOp::XOR, core.reg, sec);
+								encode_operation(size, arOp::SUB, core.reg, sec);
+								encode_restore(sec, reg_in_use, 0, true);
 							}
 						}
 					} else {
 						if (node.inputs.Length() != 2) throw InvalidArgumentException();
-						_internal_disposition modifier;
+						InternalDisposition modifier;
 						modifier.flags = DispositionAny;
 						modifier.size = size;
-						modifier.reg = core.reg == Reg::RCX ? Reg::RDX : Reg::RCX;
-						_encode_preserve(modifier.reg, reg_in_use, !idle);
+						modifier.reg = core.reg == Reg64::RCX ? Reg64::RDX : Reg64::RCX;
+						encode_preserve(modifier.reg, reg_in_use, 0, !idle);
 						_encode_tree_node(node.inputs[0], idle, mem_load, &core, reg_in_use | uint(core.reg) | uint(modifier.reg));
 						_encode_tree_node(node.inputs[1], idle, mem_load, &modifier, reg_in_use | uint(core.reg) | uint(modifier.reg));
 						if (!idle) {
@@ -559,47 +273,47 @@ namespace Engine
 								_dest.code << 0x74; // JZ
 								_dest.code << 0x00;
 								int addr2 = _dest.code.Length();
-								encode_operation(size, Op::_xor, core.reg, core.reg);
+								encode_operation(size, arOp::XOR, core.reg, core.reg);
 								_dest.code[addr - 1] = _dest.code.Length() - addr;
 								_dest.code[addr2 - 1] = _dest.code.Length() - addr2;
 							} else if (opcode == TransformVectorAnd) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::_and, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::_and, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, arOp::AND, core.reg, modifier.reg, true);
+								else encode_operation(size, arOp::AND, core.reg, modifier.reg);
 							} else if (opcode == TransformVectorOr) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::_or, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::_or, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, arOp::OR, core.reg, modifier.reg, true);
+								else encode_operation(size, arOp::OR, core.reg, modifier.reg);
 							} else if (opcode == TransformVectorXor) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::_xor, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::_xor, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, arOp::XOR, core.reg, modifier.reg, true);
+								else encode_operation(size, arOp::XOR, core.reg, modifier.reg);
 							} else if (opcode == TransformVectorShiftL || opcode == TransformVectorShiftR || opcode == TransformVectorShiftAL || opcode == TransformVectorShiftAR) {
-								if (modifier.flags & DispositionPointer) encode_mov_reg_mem(size, Reg::RCX, Reg::RCX);
+								if (modifier.flags & DispositionPointer) encode_mov_reg_mem(size, Reg64::RCX, Reg64::RCX);
 								int mask, max_shift;
 								shOp op;
-								if (opcode == TransformVectorShiftL) op = shOp::shl;
-								else if (opcode == TransformVectorShiftR) op = shOp::shr;
-								else if (opcode == TransformVectorShiftAL) op = shOp::sal;
-								else if (opcode == TransformVectorShiftAR) op = shOp::sar;
+								if (opcode == TransformVectorShiftL) op = shOp::SHL;
+								else if (opcode == TransformVectorShiftR) op = shOp::SHR;
+								else if (opcode == TransformVectorShiftAL) op = shOp::SAL;
+								else if (opcode == TransformVectorShiftAR) op = shOp::SAR;
 								if (size == 1) { mask = 0xFFFFFFF8; max_shift = 7; }
 								else if (size == 2) { mask = 0xFFFFFFF0; max_shift = 15; }
 								else if (size == 4) { mask = 0xFFFFFFE0; max_shift = 31; }
 								else if (size == 8) { mask = 0xFFFFFFC0; max_shift = 63; }
-								encode_test(size, Reg::RCX, mask);
+								encode_test(size, Reg64::RCX, mask);
 								int addr;
 								_dest.code << 0x75; // JNZ
 								_dest.code << 0x00;
 								addr = _dest.code.Length();
-								encode_shift(size, op, Reg::RAX);
+								encode_shift(size, op, Reg64::RAX);
 								_dest.code << 0xEB;
 								_dest.code << 0x00;
 								_dest.code[addr - 1] = _dest.code.Length() - addr;
 								addr = _dest.code.Length();
-								if (opcode == TransformVectorShiftAR) encode_shift(size, op, Reg::RAX, max_shift);
-								else encode_mov_reg_const(size, Reg::RAX, 0);
+								if (opcode == TransformVectorShiftAR) encode_shift(size, op, Reg64::RAX, max_shift);
+								else encode_mov_reg_const(size, Reg64::RAX, 0);
 								_dest.code[addr - 1] = _dest.code.Length() - addr;
-								rreg = Reg::RAX;
+								rreg = Reg64::RAX;
 							} else if (opcode >= TransformIntegerEQ && opcode <= TransformIntegerSG) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::cmp, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::cmp, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, arOp::CMP, core.reg, modifier.reg, true);
+								else encode_operation(size, arOp::CMP, core.reg, modifier.reg);
 								uint8 jcc;
 								if (opcode == TransformIntegerEQ) jcc = 0x74; // JZ
 								else if (opcode == TransformIntegerNEQ) jcc = 0x75; // JNZ
@@ -613,94 +327,93 @@ namespace Engine
 								else if (opcode == TransformIntegerSG) jcc = 0x7F; // JG
 								_dest.code << jcc;
 								_dest.code << 5;
-								encode_operation(8, Op::_xor, core.reg, core.reg);
+								encode_operation(8, arOp::XOR, core.reg, core.reg);
 								_dest.code << 0xEB;
 								_dest.code << 10;
 								encode_mov_reg_const(8, core.reg, 1);
 							} else if (opcode == TransformIntegerAdd) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::add, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::add, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, arOp::ADD, core.reg, modifier.reg, true);
+								else encode_operation(size, arOp::ADD, core.reg, modifier.reg);
 							} else if (opcode == TransformIntegerSubt) {
-								if (modifier.flags & DispositionPointer) encode_operation(size, Op::sub, core.reg, modifier.reg, true);
-								else encode_operation(size, Op::sub, core.reg, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_operation(size, arOp::SUB, core.reg, modifier.reg, true);
+								else encode_operation(size, arOp::SUB, core.reg, modifier.reg);
 							} else if (opcode == TransformIntegerUMul) {
-								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::mul, modifier.reg, true);
-								else encode_mul_div(size, mdOp::mul, modifier.reg);
-								rreg = Reg::RAX;
+								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::MUL, modifier.reg, true);
+								else encode_mul_div(size, mdOp::MUL, modifier.reg);
+								rreg = Reg64::RAX;
 							} else if (opcode == TransformIntegerSMul) {
-								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::imul, modifier.reg, true);
-								else encode_mul_div(size, mdOp::imul, modifier.reg);
-								rreg = Reg::RAX;
+								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::IMUL, modifier.reg, true);
+								else encode_mul_div(size, mdOp::IMUL, modifier.reg);
+								rreg = Reg64::RAX;
 							} else if (opcode == TransformIntegerUDiv) {
-								if (size > 1) encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
-								else { encode_shl(Reg::RAX, 56); encode_shr(Reg::RAX, 56); }
-								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::div, modifier.reg, true);
-								else encode_mul_div(size, mdOp::div, modifier.reg);
-								rreg = Reg::RAX;
+								if (size > 1) encode_operation(size, arOp::XOR, Reg64::RDX, Reg64::RDX);
+								else { encode_shl(Reg64::RAX, 56); encode_shr(Reg64::RAX, 56); }
+								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::DIV, modifier.reg, true);
+								else encode_mul_div(size, mdOp::DIV, modifier.reg);
+								rreg = Reg64::RAX;
 							} else if (opcode == TransformIntegerSDiv) {
 								if (size > 1) {
-									encode_mov_reg_reg(size, Reg::RDX, Reg::RAX);
-									encode_shift(size, shOp::sar, Reg::RDX, 63);
+									encode_mov_reg_reg(size, Reg64::RDX, Reg64::RAX);
+									encode_shift(size, shOp::SAR, Reg64::RDX, 63);
 								} else { _dest.code << 0x66; _dest.code << 0x98; }
-								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::idiv, modifier.reg, true);
-								else encode_mul_div(size, mdOp::idiv, modifier.reg);
-								rreg = Reg::RAX;
+								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::IDIV, modifier.reg, true);
+								else encode_mul_div(size, mdOp::IDIV, modifier.reg);
+								rreg = Reg64::RAX;
 							} else if (opcode == TransformIntegerUMod) {
-								if (size > 1) encode_operation(size, Op::_xor, Reg::RDX, Reg::RDX);
-								else { encode_shl(Reg::RAX, 56); encode_shr(Reg::RAX, 56); }
-								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::div, modifier.reg, true);
-								else encode_mul_div(size, mdOp::div, modifier.reg);
+								if (size > 1) encode_operation(size, arOp::XOR, Reg64::RDX, Reg64::RDX);
+								else { encode_shl(Reg64::RAX, 56); encode_shr(Reg64::RAX, 56); }
+								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::DIV, modifier.reg, true);
+								else encode_mul_div(size, mdOp::DIV, modifier.reg);
 								if (size == 1) {
-									encode_shr(Reg::RAX, 8);
-									rreg = Reg::RAX;
-								} else rreg = Reg::RDX;
+									encode_shr(Reg64::RAX, 8);
+									rreg = Reg64::RAX;
+								} else rreg = Reg64::RDX;
 							} else if (opcode == TransformIntegerSMod) {
 								if (size > 1) {
-									encode_mov_reg_reg(size, Reg::RDX, Reg::RAX);
-									encode_shift(size, shOp::sar, Reg::RDX, 63);
+									encode_mov_reg_reg(size, Reg64::RDX, Reg64::RAX);
+									encode_shift(size, shOp::SAR, Reg64::RDX, 63);
 								} else { _dest.code << 0x66; _dest.code << 0x98; }
-								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::idiv, modifier.reg, true);
-								else encode_mul_div(size, mdOp::idiv, modifier.reg);
+								if (modifier.flags & DispositionPointer) encode_mul_div(size, mdOp::IDIV, modifier.reg, true);
+								else encode_mul_div(size, mdOp::IDIV, modifier.reg);
 								if (size == 1) {
-									encode_shr(Reg::RAX, 8);
-									rreg = Reg::RAX;
-								} else rreg = Reg::RDX;
+									encode_shr(Reg64::RAX, 8);
+									rreg = Reg64::RAX;
+								} else rreg = Reg64::RDX;
 							} else throw InvalidArgumentException();
 						}
-						_encode_restore(modifier.reg, reg_in_use, !idle);
+						encode_restore(modifier.reg, reg_in_use, 0, !idle);
 					}
-					if (rreg != Reg::NO && rreg != disp->reg && !idle) encode_mov_reg_reg(size, disp->reg, rreg);
-					for (auto & r : fsave.InversedElements()) _encode_restore(r, reg_in_use, !idle);
+					if (rreg != Reg64::NO && rreg != disp->reg && !idle) encode_mov_reg_reg(size, disp->reg, rreg);
+					for (auto & r : fsave.InversedElements()) encode_restore(r, reg_in_use, 0, !idle);
 					if (disp->flags & DispositionRegister) {
 						disp->flags = DispositionRegister;
 					} else if (disp->flags & DispositionPointer) {
 						(*mem_load) += _word_align(TH::MakeSize(size, 0));
 						if (!idle) {
-							int offs;
-							_allocate_temporary(TH::MakeSize(size, 0), &offs);
-							encode_mov_mem_reg(size, Reg::RBP, offs, disp->reg);
-							encode_lea(disp->reg, Reg::RBP, offs);
+							int offs = allocate_temporary(TH::MakeSize(size, 0));
+							encode_mov_mem_reg(size, Reg64::RBP, offs, disp->reg);
+							encode_lea(disp->reg, Reg64::RBP, offs);
 						}
 						disp->flags = DispositionPointer;
 					}
 				}
-				void _encode_logics(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
+				void _encode_logics(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{
 					if (node.self.index == TransformLogicalFork) {
 						if (node.inputs.Length() != 3) throw InvalidArgumentException();
-						_internal_disposition cond, none;
-						cond.reg = Reg::RCX;
+						InternalDisposition cond, none;
+						cond.reg = Reg64::RCX;
 						cond.flags = DispositionRegister;
 						cond.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
-						none.reg = Reg::NO;
+						none.reg = Reg64::NO;
 						none.flags = DispositionDiscard;
 						none.size = 0;
 						if (!cond.size || cond.size > 8) throw InvalidArgumentException();
-						_encode_preserve(cond.reg, reg_in_use, !idle);
+						encode_preserve(cond.reg, reg_in_use, 0, !idle);
 						_encode_tree_node(node.inputs[0], idle, mem_load, &cond, reg_in_use | uint(cond.reg));
 						if (!idle) {
 							encode_test(cond.size, cond.reg, 0xFFFFFFFF);
-							_encode_restore(cond.reg, reg_in_use, true);
+							encode_restore(cond.reg, reg_in_use, 0, true);
 							_dest.code << 0x0F; _dest.code << 0x84; // JZ
 							_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
 						}
@@ -708,10 +421,10 @@ namespace Engine
 						if (!idle) {
 							int local_mem_load = 0, ssoffs;
 							_encode_tree_node(node.inputs[1], true, &local_mem_load, &none, reg_in_use);
-							_allocate_temporary(TH::MakeSize(local_mem_load, 0), &ssoffs);
-							_encode_open_scope(local_mem_load, true, ssoffs);
+							ssoffs = allocate_temporary(TH::MakeSize(local_mem_load, 0));
+							encode_open_scope(local_mem_load, true, ssoffs);
 							_encode_tree_node(node.inputs[1], false, &local_mem_load, &none, reg_in_use);
-							_encode_close_scope(reg_in_use);
+							encode_close_scope(reg_in_use);
 							_dest.code << 0xE9; // JMP
 							_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
 							*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
@@ -720,10 +433,10 @@ namespace Engine
 						if (!idle) {
 							int local_mem_load = 0, ssoffs;
 							_encode_tree_node(node.inputs[2], true, &local_mem_load, &none, reg_in_use);
-							_allocate_temporary(TH::MakeSize(local_mem_load, 0), &ssoffs);
-							_encode_open_scope(local_mem_load, true, ssoffs);
+							ssoffs = allocate_temporary(TH::MakeSize(local_mem_load, 0));
+							encode_open_scope(local_mem_load, true, ssoffs);
 							_encode_tree_node(node.inputs[2], false, &local_mem_load, &none, reg_in_use);
-							_encode_close_scope(reg_in_use);
+							encode_close_scope(reg_in_use);
 							*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
 						} else _encode_tree_node(node.inputs[2], true, mem_load, &none, reg_in_use);
 						if (disp->flags & DispositionDiscard) {
@@ -731,8 +444,8 @@ namespace Engine
 						} else throw InvalidArgumentException();
 					} else {
 						if (!node.inputs.Length()) throw InvalidArgumentException();
-						Reg local = disp->reg != Reg::NO ? disp->reg : Reg::RCX;
-						_encode_preserve(local, reg_in_use, local != disp->reg && !idle);
+						Reg local = disp->reg != Reg64::NO ? disp->reg : Reg64::RCX;
+						encode_preserve(local, reg_in_use, disp->reg, !idle);
 						Array<int> put_offs(0x10);
 						uint min_size = 0;
 						uint rv_size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
@@ -742,17 +455,17 @@ namespace Engine
 							auto size = node.input_specs[i].size.num_bytes + WordSize * node.input_specs[i].size.num_words;
 							if (!size || size > 8) throw InvalidArgumentException();
 							if (size < min_size) min_size = size;
-							_internal_disposition ld;
+							InternalDisposition ld;
 							ld.flags = DispositionRegister;
 							ld.reg = local;
 							ld.size = size;
 							if (!idle) {
 								int local_mem_load = 0, ssoffs;
 								_encode_tree_node(n, true, &local_mem_load, &ld, reg_in_use | uint(local));
-								_allocate_temporary(TH::MakeSize(local_mem_load, 0), &ssoffs);
-								_encode_open_scope(local_mem_load, true, ssoffs);
+								ssoffs = allocate_temporary(TH::MakeSize(local_mem_load, 0));
+								encode_open_scope(local_mem_load, true, ssoffs);
 								_encode_tree_node(n, false, &local_mem_load, &ld, reg_in_use | uint(local));
-								_encode_close_scope(reg_in_use | uint(local));
+								encode_close_scope(reg_in_use | uint(local));
 							} else _encode_tree_node(n, true, mem_load, &ld, reg_in_use | uint(local));
 							if (!idle && i < node.inputs.Length() - 1) {
 								encode_test(size, local, 0xFFFFFFFF);
@@ -782,19 +495,18 @@ namespace Engine
 						} else if (disp->flags & DispositionPointer) {
 							*mem_load += 8;
 							if (!idle) {
-								int offs;
-								_allocate_temporary(TH::MakeSize(0, 1), &offs);
-								encode_mov_mem_reg(8, Reg::RBP, offs, local);
-								encode_lea(disp->reg, Reg::RBP, offs);
+								int offs = allocate_temporary(TH::MakeSize(0, 1));
+								encode_mov_mem_reg(8, Reg64::RBP, offs, local);
+								encode_lea(disp->reg, Reg64::RBP, offs);
 							}
 							disp->flags = DispositionPointer;
 						} else if (disp->flags & DispositionDiscard) {
 							disp->flags = DispositionDiscard;
 						}
-						_encode_restore(local, reg_in_use, local != disp->reg && !idle);
+						encode_restore(local, reg_in_use, disp->reg, !idle);
 					}
 				}
-				void _encode_general_call(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
+				void _encode_general_call(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{
 					bool indirect, retval_byref, preserve_rax, retval_final;
 					int first_arg, arg_no;
@@ -803,36 +515,36 @@ namespace Engine
 					} else {
 						indirect = false; first_arg = 0; arg_no = node.inputs.Length();
 					}
-					preserve_rax = disp->reg != Reg::RAX;
+					preserve_rax = disp->reg != Reg64::RAX;
 					retval_byref = _is_pass_by_reference(node.retval_spec);
 					retval_final = node.retval_final.final.ref_class != ReferenceNull;
-					SafePointer< Array<_argument_passage_info> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no);
+					SafePointer< Array<ArgumentPassageInfo> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no);
 					Array<Reg> preserve_regs(0x10);
 					Array<int> argument_homes(1), argument_layout_index(1);
-					if (_conv == CallingConvention::Windows) preserve_regs << Reg::RBX << Reg::RCX << Reg::RDX << Reg::R8 << Reg::R9;
-					else if (_conv == CallingConvention::Unix) preserve_regs << Reg::RBX << Reg::RDI << Reg::RSI << Reg::RDX << Reg::RCX << Reg::R8 << Reg::R9;
-					_encode_preserve(Reg::RAX, reg_in_use, !idle && preserve_rax);
-					for (auto & r : preserve_regs.Elements()) _encode_preserve(r, reg_in_use, !idle);
+					if (_conv == CallingConvention::Windows) preserve_regs << Reg64::RBX << Reg64::RCX << Reg64::RDX << Reg64::R8 << Reg64::R9;
+					else if (_conv == CallingConvention::Unix) preserve_regs << Reg64::RBX << Reg64::RDI << Reg64::RSI << Reg64::RDX << Reg64::RCX << Reg64::R8 << Reg64::R9;
+					encode_preserve(Reg64::RAX, reg_in_use, 0, !idle && preserve_rax);
+					for (auto & r : preserve_regs.Elements()) encode_preserve(r, reg_in_use, 0, !idle);
 					uint reg_used_mask = 0;
 					uint stack_usage = 0;
 					uint num_args_by_stack = 0;
 					uint num_args_by_xmm = 0;
 					for (auto & info : *layout) {
 						if (_is_xmm_register(info.reg)) num_args_by_xmm++;
-						else if (info.reg == Reg::NO) num_args_by_stack++;
+						else if (info.reg == Reg64::NO) num_args_by_stack++;
 					}
 					if (_conv == CallingConvention::Windows) stack_usage = max(layout->Length(), 4) * 8;
 					else if (_conv == CallingConvention::Unix) stack_usage = (num_args_by_stack + num_args_by_xmm) * 8;
 					if ((_stack_oddity + stack_usage) & 0xF) stack_usage += 8;
 					if (stack_usage && !idle) {
 						_stack_oddity += stack_usage;
-						encode_add(Reg::RSP, -int(stack_usage));
+						encode_add(Reg64::RSP, -int(stack_usage));
 					}
 					argument_homes.SetLength(node.inputs.Length() - first_arg);
 					argument_layout_index.SetLength(node.inputs.Length() - first_arg);
 					uint current_stack_index = 0;
 					int rv_offset = 0;
-					Reg rv_reg = Reg::NO;
+					Reg rv_reg = Reg64::NO;
 					int rv_mem_index = -1;
 					for (int i = 0; i < layout->Length(); i++) {
 						auto & info = layout->ElementAt(i);
@@ -842,7 +554,7 @@ namespace Engine
 								argument_homes[info.index] = current_stack_index;
 								current_stack_index += 8;
 							} else if (_conv == CallingConvention::Unix) {
-								if (info.reg == Reg::NO) {
+								if (info.reg == Reg64::NO) {
 									argument_homes[info.index] = current_stack_index;
 									current_stack_index += 8;
 								} else argument_homes[info.index] = -1;
@@ -851,7 +563,7 @@ namespace Engine
 							if (_conv == CallingConvention::Windows) current_stack_index += 8;
 							*mem_load += _word_align(node.retval_spec.size);
 							rv_reg = info.reg;
-							if (!idle) rv_mem_index = _allocate_temporary(node.retval_spec.size, &rv_offset);
+							if (!idle) rv_offset = allocate_temporary(node.retval_spec.size, &rv_mem_index);
 						}
 					}
 					if (_conv == CallingConvention::Unix) for (auto & info : layout->Elements()) if (info.index >= 0 && _is_xmm_register(info.reg)) {
@@ -859,104 +571,655 @@ namespace Engine
 						current_stack_index += 8;
 					}
 					if (indirect) {
-						_internal_disposition ld;
+						InternalDisposition ld;
 						ld.flags = DispositionRegister;
-						ld.reg = Reg::RAX;
+						ld.reg = Reg64::RAX;
 						ld.size = 8;
 						reg_used_mask |= uint(ld.reg);
 						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | reg_used_mask);
 					}
 					if (!idle && current_stack_index) {
-						encode_mov_reg_reg(8, Reg::RBX, Reg::RSP);
-						reg_used_mask |= uint(Reg::RBX);
+						encode_mov_reg_reg(8, Reg64::RBX, Reg64::RSP);
+						reg_used_mask |= uint(Reg64::RBX);
 					}
 					for (int i = 0; i < argument_homes.Length(); i++) {
 						auto home = argument_homes[i];
 						auto & info = layout->ElementAt(argument_layout_index[i]);
 						auto & spec = node.input_specs[i + first_arg];
-						_internal_disposition ld;
+						InternalDisposition ld;
 						ld.size = spec.size.num_bytes + WordSize * spec.size.num_words;
 						ld.flags = info.indirect ? DispositionPointer : DispositionRegister;
 						bool home_mode;
-						if (info.reg == Reg::NO || _is_xmm_register(info.reg)) {
+						if (info.reg == Reg64::NO || _is_xmm_register(info.reg)) {
 							home_mode = true;
-							ld.reg = Reg::R14;
+							ld.reg = Reg64::R14;
 						} else {
 							home_mode = false;
 							ld.reg = info.reg;
 							reg_used_mask |= uint(ld.reg);
 						}
-						if (home_mode) _encode_preserve(ld.reg, reg_in_use | reg_used_mask, !idle);
+						if (home_mode) encode_preserve(ld.reg, reg_in_use | reg_used_mask, 0, !idle);
 						_encode_tree_node(node.inputs[i + first_arg], idle, mem_load, &ld, reg_in_use | reg_used_mask | uint(ld.reg));
+						if ((ld.flags & DispositionRegister) && !idle && ld.size < 4) {
+							encode_shift(8, shOp::SHL, ld.reg, (8 - ld.size) * 8);
+							encode_shift(8, node.input_specs[i + first_arg].semantics == ArgumentSemantics::SignedInteger ? shOp::SAR : shOp::SHR, ld.reg, (8 - ld.size) * 8);
+						}
 						if (home_mode) {
-							if (!idle) encode_mov_mem_reg(8, Reg::RBX, home, ld.reg);
-							_encode_restore(ld.reg, reg_in_use | reg_used_mask, !idle);
+							if (!idle) encode_mov_mem_reg(8, Reg64::RBX, home, ld.reg);
+							encode_restore(ld.reg, reg_in_use | reg_used_mask, 0, !idle);
 						}
 					}
-					if (!idle && rv_reg != Reg::NO) encode_lea(rv_reg, Reg::RBP, rv_offset);
+					if (!idle && rv_reg != Reg64::NO) encode_lea(rv_reg, Reg64::RBP, rv_offset);
 					if (!idle && num_args_by_xmm) {
-						if (indirect) encode_push(Reg::RAX);
+						if (indirect) encode_push(Reg64::RAX);
 						for (int i = 0; i < argument_homes.Length(); i++) {
 							auto home = argument_homes[i];
 							auto & info = layout->ElementAt(argument_layout_index[i]);
 							if (_is_xmm_register(info.reg)) {
-								encode_mov_reg_mem(8, Reg::RAX, Reg::RBX, home);
-								encode_mov_xmm_reg(8, info.reg, Reg::RAX);
+								encode_mov_reg_mem(8, Reg64::RAX, Reg64::RBX, home);
+								encode_mov_xmm_reg(8, info.reg, Reg64::RAX);
 							}
 						}
-						if (indirect) encode_pop(Reg::RAX);
+						if (indirect) encode_pop(Reg64::RAX);
 					}
-					if (!indirect && !idle) encode_put_addr_of(Reg::RAX, node.self);
+					if (!indirect && !idle) encode_put_addr_of(Reg64::RAX, node.self);
 					if (!idle) {
-						encode_call(Reg::RAX, false);
+						encode_call(Reg64::RAX, false);
 						_stack_oddity -= stack_usage;
-						if (stack_usage) encode_add(Reg::RSP, int(stack_usage));
-						if (!retval_byref && node.retval_spec.semantics == ArgumentSemantics::FloatingPoint) encode_mov_reg_xmm(8, Reg::RAX, Reg::XMM0);
+						if (stack_usage) encode_add(Reg64::RSP, int(stack_usage));
+						if (!retval_byref && node.retval_spec.semantics == ArgumentSemantics::FloatingPoint) encode_mov_reg_xmm(8, Reg64::RAX, Reg64::XMM0);
 					}
-					for (auto & r : preserve_regs.InversedElements()) _encode_restore(r, reg_in_use, !idle);
+					for (auto & r : preserve_regs.InversedElements()) encode_restore(r, reg_in_use, 0, !idle);
 					if ((disp->flags & DispositionPointer) && retval_byref) {
-						if (!idle && disp->reg != Reg::RAX) encode_mov_reg_reg(8, disp->reg, Reg::RAX);
+						if (!idle && disp->reg != Reg64::RAX) encode_mov_reg_reg(8, disp->reg, Reg64::RAX);
 						disp->flags = DispositionPointer;
 					} else if ((disp->flags & DispositionRegister) && !retval_byref) {
 						if (retval_final) {
 							*mem_load += WordSize;
 							if (!idle) {
 								int offs;
-								rv_mem_index = _allocate_temporary(TH::MakeSize(0, 1), &offs);
-								encode_mov_mem_reg(8, Reg::RBP, offs, Reg::RAX);
+								offs = allocate_temporary(TH::MakeSize(0, 1), &rv_mem_index);
+								encode_mov_mem_reg(8, Reg64::RBP, offs, Reg64::RAX);
 							}
 						}
-						if (!idle && disp->reg != Reg::RAX) encode_mov_reg_reg(8, disp->reg, Reg::RAX);
+						if (!idle && disp->reg != Reg64::RAX) encode_mov_reg_reg(8, disp->reg, Reg64::RAX);
 						disp->flags = DispositionRegister;
 					} else if ((disp->flags & DispositionPointer) && !retval_byref) {
 						*mem_load += WordSize;
 						if (!idle) {
 							int offs;
-							rv_mem_index = _allocate_temporary(TH::MakeSize(0, 1), &offs);
-							encode_mov_mem_reg(8, Reg::RBP, offs, Reg::RAX);
-							encode_lea(disp->reg, Reg::RBP, offs);
+							offs = allocate_temporary(TH::MakeSize(0, 1), &rv_mem_index);
+							encode_mov_mem_reg(8, Reg64::RBP, offs, Reg64::RAX);
+							encode_lea(disp->reg, Reg64::RBP, offs);
 						}
 						disp->flags = DispositionPointer;
 					} else if ((disp->flags & DispositionRegister) && retval_byref) {
 						if (!idle) {
-							_encode_preserve(Reg::RCX, reg_in_use, !preserve_rax);
-							Reg src = Reg::RAX;
-							if (disp->reg == Reg::RAX) {
-								src = Reg::RCX;
-								encode_mov_reg_reg(8, Reg::RCX, Reg::RAX);
+							encode_preserve(Reg64::RCX, reg_in_use, 0, !preserve_rax);
+							Reg src = Reg64::RAX;
+							if (disp->reg == Reg64::RAX) {
+								src = Reg64::RCX;
+								encode_mov_reg_reg(8, Reg64::RCX, Reg64::RAX);
 							}
 							uint size = _word_align(node.retval_spec.size);
-							_encode_blt(disp->reg, false, src, true, size, reg_in_use | uint(disp->reg) | uint(src));
-							_encode_restore(Reg::RCX, reg_in_use, !preserve_rax);
+							encode_blt(disp->reg, false, src, true, size, reg_in_use | uint(disp->reg) | uint(src));
+							encode_restore(Reg64::RCX, reg_in_use, 0, !preserve_rax);
 						}
 						disp->flags = DispositionRegister;
 					} else if (disp->flags & DispositionDiscard) {
 						disp->flags = DispositionDiscard;
 					}
-					_encode_restore(Reg::RAX, reg_in_use, !idle && preserve_rax);
-					if (rv_mem_index >= 0) _assign_finalizer(rv_mem_index, node.retval_final);
+					encode_restore(Reg64::RAX, reg_in_use, 0, !idle && preserve_rax);
+					if (rv_mem_index >= 0) assign_finalizer(rv_mem_index, node.retval_final);
 				}
-				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
+				void _encode_floating_point(const ExpressionTree & node, bool idle, int * mem_load, VectorDisposition * disp, uint reg_in_use, uint vreg_in_use)
+				{
+					if (node.self.ref_flags & ReferenceFlagInvoke) {
+						if (node.self.ref_class == ReferenceTransform) {
+							if (node.self.index >= 0x080 && node.self.index < 0x100) {
+								if (node.self.ref_flags & ReferenceFlagShort) throw InvalidArgumentException();
+								if (node.self.index == TransformFloatResize) {
+									// TODO: IMPLEMENT
+									// TransformFloatResize	= 0x0080, // 1 argument - a vector to resize; retval - vector; the flag specifies the source precision
+								} else if (node.self.index == TransformFloatGather) {
+									// TODO: IMPLEMENT
+									// TransformFloatGather	= 0x0081, // N arguments - creates a vector from scalar inputs; retval - vector; type specification matters
+								} else if (node.self.index == TransformFloatScatter) {
+									// TODO: IMPLEMENT
+									// TransformFloatScatter	= 0x0082, // 1 argument - a vector to split, N arguments - the destinations; retval - the source; type specification matters
+								} else if (node.self.index == TransformFloatRecombine) {
+									// TODO: IMPLEMENT
+									// TransformFloatRecombine	= 0x0083, // 2 arguments - a vector to recombine, a recombination mask literal; retval - vector;
+								} else if (node.self.index == TransformFloatAbs || node.self.index == TransformFloatInverse) {
+									if (node.inputs.Length() != 1) throw InvalidArgumentException();
+									VectorDisposition a, b;
+									a.size = b.size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
+									allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
+									encode_preserve(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(b.reg_lo, vreg_in_use, 0, !idle);
+									encode_preserve(b.reg_hi, vreg_in_use, 0, !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &b, reg_in_use, vreg_in_use | uint(b.reg_lo) | uint(b.reg_hi));
+									if (!idle) {
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											if (a.size == 32) {
+												_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(a.reg_hi));
+												_dest.code << 0x66 << 0x0F << 0x5C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0x66 << 0x0F << 0x5C << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi));
+												if (node.self.index == TransformFloatAbs) {
+													_dest.code << 0x66 << 0x0F << 0x5F << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+													_dest.code << 0x66 << 0x0F << 0x5F << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi));
+												}
+											} else if (a.size == 24) {
+												_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(a.reg_hi));
+												_dest.code << 0x66 << 0x0F << 0x5C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0xF2 << 0x0F << 0x5C << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi));
+												if (node.self.index == TransformFloatAbs) {
+													_dest.code << 0x66 << 0x0F << 0x5F << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+													_dest.code << 0xF2 << 0x0F << 0x5F << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi));
+												}
+											} else if (a.size == 16) {
+												_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												_dest.code << 0x66 << 0x0F << 0x5C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												if (node.self.index == TransformFloatAbs) _dest.code << 0x66 << 0x0F << 0x5F << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+											} else if (a.size == 8) {
+												_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												_dest.code << 0xF2 << 0x0F << 0x5C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												if (node.self.index == TransformFloatAbs) _dest.code << 0xF2 << 0x0F << 0x5F << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+											} else throw InvalidArgumentException();
+										} else {
+											if (a.size == 16 || a.size == 12 || a.size == 8) {
+												_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												_dest.code << 0x0F << 0x5C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												if (node.self.index == TransformFloatAbs) _dest.code << 0x0F << 0x5F << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+											} else if (a.size == 4) {
+												_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												_dest.code << 0xF3 << 0x0F << 0x5C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												if (node.self.index == TransformFloatAbs) _dest.code << 0xF3 << 0x0F << 0x5F << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+											} else throw InvalidArgumentException();
+										}
+									}
+									encode_restore(b.reg_hi, vreg_in_use, 0, !idle);
+									encode_restore(b.reg_lo, vreg_in_use, 0, !idle);
+									encode_restore(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+								} else if (node.self.index == TransformFloatSqrt) {
+									if (node.inputs.Length() != 1) throw InvalidArgumentException();
+									VectorDisposition a;
+									a.size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
+									encode_preserve(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									if (!idle) {
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											if (a.size == 32) {
+												_dest.code << 0x66 << 0x0F << 0x51 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												_dest.code << 0x66 << 0x0F << 0x51 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(a.reg_hi));
+											} else if (a.size == 24) {
+												_dest.code << 0x66 << 0x0F << 0x51 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												_dest.code << 0xF2 << 0x0F << 0x51 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(a.reg_hi));
+											} else if (a.size == 16) {
+												_dest.code << 0x66 << 0x0F << 0x51 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											} else if (a.size == 8) {
+												_dest.code << 0xF2 << 0x0F << 0x51 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											} else throw InvalidArgumentException();
+										} else {
+											if (a.size == 16 || a.size == 12 || a.size == 8) {
+												_dest.code << 0x0F << 0x51 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											} else if (a.size == 4) {
+												_dest.code << 0xF3 << 0x0F << 0x51 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											} else throw InvalidArgumentException();
+										}
+									}
+									encode_restore(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+								} else if (node.self.index == TransformFloatAdd || node.self.index == TransformFloatSubt || node.self.index == TransformFloatMul || node.self.index == TransformFloatDiv) {
+									uint8 op;
+									if (node.self.index == TransformFloatAdd) op = 0x58;
+									else if (node.self.index == TransformFloatSubt) op = 0x5C;
+									else if (node.self.index == TransformFloatMul) op = 0x59;
+									else if (node.self.index == TransformFloatDiv) op = 0x5E;
+									if (node.inputs.Length() != 2) throw InvalidArgumentException();
+									VectorDisposition a, b;
+									a.size = b.size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
+									allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
+									encode_preserve(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(b.reg_lo, vreg_in_use, 0, !idle);
+									encode_preserve(b.reg_hi, vreg_in_use, 0, !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									_encode_floating_point(node.inputs[1], idle, mem_load, &b, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi));
+									if (!idle) {
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											if (a.size == 32) {
+												_dest.code << 0x66 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0x66 << 0x0F << op << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi));
+											} else if (a.size == 24) {
+												_dest.code << 0x66 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0xF2 << 0x0F << op << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi));
+											} else if (a.size == 16) {
+												_dest.code << 0x66 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+											} else if (a.size == 8) {
+												_dest.code << 0xF2 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+											} else throw InvalidArgumentException();
+										} else {
+											if (a.size == 16 || a.size == 12 || a.size == 8) {
+												_dest.code << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+											} else if (a.size == 4) {
+												_dest.code << 0xF3 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+											} else throw InvalidArgumentException();
+										}
+									}
+									encode_restore(b.reg_hi, vreg_in_use, 0, !idle);
+									encode_restore(b.reg_lo, vreg_in_use, 0, !idle);
+									encode_restore(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+								} else if (node.self.index == TransformFloatMulAdd || node.self.index == TransformFloatMulSubt) {
+									uint8 op;
+									uint8 opm = 0x59;
+									if (node.self.index == TransformFloatMulAdd) op = 0x58;
+									else if (node.self.index == TransformFloatMulSubt) op = 0x5C;
+									if (node.inputs.Length() != 3) throw InvalidArgumentException();
+									VectorDisposition a, b, c;
+									a.size = b.size = c.size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
+									allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
+									allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi | b.reg_lo | b.reg_hi, a.reg_lo | a.reg_hi | b.reg_lo | b.reg_hi, c);
+									encode_preserve(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(b.reg_lo, vreg_in_use, 0, !idle);
+									encode_preserve(b.reg_hi, vreg_in_use, 0, !idle);
+									encode_preserve(c.reg_lo, vreg_in_use, 0, !idle);
+									encode_preserve(c.reg_hi, vreg_in_use, 0, !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									_encode_floating_point(node.inputs[1], idle, mem_load, &b, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi));
+									_encode_floating_point(node.inputs[2], idle, mem_load, &c, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi) | uint(c.reg_lo) | uint(c.reg_hi));
+									if (!idle) {
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											if (a.size == 32) {
+												_dest.code << 0x66 << 0x0F << opm << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0x66 << 0x0F << opm << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi));
+												_dest.code << 0x66 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(c.reg_lo));
+												_dest.code << 0x66 << 0x0F << op << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(c.reg_hi));
+											} else if (a.size == 24) {
+												_dest.code << 0x66 << 0x0F << opm << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0xF2 << 0x0F << opm << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi));
+												_dest.code << 0x66 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(c.reg_lo));
+												_dest.code << 0xF2 << 0x0F << op << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(c.reg_hi));
+											} else if (a.size == 16) {
+												_dest.code << 0x66 << 0x0F << opm << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0x66 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(c.reg_lo));
+											} else if (a.size == 8) {
+												_dest.code << 0xF2 << 0x0F << opm << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0xF2 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(c.reg_lo));
+											} else throw InvalidArgumentException();
+										} else {
+											if (a.size == 16 || a.size == 12 || a.size == 8) {
+												_dest.code << 0x0F << opm << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(c.reg_lo));
+											} else if (a.size == 4) {
+												_dest.code << 0xF3 << 0x0F << opm << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo));
+												_dest.code << 0xF3 << 0x0F << op << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(c.reg_lo));
+											} else throw InvalidArgumentException();
+										}
+									}
+									encode_restore(c.reg_hi, vreg_in_use, 0, !idle);
+									encode_restore(c.reg_lo, vreg_in_use, 0, !idle);
+									encode_restore(b.reg_hi, vreg_in_use, 0, !idle);
+									encode_restore(b.reg_lo, vreg_in_use, 0, !idle);
+									encode_restore(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+								} else throw InvalidArgumentException();
+								return;
+							}
+						}
+					}
+					InternalDisposition idisp;
+					idisp.size = disp->size;
+					if (disp->reg_lo == Reg64::NO) {
+						idisp.flags = DispositionDiscard;
+						idisp.reg = Reg64::NO;
+					} else {
+						idisp.flags = DispositionPointer;
+						idisp.reg = Reg64::RSI;
+					}
+					encode_preserve(idisp.reg, reg_in_use, 0, !idle);
+					if (node.self.ref_flags & ReferenceFlagInvoke) {
+						encode_preserve(Reg64::XMM0, vreg_in_use, 0, !idle);
+						encode_preserve(Reg64::XMM1, vreg_in_use, 0, !idle);
+						encode_preserve(Reg64::XMM2, vreg_in_use, 0, !idle);
+						encode_preserve(Reg64::XMM3, vreg_in_use, 0, !idle);
+						encode_preserve(Reg64::XMM4, vreg_in_use, 0, !idle);
+						encode_preserve(Reg64::XMM5, vreg_in_use, 0, !idle);
+						encode_preserve(Reg64::XMM6, vreg_in_use, 0, !idle);
+						encode_preserve(Reg64::XMM7, vreg_in_use, 0, !idle);
+					}
+					_encode_tree_node(node, idle, mem_load, &idisp, reg_in_use | uint(idisp.reg));
+					if (!idle && idisp.reg != Reg64::NO) {
+						if (disp->size > 16) {
+							encode_mov_xmm_mem(16, disp->reg_lo, idisp.reg, 0);
+							encode_mov_xmm_mem(disp->size - 16, disp->reg_hi, idisp.reg, 16);
+						} else encode_mov_xmm_mem(disp->size, disp->reg_lo, idisp.reg, 0);
+					}
+					if (node.self.ref_flags & ReferenceFlagInvoke) {
+						encode_restore(Reg64::XMM7, vreg_in_use, 0, !idle);
+						encode_restore(Reg64::XMM6, vreg_in_use, 0, !idle);
+						encode_restore(Reg64::XMM5, vreg_in_use, 0, !idle);
+						encode_restore(Reg64::XMM4, vreg_in_use, 0, !idle);
+						encode_restore(Reg64::XMM3, vreg_in_use, 0, !idle);
+						encode_restore(Reg64::XMM2, vreg_in_use, 0, !idle);
+						encode_restore(Reg64::XMM1, vreg_in_use, 0, !idle);
+						encode_restore(Reg64::XMM0, vreg_in_use, 0, !idle);
+					}
+					encode_restore(idisp.reg, reg_in_use, 0, !idle);
+				}
+				void _encode_floating_point_ir(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
+				{
+					if (node.self.index == TransformFloatInteger) {
+						if (node.inputs.Length() != 1) throw InvalidArgumentException();
+						int nx;
+						VectorDisposition a;
+						a.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
+						allocate_xmm(0, 0, a);
+						_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, uint(a.reg_lo) | uint(a.reg_hi));
+						if (!idle) {
+							if (node.self.ref_flags & ReferenceFlagLong) {
+								if (a.size == 32) {
+									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
+									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(1, 3, xmm_register_code(a.reg_hi));
+								} else if (a.size == 24) {
+									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
+									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(1, 3, xmm_register_code(a.reg_hi));
+								} else if (a.size == 16) {
+									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
+								} else if (a.size == 8) {
+									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
+								} else throw InvalidArgumentException();
+							} else {
+								if (a.size == 16 || a.size == 12) {
+									_dest.code << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
+									_dest.code << 0x0F << 0x12 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+									_dest.code << 0x0F << 0x2C << make_mod(1, 3, xmm_register_code(a.reg_lo));
+								} else if (a.size == 8 || a.size == 4) {
+									_dest.code << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
+								} else throw InvalidArgumentException();
+							}
+						}
+						if (node.self.ref_flags & ReferenceFlagLong) nx = a.size / 8;
+						else nx = a.size / 4;
+						auto rvs = object_size(node.retval_spec.size);
+						if ((disp->flags & DispositionRegister) && nx == 1) {
+							disp->flags = DispositionRegister;
+							if (rvs == 8) {
+								if (!idle) {
+									encode_preserve(Reg64::RAX, reg_in_use, disp->reg, true);
+									_dest.code << 0x0F << 0x7E << make_mod(0, 3, 0);
+									_dest.code << make_rex(true, 0, 0, 0) << 0x98;
+									if (Reg64::RAX != disp->reg) encode_mov_reg_reg(8, disp->reg, Reg64::RAX);
+									encode_restore(Reg64::RAX, reg_in_use, disp->reg, true);
+								}
+							} else if (rvs == 4) {
+								if (!idle) _dest.code << make_rex(false, 0, 0, regular_register_code(disp->reg) & 8) << 0x0F << 0x7E << make_mod(0, 3, regular_register_code(disp->reg) & 7);
+							} else if (rvs == 2) {
+								if (!idle) {
+									_dest.code << make_rex(false, 0, 0, regular_register_code(disp->reg) & 8) << 0x0F << 0x7E << make_mod(0, 3, regular_register_code(disp->reg) & 7);
+									encode_and(disp->reg, 0xFFFF);
+								}
+							} else if (rvs == 1) {
+								if (!idle) {
+									_dest.code << make_rex(false, 0, 0, regular_register_code(disp->reg) & 8) << 0x0F << 0x7E << make_mod(0, 3, regular_register_code(disp->reg) & 7);
+									encode_and(disp->reg, 0xFF);
+								}
+							} else throw InvalidArgumentException();
+						} else {
+							if (rvs % nx) throw InvalidArgumentException();
+							auto rqs = rvs / nx;
+							if (rqs != 8 && rqs != 4 && rqs != 2 && rqs != 1) throw InvalidArgumentException();
+							auto rvs_padded = word_align(node.retval_spec.size);
+							(*mem_load) += rvs_padded;
+							int offs;
+							if (!idle) {
+								offs = allocate_temporary(node.retval_spec.size);
+								Reg reg = disp->reg;
+								if (reg == Reg64::NO) reg = Reg64::RAX;
+								encode_preserve(reg, reg_in_use, disp->reg, true);
+								_dest.code << make_rex(true, 0, 0, regular_register_code(reg) & 8) << 0x0F << 0x7E << make_mod(0, 3, regular_register_code(reg) & 7);
+								if (rqs <= 4) encode_mov_mem_reg(rqs, Reg64::RBP, offs, reg); else {
+									encode_mov_mem_reg(4, Reg64::RBP, offs + 4, reg);
+									encode_shift(8, shOp::SAR, Reg64::RBP, 32, true, offs);
+								}
+								if (nx > 1) {
+									encode_shift(8, shOp::SAR, reg, 32);
+									encode_mov_mem_reg(rqs, Reg64::RBP, offs + rqs, reg);
+									if (nx > 2) {
+										_dest.code << make_rex(true, 0, 0, regular_register_code(reg) & 8) << 0x0F << 0x7E << make_mod(1, 3, regular_register_code(reg) & 7);
+										if (rqs <= 4) encode_mov_mem_reg(rqs, Reg64::RBP, offs + 2 * rqs, reg); else {
+											encode_mov_mem_reg(4, Reg64::RBP, offs + 2 * rqs + 4, reg);
+											encode_shift(8, shOp::SAR, Reg64::RBP, 32, true, offs + 2 * rqs);
+										}
+										if (nx > 3) {
+											encode_shift(8, shOp::SAR, reg, 32);
+											encode_mov_mem_reg(rqs, Reg64::RBP, offs + 3 * rqs, reg);
+										}
+									}
+								}
+								encode_restore(reg, reg_in_use, disp->reg, true);
+							}
+							if (disp->flags & DispositionPointer) {
+								disp->flags = DispositionPointer;
+								if (!idle) encode_lea(disp->reg, Reg64::RBP, offs);
+							} else if (disp->flags & DispositionRegister) {
+								disp->flags = DispositionRegister;
+								if (!idle) encode_mov_reg_mem(min(rvs, 8U), disp->reg, Reg64::RBP, offs);
+							} else disp->flags = DispositionDiscard;
+						}
+					} else if (node.self.index == TransformFloatIsZero || node.self.index == TransformFloatNotZero) {
+						uint8 result_mask;
+						bool invert = (node.self.index == TransformFloatNotZero);
+						if (node.inputs.Length() != 1) throw InvalidArgumentException();
+						VectorDisposition a, b;
+						Reg acc1, acc2;
+						a.size = b.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
+						allocate_xmm(0, 0, a);
+						allocate_xmm(a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
+						_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, uint(a.reg_lo) | uint(a.reg_hi));
+						if (disp->reg != Reg64::NO) acc1 = disp->reg; else acc1 = Reg64::RAX;
+						if (a.reg_hi != Reg64::NO) { if (acc1 == Reg64::RAX) acc2 = Reg64::RDX; else acc2 = Reg64::RAX; }
+						encode_preserve(acc1, reg_in_use, disp->reg, !idle);
+						encode_preserve(acc2, reg_in_use, disp->reg, !idle);
+						if (!idle) {
+							_dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(b.reg_lo), 3, xmm_register_code(b.reg_lo));
+							if (node.self.ref_flags & ReferenceFlagLong) {
+								if (a.size == 32) {
+									_dest.code << 0x66 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << 0;
+									_dest.code << 0x66 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_lo)) << 0;
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc2) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc2) & 0x7, 3, xmm_register_code(a.reg_hi));
+									encode_shl(acc2, 2);
+									encode_operation(8, arOp::OR, acc1, acc2);
+									result_mask = 0xF;
+								} else if (a.size == 24) {
+									_dest.code << 0x66 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << 0;
+									_dest.code << 0xF2 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_lo)) << 0;
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc2) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc2) & 0x7, 3, xmm_register_code(a.reg_hi));
+									encode_shl(acc2, 2);
+									encode_operation(8, arOp::OR, acc1, acc2);
+									encode_and(acc1, 7);
+									result_mask = 0x7;
+								} else if (a.size == 16) {
+									_dest.code << 0x66 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << 0;
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									result_mask = 0x3;
+								} else if (a.size == 8) {
+									_dest.code << 0xF2 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << 0;
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									encode_and(acc1, 1);
+									result_mask = 0x1;
+								} else throw InvalidArgumentException();
+							} else {
+								if (a.size == 16 || a.size == 12 || a.size == 8) {
+									_dest.code << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << 0;
+									_dest.code << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									if (a.size == 16) result_mask = 0xF;
+									else if (a.size == 12) { encode_and(acc1, 7); result_mask = 0x7; }
+									else if (a.size == 8) { encode_and(acc1, 3); result_mask = 0x3; }
+								} else if (a.size == 4) {
+									_dest.code << 0xF3 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << 0;
+									_dest.code << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									encode_and(acc1, 1);
+									result_mask = 0x1;
+								} else throw InvalidArgumentException();
+							}
+							if ((node.self.ref_flags & ReferenceFlagVectorCom) || result_mask == 1) {
+								if (invert) encode_xor(acc1, result_mask);
+							} else {
+								if (!invert) encode_xor(acc1, result_mask);
+								encode_test(8, acc1, result_mask);
+								_dest.code << 0x74; // JZ
+								_dest.code << 0x00;
+								int addr = _dest.code.Length();
+								encode_mov_reg_const(8, acc1, 0);
+								_dest.code << 0xEB; // JMP
+								_dest.code << 0x00;
+								_dest.code[addr - 1] = _dest.code.Length() - addr;
+								addr = _dest.code.Length();
+								encode_mov_reg_const(8, acc1, 1);
+								_dest.code[addr - 1] = _dest.code.Length() - addr;
+							}
+						}
+						if (_word_align(node.retval_spec.size) != 8) throw InvalidArgumentException();
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += 8;
+							if (!idle) {
+								int offs = allocate_temporary(node.retval_spec.size);
+								encode_mov_mem_reg(8, Reg64::RBP, offs, acc1);
+								encode_lea(acc1, Reg64::RBP, offs);
+							}
+						} else disp->flags = DispositionDiscard;
+						encode_restore(acc2, reg_in_use, disp->reg, !idle);
+						encode_restore(acc1, reg_in_use, disp->reg, !idle);
+					} else if (node.self.index == TransformFloatEQ || node.self.index == TransformFloatNEQ ||
+						node.self.index == TransformFloatLE || node.self.index == TransformFloatGE ||
+						node.self.index == TransformFloatL || node.self.index == TransformFloatG) {
+						uint8 result_mask;
+						uint8 comparator;
+						bool invert;
+						if (node.self.index == TransformFloatEQ || node.self.index == TransformFloatNEQ) {
+							comparator = 0;
+							invert = (node.self.index == TransformFloatNEQ);
+						} else if (node.self.index == TransformFloatL || node.self.index == TransformFloatGE) {
+							comparator = 1;
+							invert = (node.self.index == TransformFloatGE);
+						} else if (node.self.index == TransformFloatLE || node.self.index == TransformFloatG) {
+							comparator = 2;
+							invert = (node.self.index == TransformFloatG);
+						}
+						if (node.inputs.Length() != 2) throw InvalidArgumentException();
+						VectorDisposition a, b;
+						Reg acc1, acc2;
+						a.size = b.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
+						allocate_xmm(0, 0, a);
+						allocate_xmm(a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
+						_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, uint(a.reg_lo) | uint(a.reg_hi));
+						_encode_floating_point(node.inputs[1], idle, mem_load, &b, reg_in_use, uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi));
+						if (disp->reg != Reg64::NO) acc1 = disp->reg; else acc1 = Reg64::RAX;
+						if (a.reg_hi != Reg64::NO) { if (acc1 == Reg64::RAX) acc2 = Reg64::RDX; else acc2 = Reg64::RAX; }
+						encode_preserve(acc1, reg_in_use, disp->reg, !idle);
+						encode_preserve(acc2, reg_in_use, disp->reg, !idle);
+						if (!idle) {
+							if (node.self.ref_flags & ReferenceFlagLong) {
+								if (a.size == 32) {
+									_dest.code << 0x66 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << comparator;
+									_dest.code << 0x66 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi)) << comparator;
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc2) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc2) & 0x7, 3, xmm_register_code(a.reg_hi));
+									encode_shl(acc2, 2);
+									encode_operation(8, arOp::OR, acc1, acc2);
+									result_mask = 0xF;
+								} else if (a.size == 24) {
+									_dest.code << 0x66 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << comparator;
+									_dest.code << 0xF2 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(b.reg_hi)) << comparator;
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc2) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc2) & 0x7, 3, xmm_register_code(a.reg_hi));
+									encode_shl(acc2, 2);
+									encode_operation(8, arOp::OR, acc1, acc2);
+									encode_and(acc1, 7);
+									result_mask = 0x7;
+								} else if (a.size == 16) {
+									_dest.code << 0x66 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << comparator;
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									result_mask = 0x3;
+								} else if (a.size == 8) {
+									_dest.code << 0xF2 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << comparator;
+									_dest.code << 0x66 << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									encode_and(acc1, 1);
+									result_mask = 0x1;
+								} else throw InvalidArgumentException();
+							} else {
+								if (a.size == 16 || a.size == 12 || a.size == 8) {
+									_dest.code << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << comparator;
+									_dest.code << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									if (a.size == 16) result_mask = 0xF;
+									else if (a.size == 12) { encode_and(acc1, 7); result_mask = 0x7; }
+									else if (a.size == 8) { encode_and(acc1, 3); result_mask = 0x3; }
+								} else if (a.size == 4) {
+									_dest.code << 0xF3 << 0x0F << 0xC2 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(b.reg_lo)) << comparator;
+									_dest.code << make_rex(true, regular_register_code(acc1) & 0x8, 0, 0) << 0x0F << 0x50 << make_mod(regular_register_code(acc1) & 0x7, 3, xmm_register_code(a.reg_lo));
+									encode_and(acc1, 1);
+									result_mask = 0x1;
+								} else throw InvalidArgumentException();
+							}
+							if ((node.self.ref_flags & ReferenceFlagVectorCom) || result_mask == 1) {
+								if (invert) encode_xor(acc1, result_mask);
+							} else {
+								if (!invert) encode_xor(acc1, result_mask);
+								encode_test(8, acc1, result_mask);
+								_dest.code << 0x74; // JZ
+								_dest.code << 0x00;
+								int addr = _dest.code.Length();
+								encode_mov_reg_const(8, acc1, 0);
+								_dest.code << 0xEB; // JMP
+								_dest.code << 0x00;
+								_dest.code[addr - 1] = _dest.code.Length() - addr;
+								addr = _dest.code.Length();
+								encode_mov_reg_const(8, acc1, 1);
+								_dest.code[addr - 1] = _dest.code.Length() - addr;
+							}
+						}
+						if (_word_align(node.retval_spec.size) != 8) throw InvalidArgumentException();
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += 8;
+							if (!idle) {
+								int offs = allocate_temporary(node.retval_spec.size);
+								encode_mov_mem_reg(8, Reg64::RBP, offs, acc1);
+								encode_lea(acc1, Reg64::RBP, offs);
+							}
+						} else disp->flags = DispositionDiscard;
+						encode_restore(acc2, reg_in_use, disp->reg, !idle);
+						encode_restore(acc1, reg_in_use, disp->reg, !idle);
+					} else throw InvalidArgumentException();
+				}
+				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{
 					if (node.self.ref_flags & ReferenceFlagInvoke) {
 						if (node.self.ref_class == ReferenceTransform) {
@@ -964,14 +1227,14 @@ namespace Engine
 								if (node.self.index == TransformFollowPointer) {
 									if (node.inputs.Length() != 1) throw InvalidArgumentException();
 									if (disp->flags & DispositionPointer) {
-										_internal_disposition src;
+										InternalDisposition src;
 										src.flags = DispositionRegister;
 										src.reg = disp->reg;
 										src.size = 8;
 										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										disp->flags = DispositionPointer;
 									} else if (disp->flags & DispositionRegister) {
-										_internal_disposition src;
+										InternalDisposition src;
 										src.flags = DispositionRegister;
 										src.reg = disp->reg;
 										src.size = 8;
@@ -979,9 +1242,9 @@ namespace Engine
 										if (!idle) encode_mov_reg_mem(8, src.reg, src.reg);
 										disp->flags = DispositionRegister;
 									} else if (disp->flags & DispositionDiscard) {
-										_internal_disposition src;
+										InternalDisposition src;
 										src.flags = DispositionDiscard;
-										src.reg = Reg::NO;
+										src.reg = Reg64::NO;
 										src.size = 0;
 										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										disp->flags = DispositionDiscard;
@@ -989,161 +1252,160 @@ namespace Engine
 								} else if (node.self.index == TransformTakePointer) {
 									if (node.inputs.Length() != 1) throw InvalidArgumentException();
 									if (disp->flags & DispositionRegister) {
-										_internal_disposition src;
+										InternalDisposition src;
 										src.flags = DispositionPointer;
 										src.reg = disp->reg;
 										src.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
 										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										disp->flags = DispositionRegister;
 									} else if (disp->flags & DispositionPointer) {
-										_internal_disposition src;
+										InternalDisposition src;
 										src.flags = DispositionPointer;
 										src.reg = disp->reg;
 										src.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
 										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										*mem_load += _word_align(TH::MakeSize(0, 1));
 										if (!idle) {
-											int offset;
-											_allocate_temporary(TH::MakeSize(0, 1), &offset);
-											encode_mov_mem_reg(8, Reg::RBP, offset, src.reg);
-											encode_lea(src.reg, Reg::RBP, offset);
+											int offset = allocate_temporary(TH::MakeSize(0, 1));
+											encode_mov_mem_reg(8, Reg64::RBP, offset, src.reg);
+											encode_lea(src.reg, Reg64::RBP, offset);
 										}
 										disp->flags = DispositionPointer;
 									} else if (disp->flags & DispositionDiscard) {
-										_internal_disposition src;
+										InternalDisposition src;
 										src.flags = DispositionDiscard;
-										src.reg = Reg::NO;
+										src.reg = Reg64::NO;
 										src.size = 0;
 										_encode_tree_node(node.inputs[0], idle, mem_load, &src, reg_in_use);
 										disp->flags = DispositionDiscard;
 									}
 								} else if (node.self.index == TransformAddressOffset) {
 									if (node.inputs.Length() < 2 || node.inputs.Length() > 3) throw InvalidArgumentException();
-									_internal_disposition base;
+									InternalDisposition base;
 									base.flags = DispositionPointer;
-									base.reg = Reg::RSI;
+									base.reg = Reg64::RSI;
 									base.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
-									_encode_preserve(base.reg, reg_in_use, !idle && disp->reg != Reg::RSI);
+									encode_preserve(base.reg, reg_in_use, disp->reg, !idle);
 									_encode_tree_node(node.inputs[0], idle, mem_load, &base, reg_in_use | uint(base.reg));
 									if (node.inputs[1].self.ref_class == ReferenceLiteral && (node.inputs.Length() == 2 || node.inputs[2].self.ref_class == ReferenceLiteral)) {
 										uint offset = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
 										uint scale = 1;
 										if (node.inputs.Length() == 3) scale = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;
 										if (!idle && offset * scale) {
-											if (scale != 0xFFFFFFFF) encode_add(Reg::RSI, offset * scale);
-											else encode_add(Reg::RSI, -offset);
+											if (scale != 0xFFFFFFFF) encode_add(Reg64::RSI, offset * scale);
+											else encode_add(Reg64::RSI, -offset);
 										}
 									} else if (node.inputs[1].self.ref_class != ReferenceLiteral && (node.inputs.Length() == 2 || node.inputs[2].self.ref_class == ReferenceLiteral)) {
 										uint scale = 1;
 										if (node.inputs.Length() == 3) scale = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;
-										_encode_preserve(Reg::RAX, reg_in_use, !idle);
-										_encode_preserve(Reg::RDX, reg_in_use, !idle);
-										_encode_preserve(Reg::RCX, reg_in_use, !idle && scale > 1);
+										encode_preserve(Reg64::RAX, reg_in_use, 0, !idle);
+										encode_preserve(Reg64::RDX, reg_in_use, 0, !idle);
+										encode_preserve(Reg64::RCX, reg_in_use, 0, !idle && scale > 1);
 										if (scale) {
-											_internal_disposition offset;
+											InternalDisposition offset;
 											offset.flags = DispositionRegister;
-											offset.reg = Reg::RAX;
+											offset.reg = Reg64::RAX;
 											offset.size = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
 											if (offset.size != 8) throw InvalidArgumentException();
-											_encode_tree_node(node.inputs[1], idle, mem_load, &offset, reg_in_use | uint(Reg::RSI) | uint(Reg::RAX) | uint(Reg::RDX) | uint(Reg::RCX));
+											_encode_tree_node(node.inputs[1], idle, mem_load, &offset, reg_in_use | uint(Reg64::RSI) | uint(Reg64::RAX) | uint(Reg64::RDX) | uint(Reg64::RCX));
 											if (!idle) {
 												if (scale > 1) {
-													encode_mov_reg_const(8, Reg::RCX, scale);
-													encode_mul_div(8, mdOp::mul, Reg::RCX);
+													encode_mov_reg_const(8, Reg64::RCX, scale);
+													encode_mul_div(8, mdOp::MUL, Reg64::RCX);
 												}
-												encode_operation(8, Op::add, Reg::RSI, Reg::RAX);
+												encode_operation(8, arOp::ADD, Reg64::RSI, Reg64::RAX);
 											}
 										}
-										_encode_restore(Reg::RCX, reg_in_use, !idle && scale > 1);
-										_encode_restore(Reg::RDX, reg_in_use, !idle);
-										_encode_restore(Reg::RAX, reg_in_use, !idle);
+										encode_restore(Reg64::RCX, reg_in_use, 0, !idle && scale > 1);
+										encode_restore(Reg64::RDX, reg_in_use, 0, !idle);
+										encode_restore(Reg64::RAX, reg_in_use, 0, !idle);
 									} else if (node.inputs.Length() == 3 && node.inputs[1].self.ref_class == ReferenceLiteral && node.inputs[2].self.ref_class != ReferenceLiteral) {
 										uint scale = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
-										_encode_preserve(Reg::RAX, reg_in_use, !idle);
-										_encode_preserve(Reg::RDX, reg_in_use, !idle);
-										_encode_preserve(Reg::RCX, reg_in_use, !idle && scale > 1);
+										encode_preserve(Reg64::RAX, reg_in_use, 0, !idle);
+										encode_preserve(Reg64::RDX, reg_in_use, 0, !idle);
+										encode_preserve(Reg64::RCX, reg_in_use, 0, !idle && scale > 1);
 										if (scale) {
-											_internal_disposition offset;
+											InternalDisposition offset;
 											offset.flags = DispositionRegister;
-											offset.reg = Reg::RAX;
+											offset.reg = Reg64::RAX;
 											offset.size = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;
 											if (offset.size != 8) throw InvalidArgumentException();
-											_encode_tree_node(node.inputs[2], idle, mem_load, &offset, reg_in_use | uint(Reg::RSI) | uint(Reg::RAX) | uint(Reg::RDX) | uint(Reg::RCX));
+											_encode_tree_node(node.inputs[2], idle, mem_load, &offset, reg_in_use | uint(Reg64::RSI) | uint(Reg64::RAX) | uint(Reg64::RDX) | uint(Reg64::RCX));
 											if (!idle) {
 												if (scale > 1) {
-													encode_mov_reg_const(8, Reg::RCX, scale);
-													encode_mul_div(8, mdOp::mul, Reg::RCX);
+													encode_mov_reg_const(8, Reg64::RCX, scale);
+													encode_mul_div(8, mdOp::MUL, Reg64::RCX);
 												}
-												encode_operation(8, Op::add, Reg::RSI, Reg::RAX);
+												encode_operation(8, arOp::ADD, Reg64::RSI, Reg64::RAX);
 											}
 										}
-										_encode_restore(Reg::RCX, reg_in_use, !idle && scale > 1);
-										_encode_restore(Reg::RDX, reg_in_use, !idle);
-										_encode_restore(Reg::RAX, reg_in_use, !idle);
+										encode_restore(Reg64::RCX, reg_in_use, 0, !idle && scale > 1);
+										encode_restore(Reg64::RDX, reg_in_use, 0, !idle);
+										encode_restore(Reg64::RAX, reg_in_use, 0, !idle);
 									} else {
-										_encode_preserve(Reg::RAX, reg_in_use, !idle);
-										_encode_preserve(Reg::RDX, reg_in_use, !idle);
-										_encode_preserve(Reg::RCX, reg_in_use, !idle);
-										_internal_disposition offset;
+										encode_preserve(Reg64::RAX, reg_in_use, 0, !idle);
+										encode_preserve(Reg64::RDX, reg_in_use, 0, !idle);
+										encode_preserve(Reg64::RCX, reg_in_use, 0, !idle);
+										InternalDisposition offset;
 										offset.flags = DispositionRegister;
-										offset.reg = Reg::RAX;
+										offset.reg = Reg64::RAX;
 										offset.size = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
-										_internal_disposition scale;
+										InternalDisposition scale;
 										scale.flags = DispositionRegister;
-										scale.reg = Reg::RCX;
+										scale.reg = Reg64::RCX;
 										scale.size = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;
 										if (offset.size != 8 || scale.size != 8) throw InvalidArgumentException();
-										_encode_tree_node(node.inputs[1], idle, mem_load, &offset, reg_in_use | uint(Reg::RSI) | uint(Reg::RAX) | uint(Reg::RDX) | uint(Reg::RCX));
-										_encode_tree_node(node.inputs[2], idle, mem_load, &scale, reg_in_use | uint(Reg::RSI) | uint(Reg::RAX) | uint(Reg::RDX) | uint(Reg::RCX));
+										_encode_tree_node(node.inputs[1], idle, mem_load, &offset, reg_in_use | uint(Reg64::RSI) | uint(Reg64::RAX) | uint(Reg64::RDX) | uint(Reg64::RCX));
+										_encode_tree_node(node.inputs[2], idle, mem_load, &scale, reg_in_use | uint(Reg64::RSI) | uint(Reg64::RAX) | uint(Reg64::RDX) | uint(Reg64::RCX));
 										if (!idle) {
-											encode_mul_div(8, mdOp::mul, Reg::RCX);
-											encode_operation(8, Op::add, Reg::RSI, Reg::RAX);
+											encode_mul_div(8, mdOp::MUL, Reg64::RCX);
+											encode_operation(8, arOp::ADD, Reg64::RSI, Reg64::RAX);
 										}
-										_encode_restore(Reg::RCX, reg_in_use, !idle);
-										_encode_restore(Reg::RDX, reg_in_use, !idle);
-										_encode_restore(Reg::RAX, reg_in_use, !idle);
+										encode_restore(Reg64::RCX, reg_in_use, 0, !idle);
+										encode_restore(Reg64::RDX, reg_in_use, 0, !idle);
+										encode_restore(Reg64::RAX, reg_in_use, 0, !idle);
 									}
 									if (disp->flags & DispositionPointer) {
-										if (disp->reg != Reg::RSI && !idle) encode_mov_reg_reg(8, disp->reg, Reg::RSI);
+										if (disp->reg != Reg64::RSI && !idle) encode_mov_reg_reg(8, disp->reg, Reg64::RSI);
 										disp->flags = DispositionPointer;
 									} else if (disp->flags & DispositionRegister) {
 										if (!idle) {
-											if (disp->reg != Reg::RSI) {
-												_encode_blt(disp->reg, false, Reg::RSI, true, disp->size, reg_in_use | uint(Reg::RSI));
+											if (disp->reg != Reg64::RSI) {
+												encode_blt(disp->reg, false, Reg64::RSI, true, disp->size, reg_in_use | uint(Reg64::RSI));
 											} else {
-												_encode_preserve(Reg::RDI, reg_in_use, true);
-												encode_mov_reg_reg(8, Reg::RDI, Reg::RSI);
-												_encode_blt(Reg::RSI, false, Reg::RDI, true, disp->size, reg_in_use | uint(Reg::RDI) | uint(Reg::RSI));
-												_encode_restore(Reg::RDI, reg_in_use, true);
+												encode_preserve(Reg64::RDI, reg_in_use, 0, true);
+												encode_mov_reg_reg(8, Reg64::RDI, Reg64::RSI);
+												encode_blt(Reg64::RSI, false, Reg64::RDI, true, disp->size, reg_in_use | uint(Reg64::RDI) | uint(Reg64::RSI));
+												encode_restore(Reg64::RDI, reg_in_use, 0, true);
 											}
 										}
 										disp->flags = DispositionRegister;
 									} else if (disp->flags & DispositionDiscard) {
 										disp->flags = DispositionDiscard;
 									}
-									_encode_restore(base.reg, reg_in_use, !idle && disp->reg != Reg::RSI);
+									encode_restore(base.reg, reg_in_use, disp->reg, !idle);
 								} else if (node.self.index == TransformBlockTransfer) {
 									if (node.inputs.Length() != 2) throw InvalidArgumentException();
 									uint size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
-									_internal_disposition dest_d, src_d;
+									InternalDisposition dest_d, src_d;
 									dest_d = *disp;
-									if (dest_d.reg == Reg::NO) dest_d.reg = Reg::RAX;
+									if (dest_d.reg == Reg64::NO) dest_d.reg = Reg64::RAX;
 									dest_d.size = size;
 									dest_d.flags = DispositionPointer;
 									src_d.flags = DispositionAny;
 									src_d.size = size;
-									src_d.reg = Reg::RBX;
-									if (src_d.reg == dest_d.reg) src_d.reg = Reg::RAX;
+									src_d.reg = Reg64::RBX;
+									if (src_d.reg == dest_d.reg) src_d.reg = Reg64::RAX;
 									if (!idle) {
-										_encode_preserve(dest_d.reg, reg_in_use, disp->reg == Reg::NO);
-										_encode_preserve(src_d.reg, reg_in_use, true);
+										encode_preserve(dest_d.reg, reg_in_use, 0, disp->reg == Reg64::NO);
+										encode_preserve(src_d.reg, reg_in_use, 0, true);
 									}
 									_encode_tree_node(node.inputs[0], idle, mem_load, &dest_d, reg_in_use | uint(dest_d.reg) | uint(src_d.reg));
 									_encode_tree_node(node.inputs[1], idle, mem_load, &src_d, reg_in_use | uint(dest_d.reg) | uint(src_d.reg));
-									if (!idle) _encode_blt(dest_d.reg, true, src_d.reg, src_d.flags & DispositionPointer, size, reg_in_use);
+									if (!idle) encode_blt(dest_d.reg, true, src_d.reg, src_d.flags & DispositionPointer, size, reg_in_use);
 									if ((disp->flags & DispositionRegister) && !(disp->flags & DispositionPointer)) {
 										if (!idle) {
-											if (src_d.flags & DispositionPointer) _encode_blt(src_d.reg, false, dest_d.reg, true, size, reg_in_use | uint(dest_d.reg) | uint(src_d.reg));
+											if (src_d.flags & DispositionPointer) encode_blt(src_d.reg, false, dest_d.reg, true, size, reg_in_use | uint(dest_d.reg) | uint(src_d.reg));
 											encode_mov_reg_reg(8, dest_d.reg, src_d.reg);
 										}
 										disp->flags = DispositionRegister;
@@ -1153,8 +1415,8 @@ namespace Engine
 										if (disp->flags & DispositionAny) *disp = dest_d;
 									}
 									if (!idle) {
-										_encode_restore(src_d.reg, reg_in_use, true);
-										_encode_restore(dest_d.reg, reg_in_use, disp->reg == Reg::NO);
+										encode_restore(src_d.reg, reg_in_use, 0, true);
+										encode_restore(dest_d.reg, reg_in_use, 0, disp->reg == Reg64::NO);
 									}
 								} else if (node.self.index == TransformInvoke) {
 									_encode_general_call(node, idle, mem_load, disp, reg_in_use);
@@ -1162,28 +1424,28 @@ namespace Engine
 									if (node.inputs.Length() != 1) throw InvalidArgumentException();
 									auto size = node.retval_spec.size.num_bytes + WordSize * node.retval_spec.size.num_words;
 									*mem_load += _word_align(node.retval_spec.size);
-									_internal_disposition ld;
+									InternalDisposition ld;
 									ld.flags = DispositionDiscard;
-									ld.reg = Reg::NO;
+									ld.reg = Reg64::NO;
 									ld.size = 0;
 									int offset, index;
 									if (!idle) {
-										index = _allocate_temporary(node.retval_spec.size, &offset);
-										_local_disposition local;
-										local.rbp_offset = offset;
+										offset = allocate_temporary(node.retval_spec.size, &index);
+										LocalDisposition local;
+										local.bp_offset = offset;
 										local.size = size;
 										_init_locals.Push(local);
 									}
 									_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use);
 									if (!idle) {
-										_assign_finalizer(index, node.retval_final);
+										assign_finalizer(index, node.retval_final);
 										_init_locals.Pop();
 									}
 									if (disp->flags & DispositionPointer) {
-										if (!idle) encode_lea(disp->reg, Reg::RBP, offset);
+										if (!idle) encode_lea(disp->reg, Reg64::RBP, offset);
 										disp->flags = DispositionPointer;
 									} else if (disp->flags & DispositionRegister) {
-										if (!idle) encode_mov_reg_mem(8, disp->reg, Reg::RBP, offset);
+										if (!idle) encode_mov_reg_mem(8, disp->reg, Reg64::RBP, offset);
 										disp->flags = DispositionRegister;
 									} else if (disp->flags & DispositionDiscard) {
 										disp->flags = DispositionDiscard;
@@ -1191,11 +1453,11 @@ namespace Engine
 								} else if (node.self.index == TransformBreakIf) {
 									if (node.inputs.Length() != 3) throw InvalidArgumentException();
 									_encode_tree_node(node.inputs[0], idle, mem_load, disp, reg_in_use);
-									_internal_disposition ld;
+									InternalDisposition ld;
 									ld.flags = DispositionRegister;
-									ld.reg = Reg::RCX;
+									ld.reg = Reg64::RCX;
 									ld.size = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
-									_encode_preserve(ld.reg, reg_in_use, !idle);
+									encode_preserve(ld.reg, reg_in_use, 0, !idle);
 									_encode_tree_node(node.inputs[1], idle, mem_load, &ld, reg_in_use | uint(ld.reg));
 									if (!idle) {
 										encode_test(ld.size, ld.reg, 0xFFFFFFFF);
@@ -1203,46 +1465,45 @@ namespace Engine
 										_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
 										int addr = _dest.code.Length();
 										auto scope = _scopes.GetLast();
-										while (scope && !scope->GetValue().shift_rsp) scope = scope->GetPrevious();
-										if (scope) encode_lea(Reg::RSP, Reg::RBP, scope->GetValue().frame_base);
-										else encode_lea(Reg::RSP, Reg::RBP, _scope_frame_base);
+										while (scope && !scope->GetValue().shift_sp) scope = scope->GetPrevious();
+										if (scope) encode_lea(Reg64::RSP, Reg64::RBP, scope->GetValue().frame_base);
+										else encode_lea(Reg64::RSP, Reg64::RBP, _scope_frame_base);
 										int _preserve_oddity = _stack_oddity;
 										_stack_oddity = 0;
 										encode_scope_unroll(_current_instruction, _current_instruction + 1 + int(node.input_specs[2].size.num_bytes));
 										_stack_oddity = _preserve_oddity;
 										_dest.code << 0xE9; // JMP
 										_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
-										_jump_reloc_struct rs;
+										JumpRelocStruct rs;
 										rs.machine_offset_at = _dest.code.Length() - 4;
 										rs.machine_offset_relative_to = _dest.code.Length();
 										rs.xasm_offset_jump_to = _current_instruction + 1 + int(node.input_specs[2].size.num_bytes);
 										_jump_reloc << rs;
 										*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
 									}
-									_encode_restore(ld.reg, reg_in_use, !idle);
+									encode_restore(ld.reg, reg_in_use, 0, !idle);
 								} else if (node.self.index == TransformSplit) {
 									if (node.inputs.Length() != 1) throw InvalidArgumentException();
 									auto size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
-									_internal_disposition ld = *disp;
+									InternalDisposition ld = *disp;
 									if (ld.flags & DispositionDiscard) {
 										ld.flags = DispositionPointer;
-										ld.reg = Reg::RSI;
+										ld.reg = Reg64::RSI;
 										ld.size = size;
 									}
-									_encode_preserve(ld.reg, reg_in_use, !idle && ld.reg != disp->reg);
+									encode_preserve(ld.reg, reg_in_use, disp->reg, !idle);
 									_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | uint(ld.reg));
 									*mem_load += _word_align(node.input_specs[0].size);
-									Reg dest = ld.reg == Reg::RDI ? Reg::RDX : Reg::RDI;
+									Reg dest = ld.reg == Reg64::RDI ? Reg64::RDX : Reg64::RDI;
 									if (!idle) {
-										int offset;
-										_allocate_temporary(node.input_specs[0].size, &offset);
+										int offset = allocate_temporary(node.input_specs[0].size);
 										_scopes.GetLast()->GetValue().current_split_offset = offset;
-										_encode_preserve(dest, reg_in_use | uint(ld.reg), true);
-										encode_lea(dest, Reg::RBP, offset);
-										_encode_blt(dest, true, ld.reg, ld.flags & DispositionPointer, size, reg_in_use | uint(ld.reg) | uint(dest));
-										_encode_restore(dest, reg_in_use | uint(ld.reg), true);
+										encode_preserve(dest, reg_in_use | uint(ld.reg), 0, true);
+										encode_lea(dest, Reg64::RBP, offset);
+										encode_blt(dest, true, ld.reg, ld.flags & DispositionPointer, size, reg_in_use | uint(ld.reg) | uint(dest));
+										encode_restore(dest, reg_in_use | uint(ld.reg), 0, true);
 									}
-									_encode_restore(ld.reg, reg_in_use, !idle && ld.reg != disp->reg);
+									encode_restore(ld.reg, reg_in_use, disp->reg, !idle);
 									if (disp->flags & DispositionDiscard) {
 										disp->flags = DispositionDiscard;
 									} else *disp = ld;
@@ -1251,6 +1512,39 @@ namespace Engine
 								_encode_logics(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x013 && node.self.index < 0x050) {
 								_encode_arithmetics(node, idle, mem_load, disp, reg_in_use);
+							} else if (node.self.index >= 0x080 && node.self.index < 0x100) {
+								if (is_vector_retval_transform(node.self.index)) {
+									VectorDisposition vdisp;
+									vdisp.size = node.retval_spec.size.num_bytes + node.retval_spec.size.num_words * WordSize;
+									if (disp->flags & DispositionDiscard) vdisp.reg_lo = vdisp.reg_hi = Reg64::NO; else {
+										vdisp.reg_lo = Reg64::XMM0;
+										vdisp.reg_hi = vdisp.size > 16 ? Reg64::XMM1 : Reg64::NO;
+									}
+									_encode_floating_point(node, idle, mem_load, &vdisp, reg_in_use, uint(vdisp.reg_lo) | uint(vdisp.reg_hi));
+									if (disp->flags & DispositionPointer) {
+										disp->flags = DispositionPointer;
+										int offs;
+										*mem_load += _word_align(node.retval_spec.size);
+										if (!idle) {
+											Reg freg;
+											if (uint(disp->reg) < 8) freg = disp->reg; else freg = Reg64::RDI;
+											offs = allocate_temporary(node.retval_spec.size);
+											encode_preserve(freg, reg_in_use, disp->reg, true);
+											encode_lea(freg, Reg64::RBP, offs);
+											if (vdisp.size > 16) {
+												encode_mov_mem_xmm(16, freg, 0, vdisp.reg_lo);
+												encode_mov_mem_xmm(vdisp.size - 16, freg, 16, vdisp.reg_hi);
+											} else encode_mov_mem_xmm(vdisp.size, freg, 0, vdisp.reg_lo);
+											if (disp->reg != freg) encode_mov_reg_reg(8, disp->reg, freg);
+											encode_restore(freg, reg_in_use, disp->reg, true);
+										}
+									} else if (disp->flags & DispositionRegister) {
+										disp->flags = DispositionRegister;
+										if (!idle) encode_mov_reg_xmm(8, disp->reg, vdisp.reg_lo);
+									} else if (disp->flags & DispositionDiscard) {
+										disp->flags = DispositionDiscard;
+									} else throw InvalidArgumentException();
+								} else _encode_floating_point_ir(node, idle, mem_load, disp, reg_in_use);
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);
@@ -1262,12 +1556,12 @@ namespace Engine
 						} else if (disp->flags & DispositionRegister) {
 							disp->flags = DispositionRegister;
 							if (!idle) {
-								Reg ld = Reg::RAX;
-								if (ld == disp->reg) ld = Reg::R15;
-								_encode_preserve(ld, reg_in_use, true);
+								Reg ld = Reg64::RAX;
+								if (ld == disp->reg) ld = Reg64::R15;
+								encode_preserve(ld, reg_in_use, 0, true);
 								encode_put_addr_of(ld, node.self);
-								_encode_blt(disp->reg, false, ld, true, disp->size, reg_in_use | uint(ld));
-								_encode_restore(ld, reg_in_use, true);
+								encode_blt(disp->reg, false, ld, true, disp->size, reg_in_use | uint(ld));
+								encode_restore(ld, reg_in_use, 0, true);
 							}
 						} else if (disp->flags & DispositionDiscard) {
 							disp->flags = DispositionDiscard;
@@ -1276,11 +1570,11 @@ namespace Engine
 				}
 				void _encode_expression_evaluation(const ExpressionTree & tree, Reg retval_copy)
 				{
-					if (retval_copy != Reg::NO && (tree.self.ref_flags & ReferenceFlagInvoke) && _needs_stack_storage(tree.retval_spec)) throw InvalidArgumentException();
+					if (retval_copy != Reg64::NO && (tree.self.ref_flags & ReferenceFlagInvoke) && _needs_stack_storage(tree.retval_spec)) throw InvalidArgumentException();
 					int _temp_storage = 0;
-					_internal_disposition disp;
+					InternalDisposition disp;
 					disp.reg = retval_copy;
-					if (retval_copy == Reg::NO) {
+					if (retval_copy == Reg64::NO) {
 						disp.flags = DispositionDiscard;
 						disp.size = 0;
 					} else {
@@ -1288,652 +1582,157 @@ namespace Engine
 						disp.size = 1;
 					}
 					_encode_tree_node(tree, true, &_temp_storage, &disp, uint(retval_copy));
-					_encode_open_scope(_temp_storage, true, 0);
+					encode_open_scope(_temp_storage, true, 0);
 					_encode_tree_node(tree, false, &_temp_storage, &disp, uint(retval_copy));
-					_encode_close_scope(uint(retval_copy));
+					encode_close_scope(uint(retval_copy));
 				}
 			public:
-				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src) : _conv(conv), _dest(dest), _src(src), _org_inst_offsets(0x200), _jump_reloc(0x100), _inputs(0x20)
+				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(conv, dest, src, true) {}
+				virtual void encode_function_prologue(void) override
 				{
-					_current_instruction = -1;
-					_stack_oddity = 0;
-					_org_inst_offsets.SetLength(_src.instset.Length());
-				}
-				void encode_debugger_trap(void) { _dest.code << 0xCC; }
-				void encode_pure_ret(void) { _dest.code << 0xC3; }
-				void encode_mov_reg_reg(uint quant, Reg dest, Reg src)
-				{
-					auto di = _regular_register_code(dest);
-					auto si = _regular_register_code(src);
-					if (quant == 8) {
-						_dest.code << _make_rex(true, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, 0x3, di & 0x07);
-					} else if (quant == 4) {
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, 0x3, di & 0x07);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, 0x3, di & 0x07);
-					} else if (quant == 1) {
-						if (si >= 4 || di >= 4) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x88;
-						_dest.code << _make_mod(si & 0x07, 0x3, di & 0x07);
-					}
-				}
-				void encode_mov_reg_mem(uint quant, Reg dest, Reg src_ptr)
-				{
-					if (src_ptr == Reg::RBP || src_ptr == Reg::RSP) return;
-					auto di = _regular_register_code(dest);
-					auto si = _regular_register_code(src_ptr);
-					if (quant == 8) {
-						_dest.code << _make_rex(true, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x8B;
-						_dest.code << _make_mod(di & 0x07, 0x0, si & 0x07);
-					} else if (quant == 4) {
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x8B;
-						_dest.code << _make_mod(di & 0x07, 0x0, si & 0x07);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x8B;
-						_dest.code << _make_mod(di & 0x07, 0x0, si & 0x07);
-					} else if (quant == 1) {
-						if (si >= 4 || di >= 4) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x8A;
-						_dest.code << _make_mod(di & 0x07, 0x0, si & 0x07);
-					}
-				}
-				void encode_mov_reg_mem(uint quant, Reg dest, Reg src_ptr, int src_offset)
-				{
-					if (src_ptr == Reg::RSP) return;
-					auto di = _regular_register_code(dest);
-					auto si = _regular_register_code(src_ptr);
-					uint8 mode;
-					if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
-					if (quant == 8) {
-						_dest.code << _make_rex(true, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x8B;
-						_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					} else if (quant == 4) {
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x8B;
-						_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x8B;
-						_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					} else if (quant == 1) {
-						if (si >= 4 || di >= 4) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x8A;
-						_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					}
-					if (mode == 0x02) {
-						_dest.code << int8(src_offset);
-						_dest.code << int8(src_offset >> 8);
-						_dest.code << int8(src_offset >> 16);
-						_dest.code << int8(src_offset >> 24);
-					} else _dest.code << int8(src_offset);
-				}
-				void encode_mov_reg_const(uint quant, Reg dest, uint64 value)
-				{
-					auto di = _regular_register_code(dest);
-					auto di_lo = di & 0x07;
-					if (quant == 8) {
-						_dest.code << _make_rex(true, 0, 0, di & 0x08);
-						_dest.code << 0xB8 + di_lo;
-					} else if (quant == 4) {
-						if (di & 0x08) _dest.code << _make_rex(false, 0, 0, di & 0x08);
-						_dest.code << 0xB8 + di_lo;
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if (di & 0x08) _dest.code << _make_rex(false, 0, 0, di & 0x08);
-						_dest.code << 0xB8 + di_lo;
-					} else if (quant == 1) {
-						if (di >= 4) _dest.code << _make_rex(false, 0, 0, di & 0x08);
-						_dest.code << 0xB0 + di_lo;
-					}
-					for (uint q = 0; q < quant; q++) { _dest.code << uint8(value); value >>= 8; }
-				}
-				void encode_mov_mem_reg(uint quant, Reg dest_ptr, Reg src)
-				{
-					if (dest_ptr == Reg::RBP || dest_ptr == Reg::RSP) return;
-					auto di = _regular_register_code(dest_ptr);
-					auto si = _regular_register_code(src);
-					if (quant == 8) {
-						_dest.code << _make_rex(true, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, 0x0, di & 0x07);
-					} else if (quant == 4) {
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, 0x0, di & 0x07);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, 0x0, di & 0x07);
-					} else if (quant == 1) {
-						if (si >= 4 || di >= 4) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x88;
-						_dest.code << _make_mod(si & 0x07, 0x0, di & 0x07);
-					}
-				}
-				void encode_mov_mem_reg(uint quant, Reg dest_ptr, int dest_offset, Reg src)
-				{
-					if (dest_ptr == Reg::RSP) return;
-					auto di = _regular_register_code(dest_ptr);
-					auto si = _regular_register_code(src);
-					uint8 mode;
-					if (dest_offset >= -128 && dest_offset < 128) mode = 0x01; else mode = 0x02;
-					if (quant == 8) {
-						_dest.code << _make_rex(true, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, mode, di & 0x07);
-					} else if (quant == 4) {
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, mode, di & 0x07);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x89;
-						_dest.code << _make_mod(si & 0x07, mode, di & 0x07);
-					} else if (quant == 1) {
-						if (si >= 4 || di >= 4) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x88;
-						_dest.code << _make_mod(si & 0x07, mode, di & 0x07);
-					}
-					if (mode == 0x02) {
-						_dest.code << int8(dest_offset);
-						_dest.code << int8(dest_offset >> 8);
-						_dest.code << int8(dest_offset >> 16);
-						_dest.code << int8(dest_offset >> 24);
-					} else _dest.code << int8(dest_offset);
-				}
-				void encode_mov_reg_xmm(uint quant, Reg dest, Reg src)
-				{
-					auto di = _regular_register_code(dest);
-					auto si = _xmm_register_code(src);
-					if (quant == 8) {
-						_dest.code << 0x66;
-						_dest.code << _make_rex(true, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x0F;
-						_dest.code << 0x7E;
-						_dest.code << _make_mod(si & 0x07, 0x3, di & 0x07);
-					} else if (quant == 4) {
-						_dest.code << 0x66;
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, si & 0x08, 0, di & 0x08);
-						_dest.code << 0x0F;
-						_dest.code << 0x7E;
-						_dest.code << _make_mod(si & 0x07, 0x3, di & 0x07);
-					}
-				}
-				void encode_mov_xmm_reg(uint quant, Reg dest, Reg src)
-				{
-					auto di = _xmm_register_code(dest);
-					auto si = _regular_register_code(src);
-					if (quant == 8) {
-						_dest.code << 0x66;
-						_dest.code << _make_rex(true, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x0F;
-						_dest.code << 0x6E;
-						_dest.code << _make_mod(di & 0x07, 0x3, si & 0x07);
-					} else if (quant == 4) {
-						_dest.code << 0x66;
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << 0x0F;
-						_dest.code << 0x6E;
-						_dest.code << _make_mod(di & 0x07, 0x3, si & 0x07);
-					}
-				}
-				void encode_lea(Reg dest, Reg src_ptr, int src_offset)
-				{
-					if (src_ptr == Reg::RSP) return;
-					auto di = _regular_register_code(dest);
-					auto si = _regular_register_code(src_ptr);
-					uint8 mode;
-					if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
-					_dest.code << _make_rex(true, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8D;
-					_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					if (mode == 0x02) {
-						_dest.code << int8(src_offset);
-						_dest.code << int8(src_offset >> 8);
-						_dest.code << int8(src_offset >> 16);
-						_dest.code << int8(src_offset >> 24);
-					} else _dest.code << int8(src_offset);
-				}
-				void encode_push(Reg reg)
-				{
-					uint rc = _regular_register_code(reg);
-					uint8 rex = _make_rex(false, false, false, rc & 0x08);
-					if (rex & 0x0F) _dest.code << rex;
-					_dest.code << (0x50 + (rc & 0x07));
-				}
-				void encode_pop(Reg reg)
-				{
-					uint rc = _regular_register_code(reg);
-					uint8 rex = _make_rex(false, false, false, rc & 0x08);
-					if (rex & 0x0F) _dest.code << rex;
-					_dest.code << (0x58 + (rc & 0x07));
-				}
-				void encode_operation(uint quant, Op op, Reg to, Reg value_ptr, bool indirect = false, int value_offset = 0)
-				{
-					if (value_ptr == Reg::RSP || value_ptr == Reg::RBP) return;
-					auto di = _regular_register_code(to);
-					auto si = _regular_register_code(value_ptr);
-					auto o = uint(op);
-					uint8 mode;
-					if (indirect) {
-						if (value_offset == 0) mode = 0x00;
-						else if (value_offset >= -128 && value_offset < 128) mode = 0x01;
-						else mode = 0x02;
-					} else mode = 0x03;
-					if (quant == 8) {
-						_dest.code << _make_rex(true, di & 0x08, 0, si & 0x08);
-						_dest.code << (o + 1);
-						_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					} else if (quant == 4) {
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << (o + 1);
-						_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if ((si & 0x08) || (di & 0x08)) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << (o + 1);
-						_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					} else if (quant == 1) {
-						if (si >= 4 || di >= 4) _dest.code << _make_rex(false, di & 0x08, 0, si & 0x08);
-						_dest.code << o;
-						_dest.code << _make_mod(di & 0x07, mode, si & 0x07);
-					}
-					if (mode == 0x02) {
-						_dest.code << int8(value_offset);
-						_dest.code << int8(value_offset >> 8);
-						_dest.code << int8(value_offset >> 16);
-						_dest.code << int8(value_offset >> 24);
-					} else if (mode == 0x01) _dest.code << int8(value_offset);
-				}
-				void encode_mul_div(uint quant, mdOp op, Reg value_ptr, bool indirect = false, int value_offset = 0)
-				{
-					if (value_ptr == Reg::RSP || value_ptr == Reg::RBP) return;
-					auto si = _regular_register_code(value_ptr);
-					auto o = uint(op);
-					uint8 mode;
-					if (indirect) {
-						if (value_offset == 0) mode = 0x00;
-						else if (value_offset >= -128 && value_offset < 128) mode = 0x01;
-						else mode = 0x02;
-					} else mode = 0x03;
-					if (quant == 8) {
-						_dest.code << _make_rex(true, false, 0, si & 0x08);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(uint(op), mode, si & 0x07);
-					} else if (quant == 4) {
-						if (si & 0x08) _dest.code << _make_rex(false, false, 0, si & 0x08);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(uint(op), mode, si & 0x07);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if (si & 0x08) _dest.code << _make_rex(false, false, 0, si & 0x08);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(uint(op), mode, si & 0x07);
-					} else if (quant == 1) {
-						if (si >= 4) _dest.code << _make_rex(false, false, 0, si & 0x08);
-						_dest.code << 0xF6;
-						_dest.code << _make_mod(uint(op), mode, si & 0x07);
-					}
-					if (mode == 0x02) {
-						_dest.code << int8(value_offset);
-						_dest.code << int8(value_offset >> 8);
-						_dest.code << int8(value_offset >> 16);
-						_dest.code << int8(value_offset >> 24);
-					} else if (mode == 0x01) _dest.code << int8(value_offset);
-				}
-				void encode_add(Reg reg, int literal)
-				{
-					uint rc = _regular_register_code(reg);
-					_dest.code << _make_rex(true, false, false, rc & 0x08);
-					if (literal >= -128 && literal <= 127) {
-						_dest.code << 0x83;
-						_dest.code << _make_mod(0, 0x3, rc & 0x07);
-						_dest.code << int8(literal);
-					} else {
-						_dest.code << 0x81;
-						_dest.code << _make_mod(0, 0x3, rc & 0x07);
-						_dest.code << int8(literal);
-						_dest.code << int8(literal >> 8);
-						_dest.code << int8(literal >> 16);
-						_dest.code << int8(literal >> 24);
-					}
-				}
-				void encode_test(uint quant, Reg reg, int literal)
-				{
-					auto ri = _regular_register_code(reg);
-					if (quant == 8) {
-						_dest.code << _make_rex(true, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0, 0x3, ri & 0x7);
-						_dest.code << (literal & 0xFF);
-						_dest.code << ((literal >> 8) & 0xFF);
-						_dest.code << ((literal >> 16) & 0xFF);
-						_dest.code << ((literal >> 24) & 0xFF);
-					} else if (quant == 4) {
-						if (ri & 0x8) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0, 0x3, ri & 0x7);
-						_dest.code << (literal & 0xFF);
-						_dest.code << ((literal >> 8) & 0xFF);
-						_dest.code << ((literal >> 16) & 0xFF);
-						_dest.code << ((literal >> 24) & 0xFF);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if (ri & 0x8) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0, 0x3, ri & 0x7);
-						_dest.code << (literal & 0xFF);
-						_dest.code << ((literal >> 8) & 0xFF);
-					} else if (quant == 1) {
-						if (ri & 0xC) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF6;
-						_dest.code << _make_mod(0, 0x3, ri & 0x7);
-						_dest.code << (literal & 0xFF);
-					}
-				}
-				void encode_invert(uint quant, Reg reg)
-				{
-					auto ri = _regular_register_code(reg);
-					if (quant == 8) {
-						_dest.code << _make_rex(true, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0x2, 0x3, ri & 0x7);
-					} else if (quant == 4) {
-						if (ri & 0x8) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0x2, 0x3, ri & 0x7);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if (ri & 0x8) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0x2, 0x3, ri & 0x7);
-					} else if (quant == 1) {
-						if (ri & 0xC) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF6;
-						_dest.code << _make_mod(0x2, 0x3, ri & 0x7);
-					}
-				}
-				void encode_negative(uint quant, Reg reg)
-				{
-					auto ri = _regular_register_code(reg);
-					if (quant == 8) {
-						_dest.code << _make_rex(true, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0x3, 0x3, ri & 0x7);
-					} else if (quant == 4) {
-						if (ri & 0x8) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0x3, 0x3, ri & 0x7);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if (ri & 0x8) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF7;
-						_dest.code << _make_mod(0x3, 0x3, ri & 0x7);
-					} else if (quant == 1) {
-						if (ri & 0xC) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << 0xF6;
-						_dest.code << _make_mod(0x3, 0x3, ri & 0x7);
-					}
-				}
-				void encode_shift(uint quant, shOp op, Reg reg, int by = 0)
-				{
-					uint8 oc, ocx;
-					auto ri = _regular_register_code(reg);
-					if (by) {
-						if (op == shOp::shl) { oc = 0xC0; ocx = 0x4; }
-						else if (op == shOp::shr) { oc = 0xC0; ocx = 0x5; }
-						else if (op == shOp::sal) { oc = 0xC0; ocx = 0x4; }
-						else if (op == shOp::sar) { oc = 0xC0; ocx = 0x7; }
-					} else {
-						if (op == shOp::shl) { oc = 0xD2; ocx = 0x4; }
-						else if (op == shOp::shr) { oc = 0xD2; ocx = 0x5; }
-						else if (op == shOp::sal) { oc = 0xD2; ocx = 0x4; }
-						else if (op == shOp::sar) { oc = 0xD2; ocx = 0x7; }
-					}
-					if (quant == 8) {
-						_dest.code << _make_rex(true, false, false, ri & 0x8);
-						_dest.code << (oc + 1);
-						_dest.code << _make_mod(ocx, 0x3, ri & 0x7);
-					} else if (quant == 4) {
-						if (ri & 0x8) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << (oc + 1);
-						_dest.code << _make_mod(ocx, 0x3, ri & 0x7);
-					} else if (quant == 2) {
-						_dest.code << 0x66;
-						if (ri & 0x8) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << (oc + 1);
-						_dest.code << _make_mod(ocx, 0x3, ri & 0x7);
-					} else if (quant == 1) {
-						if (ri & 0xC) _dest.code << _make_rex(false, false, false, ri & 0x8);
-						_dest.code << oc;
-						_dest.code << _make_mod(ocx, 0x3, ri & 0x7);
-					}
-					if (by) _dest.code << by;
-				}
-				void encode_shl(Reg reg, int bits)
-				{
-					uint rc = _regular_register_code(reg);
-					_dest.code << _make_rex(true, false, false, rc & 0x08);
-					_dest.code << 0xC1;
-					_dest.code << _make_mod(0x4, 0x3, rc & 0x7);
-					_dest.code << bits;
-				}
-				void encode_shr(Reg reg, int bits)
-				{
-					uint rc = _regular_register_code(reg);
-					_dest.code << _make_rex(true, false, false, rc & 0x08);
-					_dest.code << 0xC1;
-					_dest.code << _make_mod(0x5, 0x3, rc & 0x7);
-					_dest.code << bits;
-				}
-				void encode_call(Reg func_ptr, bool indirect)
-				{
-					uint rc = _regular_register_code(func_ptr);
-					if (rc & 0x08) _dest.code << _make_rex(false, false, false, true);
-					_dest.code << 0xFF;
-					_dest.code << _make_mod(0x2, indirect ? 0x00 : 0x03, rc & 0x07);
-				}
-				void encode_put_addr_of(Reg dest, const ObjectReference & value)
-				{
-					if (value.ref_class == ReferenceNull) {
-						encode_mov_reg_const(8, dest, 0);
-					} else if (value.ref_class == ReferenceExternal) {
-						encode_mov_reg_const(8, dest, 0);
-						_refer_object_at(_src.extrefs[value.index], _dest.code.Length() - 8);
-					} else if (value.ref_class == ReferenceData) {
-						encode_mov_reg_const(8, dest, value.index);
-						_relocate_data_at(_dest.code.Length() - 8);
-					} else if (value.ref_class == ReferenceCode) {
-						encode_mov_reg_const(8, dest, value.index);
-						_relocate_code_at(_dest.code.Length() - 8);
-					} else if (value.ref_class == ReferenceArgument) {
-						auto & arg = _inputs[value.index];
-						if (arg.indirect) encode_mov_reg_mem(8, dest, Reg::RBP, arg.rbp_offset);
-						else encode_lea(dest, Reg::RBP, arg.rbp_offset);
-					} else if (value.ref_class == ReferenceRetVal) {
-						if (_retval.indirect) encode_mov_reg_mem(8, dest, Reg::RBP, _retval.rbp_offset);
-						else encode_lea(dest, Reg::RBP, _retval.rbp_offset);
-					} else if (value.ref_class == ReferenceLocal) {
-						bool found = false;
-						for (auto & scp : _scopes) if (scp.first_local_no <= value.index && value.index < scp.first_local_no + scp.locals.Length()) {
-							auto & local = scp.locals[value.index - scp.first_local_no];
-							encode_lea(dest, Reg::RBP, local.rbp_offset);
-							found = true;
-							break;
-						}
-						if (!found) throw InvalidArgumentException();
-					} else if (value.ref_class == ReferenceInit) {
-						if (!_init_locals.IsEmpty()) {
-							auto & local = _init_locals.GetLast()->GetValue();
-							encode_lea(dest, Reg::RBP, local.rbp_offset);
-						} else throw InvalidArgumentException();
-					} else if (value.ref_class == ReferenceSplitter) {
-						auto scope = _scopes.GetLast();
-						if (scope && scope->GetValue().current_split_offset) {
-							encode_lea(dest, Reg::RBP, scope->GetValue().current_split_offset);
-						} else throw InvalidArgumentException();
-					} else throw InvalidArgumentException();
-				}
-				void encode_function_prologue(void)
-				{
-					SafePointer< Array<_argument_passage_info> > api = _make_interface_layout(_src.retval, _src.inputs.GetBuffer(), _src.inputs.Length());
+					SafePointer< Array<ArgumentPassageInfo> > api = _make_interface_layout(_src.retval, _src.inputs.GetBuffer(), _src.inputs.Length());
 					_inputs.SetLength(_src.inputs.Length());
 					if (_conv == CallingConvention::Windows) {
 						int align = WordSize * 9;
 						_unroll_base = -WordSize * 9;
-						encode_push(Reg::RBP);
-						encode_mov_reg_reg(8, Reg::RBP, Reg::RSP);
-						encode_push(Reg::RBX);
-						encode_push(Reg::RDI);
-						encode_push(Reg::RSI);
-						encode_push(Reg::R10);
-						encode_push(Reg::R11);
-						encode_push(Reg::R12);
-						encode_push(Reg::R13);
-						encode_push(Reg::R14);
-						encode_push(Reg::R15);
-						_retval.rbp_offset = 0;
+						encode_push(Reg64::RBP);
+						encode_mov_reg_reg(8, Reg64::RBP, Reg64::RSP);
+						encode_push(Reg64::RBX);
+						encode_push(Reg64::RDI);
+						encode_push(Reg64::RSI);
+						encode_push(Reg64::R10);
+						encode_push(Reg64::R11);
+						encode_push(Reg64::R12);
+						encode_push(Reg64::R13);
+						encode_push(Reg64::R14);
+						encode_push(Reg64::R15);
+						_retval.bp_offset = 0;
 						for (int i = 0; i < api->Length(); i++) {
 							auto & info = api->ElementAt(i);
 							if (info.index >= 0) {
 								_inputs[info.index].bound_to = info.reg;
-								_inputs[info.index].rbp_offset = WordSize * (2 + i);
+								_inputs[info.index].bp_offset = WordSize * (2 + i);
 								_inputs[info.index].indirect = info.indirect;
 							} else {
 								_retval.bound_to = info.reg;
 								_retval.indirect = info.indirect;
-								_retval.rbp_offset = WordSize * (2 + i);
+								_retval.bp_offset = WordSize * (2 + i);
 							}
-							if (info.reg != Reg::NO) {
+							if (info.reg != Reg64::NO) {
 								if (_is_xmm_register(info.reg)) {
-									encode_mov_reg_xmm(8, Reg::RAX, info.reg);
-									encode_mov_mem_reg(8, Reg::RBP, WordSize * (2 + i), Reg::RAX);
-								} else encode_mov_mem_reg(8, Reg::RBP, WordSize * (2 + i), info.reg);
+									encode_mov_reg_xmm(8, Reg64::RAX, info.reg);
+									encode_mov_mem_reg(8, Reg64::RBP, WordSize * (2 + i), Reg64::RAX);
+								} else encode_mov_mem_reg(8, Reg64::RBP, WordSize * (2 + i), info.reg);
 							}
 						}
-						if (!_retval.rbp_offset) {
-							_retval.bound_to = _src.retval.semantics == ArgumentSemantics::FloatingPoint ? Reg::XMM0 : Reg::RAX;
+						if (!_retval.bp_offset) {
+							_retval.bound_to = _src.retval.semantics == ArgumentSemantics::FloatingPoint ? Reg64::XMM0 : Reg64::RAX;
 							_retval.indirect = false;
-							_retval.rbp_offset = -align - WordSize;
+							_retval.bp_offset = -align - WordSize;
 							align += WordSize;
 							_unroll_base -= WordSize;
-							encode_add(Reg::RSP, -WordSize);
+							encode_add(Reg64::RSP, -WordSize);
 						}
 						if (align & 0xF) {
 							align += WordSize;
-							encode_add(Reg::RSP, -WordSize);
+							encode_add(Reg64::RSP, -WordSize);
 						}
 						_scope_frame_base = -align;
 					} else if (_conv == CallingConvention::Unix) {
 						int align = WordSize * 7;
 						_unroll_base = -WordSize * 7;
-						encode_push(Reg::RBP);
-						encode_mov_reg_reg(8, Reg::RBP, Reg::RSP);
-						encode_push(Reg::RBX);
-						encode_push(Reg::R10);
-						encode_push(Reg::R11);
-						encode_push(Reg::R12);
-						encode_push(Reg::R13);
-						encode_push(Reg::R14);
-						encode_push(Reg::R15);
+						encode_push(Reg64::RBP);
+						encode_mov_reg_reg(8, Reg64::RBP, Reg64::RSP);
+						encode_push(Reg64::RBX);
+						encode_push(Reg64::R10);
+						encode_push(Reg64::R11);
+						encode_push(Reg64::R12);
+						encode_push(Reg64::R13);
+						encode_push(Reg64::R14);
+						encode_push(Reg64::R15);
 						if (!_is_pass_by_reference(_src.retval)) {
-							_retval.bound_to = _src.retval.semantics == ArgumentSemantics::FloatingPoint ? Reg::XMM0 : Reg::RAX;
+							_retval.bound_to = _src.retval.semantics == ArgumentSemantics::FloatingPoint ? Reg64::XMM0 : Reg64::RAX;
 							_retval.indirect = false;
-							_retval.rbp_offset = -align - WordSize;
+							_retval.bp_offset = -align - WordSize;
 							align += WordSize;
 							_unroll_base -= WordSize;
-							encode_add(Reg::RSP, -WordSize);
+							encode_add(Reg64::RSP, -WordSize);
 						}
 						int stack_space_offset = 2 * WordSize;
 						for (auto & info : *api) {
-							_argument_storage_spec * spec;
+							ArgumentStorageSpec * spec;
 							if (info.index >= 0) spec = &_inputs[info.index];
 							else spec = &_retval;
 							spec->bound_to = info.reg;
 							spec->indirect = info.indirect;
-							if (info.reg == Reg::NO) {
-								spec->rbp_offset = stack_space_offset;
+							if (info.reg == Reg64::NO) {
+								spec->bp_offset = stack_space_offset;
 								stack_space_offset += WordSize;
 							} else {
 								if (_is_xmm_register(info.reg)) {
-									encode_mov_reg_xmm(8, Reg::RAX, info.reg);
-									encode_push(Reg::RAX);
+									encode_mov_reg_xmm(8, Reg64::RAX, info.reg);
+									encode_push(Reg64::RAX);
 								} else encode_push(info.reg);
-								spec->rbp_offset = -align - WordSize;
+								spec->bp_offset = -align - WordSize;
 								align += WordSize;
 							}	
 						}
 						if (align & 0xF) {
 							align += WordSize;
-							encode_add(Reg::RSP, -WordSize);
+							encode_add(Reg64::RSP, -WordSize);
 						}
 						_scope_frame_base = -align;
 					}
 				}
-				void encode_function_epilogue(void)
+				virtual void encode_function_epilogue(void) override
 				{
 					if (_conv == CallingConvention::Windows) {
-						if (_unroll_base != _scope_frame_base) encode_lea(Reg::RSP, Reg::RBP, _unroll_base);
+						if (_unroll_base != _scope_frame_base) encode_lea(Reg64::RSP, Reg64::RBP, _unroll_base);
 						if (!_is_pass_by_reference(_src.retval)) {
-							encode_pop(Reg::RAX);
-							if (_retval.bound_to == Reg::XMM0) {
+							encode_pop(Reg64::RAX);
+							if (_retval.bound_to == Reg64::XMM0) {
 								auto quant = _src.retval.size.num_bytes + WordSize * _src.retval.size.num_words;
-								encode_mov_xmm_reg(quant, Reg::XMM0, Reg::RAX);
+								encode_mov_xmm_reg(quant, Reg64::XMM0, Reg64::RAX);
 							}
-						} else encode_mov_reg_mem(8, Reg::RAX, Reg::RBP, _retval.rbp_offset);
-						encode_pop(Reg::R15);
-						encode_pop(Reg::R14);
-						encode_pop(Reg::R13);
-						encode_pop(Reg::R12);
-						encode_pop(Reg::R11);
-						encode_pop(Reg::R10);
-						encode_pop(Reg::RSI);
-						encode_pop(Reg::RDI);
-						encode_pop(Reg::RBX);
-						encode_pop(Reg::RBP);
+						} else encode_mov_reg_mem(8, Reg64::RAX, Reg64::RBP, _retval.bp_offset);
+						encode_pop(Reg64::R15);
+						encode_pop(Reg64::R14);
+						encode_pop(Reg64::R13);
+						encode_pop(Reg64::R12);
+						encode_pop(Reg64::R11);
+						encode_pop(Reg64::R10);
+						encode_pop(Reg64::RSI);
+						encode_pop(Reg64::RDI);
+						encode_pop(Reg64::RBX);
+						encode_pop(Reg64::RBP);
 						encode_pure_ret();
 					} else if (_conv == CallingConvention::Unix) {
-						if (_unroll_base != _scope_frame_base) encode_lea(Reg::RSP, Reg::RBP, _unroll_base);
+						if (_unroll_base != _scope_frame_base) encode_lea(Reg64::RSP, Reg64::RBP, _unroll_base);
 						if (!_is_pass_by_reference(_src.retval)) {
-							encode_pop(Reg::RAX);
-							if (_retval.bound_to == Reg::XMM0) {
+							encode_pop(Reg64::RAX);
+							if (_retval.bound_to == Reg64::XMM0) {
 								auto quant = _src.retval.size.num_bytes + WordSize * _src.retval.size.num_words;
-								encode_mov_xmm_reg(quant, Reg::XMM0, Reg::RAX);
+								encode_mov_xmm_reg(quant, Reg64::XMM0, Reg64::RAX);
 							}
-						} else encode_mov_reg_mem(8, Reg::RAX, Reg::RBP, _retval.rbp_offset);
-						encode_pop(Reg::R15);
-						encode_pop(Reg::R14);
-						encode_pop(Reg::R13);
-						encode_pop(Reg::R12);
-						encode_pop(Reg::R11);
-						encode_pop(Reg::R10);
-						encode_pop(Reg::RBX);
-						encode_pop(Reg::RBP);
+						} else encode_mov_reg_mem(8, Reg64::RAX, Reg64::RBP, _retval.bp_offset);
+						encode_pop(Reg64::R15);
+						encode_pop(Reg64::R14);
+						encode_pop(Reg64::R13);
+						encode_pop(Reg64::R12);
+						encode_pop(Reg64::R11);
+						encode_pop(Reg64::R10);
+						encode_pop(Reg64::RBX);
+						encode_pop(Reg64::RBP);
 						encode_pure_ret();
 					}
 				}
-				void encode_scope_unroll(int inst_current, int inst_jump_to)
+				virtual void encode_scope_unroll(int inst_current, int inst_jump_to) override
 				{
 					int current_level = 0;
 					int ref_level = 0;
 					auto current_scope = _scopes.GetLast();
 					while (current_scope && current_scope->GetValue().temporary) {
-						_encode_finalize_scope(current_scope->GetValue());
+						encode_finalize_scope(current_scope->GetValue());
 						current_scope = current_scope->GetPrevious();
 					}
 					if (inst_jump_to > inst_current) {
@@ -1945,7 +1744,7 @@ namespace Engine
 								if (current_level < ref_level) {
 									ref_level--;
 									if (!current_scope) throw InvalidStateException();
-									_encode_finalize_scope(current_scope->GetValue());
+									encode_finalize_scope(current_scope->GetValue());
 									current_scope = current_scope->GetPrevious();
 								}
 							}
@@ -1957,7 +1756,7 @@ namespace Engine
 								if (current_level < ref_level) {
 									ref_level--;
 									if (!current_scope) throw InvalidStateException();
-									_encode_finalize_scope(current_scope->GetValue());
+									encode_finalize_scope(current_scope->GetValue());
 									current_scope = current_scope->GetPrevious();
 								}
 							} else if (_src.instset[i].opcode == OpcodeCloseScope) {
@@ -1966,7 +1765,7 @@ namespace Engine
 						}
 					}
 				}
-				void process_encoding(void)
+				virtual void process_encoding(void) override
 				{
 					for (int i = 0; i < _src.instset.Length(); i++) {
 						_current_instruction = i;
@@ -1989,24 +1788,24 @@ namespace Engine
 									if (future_scope_depth == current_scope_depth) required_size += _word_align(_src.instset[j].attachment);
 								}
 							}
-							_encode_open_scope(required_size, false, 0);
+							encode_open_scope(required_size, false, 0);
 						} else if (inst.opcode == OpcodeCloseScope) {
-							_encode_close_scope();
+							encode_close_scope();
 						} else if (inst.opcode == OpcodeExpression) {
-							_encode_expression_evaluation(inst.tree, Reg::NO);
+							_encode_expression_evaluation(inst.tree, Reg64::NO);
 						} else if (inst.opcode == OpcodeNewLocal) {
 							auto current_scope_ptr = _scopes.GetLast();
 							if (!current_scope_ptr) throw InvalidArgumentException();
 							auto & scope = current_scope_ptr->GetValue();
-							_local_disposition new_var;
+							LocalDisposition new_var;
 							ZeroMemory(&new_var.finalizer.final, sizeof(new_var.finalizer.final));
 							new_var.size = inst.attachment.num_bytes + WordSize * inst.attachment.num_words;
 							auto size_padded = _word_align(inst.attachment);
-							new_var.rbp_offset = scope.frame_base + scope.frame_size_unused - size_padded;
+							new_var.bp_offset = scope.frame_base + scope.frame_size_unused - size_padded;
 							scope.frame_size_unused -= size_padded;
 							if (scope.frame_size_unused < 0) throw InvalidArgumentException();
 							_init_locals.Push(new_var);
-							_encode_expression_evaluation(inst.tree, Reg::NO);
+							_encode_expression_evaluation(inst.tree, Reg64::NO);
 							_init_locals.Pop();
 							new_var.finalizer = inst.attachment_final;
 							scope.locals << new_var;
@@ -2014,14 +1813,14 @@ namespace Engine
 							encode_scope_unroll(i, i + 1 + int(inst.attachment.num_bytes));
 							_dest.code << 0xE9; // JMP
 							_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
-							_jump_reloc_struct rs;
+							JumpRelocStruct rs;
 							rs.machine_offset_at = _dest.code.Length() - 4;
 							rs.machine_offset_relative_to = _dest.code.Length();
 							rs.xasm_offset_jump_to = i + 1 + int(inst.attachment.num_bytes);
 							_jump_reloc << rs;
 						} else if (inst.opcode == OpcodeConditionalJump) {
-							_encode_expression_evaluation(inst.tree, Reg::R15);
-							encode_test(1, Reg::R15, 0xFF);
+							_encode_expression_evaluation(inst.tree, Reg64::R15);
+							encode_test(1, Reg64::R15, 0xFF);
 							_dest.code << 0x0F; _dest.code << 0x84; // JZ
 							_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
 							int addr = _dest.code.Length();
@@ -2029,19 +1828,19 @@ namespace Engine
 							_dest.code << 0xE9; // JMP
 							_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
 							*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
-							_jump_reloc_struct rs;
+							JumpRelocStruct rs;
 							rs.machine_offset_at = _dest.code.Length() - 4;
 							rs.machine_offset_relative_to = _dest.code.Length();
 							rs.xasm_offset_jump_to = i + 1 + int(inst.attachment.num_bytes);
 							_jump_reloc << rs;
 						} else if (inst.opcode == OpcodeControlReturn) {
-							_encode_expression_evaluation(inst.tree, Reg::NO);
-							for (auto & scp : _scopes.InversedElements()) _encode_finalize_scope(scp);
+							_encode_expression_evaluation(inst.tree, Reg64::NO);
+							for (auto & scp : _scopes.InversedElements()) encode_finalize_scope(scp);
 							encode_function_epilogue();
 						} else InvalidArgumentException();
 					}
 				}
-				void finalize_encoding(void)
+				virtual void finalize_encoding(void) override
 				{
 					for (auto & rs : _jump_reloc) {
 						int offset_to = _org_inst_offsets[rs.xasm_offset_jump_to];
@@ -2062,7 +1861,7 @@ namespace Engine
 					try {
 						dest.Clear();
 						dest.data = src.data;
-						EncoderContext ctx(_conv, dest, src);
+						X64::EncoderContext ctx(_conv, dest, src);
 						ctx.encode_function_prologue();
 						ctx.process_encoding();
 						ctx.finalize_encoding();

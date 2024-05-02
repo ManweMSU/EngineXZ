@@ -1,5 +1,5 @@
 ﻿#include "xx_machine.h"
-#include "xx_com.h"
+#include "xx_com_xe.h"
 
 #include "../xcon/client/xc_api.h"
 

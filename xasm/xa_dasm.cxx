@@ -161,10 +161,6 @@ namespace Engine
 						else if (ref.index == TransformFloatScatter) output << L"SCATTER";
 						else if (ref.index == TransformFloatRecombine) output << L"REORDER";
 						else if (ref.index == TransformFloatInteger) output << L"INTEGER";
-						else if (ref.index == TransformFloatRoundTN) output << L"RND_N";
-						else if (ref.index == TransformFloatRoundTZ) output << L"RND_Z";
-						else if (ref.index == TransformFloatRoundTPI) output << L"RND_PI";
-						else if (ref.index == TransformFloatRoundTNI) output << L"RND_NI";
 						else if (ref.index == TransformFloatIsZero) output << L"ZERO";
 						else if (ref.index == TransformFloatNotZero) output << L"NOTZERO";
 						else if (ref.index == TransformFloatEQ) output << L"EQ";
@@ -183,6 +179,7 @@ namespace Engine
 						else if (ref.index == TransformFloatInverse) output << L"NEG";
 						else if (ref.index == TransformFloatSqrt) output << L"SQRT";
 						else throw InvalidArgumentException();
+						if (ref.ref_flags & ReferenceFlagVectorCom) output << L"V";
 						if (ref.ref_flags & ReferenceFlagShort) output << L"_16";
 						else if (ref.ref_flags & ReferenceFlagLong) output << L"_64";
 						else output << L"_32";

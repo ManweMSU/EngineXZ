@@ -39,6 +39,7 @@ namespace Engine
 			ReferenceFlagUnaligned	= 0x02,
 			ReferenceFlagShort		= 0x04,
 			ReferenceFlagLong		= 0x08,
+			ReferenceFlagVectorCom	= 0x10,
 		};
 		enum ReferenceTransforms : uint32
 		{
@@ -95,10 +96,6 @@ namespace Engine
 			TransformFloatScatter	= 0x0082, // 1 argument - a vector to split, N arguments - the destinations; retval - the source; type specification matters
 			TransformFloatRecombine	= 0x0083, // 2 arguments - a vector to recombine, a recombination mask literal; retval - vector;
 			TransformFloatInteger	= 0x0084, // 1 argument - a vector; retval - an integer array; type specification matters
-			TransformFloatRoundTN	= 0x0085, // 1 argument - a vector; retval - vector
-			TransformFloatRoundTZ	= 0x0086, // 1 argument - a vector; retval - vector
-			TransformFloatRoundTPI	= 0x0087, // 1 argument - a vector; retval - vector
-			TransformFloatRoundTNI	= 0x0088, // 1 argument - a vector; retval - vector
 			TransformFloatIsZero	= 0x0090, // 1 argument - a vector; retval - integer
 			TransformFloatNotZero	= 0x0091, // 1 argument - a vector; retval - integer
 			TransformFloatEQ		= 0x0092, // 2 arguments - vectors; retval - integer

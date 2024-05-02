@@ -67,6 +67,11 @@ namespace Engine
 					Reg reg;
 					int size;
 				};
+				struct _vector_disposition {
+					int size;
+					VReg reg_lo;
+					VReg reg_hi;
+				};
 				struct _local_disposition {
 					int fp_offset;
 					int size;
@@ -837,6 +842,22 @@ namespace Engine
 					if (preserve_x19 && !idle) _encode_pop(Reg::X19);
 					_encode_restore(0x3FFFF, reg_in_use, uint(disp->reg), !idle);
 				}
+				void _encode_floating_point(const ExpressionTree & node, bool idle, int * mem_load, _vector_disposition * disp, uint reg_in_use, uint vreg_in_use)
+				{
+					if (node.self.ref_flags & ReferenceFlagInvoke) {
+						if (node.self.ref_class == ReferenceTransform) {
+							if (node.self.index >= 0x080 && node.self.index < 0x100) {
+								if (node.self.ref_flags & ReferenceFlagShort) throw InvalidArgumentException();
+
+								// TODO: IMPLEMENT
+
+								return;
+							}
+						}
+					}
+
+					// TODO: IMPLEMENT NON FLOAT
+				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
 				{
 					if (node.self.ref_flags & ReferenceFlagInvoke) {
@@ -1088,6 +1109,16 @@ namespace Engine
 								_encode_logics(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x013 && node.self.index < 0x050) {
 								_encode_arithmetics(node, idle, mem_load, disp, reg_in_use);
+							} else if (node.self.index >= 0x080 && node.self.index < 0x100) {
+								_vector_disposition vdisp;
+								vdisp.size = disp->size;
+								if (disp->flags & DispositionDiscard) vdisp.reg_lo = vdisp.reg_hi = VReg::NO; else {
+									vdisp.reg_lo = VReg::V0;
+									vdisp.reg_hi = vdisp.size > 16 ? VReg::V1 : VReg::NO;
+								}
+								_encode_floating_point(node, idle, mem_load, &vdisp, reg_in_use, uint(vdisp.reg_lo) | uint(vdisp.reg_hi));
+
+								// TODO: REFER FPU
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);

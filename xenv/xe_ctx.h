@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "../xasm/xa_trans.h"
+#include "../xasm/xa_trans_sel.h"
 #include "xe_rtss.h"
 
 namespace Engine
