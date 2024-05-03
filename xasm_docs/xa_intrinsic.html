@@ -45,6 +45,7 @@
 		<p><b>Логический</b> тип данных хранит значение ИСТИНА, если младший байт не 0 и ЛОЖЬ, если младший байт 0. Имеет размер 1, 2, 4 или 8.
 			Интерпретация старших байт зависит от реализации.</p>
 		<p><b>Целочисленный</b> тип данных хранит целое число. Может иметь размер 1, 2, 4 или 8.</p>
+		<p><b>Векторный</b> тип данных хранит 1, 2, 3 или 4 числа с плавающей запятой размера 2, 4 или 8 каждое.</p>
 		<h2>Встроенные функции общего назначения</h2>
 		<table>
 			<tr><td class="bold">Псевдоним функции</td><td>
@@ -485,6 +486,278 @@
 			<tr><td class="bold">Описание функции</td><td>
 				Возвращает остаток от деления первого аргумента на второй.
 				Префикс U или S определяет интерпретацию аргументов как знаковых или беззнаковых чисел.
+			</td></tr>
+		</table>
+		<h2>Встроенные функции вещественных преобразований</h2>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_RESIZE_16, FP_RESIZE_32, FP_RESIZE_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N => V&times;M<br>V = 1, 2, 3, 4<br>N, M = 2, 4, 8
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Преобразует тип чисел с плавающей запятой в векторе.
+				Суффикс функции соответствует входному формату чисел, выходной формат определяется размерами входа и выхода.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_GATHER_16, FP_GATHER_32, FP_GATHER_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				N1 N2 ... Nk => k&times;M<br>Ni = 1, 2, 4, 8<br>k = 1, 2, 3, 4<br>M = 2, 4, 8
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Составляет вектор из отдельных координат.
+				Исходный формат координаты определяется размером и спецификатором типа (INT, SINT или FLOAT).
+				Выходной формат определяется суффиксом функции.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_SCATTER_16, FP_SCATTER_32, FP_SCATTER_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				k&times;M N1 N2 ... Nk => k&times;M<br>Ni = 1, 2, 4, 8<br>k = 1, 2, 3, 4<br>M = 2, 4, 8
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Извлекает координаты вектора в хранилища аргументов №2, 3, 4 и 5. Возвращает копию вектора.
+				Форматы извлечённых координат определяются размером и спецификатором типа (INT, SINT или FLOAT).
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_REORDER_16, FP_REORDER_32, FP_REORDER_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N M => U&times;N<br>N = 2, 4, 8<br>V, U = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Производит рекомбинацию координат вектор без преобразования их типов.
+				Принимает вектор размерности V и литерал M.
+				Возвращает вектор размерности U, каждая j-я компонента которого является i-й компонентой исходного вектора,
+				i определяется из j-й четвёрки бит M.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_INTEGER_16, FP_INTEGER_32, FP_INTEGER_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N => V&times;M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Преобразует вектор в целочисленный массив той же размерности.
+				Тип целочисленных координат определяется из размера и спецификатора типа (INT или SINT) возвращаемого значения.				
+			</td></tr>
+		</table>
+		<h2>Встроенные функции вещественного сравнения</h2>
+		<p>
+			Функции с суффиксом V возвращают целочисленное значение, биты которого содержат результаты покомпонентного сравнения.
+			Остальные функции возвращают логическое значение, которое истинно, если все покомпонентные сравнения были истинны.
+		</p>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_ZERO_16, FP_ZERO_32, FP_ZERO_64, FP_ZEROV_16, FP_ZEROV_32, FP_ZEROV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N => M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Проверяет вектор на равенство нулю.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_NOTZERO_16, FP_NOTZERO_32, FP_NOTZERO_64, FP_NOTZEROV_16, FP_NOTZEROV_32, FP_NOTZEROV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N => M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Проверяет вектор на неравенство нулю.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_EQ_16, FP_EQ_32, FP_EQ_64, FP_EQV_16, FP_EQV_32, FP_EQV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Проверяет векторы на равенство.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_NEQ_16, FP_NEQ_32, FP_NEQ_64, FP_NEQV_16, FP_NEQV_32, FP_NEQV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Проверяет векторы на неравенство.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_LE_16, FP_LE_32, FP_LE_64, FP_LEV_16, FP_LEV_32, FP_LEV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Проверяет векторы на отношение '&le;'.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_GE_16, FP_GE_32, FP_GE_64, FP_GEV_16, FP_GEV_32, FP_GEV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Проверяет векторы на отношение '&ge;'.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_L_16, FP_L_32, FP_L_64, FP_LV_16, FP_LV_32, FP_LV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Проверяет векторы на отношение '&lt;'.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_G_16, FP_G_32, FP_G_64, FP_GV_16, FP_GV_32, FP_GV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => M<br>N = 2, 4, 8<br>M=1, 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Проверяет векторы на отношение '&gt;'.
+			</td></tr>
+		</table>
+		<h2>Встроенные функции вещественной арифметики</h2>
+		<p>Обозначим: Ai, Bi, Ci - i-е компоненты входных аргументов, Ri - i-я компонента результата, ':=' - операция присваивания.</p>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_ADD_16, FP_ADD_32, FP_ADD_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Ri := Ai + Bi
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_SUB_16, FP_SUB_32, FP_SUB_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Ri := Ai - Bi
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_MUL_16, FP_MUL_32, FP_MUL_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Ri := Ai &times; Bi
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_DIV_16, FP_DIV_32, FP_DIV_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Ri := Ai / Bi
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_MADD_16, FP_MADD_32, FP_MADD_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Ri := Ai &times; Bi + Ci
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_MSUB_16, FP_MSUB_32, FP_MSUB_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N V&times;N V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Ri := Ai &times; Bi - Ci
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_ABS_16, FP_ABS_32, FP_ABS_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Ri := |Ai|
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_NEG_16, FP_NEG_32, FP_NEG_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Ri := -Ai
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_SQRT_16, FP_SQRT_32, FP_SQRT_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N => V&times;N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				Находит Ri &ge; 0 такие, что Ri<sup>2</sup> = Ai.
+			</td></tr>
+		</table>
+		<table>
+			<tr><td class="bold">Псевдоним функции</td><td>
+				FP_REDUCE_16, FP_REDUCE_32, FP_REDUCE_64
+			</td></tr>
+			<tr><td class="bold">Интерфейс функции</td><td>
+				V&times;N => N<br>N = 2, 4, 8<br>V = 1, 2, 3, 4
+			</td></tr>
+			<tr><td class="bold">Описание функции</td><td>
+				R0 := A0, если V = 1<br>
+				R0 := A0 + A1, если V = 2<br>
+				R0 := A0 + A1 + A2, если V = 3<br>
+				R0 := A0 + A1 + A2 + A3, если V = 4
 			</td></tr>
 		</table>
 	</body>
