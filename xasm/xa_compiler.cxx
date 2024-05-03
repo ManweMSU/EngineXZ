@@ -320,6 +320,9 @@ namespace Engine
 				else if (i == L"FP_SQRT_16") { ref.index = TransformFloatSqrt; ref.ref_flags |= ReferenceFlagShort; }
 				else if (i == L"FP_SQRT_32") { ref.index = TransformFloatSqrt; }
 				else if (i == L"FP_SQRT_64") { ref.index = TransformFloatSqrt; ref.ref_flags |= ReferenceFlagLong; }
+				else if (i == L"FP_REDUCE_16") { ref.index = TransformFloatReduce; ref.ref_flags |= ReferenceFlagShort; }
+				else if (i == L"FP_REDUCE_32") { ref.index = TransformFloatReduce; }
+				else if (i == L"FP_REDUCE_64") { ref.index = TransformFloatReduce; ref.ref_flags |= ReferenceFlagLong; }
 				// Else there is a failure
 				else return false;
 				return true;

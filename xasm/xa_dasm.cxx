@@ -178,6 +178,7 @@ namespace Engine
 						else if (ref.index == TransformFloatAbs) output << L"ABS";
 						else if (ref.index == TransformFloatInverse) output << L"NEG";
 						else if (ref.index == TransformFloatSqrt) output << L"SQRT";
+						else if (ref.index == TransformFloatReduce) output << L"REDUCE";
 						else throw InvalidArgumentException();
 						if (ref.ref_flags & ReferenceFlagVectorCom) output << L"V";
 						if (ref.ref_flags & ReferenceFlagShort) output << L"_16";

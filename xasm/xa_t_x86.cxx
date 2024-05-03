@@ -673,6 +673,24 @@ namespace Engine
 				} else if (mode == 0x01) _dest.code << int8(src_offset);
 				if (quant == 12) _dest.code << 0x0F << 0xC6 << make_mod(di, 0x03, di) << 0x4E;
 			}
+			void EncoderContext::encode_mov_xmm_mem_hi(uint quant, Reg dest, Reg src, int src_offset)
+			{
+				if (!_x64_mode) throw InvalidStateException();
+				auto di = xmm_register_code(dest);
+				auto si = regular_register_code(src);
+				uint8 mode;
+				if (src_offset == 0) mode = 0x00; else if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
+				if (quant == 8) {
+					_dest.code << 0x66 << 0x0F << 0x16;
+					_dest.code << make_mod(di, mode, si);
+				} else throw InvalidArgumentException();
+				if (mode == 0x02) {
+					_dest.code << int8(src_offset);
+					_dest.code << int8(src_offset >> 8);
+					_dest.code << int8(src_offset >> 16);
+					_dest.code << int8(src_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(src_offset);
+			}
 			void EncoderContext::encode_lea(Reg dest, Reg src_ptr, int src_offset)
 			{
 				if (src_ptr == Reg64::RSP) return;

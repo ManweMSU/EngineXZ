@@ -672,6 +672,30 @@ namespace Engine
 					encode_restore(Reg64::RAX, reg_in_use, 0, !idle && preserve_rax);
 					if (rv_mem_index >= 0) assign_finalizer(rv_mem_index, node.retval_final);
 				}
+				void _encode_floating_point_preserve(uint vreg_in_use, VectorDisposition * disp)
+				{
+					uint unmask = disp ? disp->reg_lo | disp->reg_hi : 0;
+					encode_preserve(Reg64::XMM0, vreg_in_use, unmask, true);
+					encode_preserve(Reg64::XMM1, vreg_in_use, unmask, true);
+					encode_preserve(Reg64::XMM2, vreg_in_use, unmask, true);
+					encode_preserve(Reg64::XMM3, vreg_in_use, unmask, true);
+					encode_preserve(Reg64::XMM4, vreg_in_use, unmask, true);
+					encode_preserve(Reg64::XMM5, vreg_in_use, unmask, true);
+					encode_preserve(Reg64::XMM6, vreg_in_use, unmask, true);
+					encode_preserve(Reg64::XMM7, vreg_in_use, unmask, true);
+				}
+				void _encode_floating_point_restore(uint vreg_in_use, VectorDisposition * disp)
+				{
+					uint unmask = disp ? disp->reg_lo | disp->reg_hi : 0;
+					encode_restore(Reg64::XMM7, vreg_in_use, unmask, true);
+					encode_restore(Reg64::XMM6, vreg_in_use, unmask, true);
+					encode_restore(Reg64::XMM5, vreg_in_use, unmask, true);
+					encode_restore(Reg64::XMM4, vreg_in_use, unmask, true);
+					encode_restore(Reg64::XMM3, vreg_in_use, unmask, true);
+					encode_restore(Reg64::XMM2, vreg_in_use, unmask, true);
+					encode_restore(Reg64::XMM1, vreg_in_use, unmask, true);
+					encode_restore(Reg64::XMM0, vreg_in_use, unmask, true);
+				}
 				void _encode_floating_point(const ExpressionTree & node, bool idle, int * mem_load, VectorDisposition * disp, uint reg_in_use, uint vreg_in_use)
 				{
 					if (node.self.ref_flags & ReferenceFlagInvoke) {
@@ -679,17 +703,364 @@ namespace Engine
 							if (node.self.index >= 0x080 && node.self.index < 0x100) {
 								if (node.self.ref_flags & ReferenceFlagShort) throw InvalidArgumentException();
 								if (node.self.index == TransformFloatResize) {
-									// TODO: IMPLEMENT
-									// TransformFloatResize	= 0x0080, // 1 argument - a vector to resize; retval - vector; the flag specifies the source precision
+									if (node.inputs.Length() != 1) throw InvalidArgumentException();
+									auto ins = object_size(node.input_specs[0].size);
+									auto ous = object_size(node.retval_spec.size);
+									auto dim = (node.self.ref_flags & ReferenceFlagLong) ? ins / 8 : ins / 4;
+									if (ins == ous) {
+										VectorDisposition a;
+										a.size = ins;
+										a.reg_lo = disp->reg_lo;
+										a.reg_hi = disp->reg_hi;
+										if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
+										encode_preserve(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+										encode_preserve(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+										_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+										encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+										encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									} else {
+										VectorDisposition in;
+										in.size = ins;
+										allocate_xmm(vreg_in_use, disp->reg_lo | disp->reg_hi, in);
+										encode_preserve(in.reg_lo, vreg_in_use, 0, !idle);
+										encode_preserve(in.reg_hi, vreg_in_use, 0, !idle);
+										_encode_floating_point(node.inputs[0], idle, mem_load, &in, reg_in_use, vreg_in_use | uint(in.reg_lo) | uint(in.reg_hi));
+										if (!idle && disp->reg_lo) {
+											if (dim == 4) {
+												if (ins == 32 && ous == 16) {
+													// CVTPD2PS disp->reg_lo in.reg_lo
+													_dest.code << 0x66 << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_lo));
+													// CVTPD2PS in.reg_hi in.reg_hi
+													_dest.code << 0x66 << 0x0F << 0x5A << make_mod(xmm_register_code(in.reg_hi), 3, xmm_register_code(in.reg_hi));
+													// MOVLHPS disp->reg_lo in.reg_hi
+													_dest.code << 0x0F << 0x16 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_hi));
+												} else if (ins == 16 && ous == 32) {
+													// CVTPS2PD disp->reg_lo in.reg_lo
+													_dest.code << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_lo));
+													// MOVHLPS disp->reg_hi in.reg_lo
+													_dest.code << 0x0F << 0x12 << make_mod(xmm_register_code(disp->reg_hi), 3, xmm_register_code(in.reg_lo));
+													// CVTPS2PD disp->reg_hi disp->reg_hi
+													_dest.code << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_hi), 3, xmm_register_code(disp->reg_hi));
+												} else throw InvalidArgumentException();
+											} else if (dim == 3) {
+												if (ins == 24 && ous == 12) {
+													// CVTPD2PS disp->reg_lo in.reg_lo
+													_dest.code << 0x66 << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_lo));
+													// CVTSD2SS in.reg_hi in.reg_hi
+													_dest.code << 0xF2 << 0x0F << 0x5A << make_mod(xmm_register_code(in.reg_hi), 3, xmm_register_code(in.reg_hi));
+													// MOVLHPS disp->reg_lo in.reg_hi
+													_dest.code << 0x0F << 0x16 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_hi));
+												} else if (ins == 12 && ous == 24) {
+													// CVTPS2PD disp->reg_lo in.reg_lo
+													_dest.code << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_lo));
+													// MOVHLPS disp->reg_hi in.reg_lo
+													_dest.code << 0x0F << 0x12 << make_mod(xmm_register_code(disp->reg_hi), 3, xmm_register_code(in.reg_lo));
+													// CVTSS2SD disp->reg_hi disp->reg_hi
+													_dest.code << 0xF3 << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_hi), 3, xmm_register_code(disp->reg_hi));
+												} else throw InvalidArgumentException();
+											} else if (dim == 2) {
+												if (ins == 16 && ous == 8) {
+													// CVTPD2PS disp->reg_lo in.reg_lo
+													_dest.code << 0x66 << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_lo));
+												} else if (ins == 8 && ous == 16) {
+													// CVTPS2PD disp->reg_lo in.reg_lo
+													_dest.code << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_lo));
+												} else throw InvalidArgumentException();
+											} else if (dim == 1) {
+												if (ins == 8 && ous == 4) {
+													// CVTSD2SS disp->reg_lo in.reg_lo
+													_dest.code << 0xF2 << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_lo));
+												} else if (ins == 4 && ous == 8) {
+													// CVTSS2SD disp->reg_lo in.reg_lo
+													_dest.code << 0xF3 << 0x0F << 0x5A << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(in.reg_lo));
+												} else throw InvalidArgumentException();
+											} else throw InvalidArgumentException();
+										}
+										encode_restore(in.reg_hi, vreg_in_use, 0, !idle);
+										encode_restore(in.reg_lo, vreg_in_use, 0, !idle);
+									}
 								} else if (node.self.index == TransformFloatGather) {
-									// TODO: IMPLEMENT
-									// TransformFloatGather	= 0x0081, // N arguments - creates a vector from scalar inputs; retval - vector; type specification matters
+									int ous = object_size(node.retval_spec.size);
+									int dim = (node.self.ref_flags & ReferenceFlagLong) ? ous / 8 : ous / 4;
+									if (dim == 0 || dim > 4 || node.inputs.Length() != dim) throw InvalidArgumentException();
+									Reg vin[4] = { 0, 0, 0, 0 };
+									Reg xin[4] = { 0, 0, 0, 0 };
+									Reg xalloc = Reg64::RAX;
+									for (int i = 0; i < dim; i++) if (node.input_specs[i].semantics != ArgumentSemantics::FloatingPoint) {
+										xin[i] = xalloc; xalloc <<= 1;
+										encode_preserve(xin[i], reg_in_use, 0, !idle);
+									}
+									auto fppres = xalloc != Reg64::RAX && !idle;
+									if (fppres) _encode_floating_point_preserve(vreg_in_use, disp);
+									xalloc = 0;
+									for (int i = 0; i < dim; i++) if (xin[i]) {
+										InternalDisposition ld;
+										ld.size = object_size(node.input_specs[i].size);
+										ld.reg = xin[i];
+										ld.flags = DispositionRegister;
+										xalloc |= ld.reg;
+										_encode_tree_node(node.inputs[i], idle, mem_load, &ld, reg_in_use | xalloc);
+									}
+									if (fppres) _encode_floating_point_restore(vreg_in_use, disp);
+									auto reg_in_use_new = reg_in_use | xalloc;
+									xalloc = disp->reg_lo | disp->reg_hi;
+									for (int i = 0; i < dim; i++) {
+										vin[i] = allocate_xmm(vreg_in_use | xalloc, xalloc);
+										xalloc |= vin[i];
+										encode_preserve(vin[i], vreg_in_use, 0, !idle);
+										if (node.input_specs[i].semantics == ArgumentSemantics::FloatingPoint) {
+											VectorDisposition ld;
+											ld.size = object_size(node.input_specs[i].size);
+											ld.reg_lo = vin[i];
+											ld.reg_hi = Reg64::NO;
+											_encode_floating_point(node.inputs[i], idle, mem_load, &ld, reg_in_use_new, vreg_in_use | xalloc);
+										}
+									}
+									if (!idle) {
+										for (int i = 0; i < dim; i++) {
+											auto ins = object_size(node.input_specs[i].size);
+											if (xin[i]) {
+												if (ins == 1) {
+													encode_shift(8, shOp::SHL, xin[i], 56);
+													encode_shift(8, node.input_specs[i].semantics == ArgumentSemantics::SignedInteger ? shOp::SAR : shOp::SHR, xin[i], 56);
+												} else if (ins == 2) {
+													encode_shift(8, shOp::SHL, xin[i], 48);
+													encode_shift(8, node.input_specs[i].semantics == ArgumentSemantics::SignedInteger ? shOp::SAR : shOp::SHR, xin[i], 48);
+												} else if (ins != 4 && ins != 8) throw InvalidArgumentException();
+												if (node.self.ref_flags & ReferenceFlagLong) {
+													// CVTSI2SD vin[i] xin[i]
+													_dest.code << 0xF2 << 0x0F << 0x2A << make_mod(xmm_register_code(vin[i]), 3, regular_register_code(xin[i]));
+													ins = 8;
+												} else {
+													// CVTSI2SS vin[i] xin[i]
+													_dest.code << 0xF3 << 0x0F << 0x2A << make_mod(xmm_register_code(vin[i]), 3, regular_register_code(xin[i]));
+													ins = 4;
+												}
+											}
+											if ((node.self.ref_flags & ReferenceFlagLong) && ins == 4) {
+												// CVTSS2SD vin[i] vin[i]
+												_dest.code << 0xF3 << 0x0F << 0x5A << make_mod(xmm_register_code(vin[i]), 3, xmm_register_code(vin[i]));
+											} else if (!(node.self.ref_flags & ReferenceFlagLong) && ins == 8) {
+												// CVTSD2SS vin[i] vin[i]
+												_dest.code << 0xF2 << 0x0F << 0x5A << make_mod(xmm_register_code(vin[i]), 3, xmm_register_code(vin[i]));
+											}
+										}
+										if (disp->reg_lo) {
+											if (node.self.ref_flags & ReferenceFlagLong) {
+												if (ous == 8) {
+													// MOVSD disp->reg_lo vin[0]
+													_dest.code << 0xF2 << 0x0F << 0x10 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(vin[0]));
+												} else if (ous == 16) {
+													// SHUFPD vin[0] vin[1]
+													_dest.code << 0x66 << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[1])) << 0x00;
+													// MOVAPD disp->reg_lo vin[0]
+													_dest.code << 0x66 << 0x0F << 0x28 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(vin[0]));
+												} else if (ous == 24) {
+													// SHUFPD vin[0] vin[1]
+													_dest.code << 0x66 << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[1])) << 0x00;
+													// MOVAPD disp->reg_lo vin[0]
+													_dest.code << 0x66 << 0x0F << 0x28 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(vin[0]));
+													// MOVSD disp->reg_hi vin[2]
+													_dest.code << 0xF2 << 0x0F << 0x10 << make_mod(xmm_register_code(disp->reg_hi), 3, xmm_register_code(vin[2]));
+												} else if (ous == 32) {
+													// SHUFPD vin[0] vin[1]
+													_dest.code << 0x66 << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[1])) << 0x00;
+													// MOVAPD disp->reg_lo vin[0]
+													_dest.code << 0x66 << 0x0F << 0x28 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(vin[0]));
+													// SHUFPD vin[2] vin[3]
+													_dest.code << 0x66 << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[2]), 3, xmm_register_code(vin[3])) << 0x00;
+													// MOVAPD disp->reg_hi vin[2]
+													_dest.code << 0x66 << 0x0F << 0x28 << make_mod(xmm_register_code(disp->reg_hi), 3, xmm_register_code(vin[2]));
+												} else throw InvalidArgumentException();
+											} else {
+												if (ous == 4) {
+													// MOVSS disp->reg_lo vin[0]
+													_dest.code << 0xF3 << 0x0F << 0x10 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(vin[0]));
+												} else if (ous == 8) {
+													// SHUFPS vin[0] vin[1]
+													_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[1])) << 0x00;
+													// SHUFPS vin[0] vin[0]
+													_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[0])) << 0x08;
+													// MOVAPS disp->reg_lo vin[0]
+													_dest.code << 0x0F << 0x28 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(vin[0]));
+												} else if (ous == 12) {
+													// SHUFPS vin[0] vin[1]
+													_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[1])) << 0x00;
+													// SHUFPS vin[0] vin[2]
+													_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[2])) << 0x08;
+													// MOVAPS disp->reg_lo vin[0]
+													_dest.code << 0x0F << 0x28 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(vin[0]));
+												} else if (ous == 16) {
+													// SHUFPS vin[0] vin[1]
+													_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[1])) << 0x00;
+													// SHUFPS vin[2] vin[3]
+													_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[2]), 3, xmm_register_code(vin[3])) << 0x00;
+													// SHUFPS vin[0] vin[2]
+													_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(vin[0]), 3, xmm_register_code(vin[2])) << 0x88;
+													// MOVAPS disp->reg_lo vin[0]
+													_dest.code << 0x0F << 0x28 << make_mod(xmm_register_code(disp->reg_lo), 3, xmm_register_code(vin[0]));
+												} else throw InvalidArgumentException();
+											}
+										}
+									}
+									for (int i = dim - 1; i >= 0; i--) encode_restore(vin[i], vreg_in_use, 0, !idle);
+									for (int i = dim - 1; i >= 0; i--) if (xin[i]) encode_restore(xin[i], reg_in_use, 0, !idle);
 								} else if (node.self.index == TransformFloatScatter) {
-									// TODO: IMPLEMENT
-									// TransformFloatScatter	= 0x0082, // 1 argument - a vector to split, N arguments - the destinations; retval - the source; type specification matters
+									if (node.inputs.Length() < 1) throw InvalidArgumentException();
+									int ins = object_size(node.input_specs[0].size);
+									int dim = (node.self.ref_flags & ReferenceFlagLong) ? ins / 8 : ins / 4;
+									if (dim == 0 || dim > 4 || node.inputs.Length() != dim + 1) throw InvalidArgumentException();
+									VectorDisposition a;
+									a.size = ins;
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
+									encode_preserve(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									Reg ar[4] = { Reg64::RAX, Reg64::RDX, Reg64::RCX, Reg64::RDI };
+									Reg irx = Reg64::RBX;
+									Reg irv = allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi);
+									for (int i = 0; i < dim; i++) encode_preserve(ar[i], reg_in_use, 0, !idle);
+									auto local_reg_in_use = reg_in_use;
+									if (!idle) _encode_floating_point_preserve(vreg_in_use, disp);
+									for (int i = 0; i < dim; i++) {
+										InternalDisposition ld;
+										ld.size = object_size(node.input_specs[1 + i].size);
+										ld.reg = ar[i];
+										ld.flags = DispositionPointer;
+										_encode_tree_node(node.inputs[1 + i], idle, mem_load, &ld, local_reg_in_use);
+										local_reg_in_use |= ld.reg;
+									}
+									if (!idle) _encode_floating_point_restore(vreg_in_use, disp);
+									encode_preserve(irv, reg_in_use, 0, !idle);
+									encode_preserve(irx, reg_in_use, 0, !idle);
+									if (!idle) for (int i = 0; i < dim; i++) {
+										auto & spec = node.input_specs[1 + i];
+										auto quant = object_size(spec.size);
+										Reg addr = ar[i];
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											if (i == 0) {
+												// MOVSD irv a.reg_lo
+												_dest.code << 0xF2 << 0x0F << 0x10 << make_mod(xmm_register_code(irv), 3, xmm_register_code(a.reg_lo));
+											} else if (i == 1) {
+												// MOVHLPS irv a.reg_lo
+												_dest.code << 0x0F << 0x12 << make_mod(xmm_register_code(irv), 3, xmm_register_code(a.reg_lo));
+											} else if (i == 2) {
+												// MOVSD irv a.reg_hi
+												_dest.code << 0xF2 << 0x0F << 0x10 << make_mod(xmm_register_code(irv), 3, xmm_register_code(a.reg_hi));
+											} else if (i == 3) {
+												// MOVHLPS irv a.reg_hi
+												_dest.code << 0x0F << 0x12 << make_mod(xmm_register_code(irv), 3, xmm_register_code(a.reg_hi));
+											}
+											if (spec.semantics == ArgumentSemantics::FloatingPoint) {
+												if (quant == 4) {
+													// CVTSD2SS irv irv
+													_dest.code << 0xF2 << 0x0F << 0x5A << make_mod(xmm_register_code(irv), 3, xmm_register_code(irv));
+												}
+											} else {
+												// CVTTSD2SI irx irv
+												_dest.code << 0xF2 << 0x0F << 0x2C << make_mod(regular_register_code(irx) & 7, 3, xmm_register_code(irv));
+											}
+										} else {
+											if (i == 0) {
+												// MOVSS irv a.reg_lo
+												_dest.code << 0xF3 << 0x0F << 0x10 << make_mod(xmm_register_code(irv), 3, xmm_register_code(a.reg_lo));
+											} else if (i == 1) {
+												// MOVAPS irv a.reg_lo
+												_dest.code << 0x0F << 0x28 << make_mod(xmm_register_code(irv), 3, xmm_register_code(a.reg_lo));
+												// SHUFPS irv irv
+												_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(irv), 3, xmm_register_code(irv)) << 0x01;
+											} else if (i == 2) {
+												// MOVAPS irv a.reg_lo
+												_dest.code << 0x0F << 0x28 << make_mod(xmm_register_code(irv), 3, xmm_register_code(a.reg_lo));
+												// SHUFPS irv irv
+												_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(irv), 3, xmm_register_code(irv)) << 0x02;
+											} else if (i == 3) {
+												// MOVAPS irv a.reg_lo
+												_dest.code << 0x0F << 0x28 << make_mod(xmm_register_code(irv), 3, xmm_register_code(a.reg_lo));
+												// SHUFPS irv irv
+												_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(irv), 3, xmm_register_code(irv)) << 0x03;
+											}
+											if (spec.semantics == ArgumentSemantics::FloatingPoint) {
+												if (quant == 8) {
+													// CVTSS2SD irv irv
+													_dest.code << 0xF3 << 0x0F << 0x5A << make_mod(xmm_register_code(irv), 3, xmm_register_code(irv));
+												}
+											} else {
+												// CVTTSS2SI irx irv
+												_dest.code << 0xF3 << 0x0F << 0x2C << make_mod(regular_register_code(irx) & 7, 3, xmm_register_code(irv));
+											}
+										}
+										if (spec.semantics != ArgumentSemantics::FloatingPoint) {
+											if (quant <= 4) {
+												encode_mov_mem_reg(quant, addr, irx);
+											} else {
+												encode_mov_mem_reg(4, addr, 4, irx);
+												if (spec.semantics == ArgumentSemantics::SignedInteger) encode_shift(8, shOp::SAR, addr, 32, true);
+												else encode_shift(8, shOp::SHR, addr, 32, true);
+											}
+										} else encode_mov_mem_xmm(quant, addr, 0, irv);
+									}
+									encode_restore(irx, reg_in_use, 0, !idle);
+									encode_restore(irv, reg_in_use, 0, !idle);
+									for (int i = dim - 1; i >= 0; i--) encode_restore(ar[i], reg_in_use, 0, !idle);
+									encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 								} else if (node.self.index == TransformFloatRecombine) {
-									// TODO: IMPLEMENT
-									// TransformFloatRecombine	= 0x0083, // 2 arguments - a vector to recombine, a recombination mask literal; retval - vector;
+									if (node.inputs.Length() != 2) throw InvalidArgumentException();
+									if (node.inputs[1].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+									auto ins = object_size(node.input_specs[0].size);
+									auto ous = object_size(node.retval_spec.size);
+									auto rec = node.input_specs[1].size.num_bytes;
+									VectorDisposition a;
+									a.size = ins;
+									a.reg_lo = disp->reg_lo ? disp->reg_lo : allocate_xmm(vreg_in_use, 0);
+									a.reg_hi = disp->reg_hi ? disp->reg_hi : (max(ins, ous) > 16 ? allocate_xmm(vreg_in_use, a.reg_lo) : Reg64::NO);
+									encode_preserve(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									if ((node.self.ref_flags & ReferenceFlagLong) && ins > 16) *mem_load += 32;
+									if (!idle && disp->reg_lo) {
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											if (ins <= 16) {
+												if (ous <= 16) {
+													// SHUFPD a.reg_lo a.reg_lo
+													_dest.code << 0x66 << 0x0F << 0xC6 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+													_dest.code << ((rec & 0x1) | ((rec & 0x10) >> 3));
+												} else {
+													// MOVAPD a.reg_hi a.reg_lo
+													_dest.code << 0x66 << 0x0F << 0x28 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(a.reg_lo));
+													// SHUFPD a.reg_lo a.reg_lo
+													_dest.code << 0x66 << 0x0F << 0xC6 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+													_dest.code << ((rec & 0x1) | ((rec & 0x10) >> 3));
+													// SHUFPD a.reg_hi a.reg_hi
+													_dest.code << 0x66 << 0x0F << 0xC6 << make_mod(xmm_register_code(a.reg_hi), 3, xmm_register_code(a.reg_hi));
+													_dest.code << (((rec & 0x100) >> 8) | ((rec & 0x1000) >> 11));
+												}
+											} else {
+												auto offset = allocate_temporary(XA::TH::MakeSize(32, 0));
+												encode_mov_mem_xmm(16, Reg64::RBP, offset, a.reg_lo);
+												encode_mov_mem_xmm(16, Reg64::RBP, offset + 16, a.reg_hi);
+												if (ous >= 8) {
+													encode_mov_xmm_mem(8, a.reg_lo, Reg64::RBP, offset + ((rec & 0x3) << 3));
+													if (ous >= 16) {
+														encode_mov_xmm_mem_hi(8, a.reg_lo, Reg64::RBP, offset + ((rec & 0x30) >> 1));
+														if (ous >= 24) {
+															encode_mov_xmm_mem(8, a.reg_hi, Reg64::RBP, offset + ((rec & 0x300) >> 5));
+															if (ous == 32) encode_mov_xmm_mem_hi(8, a.reg_hi, Reg64::RBP, offset + ((rec & 0x3000) >> 9));
+														}
+													}
+												}
+											}
+										} else {
+											// SHUFPS a.reg_lo a.reg_lo
+											_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											_dest.code << ((rec & 0x3) | ((rec & 0x30) >> 2) | ((rec & 0x300) >> 4) | ((rec & 0x3000) >> 6));
+										}
+									}
+									encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 								} else if (node.self.index == TransformFloatAbs || node.self.index == TransformFloatInverse) {
 									if (node.inputs.Length() != 1) throw InvalidArgumentException();
 									VectorDisposition a, b;
@@ -698,8 +1069,8 @@ namespace Engine
 									a.reg_hi = disp->reg_hi;
 									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
 									allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
-									encode_preserve(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
-									encode_preserve(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 									encode_preserve(b.reg_lo, vreg_in_use, 0, !idle);
 									encode_preserve(b.reg_hi, vreg_in_use, 0, !idle);
 									_encode_floating_point(node.inputs[0], idle, mem_load, &b, reg_in_use, vreg_in_use | uint(b.reg_lo) | uint(b.reg_hi));
@@ -746,8 +1117,8 @@ namespace Engine
 									}
 									encode_restore(b.reg_hi, vreg_in_use, 0, !idle);
 									encode_restore(b.reg_lo, vreg_in_use, 0, !idle);
-									encode_restore(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
-									encode_restore(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 								} else if (node.self.index == TransformFloatSqrt) {
 									if (node.inputs.Length() != 1) throw InvalidArgumentException();
 									VectorDisposition a;
@@ -755,8 +1126,8 @@ namespace Engine
 									a.reg_lo = disp->reg_lo;
 									a.reg_hi = disp->reg_hi;
 									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
-									encode_preserve(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
-									encode_preserve(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
 									if (!idle) {
 										if (node.self.ref_flags & ReferenceFlagLong) {
@@ -779,8 +1150,61 @@ namespace Engine
 											} else throw InvalidArgumentException();
 										}
 									}
-									encode_restore(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
-									encode_restore(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+								} else if (node.self.index == TransformFloatReduce) {
+									if (node.inputs.Length() != 1) throw InvalidArgumentException();
+									VectorDisposition a;
+									a.size = object_size(node.input_specs[0].size);
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == Reg64::NO) a.reg_lo = allocate_xmm(vreg_in_use, 0);
+									if (a.reg_hi == Reg64::NO && a.size > 16) a.reg_hi = allocate_xmm(vreg_in_use | a.reg_lo, a.reg_lo);
+									encode_preserve(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									if (!idle) {
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											if (a.size == 32) {
+												// HADDPD a.reg_lo a.reg_hi
+												_dest.code << 0x66 << 0x0F << 0x7C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_hi));
+												// HADDPD a.reg_lo a.reg_lo
+												_dest.code << 0x66 << 0x0F << 0x7C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											} else if (a.size == 24) {
+												// HADDPD a.reg_lo a.reg_lo
+												_dest.code << 0x66 << 0x0F << 0x7C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												// ADDSD a.reg_lo a.reg_hi
+												_dest.code << 0xF2 << 0x0F << 0x58 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_hi));
+											} else if (a.size == 16) {
+												// HADDPD a.reg_lo a.reg_lo
+												_dest.code << 0x66 << 0x0F << 0x7C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											} else if (a.size == 8) {
+											} else throw InvalidArgumentException();
+										} else {
+											if (a.size == 16) {
+												// HADDPS a.reg_lo a.reg_lo
+												_dest.code << 0xF2 << 0x0F << 0x7C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+												// HADDPS a.reg_lo a.reg_lo
+												_dest.code << 0xF2 << 0x0F << 0x7C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											} else if (a.size == 12) {
+												auto aux = allocate_xmm(vreg_in_use | a.reg_lo, a.reg_lo);
+												encode_preserve(aux, vreg_in_use, 0, true);
+												// HADDPS aux a.reg_lo
+												_dest.code << 0xF2 << 0x0F << 0x7C << make_mod(xmm_register_code(aux), 3, xmm_register_code(a.reg_lo));
+												// ADDPS a.reg_lo aux
+												_dest.code << 0x0F << 0x58 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(aux));
+												// SHUFPS a.reg_lo a.reg_lo
+												_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo)) << 0xAA;
+												encode_restore(aux, vreg_in_use, 0, true);
+											} else if (a.size == 8) {
+												// HADDPS a.reg_lo a.reg_lo
+												_dest.code << 0xF2 << 0x0F << 0x7C << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
+											} else if (a.size == 4) {
+											} else throw InvalidArgumentException();
+										}
+									}
+									encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 								} else if (node.self.index == TransformFloatAdd || node.self.index == TransformFloatSubt || node.self.index == TransformFloatMul || node.self.index == TransformFloatDiv) {
 									uint8 op;
 									if (node.self.index == TransformFloatAdd) op = 0x58;
@@ -794,8 +1218,8 @@ namespace Engine
 									a.reg_hi = disp->reg_hi;
 									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
 									allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
-									encode_preserve(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
-									encode_preserve(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 									encode_preserve(b.reg_lo, vreg_in_use, 0, !idle);
 									encode_preserve(b.reg_hi, vreg_in_use, 0, !idle);
 									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
@@ -823,8 +1247,8 @@ namespace Engine
 									}
 									encode_restore(b.reg_hi, vreg_in_use, 0, !idle);
 									encode_restore(b.reg_lo, vreg_in_use, 0, !idle);
-									encode_restore(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
-									encode_restore(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 								} else if (node.self.index == TransformFloatMulAdd || node.self.index == TransformFloatMulSubt) {
 									uint8 op;
 									uint8 opm = 0x59;
@@ -838,8 +1262,8 @@ namespace Engine
 									if (a.reg_lo == Reg64::NO) allocate_xmm(vreg_in_use, 0, a);
 									allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
 									allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi | b.reg_lo | b.reg_hi, a.reg_lo | a.reg_hi | b.reg_lo | b.reg_hi, c);
-									encode_preserve(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
-									encode_preserve(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_preserve(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_preserve(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 									encode_preserve(b.reg_lo, vreg_in_use, 0, !idle);
 									encode_preserve(b.reg_hi, vreg_in_use, 0, !idle);
 									encode_preserve(c.reg_lo, vreg_in_use, 0, !idle);
@@ -880,8 +1304,8 @@ namespace Engine
 									encode_restore(c.reg_lo, vreg_in_use, 0, !idle);
 									encode_restore(b.reg_hi, vreg_in_use, 0, !idle);
 									encode_restore(b.reg_lo, vreg_in_use, 0, !idle);
-									encode_restore(a.reg_hi, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
-									encode_restore(a.reg_lo, vreg_in_use, a.reg_lo | a.reg_hi, !idle);
+									encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
+									encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 								} else throw InvalidArgumentException();
 								return;
 							}
@@ -897,16 +1321,7 @@ namespace Engine
 						idisp.reg = Reg64::RSI;
 					}
 					encode_preserve(idisp.reg, reg_in_use, 0, !idle);
-					if (node.self.ref_flags & ReferenceFlagInvoke) {
-						encode_preserve(Reg64::XMM0, vreg_in_use, 0, !idle);
-						encode_preserve(Reg64::XMM1, vreg_in_use, 0, !idle);
-						encode_preserve(Reg64::XMM2, vreg_in_use, 0, !idle);
-						encode_preserve(Reg64::XMM3, vreg_in_use, 0, !idle);
-						encode_preserve(Reg64::XMM4, vreg_in_use, 0, !idle);
-						encode_preserve(Reg64::XMM5, vreg_in_use, 0, !idle);
-						encode_preserve(Reg64::XMM6, vreg_in_use, 0, !idle);
-						encode_preserve(Reg64::XMM7, vreg_in_use, 0, !idle);
-					}
+					if (!idle && (node.self.ref_flags & ReferenceFlagInvoke)) _encode_floating_point_preserve(vreg_in_use, disp);
 					_encode_tree_node(node, idle, mem_load, &idisp, reg_in_use | uint(idisp.reg));
 					if (!idle && idisp.reg != Reg64::NO) {
 						if (disp->size > 16) {
@@ -914,16 +1329,7 @@ namespace Engine
 							encode_mov_xmm_mem(disp->size - 16, disp->reg_hi, idisp.reg, 16);
 						} else encode_mov_xmm_mem(disp->size, disp->reg_lo, idisp.reg, 0);
 					}
-					if (node.self.ref_flags & ReferenceFlagInvoke) {
-						encode_restore(Reg64::XMM7, vreg_in_use, 0, !idle);
-						encode_restore(Reg64::XMM6, vreg_in_use, 0, !idle);
-						encode_restore(Reg64::XMM5, vreg_in_use, 0, !idle);
-						encode_restore(Reg64::XMM4, vreg_in_use, 0, !idle);
-						encode_restore(Reg64::XMM3, vreg_in_use, 0, !idle);
-						encode_restore(Reg64::XMM2, vreg_in_use, 0, !idle);
-						encode_restore(Reg64::XMM1, vreg_in_use, 0, !idle);
-						encode_restore(Reg64::XMM0, vreg_in_use, 0, !idle);
-					}
+					if (!idle && (node.self.ref_flags & ReferenceFlagInvoke)) _encode_floating_point_restore(vreg_in_use, disp);
 					encode_restore(idisp.reg, reg_in_use, 0, !idle);
 				}
 				void _encode_floating_point_ir(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)

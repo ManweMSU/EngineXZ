@@ -139,6 +139,7 @@ namespace Engine
 				void encode_mov_xmm_reg(uint quant, Reg dest, Reg src);
 				void encode_mov_mem_xmm(uint quant, Reg dest, int dest_offset, Reg src);
 				void encode_mov_xmm_mem(uint quant, Reg dest, Reg src, int src_offset);
+				void encode_mov_xmm_mem_hi(uint quant, Reg dest, Reg src, int src_offset);
 				void encode_lea(Reg dest, Reg src_ptr, int src_offset);
 				void encode_push(Reg reg);
 				void encode_pop(Reg reg);

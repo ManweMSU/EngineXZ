@@ -113,6 +113,7 @@ namespace Engine
 			TransformFloatAbs		= 0x00A6, // 1 argument - a vector; retval - vector
 			TransformFloatInverse	= 0x00A7, // 1 argument - a vector; retval - vector
 			TransformFloatSqrt		= 0x00A8, // 1 argument - a vector; retval - vector
+			TransformFloatReduce	= 0x00A9, // 1 argument - a vector; retval - scalar
 		};
 		enum StatementOpcodes : uint32
 		{
