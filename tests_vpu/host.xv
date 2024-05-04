@@ -1,0 +1,94 @@
+﻿importa tests;
+importa consolatorium;
+importa lxx;
+
+var ~ consolatorium con = consolatorium.currens()^;
+
+functio nihil sectio(~linea nomen) iacit
+{
+	con.color_primus = consolatorium.color.flavus;
+	con.scribe_lineam("ТЕСТ " + nomen);
+	con.color_primus = consolatorium.color.defalta;
+}
+functio nihil probatio(~linea nomen, int r) iacit
+{
+	con.color_primus = consolatorium.color.albus;
+	con.scribe("  ");
+	con.scribe(nomen);
+	con.scribe(": ");
+	con.color_primus = r ? consolatorium.color.viridis : consolatorium.color.ruber;
+	con.scribe_lineam(r ? "Успешно" : "Провален");
+	con.color_primus = consolatorium.color.defalta;
+	si (!r) iace 1;
+}
+functio nihil invalida(~ordo [8] int r) { pro (var i : [0, 7]) r[i] = 0; }
+
+functio nihil ini() introitus iacit
+{
+	ordo [8] int r1, r2;
+	proba con acsi (xx.xc)^.clode_fenestram = non;
+
+	invalida(r1);
+	sectio("[d]frac -> int [1]");
+	VPU_TESTS.TEST1(@r1);
+	probatio("frac1  -> int   ", r1[0]);
+	probatio("frac2  -> int[2]", r1[1]);
+	probatio("frac3  -> int[3]", r1[2]);
+	probatio("frac4  -> int[4]", r1[3]);
+	probatio("dfrac1 -> int   ", r1[4]);
+	probatio("dfrac2 -> int[2]", r1[5]);
+	probatio("dfrac3 -> int[3]", r1[6]);
+	probatio("dfrac4 -> int[4]", r1[7]);
+
+	invalida(r2);
+	sectio("*** -> [d]frac [2]");
+	VPU_TESTS.TEST2(@r2);
+	probatio("*** -> frac1 ", r2[0]);
+	probatio("*** -> frac2 ", r2[1]);
+	probatio("*** -> frac3 ", r2[2]);
+	probatio("*** -> frac4 ", r2[3]);
+	probatio("*** -> dfrac1", r2[4]);
+	probatio("*** -> dfrac2", r2[5]);
+	probatio("*** -> dfrac3", r2[6]);
+	probatio("*** -> dfrac4", r2[7]);
+
+	invalida(r1);
+	sectio("[d]frac -> [d]frac [3]");
+	VPU_TESTS.TEST3(@r1);
+	probatio("frac1  -> dfrac1", r1[0]);
+	probatio("frac2  -> dfrac2", r1[1]);
+	probatio("frac3  -> dfrac3", r1[2]);
+	probatio("frac4  -> dfrac4", r1[3]);
+	probatio("dfrac1 -> frac1 ", r1[4]);
+	probatio("dfrac2 -> frac2 ", r1[5]);
+	probatio("dfrac3 -> frac3 ", r1[6]);
+	probatio("dfrac4 -> frac4 ", r1[7]);
+
+	invalida(r2);
+	sectio("fracX -> fracY [4]");
+	VPU_TESTS.TEST4(@r2);
+	probatio("dfrac1 -> dfrac4", r2[0]);
+	probatio("dfrac2 -> dfrac4", r2[1]);
+	probatio("dfrac3 -> dfrac4", r2[2]);
+	probatio("dfrac4 -> dfrac4", r2[3]);
+	probatio("frac1  -> frac4 ", r2[4]);
+	probatio("frac2  -> frac4 ", r2[5]);
+	probatio("frac3  -> frac4 ", r2[6]);
+	probatio("frac4  -> frac4 ", r2[7]);
+
+	invalida(r1);
+	sectio("[d]frac -> *** [5]");
+	VPU_TESTS.TEST5(@r1);
+	probatio("frac1  -> ***", r1[0]);
+	probatio("frac2  -> ***", r1[1]);
+	probatio("frac3  -> ***", r1[2]);
+	probatio("frac4  -> ***", r1[3]);
+	probatio("dfrac1 -> *** ", r1[4]);
+	probatio("dfrac2 -> *** ", r1[5]);
+	probatio("dfrac3 -> *** ", r1[6]);
+	probatio("dfrac4 -> *** ", r1[7]);
+
+	con.color_primus = consolatorium.color.viridis;
+	con.scribe_lineam("Все тесты прошли успешно.");
+	con.color_primus = consolatorium.color.defalta;
+}
