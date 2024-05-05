@@ -65,7 +65,7 @@ functio nihil ini() introitus iacit
 	probatio("dfrac4 -> frac4 ", r1[7]);
 
 	invalida(r2);
-	sectio("fracX -> fracY [4]");
+	sectio("[d]fracX -> [d]fracY [4]");
 	VPU_TESTS.TEST4(@r2);
 	probatio("dfrac1 -> dfrac4", r2[0]);
 	probatio("dfrac2 -> dfrac4", r2[1]);
@@ -87,6 +87,102 @@ functio nihil ini() introitus iacit
 	probatio("dfrac2 -> *** ", r1[5]);
 	probatio("dfrac3 -> *** ", r1[6]);
 	probatio("dfrac4 -> *** ", r1[7]);
+
+	invalida(r2);
+	sectio("[d]frac -> logicum [6]");
+	VPU_TESTS.TEST6(@r2);
+	probatio("frac1  -> logicum", r2[0]);
+	probatio("frac2  -> logicum", r2[1]);
+	probatio("frac3  -> logicum", r2[2]);
+	probatio("frac4  -> logicum", r2[3]);
+	probatio("dfrac1 -> logicum", r2[4]);
+	probatio("dfrac2 -> logicum", r2[5]);
+	probatio("dfrac3 -> logicum", r2[6]);
+	probatio("dfrac4 -> logicum", r2[7]);
+
+	invalida(r2);
+	sectio("![d]frac -> logicum [7]");
+	VPU_TESTS.TEST7(@r2);
+	probatio("!frac1  -> logicum", r2[0]);
+	probatio("!frac2  -> logicum", r2[1]);
+	probatio("!frac3  -> logicum", r2[2]);
+	probatio("!frac4  -> logicum", r2[3]);
+	probatio("!dfrac1 -> logicum", r2[4]);
+	probatio("!dfrac2 -> logicum", r2[5]);
+	probatio("!dfrac3 -> logicum", r2[6]);
+	probatio("!dfrac4 -> logicum", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac == [d]frac [8]");
+	VPU_TESTS.TEST8(@r2);
+	probatio("frac1  == frac1 ", r2[0]);
+	probatio("frac2  == frac2 ", r2[1]);
+	probatio("frac3  == frac3 ", r2[2]);
+	probatio("frac4  == frac4 ", r2[3]);
+	probatio("dfrac1 == dfrac1", r2[4]);
+	probatio("dfrac2 == dfrac2", r2[5]);
+	probatio("dfrac3 == dfrac3", r2[6]);
+	probatio("dfrac4 == dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac != [d]frac [9]");
+	VPU_TESTS.TEST9(@r2);
+	probatio("frac1  != frac1 ", r2[0]);
+	probatio("frac2  != frac2 ", r2[1]);
+	probatio("frac3  != frac3 ", r2[2]);
+	probatio("frac4  != frac4 ", r2[3]);
+	probatio("dfrac1 != dfrac1", r2[4]);
+	probatio("dfrac2 != dfrac2", r2[5]);
+	probatio("dfrac3 != dfrac3", r2[6]);
+	probatio("dfrac4 != dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac <= [d]frac [10]");
+	VPU_TESTS.TEST10(@r2);
+	probatio("frac1  <= frac1 ", r2[0]);
+	probatio("frac2  <= frac2 ", r2[1]);
+	probatio("frac3  <= frac3 ", r2[2]);
+	probatio("frac4  <= frac4 ", r2[3]);
+	probatio("dfrac1 <= dfrac1", r2[4]);
+	probatio("dfrac2 <= dfrac2", r2[5]);
+	probatio("dfrac3 <= dfrac3", r2[6]);
+	probatio("dfrac4 <= dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac >= [d]frac [11]");
+	VPU_TESTS.TEST11(@r2);
+	probatio("frac1  >= frac1 ", r2[0]);
+	probatio("frac2  >= frac2 ", r2[1]);
+	probatio("frac3  >= frac3 ", r2[2]);
+	probatio("frac4  >= frac4 ", r2[3]);
+	probatio("dfrac1 >= dfrac1", r2[4]);
+	probatio("dfrac2 >= dfrac2", r2[5]);
+	probatio("dfrac3 >= dfrac3", r2[6]);
+	probatio("dfrac4 >= dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac < [d]frac [12]");
+	VPU_TESTS.TEST12(@r2);
+	probatio("frac1  < frac1 ", r2[0]);
+	probatio("frac2  < frac2 ", r2[1]);
+	probatio("frac3  < frac3 ", r2[2]);
+	probatio("frac4  < frac4 ", r2[3]);
+	probatio("dfrac1 < dfrac1", r2[4]);
+	probatio("dfrac2 < dfrac2", r2[5]);
+	probatio("dfrac3 < dfrac3", r2[6]);
+	probatio("dfrac4 < dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac > [d]frac [13]");
+	VPU_TESTS.TEST13(@r2);
+	probatio("frac1  > frac1 ", r2[0]);
+	probatio("frac2  > frac2 ", r2[1]);
+	probatio("frac3  > frac3 ", r2[2]);
+	probatio("frac4  > frac4 ", r2[3]);
+	probatio("dfrac1 > dfrac1", r2[4]);
+	probatio("dfrac2 > dfrac2", r2[5]);
+	probatio("dfrac3 > dfrac3", r2[6]);
+	probatio("dfrac4 > dfrac4", r2[7]);
 
 	con.color_primus = consolatorium.color.viridis;
 	con.scribe_lineam("Все тесты прошли успешно.");
