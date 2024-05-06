@@ -1407,4 +1407,798 @@ spatium VPU_TESTS {
 			RET
 		}
 	}
+	/*FP_ADD_XX*/ [[xa]] functio nihil TEST14(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD 11.0
+			DWORD 22.0
+			DWORD 33.0
+			DWORD 44.0
+			; 16
+			DWORD 12.0
+			DWORD 15.0
+			DWORD 12.0
+			DWORD 15.0
+			; 32
+			DWORD 23.0
+			DWORD 37.0
+			DWORD 45.0
+			DWORD 59.0
+			; 48
+			QWORD 11.0
+			QWORD 22.0
+			QWORD 33.0
+			QWORD 44.0
+			; 80
+			QWORD 12.0
+			QWORD 15.0
+			QWORD 12.0
+			QWORD 15.0
+			; 112
+			QWORD 23.0
+			QWORD 37.0
+			QWORD 45.0
+			QWORD 59.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(@FP_ADD_32:4 4=>4(D[12], D[28]), D[44])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(@FP_ADD_32:8 8=>8(D[4], D[20]), D[36])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(@FP_ADD_32:12 12=>12(D[0], D[16]), D[32])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(@FP_ADD_32:16 16=>16(D[0], D[16]), D[32])
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(@FP_ADD_64:8 8=>8(D[72], D[104]), D[136])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(@FP_ADD_64:16 16=>16(D[56], D[88]), D[120])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(@FP_ADD_64:24 24=>24(D[48], D[80]), D[112])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(@FP_ADD_64:32 32=>32(D[48], D[80]), D[112])
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_SUB_XX*/ [[xa]] functio nihil TEST15(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD 11.0
+			DWORD 22.0
+			DWORD 33.0
+			DWORD 44.0
+			; 16
+			DWORD 12.0
+			DWORD 15.0
+			DWORD 12.0
+			DWORD 15.0
+			; 32
+			DWORD -1.0
+			DWORD 7.0
+			DWORD 21.0
+			DWORD 29.0
+			; 48
+			QWORD 11.0
+			QWORD 22.0
+			QWORD 33.0
+			QWORD 44.0
+			; 80
+			QWORD 12.0
+			QWORD 15.0
+			QWORD 12.0
+			QWORD 15.0
+			; 112
+			QWORD -1.0
+			QWORD 7.0
+			QWORD 21.0
+			QWORD 29.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(@FP_SUB_32:4 4=>4(D[12], D[28]), D[44])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(@FP_SUB_32:8 8=>8(D[4], D[20]), D[36])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(@FP_SUB_32:12 12=>12(D[0], D[16]), D[32])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(@FP_SUB_32:16 16=>16(D[0], D[16]), D[32])
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(@FP_SUB_64:8 8=>8(D[72], D[104]), D[136])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(@FP_SUB_64:16 16=>16(D[56], D[88]), D[120])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(@FP_SUB_64:24 24=>24(D[48], D[80]), D[112])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(@FP_SUB_64:32 32=>32(D[48], D[80]), D[112])
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_MUL_XX*/ [[xa]] functio nihil TEST16(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD 11.0
+			DWORD 22.0
+			DWORD 33.0
+			DWORD 44.0
+			; 16
+			DWORD 12.0
+			DWORD 15.0
+			DWORD 12.0
+			DWORD 15.0
+			; 32
+			DWORD 132.0
+			DWORD 330.0
+			DWORD 396.0
+			DWORD 660.0
+			; 48
+			QWORD 11.0
+			QWORD 22.0
+			QWORD 33.0
+			QWORD 44.0
+			; 80
+			QWORD 12.0
+			QWORD 15.0
+			QWORD 12.0
+			QWORD 15.0
+			; 112
+			QWORD 132.0
+			QWORD 330.0
+			QWORD 396.0
+			QWORD 660.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(@FP_MUL_32:4 4=>4(D[12], D[28]), D[44])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(@FP_MUL_32:8 8=>8(D[4], D[20]), D[36])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(@FP_MUL_32:12 12=>12(D[0], D[16]), D[32])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(@FP_MUL_32:16 16=>16(D[0], D[16]), D[32])
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(@FP_MUL_64:8 8=>8(D[72], D[104]), D[136])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(@FP_MUL_64:16 16=>16(D[56], D[88]), D[120])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(@FP_MUL_64:24 24=>24(D[48], D[80]), D[112])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(@FP_MUL_64:32 32=>32(D[48], D[80]), D[112])
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_DIV_XX*/ [[xa]] functio nihil TEST17(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD 15.0
+			DWORD 24.0
+			DWORD 33.0
+			DWORD 45.0
+			; 16
+			DWORD 12.0
+			DWORD 15.0
+			DWORD 12.0
+			DWORD 15.0
+			; 32
+			DWORD 1.25
+			DWORD 1.6
+			DWORD 2.75
+			DWORD 3.0
+			; 48
+			QWORD 15.0
+			QWORD 24.0
+			QWORD 33.0
+			QWORD 45.0
+			; 80
+			QWORD 12.0
+			QWORD 15.0
+			QWORD 12.0
+			QWORD 15.0
+			; 112
+			QWORD 1.25
+			QWORD 1.6
+			QWORD 2.75
+			QWORD 3.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(@FP_DIV_32:4 4=>4(D[12], D[28]), D[44])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(@FP_DIV_32:8 8=>8(D[4], D[20]), D[36])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(@FP_DIV_32:12 12=>12(D[0], D[16]), D[32])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(@FP_DIV_32:16 16=>16(D[0], D[16]), D[32])
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(@FP_DIV_64:8 8=>8(D[72], D[104]), D[136])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(@FP_DIV_64:16 16=>16(D[56], D[88]), D[120])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(@FP_DIV_64:24 24=>24(D[48], D[80]), D[112])
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(@FP_DIV_64:32 32=>32(D[48], D[80]), D[112])
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_MADD_XX*/ [[xa]] functio nihil TEST18(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD 15.0
+			DWORD 24.0
+			DWORD 33.0
+			DWORD 45.0
+			; 16
+			DWORD 12.0
+			DWORD 15.0
+			DWORD 12.0
+			DWORD 15.0
+			; 32
+			DWORD 1.25
+			DWORD 1.6
+			DWORD 2.75
+			DWORD 3.0
+			; 48
+			QWORD 15.0
+			QWORD 24.0
+			QWORD 33.0
+			QWORD 45.0
+			; 80
+			QWORD 12.0
+			QWORD 15.0
+			QWORD 12.0
+			QWORD 15.0
+			; 112
+			QWORD 1.25
+			QWORD 1.6
+			QWORD 2.75
+			QWORD 3.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_MADD_32:4 4 4=>4(D[0], D[16], D[32]),
+					@FP_ADD_32:4 4=>4(@FP_MUL_32:4 4=>4(D[0], D[16]), D[32])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(
+					@FP_MADD_32:8 8 8=>8(D[0], D[16], D[32]),
+					@FP_ADD_32:8 8=>8(@FP_MUL_32:8 8=>8(D[0], D[16]), D[32])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(
+					@FP_MADD_32:12 12 12=>12(D[0], D[16], D[32]),
+					@FP_ADD_32:12 12=>12(@FP_MUL_32:12 12=>12(D[0], D[16]), D[32])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(
+					@FP_MADD_32:16 16 16=>16(D[0], D[16], D[32]),
+					@FP_ADD_32:16 16=>16(@FP_MUL_32:16 16=>16(D[0], D[16]), D[32])
+				)
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_MADD_64:8 8 8=>8(D[48], D[80], D[112]),
+					@FP_ADD_64:8 8=>8(@FP_MUL_64:8 8=>8(D[48], D[80]), D[112])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(
+					@FP_MADD_64:16 16 16=>16(D[48], D[80], D[112]),
+					@FP_ADD_64:16 16=>16(@FP_MUL_64:16 16=>16(D[48], D[80]), D[112])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(
+					@FP_MADD_64:24 24 24=>24(D[48], D[80], D[112]),
+					@FP_ADD_64:24 24=>24(@FP_MUL_64:24 24=>24(D[48], D[80]), D[112])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(
+					@FP_MADD_64:32 32 32=>32(D[48], D[80], D[112]),
+					@FP_ADD_64:32 32=>32(@FP_MUL_64:32 32=>32(D[48], D[80]), D[112])
+				)
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_MSUB_XX*/ [[xa]] functio nihil TEST19(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD 15.0
+			DWORD 24.0
+			DWORD 33.0
+			DWORD 45.0
+			; 16
+			DWORD 12.0
+			DWORD 15.0
+			DWORD 12.0
+			DWORD 15.0
+			; 32
+			DWORD 1.25
+			DWORD 1.6
+			DWORD 2.75
+			DWORD 3.0
+			; 48
+			QWORD 15.0
+			QWORD 24.0
+			QWORD 33.0
+			QWORD 45.0
+			; 80
+			QWORD 12.0
+			QWORD 15.0
+			QWORD 12.0
+			QWORD 15.0
+			; 112
+			QWORD 1.25
+			QWORD 1.6
+			QWORD 2.75
+			QWORD 3.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_MSUB_32:4 4 4=>4(D[0], D[16], D[32]),
+					@FP_SUB_32:4 4=>4(@FP_MUL_32:4 4=>4(D[0], D[16]), D[32])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(
+					@FP_MSUB_32:8 8 8=>8(D[0], D[16], D[32]),
+					@FP_SUB_32:8 8=>8(@FP_MUL_32:8 8=>8(D[0], D[16]), D[32])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(
+					@FP_MSUB_32:12 12 12=>12(D[0], D[16], D[32]),
+					@FP_SUB_32:12 12=>12(@FP_MUL_32:12 12=>12(D[0], D[16]), D[32])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(
+					@FP_MSUB_32:16 16 16=>16(D[0], D[16], D[32]),
+					@FP_SUB_32:16 16=>16(@FP_MUL_32:16 16=>16(D[0], D[16]), D[32])
+				)
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_MSUB_64:8 8 8=>8(D[48], D[80], D[112]),
+					@FP_SUB_64:8 8=>8(@FP_MUL_64:8 8=>8(D[48], D[80]), D[112])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(
+					@FP_MSUB_64:16 16 16=>16(D[48], D[80], D[112]),
+					@FP_SUB_64:16 16=>16(@FP_MUL_64:16 16=>16(D[48], D[80]), D[112])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(
+					@FP_MSUB_64:24 24 24=>24(D[48], D[80], D[112]),
+					@FP_SUB_64:24 24=>24(@FP_MUL_64:24 24=>24(D[48], D[80]), D[112])
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(
+					@FP_MSUB_64:32 32 32=>32(D[48], D[80], D[112]),
+					@FP_SUB_64:32 32=>32(@FP_MUL_64:32 32=>32(D[48], D[80]), D[112])
+				)
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_ABS_XX*/ [[xa]] functio nihil TEST20(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD -2.0
+			DWORD -0.0
+			DWORD 3.0
+			DWORD -4.0
+			; 16
+			DWORD 2.0
+			DWORD 0.0
+			DWORD 3.0
+			DWORD 4.0
+			; 32
+			QWORD -2.0
+			QWORD -0.0
+			QWORD 3.0
+			QWORD -4.0
+			; 64
+			QWORD 2.0
+			QWORD 0.0
+			QWORD 3.0
+			QWORD 4.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_ABS_32:4=>4(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(
+					@FP_ABS_32:8=>8(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(
+					@FP_ABS_32:12=>12(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(
+					@FP_ABS_32:16=>16(D[0]),
+					D[16]
+				)
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_ABS_64:8=>8(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(
+					@FP_ABS_64:16=>16(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(
+					@FP_ABS_64:24=>24(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(
+					@FP_ABS_64:32=>32(D[32]),
+					D[64]
+				)
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_NEG_XX*/ [[xa]] functio nihil TEST21(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD -2.0
+			DWORD -0.0
+			DWORD 3.0
+			DWORD -4.0
+			; 16
+			DWORD 2.0
+			DWORD 0.0
+			DWORD -3.0
+			DWORD 4.0
+			; 32
+			QWORD -2.0
+			QWORD -0.0
+			QWORD 3.0
+			QWORD -4.0
+			; 64
+			QWORD 2.0
+			QWORD 0.0
+			QWORD -3.0
+			QWORD 4.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_NEG_32:4=>4(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(
+					@FP_NEG_32:8=>8(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(
+					@FP_NEG_32:12=>12(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(
+					@FP_NEG_32:16=>16(D[0]),
+					D[16]
+				)
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_NEG_64:8=>8(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(
+					@FP_NEG_64:16=>16(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(
+					@FP_NEG_64:24=>24(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(
+					@FP_NEG_64:32=>32(D[32]),
+					D[64]
+				)
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_SQRT_XX*/ [[xa]] functio nihil TEST22(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD 1.0
+			DWORD 0.0
+			DWORD 4.0
+			DWORD 9.0
+			; 16
+			DWORD 1.0
+			DWORD 0.0
+			DWORD 2.0
+			DWORD 3.0
+			; 32
+			QWORD 1.0
+			QWORD 0.0
+			QWORD 4.0
+			QWORD 9.0
+			; 64
+			QWORD 1.0
+			QWORD 0.0
+			QWORD 2.0
+			QWORD 3.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_SQRT_32:4=>4(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:8 8=>1(
+					@FP_SQRT_32:8=>8(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:12 12=>1(
+					@FP_SQRT_32:12=>12(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:16 16=>1(
+					@FP_SQRT_32:16=>16(D[0]),
+					D[16]
+				)
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_SQRT_64:8=>8(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:16 16=>1(
+					@FP_SQRT_64:16=>16(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:24 24=>1(
+					@FP_SQRT_64:24=>24(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:32 32=>1(
+					@FP_SQRT_64:32=>32(D[32]),
+					D[64]
+				)
+			) }
+
+			LEAVE
+			RET
+		}
+	}
+	/*FP_REDUCE_XX*/ [[xa]] functio nihil TEST23(@ordo [8] int) {
+		DATA {
+			; 0
+			DWORD 1.0
+			DWORD 2.0
+			DWORD 3.0
+			DWORD 4.0
+			; 16
+			DWORD 1.0
+			DWORD 3.0
+			DWORD 6.0
+			DWORD 10.0
+			; 32
+			QWORD 1.0
+			QWORD 2.0
+			QWORD 3.0
+			QWORD 4.0
+			; 64
+			QWORD 1.0
+			QWORD 3.0
+			QWORD 6.0
+			QWORD 10.0
+		}
+
+		INTERFACE W 1=>0:-
+
+		CODE {
+			ENTER
+
+			EVAL { @BLT:4 4=>4(@OFFSET:32 0=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_REDUCE_32:4=>4(D[0]),
+					D[16]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_REDUCE_32:8=>4(D[0]),
+					D[20]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 8=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_REDUCE_32:12=>4(D[0]),
+					D[24]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 12=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_32:4 4=>1(
+					@FP_REDUCE_32:16=>4(D[0]),
+					D[28]
+				)
+			) }
+			
+			EVAL { @BLT:4 4=>4(@OFFSET:32 16=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_REDUCE_64:8=>8(D[32]),
+					D[64]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 20=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_REDUCE_64:16=>8(D[32]),
+					D[72]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 24=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_REDUCE_64:24=>8(D[32]),
+					D[80]
+				)
+			) }
+			EVAL { @BLT:4 4=>4(@OFFSET:32 28=>4(@PTR_FOLLOW:W 1=>32(A[0]), -),
+				@FP_EQ_64:8 8=>1(
+					@FP_REDUCE_64:32=>8(D[32]),
+					D[88]
+				)
+			) }
+
+			LEAVE
+			RET
+		}
+	}
 }

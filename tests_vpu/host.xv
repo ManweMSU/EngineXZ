@@ -184,6 +184,126 @@ functio nihil ini() introitus iacit
 	probatio("dfrac3 > dfrac3", r2[6]);
 	probatio("dfrac4 > dfrac4", r2[7]);
 
+	invalida(r2);
+	sectio("[d]frac + [d]frac [14]");
+	VPU_TESTS.TEST14(@r2);
+	probatio("frac1  + frac1 ", r2[0]);
+	probatio("frac2  + frac2 ", r2[1]);
+	probatio("frac3  + frac3 ", r2[2]);
+	probatio("frac4  + frac4 ", r2[3]);
+	probatio("dfrac1 + dfrac1", r2[4]);
+	probatio("dfrac2 + dfrac2", r2[5]);
+	probatio("dfrac3 + dfrac3", r2[6]);
+	probatio("dfrac4 + dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac - [d]frac [15]");
+	VPU_TESTS.TEST15(@r2);
+	probatio("frac1  - frac1 ", r2[0]);
+	probatio("frac2  - frac2 ", r2[1]);
+	probatio("frac3  - frac3 ", r2[2]);
+	probatio("frac4  - frac4 ", r2[3]);
+	probatio("dfrac1 - dfrac1", r2[4]);
+	probatio("dfrac2 - dfrac2", r2[5]);
+	probatio("dfrac3 - dfrac3", r2[6]);
+	probatio("dfrac4 - dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac * [d]frac [16]");
+	VPU_TESTS.TEST16(@r2);
+	probatio("frac1  * frac1 ", r2[0]);
+	probatio("frac2  * frac2 ", r2[1]);
+	probatio("frac3  * frac3 ", r2[2]);
+	probatio("frac4  * frac4 ", r2[3]);
+	probatio("dfrac1 * dfrac1", r2[4]);
+	probatio("dfrac2 * dfrac2", r2[5]);
+	probatio("dfrac3 * dfrac3", r2[6]);
+	probatio("dfrac4 * dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac / [d]frac [17]");
+	VPU_TESTS.TEST17(@r2);
+	probatio("frac1  / frac1 ", r2[0]);
+	probatio("frac2  / frac2 ", r2[1]);
+	probatio("frac3  / frac3 ", r2[2]);
+	probatio("frac4  / frac4 ", r2[3]);
+	probatio("dfrac1 / dfrac1", r2[4]);
+	probatio("dfrac2 / dfrac2", r2[5]);
+	probatio("dfrac3 / dfrac3", r2[6]);
+	probatio("dfrac4 / dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac * [d]frac + [d]frac [18]");
+	VPU_TESTS.TEST18(@r2);
+	probatio("frac1  * frac1  + frac1 ", r2[0]);
+	probatio("frac2  * frac2  + frac2 ", r2[1]);
+	probatio("frac3  * frac3  + frac3 ", r2[2]);
+	probatio("frac4  * frac4  + frac4 ", r2[3]);
+	probatio("dfrac1 * dfrac1 + dfrac1", r2[4]);
+	probatio("dfrac2 * dfrac2 + dfrac2", r2[5]);
+	probatio("dfrac3 * dfrac3 + dfrac3", r2[6]);
+	probatio("dfrac4 * dfrac4 + dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("[d]frac * [d]frac - [d]frac [19]");
+	VPU_TESTS.TEST19(@r2);
+	probatio("frac1  * frac1  - frac1 ", r2[0]);
+	probatio("frac2  * frac2  - frac2 ", r2[1]);
+	probatio("frac3  * frac3  - frac3 ", r2[2]);
+	probatio("frac4  * frac4  - frac4 ", r2[3]);
+	probatio("dfrac1 * dfrac1 - dfrac1", r2[4]);
+	probatio("dfrac2 * dfrac2 - dfrac2", r2[5]);
+	probatio("dfrac3 * dfrac3 - dfrac3", r2[6]);
+	probatio("dfrac4 * dfrac4 - dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("|[d]frac| [20]");
+	VPU_TESTS.TEST20(@r2);
+	probatio("|frac1| ", r2[0]);
+	probatio("|frac2| ", r2[1]);
+	probatio("|frac3| ", r2[2]);
+	probatio("|frac4| ", r2[3]);
+	probatio("|dfrac1|", r2[4]);
+	probatio("|dfrac2|", r2[5]);
+	probatio("|dfrac3|", r2[6]);
+	probatio("|dfrac4|", r2[7]);
+
+	invalida(r2);
+	sectio("-[d]frac [21]");
+	VPU_TESTS.TEST21(@r2);
+	probatio("-frac1 ", r2[0]);
+	probatio("-frac2 ", r2[1]);
+	probatio("-frac3 ", r2[2]);
+	probatio("-frac4 ", r2[3]);
+	probatio("-dfrac1", r2[4]);
+	probatio("-dfrac2", r2[5]);
+	probatio("-dfrac3", r2[6]);
+	probatio("-dfrac4", r2[7]);
+
+	invalida(r2);
+	sectio("sqrt([d]frac) [22]");
+	VPU_TESTS.TEST22(@r2);
+	probatio("sqrt(frac1) ", r2[0]);
+	probatio("sqrt(frac2) ", r2[1]);
+	probatio("sqrt(frac3) ", r2[2]);
+	probatio("sqrt(frac4) ", r2[3]);
+	probatio("sqrt(dfrac1)", r2[4]);
+	probatio("sqrt(dfrac2)", r2[5]);
+	probatio("sqrt(dfrac3)", r2[6]);
+	probatio("sqrt(dfrac4)", r2[7]);
+
+	invalida(r2);
+	sectio("reduce([d]frac) [23]");
+	VPU_TESTS.TEST23(@r2);
+	probatio("reduce(frac1) ", r2[0]);
+	probatio("reduce(frac2) ", r2[1]);
+	probatio("reduce(frac3) ", r2[2]);
+	probatio("reduce(frac4) ", r2[3]);
+	probatio("reduce(dfrac1)", r2[4]);
+	probatio("reduce(dfrac2)", r2[5]);
+	probatio("reduce(dfrac3)", r2[6]);
+	probatio("reduce(dfrac4)", r2[7]);
+
 	con.color_primus = consolatorium.color.viridis;
 	con.scribe_lineam("Все тесты прошли успешно.");
 	con.color_primus = consolatorium.color.defalta;
