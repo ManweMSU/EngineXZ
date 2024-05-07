@@ -35,7 +35,7 @@ BETA-5:
  + XA FPU and VPU extensions
  + x86-64 FPU and VPU support
  - i386 FPU and VPU support
- - ARMv8 FPU and VPU support
+ + ARMv8 FPU and VPU support
  - Regular Mathematics via FPU
  - Extended Mathematics: vectors
  - Extended Mathematics: complex

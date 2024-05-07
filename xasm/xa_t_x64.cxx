@@ -923,7 +923,7 @@ namespace Engine
 									Reg irv = allocate_xmm(vreg_in_use | a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi);
 									for (int i = 0; i < dim; i++) encode_preserve(ar[i], reg_in_use, 0, !idle);
 									auto local_reg_in_use = reg_in_use;
-									if (!idle) _encode_floating_point_preserve(vreg_in_use, disp);
+									if (!idle) _encode_floating_point_preserve(vreg_in_use, 0);
 									for (int i = 0; i < dim; i++) {
 										InternalDisposition ld;
 										ld.size = object_size(node.input_specs[1 + i].size);
@@ -932,8 +932,8 @@ namespace Engine
 										_encode_tree_node(node.inputs[1 + i], idle, mem_load, &ld, local_reg_in_use);
 										local_reg_in_use |= ld.reg;
 									}
-									if (!idle) _encode_floating_point_restore(vreg_in_use, disp);
-									encode_preserve(irv, reg_in_use, 0, !idle);
+									if (!idle) _encode_floating_point_restore(vreg_in_use, 0);
+									encode_preserve(irv, vreg_in_use, 0, !idle);
 									encode_preserve(irx, reg_in_use, 0, !idle);
 									if (!idle) for (int i = 0; i < dim; i++) {
 										auto & spec = node.input_specs[1 + i];
@@ -1003,7 +1003,7 @@ namespace Engine
 										} else encode_mov_mem_xmm(quant, addr, 0, irv);
 									}
 									encode_restore(irx, reg_in_use, 0, !idle);
-									encode_restore(irv, reg_in_use, 0, !idle);
+									encode_restore(irv, vreg_in_use, 0, !idle);
 									for (int i = dim - 1; i >= 0; i--) encode_restore(ar[i], reg_in_use, 0, !idle);
 									encode_restore(a.reg_hi, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);
 									encode_restore(a.reg_lo, vreg_in_use, disp->reg_lo | disp->reg_hi, !idle);

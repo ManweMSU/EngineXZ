@@ -38,6 +38,7 @@ namespace Engine
 				A  = 0x8, BE = 0x9, GE = 0xA, L  = 0xB,
 				G  = 0xC, LE = 0xD, ALWAYS = 0xE,
 			};
+			enum class Comp : uint { EQ, GE, GT };
 			enum DispositionFlags {
 				DispositionRegister	= 0x01,
 				DispositionPointer	= 0x02,
@@ -137,11 +138,30 @@ namespace Engine
 				static Reg _make_reg(int index) { return static_cast<Reg>(1 << index); }
 				static VReg _make_vreg(int index) { return static_cast<VReg>(1 << index); }
 				static bool _is_pass_by_ref(const ArgumentSpecification & spec) { return _word_align(spec.size) > 16 || spec.semantics == ArgumentSemantics::Object; }
+				static bool _is_vector_retval_transform(uint opcode)
+				{
+					if (opcode >= 0x080 && opcode < 0x100) {
+						if (opcode == TransformFloatInteger || (opcode >= TransformFloatIsZero && opcode <= TransformFloatG)) return false;
+						else return true;
+					} else return false;
+				}
 				static Reg _reg_alloc(uint reg_in_use, uint reg_prohibit)
 				{
 					for (int i = 0; i < 18; i++) { uint m = 1 << i; if (!(reg_in_use & m) && !(reg_prohibit & m)) return _make_reg(i); }
 					for (int i = 0; i < 18; i++) { uint m = 1 << i; if (!(reg_prohibit & m)) return _make_reg(i); }
 					throw InvalidArgumentException();
+				}
+				static VReg _vreg_alloc(uint reg_in_use, uint reg_prohibit)
+				{
+					reg_prohibit |= 0x0000FF00;
+					for (int i = 0; i < 32; i++) { uint m = 1 << i; if (!(reg_in_use & m) && !(reg_prohibit & m)) return _make_vreg(i); }
+					for (int i = 0; i < 32; i++) { uint m = 1 << i; if (!(reg_prohibit & m)) return _make_vreg(i); }
+					throw InvalidArgumentException();
+				}
+				static void _vdisp_alloc(uint reg_in_use, uint reg_prohibit, _vector_disposition & disp)
+				{
+					disp.reg_lo = _vreg_alloc(reg_in_use, reg_prohibit);
+					disp.reg_hi = disp.size > 16 ? _vreg_alloc(reg_in_use | uint(disp.reg_lo), reg_prohibit | uint(disp.reg_lo)) : VReg::NO;
 				}
 				Array<_argument_passage_info> * _make_interface_layout(const ArgumentSpecification & output, const ArgumentSpecification * inputs, int in_cnt)
 				{
@@ -250,14 +270,20 @@ namespace Engine
 					}
 					throw InvalidArgumentException();
 				}
-				void _encode_push(Reg reg) { encode_sub(Reg::SP, Reg::SP, 16); encode_store(8, Reg::SP, 0, reg); }
-				void _encode_pop(Reg reg) { encode_load(8, false, reg, Reg::SP); encode_add(Reg::SP, Reg::SP, 16); }
 				void _encode_preserve(uint mask_preserve, uint mask_in_use, uint mask_enforce, bool cond)
 				{
 					if (!cond) return;
 					for (int i = 0; i < 32; i++) {
 						uint m = 1 << i;
-						if ((m & mask_preserve) && (m & mask_in_use) && !(m & mask_enforce)) _encode_push(_make_reg(i));
+						if ((m & mask_preserve) && (m & mask_in_use) && !(m & mask_enforce)) encode_push(_make_reg(i));
+					}
+				}
+				void _encode_v_preserve(uint mask_preserve, uint mask_in_use, uint mask_enforce, bool cond)
+				{
+					if (!cond) return;
+					for (int i = 0; i < 32; i++) {
+						uint m = 1 << i;
+						if ((m & mask_preserve) && (m & mask_in_use) && !(m & mask_enforce)) encode_push(_make_vreg(i));
 					}
 				}
 				void _encode_restore(uint mask_preserve, uint mask_in_use, uint mask_enforce, bool cond)
@@ -265,7 +291,15 @@ namespace Engine
 					if (!cond) return;
 					for (int i = 31; i >= 0; i--) {
 						uint m = 1 << i;
-						if ((m & mask_preserve) && (m & mask_in_use) && !(m & mask_enforce)) _encode_pop(_make_reg(i));
+						if ((m & mask_preserve) && (m & mask_in_use) && !(m & mask_enforce)) encode_pop(_make_reg(i));
+					}
+				}
+				void _encode_v_restore(uint mask_preserve, uint mask_in_use, uint mask_enforce, bool cond)
+				{
+					if (!cond) return;
+					for (int i = 31; i >= 0; i--) {
+						uint m = 1 << i;
+						if ((m & mask_preserve) && (m & mask_in_use) && !(m & mask_enforce)) encode_pop(_make_vreg(i));
 					}
 				}
 				void _encode_transform_to_pointer(Reg reg, uint reg_in_use)
@@ -702,7 +736,7 @@ namespace Engine
 					bool preserve_x19 = false;
 					if (disp->reg != Reg::X19) for (auto & info : *layout) if (!info.indirect && info.vreg != VReg::NO) { preserve_x19 = true; break; }
 					_encode_preserve(0x3FFFF, reg_in_use, uint(disp->reg), !idle);
-					if (preserve_x19 && !idle) _encode_push(Reg::X19);
+					if (preserve_x19 && !idle) encode_push(Reg::X19);
 					uint stack_usage = 0;
 					for (auto & info : *layout) if (info.stack_offset < 0) {
 						ArgumentSpecification spec;
@@ -783,7 +817,7 @@ namespace Engine
 					}
 					if (!indirect && !idle) encode_put_addr_of(Reg::X16, node.self);
 					if (!idle) {
-						for (auto & ld : vec_reload) encode_load(ld.value.size, ld.value.reg, ld.key);
+						for (auto & ld : vec_reload) encode_load_element(ld.value.size, ld.value.reg, ld.key);
 						encode_branch_call(Reg::X16);
 						encode_add(Reg::SP, Reg::SP, stack_usage);
 					}
@@ -795,7 +829,7 @@ namespace Engine
 							if (!idle) {
 								rv_offset = _allocate_temporary(node.retval_spec.size, &rv_mem_index);
 								encode_emulate_lea(Reg::X8, Reg::FP, rv_offset);
-								encode_store(_word_align(node.retval_spec.size), Reg::X8, VReg::V0);
+								encode_store_element(_word_align(node.retval_spec.size), Reg::X8, VReg::V0);
 							}
 						} else if (_size_eval(node.retval_spec.size) > 8) {
 							retval_byref = true;
@@ -839,8 +873,18 @@ namespace Engine
 						disp->flags = DispositionDiscard;
 					}
 					if (rv_mem_index >= 0) _assign_finalizer(rv_mem_index, node.retval_final);
-					if (preserve_x19 && !idle) _encode_pop(Reg::X19);
+					if (preserve_x19 && !idle) encode_pop(Reg::X19);
 					_encode_restore(0x3FFFF, reg_in_use, uint(disp->reg), !idle);
+				}
+				void _encode_floating_point_preserve(uint vreg_in_use, _vector_disposition * disp)
+				{
+					uint unmask = disp ? uint(disp->reg_lo) | uint(disp->reg_hi) : 0;
+					_encode_v_preserve(0xFFFFFFFF, vreg_in_use, unmask, true);
+				}
+				void _encode_floating_point_restore(uint vreg_in_use, _vector_disposition * disp)
+				{
+					uint unmask = disp ? uint(disp->reg_lo) | uint(disp->reg_hi) : 0;
+					_encode_v_restore(0xFFFFFFFF, vreg_in_use, unmask, true);
 				}
 				void _encode_floating_point(const ExpressionTree & node, bool idle, int * mem_load, _vector_disposition * disp, uint reg_in_use, uint vreg_in_use)
 				{
@@ -848,15 +892,503 @@ namespace Engine
 						if (node.self.ref_class == ReferenceTransform) {
 							if (node.self.index >= 0x080 && node.self.index < 0x100) {
 								if (node.self.ref_flags & ReferenceFlagShort) throw InvalidArgumentException();
+								if (node.self.index == TransformFloatResize) {
+									if (node.inputs.Length() != 1) throw InvalidArgumentException();
+									auto ins = _size_eval(node.input_specs[0].size);
+									auto ous = _size_eval(node.retval_spec.size);
+									auto dim = (node.self.ref_flags & ReferenceFlagLong) ? ins / 8 : ins / 4;
+									if (ins == ous) {
+										_vector_disposition a;
+										a.size = ins;
+										a.reg_lo = disp->reg_lo;
+										a.reg_hi = disp->reg_hi;
+										if (a.reg_lo == VReg::NO) _vdisp_alloc(vreg_in_use, 0, a);
+										_encode_v_preserve(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+										_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+										_encode_v_restore(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+									} else {
+										_vector_disposition in;
+										in.size = ins;
+										_vdisp_alloc(vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), in);
+										_encode_v_preserve(uint(in.reg_lo) | uint(in.reg_hi), vreg_in_use, 0, !idle);
+										_encode_floating_point(node.inputs[0], idle, mem_load, &in, reg_in_use, vreg_in_use | uint(in.reg_lo) | uint(in.reg_hi));
+										if (!idle && disp->reg_lo != VReg::NO) {
+											if (dim == 1) {
+												encode_convert_precision(ous, disp->reg_lo, ins, in.reg_lo);
+											} else {
+												auto ivr = _vreg_alloc(vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi) | uint(in.reg_lo) | uint(in.reg_hi));
+												_encode_v_preserve(uint(ivr), vreg_in_use, 0, true);
+												for (int i = 0; i < dim; i++) {
+													if (node.self.ref_flags & ReferenceFlagLong) {
+														if (i) encode_mov_element(8, in.reg_lo, 0, i & 2 ? in.reg_hi : in.reg_lo, i & 1);
+														encode_convert_precision(4, ivr, 8, in.reg_lo);
+														encode_mov_element(4, disp->reg_lo, i, ivr, 0);
+													} else {
+														if (i) encode_mov_element(4, in.reg_lo, 0, in.reg_lo, i);
+														encode_convert_precision(8, ivr, 4, in.reg_lo);
+														encode_mov_element(8, i & 2 ? disp->reg_hi : disp->reg_lo, i & 1, ivr, 0);
+													}
+												}
+												_encode_v_restore(uint(ivr), vreg_in_use, 0, true);
+											}
+										}
+										_encode_v_restore(uint(in.reg_lo) | uint(in.reg_hi), vreg_in_use, 0, !idle);
+									}
+								} else if (node.self.index == TransformFloatGather) {
+									int ous = _size_eval(node.retval_spec.size);
+									int dim = (node.self.ref_flags & ReferenceFlagLong) ? ous / 8 : ous / 4;
+									if (dim == 0 || dim > 4 || node.inputs.Length() != dim) throw InvalidArgumentException();
+									VReg ivr;
+									Reg xin[4] = { Reg::NO, Reg::NO, Reg::NO, Reg::NO };
+									uint xin_mask = 0;
+									for (int i = 0; i < dim; i++) if (node.input_specs[i].semantics != ArgumentSemantics::FloatingPoint) {
+										xin[i] = _reg_alloc(reg_in_use | xin_mask, xin_mask);
+										xin_mask |= uint(xin[i]);
+									}
+									_encode_preserve(xin_mask, reg_in_use, 0, !idle);
+									if (xin_mask && !idle) _encode_floating_point_preserve(vreg_in_use, disp);
+									uint xin_mask_local = 0;
+									for (int i = 0; i < dim; i++) if (xin[i] != Reg::NO) {
+										_internal_disposition ld;
+										ld.size = _size_eval(node.input_specs[i].size);
+										ld.reg = xin[i];
+										ld.flags = DispositionRegister;
+										xin_mask_local |= uint(ld.reg);
+										_encode_tree_node(node.inputs[i], idle, mem_load, &ld, reg_in_use | xin_mask_local);
+									}
+									if (xin_mask && !idle) _encode_floating_point_restore(vreg_in_use, disp);
+									ivr = _vreg_alloc(vreg_in_use | uint(disp->reg_lo) | uint(disp->reg_hi), uint(disp->reg_lo) | uint(disp->reg_hi));
+									_encode_v_preserve(uint(ivr), vreg_in_use, 0, !idle);
+									for (int i = 0; i < dim; i++) {
+										auto ins = _size_eval(node.input_specs[i].size);
+										if (node.input_specs[i].semantics == ArgumentSemantics::FloatingPoint) {
+											_vector_disposition ld;
+											ld.size = ins;
+											ld.reg_lo = ivr;
+											ld.reg_hi = VReg::NO;
+											_encode_floating_point(node.inputs[i], idle, mem_load, &ld, reg_in_use | xin_mask, vreg_in_use | uint(ivr));
+											if (!idle && disp->reg_lo != VReg::NO) {
+												if (node.self.ref_flags & ReferenceFlagLong) {
+													if (ld.size == 4) encode_convert_precision(8, ivr, 4, ivr);
+													encode_mov_element(8, i & 2 ? disp->reg_hi : disp->reg_lo, i & 1, ivr, 0);
+												} else {
+													if (ld.size == 8) encode_convert_precision(4, ivr, 8, ivr);
+													encode_mov_element(4, disp->reg_lo, i, ivr, 0);
+												}
+											}
+										} else if (!idle && disp->reg_lo != VReg::NO) {
+											auto sgn = node.input_specs[i].semantics == ArgumentSemantics::SignedInteger;
+											encode_extend(xin[i], xin[i], ins, sgn);
+											encode_mov(8, ivr, xin[i]);
+											if (node.self.ref_flags & ReferenceFlagLong) {
+												encode_convert_to_float(8, ivr, ivr, sgn);
+												encode_mov_element(8, i & 2 ? disp->reg_hi : disp->reg_lo, i & 1, ivr, 0);
+											} else {
+												encode_convert_to_float(4, ivr, ivr, sgn);
+												encode_mov_element(4, disp->reg_lo, i, ivr, 0);
+											}
+										}
+									}
+									_encode_v_restore(uint(ivr), vreg_in_use, 0, !idle);
+									_encode_restore(xin_mask, reg_in_use, 0, !idle);
+								} else if (node.self.index == TransformFloatScatter) {
+									if (node.inputs.Length() < 1) throw InvalidArgumentException();
+									int ins = _size_eval(node.input_specs[0].size);
+									int dim = (node.self.ref_flags & ReferenceFlagLong) ? ins / 8 : ins / 4;
+									if (dim == 0 || dim > 4 || node.inputs.Length() != dim + 1) throw InvalidArgumentException();
+									_vector_disposition a;
+									a.size = ins;
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == VReg::NO) _vdisp_alloc(vreg_in_use, 0, a);
+									_encode_v_preserve(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									Reg ar[4] = { Reg::NO, Reg::NO, Reg::NO, Reg::NO };
+									Reg irx = _reg_alloc(reg_in_use, 0);
+									VReg irv = _vreg_alloc(vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi), uint(a.reg_lo) | uint(a.reg_hi));
+									uint ar_mask = uint(irx);
+									for (int i = 0; i < dim; i++) {
+										ar[i] = _reg_alloc(reg_in_use, ar_mask);
+										ar_mask |= uint(ar[i]);
+									}
+									_encode_preserve(ar_mask, reg_in_use, 0, !idle);
+									auto local_reg_in_use = reg_in_use;
+									if (!idle) _encode_floating_point_preserve(vreg_in_use, 0);
+									for (int i = 0; i < dim; i++) {
+										_internal_disposition ld;
+										ld.size = _size_eval(node.input_specs[1 + i].size);
+										ld.reg = ar[i];
+										ld.flags = DispositionPointer;
+										_encode_tree_node(node.inputs[1 + i], idle, mem_load, &ld, local_reg_in_use);
+										local_reg_in_use |= uint(ld.reg);
+									}
+									if (!idle) _encode_floating_point_restore(vreg_in_use, 0);
+									_encode_v_preserve(uint(irv), vreg_in_use, 0, !idle);
+									_encode_preserve(uint(irx), reg_in_use, 0, !idle);
+									if (!idle) for (int i = 0; i < dim; i++) {
+										auto & spec = node.input_specs[1 + i];
+										auto quant = _size_eval(spec.size);
+										Reg addr = ar[i];
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											encode_mov_element(8, irv, 0, i & 2 ? a.reg_hi : a.reg_lo, i & 1);
+										} else {
+											encode_mov_element(4, irv, 0, a.reg_lo, i);
+										}
+										if (spec.semantics == ArgumentSemantics::FloatingPoint) {
+											if (node.self.ref_flags & ReferenceFlagLong) {
+												if (quant == 4) encode_convert_precision(4, irv, 8, irv);
+												encode_store(quant, addr, 0, irv);
+											} else {
+												if (quant == 8) encode_convert_precision(8, irv, 4, irv);
+												encode_store(quant, addr, 0, irv);
+											}
+										} else {
+											if (node.self.ref_flags & ReferenceFlagLong) {
+												encode_convert_to_integer(8, irx, 8, irv, spec.semantics == ArgumentSemantics::SignedInteger);
+											} else {
+												encode_convert_to_integer(8, irx, 4, irv, spec.semantics == ArgumentSemantics::SignedInteger);
+											}
+											encode_store(quant, addr, 0, irx);
 
-								// TODO: IMPLEMENT
-
+										}
+									}
+									_encode_restore(uint(irx), reg_in_use, 0, !idle);
+									_encode_v_restore(uint(irv), vreg_in_use, 0, !idle);
+									_encode_restore(ar_mask, reg_in_use, 0, !idle);
+									_encode_v_restore(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+								} else if (node.self.index == TransformFloatRecombine) {
+									if (node.inputs.Length() != 2) throw InvalidArgumentException();
+									if (node.inputs[1].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+									auto ins = _size_eval(node.input_specs[0].size);
+									auto ous = _size_eval(node.retval_spec.size);
+									auto rec = node.input_specs[1].size.num_bytes;
+									_vector_disposition a;
+									a.size = ins;
+									_vdisp_alloc(vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), a);
+									_encode_v_preserve(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, 0, !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									if (!idle && disp->reg_lo != VReg::NO) {
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											int dim = ous / 8;
+											for (int i = 0; i < dim; i++) {
+												int j = (node.input_specs[1].size.num_bytes >> (i * 4)) & 0xF;
+												encode_mov_element(8, i & 2 ? disp->reg_hi : disp->reg_lo, i & 1, j & 2 ? a.reg_hi : a.reg_lo, j & 1);
+											}
+										} else {
+											int dim = ous / 4;
+											for (int i = 0; i < dim; i++) {
+												int j = (node.input_specs[1].size.num_bytes >> (i * 4)) & 0xF;
+												encode_mov_element(4, disp->reg_lo, i, a.reg_lo, j);
+											}
+										}
+									}
+									_encode_v_restore(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, 0, !idle);
+								} else if (node.self.index == TransformFloatAbs || node.self.index == TransformFloatInverse || node.self.index == TransformFloatSqrt) {
+									if (node.inputs.Length() != 1) throw InvalidArgumentException();
+									_vector_disposition a;
+									a.size = _size_eval(node.retval_spec.size);
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == VReg::NO) _vdisp_alloc(vreg_in_use, 0, a);
+									_encode_v_preserve(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									if (!idle) {
+										uint quant, vn;
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											quant = 8;
+											if (a.size == 32 || a.size == 24) vn = 2;
+											else if (a.size == 16 || a.size == 8) vn = 1;
+											else throw InvalidArgumentException();
+										} else {
+											quant = 4;
+											if (a.size == 16 || a.size == 12 || a.size == 8 || a.size == 4) vn = 1;
+											else throw InvalidArgumentException();
+										}
+										if (node.self.index == TransformFloatAbs) {
+											encode_simd_abs(quant, a.reg_lo, a.reg_lo);
+											if (vn == 2) encode_simd_abs(quant, a.reg_hi, a.reg_hi);
+										} else if (node.self.index == TransformFloatInverse) {
+											encode_simd_neg(quant, a.reg_lo, a.reg_lo);
+											if (vn == 2) encode_simd_neg(quant, a.reg_hi, a.reg_hi);
+										} else if (node.self.index == TransformFloatSqrt) {
+											encode_simd_sqrt(quant, a.reg_lo, a.reg_lo);
+											if (vn == 2) encode_simd_sqrt(quant, a.reg_hi, a.reg_hi);
+										}
+									}
+									_encode_v_restore(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+								} else if (node.self.index == TransformFloatReduce) {
+									if (node.inputs.Length() != 1) throw InvalidArgumentException();
+									_vector_disposition a;
+									a.size = _size_eval(node.input_specs[0].size);
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == VReg::NO) a.reg_lo = _vreg_alloc(vreg_in_use, 0);
+									if (a.reg_hi == VReg::NO && a.size > 16) a.reg_hi = _vreg_alloc(vreg_in_use | uint(a.reg_lo), uint(a.reg_lo));
+									_encode_v_preserve(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									if (!idle) {
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											if (a.size == 32) {
+												encode_simd_add_paired(8, a.reg_lo, a.reg_lo, a.reg_hi);
+												encode_simd_add_paired(8, a.reg_lo, a.reg_lo, a.reg_lo);
+											} else if (a.size == 24) {
+												encode_simd_add_paired(8, a.reg_lo, a.reg_lo, a.reg_lo);
+												encode_simd_add(8, a.reg_lo, a.reg_lo, a.reg_hi);
+											} else if (a.size == 16) {
+												encode_simd_add_paired(8, a.reg_lo, a.reg_lo, a.reg_lo);
+											} else if (a.size == 8) {
+											} else throw InvalidArgumentException();
+										} else {
+											if (a.size == 16) {
+												encode_simd_add_paired(4, a.reg_lo, a.reg_lo, a.reg_lo);
+												encode_simd_add_paired(4, a.reg_lo, a.reg_lo, a.reg_lo);
+											} else if (a.size == 12) {
+												auto aux = _vreg_alloc(vreg_in_use | uint(a.reg_lo), uint(a.reg_lo));
+												_encode_v_preserve(uint(aux), vreg_in_use, 0, true);
+												encode_mov_element(4, aux, 0, a.reg_lo, 2);
+												encode_simd_add_paired(4, a.reg_lo, a.reg_lo, a.reg_lo);
+												encode_simd_add(4, a.reg_lo, a.reg_lo, aux);
+												_encode_v_restore(uint(aux), vreg_in_use, 0, true);
+											} else if (a.size == 8) {
+												encode_simd_add_paired(4, a.reg_lo, a.reg_lo, a.reg_lo);
+											} else if (a.size == 4) {
+											} else throw InvalidArgumentException();
+										}
+									}
+									_encode_v_restore(uint(a.reg_lo) | uint(a.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+								} else if (node.self.index == TransformFloatAdd || node.self.index == TransformFloatSubt || node.self.index == TransformFloatMul || node.self.index == TransformFloatDiv) {
+									if (node.inputs.Length() != 2) throw InvalidArgumentException();
+									_vector_disposition a, b;
+									a.size = b.size = _size_eval(node.retval_spec.size);
+									a.reg_lo = disp->reg_lo;
+									a.reg_hi = disp->reg_hi;
+									if (a.reg_lo == VReg::NO) _vdisp_alloc(vreg_in_use, 0, a);
+									_vdisp_alloc(vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi), uint(a.reg_lo) | uint(a.reg_hi), b);
+									_encode_v_preserve(uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									_encode_floating_point(node.inputs[1], idle, mem_load, &b, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi));
+									if (!idle) {
+										uint quant, vn;
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											quant = 8;
+											if (a.size == 32 || a.size == 24) vn = 2;
+											else if (a.size == 16 || a.size == 8) vn = 1;
+											else throw InvalidArgumentException();
+										} else {
+											quant = 4;
+											if (a.size == 16 || a.size == 12 || a.size == 8 || a.size == 4) vn = 1;
+											else throw InvalidArgumentException();
+										}
+										if (node.self.index == TransformFloatAdd) {
+											encode_simd_add(quant, a.reg_lo, a.reg_lo, b.reg_lo);
+											if (vn == 2) encode_simd_add(quant, a.reg_hi, a.reg_hi, b.reg_hi);
+										} else if (node.self.index == TransformFloatSubt) {
+											encode_simd_sub(quant, a.reg_lo, a.reg_lo, b.reg_lo);
+											if (vn == 2) encode_simd_sub(quant, a.reg_hi, a.reg_hi, b.reg_hi);
+										} else if (node.self.index == TransformFloatMul) {
+											encode_simd_mul(quant, a.reg_lo, a.reg_lo, b.reg_lo);
+											if (vn == 2) encode_simd_mul(quant, a.reg_hi, a.reg_hi, b.reg_hi);
+										} else if (node.self.index == TransformFloatDiv) {
+											encode_simd_div(quant, a.reg_lo, a.reg_lo, b.reg_lo);
+											if (vn == 2) encode_simd_div(quant, a.reg_hi, a.reg_hi, b.reg_hi);
+										}
+									}
+									_encode_v_restore(uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi), vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+								} else if (node.self.index == TransformFloatMulAdd || node.self.index == TransformFloatMulSubt) {
+									if (node.inputs.Length() != 3) throw InvalidArgumentException();
+									_vector_disposition a, b, c;
+									a.size = b.size = c.size = _size_eval(node.retval_spec.size);
+									c.reg_lo = disp->reg_lo;
+									c.reg_hi = disp->reg_hi;
+									if (c.reg_lo == VReg::NO) _vdisp_alloc(vreg_in_use, 0, c);
+									_vdisp_alloc(vreg_in_use, uint(c.reg_lo) | uint(c.reg_hi), a);
+									_vdisp_alloc(vreg_in_use, uint(c.reg_lo) | uint(c.reg_hi) | uint(a.reg_lo) | uint(a.reg_hi), b);
+									_encode_v_preserve(uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi) | uint(c.reg_lo) | uint(c.reg_hi),
+										vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+									_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi));
+									_encode_floating_point(node.inputs[1], idle, mem_load, &b, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi));
+									_encode_floating_point(node.inputs[2], idle, mem_load, &c, reg_in_use, vreg_in_use | uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi) | uint(c.reg_lo) | uint(c.reg_hi));
+									if (!idle) {
+										uint quant, vn;
+										if (node.self.ref_flags & ReferenceFlagLong) {
+											quant = 8;
+											if (a.size == 32 || a.size == 24) vn = 2;
+											else if (a.size == 16 || a.size == 8) vn = 1;
+											else throw InvalidArgumentException();
+										} else {
+											quant = 4;
+											if (a.size == 16 || a.size == 12 || a.size == 8 || a.size == 4) vn = 1;
+											else throw InvalidArgumentException();
+										}
+										if (node.self.index == TransformFloatMulAdd) {
+											encode_simd_mul_add(quant, c.reg_lo, a.reg_lo, b.reg_lo);
+											if (vn == 2) encode_simd_mul_add(quant, c.reg_hi, a.reg_hi, b.reg_hi);
+										} else if (node.self.index == TransformFloatMulSubt) {
+											encode_simd_mul(quant, a.reg_lo, a.reg_lo, b.reg_lo);
+											if (vn == 2) encode_simd_mul(quant, a.reg_hi, a.reg_hi, b.reg_hi);
+											encode_simd_sub(quant, c.reg_lo, a.reg_lo, c.reg_lo);
+											if (vn == 2) encode_simd_sub(quant, c.reg_hi, a.reg_hi, c.reg_hi);
+										}
+									}
+									_encode_v_restore(uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi) | uint(c.reg_lo) | uint(c.reg_hi),
+										vreg_in_use, uint(disp->reg_lo) | uint(disp->reg_hi), !idle);
+								} else throw InvalidArgumentException();
 								return;
 							}
 						}
 					}
-
-					// TODO: IMPLEMENT NON FLOAT
+					_internal_disposition idisp;
+					idisp.size = disp->size;
+					if (disp->reg_lo == VReg::NO) {
+						idisp.flags = DispositionDiscard;
+						idisp.reg = Reg::NO;
+					} else {
+						idisp.flags = DispositionPointer;
+						idisp.reg = _reg_alloc(reg_in_use, 0);
+					}
+					_encode_preserve(uint(idisp.reg), reg_in_use, 0, !idle);
+					if (!idle && (node.self.ref_flags & ReferenceFlagInvoke)) _encode_floating_point_preserve(vreg_in_use, disp);
+					_encode_tree_node(node, idle, mem_load, &idisp, reg_in_use | uint(idisp.reg));
+					if (!idle && idisp.reg != Reg::NO) {
+						if (disp->size > 16) {
+							encode_load(16, disp->reg_lo, idisp.reg, 0);
+							if (disp->size == 32) encode_load(16, disp->reg_hi, idisp.reg, 16);
+							else if (disp->size == 24) encode_load(8, disp->reg_hi, idisp.reg, 16);
+							else throw InvalidArgumentException();
+						} else {
+							if (disp->size == 16) encode_load(16, disp->reg_lo, idisp.reg, 0);
+							else if (disp->size == 12) {
+								encode_load_element(8, disp->reg_lo, 0, idisp.reg);
+								encode_add(idisp.reg, idisp.reg, 8);
+								encode_load_element(4, disp->reg_lo, 2, idisp.reg);
+							} else if (disp->size == 8) encode_load(8, disp->reg_lo, idisp.reg, 0);
+							else if (disp->size == 4) encode_load(4, disp->reg_lo, idisp.reg, 0);
+							else throw InvalidArgumentException();
+						}
+					}
+					if (!idle && (node.self.ref_flags & ReferenceFlagInvoke)) _encode_floating_point_restore(vreg_in_use, disp);
+					_encode_restore(uint(idisp.reg), reg_in_use, 0, !idle);
+				}
+				void _encode_floating_point_ir(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
+				{
+					if (node.self.index == TransformFloatInteger) {
+						if (node.inputs.Length() != 1) throw InvalidArgumentException();
+						int dim;
+						_vector_disposition a;
+						a.size = _size_eval(node.input_specs[0].size);
+						_vdisp_alloc(0, 0, a);
+						if (node.self.ref_flags & ReferenceFlagLong) dim = a.size / 8;
+						else dim = a.size / 4;
+						_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, uint(a.reg_lo) | uint(a.reg_hi));
+						auto rvs = _size_eval(node.retval_spec.size);
+						auto sgn = node.retval_spec.semantics == ArgumentSemantics::SignedInteger;
+						if ((disp->flags & DispositionRegister) && dim == 1) {
+							disp->flags = DispositionRegister;
+							if (!idle) {
+								if (a.size == 8) encode_convert_to_integer(8, disp->reg, 8, a.reg_lo, sgn);
+								else if (a.size == 4) encode_convert_to_integer(8, disp->reg, 4, a.reg_lo, sgn);
+								else throw InvalidArgumentException();
+							}
+						} else if ((disp->flags & DispositionRegister) || (disp->flags & DispositionPointer)) {
+							if (rvs % dim) throw InvalidArgumentException();
+							auto rqs = rvs / dim;
+							if (rqs != 8 && rqs != 4 && rqs != 2 && rqs != 1) throw InvalidArgumentException();
+							auto rvs_padded = _word_align(node.retval_spec.size);
+							(*mem_load) += rvs_padded;
+							if (!idle) {
+								auto offs = _allocate_temporary(node.retval_spec.size);
+								encode_emulate_lea(disp->reg, Reg::FP, offs);
+								auto ir = _reg_alloc(reg_in_use, uint(disp->reg));
+								_encode_preserve(uint(ir), reg_in_use, 0, true);
+								for (int i = 0; i < dim; i++) {
+									if (node.self.ref_flags & ReferenceFlagLong) {
+										if (i) encode_mov_element(8, a.reg_lo, 0, i & 2 ? a.reg_hi : a.reg_lo, i & 1);
+										encode_convert_to_integer(8, ir, 8, a.reg_lo, sgn);
+									} else {
+										if (i) encode_mov_element(4, a.reg_lo, 0, a.reg_lo, i);
+										encode_convert_to_integer(8, ir, 4, a.reg_lo, sgn);
+									}
+									encode_store(rqs, disp->reg, i * rqs, ir);
+								}
+								_encode_restore(uint(ir), reg_in_use, 0, true);
+							}
+							if (disp->flags & DispositionPointer) {
+								disp->flags = DispositionPointer;
+							} else {
+								disp->flags = DispositionRegister;
+								if (!idle) encode_load(8, sgn, disp->reg, disp->reg);
+							}
+						} else disp->flags = DispositionDiscard;
+					} else if (node.self.index == TransformFloatIsZero || node.self.index == TransformFloatNotZero ||
+						node.self.index == TransformFloatEQ || node.self.index == TransformFloatNEQ ||
+						node.self.index == TransformFloatLE || node.self.index == TransformFloatGE ||
+						node.self.index == TransformFloatL || node.self.index == TransformFloatG) {
+						uint8 result_mask;
+						Comp comparator;
+						bool invert;
+						if (node.self.index == TransformFloatIsZero || node.self.index == TransformFloatNotZero || node.self.index == TransformFloatEQ || node.self.index == TransformFloatNEQ) {
+							comparator = Comp::EQ;
+							invert = (node.self.index == TransformFloatNotZero) || (node.self.index == TransformFloatNEQ);
+						} else if (node.self.index == TransformFloatGE || node.self.index == TransformFloatL) {
+							comparator = Comp::GE;
+							invert = (node.self.index == TransformFloatL);
+						} else if (node.self.index == TransformFloatG || node.self.index == TransformFloatLE) {
+							comparator = Comp::GT;
+							invert = (node.self.index == TransformFloatLE);
+						}
+						if (node.inputs.Length() < 1) throw InvalidArgumentException();
+						_vector_disposition a, b;
+						a.size = b.size = _size_eval(node.input_specs[0].size);
+						_vdisp_alloc(0, 0, a);
+						_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, uint(a.reg_lo) | uint(a.reg_hi));
+						if (node.self.index == TransformFloatIsZero || node.self.index == TransformFloatNotZero) {
+							if (node.inputs.Length() != 1) throw InvalidArgumentException();
+							b.reg_lo = b.reg_hi = VReg::NO;
+						} else {
+							if (node.inputs.Length() != 2) throw InvalidArgumentException();
+							_vdisp_alloc(uint(a.reg_lo) | uint(a.reg_hi), uint(a.reg_lo) | uint(a.reg_hi), b);
+							_encode_floating_point(node.inputs[1], idle, mem_load, &b, reg_in_use, uint(a.reg_lo) | uint(a.reg_hi) | uint(b.reg_lo) | uint(b.reg_hi));
+						}
+						uint quant = (node.self.ref_flags & ReferenceFlagLong) ? 8 : 4;
+						if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						} else {
+							if (!idle) {
+								encode_simd_compare(quant, a.reg_lo, comparator, a.reg_lo, b.reg_lo);
+								if (a.reg_hi != VReg::NO) encode_simd_compare(quant, a.reg_hi, comparator, a.reg_hi, b.reg_hi);
+								if (invert) {
+									encode_simd_not(a.reg_lo, a.reg_lo);
+									if (a.reg_hi != VReg::NO) encode_simd_not(a.reg_hi, a.reg_hi);
+								}
+								encode_simd_shr(quant, a.reg_lo, a.reg_lo);
+								if (a.reg_hi != VReg::NO) encode_simd_shr(quant, a.reg_hi, a.reg_hi);
+								encode_mov(quant, disp->reg, a.reg_lo);
+								int dim = a.size / quant;
+								if (dim > 1) {
+									Reg acr = _reg_alloc(reg_in_use, uint(disp->reg));
+									_encode_preserve(uint(acr), reg_in_use, 0, true);
+									for (int i = 1; i < dim; i++) {
+										if (quant == 8) encode_mov_element(8, a.reg_lo, 0, i & 2 ? a.reg_hi : a.reg_lo, i & 1);
+										else encode_mov_element(4, a.reg_lo, 0, a.reg_lo, i);
+										encode_mov(4, acr, a.reg_lo);
+										if (node.self.ref_flags & ReferenceFlagVectorCom) {
+											encode_shl(acr, acr, i);
+											encode_or(disp->reg, disp->reg, acr);
+										} else {
+											encode_and(disp->reg, disp->reg, acr, false);
+										}
+									}
+									_encode_restore(uint(acr), reg_in_use, 0, true);
+								}
+							}
+							if (disp->flags & DispositionRegister) {
+								disp->flags = DispositionRegister;
+							} else {
+								disp->flags = DispositionPointer;
+								_encode_transform_to_pointer(disp->reg, reg_in_use);
+							}
+						}
+					} else throw InvalidArgumentException();
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
 				{
@@ -1110,15 +1642,37 @@ namespace Engine
 							} else if (node.self.index >= 0x013 && node.self.index < 0x050) {
 								_encode_arithmetics(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x080 && node.self.index < 0x100) {
-								_vector_disposition vdisp;
-								vdisp.size = disp->size;
-								if (disp->flags & DispositionDiscard) vdisp.reg_lo = vdisp.reg_hi = VReg::NO; else {
-									vdisp.reg_lo = VReg::V0;
-									vdisp.reg_hi = vdisp.size > 16 ? VReg::V1 : VReg::NO;
-								}
-								_encode_floating_point(node, idle, mem_load, &vdisp, reg_in_use, uint(vdisp.reg_lo) | uint(vdisp.reg_hi));
-
-								// TODO: REFER FPU
+								if (_is_vector_retval_transform(node.self.index)) {
+									_vector_disposition vdisp;
+									vdisp.size = _size_eval(node.retval_spec.size);
+									if (disp->flags & DispositionDiscard) vdisp.reg_lo = vdisp.reg_hi = VReg::NO; else {
+										vdisp.reg_lo = VReg::V0;
+										vdisp.reg_hi = vdisp.size > 16 ? VReg::V1 : VReg::NO;
+									}
+									_encode_floating_point(node, idle, mem_load, &vdisp, reg_in_use, uint(vdisp.reg_lo) | uint(vdisp.reg_hi));
+									if (disp->flags & DispositionPointer) {
+										disp->flags = DispositionPointer;
+										int offs;
+										*mem_load += _word_align(node.retval_spec.size);
+										if (!idle) {
+											offs = _allocate_temporary(node.retval_spec.size);
+											encode_emulate_lea(disp->reg, Reg::FP, offs);
+											if (vdisp.size > 16) {
+												encode_store(16, disp->reg, 0, vdisp.reg_lo);
+												if (vdisp.size > 24) encode_store(16, disp->reg, 16, vdisp.reg_hi);
+												else encode_store(8, disp->reg, 16, vdisp.reg_hi);
+											} else {
+												if (vdisp.size > 8) encode_store(16, disp->reg, 0, vdisp.reg_lo);
+												else encode_store(8, disp->reg, 0, vdisp.reg_lo);
+											}
+										}
+									} else if (disp->flags & DispositionRegister) {
+										disp->flags = DispositionRegister;
+										if (!idle) encode_mov(8, disp->reg, vdisp.reg_lo);
+									} else if (disp->flags & DispositionDiscard) {
+										disp->flags = DispositionDiscard;
+									} else throw InvalidArgumentException();
+								} else _encode_floating_point_ir(node, idle, mem_load, disp, reg_in_use);
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);
@@ -1179,6 +1733,26 @@ namespace Engine
 					uint opcode = _reg_code(dest) | ((literal & 0xFFFF) << 5) | ((hw & 0x3) << 21) | 0xF2800000;
 					encode_uint32(opcode);
 				}
+				void encode_pop(Reg dest)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(Reg::SP) << 5) | ((uint(16) << 12) & 0x1FF000) | 0xF8400400;
+					encode_uint32(opcode);
+				}
+				void encode_pop(VReg dest)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(Reg::SP) << 5) | ((uint(16) << 12) & 0x1FF000) | 0x3CC00400;
+					encode_uint32(opcode);
+				}
+				void encode_push(Reg src)
+				{
+					uint opcode = _reg_code(src) | (_reg_code(Reg::SP) << 5) | ((uint(-16) << 12) & 0x1FF000) | 0xF8000C00;
+					encode_uint32(opcode);
+				}
+				void encode_push(VReg dest)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(Reg::SP) << 5) | ((uint(-16) << 12) & 0x1FF000) | 0x3C800C00;
+					encode_uint32(opcode);
+				}
 				void encode_load(uint quant, bool sgn, Reg dest, Reg src_ptr, int offset = 0)
 				{
 					uint opcode;
@@ -1205,12 +1779,37 @@ namespace Engine
 					}
 					encode_uint32(opcode);
 				}
-				void encode_load(uint quant, VReg dest, Reg src_ptr)
+				void encode_load(uint quant, VReg dest, Reg src_ptr, int offset = 0)
+				{
+					uint opcode;
+					if (quant == 16) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0x3CC00000;
+					} else if (quant == 8) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xFC400000;
+					} else if (quant == 4) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xBC400000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_load_element(uint quant, VReg dest, Reg src_ptr)
 				{
 					uint opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5);
 					if (quant == 8) opcode |= 0x0D408400;
 					else if (quant == 4) opcode |= 0x0D408000;
 					else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_load_element(uint quant, VReg dest, uint index, Reg src_ptr)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5);
+					if (quant == 8) {
+						opcode |= 0x0D408400;
+						if (index & 1) opcode |= 0x40000000;
+					} else if (quant == 4) {
+						opcode |= 0x0D408000;
+						if (index & 1) opcode |= 0x00001000;
+						if (index & 2) opcode |= 0x40000000;
+					} else throw InvalidArgumentException();
 					encode_uint32(opcode);
 				}
 				void encode_load(Reg dest, uint literal)
@@ -1236,12 +1835,37 @@ namespace Engine
 					} else throw InvalidArgumentException();
 					encode_uint32(opcode);
 				}
-				void encode_store(uint quant, Reg dest_ptr, VReg src)
+				void encode_store(uint quant, Reg dest_ptr, int offset, VReg src)
+				{
+					uint opcode;
+					if (quant == 16) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0x3C800000;
+					} else if (quant == 8) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xFC000000;
+					} else if (quant == 4) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xBC000000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_store_element(uint quant, Reg dest_ptr, VReg src)
 				{
 					uint opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5);
 					if (quant == 8) opcode |= 0x0D008400;
 					else if (quant == 4) opcode |= 0x0D008000;
 					else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_store_element(uint quant, Reg dest_ptr, VReg src, uint index)
+				{
+					uint opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5);
+					if (quant == 8) {
+						opcode |= 0x0D008400;
+						if (index & 1) opcode |= 0x40000000;
+					} else if (quant == 4) {
+						opcode |= 0x0D008000;
+						if (index & 1) opcode |= 0x00001000;
+						if (index & 2) opcode |= 0x40000000;
+					} else throw InvalidArgumentException();
 					encode_uint32(opcode);
 				}
 				void encode_add(Reg dest, Reg op1, uint op2)
@@ -1277,8 +1901,67 @@ namespace Engine
 					uint opcode = _reg_code(dest) | (_reg_code(op1) << 5) | ((uint(op2) << 16) & 0x3F0000) | 0x9340FC00;
 					encode_uint32(opcode);
 				}
+				void encode_shl(Reg dest, Reg op1, uint op2)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(op1) << 5) | 0xD3400000;
+					opcode |= ((-op2) & 0x3F) << 16;
+					opcode |= ((63 - op2) & 0x3F) << 10;
+					encode_uint32(opcode);
+				}
 				void encode_emulate_lea(Reg dest, Reg src_ptr, int offset = 0) { if (offset >= 0) encode_add(dest, src_ptr, offset); else encode_sub(dest, src_ptr, -offset); }
 				void encode_mov(Reg dest, Reg src) { encode_add(dest, src, 0); }
+				void encode_mov(uint quant, VReg dest, VReg src)
+				{
+					uint opcode;
+					if (quant == 16) {
+						opcode = _reg_code(dest) | (_reg_code(src) << 5) | (_reg_code(src) << 16) | 0x4EA01C00;
+					} else if (quant == 8) {
+						opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x1E604000;
+					} else if (quant == 4) {
+						opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x1E204000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_mov_element(uint quant, VReg dest, uint dest_index, VReg src, uint src_index)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x6E000400;
+					uint di, si;
+					if (quant == 8) {
+						di = ((dest_index & 0x1) << 4) | 0x8;
+						si = ((src_index & 0x1) << 3);
+					} else if (quant == 4) {
+						di = ((dest_index & 0x3) << 3) | 0x4;
+						si = ((src_index & 0x3) << 2);
+					} else if (quant == 2) {
+						di = ((dest_index & 0x7) << 2) | 0x2;
+						si = ((src_index & 0x7) << 1);
+					} else if (quant == 1) {
+						di = ((dest_index & 0xF) << 1) | 0x1;
+						si = (src_index & 0xF);
+					} else throw InvalidArgumentException();
+					opcode |= (di << 16) | (si << 11);
+					encode_uint32(opcode);
+				}
+				void encode_mov(uint quant, VReg dest, Reg src)
+				{
+					uint opcode;
+					if (quant == 8) {
+						opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x9E670000;
+					} else if (quant == 4) {
+						opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x1E270000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_mov(uint quant, Reg dest, VReg src)
+				{
+					uint opcode;
+					if (quant == 8) {
+						opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x9E660000;
+					} else if (quant == 4) {
+						opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x1E260000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
 				void encode_branch_call(Reg routine) { encode_uint32((_reg_code(routine) << 5) | 0xD63F0000); }
 				void encode_branch_jmp(_arm_reference & put_addr)
 				{
@@ -1385,6 +2068,133 @@ namespace Engine
 					if (sgn) opcode |= 0x0400;
 					encode_uint32(opcode);
 				}
+				void encode_simd_not(VReg dest, VReg src)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x6E205800;
+					encode_uint32(opcode);
+				}
+				void encode_simd_shr(uint quant, VReg dest, VReg src)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x6F010400;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant == 4) opcode |= 0x00200000;
+					else if (quant == 2) opcode |= 0x00100000;
+					else if (quant == 1) opcode |= 0x00080000;
+					else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_compare(uint quant, VReg dest, Comp comp, VReg a, VReg b = VReg::NO)
+				{
+					if (b != VReg::NO) {
+						uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16) | 0x4E20E400;
+						if (quant == 8) opcode |= 0x00400000;
+						else if (quant != 4) throw InvalidArgumentException();
+						if (comp != Comp::EQ) opcode |= 0x20000000;
+						if (comp == Comp::GT) opcode |= 0x00800000;
+						encode_uint32(opcode);
+					} else {
+						uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | 0x4EA0C800;
+						if (quant == 8) opcode |= 0x00400000;
+						else if (quant != 4) throw InvalidArgumentException();
+						if (comp == Comp::GE) opcode |= 0x20000000;
+						else if (comp == Comp::EQ) opcode |= 0x00001000;
+						encode_uint32(opcode);
+					}
+				}
+				void encode_simd_add(uint quant, VReg dest, VReg a, VReg b)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16) | 0x4E20D400;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_sub(uint quant, VReg dest, VReg a, VReg b)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16) | 0x4EA0D400;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_mul(uint quant, VReg dest, VReg a, VReg b)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16) | 0x6E20DC00;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_div(uint quant, VReg dest, VReg a, VReg b)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16) | 0x6E20FC00;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_mul_add(uint quant, VReg dest, VReg a, VReg b)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16) | 0x4E20CC00;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_abs(uint quant, VReg dest, VReg src)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x4EA0F800;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_neg(uint quant, VReg dest, VReg src)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x6EA0F800;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_sqrt(uint quant, VReg dest, VReg src)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x6EA1F800;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_add_paired(uint quant, VReg dest, VReg a, VReg b)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16) | 0x6E20D400;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_convert_to_integer(uint dest_quant, Reg dest, uint src_quant, VReg src, bool sgn)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x1E380000;
+					if (!sgn) opcode |= 0x00010000;
+					if (dest_quant == 8) opcode |= 0x80000000;
+					else if (dest_quant != 4) throw InvalidArgumentException();
+					if (src_quant == 8) opcode |= 0x00400000;
+					else if (src_quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_convert_to_float(uint quant, VReg dest, VReg src, bool sgn)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x5E21D800;
+					if (!sgn) opcode |= 0x20000000;
+					if (quant == 8) opcode |= 0x00400000;
+					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_convert_precision(uint dest_quant, VReg dest, uint src_quant, VReg src)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x1E224000;
+					if (src_quant == 8) opcode |= 0x00400000;
+					else if (src_quant == 4) opcode |= 0x00000000;
+					else if (src_quant == 2) opcode |= 0x00C00000;
+					else throw InvalidArgumentException();
+					if (dest_quant == 8) opcode |= 0x00008000;
+					else if (dest_quant == 4) opcode |= 0x00000000;
+					else if (dest_quant == 2) opcode |= 0x00018000;
+					else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
 				void encode_put_global_address(Reg dest, const ObjectReference & value)
 				{
 					_arm_global_reference ref;
@@ -1482,7 +2292,7 @@ namespace Engine
 						}
 						if (a.vreg != VReg::NO) {
 							encode_emulate_lea(Reg::X9, Reg::FP, a.fp_offset);
-							encode_store(8, Reg::X9, a.vreg);
+							encode_store_element(8, Reg::X9, a.vreg);
 						}
 					}
 					if (rv_reg != Reg::NO) encode_store(8, Reg::FP, _retval.fp_offset, rv_reg);
@@ -1493,7 +2303,7 @@ namespace Engine
 						encode_load(8, false, _conv == CallingConvention::Unix ? Reg::X8 : Reg::X0, Reg::FP, _retval.fp_offset);
 					} else if (_retval.vreg != VReg::NO) {
 						encode_emulate_lea(Reg::X8, Reg::FP, _retval.fp_offset);
-						encode_load(8, VReg::V0, Reg::X8);
+						encode_load_element(8, VReg::V0, Reg::X8);
 					} else {
 						encode_load(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
 						if (_retval.reg_max != Reg::NO && _retval.reg_max != _retval.reg_min) {
