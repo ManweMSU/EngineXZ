@@ -3,6 +3,7 @@
 #include "../xv/xv_compiler.h"
 #include "../ximg/xi_module.h"
 #include "xvsl_struct.h"
+#include "xvsl_fjson.h"
 
 using namespace Engine;
 using namespace Engine::IO;
@@ -178,11 +179,9 @@ public:
 	}
 	void Write(RPC::Message & message)
 	{
-		Streaming::MemoryStream stream(0x1000);
-		Reflection::JsonSerializer serializer(&stream, true);
-		message.Serialize(&serializer);
+		SafePointer<DataBlock> data = SerializeToJSON(message);
 		access_sync->Wait();
-		Write(stream.GetBuffer(), stream.Length());
+		Write(data->GetBuffer(), data->Length());
 		access_sync->Open();
 	}
 };
@@ -439,26 +438,22 @@ void RestoreObject(Reflection::Reflected & object, const IOData & data)
 }
 void RespondWithError(IOChannel * channel, const RPC::RequestMessage & req, int error)
 {
-	Streaming::MemoryStream stream(0x1000);
-	Reflection::JsonSerializer serializer(&stream, true);
 	RPC::ResponseMessage_Fail responce;
 	responce.jsonrpc = req.jsonrpc;
 	responce.id = req.id;
 	responce.error.code = error;
-	responce.Serialize(&serializer);
+	SafePointer<DataBlock> data = SerializeToJSON(responce);
 	access_sync->Wait();
-	channel->Write(stream.GetBuffer(), stream.Length());
+	channel->Write(data->GetBuffer(), data->Length());
 	access_sync->Open();
 }
 void RespondWithObject(IOChannel * channel, const RPC::RequestMessage & req, RPC::ResponseMessage_Success & object)
 {
-	Streaming::MemoryStream stream(0x1000);
-	Reflection::JsonSerializer serializer(&stream, true);
 	object.jsonrpc = req.jsonrpc;
 	object.id = req.id;
-	object.Serialize(&serializer);
+	SafePointer<DataBlock> data = SerializeToJSON(object);
 	access_sync->Wait();
-	channel->Write(stream.GetBuffer(), stream.Length());
+	channel->Write(data->GetBuffer(), data->Length());
 	access_sync->Open();
 }
 void RespondWithOK(IOChannel * channel, const RPC::RequestMessage & req)
