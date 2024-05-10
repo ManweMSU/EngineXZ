@@ -10,95 +10,6 @@ namespace Engine
 	{
 		class FPU : public IAPIExtension
 		{
-			static float _neg_32(float & self) { return -self; }
-			static double _neg_64(double & self) { return -self; }
-			static bool _not_32(float & self) { return !self; }
-			static bool _not_64(double & self) { return !self; }
-			static float & _asgn_add_32(float & self, float value) { self += value; return self; }
-			static double & _asgn_add_64(double & self, double value) { self += value; return self; }
-			static float & _asgn_sub_32(float & self, float value) { self -= value; return self; }
-			static double & _asgn_sub_64(double & self, double value) { self -= value; return self; }
-			static float & _asgn_mul_32(float & self, float value) { self *= value; return self; }
-			static double & _asgn_mul_64(double & self, double value) { self *= value; return self; }
-			static float & _asgn_div_32(float & self, float value) { self /= value; return self; }
-			static double & _asgn_div_64(double & self, double value) { self /= value; return self; }
-			static float & _inc_32(float & self) { self += 1.0f; return self; }
-			static double & _inc_64(double & self) { self += 1.0; return self; }
-			static float & _dec_32(float & self) { self -= 1.0f; return self; }
-			static double & _dec_64(double & self) { self -= 1.0; return self; }
-			static float _add_32(float a, float b) { return a + b; }
-			static double _add_64(double a, double b) { return a + b; }
-			static float _sub_32(float a, float b) { return a - b; }
-			static double _sub_64(double a, double b) { return a - b; }
-			static float _mul_32(float a, float b) { return a * b; }
-			static double _mul_64(double a, double b) { return a * b; }
-			static float _div_32(float a, float b) { return a / b; }
-			static double _div_64(double a, double b) { return a / b; }
-			static bool _eq_32(float a, float b) { return a == b; }
-			static bool _eq_64(double a, double b) { return a == b; }
-			static bool _neq_32(float a, float b) { return a != b; }
-			static bool _neq_64(double a, double b) { return a != b; }
-			static bool _ls_32(float a, float b) { return a < b; }
-			static bool _ls_64(double a, double b) { return a < b; }
-			static bool _gt_32(float a, float b) { return a > b; }
-			static bool _gt_64(double a, double b) { return a > b; }
-			static bool _le_32(float a, float b) { return a <= b; }
-			static bool _le_64(double a, double b) { return a <= b; }
-			static bool _ge_32(float a, float b) { return a >= b; }
-			static bool _ge_64(double a, double b) { return a >= b; }
-			static float _b_f32(bool & self) { return self ? 1.0f : 0.0f; }
-			static double _b_f64(bool & self) { return self ? 1.0 : 0.0; }
-			static float _s8_f32(int8 & self) { return self; }
-			static float _u8_f32(uint8 & self) { return self; }
-			static double _s8_f64(int8 & self) { return self; }
-			static double _u8_f64(uint8 & self) { return self; }
-			static float _s16_f32(int16 & self) { return self; }
-			static float _u16_f32(uint16 & self) { return self; }
-			static double _s16_f64(int16 & self) { return self; }
-			static double _u16_f64(uint16 & self) { return self; }
-			static float _s32_f32(int32 & self) { return self; }
-			static float _u32_f32(uint32 & self) { return self; }
-			static double _s32_f64(int32 & self) { return self; }
-			static double _u32_f64(uint32 & self) { return self; }
-			static float _s64_f32(int64 & self) { return self; }
-			static float _u64_f32(uint64 & self) { return self; }
-			static double _s64_f64(int64 & self) { return self; }
-			static double _u64_f64(uint64 & self) { return self; }
-			static float _sw_f32(sintptr & self) { return self; }
-			static float _uw_f32(uintptr & self) { return self; }
-			static double _sw_f64(sintptr & self) { return self; }
-			static double _uw_f64(uintptr & self) { return self; }
-			static bool _f32_b(float & self) { return self; }
-			static int8 _f32_s8(float & self) { return self; }
-			static uint8 _f32_u8(float & self) { return self; }
-			static int16 _f32_s16(float & self) { return self; }
-			static uint16 _f32_u16(float & self) { return self; }
-			static int32 _f32_s32(float & self) { return self; }
-			static uint32 _f32_u32(float & self) { return self; }
-			static int64 _f32_s64(float & self) { return self; }
-			static uint64 _f32_u64(float & self) { return self; }
-			static sintptr _f32_sw(float & self) { return self; }
-			static uintptr _f32_uw(float & self) { return self; }
-			static bool _f64_b(double & self) { return self; }
-			static int8 _f64_s8(double & self) { return self; }
-			static uint8 _f64_u8(double & self) { return self; }
-			static int16 _f64_s16(double & self) { return self; }
-			static uint16 _f64_u16(double & self) { return self; }
-			static int32 _f64_s32(double & self) { return self; }
-			static uint32 _f64_u32(double & self) { return self; }
-			static int64 _f64_s64(double & self) { return self; }
-			static uint64 _f64_u64(double & self) { return self; }
-			static sintptr _f64_sw(double & self) { return self; }
-			static uintptr _f64_uw(double & self) { return self; }
-			static double _f32_f64(float & self) { return self; }
-			static float _f64_f32(double & self) { return self; }
-			static int8 _abs_i8(int8 value) { return value >= 0 ? value : -value; }
-			static int16 _abs_i16(int16 value) { return value >= 0 ? value : -value; }
-			static int32 _abs_i32(int32 value) { return value >= 0 ? value : -value; }
-			static int64 _abs_i64(int64 value) { return value >= 0 ? value : -value; }
-			static sintptr _abs_iw(sintptr value) { return value >= 0 ? value : -value; }
-			static float _abs_f32(float value) { return value >= 0.0f ? value : -value; }
-			static double _abs_f64(double value) { return value >= 0.0 ? value : -value; }
 			static int8 _sgn_i8(int8 value) { return value > 0 ? 1 : value < 0 ? -1 : 0; }
 			static int16 _sgn_i16(int16 value) { return value > 0 ? 1 : value < 0 ? -1 : 0; }
 			static int32 _sgn_i32(int32 value) { return value > 0 ? 1 : value < 0 ? -1 : 0; }
@@ -126,7 +37,6 @@ namespace Engine
 			static double _trunc_d(double value) { return trunc(value); }
 			static double _floor_d(double value) { return floor(value); }
 			static double _ceil_d(double value) { return ceil(value); }
-			static double _sqrt_d(double value) { return sqrt(value); }
 			static double _pow_d(double value, double p) { return pow(value, p); }
 			static double _exp_d(double value) { return exp(value); }
 			static double _log_d(double value) { return log(value); }
@@ -141,577 +51,213 @@ namespace Engine
 		public:
 			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				if (string::Compare(routine_name, L"fpu_f32_ad_i64") < 0) {
-					if (string::Compare(routine_name, L"fpu_abs_f32") < 0) {
-						if (string::Compare(routine_name, L"fpu_64_dec") < 0) {
-							if (string::Compare(routine_name, L"fpu_32_mul") < 0) {
-								if (string::Compare(routine_name, L"fpu_32_lml") < 0) {
-									if (string::Compare(routine_name, L"fpu_32_inc") < 0) {
-										if (string::Compare(routine_name, L"fpu_32_div") < 0) {
-											if (string::Compare(routine_name, L"fpu_32_dec") == 0) return reinterpret_cast<const void *>(_dec_32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_32_div") == 0) return reinterpret_cast<const void *>(_div_32);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_32_ldv") < 0) {
-											if (string::Compare(routine_name, L"fpu_32_inc") == 0) return reinterpret_cast<const void *>(_inc_32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_32_ldv") == 0) return reinterpret_cast<const void *>(_asgn_div_32);
-										}
-									}
+				if (string::Compare(routine_name, L"fpu_f32_nn") < 0) {
+					if (string::Compare(routine_name, L"fpu_c3_d") < 0) {
+						if (string::Compare(routine_name, L"fpu_atg") < 0) {
+							if (string::Compare(routine_name, L"fpu_actg_d") < 0) {
+								if (string::Compare(routine_name, L"fpu_acos_d") < 0) {
+									if (string::Compare(routine_name, L"fpu_acos") == 0) return reinterpret_cast<const void *>(&acosf);
 								} else {
-									if (string::Compare(routine_name, L"fpu_32_lsm") < 0) {
-										if (string::Compare(routine_name, L"fpu_32_lsb") < 0) {
-											if (string::Compare(routine_name, L"fpu_32_lml") == 0) return reinterpret_cast<const void *>(_asgn_mul_32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_32_lsb") == 0) return reinterpret_cast<const void *>(_asgn_sub_32);
-										}
+									if (string::Compare(routine_name, L"fpu_actg") < 0) {
+										if (string::Compare(routine_name, L"fpu_acos_d") == 0) return reinterpret_cast<const void *>(&_acos_d);
 									} else {
-										if (string::Compare(routine_name, L"fpu_32_maj") < 0) {
-											if (string::Compare(routine_name, L"fpu_32_lsm") == 0) return reinterpret_cast<const void *>(_asgn_add_32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_32_min") < 0) {
-												if (string::Compare(routine_name, L"fpu_32_maj") == 0) return reinterpret_cast<const void *>(_gt_32);
-											} else {
-												if (string::Compare(routine_name, L"fpu_32_min") == 0) return reinterpret_cast<const void *>(_ls_32);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_actg") == 0) return reinterpret_cast<const void *>(&_arcctg_f32);
 									}
 								}
 							} else {
-								if (string::Compare(routine_name, L"fpu_32_par") < 0) {
-									if (string::Compare(routine_name, L"fpu_32_non") < 0) {
-										if (string::Compare(routine_name, L"fpu_32_neg") < 0) {
-											if (string::Compare(routine_name, L"fpu_32_mul") == 0) return reinterpret_cast<const void *>(_mul_32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_32_neg") == 0) return reinterpret_cast<const void *>(_neg_32);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_32_npr") < 0) {
-											if (string::Compare(routine_name, L"fpu_32_non") == 0) return reinterpret_cast<const void *>(_not_32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_32_npr") == 0) return reinterpret_cast<const void *>(_neq_32);
-										}
-									}
+								if (string::Compare(routine_name, L"fpu_asin") < 0) {
+									if (string::Compare(routine_name, L"fpu_actg_d") == 0) return reinterpret_cast<const void *>(&_arcctg_f64);
 								} else {
-									if (string::Compare(routine_name, L"fpu_32_pmn") < 0) {
-										if (string::Compare(routine_name, L"fpu_32_pmj") < 0) {
-											if (string::Compare(routine_name, L"fpu_32_par") == 0) return reinterpret_cast<const void *>(_eq_32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_32_pmj") == 0) return reinterpret_cast<const void *>(_ge_32);
-										}
+									if (string::Compare(routine_name, L"fpu_asin_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_asin") == 0) return reinterpret_cast<const void *>(&asinf);
 									} else {
-										if (string::Compare(routine_name, L"fpu_32_sub") < 0) {
-											if (string::Compare(routine_name, L"fpu_32_pmn") == 0) return reinterpret_cast<const void *>(_le_32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_32_sum") < 0) {
-												if (string::Compare(routine_name, L"fpu_32_sub") == 0) return reinterpret_cast<const void *>(_sub_32);
-											} else {
-												if (string::Compare(routine_name, L"fpu_32_sum") == 0) return reinterpret_cast<const void *>(_add_32);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_asin_d") == 0) return reinterpret_cast<const void *>(&_asin_d);
 									}
 								}
 							}
 						} else {
-							if (string::Compare(routine_name, L"fpu_64_mul") < 0) {
-								if (string::Compare(routine_name, L"fpu_64_lml") < 0) {
-									if (string::Compare(routine_name, L"fpu_64_inc") < 0) {
-										if (string::Compare(routine_name, L"fpu_64_div") < 0) {
-											if (string::Compare(routine_name, L"fpu_64_dec") == 0) return reinterpret_cast<const void *>(_dec_64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_64_div") == 0) return reinterpret_cast<const void *>(_div_64);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_64_ldv") < 0) {
-											if (string::Compare(routine_name, L"fpu_64_inc") == 0) return reinterpret_cast<const void *>(_inc_64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_64_ldv") == 0) return reinterpret_cast<const void *>(_asgn_div_64);
-										}
-									}
+							if (string::Compare(routine_name, L"fpu_c1_d") < 0) {
+								if (string::Compare(routine_name, L"fpu_atg_d") < 0) {
+									if (string::Compare(routine_name, L"fpu_atg") == 0) return reinterpret_cast<const void *>(&atanf);
 								} else {
-									if (string::Compare(routine_name, L"fpu_64_lsm") < 0) {
-										if (string::Compare(routine_name, L"fpu_64_lsb") < 0) {
-											if (string::Compare(routine_name, L"fpu_64_lml") == 0) return reinterpret_cast<const void *>(_asgn_mul_64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_64_lsb") == 0) return reinterpret_cast<const void *>(_asgn_sub_64);
-										}
+									if (string::Compare(routine_name, L"fpu_c1") < 0) {
+										if (string::Compare(routine_name, L"fpu_atg_d") == 0) return reinterpret_cast<const void *>(&_atan_d);
 									} else {
-										if (string::Compare(routine_name, L"fpu_64_maj") < 0) {
-											if (string::Compare(routine_name, L"fpu_64_lsm") == 0) return reinterpret_cast<const void *>(_asgn_add_64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_64_min") < 0) {
-												if (string::Compare(routine_name, L"fpu_64_maj") == 0) return reinterpret_cast<const void *>(_gt_64);
-											} else {
-												if (string::Compare(routine_name, L"fpu_64_min") == 0) return reinterpret_cast<const void *>(_ls_64);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_c1") == 0) return reinterpret_cast<const void *>(&roundf);
 									}
 								}
 							} else {
-								if (string::Compare(routine_name, L"fpu_64_par") < 0) {
-									if (string::Compare(routine_name, L"fpu_64_non") < 0) {
-										if (string::Compare(routine_name, L"fpu_64_neg") < 0) {
-											if (string::Compare(routine_name, L"fpu_64_mul") == 0) return reinterpret_cast<const void *>(_mul_64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_64_neg") == 0) return reinterpret_cast<const void *>(_neg_64);
-										}
+								if (string::Compare(routine_name, L"fpu_c2_d") < 0) {
+									if (string::Compare(routine_name, L"fpu_c2") < 0) {
+										if (string::Compare(routine_name, L"fpu_c1_d") == 0) return reinterpret_cast<const void *>(&_round_d);
 									} else {
-										if (string::Compare(routine_name, L"fpu_64_npr") < 0) {
-											if (string::Compare(routine_name, L"fpu_64_non") == 0) return reinterpret_cast<const void *>(_not_64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_64_npr") == 0) return reinterpret_cast<const void *>(_neq_64);
-										}
+										if (string::Compare(routine_name, L"fpu_c2") == 0) return reinterpret_cast<const void *>(&truncf);
 									}
 								} else {
-									if (string::Compare(routine_name, L"fpu_64_pmn") < 0) {
-										if (string::Compare(routine_name, L"fpu_64_pmj") < 0) {
-											if (string::Compare(routine_name, L"fpu_64_par") == 0) return reinterpret_cast<const void *>(_eq_64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_64_pmj") == 0) return reinterpret_cast<const void *>(_ge_64);
-										}
+									if (string::Compare(routine_name, L"fpu_c3") < 0) {
+										if (string::Compare(routine_name, L"fpu_c2_d") == 0) return reinterpret_cast<const void *>(&_trunc_d);
 									} else {
-										if (string::Compare(routine_name, L"fpu_64_sub") < 0) {
-											if (string::Compare(routine_name, L"fpu_64_pmn") == 0) return reinterpret_cast<const void *>(_le_64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_64_sum") < 0) {
-												if (string::Compare(routine_name, L"fpu_64_sub") == 0) return reinterpret_cast<const void *>(_sub_64);
-											} else {
-												if (string::Compare(routine_name, L"fpu_64_sum") == 0) return reinterpret_cast<const void *>(_add_64);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_c3") == 0) return reinterpret_cast<const void *>(&floorf);
 									}
 								}
 							}
 						}
 					} else {
-						if (string::Compare(routine_name, L"fpu_c2_d") < 0) {
-							if (string::Compare(routine_name, L"fpu_actg") < 0) {
-								if (string::Compare(routine_name, L"fpu_abs_i64") < 0) {
-									if (string::Compare(routine_name, L"fpu_abs_i16") < 0) {
-										if (string::Compare(routine_name, L"fpu_abs_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_abs_f32") == 0) return reinterpret_cast<const void *>(_abs_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_abs_f64") == 0) return reinterpret_cast<const void *>(_abs_f64);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_abs_i32") < 0) {
-											if (string::Compare(routine_name, L"fpu_abs_i16") == 0) return reinterpret_cast<const void *>(_abs_i16);
-										} else {
-											if (string::Compare(routine_name, L"fpu_abs_i32") == 0) return reinterpret_cast<const void *>(_abs_i32);
-										}
-									}
+						if (string::Compare(routine_name, L"fpu_ei_32") < 0) {
+							if (string::Compare(routine_name, L"fpu_cos") < 0) {
+								if (string::Compare(routine_name, L"fpu_c4") < 0) {
+									if (string::Compare(routine_name, L"fpu_c3_d") == 0) return reinterpret_cast<const void *>(&_floor_d);
 								} else {
-									if (string::Compare(routine_name, L"fpu_abs_iad") < 0) {
-										if (string::Compare(routine_name, L"fpu_abs_i8") < 0) {
-											if (string::Compare(routine_name, L"fpu_abs_i64") == 0) return reinterpret_cast<const void *>(_abs_i64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_abs_i8") == 0) return reinterpret_cast<const void *>(_abs_i8);
-										}
+									if (string::Compare(routine_name, L"fpu_c4_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_c4") == 0) return reinterpret_cast<const void *>(&ceilf);
 									} else {
-										if (string::Compare(routine_name, L"fpu_acos") < 0) {
-											if (string::Compare(routine_name, L"fpu_abs_iad") == 0) return reinterpret_cast<const void *>(_abs_iw);
-										} else {
-											if (string::Compare(routine_name, L"fpu_acos_d") < 0) {
-												if (string::Compare(routine_name, L"fpu_acos") == 0) return reinterpret_cast<const void *>(acosf);
-											} else {
-												if (string::Compare(routine_name, L"fpu_acos_d") == 0) return reinterpret_cast<const void *>(_acos_d);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_c4_d") == 0) return reinterpret_cast<const void *>(&_ceil_d);
 									}
 								}
 							} else {
-								if (string::Compare(routine_name, L"fpu_atg") < 0) {
-									if (string::Compare(routine_name, L"fpu_asin") < 0) {
-										if (string::Compare(routine_name, L"fpu_actg_d") < 0) {
-											if (string::Compare(routine_name, L"fpu_actg") == 0) return reinterpret_cast<const void *>(_arcctg_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_actg_d") == 0) return reinterpret_cast<const void *>(_arcctg_f64);
-										}
+								if (string::Compare(routine_name, L"fpu_ctg") < 0) {
+									if (string::Compare(routine_name, L"fpu_cos_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_cos") == 0) return reinterpret_cast<const void *>(&cosf);
 									} else {
-										if (string::Compare(routine_name, L"fpu_asin_d") < 0) {
-											if (string::Compare(routine_name, L"fpu_asin") == 0) return reinterpret_cast<const void *>(asinf);
-										} else {
-											if (string::Compare(routine_name, L"fpu_asin_d") == 0) return reinterpret_cast<const void *>(_asin_d);
-										}
+										if (string::Compare(routine_name, L"fpu_cos_d") == 0) return reinterpret_cast<const void *>(&_cos_d);
 									}
 								} else {
-									if (string::Compare(routine_name, L"fpu_c1") < 0) {
-										if (string::Compare(routine_name, L"fpu_atg_d") < 0) {
-											if (string::Compare(routine_name, L"fpu_atg") == 0) return reinterpret_cast<const void *>(atanf);
-										} else {
-											if (string::Compare(routine_name, L"fpu_atg_d") == 0) return reinterpret_cast<const void *>(_atan_d);
-										}
+									if (string::Compare(routine_name, L"fpu_ctg_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_ctg") == 0) return reinterpret_cast<const void *>(&_ctg_f32);
 									} else {
-										if (string::Compare(routine_name, L"fpu_c1_d") < 0) {
-											if (string::Compare(routine_name, L"fpu_c1") == 0) return reinterpret_cast<const void *>(roundf);
-										} else {
-											if (string::Compare(routine_name, L"fpu_c2") < 0) {
-												if (string::Compare(routine_name, L"fpu_c1_d") == 0) return reinterpret_cast<const void *>(_round_d);
-											} else {
-												if (string::Compare(routine_name, L"fpu_c2") == 0) return reinterpret_cast<const void *>(truncf);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_ctg_d") == 0) return reinterpret_cast<const void *>(&_ctg_f64);
 									}
 								}
 							}
 						} else {
-							if (string::Compare(routine_name, L"fpu_ei_32") < 0) {
-								if (string::Compare(routine_name, L"fpu_c4_d") < 0) {
-									if (string::Compare(routine_name, L"fpu_c3_d") < 0) {
-										if (string::Compare(routine_name, L"fpu_c3") < 0) {
-											if (string::Compare(routine_name, L"fpu_c2_d") == 0) return reinterpret_cast<const void *>(_trunc_d);
-										} else {
-											if (string::Compare(routine_name, L"fpu_c3") == 0) return reinterpret_cast<const void *>(floorf);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_c4") < 0) {
-											if (string::Compare(routine_name, L"fpu_c3_d") == 0) return reinterpret_cast<const void *>(_floor_d);
-										} else {
-											if (string::Compare(routine_name, L"fpu_c4") == 0) return reinterpret_cast<const void *>(ceilf);
-										}
-									}
+							if (string::Compare(routine_name, L"fpu_enn_64") < 0) {
+								if (string::Compare(routine_name, L"fpu_ei_64") < 0) {
+									if (string::Compare(routine_name, L"fpu_ei_32") == 0) return reinterpret_cast<const void *>(&_is_inf_f32);
 								} else {
-									if (string::Compare(routine_name, L"fpu_cos_d") < 0) {
-										if (string::Compare(routine_name, L"fpu_cos") < 0) {
-											if (string::Compare(routine_name, L"fpu_c4_d") == 0) return reinterpret_cast<const void *>(_ceil_d);
-										} else {
-											if (string::Compare(routine_name, L"fpu_cos") == 0) return reinterpret_cast<const void *>(cosf);
-										}
+									if (string::Compare(routine_name, L"fpu_enn_32") < 0) {
+										if (string::Compare(routine_name, L"fpu_ei_64") == 0) return reinterpret_cast<const void *>(&_is_inf_f64);
 									} else {
-										if (string::Compare(routine_name, L"fpu_ctg") < 0) {
-											if (string::Compare(routine_name, L"fpu_cos_d") == 0) return reinterpret_cast<const void *>(_cos_d);
-										} else {
-											if (string::Compare(routine_name, L"fpu_ctg_d") < 0) {
-												if (string::Compare(routine_name, L"fpu_ctg") == 0) return reinterpret_cast<const void *>(_ctg_f32);
-											} else {
-												if (string::Compare(routine_name, L"fpu_ctg_d") == 0) return reinterpret_cast<const void *>(_ctg_f64);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_enn_32") == 0) return reinterpret_cast<const void *>(&_is_nan_f32);
 									}
 								}
 							} else {
-								if (string::Compare(routine_name, L"fpu_exp") < 0) {
-									if (string::Compare(routine_name, L"fpu_enn_32") < 0) {
-										if (string::Compare(routine_name, L"fpu_ei_64") < 0) {
-											if (string::Compare(routine_name, L"fpu_ei_32") == 0) return reinterpret_cast<const void *>(_is_inf_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_ei_64") == 0) return reinterpret_cast<const void *>(_is_inf_f64);
-										}
+								if (string::Compare(routine_name, L"fpu_exp_d") < 0) {
+									if (string::Compare(routine_name, L"fpu_exp") < 0) {
+										if (string::Compare(routine_name, L"fpu_enn_64") == 0) return reinterpret_cast<const void *>(&_is_nan_f64);
 									} else {
-										if (string::Compare(routine_name, L"fpu_enn_64") < 0) {
-											if (string::Compare(routine_name, L"fpu_enn_32") == 0) return reinterpret_cast<const void *>(_is_nan_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_enn_64") == 0) return reinterpret_cast<const void *>(_is_nan_f64);
-										}
+										if (string::Compare(routine_name, L"fpu_exp") == 0) return reinterpret_cast<const void *>(&expf);
 									}
 								} else {
-									if (string::Compare(routine_name, L"fpu_f32_ad_f64") < 0) {
-										if (string::Compare(routine_name, L"fpu_exp_d") < 0) {
-											if (string::Compare(routine_name, L"fpu_exp") == 0) return reinterpret_cast<const void *>(expf);
-										} else {
-											if (string::Compare(routine_name, L"fpu_exp_d") == 0) return reinterpret_cast<const void *>(_exp_d);
-										}
+									if (string::Compare(routine_name, L"fpu_f32_ni") < 0) {
+										if (string::Compare(routine_name, L"fpu_exp_d") == 0) return reinterpret_cast<const void *>(&_exp_d);
 									} else {
-										if (string::Compare(routine_name, L"fpu_f32_ad_i16") < 0) {
-											if (string::Compare(routine_name, L"fpu_f32_ad_f64") == 0) return reinterpret_cast<const void *>(_f32_f64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f32_ad_i32") < 0) {
-												if (string::Compare(routine_name, L"fpu_f32_ad_i16") == 0) return reinterpret_cast<const void *>(_f32_s16);
-											} else {
-												if (string::Compare(routine_name, L"fpu_f32_ad_i32") == 0) return reinterpret_cast<const void *>(_f32_s32);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_f32_ni") == 0) return reinterpret_cast<const void *>(&_inf_neg_f32);
 									}
 								}
 							}
 						}
 					}
 				} else {
-					if (string::Compare(routine_name, L"fpu_iadl_ad_f64") < 0) {
-						if (string::Compare(routine_name, L"fpu_f64_ad_l") < 0) {
-							if (string::Compare(routine_name, L"fpu_f32_ni") < 0) {
-								if (string::Compare(routine_name, L"fpu_f32_ad_n16") < 0) {
-									if (string::Compare(routine_name, L"fpu_f32_ad_iadl") < 0) {
-										if (string::Compare(routine_name, L"fpu_f32_ad_i8") < 0) {
-											if (string::Compare(routine_name, L"fpu_f32_ad_i64") == 0) return reinterpret_cast<const void *>(_f32_s64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f32_ad_i8") == 0) return reinterpret_cast<const void *>(_f32_s8);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_f32_ad_l") < 0) {
-											if (string::Compare(routine_name, L"fpu_f32_ad_iadl") == 0) return reinterpret_cast<const void *>(_f32_sw);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f32_ad_l") == 0) return reinterpret_cast<const void *>(_f32_b);
-										}
-									}
+					if (string::Compare(routine_name, L"fpu_ncg_3") < 0) {
+						if (string::Compare(routine_name, L"fpu_lb_d") < 0) {
+							if (string::Compare(routine_name, L"fpu_f64_nn") < 0) {
+								if (string::Compare(routine_name, L"fpu_f32_pi") < 0) {
+									if (string::Compare(routine_name, L"fpu_f32_nn") == 0) return reinterpret_cast<const void *>(&_inf_nan_f32);
 								} else {
-									if (string::Compare(routine_name, L"fpu_f32_ad_n64") < 0) {
-										if (string::Compare(routine_name, L"fpu_f32_ad_n32") < 0) {
-											if (string::Compare(routine_name, L"fpu_f32_ad_n16") == 0) return reinterpret_cast<const void *>(_f32_u16);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f32_ad_n32") == 0) return reinterpret_cast<const void *>(_f32_u32);
-										}
+									if (string::Compare(routine_name, L"fpu_f64_ni") < 0) {
+										if (string::Compare(routine_name, L"fpu_f32_pi") == 0) return reinterpret_cast<const void *>(&_inf_pos_f32);
 									} else {
-										if (string::Compare(routine_name, L"fpu_f32_ad_n8") < 0) {
-											if (string::Compare(routine_name, L"fpu_f32_ad_n64") == 0) return reinterpret_cast<const void *>(_f32_u64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f32_ad_nadl") < 0) {
-												if (string::Compare(routine_name, L"fpu_f32_ad_n8") == 0) return reinterpret_cast<const void *>(_f32_u8);
-											} else {
-												if (string::Compare(routine_name, L"fpu_f32_ad_nadl") == 0) return reinterpret_cast<const void *>(_f32_uw);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_f64_ni") == 0) return reinterpret_cast<const void *>(&_inf_neg_f64);
 									}
 								}
 							} else {
-								if (string::Compare(routine_name, L"fpu_f64_ad_i16") < 0) {
-									if (string::Compare(routine_name, L"fpu_f32_pi") < 0) {
-										if (string::Compare(routine_name, L"fpu_f32_nn") < 0) {
-											if (string::Compare(routine_name, L"fpu_f32_ni") == 0) return reinterpret_cast<const void *>(_inf_neg_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f32_nn") == 0) return reinterpret_cast<const void *>(_inf_nan_f32);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_f64_ad_f32") < 0) {
-											if (string::Compare(routine_name, L"fpu_f32_pi") == 0) return reinterpret_cast<const void *>(_inf_pos_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f64_ad_f32") == 0) return reinterpret_cast<const void *>(_f64_f32);
-										}
-									}
+								if (string::Compare(routine_name, L"fpu_f64_pi") < 0) {
+									if (string::Compare(routine_name, L"fpu_f64_nn") == 0) return reinterpret_cast<const void *>(&_inf_nan_f64);
 								} else {
-									if (string::Compare(routine_name, L"fpu_f64_ad_i64") < 0) {
-										if (string::Compare(routine_name, L"fpu_f64_ad_i32") < 0) {
-											if (string::Compare(routine_name, L"fpu_f64_ad_i16") == 0) return reinterpret_cast<const void *>(_f64_s16);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f64_ad_i32") == 0) return reinterpret_cast<const void *>(_f64_s32);
-										}
+									if (string::Compare(routine_name, L"fpu_lb") < 0) {
+										if (string::Compare(routine_name, L"fpu_f64_pi") == 0) return reinterpret_cast<const void *>(&_inf_pos_f64);
 									} else {
-										if (string::Compare(routine_name, L"fpu_f64_ad_i8") < 0) {
-											if (string::Compare(routine_name, L"fpu_f64_ad_i64") == 0) return reinterpret_cast<const void *>(_f64_s64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f64_ad_iadl") < 0) {
-												if (string::Compare(routine_name, L"fpu_f64_ad_i8") == 0) return reinterpret_cast<const void *>(_f64_s8);
-											} else {
-												if (string::Compare(routine_name, L"fpu_f64_ad_iadl") == 0) return reinterpret_cast<const void *>(_f64_sw);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_lb") == 0) return reinterpret_cast<const void *>(&log2f);
 									}
 								}
 							}
 						} else {
-							if (string::Compare(routine_name, L"fpu_i16_ad_f32") < 0) {
-								if (string::Compare(routine_name, L"fpu_f64_ad_n8") < 0) {
-									if (string::Compare(routine_name, L"fpu_f64_ad_n32") < 0) {
-										if (string::Compare(routine_name, L"fpu_f64_ad_n16") < 0) {
-											if (string::Compare(routine_name, L"fpu_f64_ad_l") == 0) return reinterpret_cast<const void *>(_f64_b);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f64_ad_n16") == 0) return reinterpret_cast<const void *>(_f64_u16);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_f64_ad_n64") < 0) {
-											if (string::Compare(routine_name, L"fpu_f64_ad_n32") == 0) return reinterpret_cast<const void *>(_f64_u32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f64_ad_n64") == 0) return reinterpret_cast<const void *>(_f64_u64);
-										}
-									}
+							if (string::Compare(routine_name, L"fpu_ln") < 0) {
+								if (string::Compare(routine_name, L"fpu_lg") < 0) {
+									if (string::Compare(routine_name, L"fpu_lb_d") == 0) return reinterpret_cast<const void *>(&_log2_d);
 								} else {
-									if (string::Compare(routine_name, L"fpu_f64_ni") < 0) {
-										if (string::Compare(routine_name, L"fpu_f64_ad_nadl") < 0) {
-											if (string::Compare(routine_name, L"fpu_f64_ad_n8") == 0) return reinterpret_cast<const void *>(_f64_u8);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f64_ad_nadl") == 0) return reinterpret_cast<const void *>(_f64_uw);
-										}
+									if (string::Compare(routine_name, L"fpu_lg_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_lg") == 0) return reinterpret_cast<const void *>(&log10f);
 									} else {
-										if (string::Compare(routine_name, L"fpu_f64_nn") < 0) {
-											if (string::Compare(routine_name, L"fpu_f64_ni") == 0) return reinterpret_cast<const void *>(_inf_neg_f64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_f64_pi") < 0) {
-												if (string::Compare(routine_name, L"fpu_f64_nn") == 0) return reinterpret_cast<const void *>(_inf_nan_f64);
-											} else {
-												if (string::Compare(routine_name, L"fpu_f64_pi") == 0) return reinterpret_cast<const void *>(_inf_pos_f64);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_lg_d") == 0) return reinterpret_cast<const void *>(&_log10_d);
 									}
 								}
 							} else {
-								if (string::Compare(routine_name, L"fpu_i64_ad_f32") < 0) {
-									if (string::Compare(routine_name, L"fpu_i32_ad_f32") < 0) {
-										if (string::Compare(routine_name, L"fpu_i16_ad_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_i16_ad_f32") == 0) return reinterpret_cast<const void *>(_s16_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_i16_ad_f64") == 0) return reinterpret_cast<const void *>(_s16_f64);
-										}
+								if (string::Compare(routine_name, L"fpu_ncg_1") < 0) {
+									if (string::Compare(routine_name, L"fpu_ln_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_ln") == 0) return reinterpret_cast<const void *>(&logf);
 									} else {
-										if (string::Compare(routine_name, L"fpu_i32_ad_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_i32_ad_f32") == 0) return reinterpret_cast<const void *>(_s32_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_i32_ad_f64") == 0) return reinterpret_cast<const void *>(_s32_f64);
-										}
+										if (string::Compare(routine_name, L"fpu_ln_d") == 0) return reinterpret_cast<const void *>(&_log_d);
 									}
 								} else {
-									if (string::Compare(routine_name, L"fpu_i8_ad_f32") < 0) {
-										if (string::Compare(routine_name, L"fpu_i64_ad_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_i64_ad_f32") == 0) return reinterpret_cast<const void *>(_s64_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_i64_ad_f64") == 0) return reinterpret_cast<const void *>(_s64_f64);
-										}
+									if (string::Compare(routine_name, L"fpu_ncg_2") < 0) {
+										if (string::Compare(routine_name, L"fpu_ncg_1") == 0) return reinterpret_cast<const void *>(&_random_data);
 									} else {
-										if (string::Compare(routine_name, L"fpu_i8_ad_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_i8_ad_f32") == 0) return reinterpret_cast<const void *>(_s8_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_iadl_ad_f32") < 0) {
-												if (string::Compare(routine_name, L"fpu_i8_ad_f64") == 0) return reinterpret_cast<const void *>(_s8_f64);
-											} else {
-												if (string::Compare(routine_name, L"fpu_iadl_ad_f32") == 0) return reinterpret_cast<const void *>(_sw_f32);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_ncg_2") == 0) return reinterpret_cast<const void *>(&_random_int);
 									}
 								}
 							}
 						}
 					} else {
-						if (string::Compare(routine_name, L"fpu_nadl_ad_f64") < 0) {
-							if (string::Compare(routine_name, L"fpu_n16_ad_f32") < 0) {
-								if (string::Compare(routine_name, L"fpu_lb_d") < 0) {
-									if (string::Compare(routine_name, L"fpu_l_ad_f64") < 0) {
-										if (string::Compare(routine_name, L"fpu_l_ad_f32") < 0) {
-											if (string::Compare(routine_name, L"fpu_iadl_ad_f64") == 0) return reinterpret_cast<const void *>(_sw_f64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_l_ad_f32") == 0) return reinterpret_cast<const void *>(_b_f32);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_lb") < 0) {
-											if (string::Compare(routine_name, L"fpu_l_ad_f64") == 0) return reinterpret_cast<const void *>(_b_f64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_lb") == 0) return reinterpret_cast<const void *>(log2f);
-										}
-									}
+						if (string::Compare(routine_name, L"fpu_sgn_i64") < 0) {
+							if (string::Compare(routine_name, L"fpu_sgn_f32") < 0) {
+								if (string::Compare(routine_name, L"fpu_pot") < 0) {
+									if (string::Compare(routine_name, L"fpu_ncg_3") == 0) return reinterpret_cast<const void *>(&Engine::Math::Random::RandomDouble);
 								} else {
-									if (string::Compare(routine_name, L"fpu_lg_d") < 0) {
-										if (string::Compare(routine_name, L"fpu_lg") < 0) {
-											if (string::Compare(routine_name, L"fpu_lb_d") == 0) return reinterpret_cast<const void *>(_log2_d);
-										} else {
-											if (string::Compare(routine_name, L"fpu_lg") == 0) return reinterpret_cast<const void *>(log10f);
-										}
+									if (string::Compare(routine_name, L"fpu_pot_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_pot") == 0) return reinterpret_cast<const void *>(&powf);
 									} else {
-										if (string::Compare(routine_name, L"fpu_ln") < 0) {
-											if (string::Compare(routine_name, L"fpu_lg_d") == 0) return reinterpret_cast<const void *>(_log10_d);
-										} else {
-											if (string::Compare(routine_name, L"fpu_ln_d") < 0) {
-												if (string::Compare(routine_name, L"fpu_ln") == 0) return reinterpret_cast<const void *>(logf);
-											} else {
-												if (string::Compare(routine_name, L"fpu_ln_d") == 0) return reinterpret_cast<const void *>(_log_d);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_pot_d") == 0) return reinterpret_cast<const void *>(&_pow_d);
 									}
 								}
 							} else {
-								if (string::Compare(routine_name, L"fpu_n64_ad_f32") < 0) {
-									if (string::Compare(routine_name, L"fpu_n32_ad_f32") < 0) {
-										if (string::Compare(routine_name, L"fpu_n16_ad_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_n16_ad_f32") == 0) return reinterpret_cast<const void *>(_u16_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_n16_ad_f64") == 0) return reinterpret_cast<const void *>(_u16_f64);
-										}
+								if (string::Compare(routine_name, L"fpu_sgn_i16") < 0) {
+									if (string::Compare(routine_name, L"fpu_sgn_f64") < 0) {
+										if (string::Compare(routine_name, L"fpu_sgn_f32") == 0) return reinterpret_cast<const void *>(&_sgn_f32);
 									} else {
-										if (string::Compare(routine_name, L"fpu_n32_ad_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_n32_ad_f32") == 0) return reinterpret_cast<const void *>(_u32_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_n32_ad_f64") == 0) return reinterpret_cast<const void *>(_u32_f64);
-										}
+										if (string::Compare(routine_name, L"fpu_sgn_f64") == 0) return reinterpret_cast<const void *>(&_sgn_f64);
 									}
 								} else {
-									if (string::Compare(routine_name, L"fpu_n8_ad_f32") < 0) {
-										if (string::Compare(routine_name, L"fpu_n64_ad_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_n64_ad_f32") == 0) return reinterpret_cast<const void *>(_u64_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_n64_ad_f64") == 0) return reinterpret_cast<const void *>(_u64_f64);
-										}
+									if (string::Compare(routine_name, L"fpu_sgn_i32") < 0) {
+										if (string::Compare(routine_name, L"fpu_sgn_i16") == 0) return reinterpret_cast<const void *>(&_sgn_i16);
 									} else {
-										if (string::Compare(routine_name, L"fpu_n8_ad_f64") < 0) {
-											if (string::Compare(routine_name, L"fpu_n8_ad_f32") == 0) return reinterpret_cast<const void *>(_u8_f32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_nadl_ad_f32") < 0) {
-												if (string::Compare(routine_name, L"fpu_n8_ad_f64") == 0) return reinterpret_cast<const void *>(_u8_f64);
-											} else {
-												if (string::Compare(routine_name, L"fpu_nadl_ad_f32") == 0) return reinterpret_cast<const void *>(_uw_f32);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_sgn_i32") == 0) return reinterpret_cast<const void *>(&_sgn_i32);
 									}
 								}
 							}
 						} else {
-							if (string::Compare(routine_name, L"fpu_sgn_f64") < 0) {
-								if (string::Compare(routine_name, L"fpu_pot") < 0) {
-									if (string::Compare(routine_name, L"fpu_ncg_2") < 0) {
-										if (string::Compare(routine_name, L"fpu_ncg_1") < 0) {
-											if (string::Compare(routine_name, L"fpu_nadl_ad_f64") == 0) return reinterpret_cast<const void *>(_uw_f64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_ncg_1") == 0) return reinterpret_cast<const void *>(_random_data);
-										}
-									} else {
-										if (string::Compare(routine_name, L"fpu_ncg_3") < 0) {
-											if (string::Compare(routine_name, L"fpu_ncg_2") == 0) return reinterpret_cast<const void *>(_random_int);
-										} else {
-											if (string::Compare(routine_name, L"fpu_ncg_3") == 0) return reinterpret_cast<const void *>(Engine::Math::Random::RandomDouble);
-										}
-									}
+							if (string::Compare(routine_name, L"fpu_sin") < 0) {
+								if (string::Compare(routine_name, L"fpu_sgn_i8") < 0) {
+									if (string::Compare(routine_name, L"fpu_sgn_i64") == 0) return reinterpret_cast<const void *>(&_sgn_i64);
 								} else {
-									if (string::Compare(routine_name, L"fpu_rdx") < 0) {
-										if (string::Compare(routine_name, L"fpu_pot_d") < 0) {
-											if (string::Compare(routine_name, L"fpu_pot") == 0) return reinterpret_cast<const void *>(powf);
-										} else {
-											if (string::Compare(routine_name, L"fpu_pot_d") == 0) return reinterpret_cast<const void *>(_pow_d);
-										}
+									if (string::Compare(routine_name, L"fpu_sgn_iad") < 0) {
+										if (string::Compare(routine_name, L"fpu_sgn_i8") == 0) return reinterpret_cast<const void *>(&_sgn_i8);
 									} else {
-										if (string::Compare(routine_name, L"fpu_rdx_d") < 0) {
-											if (string::Compare(routine_name, L"fpu_rdx") == 0) return reinterpret_cast<const void *>(sqrtf);
-										} else {
-											if (string::Compare(routine_name, L"fpu_sgn_f32") < 0) {
-												if (string::Compare(routine_name, L"fpu_rdx_d") == 0) return reinterpret_cast<const void *>(_sqrt_d);
-											} else {
-												if (string::Compare(routine_name, L"fpu_sgn_f32") == 0) return reinterpret_cast<const void *>(_sgn_f32);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_sgn_iad") == 0) return reinterpret_cast<const void *>(&_sgn_iw);
 									}
 								}
 							} else {
-								if (string::Compare(routine_name, L"fpu_sgn_iad") < 0) {
-									if (string::Compare(routine_name, L"fpu_sgn_i32") < 0) {
-										if (string::Compare(routine_name, L"fpu_sgn_i16") < 0) {
-											if (string::Compare(routine_name, L"fpu_sgn_f64") == 0) return reinterpret_cast<const void *>(_sgn_f64);
-										} else {
-											if (string::Compare(routine_name, L"fpu_sgn_i16") == 0) return reinterpret_cast<const void *>(_sgn_i16);
-										}
+								if (string::Compare(routine_name, L"fpu_tg") < 0) {
+									if (string::Compare(routine_name, L"fpu_sin_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_sin") == 0) return reinterpret_cast<const void *>(&sinf);
 									} else {
-										if (string::Compare(routine_name, L"fpu_sgn_i64") < 0) {
-											if (string::Compare(routine_name, L"fpu_sgn_i32") == 0) return reinterpret_cast<const void *>(_sgn_i32);
-										} else {
-											if (string::Compare(routine_name, L"fpu_sgn_i8") < 0) {
-												if (string::Compare(routine_name, L"fpu_sgn_i64") == 0) return reinterpret_cast<const void *>(_sgn_i64);
-											} else {
-												if (string::Compare(routine_name, L"fpu_sgn_i8") == 0) return reinterpret_cast<const void *>(_sgn_i8);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_sin_d") == 0) return reinterpret_cast<const void *>(&_sin_d);
 									}
 								} else {
-									if (string::Compare(routine_name, L"fpu_sin_d") < 0) {
-										if (string::Compare(routine_name, L"fpu_sin") < 0) {
-											if (string::Compare(routine_name, L"fpu_sgn_iad") == 0) return reinterpret_cast<const void *>(_sgn_iw);
-										} else {
-											if (string::Compare(routine_name, L"fpu_sin") == 0) return reinterpret_cast<const void *>(sinf);
-										}
+									if (string::Compare(routine_name, L"fpu_tg_d") < 0) {
+										if (string::Compare(routine_name, L"fpu_tg") == 0) return reinterpret_cast<const void *>(&tanf);
 									} else {
-										if (string::Compare(routine_name, L"fpu_tg") < 0) {
-											if (string::Compare(routine_name, L"fpu_sin_d") == 0) return reinterpret_cast<const void *>(_sin_d);
-										} else {
-											if (string::Compare(routine_name, L"fpu_tg_d") < 0) {
-												if (string::Compare(routine_name, L"fpu_tg") == 0) return reinterpret_cast<const void *>(tanf);
-											} else {
-												if (string::Compare(routine_name, L"fpu_tg_d") == 0) return reinterpret_cast<const void *>(_tan_d);
-											}
-										}
+										if (string::Compare(routine_name, L"fpu_tg_d") == 0) return reinterpret_cast<const void *>(&_tan_d);
 									}
 								}
 							}

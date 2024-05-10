@@ -1503,28 +1503,76 @@ genus frac {
 		INTERFACE W 1 : THIS 4 : FLOAT => 0
 		CODE { RET { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } }
 	}
-	[[importa] "fpu_32_neg"] [[thiscall_nullum]] functio frac operator - ();
-	[[importa] "fpu_32_non"] [[thiscall_nullum]] functio logicum operator ! ();
+	[[xa]] [[inline]] functio frac operator - () { INTERFACE W 1 : THIS => 4 : FLOAT CODE { RET { @BLT:4 4=>4(R, @FP_NEG_32:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } } }
+	[[xa]] [[inline]] functio logicum operator ! () { INTERFACE W 1 : THIS => 1 CODE { RET { @BLT:1 1=>1(R, @FP_ZERO_32:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } } }
 	[[xa]] functio ~frac operator = (frac src) {
 		INTERFACE W 1 : THIS 4 : FLOAT => W 1
 		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
 	}
-	[[importa] "fpu_32_lsm"] [[thiscall_nullum]] functio ~frac operator += (frac src);
-	[[importa] "fpu_32_lsb"] [[thiscall_nullum]] functio ~frac operator -= (frac src);
-	[[importa] "fpu_32_lml"] [[thiscall_nullum]] functio ~frac operator *= (frac src);
-	[[importa] "fpu_32_ldv"] [[thiscall_nullum]] functio ~frac operator /= (frac src);
-	[[importa] "fpu_32_inc"] [[thiscall_nullum]] functio ~frac operator ++ ();
-	[[importa] "fpu_32_dec"] [[thiscall_nullum]] functio ~frac operator -- ();
-	[[importa] "fpu_32_sum"] [[thiscall_nullum]] classis functio frac operator + (frac a, frac b);
-	[[importa] "fpu_32_sub"] [[thiscall_nullum]] classis functio frac operator - (frac a, frac b);
-	[[importa] "fpu_32_mul"] [[thiscall_nullum]] classis functio frac operator * (frac a, frac b);
-	[[importa] "fpu_32_div"] [[thiscall_nullum]] classis functio frac operator / (frac a, frac b);
-	[[importa] "fpu_32_par"] [[thiscall_nullum]] classis functio logicum operator == (frac a, frac b);
-	[[importa] "fpu_32_npr"] [[thiscall_nullum]] classis functio logicum operator != (frac a, frac b);
-	[[importa] "fpu_32_min"] [[thiscall_nullum]] classis functio logicum operator < (frac a, frac b);
-	[[importa] "fpu_32_maj"] [[thiscall_nullum]] classis functio logicum operator > (frac a, frac b);
-	[[importa] "fpu_32_pmn"] [[thiscall_nullum]] classis functio logicum operator <= (frac a, frac b);
-	[[importa] "fpu_32_pmj"] [[thiscall_nullum]] classis functio logicum operator >= (frac a, frac b);
+	[[xa]] functio ~frac operator += (frac src) {
+		INTERFACE W 1 : THIS 4 : FLOAT => W 1
+		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_ADD_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~frac operator -= (frac src) {
+		INTERFACE W 1 : THIS 4 : FLOAT => W 1
+		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_SUB_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~frac operator *= (frac src) {
+		INTERFACE W 1 : THIS 4 : FLOAT => W 1
+		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_MUL_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~frac operator /= (frac src) {
+		INTERFACE W 1 : THIS 4 : FLOAT => W 1
+		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_DIV_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~frac operator ++ () {
+		DATA DWORD 1.0 INTERFACE W 1 : THIS => W 1
+		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_ADD_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~frac operator -- () {
+		DATA DWORD 1.0 INTERFACE W 1 : THIS => W 1
+		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_SUB_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] [[inline]] classis functio frac operator + (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_ADD_32:4 4=>4(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio frac operator - (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_SUB_32:4 4=>4(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio frac operator * (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_MUL_32:4 4=>4(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio frac operator / (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_DIV_32:4 4=>4(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator == (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_EQ_32:4 4=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator != (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_NEQ_32:4 4=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator < (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_L_32:4 4=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator > (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_G_32:4 4=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator <= (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_LE_32:4 4=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator >= (frac a, frac b) {
+		INTERFACE 4 : FLOAT 4 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_GE_32:4 4=>1(A[0], A[1])) } }
+	}
 }
 [[innatum]] [[magnitudo] "8"] [[significatio] fractus]
 genus dfrac {
@@ -1536,28 +1584,76 @@ genus dfrac {
 		INTERFACE W 1 : THIS 8 : FLOAT => 0
 		CODE { RET { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } }
 	}
-	[[importa] "fpu_64_neg"] [[thiscall_nullum]] functio dfrac operator - ();
-	[[importa] "fpu_64_non"] [[thiscall_nullum]] functio logicum operator ! ();
+	[[xa]] [[inline]] functio dfrac operator - () { INTERFACE W 1 : THIS => 8 : FLOAT CODE { RET { @BLT:8 8=>8(R, @FP_NEG_64:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } } }
+	[[xa]] [[inline]] functio logicum operator ! () { INTERFACE W 1 : THIS => 1 CODE { RET { @BLT:1 1=>1(R, @FP_ZERO_64:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } } }
 	[[xa]] functio ~dfrac operator = (dfrac src) {
 		INTERFACE W 1 : THIS 8 : FLOAT => W 1
 		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
 	}
-	[[importa] "fpu_64_lsm"] [[thiscall_nullum]] functio ~dfrac operator += (dfrac src);
-	[[importa] "fpu_64_lsb"] [[thiscall_nullum]] functio ~dfrac operator -= (dfrac src);
-	[[importa] "fpu_64_lml"] [[thiscall_nullum]] functio ~dfrac operator *= (dfrac src);
-	[[importa] "fpu_64_ldv"] [[thiscall_nullum]] functio ~dfrac operator /= (dfrac src);
-	[[importa] "fpu_64_inc"] [[thiscall_nullum]] functio ~dfrac operator ++ ();
-	[[importa] "fpu_64_dec"] [[thiscall_nullum]] functio ~dfrac operator -- ();
-	[[importa] "fpu_64_sum"] [[thiscall_nullum]] classis functio dfrac operator + (dfrac a, dfrac b);
-	[[importa] "fpu_64_sub"] [[thiscall_nullum]] classis functio dfrac operator - (dfrac a, dfrac b);
-	[[importa] "fpu_64_mul"] [[thiscall_nullum]] classis functio dfrac operator * (dfrac a, dfrac b);
-	[[importa] "fpu_64_div"] [[thiscall_nullum]] classis functio dfrac operator / (dfrac a, dfrac b);
-	[[importa] "fpu_64_par"] [[thiscall_nullum]] classis functio logicum operator == (dfrac a, dfrac b);
-	[[importa] "fpu_64_npr"] [[thiscall_nullum]] classis functio logicum operator != (dfrac a, dfrac b);
-	[[importa] "fpu_64_min"] [[thiscall_nullum]] classis functio logicum operator < (dfrac a, dfrac b);
-	[[importa] "fpu_64_maj"] [[thiscall_nullum]] classis functio logicum operator > (dfrac a, dfrac b);
-	[[importa] "fpu_64_pmn"] [[thiscall_nullum]] classis functio logicum operator <= (dfrac a, dfrac b);
-	[[importa] "fpu_64_pmj"] [[thiscall_nullum]] classis functio logicum operator >= (dfrac a, dfrac b);
+	[[xa]] functio ~dfrac operator += (dfrac src) {
+		INTERFACE W 1 : THIS 8 : FLOAT => W 1
+		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_ADD_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~dfrac operator -= (dfrac src) {
+		INTERFACE W 1 : THIS 8 : FLOAT => W 1
+		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_SUB_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~dfrac operator *= (dfrac src) {
+		INTERFACE W 1 : THIS 8 : FLOAT => W 1
+		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_MUL_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~dfrac operator /= (dfrac src) {
+		INTERFACE W 1 : THIS 8 : FLOAT => W 1
+		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_DIV_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~dfrac operator ++ () {
+		DATA QWORD 1.0 INTERFACE W 1 : THIS => W 1
+		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_ADD_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~dfrac operator -- () {
+		DATA QWORD 1.0 INTERFACE W 1 : THIS => W 1
+		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_SUB_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] [[inline]] classis functio dfrac operator + (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_ADD_64:8 8=>8(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio dfrac operator - (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_SUB_64:8 8=>8(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio dfrac operator * (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_MUL_64:8 8=>8(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio dfrac operator / (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_DIV_64:8 8=>8(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator == (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_EQ_64:8 8=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator != (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_NEQ_64:8 8=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator < (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_L_64:8 8=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator > (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_G_64:8 8=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator <= (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_LE_64:8 8=>1(A[0], A[1])) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator >= (dfrac a, dfrac b) {
+		INTERFACE 8 : FLOAT 8 : FLOAT => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_GE_64:8 8=>1(A[0], A[1])) } }
+	}
 }
 
 nomen_alternum int = int32;
@@ -1607,8 +1703,14 @@ dura logicum {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[importa] "fpu_l_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_l_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:INT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:INT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
+	}
 }
 dura int8 {
 	[[xa]] convertor (logicum) () {
@@ -1651,8 +1753,14 @@ dura int8 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[importa] "fpu_i8_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_i8_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:SINT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:SINT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
+	}
 }
 dura nint8 {
 	[[xa]] convertor (logicum) () {
@@ -1695,8 +1803,14 @@ dura nint8 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[importa] "fpu_n8_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_n8_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:INT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:INT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
+	}
 }
 dura int16 {
 	[[xa]] convertor (logicum) () {
@@ -1739,8 +1853,14 @@ dura int16 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[importa] "fpu_i16_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_i16_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:2:SINT=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:2:SINT=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
+	}
 }
 dura nint16 {
 	[[xa]] convertor (logicum) () {
@@ -1783,8 +1903,14 @@ dura nint16 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[importa] "fpu_n16_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_n16_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:2:INT=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:2:INT=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
+	}
 }
 dura int32 {
 	[[xa]] convertor (logicum) () {
@@ -1827,8 +1953,14 @@ dura int32 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[importa] "fpu_i32_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_i32_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:4:SINT=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:4:SINT=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
 }
 dura nint32 {
 	[[xa]] convertor (logicum) () {
@@ -1871,8 +2003,14 @@ dura nint32 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[importa] "fpu_n32_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_n32_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:4:INT=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:4:INT=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
 }
 dura int64 {
 	[[xa]] convertor (logicum) () {
@@ -1915,8 +2053,14 @@ dura int64 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[importa] "fpu_i64_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_i64_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:8:SINT=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:8:SINT=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
 }
 dura nint64 {
 	[[xa]] convertor (logicum) () {
@@ -1959,8 +2103,14 @@ dura nint64 {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[importa] "fpu_n64_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_n64_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:8:INT=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:8:INT=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
 }
 dura intadl {
 	[[xa]] convertor (logicum) () {
@@ -2003,8 +2153,14 @@ dura intadl {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } }
 	}
-	[[importa] "fpu_iadl_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_iadl_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:W 1:SINT=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:W 1:SINT=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
+	}
 }
 dura nintadl {
 	[[xa]] convertor (logicum) () {
@@ -2047,36 +2203,114 @@ dura nintadl {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } }
 	}
-	[[importa] "fpu_nadl_ad_f32"] [[thiscall_nullum]] convertor (frac) ();
-	[[importa] "fpu_nadl_ad_f64"] [[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:W 1:INT=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:W 1:INT=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
+	}
 }
 dura frac {
-	[[importa] "fpu_f32_ad_l"]		[[thiscall_nullum]] convertor (logicum) ();
-	[[importa] "fpu_f32_ad_i8"]		[[thiscall_nullum]] convertor (int8) ();
-	[[importa] "fpu_f32_ad_n8"]		[[thiscall_nullum]] convertor (nint8) ();
-	[[importa] "fpu_f32_ad_i16"]	[[thiscall_nullum]] convertor (int16) ();
-	[[importa] "fpu_f32_ad_n16"]	[[thiscall_nullum]] convertor (nint16) ();
-	[[importa] "fpu_f32_ad_i32"]	[[thiscall_nullum]] convertor (int32) ();
-	[[importa] "fpu_f32_ad_n32"]	[[thiscall_nullum]] convertor (nint32) ();
-	[[importa] "fpu_f32_ad_i64"]	[[thiscall_nullum]] convertor (int64) ();
-	[[importa] "fpu_f32_ad_n64"]	[[thiscall_nullum]] convertor (nint64) ();
-	[[importa] "fpu_f32_ad_iadl"]	[[thiscall_nullum]] convertor (intadl) ();
-	[[importa] "fpu_f32_ad_nadl"]	[[thiscall_nullum]] convertor (nintadl) ();
-	[[importa] "fpu_f32_ad_f64"]	[[thiscall_nullum]] convertor (dfrac) ();
+	[[xa]] [[inline]] convertor (logicum) () {
+		INTERFACE W 1 : THIS => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_NOTZERO_32:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (int8) () {
+		INTERFACE W 1 : THIS => 1 : SINT
+		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_32:4=>1:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nint8) () {
+		INTERFACE W 1 : THIS => 1 : INT
+		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_32:4=>1:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (int16) () {
+		INTERFACE W 1 : THIS => 2 : SINT
+		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_32:4=>2:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nint16) () {
+		INTERFACE W 1 : THIS => 2 : INT
+		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_32:4=>2:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (int32) () {
+		INTERFACE W 1 : THIS => 4 : SINT
+		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_32:4=>4:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nint32) () {
+		INTERFACE W 1 : THIS => 4 : INT
+		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_32:4=>4:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (int64) () {
+		INTERFACE W 1 : THIS => 8 : SINT
+		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_32:4=>8:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nint64) () {
+		INTERFACE W 1 : THIS => 8 : INT
+		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_32:4=>8:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (intadl) () {
+		INTERFACE W 1 : THIS => W 1 : SINT
+		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_32:4=>W 1:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nintadl) () {
+		INTERFACE W 1 : THIS => W 1 : INT
+		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_32:4=>W 1:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (dfrac) () {
+		INTERFACE W 1 : THIS => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_RESIZE_32:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
+	}
 }
 dura dfrac {
-	[[importa] "fpu_f64_ad_l"]		[[thiscall_nullum]] convertor (logicum) ();
-	[[importa] "fpu_f64_ad_i8"]		[[thiscall_nullum]] convertor (int8) ();
-	[[importa] "fpu_f64_ad_n8"]		[[thiscall_nullum]] convertor (nint8) ();
-	[[importa] "fpu_f64_ad_i16"]	[[thiscall_nullum]] convertor (int16) ();
-	[[importa] "fpu_f64_ad_n16"]	[[thiscall_nullum]] convertor (nint16) ();
-	[[importa] "fpu_f64_ad_i32"]	[[thiscall_nullum]] convertor (int32) ();
-	[[importa] "fpu_f64_ad_n32"]	[[thiscall_nullum]] convertor (nint32) ();
-	[[importa] "fpu_f64_ad_i64"]	[[thiscall_nullum]] convertor (int64) ();
-	[[importa] "fpu_f64_ad_n64"]	[[thiscall_nullum]] convertor (nint64) ();
-	[[importa] "fpu_f64_ad_iadl"]	[[thiscall_nullum]] convertor (intadl) ();
-	[[importa] "fpu_f64_ad_nadl"]	[[thiscall_nullum]] convertor (nintadl) ();
-	[[importa] "fpu_f64_ad_f32"]	[[thiscall_nullum]] convertor (frac) ();
+	[[xa]] [[inline]] convertor (logicum) () {
+		INTERFACE W 1 : THIS => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_NOTZERO_64:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (int8) () {
+		INTERFACE W 1 : THIS => 1 : SINT
+		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_64:8=>1:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nint8) () {
+		INTERFACE W 1 : THIS => 1 : INT
+		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_64:8=>1:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (int16) () {
+		INTERFACE W 1 : THIS => 2 : SINT
+		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_64:8=>2:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nint16) () {
+		INTERFACE W 1 : THIS => 2 : INT
+		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_64:8=>2:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (int32) () {
+		INTERFACE W 1 : THIS => 4 : SINT
+		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_64:8=>4:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nint32) () {
+		INTERFACE W 1 : THIS => 4 : INT
+		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_64:8=>4:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (int64) () {
+		INTERFACE W 1 : THIS => 8 : SINT
+		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_64:8=>8:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nint64) () {
+		INTERFACE W 1 : THIS => 8 : INT
+		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_64:8=>8:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (intadl) () {
+		INTERFACE W 1 : THIS => W 1 : SINT
+		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_64:8=>W 1:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (nintadl) () {
+		INTERFACE W 1 : THIS => W 1 : INT
+		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_64:8=>W 1:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
+	[[xa]] [[inline]] convertor (frac) () {
+		INTERFACE W 1 : THIS => 4 : FLOAT
+		CODE { RET { @BLT:4 4=>4(R, @FP_RESIZE_64:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+	}
 }
 
 [[xa]] functio logicum operator == (@nihil a, @nihil b) {
@@ -2114,13 +2348,13 @@ spatium math {
 	[[importa] fpu_enn_32]	functio logicum nn_est(frac valor);
 	[[importa] fpu_enn_64]	functio logicum nn_est(dfrac valor);
 
-	[[importa] fpu_abs_i8]	functio int8	abs(int8 valor);
-	[[importa] fpu_abs_i16]	functio int16	abs(int16 valor);
-	[[importa] fpu_abs_i32]	functio int32	abs(int32 valor);
-	[[importa] fpu_abs_i64]	functio int64	abs(int64 valor);
-	[[importa] fpu_abs_iad]	functio intadl	abs(intadl valor);
-	[[importa] fpu_abs_f32]	functio frac	abs(frac valor);
-	[[importa] fpu_abs_f64]	functio dfrac	abs(dfrac valor);
+	[[xa]] [[inline]]		functio int8	abs(int8 valor)		{ INTERFACE 1:SINT=>1:SINT CODE { RET { @BLT:1 1=>1(R, @ABS:1=>1(A[0])) } } }
+	[[xa]] [[inline]]		functio int16	abs(int16 valor)	{ INTERFACE 2:SINT=>2:SINT CODE { RET { @BLT:2 2=>2(R, @ABS:2=>2(A[0])) } } }
+	[[xa]] [[inline]]		functio int32	abs(int32 valor)	{ INTERFACE 4:SINT=>4:SINT CODE { RET { @BLT:4 4=>4(R, @ABS:4=>4(A[0])) } } }
+	[[xa]] [[inline]]		functio int64	abs(int64 valor)	{ INTERFACE 8:SINT=>8:SINT CODE { RET { @BLT:8 8=>8(R, @ABS:8=>8(A[0])) } } }
+	[[xa]] [[inline]]		functio intadl	abs(intadl valor)	{ INTERFACE W 1:SINT=>W 1:SINT CODE { RET { @BLT:W 1 W 1=>W 1(R, @ABS:W 1=>W 1(A[0])) } } }
+	[[xa]] [[inline]]		functio frac	abs(frac valor)		{ INTERFACE 4:FLOAT=>4:FLOAT CODE { RET { @BLT:4 4=>4(R, @FP_ABS_32:4=>4(A[0])) } } }
+	[[xa]] [[inline]]		functio dfrac	abs(dfrac valor)	{ INTERFACE 8:FLOAT=>8:FLOAT CODE { RET { @BLT:8 8=>8(R, @FP_ABS_64:8=>8(A[0])) } } }
 
 	[[importa] fpu_sgn_i8]	functio int8	sgn(int8 valor);
 	[[importa] fpu_sgn_i16]	functio int16	sgn(int16 valor);
@@ -2139,8 +2373,8 @@ spatium math {
 	[[importa] fpu_c4]		functio frac	tectum(frac valor);
 	[[importa] fpu_c4_d]	functio dfrac	tectum(dfrac valor);
 
-	[[importa] fpu_rdx]		functio frac	radix(frac valor);
-	[[importa] fpu_rdx_d]	functio dfrac	radix(dfrac valor);
+	[[xa]] [[inline]]		functio frac	radix(frac valor)	{ INTERFACE 4:FLOAT=>4:FLOAT CODE { RET { @BLT:4 4=>4(R, @FP_SQRT_32:4=>4(A[0])) } } }
+	[[xa]] [[inline]]		functio dfrac	radix(dfrac valor)	{ INTERFACE 8:FLOAT=>8:FLOAT CODE { RET { @BLT:8 8=>8(R, @FP_SQRT_64:8=>8(A[0])) } } }
 	[[importa] fpu_pot]		functio frac	pot(frac valor, frac pot);
 	[[importa] fpu_pot_d]	functio dfrac	pot(dfrac valor, dfrac pot);
 

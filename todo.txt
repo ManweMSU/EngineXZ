@@ -36,7 +36,7 @@ BETA-5:
  + x86-64 FPU and VPU support
  - i386 FPU and VPU support
  + ARMv8 FPU and VPU support
- - Regular Mathematics via FPU
+ + Regular Mathematics via FPU
  - Extended Mathematics: vectors
  - Extended Mathematics: complex
  - Extended Mathematics: complex vectors
@@ -44,7 +44,7 @@ BETA-5:
  - Extended Mathematics: complex matrices
  - Extended Mathematics: accessory functions for graphics
  - Extended Mathematics: color
- - XVSL Performance Improvments
+ + XVSL Performance Improvments
  - Engine Runtime 1.9 ???
  - Communication API (Sockets: local, TCP, SSL; Shared Memory; DNS; HTTP Client and Server; ECF)
  - Printing API

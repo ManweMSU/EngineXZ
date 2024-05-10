@@ -38,19 +38,20 @@ functio nihil primus() introitus iacit
 	dum (!in^.finis) { lineae << in^.lege_lineam(); }
 	int ini = -1, fin = -1;
 	pro (var i : lineae) {
-		si (lineae[i].reperi_primus("ExposeRoutine") >= 0) ini = i;
-		alioqui si (lineae[i].reperi_primus("ExposeInterface") >= 0) fin = i;
+		si (lineae[i].reperi_primum("ExposeRoutine") >= 0) ini = i;
+		alioqui si (lineae[i].reperi_primum("ExposeInterface") >= 0) fin = i;
+		si (ini >= 0 && fin >= 0) exi;
 	}
 	si (ini < 0 || fin < 0) iace errores.efformatio_falsa;
 	ordo linea selecti;
-	pro (var i : [ini + 1, fin - 1]) si (lineae[i].reperi_primus("==") >= 0) selecti << lineae[i];
+	pro (var i : [ini + 1, fin - 1]) si (lineae[i].reperi_primum("==") >= 0) selecti << lineae[i];
 	ordo informatio inf;
 	pro (var i : selecti) {
 		var ~ ln = selecti[i];
-		int nds = ln.reperi_primus("\"");
-		int ndd = ln.reperi_ultimus("\"");
-		int fds = ln.reperi_ultimus("(");
-		int fdd = ln.reperi_ultimus(")");
+		int nds = ln.reperi_primum("\"");
+		int ndd = ln.reperi_ultimum("\"");
+		int fds = ln.reperi_ultimum("(");
+		int fdd = ln.reperi_ultimum(")");
 		si (nds < 0 || ndd < 0 || fds < 0 || fdd < 0) dura;
 		inf << informatio(ln.fragmentum(nds + 1, ndd - nds - 1), ln.fragmentum(fds + 1, fdd - fds - 1));
 	}

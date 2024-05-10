@@ -1,0 +1,40 @@
+﻿importa consolatorium;
+
+var ~ consolatorium con = consolatorium.currens()^;
+
+functio nihil ini() introitus iacit {
+	dfrac T(22.0);
+	con.scribe_lineam(T);
+	con.scribe_lineam(-T);
+	con.scribe_lineam(!T);
+	T += genus(T)(2.0);
+	con.scribe_lineam(T);
+	T -= genus(T)(3.0);
+	con.scribe_lineam(T);
+	T *= genus(T)(2.0);
+	con.scribe_lineam(T);
+	T /= genus(T)(7.0);
+	con.scribe_lineam(T);
+	T++;
+	con.scribe_lineam(T);
+	T--;
+	con.scribe_lineam(T);
+	con.scribe_lineam((T + genus(T)(4.0)) * genus(T)(2.0) - T / genus(T)(3.0));
+	var pV = 1234567890000000;
+	var V = dfrac(pV);
+	con.scribe_lineam(V);
+	con.scribe_lineam(nint64(V));
+	con.scribe_lineam(nint32(V));
+	dum (sic) {
+		con.scribe("A = ");
+		genus(T) A = con.lege_lineam().ad_dfrac();
+		con.scribe("B = ");
+		genus(T) B = con.lege_lineam().ad_dfrac();
+		con.scribe_lineam(linea.forma("A = B: %0", A == B));
+		con.scribe_lineam(linea.forma("A ≠ B: %0", A != B));
+		con.scribe_lineam(linea.forma("A < B: %0", A < B));
+		con.scribe_lineam(linea.forma("A > B: %0", A > B));
+		con.scribe_lineam(linea.forma("A ≤ B: %0", A <= B));
+		con.scribe_lineam(linea.forma("A ≥ B: %0", A >= B));
+	}
+}
