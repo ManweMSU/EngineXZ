@@ -829,11 +829,15 @@ namespace Engine
 												} else if (ins != 4 && ins != 8) throw InvalidArgumentException();
 												if (node.self.ref_flags & ReferenceFlagLong) {
 													// CVTSI2SD vin[i] xin[i]
-													_dest.code << 0xF2 << 0x0F << 0x2A << make_mod(xmm_register_code(vin[i]), 3, regular_register_code(xin[i]));
+													_dest.code << 0xF2;
+													if (ins == 8) _dest.code << make_rex(true, 0, 0, 0);
+													_dest.code << 0x0F << 0x2A << make_mod(xmm_register_code(vin[i]), 3, regular_register_code(xin[i]));
 													ins = 8;
 												} else {
 													// CVTSI2SS vin[i] xin[i]
-													_dest.code << 0xF3 << 0x0F << 0x2A << make_mod(xmm_register_code(vin[i]), 3, regular_register_code(xin[i]));
+													_dest.code << 0xF3;
+													if (ins == 8) _dest.code << make_rex(true, 0, 0, 0);
+													_dest.code << 0x0F << 0x2A << make_mod(xmm_register_code(vin[i]), 3, regular_register_code(xin[i]));
 													ins = 4;
 												}
 											}
@@ -960,7 +964,9 @@ namespace Engine
 												}
 											} else {
 												// CVTTSD2SI irx irv
-												_dest.code << 0xF2 << 0x0F << 0x2C << make_mod(regular_register_code(irx) & 7, 3, xmm_register_code(irv));
+												_dest.code << 0xF2;
+												if (quant == 8) _dest.code << make_rex(true, 0, 0, 0);
+												_dest.code << 0x0F << 0x2C << make_mod(regular_register_code(irx) & 7, 3, xmm_register_code(irv));
 											}
 										} else {
 											if (i == 0) {
@@ -989,17 +995,13 @@ namespace Engine
 												}
 											} else {
 												// CVTTSS2SI irx irv
-												_dest.code << 0xF3 << 0x0F << 0x2C << make_mod(regular_register_code(irx) & 7, 3, xmm_register_code(irv));
+												_dest.code << 0xF3;
+												if (quant == 8) _dest.code << make_rex(true, 0, 0, 0);
+												_dest.code << 0x0F << 0x2C << make_mod(regular_register_code(irx) & 7, 3, xmm_register_code(irv));
 											}
 										}
 										if (spec.semantics != ArgumentSemantics::FloatingPoint) {
-											if (quant <= 4) {
-												encode_mov_mem_reg(quant, addr, irx);
-											} else {
-												encode_mov_mem_reg(4, addr, 4, irx);
-												if (spec.semantics == ArgumentSemantics::SignedInteger) encode_shift(8, shOp::SAR, addr, 32, true);
-												else encode_shift(8, shOp::SHR, addr, 32, true);
-											}
+											encode_mov_mem_reg(quant, addr, irx);
 										} else encode_mov_mem_xmm(quant, addr, 0, irv);
 									}
 									encode_restore(irx, reg_in_use, 0, !idle);
@@ -1336,62 +1338,41 @@ namespace Engine
 				{
 					if (node.self.index == TransformFloatInteger) {
 						if (node.inputs.Length() != 1) throw InvalidArgumentException();
+						uint8 cnv_prefix = (node.self.ref_flags & ReferenceFlagLong) ? 0xF2 : 0xF3;
 						int nx;
 						VectorDisposition a;
 						a.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
 						allocate_xmm(0, 0, a);
 						_encode_floating_point(node.inputs[0], idle, mem_load, &a, reg_in_use, uint(a.reg_lo) | uint(a.reg_hi));
-						if (!idle) {
-							if (node.self.ref_flags & ReferenceFlagLong) {
-								if (a.size == 32) {
-									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
-									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(1, 3, xmm_register_code(a.reg_hi));
-								} else if (a.size == 24) {
-									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
-									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(1, 3, xmm_register_code(a.reg_hi));
-								} else if (a.size == 16) {
-									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
-								} else if (a.size == 8) {
-									_dest.code << 0x66 << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
-								} else throw InvalidArgumentException();
-							} else {
-								if (a.size == 16 || a.size == 12) {
-									_dest.code << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
-									_dest.code << 0x0F << 0x12 << make_mod(xmm_register_code(a.reg_lo), 3, xmm_register_code(a.reg_lo));
-									_dest.code << 0x0F << 0x2C << make_mod(1, 3, xmm_register_code(a.reg_lo));
-								} else if (a.size == 8 || a.size == 4) {
-									_dest.code << 0x0F << 0x2C << make_mod(0, 3, xmm_register_code(a.reg_lo));
-								} else throw InvalidArgumentException();
-							}
-						}
-						if (node.self.ref_flags & ReferenceFlagLong) nx = a.size / 8;
-						else nx = a.size / 4;
+						if (node.self.ref_flags & ReferenceFlagLong) nx = a.size / 8; else nx = a.size / 4;
 						auto rvs = object_size(node.retval_spec.size);
+						if (rvs % nx) throw InvalidArgumentException();
 						if ((disp->flags & DispositionRegister) && nx == 1) {
 							disp->flags = DispositionRegister;
 							if (rvs == 8) {
 								if (!idle) {
-									encode_preserve(Reg64::RAX, reg_in_use, disp->reg, true);
-									_dest.code << 0x0F << 0x7E << make_mod(0, 3, 0);
-									_dest.code << make_rex(true, 0, 0, 0) << 0x98;
-									if (Reg64::RAX != disp->reg) encode_mov_reg_reg(8, disp->reg, Reg64::RAX);
-									encode_restore(Reg64::RAX, reg_in_use, disp->reg, true);
+									_dest.code << cnv_prefix << make_rex(true, regular_register_code(disp->reg) & 8, 0, 0);
+									_dest.code << 0x0F << 0x2C << make_mod(regular_register_code(disp->reg) & 7, 3, xmm_register_code(a.reg_lo));
 								}
 							} else if (rvs == 4) {
-								if (!idle) _dest.code << make_rex(false, 0, 0, regular_register_code(disp->reg) & 8) << 0x0F << 0x7E << make_mod(0, 3, regular_register_code(disp->reg) & 7);
+								if (!idle) {
+									_dest.code << cnv_prefix << make_rex(false, regular_register_code(disp->reg) & 8, 0, 0);
+									_dest.code << 0x0F << 0x2C << make_mod(regular_register_code(disp->reg) & 7, 3, xmm_register_code(a.reg_lo));
+								}
 							} else if (rvs == 2) {
 								if (!idle) {
-									_dest.code << make_rex(false, 0, 0, regular_register_code(disp->reg) & 8) << 0x0F << 0x7E << make_mod(0, 3, regular_register_code(disp->reg) & 7);
+									_dest.code << cnv_prefix << make_rex(false, regular_register_code(disp->reg) & 8, 0, 0);
+									_dest.code << 0x0F << 0x2C << make_mod(regular_register_code(disp->reg) & 7, 3, xmm_register_code(a.reg_lo));
 									encode_and(disp->reg, 0xFFFF);
 								}
 							} else if (rvs == 1) {
 								if (!idle) {
-									_dest.code << make_rex(false, 0, 0, regular_register_code(disp->reg) & 8) << 0x0F << 0x7E << make_mod(0, 3, regular_register_code(disp->reg) & 7);
+									_dest.code << cnv_prefix << make_rex(false, regular_register_code(disp->reg) & 8, 0, 0);
+									_dest.code << 0x0F << 0x2C << make_mod(regular_register_code(disp->reg) & 7, 3, xmm_register_code(a.reg_lo));
 									encode_and(disp->reg, 0xFF);
 								}
 							} else throw InvalidArgumentException();
 						} else {
-							if (rvs % nx) throw InvalidArgumentException();
 							auto rqs = rvs / nx;
 							if (rqs != 8 && rqs != 4 && rqs != 2 && rqs != 1) throw InvalidArgumentException();
 							auto rvs_padded = word_align(node.retval_spec.size);
@@ -1402,25 +1383,24 @@ namespace Engine
 								Reg reg = disp->reg;
 								if (reg == Reg64::NO) reg = Reg64::RAX;
 								encode_preserve(reg, reg_in_use, disp->reg, true);
-								_dest.code << make_rex(true, 0, 0, regular_register_code(reg) & 8) << 0x0F << 0x7E << make_mod(0, 3, regular_register_code(reg) & 7);
-								if (rqs <= 4) encode_mov_mem_reg(rqs, Reg64::RBP, offs, reg); else {
-									encode_mov_mem_reg(4, Reg64::RBP, offs + 4, reg);
-									encode_shift(8, shOp::SAR, Reg64::RBP, 32, true, offs);
-								}
-								if (nx > 1) {
-									encode_shift(8, shOp::SAR, reg, 32);
-									encode_mov_mem_reg(rqs, Reg64::RBP, offs + rqs, reg);
-									if (nx > 2) {
-										_dest.code << make_rex(true, 0, 0, regular_register_code(reg) & 8) << 0x0F << 0x7E << make_mod(1, 3, regular_register_code(reg) & 7);
-										if (rqs <= 4) encode_mov_mem_reg(rqs, Reg64::RBP, offs + 2 * rqs, reg); else {
-											encode_mov_mem_reg(4, Reg64::RBP, offs + 2 * rqs + 4, reg);
-											encode_shift(8, shOp::SAR, Reg64::RBP, 32, true, offs + 2 * rqs);
+								for (int i = 0; i < nx; i++) {
+									Reg xmm;
+									if (node.self.ref_flags & ReferenceFlagLong) {
+										xmm = i & 2 ? a.reg_hi : a.reg_lo;
+										if (i & 1) {
+											// SHUFPD xmm xmm
+											_dest.code << 0x66 << 0x0F << 0xC6 << make_mod(xmm_register_code(xmm), 3, xmm_register_code(xmm)) << 0x01;
 										}
-										if (nx > 3) {
-											encode_shift(8, shOp::SAR, reg, 32);
-											encode_mov_mem_reg(rqs, Reg64::RBP, offs + 3 * rqs, reg);
+									} else {
+										xmm = a.reg_lo;
+										if (i) {
+											// SHUFPS xmm xmm
+											_dest.code << 0x0F << 0xC6 << make_mod(xmm_register_code(xmm), 3, xmm_register_code(xmm)) << 0x39;
 										}
 									}
+									_dest.code << cnv_prefix << make_rex(rqs == 8, regular_register_code(reg) & 8, 0, 0);
+									_dest.code << 0x0F << 0x2C << make_mod(regular_register_code(reg) & 7, 3, xmm_register_code(xmm));
+									encode_mov_mem_reg(rqs, Reg64::RBP, offs + i * rqs, reg);
 								}
 								encode_restore(reg, reg_in_use, disp->reg, true);
 							}
