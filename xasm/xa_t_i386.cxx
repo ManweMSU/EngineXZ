@@ -19,6 +19,20 @@ namespace Engine
 				static bool _is_in_pass_by_reference(const ArgumentSpecification & spec) { return spec.semantics == ArgumentSemantics::Object; }
 				static bool _is_out_pass_by_reference(const ArgumentSpecification & spec) { return _word_align(spec.size) > 8 || spec.semantics == ArgumentSemantics::Object; }
 				static uint32 _word_align(const ObjectSize & size) { uint full_size = size.num_bytes + WordSize * size.num_words; return (uint64(full_size) + 3) / 4 * 4; }
+				static Reg _fph_allocate(uint used, uint protect)
+				{
+					if (!(Reg32::ECX & used) && !(Reg32::ECX & protect)) return Reg32::ECX;
+					if (!(Reg32::EDX & used) && !(Reg32::EDX & protect)) return Reg32::EDX;
+					if (!(Reg32::EBX & used) && !(Reg32::EBX & protect)) return Reg32::EBX;
+					if (!(Reg32::ESI & used) && !(Reg32::ESI & protect)) return Reg32::ESI;
+					if (!(Reg32::EDI & used) && !(Reg32::EDI & protect)) return Reg32::EDI;
+					if (!(Reg32::ECX & protect)) return Reg32::ECX;
+					if (!(Reg32::EDX & protect)) return Reg32::EDX;
+					if (!(Reg32::EBX & protect)) return Reg32::EBX;
+					if (!(Reg32::ESI & protect)) return Reg32::ESI;
+					if (!(Reg32::EDI & protect)) return Reg32::EDI;
+					throw InvalidStateException();
+				}
 				Array<ArgumentPassageInfo> * _make_interface_layout(const ArgumentSpecification & output, const ArgumentSpecification * inputs, int in_cnt, ABI * abiret)
 				{
 					SafePointer< Array<ArgumentPassageInfo> > result = new Array<ArgumentPassageInfo>(0x40);
@@ -891,7 +905,7 @@ namespace Engine
 							if (!idle && disp->reg != local) encode_mov_reg_reg(4, disp->reg, local);
 							disp->flags = DispositionRegister;
 						} else if (disp->flags & DispositionPointer) {
-							*mem_load += 4;
+							*mem_load += word_align(node.retval_spec.size);
 							if (!idle) {
 								int offs = allocate_temporary(node.retval_spec.size, &offs);
 								encode_mov_mem_reg(4, Reg32::EBP, offs, local);
@@ -1071,10 +1085,385 @@ namespace Engine
 				void _encode_floating_point(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{
 					if (node.self.ref_flags & ReferenceFlagShort) throw InvalidArgumentException();
-
-					throw Exception();
-
-					// TODO: IMPLEMENT
+					Reg rv;
+					uint sysdisp;
+					if (disp->flags & DispositionDiscard) rv = _fph_allocate(reg_in_use, 0);
+					else if (disp->reg == Reg32::EAX) rv = _fph_allocate(reg_in_use, 0);
+					else rv = disp->reg;
+					encode_preserve(rv, reg_in_use, disp->reg, !idle);
+					if (node.self.index == TransformFloatResize) {
+						sysdisp = DispositionPointer;
+						if (node.inputs.Length() != 1) throw InvalidArgumentException();
+						uint in_quant = (node.self.ref_flags & ReferenceFlagLong) ? 8 : 4;
+						int ins = object_size(node.input_specs[0].size);
+						int ous = object_size(node.retval_spec.size);
+						int dim = ins / in_quant;
+						if (dim < 1 || dim > 4) throw InvalidArgumentException();
+						if (ins % in_quant) throw InvalidArgumentException();
+						if (ous % dim) throw InvalidArgumentException();
+						uint out_quant = ous / dim;
+						if (out_quant != 4 && out_quant != 8) throw InvalidArgumentException();
+						InternalDisposition ld;
+						ld.size = object_size(node.input_specs[0].size);
+						ld.flags = DispositionPointer;
+						ld.reg = _fph_allocate(reg_in_use, rv);
+						encode_preserve(ld.reg, reg_in_use, disp->reg, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, (reg_in_use & ~rv) | ld.reg);
+						if ((ld.flags & DispositionReuse) && (ld.size >= ous)) {
+							if (!idle) {
+								if (ins != ous) for (int i = 0; i < dim; i++) {
+									encode_fld(in_quant, ld.reg, in_quant * i);
+									encode_fstp(out_quant, ld.reg, out_quant * i);
+								}
+								encode_mov_reg_reg(4, rv, ld.reg);
+							}
+						} else {
+							*mem_load += word_align(node.retval_spec.size);
+							if (!idle) {
+								int offs = allocate_temporary(node.retval_spec.size);
+								encode_lea(rv, Reg32::EBP, offs);
+								for (int i = 0; i < dim; i++) {
+									encode_fld(in_quant, ld.reg, in_quant * i);
+									encode_fstp(out_quant, rv, out_quant * i);
+								}
+							}
+						}
+						encode_restore(ld.reg, reg_in_use, disp->reg, !idle);
+					} else if (node.self.index == TransformFloatGather) {
+						sysdisp = DispositionPointer;
+						uint quant = (node.self.ref_flags & ReferenceFlagLong) ? 8 : 4;
+						int dim = node.inputs.Length();
+						int ous = object_size(node.retval_spec.size);
+						if (dim < 1 || dim > 4) throw InvalidArgumentException();
+						if (ous != quant * dim) throw InvalidArgumentException();
+						*mem_load += word_align(node.retval_spec.size);
+						int rvp;
+						if (!idle) rvp = allocate_temporary(node.retval_spec.size);
+						for (int i = 0; i < dim; i++) {
+							InternalDisposition ld;
+							ld.size = object_size(node.input_specs[i].size);
+							ld.reg = rv;
+							if (node.input_specs[i].semantics != ArgumentSemantics::FloatingPoint && ld.size == 1) ld.flags = DispositionRegister;
+							else ld.flags = DispositionPointer;
+							_encode_tree_node(node.inputs[i], idle, mem_load, &ld, reg_in_use | rv);
+							if (!idle) {
+								if (node.input_specs[i].semantics == ArgumentSemantics::FloatingPoint) {
+									encode_fld(ld.size, ld.reg, 0);
+									encode_fstp(quant, Reg32::EBP, rvp + i * quant);
+								} else if (ld.size == 1) {
+									encode_shl(ld.reg, 24);
+									encode_shift(4, node.input_specs[i].semantics == ArgumentSemantics::SignedInteger ? shOp::SAR : shOp::SHR, ld.reg, 24);
+									encode_mov_mem_reg(4, Reg32::EBP, rvp + i * quant, ld.reg);
+									encode_fild(4, Reg32::EBP, rvp + i * quant);
+									encode_fstp(quant, Reg32::EBP, rvp + i * quant);
+								} else {
+									encode_fild(ld.size, ld.reg, 0);
+									encode_fstp(quant, Reg32::EBP, rvp + i * quant);
+								}
+							}
+						}
+						if (!idle) encode_lea(rv, Reg32::EBP, rvp);
+					} else if (node.self.index == TransformFloatScatter) {
+						sysdisp = DispositionPointer;
+						uint quant = (node.self.ref_flags & ReferenceFlagLong) ? 8 : 4;
+						int dim = node.inputs.Length() - 1;
+						int ous = object_size(node.retval_spec.size);
+						int ins = object_size(node.input_specs[0].size);
+						if (dim < 1 || dim > 4) throw InvalidArgumentException();
+						if (ous != ins || ous != quant * dim) throw InvalidArgumentException();
+						InternalDisposition ld;
+						ld.size = object_size(node.input_specs[0].size);
+						ld.flags = DispositionPointer;
+						ld.reg = rv;
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | rv);
+						Reg ir = _fph_allocate(reg_in_use, rv);
+						encode_preserve(ir, reg_in_use, disp->reg, !idle);
+						for (int i = 0; i < dim; i++) {
+							InternalDisposition sd;
+							sd.size = object_size(node.input_specs[1 + i].size);
+							sd.flags = DispositionPointer;
+							sd.reg = ir;
+							_encode_tree_node(node.inputs[1 + i], idle, mem_load, &sd, reg_in_use | rv | ir);
+							if (sd.size == 1) *mem_load += WordSize;
+							if (!idle) {
+								encode_fld(quant, rv, i * quant);
+								if (node.input_specs[1 + i].semantics == ArgumentSemantics::FloatingPoint) {
+									encode_fstp(sd.size, ir, 0);
+								} else {
+									if (sd.size == 1) {
+										int ioffs = allocate_temporary(XA::TH::MakeSize(0, 1));
+										Reg hr = _fph_allocate(reg_in_use, rv | ir);
+										encode_preserve(hr, reg_in_use, disp->reg, true);
+										encode_fisttp(4, Reg32::EBP, ioffs);
+										encode_mov_reg_mem(1, hr, Reg32::EBP, ioffs);
+										encode_mov_mem_reg(1, ir, hr);
+										encode_restore(hr, reg_in_use, disp->reg, true);
+									} else encode_fisttp(sd.size, ir, 0);
+								}
+							}
+						}
+						encode_restore(ir, reg_in_use, disp->reg, !idle);
+						if (!((ld.flags & DispositionReuse) || (disp->flags & DispositionDiscard))) {
+							*mem_load += word_align(node.retval_spec.size);
+							if (!idle) {
+								int offs = allocate_temporary(node.retval_spec.size);
+								for (int i = 0; i < dim; i++) {
+									encode_fld(quant, rv, i * quant);
+									encode_fstp(quant, Reg32::EBP, offs + i * quant);
+								}
+								encode_lea(rv, Reg32::EBP, offs);
+							}
+						}
+					} else if (node.self.index == TransformFloatRecombine) {
+						sysdisp = DispositionPointer;
+						if (node.inputs.Length() != 2) throw InvalidArgumentException();
+						if (node.inputs[1].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+						uint quant = (node.self.ref_flags & ReferenceFlagLong) ? 8 : 4;
+						int ins = object_size(node.input_specs[0].size);
+						int ous = object_size(node.retval_spec.size);
+						int idim = ins / quant;
+						int odim = ous / quant;
+						if (idim < 1 || idim > 4 || odim < 1 || odim > 4) throw InvalidArgumentException();
+						if (ins % quant || ous % quant) throw InvalidArgumentException();
+						InternalDisposition ld;
+						ld.size = object_size(node.input_specs[0].size);
+						ld.flags = DispositionPointer;
+						ld.reg = _fph_allocate(reg_in_use, rv);
+						encode_preserve(ld.reg, reg_in_use, disp->reg, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, (reg_in_use & ~rv) | ld.reg);
+						if ((ld.flags & DispositionReuse) && idim == 1 && odim == 1) {
+							if (!idle) encode_mov_reg_reg(4, rv, ld.reg);
+						} else {
+							*mem_load += word_align(node.retval_spec.size);
+							if (!idle) {
+								int offs = allocate_temporary(node.retval_spec.size);
+								encode_lea(rv, Reg32::EBP, offs);
+								for (int i = 0; i < odim; i++) {
+									int j = ((node.input_specs[1].size.num_bytes >> (i * 4)) & 0xF) % idim;
+									encode_fld(quant, ld.reg, j * quant);
+									encode_fstp(quant, rv, i * quant);
+								}
+							}
+						}
+						encode_restore(ld.reg, reg_in_use, disp->reg, !idle);
+					} else if (node.self.index == TransformFloatInteger) {
+						sysdisp = DispositionPointer;
+						if (node.inputs.Length() != 1) throw InvalidArgumentException();
+						uint quant = (node.self.ref_flags & ReferenceFlagLong) ? 8 : 4;
+						int ins = object_size(node.input_specs[0].size);
+						int ous = object_size(node.retval_spec.size);
+						int dim = ins / quant;
+						if (dim < 1 || dim > 4) throw InvalidArgumentException();
+						if (ins % quant) throw InvalidArgumentException();
+						if (ous % dim) throw InvalidArgumentException();
+						uint oquant = ous / dim;
+						if (oquant != 1 && oquant != 2 && oquant != 4 && oquant != 8) throw InvalidArgumentException();
+						InternalDisposition ld;
+						ld.size = ins;
+						ld.flags = DispositionPointer;
+						ld.reg = _fph_allocate(reg_in_use, rv);
+						encode_preserve(ld.reg, reg_in_use, disp->reg, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, (reg_in_use & ~rv) | ld.reg);
+						*mem_load += word_align(node.retval_spec.size);
+						if (oquant == 1) *mem_load += WordSize;
+						if (!idle) {
+							int offs = allocate_temporary(node.retval_spec.size);
+							int ioffs = 0;
+							if (oquant == 1) {
+								ioffs = allocate_temporary(XA::TH::MakeSize(0, 1));
+								encode_preserve(Reg32::EAX, reg_in_use, 0, true);
+							}
+							encode_lea(rv, Reg32::EBP, offs);
+							for (int i = 0; i < dim; i++) {
+								encode_fld(quant, ld.reg, quant * i);
+								if (oquant == 1) {
+									encode_fisttp(2, Reg32::EBP, ioffs);
+									encode_mov_reg_mem(1, Reg32::EAX, Reg32::EBP, ioffs);
+									encode_mov_mem_reg(1, rv, oquant * i, Reg32::EAX);
+								} else encode_fisttp(oquant, rv, oquant * i);
+							}
+							if (oquant == 1) encode_restore(Reg32::EAX, reg_in_use, 0, true);
+						}
+						encode_restore(ld.reg, reg_in_use, disp->reg, !idle);
+					} else if (node.self.index >= TransformFloatIsZero && node.self.index <= TransformFloatG) {
+						sysdisp = DispositionRegister;
+						bool cz = (node.self.index == TransformFloatIsZero) || (node.self.index == TransformFloatNotZero);
+						if (cz && node.inputs.Length() != 1) throw InvalidArgumentException();
+						if (!cz && node.inputs.Length() != 2) throw InvalidArgumentException();
+						uint quant = (node.self.ref_flags & ReferenceFlagLong) ? 8 : 4;
+						int ins = object_size(node.input_specs[0].size);
+						int dim = ins / quant;
+						if (dim < 1 || dim > 4 || ins % quant) throw InvalidArgumentException();
+						InternalDisposition a1, a2;
+						a1.size = ins;
+						a1.flags = DispositionPointer;
+						a1.reg = _fph_allocate(reg_in_use, rv);
+						encode_preserve(a1.reg, reg_in_use, disp->reg, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &a1, (reg_in_use & ~rv) | a1.reg);
+						if (!cz) {
+							if (object_size(node.input_specs[1].size) != ins) throw InvalidArgumentException();
+							a2.size = ins;
+							a2.flags = DispositionPointer;
+							a2.reg = _fph_allocate(reg_in_use, rv | a1.reg);
+							encode_preserve(a2.reg, reg_in_use, disp->reg, !idle);
+							_encode_tree_node(node.inputs[1], idle, mem_load, &a2, (reg_in_use & ~rv) | a1.reg | a2.reg);
+						}
+						encode_preserve(Reg32::EAX, reg_in_use, disp->reg, !idle);
+						if (!idle) {
+							if (node.self.ref_flags & ReferenceFlagVectorCom) encode_operation(4, arOp::XOR, rv, rv);
+							else encode_mov_reg_const(4, rv, 1);
+							for (int i = 0; i < dim; i++) {
+								if (cz) {
+									encode_fldz();
+									encode_fld(quant, a1.reg, i * quant);
+									encode_fcompp();
+								} else {
+									encode_fld(quant, a1.reg, i * quant);
+									encode_fcomp(quant, a2.reg, i * quant);
+								}
+								encode_fstsw();
+								_dest.code << 0x9E; // SAHF: L ~ CF, E ~ ZF, NaN ~ PF
+								int jp_offs, jcc_offs, jmp = 0;
+								_dest.code << 0x7A << 0x00; // JP
+								jp_offs = _dest.code.Length();
+								if (node.self.index == TransformFloatIsZero || node.self.index == TransformFloatEQ) {
+									_dest.code << 0x75 << 0x00; // JNZ
+								} else if (node.self.index == TransformFloatNotZero || node.self.index == TransformFloatNEQ) {
+									_dest.code << 0x74 << 0x00; // JZ
+								} else if (node.self.index == TransformFloatLE) {
+									_dest.code << 0x77 << 0x00; // JA
+								} else if (node.self.index == TransformFloatGE) {
+									_dest.code << 0x72 << 0x00; // JB
+								} else if (node.self.index == TransformFloatL) {
+									_dest.code << 0x73 << 0x00; // JNB
+								} else if (node.self.index == TransformFloatG) {
+									_dest.code << 0x76 << 0x00; // JNA
+								}
+								jcc_offs = _dest.code.Length();
+								if (node.self.ref_flags & ReferenceFlagVectorCom) encode_xor(rv, 1 << i);
+								else { _dest.code << 0xEB << 0x00; jmp = _dest.code.Length(); }
+								_dest.code[jp_offs - 1] = _dest.code.Length() - jp_offs;
+								_dest.code[jcc_offs - 1] = _dest.code.Length() - jcc_offs;
+								if (jmp) {
+									encode_operation(4, arOp::XOR, rv, rv);
+									_dest.code[jmp - 1] = _dest.code.Length() - jmp;
+								}
+							}
+						}
+						encode_restore(Reg32::EAX, reg_in_use, disp->reg, !idle);
+						if (!cz) encode_restore(a2.reg, reg_in_use, disp->reg, !idle);
+						encode_restore(a1.reg, reg_in_use, disp->reg, !idle);
+					} else if (node.self.index >= TransformFloatAdd && node.self.index <= TransformFloatReduce) {
+						sysdisp = DispositionPointer;
+						if (node.inputs.Length() < 1) throw InvalidArgumentException();
+						uint quant = (node.self.ref_flags & ReferenceFlagLong) ? 8 : 4;
+						int ins = object_size(node.input_specs[0].size);
+						int dim = ins / quant;
+						if (dim < 1 || dim > 4 || ins % quant) throw InvalidArgumentException();
+						InternalDisposition a1;
+						a1.size = ins;
+						a1.flags = DispositionPointer;
+						a1.reg = rv;
+						_encode_tree_node(node.inputs[0], idle, mem_load, &a1, reg_in_use | rv);
+						Reg store_reg;
+						int store_offs;
+						if (a1.flags & DispositionReuse) {
+							store_reg = rv;
+							store_offs = 0;
+						} else {
+							*mem_load += word_align(node.retval_spec.size);
+							if (!idle) {
+								store_reg = Reg32::EBP;
+								store_offs = allocate_temporary(node.retval_spec.size);
+							}
+						}
+						if (node.self.index == TransformFloatAbs || node.self.index == TransformFloatInverse || node.self.index == TransformFloatSqrt) {
+							if (node.inputs.Length() != 1) throw InvalidArgumentException();
+							if (object_size(node.retval_spec.size) != ins) throw InvalidArgumentException();
+							if (!idle) for (int i = 0; i < dim; i++) {
+								encode_fld(quant, rv, i * quant);
+								if (node.self.index == TransformFloatAbs) encode_fabs();
+								else if (node.self.index == TransformFloatInverse) encode_fneg();
+								else if (node.self.index == TransformFloatSqrt) encode_fsqrt();
+								encode_fstp(quant, store_reg, store_offs + i * quant);
+							}
+						} else if (node.self.index == TransformFloatReduce) {
+							if (node.inputs.Length() != 1) throw InvalidArgumentException();
+							if (object_size(node.retval_spec.size) != quant) throw InvalidArgumentException();
+							if (!idle) {
+								encode_fld(quant, rv, 0);
+								for (int i = 1; i < dim; i++) encode_fadd(quant, rv, i * quant);
+								encode_fstp(quant, store_reg, store_offs);
+							}
+						} else if (node.self.index == TransformFloatAdd || node.self.index == TransformFloatSubt || node.self.index == TransformFloatMul || node.self.index == TransformFloatDiv) {
+							if (node.inputs.Length() != 2) throw InvalidArgumentException();
+							if (object_size(node.retval_spec.size) != ins) throw InvalidArgumentException();
+							if (object_size(node.input_specs[1].size) != ins) throw InvalidArgumentException();
+							InternalDisposition a2;
+							a2.size = ins;
+							a2.flags = DispositionPointer;
+							a2.reg = _fph_allocate(reg_in_use, rv);
+							encode_preserve(a2.reg, reg_in_use, disp->reg, !idle);
+							_encode_tree_node(node.inputs[1], idle, mem_load, &a2, reg_in_use | rv | a2.reg);
+							if (!idle) for (int i = 0; i < dim; i++) {
+								encode_fld(quant, rv, i * quant);
+								if (node.self.index == TransformFloatAdd) encode_fadd(quant, a2.reg, i * quant);
+								else if (node.self.index == TransformFloatSubt) encode_fsub(quant, a2.reg, i * quant);
+								else if (node.self.index == TransformFloatMul) encode_fmul(quant, a2.reg, i * quant);
+								else if (node.self.index == TransformFloatDiv) encode_fdiv(quant, a2.reg, i * quant);
+								encode_fstp(quant, store_reg, store_offs + i * quant);
+							}
+							encode_restore(a2.reg, reg_in_use, disp->reg, !idle);
+						} else if (node.self.index == TransformFloatMulAdd || node.self.index == TransformFloatMulSubt) {
+							if (node.inputs.Length() != 3) throw InvalidArgumentException();
+							if (object_size(node.retval_spec.size) != ins) throw InvalidArgumentException();
+							if (object_size(node.input_specs[1].size) != ins) throw InvalidArgumentException();
+							if (object_size(node.input_specs[2].size) != ins) throw InvalidArgumentException();
+							InternalDisposition a2, a3;
+							a2.size = a3.size = ins;
+							a2.flags = a3.flags = DispositionPointer;
+							a2.reg = _fph_allocate(reg_in_use, rv);
+							a3.reg = _fph_allocate(reg_in_use, rv | a2.reg);
+							encode_preserve(a2.reg, reg_in_use, disp->reg, !idle);
+							encode_preserve(a3.reg, reg_in_use, disp->reg, !idle);
+							_encode_tree_node(node.inputs[1], idle, mem_load, &a2, reg_in_use | rv | a2.reg);
+							_encode_tree_node(node.inputs[2], idle, mem_load, &a3, reg_in_use | rv | a2.reg | a3.reg);
+							if (!idle) for (int i = 0; i < dim; i++) {
+								encode_fld(quant, rv, i * quant);
+								encode_fmul(quant, a2.reg, i * quant);
+								if (node.self.index == TransformFloatMulAdd) encode_fadd(quant, a3.reg, i * quant);
+								else if (node.self.index == TransformFloatMulSubt) encode_fsub(quant, a3.reg, i * quant);
+								encode_fstp(quant, store_reg, store_offs + i * quant);
+							}
+							encode_restore(a3.reg, reg_in_use, disp->reg, !idle);
+							encode_restore(a2.reg, reg_in_use, disp->reg, !idle);
+						}
+						if (!(a1.flags & DispositionReuse)) encode_lea(rv, store_reg, store_offs);
+					} else throw InvalidArgumentException();
+					if (disp->flags & DispositionDiscard) {
+						disp->flags = DispositionDiscard;
+					} else if (disp->flags & DispositionPointer) {
+						disp->flags = DispositionPointer;
+						if (sysdisp == DispositionPointer) {
+							disp->flags |= DispositionReuse;
+							if (!idle && rv != disp->reg) encode_mov_reg_reg(4, disp->reg, rv);
+						} else if (sysdisp == DispositionRegister) {
+							*mem_load += word_align(node.retval_spec.size);
+							if (!idle) {
+								int offs = allocate_temporary(node.retval_spec.size, &offs);
+								encode_mov_mem_reg(4, Reg32::EBP, offs, rv);
+								encode_lea(disp->reg, Reg32::EBP, offs);
+							}
+						}
+					} else if (disp->flags & DispositionRegister) {
+						disp->flags = DispositionRegister;
+						if (sysdisp == DispositionPointer) {
+							if (!idle) encode_reg_load_32(disp->reg, rv, 0, disp->size, disp->flags & DispositionCompress, reg_in_use);
+						} else if (sysdisp == DispositionRegister) {
+							if (!idle && rv != disp->reg) encode_mov_reg_reg(4, disp->reg, rv);
+						}
+					} else throw InvalidArgumentException();
+					encode_restore(rv, reg_in_use, disp->reg, !idle);
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{

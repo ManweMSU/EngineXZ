@@ -863,14 +863,12 @@ namespace Engine
 			}
 			void EncoderContext::encode_fld(uint quant, Reg src_ptr, int src_offset)
 			{
-				if (!_x64_mode) throw InvalidStateException();
+				if (_x64_mode) throw InvalidStateException();
 				if (quant == 4) _dest.code << 0xD9;
 				else if (quant == 8) _dest.code << 0xDD;
 				else throw InvalidArgumentException();
 				uint8 mode;
-				if (src_offset) {
-					if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
-				} else mode = 0x00;
+				if (src_offset) { if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
 				_dest.code << make_mod(0, mode, regular_register_code(src_ptr));
 				if (mode == 0x02) {
 					_dest.code << int8(src_offset);
@@ -879,16 +877,36 @@ namespace Engine
 					_dest.code << int8(src_offset >> 24);
 				} else if (mode == 0x01) _dest.code << int8(src_offset);
 			}
+			void EncoderContext::encode_fild(uint quant, Reg src_ptr, int src_offset)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				if (quant == 2) _dest.code << 0xDF;
+				else if (quant == 4) _dest.code << 0xDB;
+				else if (quant == 8) _dest.code << 0xDF;
+				else throw InvalidArgumentException();
+				uint8 mode;
+				if (src_offset) { if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
+				_dest.code << make_mod(quant == 8 ? 5 : 0, mode, regular_register_code(src_ptr));
+				if (mode == 0x02) {
+					_dest.code << int8(src_offset);
+					_dest.code << int8(src_offset >> 8);
+					_dest.code << int8(src_offset >> 16);
+					_dest.code << int8(src_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(src_offset);
+			}
+			void EncoderContext::encode_fldz(void)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				_dest.code << 0xD9 << 0xEE;
+			}
 			void EncoderContext::encode_fstp(uint quant, Reg src_ptr, int src_offset)
 			{
-				if (!_x64_mode) throw InvalidStateException();
+				if (_x64_mode) throw InvalidStateException();
 				if (quant == 4) _dest.code << 0xD9;
 				else if (quant == 8) _dest.code << 0xDD;
 				else throw InvalidArgumentException();
 				uint8 mode;
-				if (src_offset) {
-					if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
-				} else mode = 0x00;
+				if (src_offset) { if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
 				_dest.code << make_mod(3, mode, regular_register_code(src_ptr));
 				if (mode == 0x02) {
 					_dest.code << int8(src_offset);
@@ -896,6 +914,128 @@ namespace Engine
 					_dest.code << int8(src_offset >> 16);
 					_dest.code << int8(src_offset >> 24);
 				} else if (mode == 0x01) _dest.code << int8(src_offset);
+			}
+			void EncoderContext::encode_fisttp(uint quant, Reg src_ptr, int src_offset)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				if (quant == 2) _dest.code << 0xDF;
+				else if (quant == 4) _dest.code << 0xDB;
+				else if (quant == 8) _dest.code << 0xDD;
+				else throw InvalidArgumentException();
+				uint8 mode;
+				if (src_offset) { if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
+				_dest.code << make_mod(1, mode, regular_register_code(src_ptr));
+				if (mode == 0x02) {
+					_dest.code << int8(src_offset);
+					_dest.code << int8(src_offset >> 8);
+					_dest.code << int8(src_offset >> 16);
+					_dest.code << int8(src_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(src_offset);
+			}
+			void EncoderContext::encode_fcomp(uint quant, Reg a2_ptr, int a2_offset)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				if (quant == 4) _dest.code << 0xD8;
+				else if (quant == 8) _dest.code << 0xDC;
+				else throw InvalidArgumentException();
+				uint8 mode;
+				if (a2_offset) { if (a2_offset >= -128 && a2_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
+				_dest.code << make_mod(3, mode, regular_register_code(a2_ptr));
+				if (mode == 0x02) {
+					_dest.code << int8(a2_offset);
+					_dest.code << int8(a2_offset >> 8);
+					_dest.code << int8(a2_offset >> 16);
+					_dest.code << int8(a2_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(a2_offset);
+			}
+			void EncoderContext::encode_fcompp(void)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				_dest.code << 0xDE << 0xD9;
+			}
+			void EncoderContext::encode_fstsw(void)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				_dest.code << 0xDF << 0xE0;
+			}
+			void EncoderContext::encode_fadd(uint quant, Reg a2_ptr, int a2_offset)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				if (quant == 4) _dest.code << 0xD8;
+				else if (quant == 8) _dest.code << 0xDC;
+				else throw InvalidArgumentException();
+				uint8 mode;
+				if (a2_offset) { if (a2_offset >= -128 && a2_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
+				_dest.code << make_mod(0, mode, regular_register_code(a2_ptr));
+				if (mode == 0x02) {
+					_dest.code << int8(a2_offset);
+					_dest.code << int8(a2_offset >> 8);
+					_dest.code << int8(a2_offset >> 16);
+					_dest.code << int8(a2_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(a2_offset);
+			}
+			void EncoderContext::encode_fsub(uint quant, Reg a2_ptr, int a2_offset)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				if (quant == 4) _dest.code << 0xD8;
+				else if (quant == 8) _dest.code << 0xDC;
+				else throw InvalidArgumentException();
+				uint8 mode;
+				if (a2_offset) { if (a2_offset >= -128 && a2_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
+				_dest.code << make_mod(4, mode, regular_register_code(a2_ptr));
+				if (mode == 0x02) {
+					_dest.code << int8(a2_offset);
+					_dest.code << int8(a2_offset >> 8);
+					_dest.code << int8(a2_offset >> 16);
+					_dest.code << int8(a2_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(a2_offset);
+			}
+			void EncoderContext::encode_fmul(uint quant, Reg a2_ptr, int a2_offset)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				if (quant == 4) _dest.code << 0xD8;
+				else if (quant == 8) _dest.code << 0xDC;
+				else throw InvalidArgumentException();
+				uint8 mode;
+				if (a2_offset) { if (a2_offset >= -128 && a2_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
+				_dest.code << make_mod(1, mode, regular_register_code(a2_ptr));
+				if (mode == 0x02) {
+					_dest.code << int8(a2_offset);
+					_dest.code << int8(a2_offset >> 8);
+					_dest.code << int8(a2_offset >> 16);
+					_dest.code << int8(a2_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(a2_offset);
+			}
+			void EncoderContext::encode_fdiv(uint quant, Reg a2_ptr, int a2_offset)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				if (quant == 4) _dest.code << 0xD8;
+				else if (quant == 8) _dest.code << 0xDC;
+				else throw InvalidArgumentException();
+				uint8 mode;
+				if (a2_offset) { if (a2_offset >= -128 && a2_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
+				_dest.code << make_mod(6, mode, regular_register_code(a2_ptr));
+				if (mode == 0x02) {
+					_dest.code << int8(a2_offset);
+					_dest.code << int8(a2_offset >> 8);
+					_dest.code << int8(a2_offset >> 16);
+					_dest.code << int8(a2_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(a2_offset);
+			}
+			void EncoderContext::encode_fabs(void)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				_dest.code << 0xD9 << 0xE1;
+			}
+			void EncoderContext::encode_fneg(void)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				_dest.code << 0xD9 << 0xE0;
+			}
+			void EncoderContext::encode_fsqrt(void)
+			{
+				if (_x64_mode) throw InvalidStateException();
+				_dest.code << 0xD9 << 0xFA;
 			}
 			void EncoderContext::encode_invert(uint quant, Reg reg)
 			{

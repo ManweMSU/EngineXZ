@@ -41,6 +41,7 @@ namespace Engine
 				DispositionPointer	= 0x02,
 				DispositionDiscard	= 0x04,
 				DispositionCompress	= 0x10, // i386 mode only
+				DispositionReuse	= 0x20, // i386 mode only
 				DispositionAny		= DispositionRegister | DispositionPointer
 			};
 
@@ -150,7 +151,20 @@ namespace Engine
 				void encode_operation(uint quant, arOp op, Reg to, Reg value_ptr, bool indirect = false, int value_offset = 0);
 				void encode_mul_div(uint quant, mdOp op, Reg value_ptr, bool indirect = false, int value_offset = 0);
 				void encode_fld(uint quant, Reg src_ptr, int src_offset);
+				void encode_fild(uint quant, Reg src_ptr, int src_offset);
+				void encode_fldz(void);
 				void encode_fstp(uint quant, Reg src_ptr, int src_offset);
+				void encode_fisttp(uint quant, Reg src_ptr, int src_offset);
+				void encode_fcomp(uint quant, Reg a2_ptr, int a2_offset);
+				void encode_fcompp(void);
+				void encode_fstsw(void);
+				void encode_fadd(uint quant, Reg a2_ptr, int a2_offset);
+				void encode_fsub(uint quant, Reg a2_ptr, int a2_offset);
+				void encode_fmul(uint quant, Reg a2_ptr, int a2_offset);
+				void encode_fdiv(uint quant, Reg a2_ptr, int a2_offset);
+				void encode_fabs(void);
+				void encode_fneg(void);
+				void encode_fsqrt(void);
 				void encode_invert(uint quant, Reg reg);
 				void encode_negative(uint quant, Reg reg);
 				void encode_shift(uint quant, shOp op, Reg reg, int by = 0, bool indirect = false, int value_offset = 0);
