@@ -1,0 +1,125 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Algebrae Vectorum Complicium";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+[[systema] libera]
+
+importa mathvec;
+importa mathcom;
+
+structura complex2 {
+	complex x; complex y;
+	[[positus] "0"] ordo [2] complex _c;
+
+	dfrac2 Re { adipisce { responde dfrac2(x.Re, y.Re); } }
+	dfrac2 Im { adipisce { responde dfrac2(x.Im, y.Im); } }
+	complex2 conjugatus { adipisce { responde complex2(x.conjugatus, y.conjugatus); } }
+	dfrac longitudo { adipisce { responde math.radix(math.prs(ego^, ego^).Re); } }
+	complex2 normativus { adipisce { responde ego^ / complex(longitudo); } }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~complex2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])) } } }
+	structor (complex s) { funda x(s); funda y(s); }
+	structor (frac2 v) { funda x(v.x); funda y(v.y); }
+	structor (dfrac2 v) { funda x(v.x); funda y(v.y); }
+	structor (complex ix, complex iy) { funda x(ix); funda y(iy); }
+	functio complex2 operator - () { responde complex2(-x, -y); }
+	[[xa]] functio ~complex2 operator = (~complex2 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~complex2 operator += (~complex2 src) { x += src.x; y += src.y; }
+	functio ~complex2 operator -= (~complex2 src) { x -= src.x; y -= src.y; }
+	functio ~complex2 operator *= (~complex2 src) { x *= src.x; y *= src.y; }
+	functio ~complex2 operator /= (~complex2 src) { x /= src.x; y /= src.y; }
+	classis functio complex2 operator + (~complex2 a, ~complex2 b) { responde complex2(a.x + b.x, a.y + b.y); }
+	classis functio complex2 operator - (~complex2 a, ~complex2 b) { responde complex2(a.x - b.x, a.y - b.y); }
+	classis functio complex2 operator * (~complex2 a, ~complex2 b) { responde complex2(a.x * b.x, a.y * b.y); }
+	classis functio complex2 operator / (~complex2 a, ~complex2 b) { responde complex2(a.x / b.x, a.y / b.y); }
+	classis functio logicum operator == (~complex2 a, ~complex2 b) { responde a.x == b.x && a.y == b.y; }
+	classis functio logicum operator != (~complex2 a, ~complex2 b) { responde a.x != b.x || a.y != b.y; }
+	convertor (linea) () iacit { responde linea.forma("(%0, %1)", x, y); }
+	[[inline]] functio ~complex operator [] (int i) { responde _c[i]; }
+}
+structura complex3 {
+	complex x; complex y; complex z;
+	[[positus] "0"] ordo [3] complex _c;
+	[[positus] "0"] complex2 xy;
+	[[positus] "16"] complex2 yz;
+
+	dfrac3 Re { adipisce { responde dfrac3(x.Re, y.Re, z.Re); } }
+	dfrac3 Im { adipisce { responde dfrac3(x.Im, y.Im, z.Im); } }
+	complex3 conjugatus { adipisce { responde complex3(x.conjugatus, y.conjugatus, z.conjugatus); } }
+	dfrac longitudo { adipisce { responde math.radix(math.prs(ego^, ego^).Re); } }
+	complex3 normativus { adipisce { responde ego^ / complex(longitudo); } }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~complex3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:48 48=>48(@PTR_FOLLOW:W 1=>48(A[0]), @PTR_FOLLOW:W 1=>48(A[1])) } } }
+	structor (complex s) { funda x(s); funda y(s); funda z(s); }
+	structor (frac3 v) { funda x(v.x); funda y(v.y); funda z(v.z); }
+	structor (dfrac3 v) { funda x(v.x); funda y(v.y); funda z(v.z); }
+	structor (complex ix, complex iy, complex iz) { funda x(ix); funda y(iy); funda z(iz); }
+	functio complex3 operator - () { responde complex3(-x, -y, -z); }
+	[[xa]] functio ~complex3 operator = (~complex3 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:48 48=>48(@PTR_FOLLOW:W 1=>48(A[0]), @PTR_FOLLOW:W 1=>48(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~complex3 operator += (~complex3 src) { x += src.x; y += src.y; z += src.z; }
+	functio ~complex3 operator -= (~complex3 src) { x -= src.x; y -= src.y; z -= src.z; }
+	functio ~complex3 operator *= (~complex3 src) { x *= src.x; y *= src.y; z *= src.z; }
+	functio ~complex3 operator /= (~complex3 src) { x /= src.x; y /= src.y; z /= src.z; }
+	classis functio complex3 operator + (~complex3 a, ~complex3 b) { responde complex3(a.x + b.x, a.y + b.y, a.z + b.z); }
+	classis functio complex3 operator - (~complex3 a, ~complex3 b) { responde complex3(a.x - b.x, a.y - b.y, a.z - b.z); }
+	classis functio complex3 operator * (~complex3 a, ~complex3 b) { responde complex3(a.x * b.x, a.y * b.y, a.z * b.z); }
+	classis functio complex3 operator / (~complex3 a, ~complex3 b) { responde complex3(a.x / b.x, a.y / b.y, a.z / b.z); }
+	classis functio logicum operator == (~complex3 a, ~complex3 b) { responde a.x == b.x && a.y == b.y && a.z == b.z; }
+	classis functio logicum operator != (~complex3 a, ~complex3 b) { responde a.x != b.x || a.y != b.y || a.z != b.z; }
+	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2)", x, y, z); }
+	[[inline]] functio ~complex operator [] (int i) { responde _c[i]; }
+}
+structura complex4 {
+	complex x; complex y; complex z; complex w;
+	[[positus] "0"] ordo [4] complex _c;
+	[[positus] "0"] complex2 xy;
+	[[positus] "16"] complex2 yz;
+	[[positus] "32"] complex2 zw;
+	[[positus] "0"] complex3 xyz;
+	[[positus] "16"] complex3 yzw;
+
+	dfrac4 Re { adipisce { responde dfrac4(x.Re, y.Re, z.Re, w.Re); } }
+	dfrac4 Im { adipisce { responde dfrac4(x.Im, y.Im, z.Im, w.Im); } }
+	complex4 conjugatus { adipisce { responde complex4(x.conjugatus, y.conjugatus, z.conjugatus, w.conjugatus); } }
+	dfrac longitudo { adipisce { responde math.radix(math.prs(ego^, ego^).Re); } }
+	complex4 normativus { adipisce { responde ego^ / complex(longitudo); } }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~complex4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:64 64=>64(@PTR_FOLLOW:W 1=>64(A[0]), @PTR_FOLLOW:W 1=>64(A[1])) } } }
+	structor (complex s) { funda x(s); funda y(s); funda z(s); funda w(s); }
+	structor (frac4 v) { funda x(v.x); funda y(v.y); funda z(v.z); funda w(v.w); }
+	structor (dfrac4 v) { funda x(v.x); funda y(v.y); funda z(v.z); funda w(v.w); }
+	structor (complex ix, complex iy, complex iz, complex iw) { funda x(ix); funda y(iy); funda z(iz); funda w(iw); }
+	functio complex4 operator - () { responde complex4(-x, -y, -z, -w); }
+	[[xa]] functio ~complex4 operator = (~complex4 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:64 64=>64(@PTR_FOLLOW:W 1=>64(A[0]), @PTR_FOLLOW:W 1=>64(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~complex4 operator += (~complex4 src) { x += src.x; y += src.y; z += src.z; w += src.w; }
+	functio ~complex4 operator -= (~complex4 src) { x -= src.x; y -= src.y; z -= src.z; w -= src.w; }
+	functio ~complex4 operator *= (~complex4 src) { x *= src.x; y *= src.y; z *= src.z; w *= src.w; }
+	functio ~complex4 operator /= (~complex4 src) { x /= src.x; y /= src.y; z /= src.z; w /= src.w; }
+	classis functio complex4 operator + (~complex4 a, ~complex4 b) { responde complex4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w); }
+	classis functio complex4 operator - (~complex4 a, ~complex4 b) { responde complex4(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w); }
+	classis functio complex4 operator * (~complex4 a, ~complex4 b) { responde complex4(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w); }
+	classis functio complex4 operator / (~complex4 a, ~complex4 b) { responde complex4(a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w); }
+	classis functio logicum operator == (~complex4 a, ~complex4 b) { responde a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w; }
+	classis functio logicum operator != (~complex4 a, ~complex4 b) { responde a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w; }
+	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", x, y, z, w); }
+	[[inline]] functio ~complex operator [] (int i) { responde _c[i]; }
+}
+
+spatium math {
+	functio complex prs(~complex2 a, ~complex2 b) { responde a.x * b.x.conjugatus + a.y * b.y.conjugatus; }
+	functio complex prs(~complex3 a, ~complex3 b) { responde a.x * b.x.conjugatus + a.y * b.y.conjugatus + a.z * b.z.conjugatus; }
+	functio complex prs(~complex4 a, ~complex4 b) { responde a.x * b.x.conjugatus + a.y * b.y.conjugatus + a.z * b.z.conjugatus + a.w * b.w.conjugatus; }
+}

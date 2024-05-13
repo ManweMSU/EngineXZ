@@ -1,0 +1,118 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Algebrae Complexorum";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+[[systema] libera]
+
+structura complex {
+	dfrac Re; dfrac Im;
+
+	complex conjugatus { adipisce { responde complex(Re, -Im); } }
+	complex inversus { adipisce { var A = Re * Re + Im * Im; responde complex(Re / A, -Im / A); } }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~complex s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])) } } }
+	structor (frac re) { funda Re(re); funda Im(0.0); }
+	structor (dfrac re) { funda Re(re); funda Im(0.0); }
+	structor (dfrac re, dfrac im) { funda Re(re); funda Im(im); }
+	[[xa]] [[inline]] functio complex operator - () { INTERFACE W 1 : THIS => 16 : OBJECT CODE { RET { @BLT:16 16=>16(R, @FP_NEG_64:16=>16(@PTR_FOLLOW:W 1=>16(A[0]))) } } }
+	[[xa]] functio ~complex operator = (~complex src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~complex operator += (~complex src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @FP_ADD_64:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1]))) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~complex operator -= (~complex src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @FP_SUB_64:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1]))) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~complex operator *= (complex src) { ego^ = ego^ * src; responde ego^; }
+	functio ~complex operator /= (complex src) { ego^ = ego^ * src.inversus; responde ego^; }
+	[[xa]] [[inline]] classis functio complex operator + (~complex a, ~complex b) {
+		INTERFACE W 1 W 1 => 16 : OBJECT
+		CODE { RET { @BLT:16 16=>16(R, @FP_ADD_64:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1]))) } }
+	}
+	[[xa]] [[inline]] classis functio complex operator - (~complex a, ~complex b) {
+		INTERFACE W 1 W 1 => 16 : OBJECT
+		CODE { RET { @BLT:16 16=>16(R, @FP_SUB_64:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1]))) } }
+	}
+	classis functio complex operator * (complex a, complex b) { responde complex(a.Re * b.Re - a.Im * b.Im, a.Re * b.Im + a.Im * b.Re); }
+	classis functio complex operator / (complex a, complex b) { responde a * b.inversus; }
+	[[xa]] [[inline]] classis functio logicum operator == (~complex a, ~complex b) {
+		INTERFACE W 1 W 1 => 1
+		CODE { RET { @BLT:1 1=>1(R, @FP_EQ_64:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1]))) } }
+	}
+	[[xa]] [[inline]] classis functio logicum operator != (~complex a, ~complex b) {
+		INTERFACE W 1 W 1 => 1
+		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_64:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])))) } }
+	}
+	convertor (linea) () iacit { responde linea.forma("(%0, %1)", Re, Im); }
+}
+
+dura complex {
+	var complex i = complex(0.0, 1.0);
+	classis functio complex ex_polari(dfrac valor, dfrac arg) { responde complex(valor * math.cos(arg), valor * math.sin(arg)); }
+}
+
+spatium math {
+	[[xa]] [[inline]] functio dfrac abs(~complex valor) {
+		INTERFACE W 1 => 8 : FLOAT
+		CODE { RET { @BLT:8 8=>8(R, @FP_SQRT_64:8=>8(@FP_REDUCE_64:16=>8(@FP_MUL_64:16 16=>16(@PTR_FOLLOW:W 1=>16(@SPLIT:W 1=>W 1(A[0])), @PTR_FOLLOW:W 1=>16(S))))) } }
+	}
+	functio dfrac arg(complex valor) {
+		si (valor.Re) {
+			dfrac prarg = arctg(valor.Im / valor.Re);
+			si (valor.Re > 0.0) responde prarg;
+			alioqui si (prarg) responde -sgn(prarg) * dfrac.pi + prarg;
+			alioqui responde dfrac.pi;
+		} alioqui si (valor.Im > 0.0) responde dfrac.pi / 2.0;
+		alioqui si (valor.Im < 0.0) responde -dfrac.pi / 2.0;
+		alioqui responde 0.0;
+	}
+	functio complex radix(complex valor) { responde complex.ex_polari(radix(abs(valor)), arg(valor) / 2.0); }
+	[[inline]] functio complex pot(complex valor, complex pot) { responde exp(pot * ln(valor)); }
+
+	functio complex exp(complex valor) { var A = exp(valor.Re); responde complex(A * cos(valor.Im), A * sin(valor.Im)); }
+	functio complex ln(complex valor) { responde complex(ln(abs(valor)), arg(valor)); }
+	[[inline]] functio complex lb(complex valor) { responde ln(valor) / ln(2.0); }
+	[[inline]] functio complex lg(complex valor) { responde ln(valor) / ln(10.0); }
+
+	functio frac	sh(frac valor) { responde (exp(valor) - exp(-valor)) / frac(2.0); }
+	functio dfrac	sh(dfrac valor) { responde (exp(valor) - exp(-valor)) / 2.0; }
+	functio complex	sh(complex valor) { responde (exp(valor) - exp(-valor)) / 2.0; }
+	functio frac	ch(frac valor) { responde (exp(valor) + exp(-valor)) / frac(2.0); }
+	functio dfrac	ch(dfrac valor) { responde (exp(valor) + exp(-valor)) / 2.0; }
+	functio complex	ch(complex valor) { responde (exp(valor) + exp(-valor)) / 2.0; }
+	functio frac	th(frac valor) { responde sh(valor) / ch(valor); }
+	functio dfrac	th(dfrac valor) { responde sh(valor) / ch(valor); }
+	functio complex	th(complex valor) { responde sh(valor) / ch(valor); }
+	functio frac	cth(frac valor) { responde ch(valor) / sh(valor); }
+	functio dfrac	cth(dfrac valor) { responde ch(valor) / sh(valor); }
+	functio complex	cth(complex valor) { responde ch(valor) / sh(valor); }
+
+	functio frac	arcsh(frac valor) { responde ln(valor + radix(valor * valor + frac(1.0))); }
+	functio dfrac	arcsh(dfrac valor) { responde ln(valor + radix(valor * valor + 1.0)); }
+	functio complex	arcsh(complex valor) { responde ln(valor + radix(valor * valor + complex(1.0))); }
+	functio frac	arcch(frac valor) { responde ln(valor + radix(valor * valor - frac(1.0))); }
+	functio dfrac	arcch(dfrac valor) { responde ln(valor + radix(valor * valor - 1.0)); }
+	functio complex	arcch(complex valor) { responde ln(valor + radix(valor * valor - complex(1.0))); }
+	functio frac	arcth(frac valor) { responde ln((frac(1.0) + valor) / (frac(1.0) - valor)) / frac(2.0); }
+	functio dfrac	arcth(dfrac valor) { responde ln((1.0 + valor) / (1.0 - valor)) / 2.0; }
+	functio complex	arcth(complex valor) { responde ln((complex(1.0) + valor) / (complex(1.0) - valor)) / complex(2.0); }
+	functio frac	arccth(frac valor) { responde ln((frac(1.0) + valor) / (valor - frac(1.0))) / frac(2.0); }
+	functio dfrac	arccth(dfrac valor) { responde ln((1.0 + valor) / (valor - 1.0)) / 2.0; }
+	functio complex	arccth(complex valor) { responde ln((complex(1.0) + valor) / (valor - complex(1.0))) / complex(2.0); }
+
+	functio complex sin(complex valor) { responde (exp(complex.i * valor) - exp(-complex.i * valor)) / (2.0 * complex.i); }
+	functio complex cos(complex valor) { responde (exp(complex.i * valor) + exp(-complex.i * valor)) / 2.0; }
+	functio complex tg(complex valor) { responde sin(valor) / cos(valor); }
+	functio complex ctg(complex valor) { responde cos(valor) / sin(valor); }
+
+	functio complex arcsin(complex valor) { responde arcsh(complex.i * valor) / complex.i; }
+	functio complex arccos(complex valor) { responde arcch(valor) / complex.i; }
+	functio complex arctg(complex valor) { responde arcth(valor * complex.i) / complex.i; }
+	functio complex arcctg(complex valor) { responde arccth(valor / complex.i) / complex.i; }
+}

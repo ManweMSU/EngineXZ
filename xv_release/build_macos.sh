@@ -40,6 +40,14 @@ cp xv_lib/potentia.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/fenestrae.xv        -NVol xv_release/_build/com/fenestrae.xo        xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/graphicum.xv        -NVol xv_release/_build/com/graphicum.xo        xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/repulsus.xv         -NVol xv_release/_build/com/repulsus.xo         xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathvec.xv          -NVol xv_release/_build/com/mathvec.xo          xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathcom.xv          -NVol xv_release/_build/com/mathcom.xo          xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathvcom.xv         -NVol xv_release/_build/com/mathvcom.xo         xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/matrices.xv         -NVol xv_release/_build/com/matrices.xo         xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/comatrices.xv       -NVol xv_release/_build/com/comatrices.xo       xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathquat.xv         -NVol xv_release/_build/com/mathquat.xo         xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathcolorum.xv      -NVol xv_release/_build/com/mathcolorum.xo      xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathgraphici.xv     -NVol xv_release/_build/com/mathgraphici.xo     xv_release/_build/com
 cp xv_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
 cp xv_release/_build/com/*.xo xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
 estrtab xv_com/locale/ru.txt :binary xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/ru.ecst

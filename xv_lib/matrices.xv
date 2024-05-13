@@ -1,0 +1,390 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Algebrae Matricum";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+[[systema] libera]
+
+importa mathvec;
+
+structura frac2x2 {
+	ordo [2] frac2 series;
+
+	frac2x2 transposita { adipisce { responde frac2x2(ego^(0), ego^(1)); } }
+	frac tractus { adipisce { responde series[0][0] + series[1][1]; } }
+	frac det { adipisce { responde series[0, 0] * series[1, 1] - series[0, 1] * series[1, 0]; } }
+	frac2x2 inversa { adipisce { var D = det; responde frac2x2(dfrac2(series[1, 1], -series[0, 1]) / D, dfrac2(-series[1, 0], series[0, 0]) / D); } }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~frac2x2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])) } } }
+	structor (frac diag) { series[0] = frac2(diag, 0.0); series[1] = frac2(0.0, diag); }
+	structor (frac2 diag) { series[0] = frac2(diag.x, 0.0); series[1] = frac2(0.0, diag.y); }
+	structor (frac2 s1, frac2 s2) { series[0] = s1; series[1] = s2; }
+	functio frac2x2 operator - () { responde frac2x2(-series[0], -series[1]); }
+	[[xa]] functio ~frac2x2 operator = (~frac2x2 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~frac2x2 operator += (~frac2x2 src) { series[0] += src[0]; series[1] += src[1]; responde ego^; }
+	functio ~frac2x2 operator -= (~frac2x2 src) { series[0] -= src[0]; series[1] -= src[1]; responde ego^; }
+	functio ~frac2x2 operator *= (~frac2x2 src) { ego^ = ego^ * src; responde ego^; }
+	classis functio frac2x2 operator + (~frac2x2 a, ~frac2x2 b) { responde frac2x2(a[0] + b[0], a[1] + b[1]); }
+	classis functio frac2x2 operator - (~frac2x2 a, ~frac2x2 b) { responde frac2x2(a[0] - b[0], a[1] - b[1]); }
+	classis functio frac2x2 operator * (~frac2x2 a, ~frac2x2 b) {
+		frac2x2 r;
+		pro (var i : [0, 1]) pro (var j : [0, 1]) {
+			frac A = 0.0;
+			pro (var k : [0, 1]) A += a[i, k] * b[k, j];
+			r[i, j] = A;
+		}
+		responde r;
+	}
+	classis functio frac2 operator * (~frac2x2 a, ~frac2 b) { responde frac2(math.prs(a[0], b), math.prs(a[1], b)); }
+	classis functio logicum operator == (~frac2x2 a, ~frac2x2 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1]; }
+	classis functio logicum operator != (~frac2x2 a, ~frac2x2 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1]; }
+	convertor (linea) () iacit { responde linea.forma("%0\n%1\n", series[0], series[1]); }
+	[[inline]] functio ~frac2 operator [] (int i) { responde series[i]; }
+	[[inline]] functio ~frac operator [] (int i, int j) { responde series[i]._c[j]; }
+	functio frac2 operator () (int i) { responde frac2(series[0][i], series[1][i]); }
+}
+structura frac3x3 {
+	ordo [3] frac3 series;
+
+	frac3x3 transposita { adipisce { responde frac3x3(ego^(0), ego^(1), ego^(2)); } }
+	frac tractus { adipisce { responde series[0][0] + series[1][1] + series[2][2]; } }
+	frac det { adipisce { responde series[0, 0] * (series[1, 1] * series[2, 2] - series[2, 1] * series[1, 2]) +
+			series[1, 0] * (series[2, 1] * series[0, 2] - series[0, 1] * series[2, 2]) +
+			series[2, 0] * (series[0, 1] * series[1, 2] - series[0, 2] * series[1, 1]);
+	} }
+	frac3x3 inversa { adipisce {
+		var m_12_12 = series[1, 1] * series[2, 2] - series[2, 1] * series[1, 2];
+		var m_02_12 = series[0, 2] * series[2, 1] - series[0, 1] * series[2, 2];
+		var m_01_12 = series[0, 1] * series[1, 2] - series[0, 2] * series[1, 1];
+		var D = series[0, 0] * m_12_12 + series[1, 0] * m_02_12 + series[2, 0] * m_01_12;
+		responde frac3x3(
+			frac3(m_12_12, m_02_12, m_01_12) / D,
+			frac3(series[1, 2] * series[2, 0] - series[1, 0] * series[2, 2],
+				series[0, 0] * series[2, 2] - series[0, 2] * series[2, 0],
+				series[0, 2] * series[1, 0] - series[0, 0] * series[1, 2]) / D,
+			frac3(series[1, 0] * series[2, 1] - series[1, 1] * series[2, 0],
+				series[0, 1] * series[2, 0] - series[0, 0] * series[2, 1],
+				series[0, 0] * series[1, 1] - series[0, 1] * series[1, 0]) / D);
+	} }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~frac3x3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:36 36=>36(@PTR_FOLLOW:W 1=>36(A[0]), @PTR_FOLLOW:W 1=>36(A[1])) } } }
+	structor (frac diag) { series[0] = frac3(diag, 0.0, 0.0); series[1] = frac3(0.0, diag, 0.0); series[2] = frac3(0.0, 0.0, diag); }
+	structor (frac3 diag) { series[0] = frac3(diag.x, 0.0, 0.0); series[1] = frac3(0.0, diag.y, 0.0); series[2] = frac3(0.0, 0.0, diag.z); }
+	structor (frac3 s1, frac3 s2, frac3 s3) { series[0] = s1; series[1] = s2; series[2] = s3; }
+	functio frac3x3 operator - () { responde frac3x3(-series[0], -series[1], -series[2]); }
+	[[xa]] functio ~frac3x3 operator = (~frac3x3 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:36 36=>36(@PTR_FOLLOW:W 1=>36(A[0]), @PTR_FOLLOW:W 1=>36(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~frac3x3 operator += (~frac3x3 src) { series[0] += src[0]; series[1] += src[1]; series[2] += src[2]; responde ego^; }
+	functio ~frac3x3 operator -= (~frac3x3 src) { series[0] -= src[0]; series[1] -= src[1]; series[2] -= src[2]; responde ego^; }
+	functio ~frac3x3 operator *= (~frac3x3 src) { ego^ = ego^ * src; responde ego^; }
+	classis functio frac3x3 operator + (~frac3x3 a, ~frac3x3 b) { responde frac3x3(a[0] + b[0], a[1] + b[1], a[2] + b[2]); }
+	classis functio frac3x3 operator - (~frac3x3 a, ~frac3x3 b) { responde frac3x3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+	classis functio frac3x3 operator * (~frac3x3 a, ~frac3x3 b) {
+		frac3x3 r;
+		pro (var i : [0, 2]) pro (var j : [0, 2]) {
+			frac A = 0.0;
+			pro (var k : [0, 2]) A += a[i, k] * b[k, j];
+			r[i, j] = A;
+		}
+		responde r;
+	}
+	classis functio frac3 operator * (~frac3x3 a, ~frac3 b) { responde frac3(math.prs(a[0], b), math.prs(a[1], b), math.prs(a[2], b)); }
+	classis functio logicum operator == (~frac3x3 a, ~frac3x3 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2]; }
+	classis functio logicum operator != (~frac3x3 a, ~frac3x3 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2]; }
+	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n", series[0], series[1], series[2]); }
+	[[inline]] functio ~frac3 operator [] (int i) { responde series[i]; }
+	[[inline]] functio ~frac operator [] (int i, int j) { responde series[i]._c[j]; }
+	functio frac3 operator () (int i) { responde frac3(series[0][i], series[1][i], series[2][i]); }
+}
+structura frac4x4 {
+	ordo [4] frac4 series;
+
+	frac4x4 transposita { adipisce { responde frac4x4(ego^(0), ego^(1), ego^(2), ego^(3)); } }
+	frac tractus { adipisce { responde series[0][0] + series[1][1] + series[2][2] + series[3][3]; } }
+	frac det { adipisce {
+		var m_23_23 = series[2, 2] * series[3, 3] - series[2, 3] * series[3, 2];
+		var m_03_23 = series[0, 2] * series[3, 3] - series[0, 3] * series[3, 2];
+		var m_13_23 = series[1, 2] * series[3, 3] - series[1, 3] * series[3, 2];
+		var m_12_23 = series[1, 2] * series[2, 3] - series[1, 3] * series[2, 2];
+		var m_02_23 = series[0, 2] * series[2, 3] - series[0, 3] * series[2, 2];
+		var m_01_23 = series[0, 2] * series[1, 3] - series[0, 3] * series[1, 2];
+		responde series[0, 0] * (series[1, 1] * m_23_23 - series[2, 1] * m_13_23 + series[3, 1] * m_12_23) -
+			series[1, 0] * (series[0, 1] * m_23_23 - series[2, 1] * m_03_23 + series[3, 1] * m_02_23) +
+			series[2, 0] * (series[0, 1] * m_13_23 - series[1, 1] * m_03_23 + series[3, 1] * m_01_23) -
+			series[3, 0] * (series[0, 1] * m_12_23 - series[1, 1] * m_02_23 + series[2, 1] * m_01_23);
+	} }
+	frac4x4 inversa { adipisce {
+		var m_23_23 = series[2, 2] * series[3, 3] - series[2, 3] * series[3, 2];
+		var m_03_23 = series[0, 2] * series[3, 3] - series[0, 3] * series[3, 2];
+		var m_13_23 = series[1, 2] * series[3, 3] - series[1, 3] * series[3, 2];
+		var m_12_23 = series[1, 2] * series[2, 3] - series[1, 3] * series[2, 2];
+		var m_02_23 = series[0, 2] * series[2, 3] - series[0, 3] * series[2, 2];
+		var m_01_23 = series[0, 2] * series[1, 3] - series[0, 3] * series[1, 2];
+		var m_23_01 = series[2, 0] * series[3, 1] - series[2, 1] * series[3, 0];
+		var m_03_01 = series[0, 0] * series[3, 1] - series[0, 1] * series[3, 0];
+		var m_13_01 = series[1, 0] * series[3, 1] - series[1, 1] * series[3, 0];
+		var m_12_01 = series[1, 0] * series[2, 1] - series[1, 1] * series[2, 0];
+		var m_02_01 = series[0, 0] * series[2, 1] - series[0, 1] * series[2, 0];
+		var m_01_01 = series[0, 0] * series[1, 1] - series[0, 1] * series[1, 0];
+		var m_123_123 = series[1, 1] * m_23_23 - series[2, 1] * m_13_23 + series[3, 1] * m_12_23;
+		var m_023_123 = series[0, 1] * m_23_23 - series[2, 1] * m_03_23 + series[3, 1] * m_02_23;
+		var m_013_123 = series[0, 1] * m_13_23 - series[1, 1] * m_03_23 + series[3, 1] * m_01_23;
+		var m_012_123 = series[0, 1] * m_12_23 - series[1, 1] * m_02_23 + series[2, 1] * m_01_23;
+		var m_123_023 = series[1, 0] * m_23_23 - series[2, 0] * m_13_23 + series[3, 0] * m_12_23;
+		var m_023_023 = series[0, 0] * m_23_23 - series[2, 0] * m_03_23 + series[3, 0] * m_02_23;
+		var m_013_023 = series[0, 0] * m_13_23 - series[1, 0] * m_03_23 + series[3, 0] * m_01_23;
+		var m_012_023 = series[0, 0] * m_12_23 - series[1, 0] * m_02_23 + series[2, 0] * m_01_23;
+		var m_123_013 = m_23_01 * series[1, 3] - m_13_01 * series[2, 3] + m_12_01 * series[3, 3];
+		var m_023_013 = m_23_01 * series[0, 3] - m_03_01 * series[2, 3] + m_02_01 * series[3, 3];
+		var m_013_013 = m_13_01 * series[0, 3] - m_03_01 * series[1, 3] + m_01_01 * series[3, 3];
+		var m_012_013 = m_12_01 * series[0, 3] - m_02_01 * series[1, 3] + m_01_01 * series[2, 3];
+		var m_123_012 = m_23_01 * series[1, 2] - m_13_01 * series[2, 2] + m_12_01 * series[3, 2];
+		var m_023_012 = m_23_01 * series[0, 2] - m_03_01 * series[2, 2] + m_02_01 * series[3, 2];
+		var m_013_012 = m_13_01 * series[0, 2] - m_03_01 * series[1, 2] + m_01_01 * series[3, 2];
+		var m_012_012 = m_12_01 * series[0, 2] - m_02_01 * series[1, 2] + m_01_01 * series[2, 2];
+		var D = series[0, 0] * m_123_123 - series[1, 0] * m_023_123 + series[2, 0] * m_013_123 - series[3, 0] * m_012_123;
+		responde frac4x4(frac4(m_123_123, -m_023_123, m_013_123, -m_012_123) / D,
+			frac4(-m_123_023, m_023_023, -m_013_023, m_012_023) / D,
+			frac4(m_123_013, -m_023_013, m_013_013, -m_012_013) / D,
+			frac4(-m_123_012, m_023_012, -m_013_012, m_012_012) / D);
+	} }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~frac4x4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:64 64=>64(@PTR_FOLLOW:W 1=>64(A[0]), @PTR_FOLLOW:W 1=>64(A[1])) } } }
+	structor (frac diag) { series[0] = frac4(diag, 0.0, 0.0, 0.0); series[1] = frac4(0.0, diag, 0.0, 0.0); series[2] = frac4(0.0, 0.0, diag, 0.0); series[3] = frac4(0.0, 0.0, 0.0, diag); }
+	structor (frac4 diag) { series[0] = frac4(diag.x, 0.0, 0.0, 0.0); series[1] = frac4(0.0, diag.y, 0.0, 0.0); series[2] = frac4(0.0, 0.0, diag.z, 0.0); series[3] = frac4(0.0, 0.0, 0.0, diag.w); }
+	structor (frac4 s1, frac4 s2, frac4 s3, frac4 s4) { series[0] = s1; series[1] = s2; series[2] = s3; series[3] = s4; }
+	functio frac4x4 operator - () { responde frac4x4(-series[0], -series[1], -series[2], -series[3]); }
+	[[xa]] functio ~frac4x4 operator = (~frac4x4 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:64 64=>64(@PTR_FOLLOW:W 1=>64(A[0]), @PTR_FOLLOW:W 1=>64(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~frac4x4 operator += (~frac4x4 src) { series[0] += src[0]; series[1] += src[1]; series[2] += src[2]; series[3] += src[3]; responde ego^; }
+	functio ~frac4x4 operator -= (~frac4x4 src) { series[0] -= src[0]; series[1] -= src[1]; series[2] -= src[2]; series[3] -= src[3]; responde ego^; }
+	functio ~frac4x4 operator *= (~frac4x4 src) { ego^ = ego^ * src; responde ego^; }
+	classis functio frac4x4 operator + (~frac4x4 a, ~frac4x4 b) { responde frac4x4(a[0] + b[0], a[1] + b[1], a[2] + b[2], a[3] + b[3]); }
+	classis functio frac4x4 operator - (~frac4x4 a, ~frac4x4 b) { responde frac4x4(a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]); }
+	classis functio frac4x4 operator * (~frac4x4 a, ~frac4x4 b) {
+		frac4x4 r;
+		pro (var i : [0, 3]) pro (var j : [0, 3]) {
+			frac A = 0.0;
+			pro (var k : [0, 3]) A += a[i, k] * b[k, j];
+			r[i, j] = A;
+		}
+		responde r;
+	}
+	classis functio frac4 operator * (~frac4x4 a, ~frac4 b) { responde frac4(math.prs(a[0], b), math.prs(a[1], b), math.prs(a[2], b), math.prs(a[3], b)); }
+	classis functio logicum operator == (~frac4x4 a, ~frac4x4 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2] && a.series[3] == b.series[3]; }
+	classis functio logicum operator != (~frac4x4 a, ~frac4x4 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2] || a.series[3] != b.series[3]; }
+	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n%3\n", series[0], series[1], series[2], series[3]); }
+	[[inline]] functio ~frac4 operator [] (int i) { responde series[i]; }
+	[[inline]] functio ~frac operator [] (int i, int j) { responde series[i]._c[j]; }
+	functio frac4 operator () (int i) { responde frac4(series[0][i], series[1][i], series[2][i], series[3][i]); }
+}
+structura dfrac2x2 {
+	ordo [2] dfrac2 series;
+
+	dfrac2x2 transposita { adipisce { responde dfrac2x2(ego^(0), ego^(1)); } }
+	dfrac tractus { adipisce { responde series[0][0] + series[1][1]; } }
+	dfrac det { adipisce { responde series[0, 0] * series[1, 1] - series[0, 1] * series[1, 0]; } }
+	dfrac2x2 inversa { adipisce { var D = det; responde dfrac2x2(dfrac2(series[1, 1], -series[0, 1]) / D, dfrac2(-series[1, 0], series[0, 0]) / D); } }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~dfrac2x2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])) } } }
+	structor (dfrac diag) { series[0] = dfrac2(diag, 0.0); series[1] = dfrac2(0.0, diag); }
+	structor (dfrac2 diag) { series[0] = dfrac2(diag.x, 0.0); series[1] = dfrac2(0.0, diag.y); }
+	structor (dfrac2 s1, dfrac2 s2) { series[0] = s1; series[1] = s2; }
+	functio dfrac2x2 operator - () { responde dfrac2x2(-series[0], -series[1]); }
+	[[xa]] functio ~dfrac2x2 operator = (~dfrac2x2 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~dfrac2x2 operator += (~dfrac2x2 src) { series[0] += src[0]; series[1] += src[1]; responde ego^; }
+	functio ~dfrac2x2 operator -= (~dfrac2x2 src) { series[0] -= src[0]; series[1] -= src[1]; responde ego^; }
+	functio ~dfrac2x2 operator *= (~dfrac2x2 src) { ego^ = ego^ * src; responde ego^; }
+	classis functio dfrac2x2 operator + (~dfrac2x2 a, ~dfrac2x2 b) { responde dfrac2x2(a[0] + b[0], a[1] + b[1]); }
+	classis functio dfrac2x2 operator - (~dfrac2x2 a, ~dfrac2x2 b) { responde dfrac2x2(a[0] - b[0], a[1] - b[1]); }
+	classis functio dfrac2x2 operator * (~dfrac2x2 a, ~dfrac2x2 b) {
+		dfrac2x2 r;
+		pro (var i : [0, 1]) pro (var j : [0, 1]) {
+			dfrac A = 0.0;
+			pro (var k : [0, 1]) A += a[i, k] * b[k, j];
+			r[i, j] = A;
+		}
+		responde r;
+	}
+	classis functio dfrac2 operator * (~dfrac2x2 a, ~dfrac2 b) { responde dfrac2(math.prs(a[0], b), math.prs(a[1], b)); }
+	classis functio logicum operator == (~dfrac2x2 a, ~dfrac2x2 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1]; }
+	classis functio logicum operator != (~dfrac2x2 a, ~dfrac2x2 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1]; }
+	convertor (linea) () iacit { responde linea.forma("%0\n%1\n", series[0], series[1]); }
+	[[inline]] functio ~dfrac2 operator [] (int i) { responde series[i]; }
+	[[inline]] functio ~dfrac operator [] (int i, int j) { responde series[i]._c[j]; }
+	functio dfrac2 operator () (int i) { responde dfrac2(series[0][i], series[1][i]); }
+}
+structura dfrac3x3 {
+	ordo [3] dfrac3 series;
+
+	dfrac3x3 transposita { adipisce { responde dfrac3x3(ego^(0), ego^(1), ego^(2)); } }
+	dfrac tractus { adipisce { responde series[0][0] + series[1][1] + series[2][2]; } }
+	dfrac det { adipisce { responde series[0, 0] * (series[1, 1] * series[2, 2] - series[2, 1] * series[1, 2]) +
+			series[1, 0] * (series[2, 1] * series[0, 2] - series[0, 1] * series[2, 2]) +
+			series[2, 0] * (series[0, 1] * series[1, 2] - series[0, 2] * series[1, 1]);
+	} }
+	dfrac3x3 inversa { adipisce {
+		var m_12_12 = series[1, 1] * series[2, 2] - series[2, 1] * series[1, 2];
+		var m_02_12 = series[0, 2] * series[2, 1] - series[0, 1] * series[2, 2];
+		var m_01_12 = series[0, 1] * series[1, 2] - series[0, 2] * series[1, 1];
+		var D = series[0, 0] * m_12_12 + series[1, 0] * m_02_12 + series[2, 0] * m_01_12;
+		responde dfrac3x3(
+			dfrac3(m_12_12, m_02_12, m_01_12) / D,
+			dfrac3(series[1, 2] * series[2, 0] - series[1, 0] * series[2, 2],
+				series[0, 0] * series[2, 2] - series[0, 2] * series[2, 0],
+				series[0, 2] * series[1, 0] - series[0, 0] * series[1, 2]) / D,
+			dfrac3(series[1, 0] * series[2, 1] - series[1, 1] * series[2, 0],
+				series[0, 1] * series[2, 0] - series[0, 0] * series[2, 1],
+				series[0, 0] * series[1, 1] - series[0, 1] * series[1, 0]) / D);
+	} }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~dfrac3x3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:72 72=>72(@PTR_FOLLOW:W 1=>72(A[0]), @PTR_FOLLOW:W 1=>72(A[1])) } } }
+	structor (dfrac diag) { series[0] = dfrac3(diag, 0.0, 0.0); series[1] = dfrac3(0.0, diag, 0.0); series[2] = dfrac3(0.0, 0.0, diag); }
+	structor (dfrac3 diag) { series[0] = dfrac3(diag.x, 0.0, 0.0); series[1] = dfrac3(0.0, diag.y, 0.0); series[2] = dfrac3(0.0, 0.0, diag.z); }
+	structor (dfrac3 s1, dfrac3 s2, dfrac3 s3) { series[0] = s1; series[1] = s2; series[2] = s3; }
+	functio dfrac3x3 operator - () { responde dfrac3x3(-series[0], -series[1], -series[2]); }
+	[[xa]] functio ~dfrac3x3 operator = (~dfrac3x3 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:72 72=>72(@PTR_FOLLOW:W 1=>72(A[0]), @PTR_FOLLOW:W 1=>72(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~dfrac3x3 operator += (~dfrac3x3 src) { series[0] += src[0]; series[1] += src[1]; series[2] += src[2]; responde ego^; }
+	functio ~dfrac3x3 operator -= (~dfrac3x3 src) { series[0] -= src[0]; series[1] -= src[1]; series[2] -= src[2]; responde ego^; }
+	functio ~dfrac3x3 operator *= (~dfrac3x3 src) { ego^ = ego^ * src; responde ego^; }
+	classis functio dfrac3x3 operator + (~dfrac3x3 a, ~dfrac3x3 b) { responde dfrac3x3(a[0] + b[0], a[1] + b[1], a[2] + b[2]); }
+	classis functio dfrac3x3 operator - (~dfrac3x3 a, ~dfrac3x3 b) { responde dfrac3x3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+	classis functio dfrac3x3 operator * (~dfrac3x3 a, ~dfrac3x3 b) {
+		dfrac3x3 r;
+		pro (var i : [0, 2]) pro (var j : [0, 2]) {
+			dfrac A = 0.0;
+			pro (var k : [0, 2]) A += a[i, k] * b[k, j];
+			r[i, j] = A;
+		}
+		responde r;
+	}
+	classis functio dfrac3 operator * (~dfrac3x3 a, ~dfrac3 b) { responde dfrac3(math.prs(a[0], b), math.prs(a[1], b), math.prs(a[2], b)); }
+	classis functio logicum operator == (~dfrac3x3 a, ~dfrac3x3 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2]; }
+	classis functio logicum operator != (~dfrac3x3 a, ~dfrac3x3 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2]; }
+	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n", series[0], series[1], series[2]); }
+	[[inline]] functio ~dfrac3 operator [] (int i) { responde series[i]; }
+	[[inline]] functio ~dfrac operator [] (int i, int j) { responde series[i]._c[j]; }
+	functio dfrac3 operator () (int i) { responde dfrac3(series[0][i], series[1][i], series[2][i]); }
+}
+structura dfrac4x4 {
+	ordo [4] dfrac4 series;
+
+	dfrac4x4 transposita { adipisce { responde dfrac4x4(ego^(0), ego^(1), ego^(2), ego^(3)); } }
+	dfrac tractus { adipisce { responde series[0][0] + series[1][1] + series[2][2] + series[3][3]; } }
+	dfrac det { adipisce {
+		var m_23_23 = series[2, 2] * series[3, 3] - series[2, 3] * series[3, 2];
+		var m_03_23 = series[0, 2] * series[3, 3] - series[0, 3] * series[3, 2];
+		var m_13_23 = series[1, 2] * series[3, 3] - series[1, 3] * series[3, 2];
+		var m_12_23 = series[1, 2] * series[2, 3] - series[1, 3] * series[2, 2];
+		var m_02_23 = series[0, 2] * series[2, 3] - series[0, 3] * series[2, 2];
+		var m_01_23 = series[0, 2] * series[1, 3] - series[0, 3] * series[1, 2];
+		responde series[0, 0] * (series[1, 1] * m_23_23 - series[2, 1] * m_13_23 + series[3, 1] * m_12_23) -
+			series[1, 0] * (series[0, 1] * m_23_23 - series[2, 1] * m_03_23 + series[3, 1] * m_02_23) +
+			series[2, 0] * (series[0, 1] * m_13_23 - series[1, 1] * m_03_23 + series[3, 1] * m_01_23) -
+			series[3, 0] * (series[0, 1] * m_12_23 - series[1, 1] * m_02_23 + series[2, 1] * m_01_23);
+	} }
+	dfrac4x4 inversa { adipisce {
+		var m_23_23 = series[2, 2] * series[3, 3] - series[2, 3] * series[3, 2];
+		var m_03_23 = series[0, 2] * series[3, 3] - series[0, 3] * series[3, 2];
+		var m_13_23 = series[1, 2] * series[3, 3] - series[1, 3] * series[3, 2];
+		var m_12_23 = series[1, 2] * series[2, 3] - series[1, 3] * series[2, 2];
+		var m_02_23 = series[0, 2] * series[2, 3] - series[0, 3] * series[2, 2];
+		var m_01_23 = series[0, 2] * series[1, 3] - series[0, 3] * series[1, 2];
+		var m_23_01 = series[2, 0] * series[3, 1] - series[2, 1] * series[3, 0];
+		var m_03_01 = series[0, 0] * series[3, 1] - series[0, 1] * series[3, 0];
+		var m_13_01 = series[1, 0] * series[3, 1] - series[1, 1] * series[3, 0];
+		var m_12_01 = series[1, 0] * series[2, 1] - series[1, 1] * series[2, 0];
+		var m_02_01 = series[0, 0] * series[2, 1] - series[0, 1] * series[2, 0];
+		var m_01_01 = series[0, 0] * series[1, 1] - series[0, 1] * series[1, 0];
+		var m_123_123 = series[1, 1] * m_23_23 - series[2, 1] * m_13_23 + series[3, 1] * m_12_23;
+		var m_023_123 = series[0, 1] * m_23_23 - series[2, 1] * m_03_23 + series[3, 1] * m_02_23;
+		var m_013_123 = series[0, 1] * m_13_23 - series[1, 1] * m_03_23 + series[3, 1] * m_01_23;
+		var m_012_123 = series[0, 1] * m_12_23 - series[1, 1] * m_02_23 + series[2, 1] * m_01_23;
+		var m_123_023 = series[1, 0] * m_23_23 - series[2, 0] * m_13_23 + series[3, 0] * m_12_23;
+		var m_023_023 = series[0, 0] * m_23_23 - series[2, 0] * m_03_23 + series[3, 0] * m_02_23;
+		var m_013_023 = series[0, 0] * m_13_23 - series[1, 0] * m_03_23 + series[3, 0] * m_01_23;
+		var m_012_023 = series[0, 0] * m_12_23 - series[1, 0] * m_02_23 + series[2, 0] * m_01_23;
+		var m_123_013 = m_23_01 * series[1, 3] - m_13_01 * series[2, 3] + m_12_01 * series[3, 3];
+		var m_023_013 = m_23_01 * series[0, 3] - m_03_01 * series[2, 3] + m_02_01 * series[3, 3];
+		var m_013_013 = m_13_01 * series[0, 3] - m_03_01 * series[1, 3] + m_01_01 * series[3, 3];
+		var m_012_013 = m_12_01 * series[0, 3] - m_02_01 * series[1, 3] + m_01_01 * series[2, 3];
+		var m_123_012 = m_23_01 * series[1, 2] - m_13_01 * series[2, 2] + m_12_01 * series[3, 2];
+		var m_023_012 = m_23_01 * series[0, 2] - m_03_01 * series[2, 2] + m_02_01 * series[3, 2];
+		var m_013_012 = m_13_01 * series[0, 2] - m_03_01 * series[1, 2] + m_01_01 * series[3, 2];
+		var m_012_012 = m_12_01 * series[0, 2] - m_02_01 * series[1, 2] + m_01_01 * series[2, 2];
+		var D = series[0, 0] * m_123_123 - series[1, 0] * m_023_123 + series[2, 0] * m_013_123 - series[3, 0] * m_012_123;
+		responde dfrac4x4(dfrac4(m_123_123, -m_023_123, m_013_123, -m_012_123) / D,
+			dfrac4(-m_123_023, m_023_023, -m_013_023, m_012_023) / D,
+			dfrac4(m_123_013, -m_023_013, m_013_013, -m_012_013) / D,
+			dfrac4(-m_123_012, m_023_012, -m_013_012, m_012_012) / D);
+	} }
+
+	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
+	[[xa]] structor (~dfrac4x4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:128 128=>128(@PTR_FOLLOW:W 1=>128(A[0]), @PTR_FOLLOW:W 1=>128(A[1])) } } }
+	structor (dfrac diag) { series[0] = dfrac4(diag, 0.0, 0.0, 0.0); series[1] = dfrac4(0.0, diag, 0.0, 0.0); series[2] = dfrac4(0.0, 0.0, diag, 0.0); series[3] = dfrac4(0.0, 0.0, 0.0, diag); }
+	structor (dfrac4 diag) { series[0] = dfrac4(diag.x, 0.0, 0.0, 0.0); series[1] = dfrac4(0.0, diag.y, 0.0, 0.0); series[2] = dfrac4(0.0, 0.0, diag.z, 0.0); series[3] = dfrac4(0.0, 0.0, 0.0, diag.w); }
+	structor (dfrac4 s1, dfrac4 s2, dfrac4 s3, dfrac4 s4) { series[0] = s1; series[1] = s2; series[2] = s3; series[3] = s4; }
+	functio dfrac4x4 operator - () { responde dfrac4x4(-series[0], -series[1], -series[2], -series[3]); }
+	[[xa]] functio ~dfrac4x4 operator = (~dfrac4x4 src) {
+		INTERFACE W 1 : THIS W 1 => W 1
+		CODE { EVAL { @BLT:128 128=>128(@PTR_FOLLOW:W 1=>128(A[0]), @PTR_FOLLOW:W 1=>128(A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~dfrac4x4 operator += (~dfrac4x4 src) { series[0] += src[0]; series[1] += src[1]; series[2] += src[2]; series[3] += src[3]; responde ego^; }
+	functio ~dfrac4x4 operator -= (~dfrac4x4 src) { series[0] -= src[0]; series[1] -= src[1]; series[2] -= src[2]; series[3] -= src[3]; responde ego^; }
+	functio ~dfrac4x4 operator *= (~dfrac4x4 src) { ego^ = ego^ * src; responde ego^; }
+	classis functio dfrac4x4 operator + (~dfrac4x4 a, ~dfrac4x4 b) { responde dfrac4x4(a[0] + b[0], a[1] + b[1], a[2] + b[2], a[3] + b[3]); }
+	classis functio dfrac4x4 operator - (~dfrac4x4 a, ~dfrac4x4 b) { responde dfrac4x4(a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]); }
+	classis functio dfrac4x4 operator * (~dfrac4x4 a, ~dfrac4x4 b) {
+		dfrac4x4 r;
+		pro (var i : [0, 3]) pro (var j : [0, 3]) {
+			dfrac A = 0.0;
+			pro (var k : [0, 3]) A += a[i, k] * b[k, j];
+			r[i, j] = A;
+		}
+		responde r;
+	}
+	classis functio dfrac4 operator * (~dfrac4x4 a, ~dfrac4 b) { responde dfrac4(math.prs(a[0], b), math.prs(a[1], b), math.prs(a[2], b), math.prs(a[3], b)); }
+	classis functio logicum operator == (~dfrac4x4 a, ~dfrac4x4 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2] && a.series[3] == b.series[3]; }
+	classis functio logicum operator != (~dfrac4x4 a, ~dfrac4x4 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2] || a.series[3] != b.series[3]; }
+	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n%3\n", series[0], series[1], series[2], series[3]); }
+	[[inline]] functio ~dfrac4 operator [] (int i) { responde series[i]; }
+	[[inline]] functio ~dfrac operator [] (int i, int j) { responde series[i]._c[j]; }
+	functio dfrac4 operator () (int i) { responde dfrac4(series[0][i], series[1][i], series[2][i], series[3][i]); }
+}
+
+dura frac2x2 {
+	convertor (dfrac2x2) () { responde dfrac2x2(series[0], series[1]); }
+}
+dura frac3x3 {
+	convertor (dfrac3x3) () { responde dfrac3x3(series[0], series[1], series[2]); }
+}
+dura frac4x4 {
+	convertor (dfrac4x4) () { responde dfrac4x4(series[0], series[1], series[2], series[3]); }
+}
+dura dfrac2x2 {
+	convertor (frac2x2) () { responde frac2x2(series[0], series[1]); }
+}
+dura dfrac3x3 {
+	convertor (frac3x3) () { responde frac3x3(series[0], series[1], series[2]); }
+}
+dura dfrac4x4 {
+	convertor (frac4x4) () { responde frac4x4(series[0], series[1], series[2], series[3]); }
+}

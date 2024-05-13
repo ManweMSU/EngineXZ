@@ -40,6 +40,14 @@ xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\potentia.xo       
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\fenestrae.xo      -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\fenestrae.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\graphicum.xo      -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\graphicum.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\repulsus.xo       -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\repulsus.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathvec.xo        -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathvec.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathcom.xo        -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathcom.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathvcom.xo       -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathvcom.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\matrices.xo       -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\matrices.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\comatrices.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\comatrices.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathquat.xo       -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathquat.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathcolorum.xo    -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathcolorum.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathgraphici.xo   -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathgraphici.xo
 
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.ru.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.ru.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.en.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.en.xo

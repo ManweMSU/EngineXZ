@@ -33,6 +33,14 @@ copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vs
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\fenestrae.xv       -NVoml  xv_release\_build\com\fenestrae.xo      xv_lib\fenestrae.xvm        xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\graphicum.xv       -NVoml  xv_release\_build\com\graphicum.xo      xv_lib\graphicum.xvm        xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\repulsus.xv        -NVoml  xv_release\_build\com\repulsus.xo       xv_lib\repulsus.xvm         xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\mathvec.xv         -NVoml  xv_release\_build\com\mathvec.xo        xv_lib\mathvec.xvm          xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\mathcom.xv         -NVoml  xv_release\_build\com\mathcom.xo        xv_lib\mathcom.xvm          xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\mathvcom.xv        -NVoml  xv_release\_build\com\mathvcom.xo       xv_lib\mathvcom.xvm         xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\matrices.xv        -NVoml  xv_release\_build\com\matrices.xo       xv_lib\matrices.xvm         xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\comatrices.xv      -NVoml  xv_release\_build\com\comatrices.xo     xv_lib\comatrices.xvm       xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\mathquat.xv        -NVoml  xv_release\_build\com\mathquat.xo       xv_lib\mathquat.xvm         xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\mathcolorum.xv     -NVoml  xv_release\_build\com\mathcolorum.xo    xv_lib\mathcolorum.xvm      xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\mathgraphici.xv    -NVoml  xv_release\_build\com\mathgraphici.xo   xv_lib\mathgraphici.xvm     xv_release\_build\com
 xcopy /BY xv_release\_build\com\* xv_release\_build\windows_%ARCH%\xvcl\
 xcopy /BY xv_lib\*.xvm xv_release\_build\windows_%ARCH%\xvcl\
 estrtab xv_com\locale\ru.txt :binary xv_release\_build\windows_%ARCH%\xv.loc\ru.ecst

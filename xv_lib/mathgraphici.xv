@@ -1,0 +1,130 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Mathematicae Graphici";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+[[systema] libera]
+
+importa matrices;
+
+spatium math {
+	spatium graphicum {
+		functio frac4x4 translator(frac3 valor)
+		{
+			responde frac4x4(
+				frac4(1.0, 0.0, 0.0, valor.x),
+				frac4(0.0, 1.0, 0.0, valor.y),
+				frac4(0.0, 0.0, 1.0, valor.z),
+				frac4(0.0, 0.0, 0.0, 1.0)
+			);
+		}
+		functio frac4x4 ascensor(frac3 valor)
+		{
+			responde frac4x4(
+				frac4(valor.x, 0.0, 0.0, 0.0),
+				frac4(0.0, valor.y, 0.0, 0.0),
+				frac4(0.0, 0.0, valor.z, 0.0),
+				frac4(0.0, 0.0, 0.0, 1.0)
+			);
+		}
+		functio frac4x4 rotor_x(frac angulus)
+		{
+			var c = cos(angulus);
+			var s = sin(angulus);
+			responde frac4x4(
+				frac4(1.0, 0.0, 0.0, 0.0),
+				frac4(0.0, c, -s, 0.0),
+				frac4(0.0, s, +c, 0.0),
+				frac4(0.0, 0.0, 0.0, 1.0)
+			);
+		}
+		functio frac4x4 rotor_y(frac angulus)
+		{
+			var c = cos(angulus);
+			var s = sin(angulus);
+			responde frac4x4(
+				frac4(+c, 0.0, s, 0.0),
+				frac4(0.0, 1.0, 0.0, 0.0),
+				frac4(-s, 0.0, c, 0.0),
+				frac4(0.0, 0.0, 0.0, 1.0)
+			);
+		}
+		functio frac4x4 rotor_z(frac angulus)
+		{
+			var c = cos(angulus);
+			var s = sin(angulus);
+			responde frac4x4(
+				frac4(c, -s, 0.0, 0.0),
+				frac4(s, +c, 0.0, 0.0),
+				frac4(0.0, 0.0, 1.0, 0.0),
+				frac4(0.0, 0.0, 0.0, 1.0)
+			);
+		}
+		functio frac4x4 rotor(frac angulus, frac3 axis)
+		{
+			var c = cos(angulus);
+			var s = sin(angulus);
+			var z = axis.normativus;
+			var x = prv(z, abs(z.x) > frac(0.5) ? frac3(0.0, 1.0, 0.0) : frac3(1.0, 0.0, 0.0)).normativus;
+			var y = prv(z, x);
+			frac3x3 trans(x, y, z);
+			frac3x3 rot(frac3(c, -s, 0.0), frac3(s, c, 0.0), frac3(0.0, 0.0, 1.0));
+			var ru = trans.transposita * rot * trans;
+			responde frac4x4(
+				frac4(ru[0, 0], ru[0, 1], ru[0, 2], 0.0),
+				frac4(ru[1, 0], ru[1, 1], ru[1, 2], 0.0),
+				frac4(ru[2, 0], ru[2, 1], ru[2, 2], 0.0),
+				frac4(0.0, 0.0, 0.0, 1.0)
+			);
+		}
+		functio frac4x4 reflexor(frac4 planus)
+		{
+			var p = planus / planus.xyz.longitudo;
+			responde frac4x4(-frac(2.0) * p.x * p, -frac(2.0) * p.y * p, -frac(2.0) * p.z * p, frac4(frac(0.0))) + frac4x4(frac(1.0));
+		}
+		functio frac4x4 spectator(frac3 pos, frac3 der, frac3 sup)
+		{
+			var z = -der.normativus;
+			var x = prv(sup, z).normativus;
+			var y = prv(z, x);
+			responde frac4x4(
+				frac4(x.x, x.y, x.z, -prs(x, pos)),
+				frac4(y.x, y.y, y.z, -prs(y, pos)),
+				frac4(z.x, z.y, z.z, -prs(z, pos)),
+				frac4(0.0, 0.0, 0.0, 1.0)
+			);
+		}
+		functio frac4x4 projector_orthogonalis(frac lat, frac alt, frac prox, frac ult)
+		{
+			var ainv = frac(1.0) / (prox - ult);
+			responde frac4x4(
+				frac4(frac(2.0) / lat, 0.0, 0.0, 0.0),
+				frac4(0.0, frac(2.0) / alt, 0.0, 0.0),
+				frac4(0.0, 0.0, ainv, ainv * prox),
+				frac4(0.0, 0.0, 0.0, 1.0)
+			);
+		}
+		functio frac4x4 projector_perspectivus(frac prox_lat, frac prox_alt, frac prox, frac ult)
+		{
+			var ainv = frac(1.0) / (prox - ult);
+			responde frac4x4(
+				frac4(frac(2.0) * prox / prox_lat, 0.0, 0.0, 0.0),
+				frac4(0.0, frac(2.0) * prox / prox_alt, 0.0, 0.0),
+				frac4(0.0, 0.0, ainv * ult, ainv * ult * prox),
+				frac4(0.0, 0.0, -1.0, 0.0)
+			);
+		}
+		functio frac4x4 projector_perspectivus_angulatus(frac angulus, frac ratio, frac prox, frac ult)
+		{
+			var ainv = frac(1.0) / (prox - ult);
+			var asc_y = ctg(angulus / frac(2.0));
+			var asc_x = asc_y / ratio;
+			responde frac4x4(
+				frac4(asc_x, 0.0, 0.0, 0.0),
+				frac4(0.0, asc_y, 0.0, 0.0),
+				frac4(0.0, 0.0, ainv * ult, ainv * ult * prox),
+				frac4(0.0, 0.0, -1.0, 0.0)
+			);
+		}
+	}
+}
