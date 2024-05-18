@@ -48,6 +48,7 @@ xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\comatrices.xo     
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathquat.xo       -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathquat.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathcolorum.xo    -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathcolorum.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathgraphici.xo   -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\mathgraphici.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\typographica.xo   -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\typographica.xo
 
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.ru.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.ru.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.en.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.en.xo

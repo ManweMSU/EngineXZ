@@ -11,6 +11,7 @@
 #include "../xenv/xe_powerapi.h"
 #include "../xenv/xe_reflapi.h"
 #include "../xenv/xe_wndapi.h"
+#include "../xenv/xe_tpgrph.h"
 
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
@@ -965,7 +966,7 @@ namespace Engine
 			}
 			XE::ActivateFileIO(*loader, conf.xi_executable, direct_args.GetBuffer(), direct_args.Length());
 		}
-		void InvalidSubsystemErrorReport(void) noexcept { PlatformErrorReport(L"Subsystema moduli est executa non (in circumiecto currenti)."); }
+		void InvalidSubsystemErrorReport(void) noexcept { PlatformErrorReport(L"Subsystema moduli executa non est (in circumiecto currenti)."); }
 		void NoEntryPointErrorReport(void) noexcept { PlatformErrorReport(L"Introitus nullus."); }
 		int Main(const EnvironmentDesc & desc) noexcept
 		{
@@ -1049,6 +1050,7 @@ namespace Engine
 				XE::ActivatePowerControl(*loader);
 				XE::ActivateReflectionAPI(*loader);
 				XE::ActivateWindowsIO(*loader);
+				XE::ActivateTypographyIO(*loader);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;
 				if (environment_configuration.locale_override.Length()) Assembly::CurrentLocale = environment_configuration.locale_override;

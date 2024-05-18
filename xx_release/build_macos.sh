@@ -45,6 +45,7 @@ xx shellex_macos/patch.xx xx_release/_build/macosx_${ARCH}/XX.app/XX.app
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/mathquat.xo      -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/mathquat.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/mathcolorum.xo   -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/mathcolorum.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/mathgraphici.xo  -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/mathgraphici.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/typographica.xo  -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/typographica.xo
 
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.ru.xo    -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/errores.ru.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.en.xo    -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/errores.en.xo

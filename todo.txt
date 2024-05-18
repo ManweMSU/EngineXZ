@@ -41,8 +41,7 @@ BETA-5:
  + XVSL Performance Improvments
  - Engine Runtime 1.9 ???
  - Communication API (Sockets: local, TCP, SSL; Shared Memory; DNS; HTTP Client and Server; ECF)
- - Printing API
- - Basic PDF API ???
+ + Printing and PDF API
 
 OTHER RELEASES:
  - Multimedia API

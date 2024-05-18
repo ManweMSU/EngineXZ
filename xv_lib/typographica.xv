@@ -1,0 +1,89 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Typographicus";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+[[systema] libera]
+
+importa imago;
+
+spatium formati {
+	spatium modus_documenti_portabilis {
+		constatus duo_colores		= nint(0x000000);
+		constatus colores_grisei	= nint(0x000001);
+		constatus colores_ultimi	= nint(0x000002);
+		constatus condensa			= nint(0x004000);
+		constatus interpola			= nint(0x008000);
+		constatus clode_contextum	= nint(0x800000);
+	}
+	enumeratio attributum_documenti_portabilis hereditat nint {
+		generator				= 0x10001,
+		codificator				= 0x10002,
+		titulus					= 0x10003,
+		creator					= 0x10004,
+		peristasis				= 0x10005,
+		verba					= 0x10006,
+		tempus_creaturae		= 0x20001,
+		tempus_alternationis	= 0x20002
+	}
+	
+	genus documentum_portabile hereditat objectum {
+		functio nihil adde_paginam(nint lat, nint alt) iacit virtualis pura;
+		functio nihil adde_paginam(nint lat, nint alt, @imago.replum rpl) iacit virtualis pura;
+		functio nihil adde_paginam(nint lat, nint alt, @imago.replum rpl, nint modus) iacit virtualis pura;
+		functio nihil loca_attributum(attributum_documenti_portabilis attr, ~linea valor) iacit virtualis pura;
+		functio nihil loca_attributum(attributum_documenti_portabilis attr, ~tempus valor) iacit virtualis pura;
+		functio nihil ende() iacit virtualis pura;
+	}
+	
+	functio !documentum_portabile crea_documentum_portabile(@flumen fl) iacit {
+		responde (@_typographica_systemae)(protocollum(typographica))^.crea_documentum_portabile(fl);
+	}
+}
+spatium graphicum {
+	enumeratio orientatio hereditat nint { verticalis = 1, horizontalis = 2 }
+	enumeratio modus_duplicis hereditat nint { simplex = 1, duplex = 2, duplex_longus = 3 }
+	structura modus_imprimendi {
+		nint latitudo;
+		nint longitudo;
+		nint puncti_per_unciam;
+		orientatio orientatio;
+		dfrac conscendens;
+		nint exemplares;
+		modus_duplicis modus_duplicis;
+		logicum confere;
+	}
+
+	genus contextus_imprimendi hereditat objectum {
+		@contextus_machinae contextus { adipisce virtualis pura; }
+		(int, int) dimensiones { adipisce virtualis pura; }
+		functio logicum exordi_paginam() virtualis pura;
+		functio logicum ende_paginam() virtualis pura;
+		functio logicum ende_imprimendum() virtualis pura;
+	}
+	genus imprimitor hereditat objectum {
+		linea nomen { adipisce iacit virtualis pura; }
+		modus_imprimendi modus { adipisce virtualis pura; loca iacit virtualis pura; }
+		functio logicum proba_modum(~modus_imprimendi modus) virtualis pura;
+		functio !contextus_imprimendi imprime(~linea nomen_documenti) iacit virtualis pura;
+		functio !contextus_imprimendi imprime(~linea nomen_documenti, ~modus_imprimendi modus) iacit virtualis pura;
+	}
+	genus fabricatio_imprimitoris hereditat objectum {
+		linea imprimitor_defaltus { adipisce iacit virtualis pura; }
+		!ordo linea imprimitores { adipisce iacit virtualis pura; }
+		functio !imprimitor aperi(~linea nomen) iacit virtualis pura;
+	}
+
+	functio !fabricatio_imprimitoris crea_fabricationem_imprimitoris() iacit {
+		responde (@_typographica_systemae)(protocollum(typographica))^.crea_fabricationem_imprimitoris();
+	}
+	functio !contextus_imprimendi imprime_in_documentum(@formati.documentum_portabile doc, ~modus_imprimendi modus_imprimendi, nint modus_codificatoris) iacit {
+		responde (@_typographica_systemae)(protocollum(typographica))^.imprime_in_documentum(doc, modus_imprimendi, modus_codificatoris);
+	}
+}
+
+protocollum _typographica_systemae {
+	functio !graphicum.fabricatio_imprimitoris crea_fabricationem_imprimitoris() iacit virtualis pura;
+	functio !formati.documentum_portabile crea_documentum_portabile(@flumen fl) iacit virtualis pura;
+	functio !graphicum.contextus_imprimendi imprime_in_documentum(@formati.documentum_portabile doc, ~graphicum.modus_imprimendi modus_imprimendi, nint modus_codificatoris) iacit virtualis pura;
+}
