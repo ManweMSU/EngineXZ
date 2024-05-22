@@ -112,7 +112,7 @@ public:
 public:
 	FunctionLoader(void) : invalid(false), is_xa(false) {}
 	virtual Platform GetArchitecture(void) noexcept override { return Platform::Unknown; }
-	virtual XA::CallingConvention GetCallingConvention(void) noexcept override { return XA::CallingConvention::Unknown; }
+	virtual XA::Environment GetEnvironment(void) noexcept override { return XA::Environment::Unknown; }
 	virtual void HandleAbstractFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override { try { xa.Load(fout); is_xa = true; } catch (...) { invalid = true; } }
 	virtual void HandlePlatformFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override {}
 	virtual void HandleNearImport(const string & symbol, const XI::Module::Function & fin, const string & func_name) noexcept override { try { this->symbol = func_name; } catch (...) { invalid = true; } }
@@ -182,16 +182,19 @@ int Main(void)
 					}
 					for (auto & abi : fabi->Elements()) {
 						Platform arch;
-						XA::CallingConvention os;
-						XI::ReadFunctionABI(abi, arch, os);
+						XA::Environment osenv;
+						XI::ReadFunctionABI(abi, arch, osenv);
 						string text_arch, text_os;
 						if (arch == Platform::X86) text_arch = Localized(601);
 						else if (arch == Platform::X64) text_arch = Localized(602);
 						else if (arch == Platform::ARM) text_arch = Localized(603);
 						else if (arch == Platform::ARM64) text_arch = Localized(604);
 						else text_arch = Localized(600);
-						if (os == XA::CallingConvention::Windows) text_os = Localized(501);
-						else if (os == XA::CallingConvention::Unix) text_os = Localized(502);
+						if (osenv == XA::Environment::Windows)		text_os = Localized(501);
+						else if (osenv == XA::Environment::MacOSX)	text_os = Localized(502);
+						else if (osenv == XA::Environment::Linux)	text_os = Localized(503);
+						else if (osenv == XA::Environment::EFI)		text_os = Localized(504);
+						else if (osenv == XA::Environment::XSO)		text_os = Localized(505);
 						else text_os = Localized(500);
 						console << L"  " << FormatString(Localized(403), text_os, text_arch) << LineFeed();
 					}

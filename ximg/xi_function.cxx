@@ -4,7 +4,7 @@ namespace Engine
 {
 	namespace XI
 	{
-		uint32 EncodeABI(Platform arch, XA::CallingConvention cc)
+		uint32 EncodeABI(Platform arch, XA::Environment osenv)
 		{
 			uint32 result = 0;
 			if (arch == Platform::X86) result = 1;
@@ -12,8 +12,11 @@ namespace Engine
 			else if (arch == Platform::ARM) result = 3;
 			else if (arch == Platform::ARM64) result = 4;
 			else throw InvalidArgumentException();
-			if (cc == XA::CallingConvention::Windows) result |= 0x10000;
-			else if (cc == XA::CallingConvention::Unix) result |= 0x20000;
+			if (osenv == XA::Environment::Windows)		result |= 0x010000;
+			else if (osenv == XA::Environment::EFI)		result |= 0x110000;
+			else if (osenv == XA::Environment::MacOSX)	result |= 0x020000;
+			else if (osenv == XA::Environment::Linux)	result |= 0x120000;
+			else if (osenv == XA::Environment::XSO)		result |= 0x030000;
 			else throw InvalidArgumentException();
 			return result;
 		}
@@ -32,7 +35,7 @@ namespace Engine
 			dest.code_flags &= Module::Function::FunctionMiscMask;
 			dest.code_flags |= Module::Function::FunctionClassXA | Module::Function::FunctionXA_Abstract;
 		}
-		void MakeFunction(Module::Function & dest, Platform arch, XA::CallingConvention cc, XA::TranslatedFunction & src)
+		void MakeFunction(Module::Function & dest, Platform arch, XA::Environment osenv, XA::TranslatedFunction & src)
 		{
 			if ((dest.code_flags & (Module::Function::FunctionClassMask | Module::Function::FunctionTypeMask)) !=
 				(Module::Function::FunctionClassXA | Module::Function::FunctionXA_Platform)) dest.code = new DataBlock(1);
@@ -44,7 +47,7 @@ namespace Engine
 			stream.Seek(0, Streaming::Begin);
 			SafePointer<DataBlock> data = stream.ReadAll();
 			uint32 base = dest.code->Length();
-			uint32 abi = EncodeABI(arch, cc);
+			uint32 abi = EncodeABI(arch, osenv);
 			uint32 len = data->Length();
 			dest.code->SetLength(base + 8 + len);
 			MemoryCopy(dest.code->GetBuffer() + base, &abi, 4);
@@ -82,7 +85,7 @@ namespace Engine
 					loader->HandleAbstractFunction(symbol, func, stream);
 				} else if (ftyp == Module::Function::FunctionXA_Platform) {
 					try {
-						uint32 abi = EncodeABI(loader->GetArchitecture(), loader->GetCallingConvention());
+						uint32 abi = EncodeABI(loader->GetArchitecture(), loader->GetEnvironment());
 						int pos = 0;
 						while (pos + 8 <= func.code->Length()) {
 							uint32 abi_cmp = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos);
@@ -129,16 +132,19 @@ namespace Engine
 			result->Retain();
 			return result;
 		}
-		void ReadFunctionABI(uint32 word, Platform & arch, XA::CallingConvention & cc)
+		void ReadFunctionABI(uint32 word, Platform & arch, XA::Environment & osenv)
 		{
 			if ((word & 0xFFFF) == 1) arch = Platform::X86;
 			else if ((word & 0xFFFF) == 2) arch = Platform::X64;
 			else if ((word & 0xFFFF) == 3) arch = Platform::ARM;
 			else if ((word & 0xFFFF) == 4) arch = Platform::ARM64;
 			else arch = Platform::Unknown;
-			if ((word & 0xFFFF0000) == 0x10000) cc = XA::CallingConvention::Windows;
-			else if ((word & 0xFFFF0000) == 0x20000) cc = XA::CallingConvention::Unix;
-			else cc = XA::CallingConvention::Unknown;
+			if ((word & 0xFFFF0000)			== 0x010000) osenv = XA::Environment::Windows;
+			else if ((word & 0xFFFF0000)	== 0x110000) osenv = XA::Environment::EFI;
+			else if ((word & 0xFFFF0000)	== 0x020000) osenv = XA::Environment::MacOSX;
+			else if ((word & 0xFFFF0000)	== 0x120000) osenv = XA::Environment::Linux;
+			else if ((word & 0xFFFF0000)	== 0x030000) osenv = XA::Environment::XSO;
+			else osenv = XA::Environment::Unknown;
 		}
 	}
 }

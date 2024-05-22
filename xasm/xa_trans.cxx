@@ -137,15 +137,15 @@ namespace Engine
 			}
 		};
 
-		CallingConvention GetApplicationCallingConvention(void)
+		Environment GetApplicationEnvironment(void)
 		{
 			#ifdef ENGINE_WINDOWS
-				return CallingConvention::Windows;
+				return Environment::Windows;
 			#endif
 			#ifdef ENGINE_UNIX
-				return CallingConvention::Unix;
+				return Environment::MacOSX;
 			#endif
-			return CallingConvention::Unknown;
+			return Environment::Unknown;
 		}
 		IExecutableLinker * CreateLinker(void) { return new ExecutableLinker; }
 	}

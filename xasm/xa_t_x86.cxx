@@ -7,7 +7,7 @@ namespace Engine
 	{
 		namespace X86
 		{
-			EncoderContext::EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src, bool x64) : _conv(conv), _dest(dest), _src(src), _org_inst_offsets(1), _jump_reloc(0x100), _inputs(1), _x64_mode(x64)
+			EncoderContext::EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src, bool x64) : _osenv(osenv), _dest(dest), _src(src), _org_inst_offsets(1), _jump_reloc(0x100), _inputs(1), _x64_mode(x64)
 			{
 				_current_instruction = -1;
 				_stack_oddity = 0;
@@ -89,7 +89,7 @@ namespace Engine
 			Reg EncoderContext::allocate_xmm(uint xmm_used, uint xmm_protected)
 			{
 				uint xmm;
-				if (_conv == CallingConvention::Windows) xmm = 0x003F0000; else xmm = 0x00FF0000;
+				if (_osenv == Environment::Windows || _osenv == Environment::EFI) xmm = 0x003F0000; else xmm = 0x00FF0000;
 				uint xmm_free = xmm & ~xmm_used;
 				if (!xmm_free) xmm_free = xmm & ~xmm_protected;
 				if (!xmm_free) return Reg64::NO;

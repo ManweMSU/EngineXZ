@@ -8,13 +8,13 @@ namespace Engine
 {
 	namespace XA
 	{
-		IAssemblyTranslator * CreatePlatformTranslator(void) { return CreatePlatformTranslator(ApplicationPlatform, GetApplicationCallingConvention()); }
-		IAssemblyTranslator * CreatePlatformTranslator(Platform platform, CallingConvention conv)
+		IAssemblyTranslator * CreatePlatformTranslator(void) { return CreatePlatformTranslator(ApplicationPlatform, GetApplicationEnvironment()); }
+		IAssemblyTranslator * CreatePlatformTranslator(Platform platform, Environment env)
 		{
-			if (platform == Platform::X86) return CreateTranslatorX86i386(conv);
-			else if (platform == Platform::X64) return CreateTranslatorX64(conv);
+			if (platform == Platform::X86) return CreateTranslatorX86i386(env);
+			else if (platform == Platform::X64) return CreateTranslatorX64(env);
 			else if (platform == Platform::ARM) return 0;
-			else if (platform == Platform::ARM64) return CreateTranslatorARMv8(conv);
+			else if (platform == Platform::ARM64) return CreateTranslatorARMv8(env);
 			else return 0;
 		}
 	}

@@ -324,7 +324,7 @@ namespace Engine
 			XFunctionOverload * _dest;
 			FunctionLoader(XFunctionOverload * dest) : _dest(dest) {}
 			virtual Platform GetArchitecture(void) noexcept override { return Platform::Unknown; }
-			virtual XA::CallingConvention GetCallingConvention(void) noexcept override { return XA::CallingConvention::Unknown; }
+			virtual XA::Environment GetEnvironment(void) noexcept override { return XA::Environment::Unknown; }
 			virtual void HandleAbstractFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override
 			{
 				try {

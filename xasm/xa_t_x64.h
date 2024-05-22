@@ -6,6 +6,6 @@ namespace Engine
 {
 	namespace XA
 	{
-		IAssemblyTranslator * CreateTranslatorX64(CallingConvention conv);
+		IAssemblyTranslator * CreateTranslatorX64(Environment osenv);
 	}
 }

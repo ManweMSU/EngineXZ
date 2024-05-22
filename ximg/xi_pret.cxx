@@ -14,7 +14,7 @@ namespace Engine
 			XA::Function function;
 			PretranslationLoader(void) : empty(true), error(false) {}
 			virtual Platform GetArchitecture(void) noexcept override { return Platform::Unknown; }
-			virtual XA::CallingConvention GetCallingConvention(void) noexcept override { return XA::CallingConvention::Unknown; }
+			virtual XA::Environment GetEnvironment(void) noexcept override { return XA::Environment::Unknown; }
 			virtual void HandleAbstractFunction(const string & symbol, const Module::Function & fin, Streaming::Stream * fout) noexcept override { try { function.Load(fout); empty = false; } catch (...) { error = true; } }
 			virtual void HandlePlatformFunction(const string & symbol, const Module::Function & fin, Streaming::Stream * fout) noexcept override {}
 			virtual void HandleNearImport(const string & symbol, const Module::Function & fin, const string & func_name) noexcept override {}
@@ -30,11 +30,11 @@ namespace Engine
 				MakeFunction(subject);
 				for (int i = 0; i < sys_list_length; i++) {
 					auto & desc = sys_list[i];
-					SafePointer<XA::IAssemblyTranslator> trs = XA::CreatePlatformTranslator(desc.arch, desc.conv);
+					SafePointer<XA::IAssemblyTranslator> trs = XA::CreatePlatformTranslator(desc.arch, desc.osenv);
 					XA::TranslatedFunction trs_func;
 					if (!trs) throw InvalidArgumentException();
 					if (!trs->Translate(trs_func, loader.function)) throw InvalidArgumentException();
-					MakeFunction(subject, desc.arch, desc.conv, trs_func);
+					MakeFunction(subject, desc.arch, desc.osenv, trs_func);
 				}
 			}
 		}

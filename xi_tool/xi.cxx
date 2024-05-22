@@ -86,8 +86,12 @@ void ProcessCommandLine(void)
 						console << TextColor(12) << Localized(205) << TextColorDefault() << LineFeed();
 						throw Exception();
 					}
-					if (prt[0] == L"win") desc.conv = XA::CallingConvention::Windows;
-					else if (prt[0] == L"mac") desc.conv = XA::CallingConvention::Unix; else {
+					if (prt[0] == L"win")		desc.osenv = XA::Environment::Windows;
+					else if (prt[0] == L"mac")	desc.osenv = XA::Environment::MacOSX;
+					else if (prt[0] == L"lnx")	desc.osenv = XA::Environment::Linux;
+					else if (prt[0] == L"efi")	desc.osenv = XA::Environment::EFI;
+					else if (prt[0] == L"xso")	desc.osenv = XA::Environment::XSO;
+					else {
 						console << TextColor(12) << Localized(205) << TextColorDefault() << LineFeed();
 						throw Exception();
 					}

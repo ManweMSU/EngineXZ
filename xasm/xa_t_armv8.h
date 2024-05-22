@@ -6,6 +6,6 @@ namespace Engine
 {
 	namespace XA
 	{
-		IAssemblyTranslator * CreateTranslatorARMv8(CallingConvention conv);
+		IAssemblyTranslator * CreateTranslatorARMv8(Environment osenv);
 	}
 }

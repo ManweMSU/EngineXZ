@@ -37,7 +37,7 @@ namespace Engine
 				{
 					SafePointer< Array<ArgumentPassageInfo> > result = new Array<ArgumentPassageInfo>(0x40);
 					ABI abi = ABI::CDECL;
-					if (_conv == CallingConvention::Windows) for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This) {
+					if (_osenv == Environment::Windows) for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This) {
 						abi = ABI::THISCALL;
 						ArgumentPassageInfo info;
 						info.index = i;
@@ -79,10 +79,10 @@ namespace Engine
 							encode_put_addr_of(Reg32::ECX, arg);
 							encode_push(Reg32::ECX);
 						}
-						if (_conv == CallingConvention::Windows) {
+						if (_osenv == Environment::Windows) {
 							stack_growth = 0;
 							encode_lea(Reg32::ECX, Reg32::EBP, l.bp_offset);
-						} else if (_conv == CallingConvention::Unix) {
+						} else {
 							stack_growth = (l.finalizer.final_args.Length() + 1) * 4;
 							encode_lea(Reg32::ECX, Reg32::EBP, l.bp_offset);
 							encode_push(Reg32::ECX);
@@ -1030,7 +1030,7 @@ namespace Engine
 						if (indirect) encode_pop(Reg32::EAX);
 						else encode_put_addr_of(Reg32::EAX, node.self);
 						encode_call(Reg32::EAX, false);
-						if (_conv == CallingConvention::Unix && retval_byref) stack_usage -= 4;
+						if (_osenv != Environment::Windows && retval_byref) stack_usage -= 4;
 						if (stack_usage && conv == ABI::CDECL) encode_add(Reg32::ESP, int(stack_usage));
 					}
 					int quant = _word_align(node.retval_spec.size);
@@ -1793,7 +1793,7 @@ namespace Engine
 					encode_close_scope(uint(retval_copy));
 				}
 			public:
-				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(conv, dest, src, false) {}
+				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(osenv, dest, src, false) {}
 				virtual void encode_function_prologue(void) override
 				{
 					_stack_clear_size = 0;
@@ -1871,7 +1871,7 @@ namespace Engine
 					encode_pop(Reg32::EBX);
 					encode_pop(Reg32::EBP);
 					if (_abi == ABI::THISCALL) encode_pure_ret(_stack_clear_size);
-					else if (_conv == CallingConvention::Unix && _retval.indirect) encode_pure_ret(4);
+					else if (_osenv != Environment::Windows && _retval.indirect) encode_pure_ret(4);
 					else encode_pure_ret(0);
 				}
 				virtual void encode_scope_unroll(int inst_current, int inst_jump_to) override
@@ -2000,15 +2000,16 @@ namespace Engine
 
 			class TranslatorX86i386 : public IAssemblyTranslator
 			{
-				CallingConvention _conv;
+				Environment _osenv;
 			public:
-				TranslatorX86i386(CallingConvention conv) : _conv(conv) {}
+				TranslatorX86i386(Environment osenv) : _osenv(osenv) {}
 				virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept override
 				{
+					if (_osenv != Environment::Windows) return false;
 					try {
 						dest.Clear();
 						dest.data = src.data;
-						i386::EncoderContext ctx(_conv, dest, src);
+						i386::EncoderContext ctx(_osenv, dest, src);
 						ctx.encode_function_prologue();
 						ctx.process_encoding();
 						ctx.finalize_encoding();
@@ -2019,11 +2020,11 @@ namespace Engine
 				}
 				virtual uint GetWordSize(void) noexcept override { return WordSize; }
 				virtual Platform GetPlatform(void) noexcept override { return Platform::X86; }
-				virtual CallingConvention GetCallingConvention(void) noexcept override { return _conv; }
+				virtual Environment GetEnvironment(void) noexcept override { return _osenv; }
 				virtual string ToString(void) const override { return L"XA-80386"; }
 			};
 		}
 
-		IAssemblyTranslator * CreateTranslatorX86i386(CallingConvention conv) { return new (std::nothrow) i386::TranslatorX86i386(conv); }
+		IAssemblyTranslator * CreateTranslatorX86i386(Environment osenv) { return new (std::nothrow) i386::TranslatorX86i386(osenv); }
 	}
 }

@@ -6,7 +6,7 @@ namespace Engine
 {
 	namespace XA
 	{
-		enum class CallingConvention { Unknown = 0, Windows = 1, Unix = 2 };
+		enum class Environment { Unknown = 0x00, Windows = 0x01, MacOSX = 0x02, Linux = 0x12, EFI = 0x11, XSO = 0x03 };
 
 		class IAssemblyTranslator : public Object
 		{
@@ -14,7 +14,7 @@ namespace Engine
 			virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept = 0;
 			virtual uint GetWordSize(void) noexcept = 0;
 			virtual Platform GetPlatform(void) noexcept = 0;
-			virtual CallingConvention GetCallingConvention(void) noexcept = 0;
+			virtual Environment GetEnvironment(void) noexcept = 0;
 		};
 		class IReferenceResolver
 		{
@@ -41,7 +41,7 @@ namespace Engine
 			virtual IExecutable * LinkFunctions(const Volumes::Dictionary<string, TranslatedFunction *> & functions, IReferenceResolver * resolver = 0) noexcept = 0;
 		};
 
-		CallingConvention GetApplicationCallingConvention(void);
+		Environment GetApplicationEnvironment(void);
 		IExecutableLinker * CreateLinker(void);
 	}
 }

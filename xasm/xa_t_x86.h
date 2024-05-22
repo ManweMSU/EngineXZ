@@ -30,7 +30,7 @@ namespace Engine
 				XMM4 = 0x00100000, XMM5 = 0x00200000, XMM6 = 0x00400000, XMM7 = 0x00800000;
 			};
 
-			enum class ABI { CDECL, THISCALL, FASTCALL };
+			enum class ABI { CDECL, THISCALL, WindowsX64, UnixX64 };
 
 			enum class arOp : uint8 { ADD = 0x02, ADC = 0x12, SBB = 0x1A, SUB = 0x2A, AND = 0x22, OR = 0x0A, XOR = 0x32, CMP = 0x3A };
 			enum class mdOp : uint8 { MUL = 0x4, DIV = 0x6, IMUL = 0x5, IDIV = 0x7 };
@@ -92,7 +92,7 @@ namespace Engine
 			protected:
 				TranslatedFunction & _dest;
 				const Function & _src;
-				CallingConvention _conv;
+				Environment _osenv;
 				ABI _abi;
 				Array<uint> _org_inst_offsets;
 				Array<JumpRelocStruct> _jump_reloc;
@@ -102,7 +102,7 @@ namespace Engine
 				Volumes::Stack<LocalScope> _scopes;
 				Volumes::Stack<LocalDisposition> _init_locals;
 			protected:
-				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src, bool x64);
+				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src, bool x64);
 				static uint8 regular_register_code(uint reg);
 				static uint8 xmm_register_code(uint reg);
 				static uint8 make_rex(bool size64_W, bool reg_ext_R, bool index_ext_X, bool opt_ext_B);

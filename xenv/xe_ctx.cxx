@@ -33,7 +33,7 @@ namespace Engine
 				if (index >= 0) return input.Fragment(index + 1, -1); else return L"";
 			}
 			virtual Platform GetArchitecture(void) noexcept override { return trans->GetPlatform(); }
-			virtual XA::CallingConvention GetCallingConvention(void) noexcept override { return trans->GetCallingConvention(); }
+			virtual XA::Environment GetEnvironment(void) noexcept override { return trans->GetEnvironment(); }
 			virtual void HandleAbstractFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override
 			{
 				try {

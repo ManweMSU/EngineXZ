@@ -104,7 +104,7 @@ namespace Engine
 					uint xasm_offset_jump_to;
 				};
 
-				CallingConvention _conv;
+				Environment _osenv;
 				TranslatedFunction & _dest;
 				const Function & _src;
 				Array<uint> _org_inst_offsets;
@@ -167,7 +167,7 @@ namespace Engine
 				{
 					SafePointer< Array<_argument_passage_info> > result = new Array<_argument_passage_info>(0x20);
 					int gri = 0, sri = 0, spo = 0;
-					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This && _conv == CallingConvention::Windows) {
+					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This && _osenv == Environment::Windows) {
 						_argument_passage_info info;
 						info.index = i;
 						info.indirect = _is_pass_by_ref(inputs[i]);
@@ -179,8 +179,8 @@ namespace Engine
 					}
 					if (_is_pass_by_ref(output)) {
 						Reg reg;
-						if (_conv == CallingConvention::Windows) { reg = _make_reg(gri); gri++; }
-						else if (_conv == CallingConvention::Unix) { reg = Reg::X8; }
+						if (_osenv == Environment::Windows) { reg = _make_reg(gri); gri++; }
+						else if (_osenv == Environment::MacOSX) { reg = Reg::X8; }
 						else throw InvalidArgumentException();
 						_argument_passage_info info;
 						info.index = -1;
@@ -191,7 +191,7 @@ namespace Engine
 						result->Append(info);
 					}
 					for (int i = 0; i < in_cnt; i++) {
-						if (inputs[i].semantics == ArgumentSemantics::This && _conv == CallingConvention::Windows) continue;
+						if (inputs[i].semantics == ArgumentSemantics::This && _osenv == Environment::Windows) continue;
 						auto & spec = inputs[i];
 						_argument_passage_info info;
 						info.index = i;
@@ -224,10 +224,10 @@ namespace Engine
 							} else {
 								int size = _size_eval(spec.size);
 								gri = 8;
-								if (_conv == CallingConvention::Windows) {
+								if (_osenv == Environment::Windows) {
 									if (size < 16) while (spo & 0x7) spo++;
 									else while (spo & 0xF) spo++;
-								} else if (_conv == CallingConvention::Unix) {
+								} else if (_osenv == Environment::MacOSX) {
 									if (size == 1);
 									else if (size < 4) while (spo & 0x1) spo++;
 									else if (size < 8) while (spo & 0x3) spo++;
@@ -1711,7 +1711,7 @@ namespace Engine
 					_encode_close_scope(uint(retval_copy));
 				}
 			public:
-				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src) : _conv(conv), _dest(dest), _src(src), _org_inst_offsets(0x200), _global_refs(0x100)
+				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : _osenv(osenv), _dest(dest), _src(src), _org_inst_offsets(0x200), _global_refs(0x100)
 				{
 					_org_inst_offsets.SetLength(_src.instset.Length());
 					_inputs.SetLength(_src.inputs.Length());
@@ -2300,7 +2300,7 @@ namespace Engine
 				void encode_function_epilogue(void)
 				{
 					if (_is_pass_by_ref(_src.retval)) {
-						encode_load(8, false, _conv == CallingConvention::Unix ? Reg::X8 : Reg::X0, Reg::FP, _retval.fp_offset);
+						encode_load(8, false, _osenv == Environment::MacOSX ? Reg::X8 : Reg::X0, Reg::FP, _retval.fp_offset);
 					} else if (_retval.vreg != VReg::NO) {
 						encode_emulate_lea(Reg::X8, Reg::FP, _retval.fp_offset);
 						encode_load_element(8, VReg::V0, Reg::X8);
@@ -2461,16 +2461,17 @@ namespace Engine
 
 			class TranslatorARMv8 : public IAssemblyTranslator
 			{
-				CallingConvention _conv;
+				Environment _osenv;
 			public:
-				TranslatorARMv8(CallingConvention conv) : _conv(conv) {}
+				TranslatorARMv8(Environment osenv) : _osenv(osenv) {}
 				virtual ~TranslatorARMv8(void) override {}
 				virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept override
 				{
+					if (_osenv != Environment::Windows && _osenv != Environment::MacOSX) return false;
 					try {
 						dest.Clear();
 						dest.data = src.data;
-						EncoderContext ctx(_conv, dest, src);
+						EncoderContext ctx(_osenv, dest, src);
 						ctx.encode_function_prologue();
 						ctx.process_encoding();
 						ctx.finalize_encoding();
@@ -2483,11 +2484,11 @@ namespace Engine
 				}
 				virtual uint GetWordSize(void) noexcept override { return 8; }
 				virtual Platform GetPlatform(void) noexcept override { return Platform::ARM64; }
-				virtual CallingConvention GetCallingConvention(void) noexcept override { return _conv; }
+				virtual Environment GetEnvironment(void) noexcept override { return _osenv; }
 				virtual string ToString(void) const override { return L"XA-ARMv8"; }
 			};
 		}
 
-		IAssemblyTranslator * CreateTranslatorARMv8(CallingConvention conv) { return new ARMv8::TranslatorARMv8(conv); }
+		IAssemblyTranslator * CreateTranslatorARMv8(Environment osenv) { return new ARMv8::TranslatorARMv8(osenv); }
 	}
 }

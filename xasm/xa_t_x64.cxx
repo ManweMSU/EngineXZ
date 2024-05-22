@@ -21,7 +21,7 @@ namespace Engine
 				Array<ArgumentPassageInfo> * _make_interface_layout(const ArgumentSpecification & output, const ArgumentSpecification * inputs, int in_cnt)
 				{
 					SafePointer< Array<ArgumentPassageInfo> > result = new Array<ArgumentPassageInfo>(0x40);
-					if (_conv == CallingConvention::Windows) {
+					if (_abi == ABI::WindowsX64) {
 						for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This) {
 							ArgumentPassageInfo info;
 							info.index = i;
@@ -37,7 +37,7 @@ namespace Engine
 						info.indirect = true;
 						result->Append(info);
 					}
-					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics != ArgumentSemantics::This || _conv == CallingConvention::Unix) {
+					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics != ArgumentSemantics::This || _abi == ABI::UnixX64) {
 						ArgumentPassageInfo info;
 						info.index = i;
 						info.reg = Reg64::NO;
@@ -50,22 +50,22 @@ namespace Engine
 					for (int i = 0; i < result->Length(); i++) {
 						auto & info = result->ElementAt(i);
 						if (!info.indirect && inputs[info.index].semantics == ArgumentSemantics::FloatingPoint) {
-							if (_conv == CallingConvention::Windows) {
+							if (_abi == ABI::WindowsX64) {
 								if (i == 0) info.reg = Reg64::XMM0;
 								else if (i == 1) info.reg = Reg64::XMM1;
 								else if (i == 2) info.reg = Reg64::XMM2;
 								else if (i == 3) info.reg = Reg64::XMM3;
-							} else if (_conv == CallingConvention::Unix) {
+							} else if (_abi == ABI::UnixX64) {
 								info.reg = unix_fr[cfr];
 								if (info.reg != Reg64::NO) cfr++;
 							}
 						} else {
-							if (_conv == CallingConvention::Windows) {
+							if (_abi == ABI::WindowsX64) {
 								if (i == 0) info.reg = Reg64::RCX;
 								else if (i == 1) info.reg = Reg64::RDX;
 								else if (i == 2) info.reg = Reg64::R8;
 								else if (i == 3) info.reg = Reg64::R9;
-							} else if (_conv == CallingConvention::Unix) {
+							} else if (_abi == ABI::UnixX64) {
 								info.reg = unix_mr[cmr];
 								if (info.reg != Reg64::NO) cmr++;
 							}
@@ -77,12 +77,12 @@ namespace Engine
 				virtual void encode_finalize_scope(const LocalScope & scope, uint reg_in_use = 0) override
 				{
 					encode_preserve(Reg64::RAX, reg_in_use, 0, true);
-					if (_conv == CallingConvention::Windows) {
+					if (_abi == ABI::WindowsX64) {
 						encode_preserve(Reg64::RCX, reg_in_use, 0, true);
 						encode_preserve(Reg64::RDX, reg_in_use, 0, true);
 						encode_preserve(Reg64::R8, reg_in_use, 0, true);
 						encode_preserve(Reg64::R9, reg_in_use, 0, true);
-					} else if (_conv == CallingConvention::Unix) {
+					} else if (_abi == ABI::UnixX64) {
 						encode_preserve(Reg64::RDI, reg_in_use, 0, true);
 						encode_preserve(Reg64::RSI, reg_in_use, 0, true);
 						encode_preserve(Reg64::RDX, reg_in_use, 0, true);
@@ -95,7 +95,7 @@ namespace Engine
 						for (auto & i : _init_locals) if (i.bp_offset == l.bp_offset) { skip = true; break; }
 						if (skip) continue;
 						int stack_growth = 0;
-						if (_conv == CallingConvention::Windows) {
+						if (_abi == ABI::WindowsX64) {
 							stack_growth = max(1 + l.finalizer.final_args.Length(), 4) * 8;
 							if ((stack_growth + _stack_oddity) & 0xF) {
 								encode_add(Reg64::RSP, -8);
@@ -110,7 +110,7 @@ namespace Engine
 							}
 							encode_lea(Reg64::RCX, Reg64::RBP, l.bp_offset);
 							encode_add(Reg64::RSP, -32);
-						} else if (_conv == CallingConvention::Unix) {
+						} else if (_abi == ABI::UnixX64) {
 							stack_growth = max(l.finalizer.final_args.Length() - 5, 0) * 8;
 							if ((stack_growth + _stack_oddity) & 0xF) {
 								encode_add(Reg64::RSP, -8);
@@ -131,12 +131,12 @@ namespace Engine
 						encode_call(Reg64::RAX, false);
 						if (stack_growth) encode_add(Reg64::RSP, stack_growth);
 					}
-					if (_conv == CallingConvention::Windows) {
+					if (_abi == ABI::WindowsX64) {
 						encode_restore(Reg64::R9, reg_in_use, 0, true);
 						encode_restore(Reg64::R8, reg_in_use, 0, true);
 						encode_restore(Reg64::RDX, reg_in_use, 0, true);
 						encode_restore(Reg64::RCX, reg_in_use, 0, true);
-					} else if (_conv == CallingConvention::Unix) {
+					} else if (_abi == ABI::UnixX64) {
 						encode_restore(Reg64::R9, reg_in_use, 0, true);
 						encode_restore(Reg64::R8, reg_in_use, 0, true);
 						encode_restore(Reg64::RCX, reg_in_use, 0, true);
@@ -521,8 +521,8 @@ namespace Engine
 					SafePointer< Array<ArgumentPassageInfo> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no);
 					Array<Reg> preserve_regs(0x10);
 					Array<int> argument_homes(1), argument_layout_index(1);
-					if (_conv == CallingConvention::Windows) preserve_regs << Reg64::RBX << Reg64::RCX << Reg64::RDX << Reg64::R8 << Reg64::R9;
-					else if (_conv == CallingConvention::Unix) preserve_regs << Reg64::RBX << Reg64::RDI << Reg64::RSI << Reg64::RDX << Reg64::RCX << Reg64::R8 << Reg64::R9;
+					if (_abi == ABI::WindowsX64) preserve_regs << Reg64::RBX << Reg64::RCX << Reg64::RDX << Reg64::R8 << Reg64::R9;
+					else if (_abi == ABI::UnixX64) preserve_regs << Reg64::RBX << Reg64::RDI << Reg64::RSI << Reg64::RDX << Reg64::RCX << Reg64::R8 << Reg64::R9;
 					encode_preserve(Reg64::RAX, reg_in_use, 0, !idle && preserve_rax);
 					for (auto & r : preserve_regs.Elements()) encode_preserve(r, reg_in_use, 0, !idle);
 					uint reg_used_mask = 0;
@@ -533,8 +533,8 @@ namespace Engine
 						if (_is_xmm_register(info.reg)) num_args_by_xmm++;
 						else if (info.reg == Reg64::NO) num_args_by_stack++;
 					}
-					if (_conv == CallingConvention::Windows) stack_usage = max(layout->Length(), 4) * 8;
-					else if (_conv == CallingConvention::Unix) stack_usage = (num_args_by_stack + num_args_by_xmm) * 8;
+					if (_abi == ABI::WindowsX64) stack_usage = max(layout->Length(), 4) * 8;
+					else if (_abi == ABI::UnixX64) stack_usage = (num_args_by_stack + num_args_by_xmm) * 8;
 					if ((_stack_oddity + stack_usage) & 0xF) stack_usage += 8;
 					if (stack_usage && !idle) {
 						_stack_oddity += stack_usage;
@@ -550,23 +550,23 @@ namespace Engine
 						auto & info = layout->ElementAt(i);
 						if (info.index >= 0) {
 							argument_layout_index[info.index] = i;
-							if (_conv == CallingConvention::Windows) {
+							if (_abi == ABI::WindowsX64) {
 								argument_homes[info.index] = current_stack_index;
 								current_stack_index += 8;
-							} else if (_conv == CallingConvention::Unix) {
+							} else if (_abi == ABI::UnixX64) {
 								if (info.reg == Reg64::NO) {
 									argument_homes[info.index] = current_stack_index;
 									current_stack_index += 8;
 								} else argument_homes[info.index] = -1;
 							}
 						} else {
-							if (_conv == CallingConvention::Windows) current_stack_index += 8;
+							if (_abi == ABI::WindowsX64) current_stack_index += 8;
 							*mem_load += _word_align(node.retval_spec.size);
 							rv_reg = info.reg;
 							if (!idle) rv_offset = allocate_temporary(node.retval_spec.size, &rv_mem_index);
 						}
 					}
-					if (_conv == CallingConvention::Unix) for (auto & info : layout->Elements()) if (info.index >= 0 && _is_xmm_register(info.reg)) {
+					if (_abi == ABI::UnixX64) for (auto & info : layout->Elements()) if (info.index >= 0 && _is_xmm_register(info.reg)) {
 						argument_homes[info.index] = current_stack_index;
 						current_stack_index += 8;
 					}
@@ -1973,12 +1973,12 @@ namespace Engine
 					encode_close_scope(uint(retval_copy));
 				}
 			public:
-				EncoderContext(CallingConvention conv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(conv, dest, src, true) {}
+				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(osenv, dest, src, true) { _abi = (osenv == Environment::Windows || osenv == Environment::EFI) ? ABI::WindowsX64 : ABI::UnixX64; }
 				virtual void encode_function_prologue(void) override
 				{
 					SafePointer< Array<ArgumentPassageInfo> > api = _make_interface_layout(_src.retval, _src.inputs.GetBuffer(), _src.inputs.Length());
 					_inputs.SetLength(_src.inputs.Length());
-					if (_conv == CallingConvention::Windows) {
+					if (_abi == ABI::WindowsX64) {
 						int align = WordSize * 9;
 						_unroll_base = -WordSize * 9;
 						encode_push(Reg64::RBP);
@@ -2024,7 +2024,7 @@ namespace Engine
 							encode_add(Reg64::RSP, -WordSize);
 						}
 						_scope_frame_base = -align;
-					} else if (_conv == CallingConvention::Unix) {
+					} else if (_abi == ABI::UnixX64) {
 						int align = WordSize * 7;
 						_unroll_base = -WordSize * 7;
 						encode_push(Reg64::RBP);
@@ -2072,7 +2072,7 @@ namespace Engine
 				}
 				virtual void encode_function_epilogue(void) override
 				{
-					if (_conv == CallingConvention::Windows) {
+					if (_abi == ABI::WindowsX64) {
 						if (_unroll_base != _scope_frame_base) encode_lea(Reg64::RSP, Reg64::RBP, _unroll_base);
 						if (!_is_pass_by_reference(_src.retval)) {
 							encode_pop(Reg64::RAX);
@@ -2092,7 +2092,7 @@ namespace Engine
 						encode_pop(Reg64::RBX);
 						encode_pop(Reg64::RBP);
 						encode_pure_ret();
-					} else if (_conv == CallingConvention::Unix) {
+					} else if (_abi == ABI::UnixX64) {
 						if (_unroll_base != _scope_frame_base) encode_lea(Reg64::RSP, Reg64::RBP, _unroll_base);
 						if (!_is_pass_by_reference(_src.retval)) {
 							encode_pop(Reg64::RAX);
@@ -2238,16 +2238,17 @@ namespace Engine
 
 			class TranslatorX64 : public IAssemblyTranslator
 			{
-				CallingConvention _conv;
+				Environment _osenv;
 			public:
-				TranslatorX64(CallingConvention conv) : _conv(conv) {}
+				TranslatorX64(Environment osenv) : _osenv(osenv) {}
 				virtual ~TranslatorX64(void) override {}
 				virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept override
 				{
+					if (_osenv != Environment::Windows && _osenv != Environment::MacOSX && _osenv != Environment::EFI) return false;
 					try {
 						dest.Clear();
 						dest.data = src.data;
-						X64::EncoderContext ctx(_conv, dest, src);
+						X64::EncoderContext ctx(_osenv, dest, src);
 						ctx.encode_function_prologue();
 						ctx.process_encoding();
 						ctx.finalize_encoding();
@@ -2258,11 +2259,11 @@ namespace Engine
 				}
 				virtual uint GetWordSize(void) noexcept override { return 8; }
 				virtual Platform GetPlatform(void) noexcept override { return Platform::X64; }
-				virtual CallingConvention GetCallingConvention(void) noexcept override { return _conv; }
+				virtual Environment GetEnvironment(void) noexcept override { return _osenv; }
 				virtual string ToString(void) const override { return L"XA-x86-64"; }
 			};
 		}
 		
-		IAssemblyTranslator * CreateTranslatorX64(CallingConvention conv) { return new X64::TranslatorX64(conv); }
+		IAssemblyTranslator * CreateTranslatorX64(Environment osenv) { return new X64::TranslatorX64(osenv); }
 	}
 }

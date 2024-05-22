@@ -7,6 +7,6 @@ namespace Engine
 	namespace XA
 	{
 		IAssemblyTranslator * CreatePlatformTranslator(void);
-		IAssemblyTranslator * CreatePlatformTranslator(Platform platform, CallingConvention conv);
+		IAssemblyTranslator * CreatePlatformTranslator(Platform platform, Environment env);
 	}
 }
