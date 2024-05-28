@@ -1438,7 +1438,7 @@ namespace Engine
 							encode_restore(a3.reg, reg_in_use, disp->reg, !idle);
 							encode_restore(a2.reg, reg_in_use, disp->reg, !idle);
 						}
-						if (!(a1.flags & DispositionReuse)) encode_lea(rv, store_reg, store_offs);
+						if (!(a1.flags & DispositionReuse) && !idle) encode_lea(rv, store_reg, store_offs);
 					} else throw InvalidArgumentException();
 					if (disp->flags & DispositionDiscard) {
 						disp->flags = DispositionDiscard;

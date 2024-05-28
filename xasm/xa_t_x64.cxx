@@ -1417,7 +1417,7 @@ namespace Engine
 						bool invert = (node.self.index == TransformFloatNotZero);
 						if (node.inputs.Length() != 1) throw InvalidArgumentException();
 						VectorDisposition a, b;
-						Reg acc1, acc2;
+						Reg acc1, acc2 = Reg64::NO;
 						a.size = b.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
 						allocate_xmm(0, 0, a);
 						allocate_xmm(a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);
@@ -1519,7 +1519,7 @@ namespace Engine
 						}
 						if (node.inputs.Length() != 2) throw InvalidArgumentException();
 						VectorDisposition a, b;
-						Reg acc1, acc2;
+						Reg acc1, acc2 = Reg64::NO;
 						a.size = b.size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
 						allocate_xmm(0, 0, a);
 						allocate_xmm(a.reg_lo | a.reg_hi, a.reg_lo | a.reg_hi, b);

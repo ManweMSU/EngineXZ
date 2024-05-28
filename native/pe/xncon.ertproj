@@ -1,0 +1,28 @@
+﻿UseVersionDefines = true
+CompileList {
+	AAAAAA = "..\\..\\xasm\\xa_t_armv8.cxx"
+	AAAAAB = "..\\..\\xasm\\xa_t_i386.cxx"
+	AAAAAC = "..\\..\\xasm\\xa_t_x64.cxx"
+	AAAAAD = "..\\..\\xasm\\xa_t_x86.cxx"
+	AAAAAE = "..\\..\\xasm\\xa_trans.cxx"
+	AAAAAF = "..\\..\\xasm\\xa_trans_sel.cxx"
+	AAAAAG = "..\\..\\xasm\\xa_type_helper.cxx"
+	AAAAAH = "..\\..\\xasm\\xa_types.cxx"
+	AAAAAI = "..\\..\\ximg\\xi_function.cxx"
+	AAAAAJ = "..\\..\\ximg\\xi_module.cxx"
+	AAAAAK = "..\\..\\ximg\\xi_resources.cxx"
+	AAAAAL = "asm_trans.cxx"
+	AAAAAM = "enc_i286.cxx"
+	AAAAAN = "lnk_x64.cxx"
+	AAAAAO = "xncon.cxx"
+}
+VersionInformation {
+	ApplicationIdentifier = "XNC"
+	ApplicationName = "XN Contextor"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2024"
+	Description = "XN Contextor"
+	InternalName = "xncon"
+	Version = "1.0.0.1"
+}
