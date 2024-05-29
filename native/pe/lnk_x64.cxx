@@ -118,9 +118,16 @@ namespace Engine
 					// JMP RAX
 					func.code << 0xFF << 0xE0;
 				} else if (_trans->GetPlatform() == Platform::ARM64) {
-
-					// TODO: IMPLEMENT
-
+					refoffs << 12;
+					uint seq[5];
+					// LDR X16, address-of-import-table-entry == jump address
+					seq[0] = 0x58000000 | 16 | (3 << 5);
+					// LDR X16, X16
+					seq[1] = 0xF8400000 | 16 | (16 << 5);
+					// BR X16
+					seq[2] = 0xD61F0000 | (16 << 5);
+					func.code.SetLength(sizeof(seq));
+					MemoryCopy(func.code.GetBuffer(), &seq, sizeof(seq));
 				} else throw Exception();
 				while (func.code.Length() & 0xF) func.code.Append(0);
 				func.extrefs.Append(L"/" + lib_name + L"/" + func_name, refoffs);
@@ -425,10 +432,14 @@ namespace Engine
 			LoadModuleEntries(mdl, entry, init, sdwn);
 			return mdl;
 		}
-		XA::Function CreateEntryPoint(string & entry, Array<string> & init, Array<string> & sdwn)
+		XA::Function CreateEntryPoint(const LinkerInput & lin, string & entry, Array<string> & init, Array<string> & sdwn)
 		{
 			XA::Function result;
 			result.retval = XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 0);
+			if (lin.arch == Platform::X86) {
+				result.inputs << XA::TH::MakeSpec(XA::ArgumentSemantics::This, 0, 1);
+				result.inputs << XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1);
+			}
 			for (int i = 0; i < 16; i++) result.data << 0;
 			auto eptr = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformTakePointer, XA::ReferenceFlagInvoke));
 			auto echk = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformVectorNotZero, XA::ReferenceFlagInvoke));
@@ -488,10 +499,14 @@ namespace Engine
 					mdt = new XI::Module(stream, XI::Module::ModuleLoadFlags::LoadResources);
 				} catch (...) { error.code = LinkerErrorCode::MainModuleLoadingError; error.object = input.path_attr; return; }
 			} else mdt.SetRetain(main);
-			output.image_base = 0x00400000;
+			if (input.arch == Platform::X86 || input.arch == Platform::ARM) {
+				output.image_base = 0x00400000;
+			} else if (input.arch == Platform::X64 || input.arch == Platform::ARM64) {
+				output.image_base = 0x140000000;
+			} else output.image_base = 0x00400000;
 			SafePointer<XA::IAssemblyTranslator> trans = XA::CreatePlatformTranslator(input.arch, input.osenv);
 			if (!trans) { error.code = LinkerErrorCode::WrongABI; error.object = input.path_xx; return; }
-			auto entry_func = CreateEntryPoint(entry, init, sdwn);
+			auto entry_func = CreateEntryPoint(input, entry, init, sdwn);
 			init.Clear(); sdwn.Clear(); entry = L"_@INITUS";
 			Volumes::Dictionary<string, LinkerCodeFragment> codes; // symbol - fragment
 			LinkerFunctionLoader loader(codes, trans);

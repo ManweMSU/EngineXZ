@@ -417,20 +417,13 @@ int Main(void)
 					XN::AddSection(shdr, "IMPORT\0\0",   output.is, output.is_rva, XN::pe_section_idata | XN::pe_section_read);
 					XN::AddSection(shdr, "AUXIL\0\0\0",  output.rs, output.rs_rva, XN::pe_section_idata | XN::pe_section_read);
 				} else if (state.arch == Platform::X64 || state.arch == Platform::ARM64) {
-					
-					// TODO: REVISE ARM VERSION
-
 					auto & shdr = *reinterpret_cast<XN::PESuperHeader64 *>(super_header->GetBuffer());
 					MemoryCopy(&shdr.hdr.hdr.signature, "PE\0\0", 4);
 					if (state.arch == Platform::X64) shdr.hdr.hdr.machine = XN::pe_machine_x86_64;
 					else if (state.arch == Platform::ARM64) shdr.hdr.hdr.machine = XN::pe_machine_arm64;
 					shdr.hdr.hdr.num_sections = 0;
 					shdr.hdr.hdr.exhdr_size = sizeof(XN::PEHeaderFull64) - sizeof(XN::PEHeader);
-					if (state.arch == Platform::X64) {
-						shdr.hdr.hdr.flags = XN::pe_flag_executable | XN::pe_flag_nodebug | XN::pe_flag_machine32;
-					} else if (state.arch == Platform::ARM64) {
-						shdr.hdr.hdr.flags = XN::pe_flag_executable | XN::pe_flag_nodebug | XN::pe_flag_largeaware;
-					}
+					shdr.hdr.hdr.flags = XN::pe_flag_executable | XN::pe_flag_nodebug | XN::pe_flag_largeaware;
 					shdr.hdr.hdr_ex.signature = 0x020B;
 					shdr.hdr.hdr_ex.linker_version_major = ENGINE_VI_VERSIONMAJOR;
 					shdr.hdr.hdr_ex.linker_version_minor = ENGINE_VI_VERSIONMINOR;
@@ -470,7 +463,7 @@ int Main(void)
 					} else if (state.osenv == XA::Environment::EFI) {
 						shdr.hdr.hdr_ex.subsystem = XN::pe_subsys_efi;
 					}
-					shdr.hdr.hdr_ex.dynamic_library_flags = XN::pe_library_dynbase | XN::pe_library_nx_awr | XN::pe_library_rnd_awr | XN::pe_library_trm_awr;
+					shdr.hdr.hdr_ex.dynamic_library_flags = XN::pe_library_dynbase | XN::pe_library_nx_awr | XN::pe_library_rnd_awr | XN::pe_library_trm_awr | XN::pe_library_no_seh;
 					shdr.hdr.hdr_ex.desired_stack_size = output.desired_stack;
 					shdr.hdr.hdr_ex.initial_stack_size = output.required_stack;
 					shdr.hdr.hdr_ex.desired_heap_size = output.desired_heap;

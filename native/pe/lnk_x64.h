@@ -33,12 +33,12 @@ namespace Engine
 			Volumes::Dictionary<string, string> resources;
 			Platform arch = Platform::Unknown;
 			XA::Environment osenv = XA::Environment::Unknown;
-			uint32 base_rva;
+			uint64 base_rva;
 		};
 		struct LinkerOutput
 		{
 			XI::Module::ExecutionSubsystem subsystem;
-			uint32 image_base, entry_rva;
+			uint64 image_base, entry_rva;
 			uint32 cs_rva, ds_rva, ls_rva, is_rva, rs_rva;
 			uint32 ls_size, is_size, rs_size;
 			SafePointer<DataBlock> cs, ds, ls, is, rs;

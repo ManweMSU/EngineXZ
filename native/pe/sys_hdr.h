@@ -31,6 +31,7 @@ namespace Engine
 		constexpr uint16 pe_library_rnd_awr	= 0x0020;
 		constexpr uint16 pe_library_dynbase	= 0x0040;
 		constexpr uint16 pe_library_nx_awr	= 0x0100;
+		constexpr uint16 pe_library_no_seh	= 0x0400;
 		constexpr uint16 pe_library_trm_awr	= 0x8000;
 
 		constexpr uint32 pe_section_code	= 0x00000020;

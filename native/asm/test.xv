@@ -11,6 +11,8 @@ auxilium icon (1) = "../../artworks/xn_icon.eiwv";
 functio nint MessageBox(nintadl hwnd, @nint16 message, @nint16 title, nint flags);
 [[importa] InitCommonControls] [[importa_de] "comctl32"] [stdcall "0"]
 functio nihil InitCommonControls();
+[[importa] ExitProcess] [[importa_de] "kernel32"] [stdcall "4"]
+functio nihil ExitProcess(nint codex);
 
 constatus textum = "Сука привет!";
 var ordo [0x100] nint16 utf16;
@@ -22,4 +24,5 @@ functio nihil ini() introitus iacit {
 	
 	InitCommonControls();
 	MessageBox(0, utf16, utf16, 0);
+	ExitProcess(0);
 }
