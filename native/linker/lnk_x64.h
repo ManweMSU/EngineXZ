@@ -11,10 +11,19 @@ namespace Engine
 	namespace XN
 	{
 		constexpr const widechar * AttributeStdCalll = L"stdcall";
-		constexpr const widechar * AttributeRequiredStack = L"XN.Acervus";
-		constexpr const widechar * AttributeDesiredStack = L"XN.AcervusMaximus";
-		constexpr const widechar * AttributeRequiredHeap = L"XN.Memoria";
-		constexpr const widechar * AttributeDesiredHeap = L"XN.MemoriaMaxima";
+
+		constexpr const widechar * AttributeRequiredStack	= L"XN.Acervus";
+		constexpr const widechar * AttributeDesiredStack	= L"XN.AcervusMaximus";
+		constexpr const widechar * AttributeRequiredHeap	= L"XN.Memoria";
+		constexpr const widechar * AttributeDesiredHeap		= L"XN.MemoriaMaxima";
+
+		constexpr const widechar * AttributeMinOSVersion	= L"XN.VersioSystemaeMinima";
+
+		constexpr const widechar * AttributeNoVersionInfo	= L"XN.InformatioVersionisNulla";
+		constexpr const widechar * AttributeNoManifest		= L"XN.ManifestumNullum";
+		constexpr const widechar * AttributeNoCommCtrl60	= L"XN.CommCtrl60Nullus";
+		constexpr const widechar * AttributeNoHighDPI		= L"XN.CulicareDensumNullum";
+		constexpr const widechar * AttributeNeedsElevation	= L"XN.ExaltatioNecessaria";
 
 		enum class LinkerErrorCode {
 			Success					= 0,
@@ -42,10 +51,9 @@ namespace Engine
 			uint32 cs_rva, ds_rva, ls_rva, is_rva, rs_rva;
 			uint32 ls_size, is_size, rs_size;
 			SafePointer<DataBlock> cs, ds, ls, is, rs;
-			uint32 required_stack;
-			uint32 required_heap;
-			uint32 desired_stack;
-			uint32 desired_heap;
+			uint32 required_stack, required_heap;
+			uint32 desired_stack, desired_heap;
+			int32 minimal_os_major, minimal_os_minor;
 		};
 		struct LinkerError
 		{

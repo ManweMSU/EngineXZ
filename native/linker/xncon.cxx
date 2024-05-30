@@ -376,8 +376,13 @@ int Main(void)
 					shdr.hdr.hdr_ex.image_base = output.image_base;
 					shdr.hdr.hdr_ex.section_alignment = XN::windows_page_size;
 					shdr.hdr.hdr_ex.file_alignment = XN::windows_block_size;
-					shdr.hdr.hdr_ex.min_os_version_major = state.osenv == XA::Environment::Windows ? 5 : 0;
-					shdr.hdr.hdr_ex.min_os_version_minor = state.osenv == XA::Environment::Windows ? 1 : 0;
+					if (output.minimal_os_major >= 0 && output.minimal_os_minor >= 0) {
+						shdr.hdr.hdr_ex.min_os_version_major = output.minimal_os_major;
+						shdr.hdr.hdr_ex.min_os_version_minor = output.minimal_os_minor;
+					} else {
+						shdr.hdr.hdr_ex.min_os_version_major = state.osenv == XA::Environment::Windows ? 5 : 0;
+						shdr.hdr.hdr_ex.min_os_version_minor = state.osenv == XA::Environment::Windows ? 1 : 0;
+					}
 					shdr.hdr.hdr_ex.subsystem_version_major = shdr.hdr.hdr_ex.min_os_version_major;
 					shdr.hdr.hdr_ex.subsystem_version_minor = shdr.hdr.hdr_ex.min_os_version_minor;
 					shdr.hdr.hdr_ex.image_memory_size = input.base_rva;
@@ -439,13 +444,18 @@ int Main(void)
 					shdr.hdr.hdr_ex.image_base = output.image_base;
 					shdr.hdr.hdr_ex.section_alignment = XN::windows_page_size;
 					shdr.hdr.hdr_ex.file_alignment = XN::windows_block_size;
-					if (state.osenv == XA::Environment::Windows) {
-						if (state.arch == Platform::X64) {
-							shdr.hdr.hdr_ex.min_os_version_major = 6;
-							shdr.hdr.hdr_ex.min_os_version_minor = 0;
-						} else if (state.arch == Platform::ARM64) {
-							shdr.hdr.hdr_ex.min_os_version_major = 6;
-							shdr.hdr.hdr_ex.min_os_version_minor = 2;
+					if (output.minimal_os_major >= 0 && output.minimal_os_minor >= 0) {
+						shdr.hdr.hdr_ex.min_os_version_major = output.minimal_os_major;
+						shdr.hdr.hdr_ex.min_os_version_minor = output.minimal_os_minor;
+					} else {
+						if (state.osenv == XA::Environment::Windows) {
+							if (state.arch == Platform::X64) {
+								shdr.hdr.hdr_ex.min_os_version_major = 6;
+								shdr.hdr.hdr_ex.min_os_version_minor = 0;
+							} else if (state.arch == Platform::ARM64) {
+								shdr.hdr.hdr_ex.min_os_version_major = 6;
+								shdr.hdr.hdr_ex.min_os_version_minor = 2;
+							}
 						}
 					}
 					shdr.hdr.hdr_ex.subsystem_version_major = shdr.hdr.hdr_ex.min_os_version_major;
@@ -505,7 +515,7 @@ int Main(void)
 			console << L"Compositura imperati:" << LineFeedSequence;
 			console << L"  xncon <modulus.xx> -NSablmox" << LineFeedSequence;
 			console << LineFeedSequence;
-			console << L"<modulus.xx> - XI modulus, objectum contexendi," << LineFeedSequence;
+			console << L"<modulus.xx> - XI aut ASM modulus, objectum contexendi," << LineFeedSequence;
 			console << L"-N           - proloquium nullum," << LineFeedSequence;
 			console << L"-S           - modus silens," << LineFeedSequence;
 			console << L"-a           - semitam XI moduli attributorum definit," << LineFeedSequence;

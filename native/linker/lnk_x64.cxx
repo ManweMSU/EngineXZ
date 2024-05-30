@@ -126,6 +126,7 @@ namespace Engine
 					seq[1] = 0xF8400000 | 16 | (16 << 5);
 					// BR X16
 					seq[2] = 0xD61F0000 | (16 << 5);
+					seq[3] = seq[4] = 0;
 					func.code.SetLength(sizeof(seq));
 					MemoryCopy(func.code.GetBuffer(), &seq, sizeof(seq));
 				} else throw Exception();
@@ -274,6 +275,7 @@ namespace Engine
 		}
 		void LinkResourceCreateVersion(ResourceItem & root, const XI::Module & mdl, const Volumes::Dictionary<string, string> & mdt)
 		{
+			if (mdt.GetElementByKey(AttributeNoVersionInfo)) return;
 			uint32 neutral_locale = 0x040004B0;
 			uint16 vi[4];
 			ZeroMemory(&vi, sizeof(vi));
@@ -329,6 +331,7 @@ namespace Engine
 		}
 		void LinkResourceCreateManifest(ResourceItem & root, const XI::Module & mdl, const Volumes::Dictionary<string, string> & mdt)
 		{
+			if (mdt.GetElementByKey(AttributeNoManifest)) return;
 			string version = L"0.0.0.0";
 			string identifier = mdl.module_import_name;
 			string description = mdl.module_import_name;
@@ -349,12 +352,18 @@ namespace Engine
 			wri << L"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">";
 			wri << L"<assemblyIdentity version=\"" << version << L"\" processorArchitecture=\"*\" name=\"" << identifier << L"\" type=\"win32\"/>";
 			wri << L"<description>" << description << L"</description>";
-			wri << L"<dependency><dependentAssembly>";
-			wri << L"<assemblyIdentity type=\"win32\" name=\"Microsoft.Windows.Common-Controls\" version=\"6.0.0.0\" processorArchitecture=\"*\" publicKeyToken=\"6595b64144ccf1df\" language=\"*\"/>";
-			wri << L"</dependentAssembly></dependency>";
+			if (!mdt.GetElementByKey(AttributeNoCommCtrl60)) {
+				wri << L"<dependency><dependentAssembly>";
+				wri << L"<assemblyIdentity type=\"win32\" name=\"Microsoft.Windows.Common-Controls\" version=\"6.0.0.0\" processorArchitecture=\"*\" publicKeyToken=\"6595b64144ccf1df\" language=\"*\"/>";
+				wri << L"</dependentAssembly></dependency>";
+			}
 			wri << L"<application xmlns=\"urn:schemas-microsoft-com:asm.v3\">";
 			wri << L"<windowsSettings>";
-			wri << L"<dpiAware xmlns=\"http://schemas.microsoft.com/SMI/2005/WindowsSettings\">true</dpiAware>";
+			if (mdt.GetElementByKey(AttributeNoHighDPI)) {
+				wri << L"<dpiAware xmlns=\"http://schemas.microsoft.com/SMI/2005/WindowsSettings\">false</dpiAware>";
+			} else {
+				wri << L"<dpiAware xmlns=\"http://schemas.microsoft.com/SMI/2005/WindowsSettings\">true</dpiAware>";
+			}
 			wri << L"</windowsSettings>";
 			wri << L"<windowsSettings xmlns:ws2=\"http://schemas.microsoft.com/SMI/2016/WindowsSettings\">";
 			wri << L"<ws2:longPathAware>true</ws2:longPathAware>";
@@ -368,7 +377,11 @@ namespace Engine
 			wri << L"<supportedOS Id=\"{e2011457-1546-43c5-a5fe-008deee3d3f0}\"/>";
 			wri << L"</application></compatibility>";
 			wri << L"<trustInfo xmlns=\"urn:schemas-microsoft-com:asm.v2\"><security><requestedPrivileges>";
-			wri << L"<requestedExecutionLevel level=\"asInvoker\" uiAccess=\"FALSE\"></requestedExecutionLevel>";
+			if (mdt.GetElementByKey(AttributeNeedsElevation)) {
+				wri << L"<requestedExecutionLevel level=\"requireAdministrator\" uiAccess=\"false\"></requestedExecutionLevel>";
+			} else {
+				wri << L"<requestedExecutionLevel level=\"asInvoker\" uiAccess=\"false\"></requestedExecutionLevel>";
+			}
 			wri << L"</requestedPrivileges></security></trustInfo>";
 			wri << L"</assembly>";
 			stream.Seek(0, Streaming::Begin);
@@ -805,6 +818,7 @@ namespace Engine
 			output.required_stack = windows_page_size;
 			output.desired_heap = 0x100000;
 			output.required_heap = windows_page_size;
+			output.minimal_os_major = output.minimal_os_minor = -1;
 			const string * attr;
 			if (attr = metadata->GetElementByKey(AttributeRequiredStack)) try {
 				output.required_stack = Align(attr->ToUInt32(), windows_page_size);
@@ -817,6 +831,11 @@ namespace Engine
 			} catch (...) {}
 			if (attr = metadata->GetElementByKey(AttributeDesiredHeap)) try {
 				output.desired_heap = Align(attr->ToUInt32(), windows_page_size);
+			} catch (...) {}
+			if (attr = metadata->GetElementByKey(AttributeMinOSVersion)) try {
+				auto parts = attr->Split(L'.');
+				output.minimal_os_major = parts.Length() > 0 ? parts[0].ToUInt32() : -1;
+				output.minimal_os_minor = parts.Length() > 1 ? parts[1].ToUInt32() : -1;
 			} catch (...) {}
 		}
 		uint Align(uint number, uint alignment) { return (number + alignment - 1) / alignment * alignment; }

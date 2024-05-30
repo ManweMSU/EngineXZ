@@ -8,8 +8,4 @@ INT 0x21
 MOV AX, 0x4C00
 INT 0x21
 
-# SEGMENTUM DATA:
-# DATA 1 'Programma executa non est in DOS circumiecto.'
-# DATA 1 13
-# DATA 1 10
-# DATA 1 '$'
+# SEGMENTUM DATA: # DATA 1 'Programma executa non est in DOS circumiecto.\r\n$'
