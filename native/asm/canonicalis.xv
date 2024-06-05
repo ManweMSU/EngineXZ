@@ -3,2390 +3,301 @@ auxilium attributum ("CreatorModuli") = "Engine Software";
 auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
 auxilium attributum ("Versio") = "1.0.0.1";
 
+importa cor;
+importa memoria;
+importa lineae;
+
 [[systema] libera]
 
-[[innatum]] [[magnitudo] "0"] [[significatio] nihil]
-genus nihil {}
-
-[[innatum]] [[magnitudo] "1"] [[significatio] integer]
-genus logicum {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (logicum src) {
-		INTERFACE W 1 : THIS 1 => 0
-		CODE { RET { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1]) } }
-	}
-	[[xa]] functio logicum operator - () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOT:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ~ () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOT:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOT:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio ~logicum operator = (logicum src) {
-		INTERFACE W 1 : THIS 1 => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~logicum operator |= (logicum src) {
-		INTERFACE W 1 : THIS 1 => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @OR:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~logicum operator &= (logicum src) {
-		INTERFACE W 1 : THIS 1 => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @AND:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~logicum operator #= (logicum src) {
-		INTERFACE W 1 : THIS 1 => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @XOR:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio logicum operator | (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @OR:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator & (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @AND:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator # (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @XOR:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @SAME:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTSAME:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_L:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_G:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_LE:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (logicum a, logicum b) {
-		INTERFACE 1 1 => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_GE:1 1=>1(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "1"] [[significatio] integer_signus]
-genus int8 {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => 0
-		CODE { RET { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1]) } }
-	}
-	[[xa]] functio int8 operator - () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @NEG:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio int8 operator ~ () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @INVERSE:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio ~int8 operator = (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator += (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @ADD:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator -= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @SUB:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator *= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @S_MUL:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator /= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @S_DIV:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator %= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @S_MOD:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator |= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @OR:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator &= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @AND:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator #= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @XOR:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator <<= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @SAL:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator >>= (int8 src) {
-		INTERFACE W 1 : THIS 1 : SINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @SAR:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @ADD:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int8 operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @SUB:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio int8 operator + (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @ADD:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator - (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @SUB:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator * (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @S_MUL:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator / (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @S_DIV:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator % (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @S_MOD:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator | (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @OR:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator & (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @AND:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator # (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @XOR:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator << (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @SAL:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int8 operator >> (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @SAR:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_L:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_G:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_LE:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (int8 a, int8 b) {
-		INTERFACE 1 : SINT 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_GE:1 1=>1(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "1"] [[significatio] integer]
-genus nint8 {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => 0
-		CODE { RET { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1]) } }
-	}
-	[[xa]] functio nint8 operator - () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @NEG:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio nint8 operator ~ () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @INVERSE:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] functio ~nint8 operator = (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator += (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @ADD:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator -= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @SUB:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator *= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @U_MUL:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator /= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @U_DIV:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator %= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @U_MOD:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator |= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @OR:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator &= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @AND:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator #= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @XOR:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator <<= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @SHL:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator >>= (nint8 src) {
-		INTERFACE W 1 : THIS 1 : UINT => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @SHR:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @ADD:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint8 operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), @SUB:1 1=>1(@PTR_FOLLOW:W 1=>1(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio nint8 operator + (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @ADD:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator - (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @SUB:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator * (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @U_MUL:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator / (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @U_DIV:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator % (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @U_MOD:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator | (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @OR:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator & (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @AND:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator # (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @XOR:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator << (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @SHL:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint8 operator >> (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @SHR:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_L:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_G:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_LE:1 1=>1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (nint8 a, nint8 b) {
-		INTERFACE 1 : UINT 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_GE:1 1=>1(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "2"] [[significatio] integer_signus]
-genus int16 {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => 0
-		CODE { RET { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1]) } }
-	}
-	[[xa]] functio int16 operator - () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @NEG:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] functio int16 operator ~ () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @INVERSE:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] functio ~int16 operator = (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator += (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @ADD:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator -= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @SUB:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator *= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @S_MUL:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator /= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @S_DIV:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator %= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @S_MOD:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator |= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @OR:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator &= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @AND:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator #= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @XOR:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator <<= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @SAL:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator >>= (int16 src) {
-		INTERFACE W 1 : THIS 2 : SINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @SAR:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @ADD:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int16 operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @SUB:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio int16 operator + (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @ADD:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator - (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @SUB:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator * (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @S_MUL:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator / (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @S_DIV:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator % (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @S_MOD:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator | (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @OR:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator & (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @AND:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator # (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @XOR:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator << (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @SAL:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int16 operator >> (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @SAR:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_L:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_G:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_LE:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (int16 a, int16 b) {
-		INTERFACE 2 : SINT 2 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_GE:2 2=>2(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "2"] [[significatio] integer]
-genus nint16 {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => 0
-		CODE { RET { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1]) } }
-	}
-	[[xa]] functio nint16 operator - () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @NEG:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] functio nint16 operator ~ () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @INVERSE:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] functio ~nint16 operator = (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator += (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @ADD:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator -= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @SUB:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator *= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @U_MUL:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator /= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @U_DIV:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator %= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @U_MOD:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator |= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @OR:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator &= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @AND:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator #= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @XOR:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator <<= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @SHL:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator >>= (nint16 src) {
-		INTERFACE W 1 : THIS 2 : UINT => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @SHR:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @ADD:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint16 operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), @SUB:2 2=>2(@PTR_FOLLOW:W 1=>2(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio nint16 operator + (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @ADD:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator - (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @SUB:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator * (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @U_MUL:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator / (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @U_DIV:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator % (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @U_MOD:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator | (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @OR:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator & (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @AND:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator # (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @XOR:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator << (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @SHL:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint16 operator >> (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @SHR:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_L:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_G:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_LE:2 2=>2(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (nint16 a, nint16 b) {
-		INTERFACE 2 : UINT 2 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_GE:2 2=>2(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "4"] [[significatio] integer_signus]
-genus int32 {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => 0
-		CODE { RET { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } }
-	}
-	[[xa]] functio int32 operator - () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @NEG:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] functio int32 operator ~ () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @INVERSE:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] functio ~int32 operator = (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator += (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @ADD:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator -= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @SUB:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator *= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @S_MUL:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator /= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @S_DIV:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator %= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @S_MOD:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator |= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @OR:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator &= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @AND:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator #= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @XOR:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator <<= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @SAL:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator >>= (int32 src) {
-		INTERFACE W 1 : THIS 4 : SINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @SAR:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @ADD:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int32 operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @SUB:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio int32 operator + (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @ADD:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator - (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @SUB:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator * (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @S_MUL:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator / (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @S_DIV:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator % (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @S_MOD:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator | (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @OR:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator & (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @AND:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator # (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @XOR:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator << (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @SAL:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int32 operator >> (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @SAR:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_L:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_G:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_LE:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (int32 a, int32 b) {
-		INTERFACE 4 : SINT 4 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_GE:4 4=>4(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "4"] [[significatio] integer]
-genus nint32 {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => 0
-		CODE { RET { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } }
-	}
-	[[xa]] functio nint32 operator - () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @NEG:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] functio nint32 operator ~ () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @INVERSE:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] functio ~nint32 operator = (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator += (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @ADD:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator -= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @SUB:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator *= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @U_MUL:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator /= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @U_DIV:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator %= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @U_MOD:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator |= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @OR:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator &= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @AND:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator #= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @XOR:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator <<= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @SHL:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator >>= (nint32 src) {
-		INTERFACE W 1 : THIS 4 : UINT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @SHR:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @ADD:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint32 operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @SUB:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio nint32 operator + (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @ADD:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator - (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @SUB:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator * (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @U_MUL:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator / (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @U_DIV:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator % (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @U_MOD:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator | (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @OR:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator & (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @AND:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator # (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @XOR:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator << (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @SHL:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint32 operator >> (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @SHR:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_L:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_G:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_LE:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (nint32 a, nint32 b) {
-		INTERFACE 4 : UINT 4 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_GE:4 4=>4(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "8"] [[significatio] integer_signus]
-genus int64 {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => 0
-		CODE { RET { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } }
-	}
-	[[xa]] functio int64 operator - () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @NEG:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] functio int64 operator ~ () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @INVERSE:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] functio ~int64 operator = (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator += (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @ADD:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator -= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @SUB:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator *= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @S_MUL:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator /= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @S_DIV:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator %= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @S_MOD:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator |= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @OR:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator &= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @AND:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator #= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @XOR:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator <<= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @SAL:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator >>= (int64 src) {
-		INTERFACE W 1 : THIS 8 : SINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @SAR:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @ADD:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~int64 operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @SUB:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio int64 operator + (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @ADD:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator - (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @SUB:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator * (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @S_MUL:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator / (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @S_DIV:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator % (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @S_MOD:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator | (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @OR:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator & (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @AND:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator # (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @XOR:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator << (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @SAL:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio int64 operator >> (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @SAR:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_L:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_G:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_LE:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (int64 a, int64 b) {
-		INTERFACE 8 : SINT 8 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_GE:8 8=>8(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "8"] [[significatio] integer]
-genus nint64 {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => 0
-		CODE { RET { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } }
-	}
-	[[xa]] functio nint64 operator - () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @NEG:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] functio nint64 operator ~ () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @INVERSE:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] functio ~nint64 operator = (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator += (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @ADD:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator -= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @SUB:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator *= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @U_MUL:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator /= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @U_DIV:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator %= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @U_MOD:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator |= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @OR:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator &= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @AND:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator #= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @XOR:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator <<= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @SHL:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator >>= (nint64 src) {
-		INTERFACE W 1 : THIS 8 : UINT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @SHR:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @ADD:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nint64 operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @SUB:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio nint64 operator + (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @ADD:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator - (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @SUB:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator * (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @U_MUL:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator / (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @U_DIV:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator % (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @U_MOD:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator | (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @OR:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator & (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @AND:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator # (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @XOR:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator << (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @SHL:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nint64 operator >> (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @SHR:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_L:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_G:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_LE:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (nint64 a, nint64 b) {
-		INTERFACE 8 : UINT 8 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_GE:8 8=>8(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "0:1"] [[significatio] integer_signus]
-genus intadl {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => 0
-		CODE { RET { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1]) } }
-	}
-	[[xa]] functio intadl operator - () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @NEG:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] functio intadl operator ~ () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @INVERSE:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] functio ~intadl operator = (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator += (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @ADD:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator -= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @SUB:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator *= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @S_MUL:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator /= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @S_DIV:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator %= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @S_MOD:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator |= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @OR:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator &= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @AND:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator #= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @XOR:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator <<= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @SAL:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator >>= (intadl src) {
-		INTERFACE W 1 : THIS W 1 : SINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @SAR:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @ADD:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~intadl operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @SUB:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio intadl operator + (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @ADD:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator - (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @SUB:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator * (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_MUL:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator / (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_DIV:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator % (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_MOD:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator | (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @OR:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator & (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @AND:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator # (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @XOR:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator << (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @SAL:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio intadl operator >> (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @SAR:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_L:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_G:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_LE:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (intadl a, intadl b) {
-		INTERFACE W 1 : SINT W 1 : SINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @S_GE:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "0:1"] [[significatio] integer]
-genus nintadl {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => 0
-		CODE { RET { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1]) } }
-	}
-	[[xa]] functio nintadl operator - () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @NEG:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] functio nintadl operator ~ () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @INVERSE:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] functio logicum operator ! () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @ZERO:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] functio ~nintadl operator = (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator += (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @ADD:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator -= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @SUB:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator *= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @U_MUL:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator /= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @U_DIV:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator %= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @U_MOD:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator |= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @OR:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator &= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @AND:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator #= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @XOR:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator <<= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @SHL:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator >>= (nintadl src) {
-		INTERFACE W 1 : THIS W 1 : UINT => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @SHR:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator ++ () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @ADD:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~nintadl operator -- () {
-		DATA DWORD 1
-		INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), @SUB:W 1 W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] classis functio nintadl operator + (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @ADD:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator - (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @SUB:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator * (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_MUL:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator / (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_DIV:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator % (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_MOD:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator | (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @OR:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator & (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @AND:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator # (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @XOR:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator << (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @SHL:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio nintadl operator >> (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @SHR:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator == (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @EQ:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator != (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @NEQ:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator < (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_L:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator > (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_G:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator <= (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_LE:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-	[[xa]] classis functio logicum operator >= (nintadl a, nintadl b) {
-		INTERFACE W 1 : UINT W 1 : UINT => 1
-		CODE { RET { @BLT:1 1=>1(R, @U_GE:W 1 W 1=>W 1(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "4"] [[significatio] fractus]
-genus frac {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (frac src) {
-		INTERFACE W 1 : THIS 4 : FLOAT => 0
-		CODE { RET { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } }
-	}
-	[[xa]] [[inline]] functio frac operator - () { INTERFACE W 1 : THIS => 4 : FLOAT CODE { RET { @BLT:4 4=>4(R, @FP_NEG_32:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } } }
-	[[xa]] [[inline]] functio logicum operator ! () { INTERFACE W 1 : THIS => 1 CODE { RET { @BLT:1 1=>1(R, @FP_ZERO_32:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } } }
-	[[xa]] functio ~frac operator = (frac src) {
-		INTERFACE W 1 : THIS 4 : FLOAT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~frac operator += (frac src) {
-		INTERFACE W 1 : THIS 4 : FLOAT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_ADD_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~frac operator -= (frac src) {
-		INTERFACE W 1 : THIS 4 : FLOAT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_SUB_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~frac operator *= (frac src) {
-		INTERFACE W 1 : THIS 4 : FLOAT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_MUL_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~frac operator /= (frac src) {
-		INTERFACE W 1 : THIS 4 : FLOAT => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_DIV_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~frac operator ++ () {
-		DATA DWORD 1.0 INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_ADD_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~frac operator -- () {
-		DATA DWORD 1.0 INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), @FP_SUB_32:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] [[inline]] classis functio frac operator + (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_ADD_32:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio frac operator - (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_SUB_32:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio frac operator * (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_MUL_32:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio frac operator / (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_DIV_32:4 4=>4(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator == (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_EQ_32:4 4=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator != (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_NEQ_32:4 4=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator < (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_L_32:4 4=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator > (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_G_32:4 4=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator <= (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_LE_32:4 4=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator >= (frac a, frac b) {
-		INTERFACE 4 : FLOAT 4 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_GE_32:4 4=>1(A[0], A[1])) } }
-	}
-}
-[[innatum]] [[magnitudo] "8"] [[significatio] fractus]
-genus dfrac {
-	[[xa]] structor () {
-		INTERFACE W 1 : THIS => 0
-		CODE { RET }
-	}
-	[[xa]] structor (dfrac src) {
-		INTERFACE W 1 : THIS 8 : FLOAT => 0
-		CODE { RET { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } }
-	}
-	[[xa]] [[inline]] functio dfrac operator - () { INTERFACE W 1 : THIS => 8 : FLOAT CODE { RET { @BLT:8 8=>8(R, @FP_NEG_64:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } } }
-	[[xa]] [[inline]] functio logicum operator ! () { INTERFACE W 1 : THIS => 1 CODE { RET { @BLT:1 1=>1(R, @FP_ZERO_64:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } } }
-	[[xa]] functio ~dfrac operator = (dfrac src) {
-		INTERFACE W 1 : THIS 8 : FLOAT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~dfrac operator += (dfrac src) {
-		INTERFACE W 1 : THIS 8 : FLOAT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_ADD_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~dfrac operator -= (dfrac src) {
-		INTERFACE W 1 : THIS 8 : FLOAT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_SUB_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~dfrac operator *= (dfrac src) {
-		INTERFACE W 1 : THIS 8 : FLOAT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_MUL_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~dfrac operator /= (dfrac src) {
-		INTERFACE W 1 : THIS 8 : FLOAT => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_DIV_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), A[1])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~dfrac operator ++ () {
-		DATA QWORD 1.0 INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_ADD_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] functio ~dfrac operator -- () {
-		DATA QWORD 1.0 INTERFACE W 1 : THIS => W 1
-		CODE { EVAL { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @FP_SUB_64:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), D[0])) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
-	}
-	[[xa]] [[inline]] classis functio dfrac operator + (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_ADD_64:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio dfrac operator - (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_SUB_64:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio dfrac operator * (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_MUL_64:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio dfrac operator / (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_DIV_64:8 8=>8(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator == (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_EQ_64:8 8=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator != (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_NEQ_64:8 8=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator < (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_L_64:8 8=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator > (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_G_64:8 8=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator <= (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_LE_64:8 8=>1(A[0], A[1])) } }
-	}
-	[[xa]] [[inline]] classis functio logicum operator >= (dfrac a, dfrac b) {
-		INTERFACE 8 : FLOAT 8 : FLOAT => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_GE_64:8 8=>1(A[0], A[1])) } }
-	}
-}
-
-nomen_alternum int = int32;
-nomen_alternum nint = nint32;
-nomen_alternum frac32 = frac;
-nomen_alternum frac64 = dfrac;
-nomen_alternum char = nint32;
-
-dura logicum {
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:1=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:1=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:INT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:INT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-}
-dura int8 {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:SINT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:SINT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-}
-dura nint8 {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:1=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:1=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:INT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:INT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
-	}
-}
-dura int16 {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:2=>1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:2=>1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:2=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:2=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:2=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:2=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:2:SINT=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:2:SINT=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-}
-dura nint16 {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:2=>1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:2=>1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:2=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:2=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:2=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:2=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:2:INT=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:2:INT=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
-	}
-}
-dura int32 {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:4=>2(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:4=>2(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:4:SINT=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:4:SINT=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-}
-dura nint32 {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:4=>2(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:4=>2(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:4:INT=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:4:INT=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-}
-dura int64 {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:8=>2(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:8=>2(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:8:SINT=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:8:SINT=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-}
-dura nint64 {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:8=>2(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:8=>2(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:8:INT=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:8:INT=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-}
-dura intadl {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:W 1=>1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:W 1=>1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:W 1=>2(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:W 1=>2(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:W 1=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:W 1=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:W 1=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:W 1=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : UINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:W 1:SINT=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:W 1:SINT=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-}
-dura nintadl {
-	[[xa]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:W 1=>1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : UINT
-		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:W 1=>1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:W 1=>2(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : UINT
-		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:W 1=>2(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:W 1=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : UINT
-		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:W 1=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:W 1=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : UINT
-		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:W 1=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:W 1:INT=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:W 1:INT=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
-	}
-}
-dura frac {
-	[[xa]] [[inline]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_NOTZERO_32:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_32:4=>1:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : INT
-		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_32:4=>1:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_32:4=>2:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : INT
-		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_32:4=>2:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_32:4=>4:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : INT
-		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_32:4=>4:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_32:4=>8:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : INT
-		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_32:4=>8:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_32:4=>W 1:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : INT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_32:4=>W 1:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (dfrac) () {
-		INTERFACE W 1 : THIS => 8 : FLOAT
-		CODE { RET { @BLT:8 8=>8(R, @FP_RESIZE_32:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
-	}
-}
-dura dfrac {
-	[[xa]] [[inline]] convertor (logicum) () {
-		INTERFACE W 1 : THIS => 1
-		CODE { RET { @BLT:1 1=>1(R, @FP_NOTZERO_64:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (int8) () {
-		INTERFACE W 1 : THIS => 1 : SINT
-		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_64:8=>1:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nint8) () {
-		INTERFACE W 1 : THIS => 1 : INT
-		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_64:8=>1:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (int16) () {
-		INTERFACE W 1 : THIS => 2 : SINT
-		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_64:8=>2:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nint16) () {
-		INTERFACE W 1 : THIS => 2 : INT
-		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_64:8=>2:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (int32) () {
-		INTERFACE W 1 : THIS => 4 : SINT
-		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_64:8=>4:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nint32) () {
-		INTERFACE W 1 : THIS => 4 : INT
-		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_64:8=>4:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (int64) () {
-		INTERFACE W 1 : THIS => 8 : SINT
-		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_64:8=>8:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nint64) () {
-		INTERFACE W 1 : THIS => 8 : INT
-		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_64:8=>8:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (intadl) () {
-		INTERFACE W 1 : THIS => W 1 : SINT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_64:8=>W 1:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (nintadl) () {
-		INTERFACE W 1 : THIS => W 1 : INT
-		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_64:8=>W 1:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-	[[xa]] [[inline]] convertor (frac) () {
-		INTERFACE W 1 : THIS => 4 : FLOAT
-		CODE { RET { @BLT:4 4=>4(R, @FP_RESIZE_64:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
-	}
-}
-
-[[xa]] functio logicum operator == (@nihil a, @nihil b) {
-	INTERFACE W 1 : - W 1 : - => 1
-	CODE { RET { @BLT:1 1=>1(R, @EQ:W 1 W 1=>W 1(A[0], A[1])) } }
-}
-[[xa]] functio logicum operator != (@nihil a, @nihil b) {
-	INTERFACE W 1 : - W 1 : - => 1
-	CODE { RET { @BLT:1 1=>1(R, @NEQ:W 1 W 1=>W 1(A[0], A[1])) } }
-}
-
+/*
+// TODO: IMPLEMENT
 spatium math {
-	dura .frac {
-		constatus pi = frac(3.14159265358979323846);
-		constatus e = frac(2.71828182845904523536);
-	}
-	dura .dfrac {
-		constatus pi = 3.14159265358979323846;
-		constatus e = 2.71828182845904523536;
+	spatium caecus {
+		[[importa] fpu_ncg_1]	functio nihil data(@nihil data, int long);
+		[[importa] fpu_ncg_2]	functio int integer(int min, int max);
+		[[importa] fpu_ncg_3]	functio dfrac fractus();
 	}
 
-	[[xa]] [[inline]]		functio int8	abs(int8 valor)		{ INTERFACE 1:SINT=>1:SINT CODE { RET { @BLT:1 1=>1(R, @ABS:1=>1(A[0])) } } }
-	[[xa]] [[inline]]		functio int16	abs(int16 valor)	{ INTERFACE 2:SINT=>2:SINT CODE { RET { @BLT:2 2=>2(R, @ABS:2=>2(A[0])) } } }
-	[[xa]] [[inline]]		functio int32	abs(int32 valor)	{ INTERFACE 4:SINT=>4:SINT CODE { RET { @BLT:4 4=>4(R, @ABS:4=>4(A[0])) } } }
-	[[xa]] [[inline]]		functio int64	abs(int64 valor)	{ INTERFACE 8:SINT=>8:SINT CODE { RET { @BLT:8 8=>8(R, @ABS:8=>8(A[0])) } } }
-	[[xa]] [[inline]]		functio intadl	abs(intadl valor)	{ INTERFACE W 1:SINT=>W 1:SINT CODE { RET { @BLT:W 1 W 1=>W 1(R, @ABS:W 1=>W 1(A[0])) } } }
-	[[xa]] [[inline]]		functio frac	abs(frac valor)		{ INTERFACE 4:FLOAT=>4:FLOAT CODE { RET { @BLT:4 4=>4(R, @FP_ABS_32:4=>4(A[0])) } } }
-	[[xa]] [[inline]]		functio dfrac	abs(dfrac valor)	{ INTERFACE 8:FLOAT=>8:FLOAT CODE { RET { @BLT:8 8=>8(R, @FP_ABS_64:8=>8(A[0])) } } }
+	[[importa] fpu_f32_pi]	functio frac inf_pos_s();
+	[[importa] fpu_f32_ni]	functio frac inf_neg_s();
+	[[importa] fpu_f32_nn]	functio frac nn_s();
+	[[importa] fpu_f64_pi]	functio dfrac inf_pos_d();
+	[[importa] fpu_f64_ni]	functio dfrac inf_neg_d();
+	[[importa] fpu_f64_nn]	functio dfrac nn_d();
+	[[importa] fpu_ei_32]	functio logicum inf_est(frac valor);
+	[[importa] fpu_ei_64]	functio logicum inf_est(dfrac valor);
+	[[importa] fpu_enn_32]	functio logicum nn_est(frac valor);
+	[[importa] fpu_enn_64]	functio logicum nn_est(dfrac valor);
 
-	[[xa]] [[inline]]		functio frac	radix(frac valor)	{ INTERFACE 4:FLOAT=>4:FLOAT CODE { RET { @BLT:4 4=>4(R, @FP_SQRT_32:4=>4(A[0])) } } }
-	[[xa]] [[inline]]		functio dfrac	radix(dfrac valor)	{ INTERFACE 8:FLOAT=>8:FLOAT CODE { RET { @BLT:8 8=>8(R, @FP_SQRT_64:8=>8(A[0])) } } }
+	[[importa] fpu_sgn_i8]	functio int8	sgn(int8 valor);
+	[[importa] fpu_sgn_i16]	functio int16	sgn(int16 valor);
+	[[importa] fpu_sgn_i32]	functio int32	sgn(int32 valor);
+	[[importa] fpu_sgn_i64]	functio int64	sgn(int64 valor);
+	[[importa] fpu_sgn_iad]	functio intadl	sgn(intadl valor);
+	[[importa] fpu_sgn_f32]	functio frac	sgn(frac valor);
+	[[importa] fpu_sgn_f64]	functio dfrac	sgn(dfrac valor);
+
+	[[importa] fpu_c1]		functio frac	concava(frac valor);
+	[[importa] fpu_c1_d]	functio dfrac	concava(dfrac valor);
+	[[importa] fpu_c2]		functio frac	trunca(frac valor);
+	[[importa] fpu_c2_d]	functio dfrac	trunca(dfrac valor);
+	[[importa] fpu_c3]		functio frac	solum(frac valor);
+	[[importa] fpu_c3_d]	functio dfrac	solum(dfrac valor);
+	[[importa] fpu_c4]		functio frac	tectum(frac valor);
+	[[importa] fpu_c4_d]	functio dfrac	tectum(dfrac valor);
+
+	[[importa] fpu_pot]		functio frac	pot(frac valor, frac pot);
+	[[importa] fpu_pot_d]	functio dfrac	pot(dfrac valor, dfrac pot);
+
+	[[importa] fpu_exp]		functio frac	exp(frac valor);
+	[[importa] fpu_exp_d]	functio dfrac	exp(dfrac valor);
+	[[importa] fpu_ln]		functio frac	ln(frac valor);
+	[[importa] fpu_ln_d]	functio dfrac	ln(dfrac valor);
+	[[importa] fpu_lb]		functio frac	lb(frac valor);
+	[[importa] fpu_lb_d]	functio dfrac	lb(dfrac valor);
+	[[importa] fpu_lg]		functio frac	lg(frac valor);
+	[[importa] fpu_lg_d]	functio dfrac	lg(dfrac valor);
+
+	[[importa] fpu_sin]		functio frac	sin(frac valor);
+	[[importa] fpu_sin_d]	functio dfrac	sin(dfrac valor);
+	[[importa] fpu_cos]		functio frac	cos(frac valor);
+	[[importa] fpu_cos_d]	functio dfrac	cos(dfrac valor);
+	[[importa] fpu_tg]		functio frac	tg(frac valor);
+	[[importa] fpu_tg_d]	functio dfrac	tg(dfrac valor);
+	[[importa] fpu_ctg]		functio frac	ctg(frac valor);
+	[[importa] fpu_ctg_d]	functio dfrac	ctg(dfrac valor);
+
+	[[importa] fpu_asin]	functio frac	arcsin(frac valor);
+	[[importa] fpu_asin_d]	functio dfrac	arcsin(dfrac valor);
+	[[importa] fpu_acos]	functio frac	arccos(frac valor);
+	[[importa] fpu_acos_d]	functio dfrac	arccos(dfrac valor);
+	[[importa] fpu_atg]		functio frac	arctg(frac valor);
+	[[importa] fpu_atg_d]	functio dfrac	arctg(dfrac valor);
+	[[importa] fpu_actg]	functio frac	arcctg(frac valor);
+	[[importa] fpu_actg_d]	functio dfrac	arcctg(dfrac valor);
 }
+
 spatium errores {
-	[error] constatus error_nullus		= 0x00;
-	[error] constatus implantatio_nulla	= 0x01;
-	[error] constatus memoria_nulla		= 0x02;
-	[error] constatus argumentum_falsum	= 0x03;
-	[error] constatus efformatio_falsa	= 0x04;
-	[error] constatus habitus_falsus	= 0x05;
-	[error] constatus ie_falsum			= 0x06;
-	[error] constatus xe_defectus		= 0x07;
-
-	[sub_error ie_falsum] constatus ie_error_nullus					= 0x00;
-	[sub_error ie_falsum] constatus ie_error_ignotus				= 0x01;
-	[sub_error ie_falsum] constatus ie_lima_nulla					= 0x02;
-	[sub_error ie_falsum] constatus ie_semita_nulla					= 0x03;
-	[sub_error ie_falsum] constatus ie_limae_apertae_nimium			= 0x04;
-	[sub_error ie_falsum] constatus ie_permissio_nulla				= 0x05;
-	[sub_error ie_falsum] constatus ie_manubrium_defectum			= 0x06;
-	[sub_error ie_falsum] constatus ie_memoria_nulla				= 0x07;
-	[sub_error ie_falsum] constatus ie_machinatio_defecta			= 0x08;
-	[sub_error ie_falsum] constatus ie_legere_sole					= 0x09;
-	[sub_error ie_falsum] constatus ie_spatium_disci_nullum			= 0x0A;
-	[sub_error ie_falsum] constatus ie_lima_preexistat				= 0x0B;
-	[sub_error ie_falsum] constatus ie_implantatio_nulla			= 0x0C;
-	[sub_error ie_falsum] constatus ie_collectorium_vacuum_non		= 0x0D;
-	[sub_error ie_falsum] constatus ie_collectorium_currens_est		= 0x0E;
-	[sub_error ie_falsum] constatus ie_machinatio_idem_non			= 0x0F;
-	[sub_error ie_falsum] constatus ie_nomen_semitae_defectum		= 0x10;
-	[sub_error ie_falsum] constatus ie_nomen_limae_largum_nimium	= 0x11;
-	[sub_error ie_falsum] constatus ie_lima_larga_nimium			= 0x12;
-	[sub_error ie_falsum] constatus ie_legere_falsum				= 0x13;
-	[sub_error ie_falsum] constatus ie_scribere_falsum				= 0x14;
-	[sub_error ie_falsum] constatus ie_creare_falsum				= 0x15;
-	[sub_error ie_falsum] constatus ie_aperire_falsum				= 0x16;
-
-	[sub_error xe_defectus] constatus xe_error_nullus			= 0x00;
-	[sub_error xe_defectus] constatus xe_modulus_nullus			= 0x01;
-	[sub_error xe_defectus] constatus xe_imago_falsa			= 0x02;
-	[sub_error xe_defectus] constatus xe_functio_falsa			= 0x03;
-	[sub_error xe_defectus] constatus xe_abi_functionis_falsa	= 0x04;
-	[sub_error xe_defectus] constatus xe_symbolus_duplicatus	= 0x05;
-	[sub_error xe_defectus] constatus xe_adhaesio_defecta		= 0x06;
-	[sub_error xe_defectus] constatus xe_importus_falsus		= 0x07;
-	[sub_error xe_defectus] constatus xe_librarium_nullum		= 0x08;
-	[sub_error xe_defectus] constatus xe_lib_importus_falsus	= 0x09;
-	[sub_error xe_defectus] constatus xe_allocatus_defectus		= 0x0A;
-	[sub_error xe_defectus] constatus xe_initium_defectum		= 0x0B;
+	[[importa] descriptio_erroris] functio nihil _descriptio_erroris(nintadl ec, nintadl esc, @nihil mdl, ~linea error, ~linea sub_error);
+	functio nihil descriptio(nintadl ec, nintadl esc, ~linea error, ~linea sub_error) { _descriptio_erroris(ec, esc, modulus(), error, sub_error); }
 }
+spatium actuarius {
+	protocollum _actuarius { functio nihil scribe(~linea ln) virtualis pura; }
+	functio nihil scribe(~linea ln) { (@_actuarius)(protocollum(actuarius))^.scribe(ln); }
+}
+spatium systema {
+	enumeratio architectura {
+		ignota	= 0x00,
+		i386	= 0x01,
+		x64		= 0x11,
+		arm_m32	= 0x02,
+		arm_a64	= 0x12
+	}
+	enumeratio operans {
+		ignota	= 0x00,
+		windows	= 0x01,
+		macos	= 0x02,
+		linux	= 0x03
+	}
+
+	structura informatio {
+		int64 frequentia_processoris;
+		int64 numerus_memoriae;
+		linea nomen_processoris;
+		operans systema_machinae;
+		architectura architectura_machinae;
+		architectura architectura_processi;
+		int32 numerus_cordium_corporalium;
+		int32 numerus_cordium_virtualium;
+		int32 versio_systemae_supera;
+		int32 versio_systemae_inferna;
+	}
+
+	[[importa] sys_info]	functio nihil para_informatio(~informatio inf);
+	[[importa] sys_temp]	functio nint32 para_tempus_systemae();
+	[[importa] sys_arch]	functio logicum proba_architecturam(architectura arch);
+}
+
+[[significatio] integer] genus tempus {
+	nint64 momentum;
+
+	structor () {}
+	structor (tempus valor) { funda momentum(valor.momentum); }
+	structor (nint64 valor) { funda momentum(valor); }
+	[[thiscall_nullum]] [[importa] tmp_crea_7] structor (int annus, int mensis, int dies, int hora, int minuta, int secunda, int millisecunda);
+	[[thiscall_nullum]] [[importa] tmp_crea_4] structor (int hora, int minuta, int secunda, int millisecunda);
+
+	classis functio logicum operator == (tempus a, tempus b) { responde a.momentum == b.momentum; }
+	classis functio logicum operator != (tempus a, tempus b) { responde a.momentum != b.momentum; }
+	classis functio logicum operator <= (tempus a, tempus b) { responde a.momentum <= b.momentum; }
+	classis functio logicum operator >= (tempus a, tempus b) { responde a.momentum >= b.momentum; }
+	classis functio logicum operator < (tempus a, tempus b) { responde a.momentum < b.momentum; }
+	classis functio logicum operator > (tempus a, tempus b) { responde a.momentum > b.momentum; }
+
+	classis functio tempus operator + (tempus a, tempus b) { responde a.momentum + b.momentum; }
+	classis functio tempus operator - (tempus a, tempus b) { responde a.momentum - b.momentum; }
+
+	convertor (nint64) () { responde momentum; }
+	functio ~tempus operator = (tempus t) { momentum = t.momentum; responde ego^; }
+	functio ~tempus operator += (tempus t) { momentum += t.momentum; responde ego^; }
+	functio ~tempus operator -= (tempus t) { momentum -= t.momentum; responde ego^; }
+
+	int annus { [[thiscall_nullum]] [[importa] tmp_a_ans] adipisce; }
+	int mensis { [[thiscall_nullum]] [[importa] tmp_a_mns] adipisce; }
+	int dies_septimanae { [[thiscall_nullum]] [[importa] tmp_a_dis] adipisce; }
+	int dies { [[thiscall_nullum]] [[importa] tmp_a_die] adipisce; }
+	int hora { [[thiscall_nullum]] [[importa] tmp_a_hor] adipisce; }
+	int minuta { [[thiscall_nullum]] [[importa] tmp_a_min] adipisce; }
+	int secunda { [[thiscall_nullum]] [[importa] tmp_a_sec] adipisce; }
+	int millisecunda { [[thiscall_nullum]] [[importa] tmp_a_msc] adipisce; }
+
+	tempus tempus_universalus { [[thiscall_nullum]] [[importa] tmp_a_uni] adipisce; }
+	tempus tempus_localis { [[thiscall_nullum]] [[importa] tmp_a_loc] adipisce; }
+
+	[[thiscall_nullum]] [[importa] tmp_adl] functio linea ad_lineam() iacit;
+	[[thiscall_nullum]] [[importa] tmp_alb] functio linea ad_lineam_brevem() iacit;
+
+	[[importa] tmp_cur] classis functio tempus currens();
+	[[thiscall_nullum]] [[importa] tmp_dim] functio int dies_in_mense();
+}
+
+genus flumen hereditat objectum {
+	constatus initus	= 0;
+	constatus currens	= 1;
+	constatus finis		= 2;
+
+	structor () {}
+	functio int lege(@nihil data, int long) iacit virtualis pura;
+	functio nihil scribe(@nihil data, int long) iacit virtualis pura;
+	functio int64 quaerita(int64 pos, int origo) iacit virtualis pura;
+	int64 longitudo {
+		adipisce iacit virtualis pura;
+		loca iacit virtualis pura;
+	}
+	functio nihil annoda() virtualis pura;
+	functio logicum _est_xv() virtualis { responde sic; }
+
+	[[thiscall_nullum]] [[importa] flumen_ex_2] functio nihil exscribe(@flumen in, int64 long) iacit;
+	[[thiscall_nullum]] [[importa] flumen_ex_1] functio nihil exscribe(@flumen in) iacit;
+	[[thiscall_nullum]] [[importa] flumen_lo_1] functio adl[dordo_datorum] lege_ordinem(int long) iacit;
+	[[thiscall_nullum]] [[importa] flumen_lo_0] functio adl[dordo_datorum] lege_ordinem() iacit;
+	[[thiscall_nullum]] [[importa] flumen_so_1] functio nihil scribe_ordinem(@dordo_datorum ord) iacit;
+}
+
+[[importa] flumen_mem_0] functio adl[flumen] crea_flumen_in_memoria() iacit;
+[[importa] flumen_mem_2] functio adl[flumen] crea_flumen_in_memoria(@nihil data, intadl long) iacit;
+[[importa] flumen_auxil] functio adl[flumen] para_auxilium(@nihil mod, ~linea aux_genus, int aux_num) iacit;
+
+spatium scriptio {
+	constatus character_finis = 0xFFFFFFFF;
+	genus codificator hereditat objectum {
+		structor () {}
+		functio nihil scribe(~linea ln) iacit virtualis pura;
+		functio nihil scribe_lineam(~linea ln) iacit virtualis pura;
+		functio nihil scribe_lineam() iacit virtualis pura;
+		functio nihil scribe_subscriptionem() iacit virtualis pura;
+
+		classis functio ~codificator operator << (~codificator cdf, ~linea ln) iacit { cdf.scribe(ln); responde cdf; }
+	}
+	genus decodificator hereditat objectum {
+		structor () {}
+		functio char lege_characterem() iacit virtualis pura;
+		functio linea lege_lineam() iacit virtualis pura;
+		functio linea lege_cunctos() iacit virtualis pura;
+
+		logicum finis { adipisce virtualis pura; }
+		linea.codex codex { adipisce virtualis pura; }
+
+		classis functio ~decodificator operator >> (~decodificator cdf, ~linea ln) iacit { ln = cdf.lege_lineam(); responde cdf; }
+	}
+
+	[[importa] scr_cod_1] functio adl[codificator] codifica(@flumen fl) iacit;
+	[[importa] scr_cod_2] functio adl[codificator] codifica(@flumen fl, linea.codex codex) iacit;
+	[[importa] scr_dec_1] functio adl[decodificator] decodifica(@flumen fl) iacit;
+	[[importa] scr_dec_2] functio adl[decodificator] decodifica(@flumen fl, linea.codex codex) iacit;
+}
+spatium contextus {
+	genus semaphorum hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		functio logicum opperire(nint ms) virtualis pura;
+		functio nihil aperi() virtualis pura;
+	}
+	genus signale hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		functio logicum opperire(nint ms) virtualis pura;
+		functio nihil erige() virtualis pura;
+		functio nihil inclina() virtualis pura;
+	}
+	genus labos hereditat objectum {
+		structor () {}
+		functio nihil exeque(@objectum ctx) virtualis pura;
+	}
+	genus labos_opperitus hereditat labos {
+		adl[signale] valor_publicus_signale_opperirendi;
+		structor () iacit { valor_publicus_signale_opperirendi = crea_signale(); si (!valor_publicus_signale_opperirendi) iace errores.memoria_nulla; }
+		functio nihil exeque(@objectum ctx) redefini {}
+	}
+	genus filum hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		logicum activum { adipisce virtualis pura; }
+		int numerus_exitus { adipisce virtualis pura; }
+	}
+	genus cauda hereditat objectum {
+		structor () {}
+		functio logicum adde(@labos lab) virtualis pura;
+		functio logicum adde(@@labos lab, int num) virtualis pura;
+	}
+	genus cauda_simplex hereditat cauda {
+		structor () {}
+		functio nihil exeque() virtualis pura;
+		functio logicum exeque_semel() virtualis pura;
+		functio adl[filum] exeque_in_filo() virtualis pura;
+		functio nihil siste() virtualis pura;
+		functio nihil linque() virtualis pura;
+		int longitudo { adipisce virtualis pura; }
+	}
+	genus cauda_filorum hereditat cauda {
+		structor () {}
+		functio nihil para_statum(~int num_fil, ~int num_act_fil, ~int num_lab) virtualis pura;
+		functio nihil opperire() virtualis pura;
+	}
+
+	[[importa] ctx_dormi] functio nihil dormi(nint ms);
+	[[importa] ctx_siste] functio nihil siste(nint valor);
+
+	[[importa] ctx_ccsim] functio adl[cauda_simplex] crea_caudam_simplicem();
+	[[importa] ctx_ccfl0] functio adl[cauda_filorum] crea_caudam_filorum();
+	[[importa] ctx_ccfl1] functio adl[cauda_filorum] crea_caudam_filorum(int num);
+	[[importa] ctx_crsem] functio adl[semaphorum] crea_semaphorum(int valor);
+	[[importa] ctx_crsgn] functio adl[signale] crea_signale();
+	[[importa] ctx_crfil] functio adl[filum] exeque(@labos lab);
+
+	functio nihil exeque_in_contextu(@cauda ctx, @labos lab) { ctx^.adde(lab); }
+	functio adl[signale] exeque_in_contextu_et_opperire(@cauda ctx, @labos_opperitus lab) { ctx^.adde(lab); responde lab^.valor_publicus_signale_opperirendi; }
+}
+
+praeforma operator muta_contextum(C) { .contextus.exeque_in_contextu($C, .contextus.labos ## { $_ }) }
+praeforma operator muta_contextum_et_opperire(C) { .contextus.exeque_in_contextu_et_opperire($C, .contextus.labos_opperitus ## { $_ }) }
+
+genus meta hereditat objectum {
+	constatus attributum_nomen_moduli	= "NomenModuli";
+	constatus attributum_creator_moduli	= "CreatorModuli";
+	constatus attributum_iura_exempli	= "IuraExempli";
+	constatus attributum_versio			= "Versio";
+
+	structor() {}
+
+	functio int initus() virtualis pura;
+	functio int finis() virtualis pura;
+	functio int prae_initus() virtualis pura;
+	functio int post_finis() virtualis pura;
+
+	functio linea operator [] (int num) iacit virtualis pura;
+	functio linea operator [] (~linea attr) iacit virtualis pura;
+
+	[[importa] meta_moduli] classis functio adl[meta] moduli(@nihil mdl) iacit;
+}
+*/

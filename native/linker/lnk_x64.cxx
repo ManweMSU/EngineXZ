@@ -388,14 +388,18 @@ namespace Engine
 			SafePointer<DataBlock> rsrc = stream.ReadAll();
 			LinkResourceStore(root, pe_rt_manifest, 1, L"", 0, rsrc);
 		}
-		void ReferCodeFragment(Volumes::Dictionary<string, LinkerCodeFragment> & codes, const string & name)
+		void ReferCodeFragment(Volumes::Dictionary<string, LinkerCodeFragment> & codes, Volumes::Set<string> & refs, const string & name)
 		{
 			auto smbl = codes.GetElementByKey(name);
 			if (!smbl || smbl->referenced) return;
 			smbl->referenced = true;
 			for (auto & der : smbl->func.extrefs) {
 				auto & er = der.key;
-				if (er[0] == L'S' && er[1] == L':') ReferCodeFragment(codes, er.Fragment(2, -1));
+				if (er[0] == L'S' && er[1] == L':') {
+					auto smbl_name = er.Fragment(2, -1);
+					refs.AddElement(smbl_name);
+					ReferCodeFragment(codes, refs, smbl_name);
+				}
 			}
 		}
 		void ZeroExpandBlock(DataBlock * data, int to_size) { data->SetLength(to_size); ZeroMemory(data->GetBuffer(), to_size); }
@@ -522,6 +526,7 @@ namespace Engine
 			auto entry_func = CreateEntryPoint(input, entry, init, sdwn);
 			init.Clear(); sdwn.Clear(); entry = L"_@INITUS";
 			Volumes::Dictionary<string, LinkerCodeFragment> codes; // symbol - fragment
+			Volumes::Set<string> symbols_referenced;
 			LinkerFunctionLoader loader(codes, trans);
 			loader.HandleAbstractFunction(entry, entry_func);
 			uint32 code_mem_load = 0;
@@ -532,8 +537,18 @@ namespace Engine
 					if ((f.value.code_flags & XI::Module::Function::FunctionClassMask) == XI::Module::Function::FunctionClassNull) continue;
 					XI::LoadFunction(c.key + L"." + f.key, f.value, &loader);
 				}
-				for (auto & l : m.literals) {
-					if (!m.data) m.data = new DataBlock(0x100);
+			}
+			if (loader.LoadError(error)) return;
+			ReferCodeFragment(codes, symbols_referenced, entry);
+			auto code_element = codes.GetFirst();
+			while (code_element) {
+				auto next = code_element->GetNext();
+				if (!code_element->GetValue().value.referenced) codes.Remove(code_element->GetValue().key);
+				code_element = next;
+			}
+			for (auto & m : modules) {
+				if (!m.data) m.data = new DataBlock(0x100);
+				for (auto & l : m.literals) if (symbols_referenced.Contains(l.key)) {
 					while (m.data->Length() % 8) m.data->Append(0);
 					int offset = m.data->Length();
 					XI::Module::Variable var;
@@ -553,14 +568,7 @@ namespace Engine
 				m.literals.Clear();
 				data_mem_load += m.data->Length();
 			}
-			if (loader.LoadError(error)) return;
-			ReferCodeFragment(codes, entry);
-			auto code_element = codes.GetFirst();
-			while (code_element) {
-				auto next = code_element->GetNext();
-				if (!code_element->GetValue().value.referenced) codes.Remove(code_element->GetValue().key);
-				code_element = next;
-			}
+			symbols_referenced.Clear();
 			for (auto & c : codes) {
 				code_mem_load += c.value.func.code.Length();
 				data_mem_load += c.value.func.data.Length();
@@ -677,7 +685,7 @@ namespace Engine
 				output.ls = new DataBlock(windows_block_size);
 				int s = 0;
 				while (s < relocations.Length()) {
-					int e = 0;
+					int e = s;
 					while (e < relocations.Length() && relocations[e] / windows_page_size == relocations[s] / windows_page_size) e++;
 					PERelocationBlock rlb;
 					rlb.page_rva = relocations[s] / windows_page_size * windows_page_size;
@@ -808,7 +816,7 @@ namespace Engine
 						SafePointer<Streaming::Stream> stream = new Streaming::FileStream(rsrc.value, Streaming::AccessRead, Streaming::OpenExisting);
 						rsrc_data = stream->ReadAll();
 					} catch (...) { error.code = LinkerErrorCode::ResourceLoadingError; error.object = rsrc.value; return; }
-					LinkResourceStore(resource_root, pe_rt_rcdata, 0, rsrc.key, 0, rsrc_data);
+					LinkResourceStore(resource_root, pe_rt_rcdata, rsrc.key, L"", 0, rsrc_data);
 				}
 				LinkResourceEncode(output.rs, resource_root, output.rs_rva);
 				output.rs_size = output.rs->Length();

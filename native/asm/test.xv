@@ -11,18 +11,48 @@ auxilium icon (1) = "../../artworks/xn_icon.eiwv";
 functio nint MessageBox(nintadl hwnd, @nint16 message, @nint16 title, nint flags);
 [[importa] InitCommonControls] [[importa_de] "comctl32"] [stdcall "0"]
 functio nihil InitCommonControls();
-[[importa] ExitProcess] [[importa_de] "kernel32"] [stdcall "4"]
+[[importa] ExitProcess] [[importa_de] "kernel32"] [stdcall "1"]
 functio nihil ExitProcess(nint codex);
 
-constatus textum = "Сука привет!";
-var ordo [0x100] nint16 utf16;
+[[importa] GetModuleHandleW] [[importa_de] "kernel32"] [stdcall "1"]
+functio nintadl GetModuleHandle(@nint16 nomen);
+[[importa] FindResourceW] [[importa_de] "kernel32"] [stdcall "3"]
+functio nintadl FindResource(nintadl mdl, @nint16 nomen, @nint16 genu);
+[[importa] LoadResource] [[importa_de] "kernel32"] [stdcall "2"]
+functio nintadl LoadResource(nintadl mdl, nintadl aux);
+[[importa] SizeofResource] [[importa_de] "kernel32"] [stdcall "2"]
+functio nint32 SizeofResource(nintadl mdl, nintadl aux);
+[[importa] LockResource] [[importa_de] "kernel32"] [stdcall "1"]
+functio @nihil LockResource(nintadl mem);
 
 functio nihil ini() introitus iacit {
-	int i = 0;
-	dum (textum[i]) { utf16[i] = textum[i]; i++; }
-	utf16[i] = textum[i];
-	
-	InitCommonControls();
-	MessageBox(0, utf16, utf16, 0);
-	ExitProcess(0);
+	proba {
+		var mdl = GetModuleHandle(nullus);
+		var aux = FindResource(mdl, linea_utf16("#1"), linea_utf16("#10"));
+		var long = SizeofResource(mdl, aux);
+		var hmem = LoadResource(mdl, aux);
+		var mem_adl = LockResource(hmem);
+
+		ordo linea ol;
+		ol << linea(mem_adl, -1, linea.codex.utf8);
+		ol << (ol[0] + " " + linea(mem_adl));
+		ol << ol[1].surroga(" ", "💟💟");
+		var data = ol[0].codifica(linea.codex.utf8, sic);
+		ol << linea.ex(ol[0].scinde(' '));
+
+		var valor = linea("234=555555555555555").ad_frac("=");
+
+		MessageBox(0, linea_utf16(linea.ex(ol) + " " + linea(valor)), linea_utf16(ol[1]), 0);
+
+		InitCommonControls();
+		MessageBox(0,
+			linea_utf16("Сука \x1F49C\x1F337 привет!"),
+			linea_utf16(linea(char('\x1F337'), 15)),
+			//linea_utf16("Заголовок"),
+			0x00000040);
+		ExitProcess(0);
+	} cape (nintadl e) {
+		MessageBox(0, linea_utf16(linea(e)), linea_utf16("ERROR"), 0x100);
+		ExitProcess(e);
+	}
 }

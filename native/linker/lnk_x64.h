@@ -39,7 +39,7 @@ namespace Engine
 		{
 			string path_xx, path_attr;
 			Array<string> path_xo = Array<string>(0x10);
-			Volumes::Dictionary<string, string> resources;
+			Volumes::Dictionary<uint, string> resources;
 			Platform arch = Platform::Unknown;
 			XA::Environment osenv = XA::Environment::Unknown;
 			uint64 base_rva;

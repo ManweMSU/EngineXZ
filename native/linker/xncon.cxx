@@ -21,7 +21,7 @@ struct {
 	bool silent = false, nologo = false;
 	string input_xx, input_metadata, input_mz, output_pe;
 	Array<string> path_xo = Array<string>(0x10);
-	Volumes::Dictionary<string, string> resources;
+	Volumes::Dictionary<uint, string> resources;
 	Platform arch = Platform::Unknown;
 	XA::Environment osenv = XA::Environment::Unknown;
 	DOSEnvironment dosenv = DOSEnvironment::Unknown;
@@ -110,8 +110,13 @@ void ProcessCommandLine(void)
 						console << TextColor(12) << L"Argumentum non sufficit." << TextColorDefault() << LineFeed();
 						throw Exception();
 					}
-					if (!state.resources.Append(args->ElementAt(i - 1), ExpandPath(args->ElementAt(i)))) {
-						console << TextColor(12) << L"Redefinitio auxilii." << TextColorDefault() << LineFeed();
+					try {
+						if (!state.resources.Append(args->ElementAt(i - 1).ToUInt32(), ExpandPath(args->ElementAt(i)))) {
+							console << TextColor(12) << L"Redefinitio auxilii." << TextColorDefault() << LineFeed();
+							throw Exception();
+						}
+					} catch (...) {
+						console << TextColor(12) << L"Argumentum falsum." << TextColorDefault() << LineFeed();
 						throw Exception();
 					}
 				} else {
@@ -530,7 +535,7 @@ int Main(void)
 			console << L"                  dos-exe   - DOS in 80286," << LineFeedSequence;
 			console << L"                  80286     - 80286 purus," << LineFeedSequence;
 			console << L"-o           - semitam proventus definit," << LineFeedSequence;
-			console << L"-x           - data auxilii addit (-x <nomen> <lima datorum>)." << LineFeedSequence;
+			console << L"-x           - data auxilii addit (-x <numerus> <lima datorum>)." << LineFeedSequence;
 		} catch (...) {}
 		return 0;
 	}

@@ -1,0 +1,43 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Memoriae";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+importa cor;
+
+[[systema] libera]
+
+spatium winapi {
+	[[importa] "GetProcessHeap"] [[importa_de] "kernel32"] [stdcall "0"]
+	functio nintadl GetProcessHeap();
+	[[importa] "HeapAlloc"] [[importa_de] "kernel32"] [stdcall "3"]
+	functio @nihil HeapAlloc(nintadl mem, nint modus, nintadl long);
+	[[importa] "HeapReAlloc"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio @nihil HeapReAlloc(nintadl mem, nint modus, @nihil adloq, nintadl long);
+	[[importa] "HeapFree"] [[importa_de] "kernel32"] [stdcall "3"]
+	functio logicum HeapFree(nintadl mem, nint modus, @nihil adloq);
+}
+
+spatium memoria {
+	functio @nihil alloca(nintadl magn)
+	{
+		si (magn) responde winapi.HeapAlloc(winapi.GetProcessHeap(), 0, magn);
+		alioqui responde nullus;
+	}
+	functio @nihil realloca(@nihil mem, nintadl magn)
+	{
+		si (mem == nullus) responde alloca(magn);
+		si (magn) responde winapi.HeapReAlloc(winapi.GetProcessHeap(), 0, mem, magn);
+		alioqui { winapi.HeapFree(winapi.GetProcessHeap(), 0, mem); responde nullus; }
+	}
+	functio nihil dimitte(@nihil mem) { si (mem != nullus) winapi.HeapFree(winapi.GetProcessHeap(), 0, mem); }
+	functio nihil relabe(@nihil mem, nintadl magn) { pro (nintadl i = 0; i < magn; i++) (@nint8)(mem)[i] = 0; }
+	functio @nihil exscribe(@nihil in, @nihil ex, nintadl magn) { pro (nintadl i = 0; i < magn; i++) (@nint8)(in)[i] = (@nint8)(ex)[i]; responde in; }
+}
+
+// TODO: IMPLEMENT NATIVELY
+// functio nint incrementum_securum(~nint valor) { responde winapi.InterlockedIncrement(@valor); }
+// functio nint decrementum_securum(~nint valor) { responde winapi.InterlockedDecrement(@valor); }
+
+functio nint incrementum_securum(~nint valor) { valor++; responde valor; }
+functio nint decrementum_securum(~nint valor) { valor--; responde valor; }
