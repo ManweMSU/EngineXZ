@@ -147,6 +147,7 @@ namespace Engine
 				void encode_add(Reg reg, int literal);
 				void encode_and(Reg reg, int literal);
 				void encode_xor(Reg reg, int literal);
+				void encode_xadd(uint quant, Reg dest_ptr, Reg src);
 				void encode_test(uint quant, Reg reg, int literal);
 				void encode_operation(uint quant, arOp op, Reg to, Reg value_ptr, bool indirect = false, int value_offset = 0);
 				void encode_mul_div(uint quant, mdOp op, Reg value_ptr, bool indirect = false, int value_offset = 0);

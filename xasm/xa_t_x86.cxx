@@ -767,6 +767,26 @@ namespace Engine
 					_dest.code << int8(literal >> 24);
 				}
 			}
+			void EncoderContext::encode_xadd(uint quant, Reg dest_ptr, Reg src)
+			{
+				if (dest_ptr == Reg64::RSP) return;
+				auto di = regular_register_code(dest_ptr);
+				auto si = regular_register_code(src);
+				if (quant == 8 && _x64_mode) {
+					_dest.code << make_rex(true, si & 0x08, 0, di & 0x08);
+					_dest.code << 0x0F << 0xC1 << make_mod(si & 0x07, 0, di & 0x07);
+				} else if (quant == 4) {
+					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
+					_dest.code << 0x0F << 0xC1 << make_mod(si & 0x07, 0, di & 0x07);
+				} else if (quant == 2) {
+					_dest.code << 0x66;
+					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
+					_dest.code << 0x0F << 0xC1 << make_mod(si & 0x07, 0, di & 0x07);
+				} else if (quant == 1) {
+					if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
+					_dest.code << 0x0F << 0xC0 << make_mod(si & 0x07, 0, di & 0x07);
+				} else throw InvalidArgumentException();
+			}
 			void EncoderContext::encode_test(uint quant, Reg reg, int literal)
 			{
 				auto ri = regular_register_code(reg);

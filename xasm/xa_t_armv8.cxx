@@ -1636,6 +1636,49 @@ namespace Engine
 									if (disp->flags & DispositionDiscard) {
 										disp->flags = DispositionDiscard;
 									} else *disp = ld;
+								} else if (node.self.index == TransformAtomicAdd) {
+									if (node.inputs.Length() != 2) throw InvalidArgumentException();
+									auto size = _size_eval(node.input_specs[0].size);
+									Reg ptr, addend, accumulator, status;
+									accumulator = disp->reg;
+									if (accumulator == Reg::NO) accumulator = _reg_alloc(reg_in_use, 0);
+									addend = _reg_alloc(reg_in_use, uint(accumulator));
+									ptr = _reg_alloc(reg_in_use, uint(accumulator) | uint(addend));
+									status = _reg_alloc(reg_in_use, uint(accumulator) | uint(addend) | uint(ptr));
+									_internal_disposition a1, a2;
+									a1.flags = DispositionPointer;
+									a1.reg = ptr;
+									a1.size = a2.size = size;
+									a2.flags = DispositionRegister;
+									a2.reg = addend;
+									_encode_preserve(uint(ptr), reg_in_use, 0, !idle);
+									_encode_tree_node(node.inputs[0], idle, mem_load, &a1, reg_in_use | uint(ptr));
+									_encode_preserve(uint(addend), reg_in_use | uint(ptr), 0, !idle);
+									_encode_tree_node(node.inputs[1], idle, mem_load, &a2, reg_in_use | uint(ptr) | uint(addend));
+									_encode_preserve(uint(accumulator), reg_in_use | uint(ptr) | uint(addend), uint(disp->reg), !idle);
+									_encode_preserve(uint(status), reg_in_use | uint(ptr) | uint(addend) | uint(accumulator), 0, !idle);
+									if (!idle) {
+										encode_dsb();
+										encode_load_exclusive(size, accumulator, ptr);
+										encode_add(accumulator, accumulator, addend, false);
+										encode_store_exclusive(size, ptr, accumulator, status);
+										encode_branch_nz(4, status, -3);
+									}
+									_encode_restore(uint(status), reg_in_use | uint(ptr) | uint(addend) | uint(accumulator), 0, !idle);
+									_encode_restore(uint(accumulator), reg_in_use | uint(ptr) | uint(addend), uint(disp->reg), !idle);
+									_encode_restore(uint(addend), reg_in_use | uint(ptr), 0, !idle);
+									_encode_restore(uint(ptr), reg_in_use, 0, !idle);
+									if (disp->flags & DispositionRegister) {
+										disp->flags = DispositionRegister;
+									} else if (disp->flags & DispositionPointer) {
+										disp->flags = DispositionPointer;
+										*mem_load += _word_align(node.input_specs[0].size);
+										if (!idle) {
+											int offset = _allocate_temporary(node.input_specs[0].size);
+											encode_store(size, Reg::FP, offset, accumulator);
+											encode_emulate_lea(accumulator, Reg::FP, offset);
+										}
+									} else disp->flags = DispositionDiscard;
 								} else throw InvalidArgumentException();
 							} else if (node.self.index >= 0x010 && node.self.index < 0x013) {
 								_encode_logics(node, idle, mem_load, disp, reg_in_use);
@@ -1779,6 +1822,20 @@ namespace Engine
 					}
 					encode_uint32(opcode);
 				}
+				void encode_load_exclusive(uint quant, Reg dest, Reg src_ptr)
+				{
+					uint opcode;
+					if (quant == 8) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | 0xC85F7C00;
+					} else if (quant == 4) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | 0x885F7C00;
+					} else if (quant == 2) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | 0x485F7C00;
+					} else if (quant == 1) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | 0x085F7C00;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
 				void encode_load(uint quant, VReg dest, Reg src_ptr, int offset = 0)
 				{
 					uint opcode;
@@ -1832,6 +1889,20 @@ namespace Engine
 						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0x78000000;
 					} else if (quant == 1) {
 						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0x38000000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_store_exclusive(uint quant, Reg dest_ptr, Reg src, Reg status)
+				{
+					uint opcode;
+					if (quant == 8) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | (_reg_code(status) << 16) | 0xC8007C00;
+					} else if (quant == 4) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | (_reg_code(status) << 16) | 0x88007C00;
+					} else if (quant == 2) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | (_reg_code(status) << 16) | 0x48007C00;
+					} else if (quant == 1) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | (_reg_code(status) << 16) | 0x08007C00;
 					} else throw InvalidArgumentException();
 					encode_uint32(opcode);
 				}
@@ -1979,6 +2050,27 @@ namespace Engine
 					put_addr.word_offset_right = 0;
 					encode_uint32(uint(cond) | 0x54000000);
 				}
+				void encode_branch_nz(uint quant, Reg cond, int dist)
+				{
+					uint opcode;
+					if (quant == 8) {
+						opcode = _reg_code(cond) | ((dist & 0x7FFFF) << 5) | 0xB5000000;
+					} else if (quant == 4) {
+						opcode = _reg_code(cond) | ((dist & 0x7FFFF) << 5) | 0x35000000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_branch_z(uint quant, Reg cond, int dist)
+				{
+					uint opcode;
+					if (quant == 8) {
+						opcode = _reg_code(cond) | (dist << 5) | 0xB4000000;
+					} else if (quant == 4) {
+						opcode = _reg_code(cond) | (dist << 5) | 0x34000000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_dsb(void) { encode_uint32(0xD5033FBF); }
 				void encode_mul_add(Reg dest, Reg add, Reg op1, Reg op2)
 				{
 					uint opcode = _reg_code(dest) | (_reg_code(op1) << 5) | (_reg_code(add) << 10) | (_reg_code(op2) << 16) | 0x9B000000;
