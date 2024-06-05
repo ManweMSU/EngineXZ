@@ -117,6 +117,7 @@ namespace Engine
 					else if (ref.index == TransformTemporary) output << L"NEW";
 					else if (ref.index == TransformBreakIf) output << L"BREAKIF";
 					else if (ref.index == TransformSplit) output << L"SPLIT";
+					else if (ref.index == TransformAtomicAdd) output << L"AADD";
 					else if (ref.index == TransformLogicalAnd) output << L"ALL";
 					else if (ref.index == TransformLogicalOr) output << L"ANY";
 					else if (ref.index == TransformLogicalFork) output << L"FORK";

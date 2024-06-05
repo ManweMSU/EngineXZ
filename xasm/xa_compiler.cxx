@@ -167,6 +167,7 @@ namespace Engine
 				else if (i == L"NEW") ref.index = TransformTemporary;
 				else if (i == L"BREAKIF") ref.index = TransformBreakIf;
 				else if (i == L"SPLIT") ref.index = TransformSplit;
+				else if (i == L"AADD") ref.index = TransformAtomicAdd;
 				// Logical
 				else if (i == L"ALL") ref.index = TransformLogicalAnd;
 				else if (i == L"ANY") ref.index = TransformLogicalOr;

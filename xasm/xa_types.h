@@ -52,6 +52,7 @@ namespace Engine
 			TransformTemporary		= 0x0006, // 1 argument - no type data; retval - new entity, finilizer supplied
 			TransformBreakIf		= 0x0007, // 3 arguments - anything; integer; literal; retval - anything
 			TransformSplit			= 0x0008, // 1 argument - anything; retval - anything
+			TransformAtomicAdd		= 0x0009, // 2 arguments - destination integer; integer; retval - a copy of the new destination
 			TransformLogicalAnd		= 0x0010, // any number of integer arguments; retval - integer
 			TransformLogicalOr		= 0x0011, // any number of integer arguments; retval - integer
 			TransformLogicalFork	= 0x0012, // 3 arguments - integer; no type; no type; retval - no type
