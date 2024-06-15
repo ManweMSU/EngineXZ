@@ -352,6 +352,8 @@ int Main(void)
 						else if (error.code == XN::LinkerErrorCode::LocalImportInModule) desc = L"importatio localis prohibita est";
 						else if (error.code == XN::LinkerErrorCode::UnknownSymbolReference) desc = L"symbolus ignotus";
 						else if (error.code == XN::LinkerErrorCode::IllegalSymbolReference) desc = L"symbolus prohibitus";
+						else if (error.code == XN::LinkerErrorCode::NoMainEntryPoint) desc = L"introitus nullus";
+						else if (error.code == XN::LinkerErrorCode::NoRootEntryPoint) desc = L"introitus radicalis nullus";
 						else if (error.code == XN::LinkerErrorCode::WrongABI) desc = L"protocollum falsum";
 						else desc = L"ignotus";
 						console << TextColor(12) << FormatString(L"Error contexendi #%1: %0 - %2.", desc, uint(error.code), error.object) << TextColorDefault() << LineFeed();

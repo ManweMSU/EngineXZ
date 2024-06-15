@@ -3091,8 +3091,8 @@ genus flumen hereditat objectum {
 	[[thiscall_nullum]] [[importa] flumen_so_1] functio nihil scribe_ordinem(@dordo_datorum ord) iacit;
 }
 
-[[importa] flumen_mem_0] functio adl[flumen] crea_flumen_in_memoria() iacit;
-[[importa] flumen_mem_2] functio adl[flumen] crea_flumen_in_memoria(@nihil data, intadl long) iacit;
+[[importa] flumen_mem_0] functio adl[flumen] crea_flumenem_in_memoria() iacit;
+[[importa] flumen_mem_2] functio adl[flumen] crea_flumenem_in_memoria(@nihil data, intadl long) iacit;
 [[importa] flumen_auxil] functio adl[flumen] para_auxilium(@nihil mod, ~linea aux_genus, int aux_num) iacit;
 
 spatium scriptio {

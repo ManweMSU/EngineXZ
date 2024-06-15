@@ -20,13 +20,21 @@ namespace Engine
 			Volumes::Dictionary<string, ResourceItem> items_named;
 			Volumes::Dictionary<uint32, ResourceItem> items_indexed;
 		};
+		struct CoreEntries
+		{
+			string main_entry;
+			Array<string> init = Array<string>(0x40);
+			Array<string> sdwn = Array<string>(0x40);
+			Volumes::Dictionary<string, string> system_entries;
+		};
 		class LinkerFunctionLoader : public XI::IFunctionLoader
 		{
 			SafePointer<XA::IAssemblyTranslator> _trans;
 			Volumes::Dictionary<string, LinkerCodeFragment> & _codes;
 			LinkerError _error;
+			CoreEntries & _core;
 		public:
-			LinkerFunctionLoader(Volumes::Dictionary<string, LinkerCodeFragment> & codes, XA::IAssemblyTranslator * trans) : _codes(codes)
+			LinkerFunctionLoader(Volumes::Dictionary<string, LinkerCodeFragment> & codes, XA::IAssemblyTranslator * trans, CoreEntries & core) : _codes(codes), _core(core)
 			{
 				_trans.SetRetain(trans);
 				_error.code = LinkerErrorCode::Success;
@@ -61,6 +69,34 @@ namespace Engine
 				if (!_trans->Translate(trf, func)) SetError(LinkerErrorCode::WrongABI, symbol);
 				HandlePlatformFunction(symbol, trf);
 			}
+			void CreateInvocationList(XA::Function & dest, const Array<string> & funcs, bool straight) noexcept
+			{
+				auto enm = straight ? funcs.Elements() : funcs.InversedElements();
+				dest.retval = XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 0);
+				dest.inputs << XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1);
+				auto eptr = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0));
+				auto evlr = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformFollowPointer, XA::ReferenceFlagInvoke));
+				XA::TH::AddTreeInput(evlr, eptr, XA::TH::MakeSpec(0, 1));
+				XA::TH::AddTreeOutput(evlr, XA::TH::MakeSpec(0, 1));
+				auto echk = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformVectorNotZero, XA::ReferenceFlagInvoke));
+				XA::TH::AddTreeInput(echk, evlr, evlr.retval_spec);
+				XA::TH::AddTreeOutput(echk, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1));
+				for (auto & f : enm) {
+					int eindex = dest.extrefs.Length();
+					dest.extrefs << (L"S:" + f);
+					auto inv = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceExternal, eindex, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(inv, eptr, XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1));
+					XA::TH::AddTreeOutput(inv, dest.retval);
+					dest.instset << XA::TH::MakeStatementExpression(inv);
+					dest.instset << XA::TH::MakeStatementJump(0, echk);
+				}
+				auto retindex = dest.instset.Length();
+				dest.instset << XA::TH::MakeStatementReturn();
+				for (int i = 0; i < dest.instset.Length(); i++) {
+					auto & o = dest.instset[i];
+					if (o.opcode == XA::OpcodeConditionalJump) o.attachment.num_bytes = retindex - i - 1;
+				}
+			}
 			virtual Platform GetArchitecture(void) noexcept override { return _trans->GetPlatform(); }
 			virtual XA::Environment GetEnvironment(void) noexcept override { return _trans->GetEnvironment(); }
 			virtual void HandleAbstractFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override
@@ -81,7 +117,21 @@ namespace Engine
 			}
 			virtual void HandleNearImport(const string & symbol, const XI::Module::Function & fin, const string & func_name) noexcept override
 			{
-				SetError(LinkerErrorCode::LocalImportInModule, symbol);
+				if (func_name == IntrinsicGlobalInit) {
+					XA::Function func;
+					CreateInvocationList(func, _core.init, true);
+					HandleAbstractFunction(symbol, func);
+				} else if (func_name == IntrinsicGlobalSdwn) {
+					XA::Function func;
+					CreateInvocationList(func, _core.sdwn, false);
+					HandleAbstractFunction(symbol, func);
+				} else if (func_name == IntrinsicGlobalEntry) {
+					XA::Function func;
+					Array<string> name(1);
+					name << _core.main_entry;
+					CreateInvocationList(func, name, true);
+					HandleAbstractFunction(symbol, func);
+				} else SetError(LinkerErrorCode::LocalImportInModule, symbol);
 			}
 			virtual void HandleFarImport(const string & symbol, const XI::Module::Function & fin, const string & func_name, const string & lib_name) noexcept override
 			{
@@ -89,7 +139,7 @@ namespace Engine
 				Array<uint32> refoffs(1);
 				if (_trans->GetPlatform() == Platform::X86) {
 					const string * attr;
-					if (attr = fin.attributes.GetElementByKey(AttributeStdCalll)) {
+					if (attr = fin.attributes.GetElementByKey(AttributeStdCall)) {
 						uint words_unroll = 0;
 						i286_EncoderContext enc(func.code, EncoderMode::i386_32);
 						try { words_unroll = attr->ToUInt32(); } catch (...) {}
@@ -403,15 +453,17 @@ namespace Engine
 			}
 		}
 		void ZeroExpandBlock(DataBlock * data, int to_size) { data->SetLength(to_size); ZeroMemory(data->GetBuffer(), to_size); }
-		void LoadModuleEntries(XI::Module * mdl, string & entry, Array<string> & init, Array<string> & sdwn)
+		void LoadModuleEntries(XI::Module * mdl, CoreEntries & core)
 		{
 			for (auto & f : mdl->functions) {
-				if (f.value.code_flags & XI::Module::Function::FunctionEntryPoint) entry = f.key;
-				if (f.value.code_flags & XI::Module::Function::FunctionInitialize) init << f.key;
-				if (f.value.code_flags & XI::Module::Function::FunctionShutdown) sdwn << f.key;
+				if (f.value.code_flags & XI::Module::Function::FunctionEntryPoint) core.main_entry = f.key;
+				if (f.value.code_flags & XI::Module::Function::FunctionInitialize) core.init << f.key;
+				if (f.value.code_flags & XI::Module::Function::FunctionShutdown) core.sdwn << f.key;
+				auto sysent = f.value.attributes.GetElementByKey(AttributeSysEntry);
+				if (sysent) core.system_entries.Append(*sysent, f.key);
 			}
 		}
-		bool LoadModuleByName(const string & name, const LinkerInput & input, string & entry, Array<string> & init, Array<string> & sdwn, ObjectArray<XI::Module> & modules, LinkerError & error)
+		bool LoadModuleByName(const string & name, const LinkerInput & input, CoreEntries & core, ObjectArray<XI::Module> & modules, LinkerError & error)
 		{
 			for (auto & m : modules) if (m.module_import_name == name) return true;
 			SafePointer<XI::Module> mdl;
@@ -428,11 +480,11 @@ namespace Engine
 				return false;
 			}
 			modules.Append(mdl);
-			for (auto & dep : mdl->modules_depends_on) if (!LoadModuleByName(dep, input, entry, init, sdwn, modules, error)) return false;
-			LoadModuleEntries(mdl, entry, init, sdwn);
+			for (auto & dep : mdl->modules_depends_on) if (!LoadModuleByName(dep, input, core, modules, error)) return false;
+			LoadModuleEntries(mdl, core);
 			return true;
 		}
-		XI::Module * LoadModuleByPath(const string & name, const LinkerInput & input, string & entry, Array<string> & init, Array<string> & sdwn, ObjectArray<XI::Module> & modules, LinkerError & error)
+		XI::Module * LoadModuleByPath(const string & name, const LinkerInput & input, CoreEntries & core, ObjectArray<XI::Module> & modules, LinkerError & error)
 		{
 			SafePointer<XI::Module> mdl;
 			try {
@@ -445,54 +497,9 @@ namespace Engine
 			}
 			for (auto & m : modules) if (m.module_import_name == mdl->module_import_name) return &m;
 			modules.Append(mdl);
-			for (auto & dep : mdl->modules_depends_on) if (!LoadModuleByName(dep, input, entry, init, sdwn, modules, error)) return 0;
-			LoadModuleEntries(mdl, entry, init, sdwn);
+			for (auto & dep : mdl->modules_depends_on) if (!LoadModuleByName(dep, input, core, modules, error)) return 0;
+			LoadModuleEntries(mdl, core);
 			return mdl;
-		}
-		XA::Function CreateEntryPoint(const LinkerInput & lin, string & entry, Array<string> & init, Array<string> & sdwn)
-		{
-			XA::Function result;
-			result.retval = XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 0);
-			if (lin.arch == Platform::X86) {
-				result.inputs << XA::TH::MakeSpec(XA::ArgumentSemantics::This, 0, 1);
-				result.inputs << XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1);
-			}
-			for (int i = 0; i < 16; i++) result.data << 0;
-			auto eptr = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformTakePointer, XA::ReferenceFlagInvoke));
-			auto echk = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformVectorNotZero, XA::ReferenceFlagInvoke));
-			XA::TH::AddTreeInput(eptr, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, 0)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 2));
-			XA::TH::AddTreeOutput(eptr, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1));
-			XA::TH::AddTreeInput(echk, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, 0)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1));
-			XA::TH::AddTreeOutput(echk, XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1));
-			for (auto & f : init.Elements()) {
-				int eindex = result.extrefs.Length();
-				result.extrefs << (L"S:" + f);
-				auto inv = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceExternal, eindex, XA::ReferenceFlagInvoke));
-				XA::TH::AddTreeInput(inv, eptr, XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1));
-				XA::TH::AddTreeOutput(inv, result.retval);
-				result.instset << XA::TH::MakeStatementExpression(inv);
-				result.instset << XA::TH::MakeStatementJump(0, echk);
-			}
-			int eindex = result.extrefs.Length();
-			result.extrefs << (L"S:" + entry);
-			auto inv = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceExternal, eindex, XA::ReferenceFlagInvoke));
-			XA::TH::AddTreeInput(inv, eptr, XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1));
-			XA::TH::AddTreeOutput(inv, result.retval);
-			result.instset << XA::TH::MakeStatementExpression(inv);
-			for (auto & f : sdwn.InversedElements()) {
-				int eindex = result.extrefs.Length();
-				result.extrefs << (L"S:" + f);
-				auto inv = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceExternal, eindex, XA::ReferenceFlagInvoke));
-				XA::TH::AddTreeOutput(inv, result.retval);
-				result.instset << XA::TH::MakeStatementExpression(inv);
-			}
-			auto retindex = result.instset.Length();
-			result.instset << XA::TH::MakeStatementReturn();
-			for (int i = 0; i < result.instset.Length(); i++) {
-				auto & o = result.instset[i];
-				if (o.opcode == XA::OpcodeConditionalJump) o.attachment.num_bytes = retindex - i - 1;
-			}
-			return result;
 		}
 		void Link(const LinkerInput & input, LinkerOutput & output, LinkerError & error)
 		{
@@ -505,10 +512,10 @@ namespace Engine
 			error.code = LinkerErrorCode::Success;
 			error.object = L"";
 			ObjectArray<XI::Module> modules(0x20);
-			Array<string> init(0x20), sdwn(0x20);
-			string entry;
-			auto main = LoadModuleByPath(input.path_xx, input, entry, init, sdwn, modules, error);
+			CoreEntries core;
+			auto main = LoadModuleByPath(input.path_xx, input, core, modules, error);
 			if (!main) return;
+			if (!core.main_entry.Length()) { error.code = LinkerErrorCode::NoMainEntryPoint; error.object = input.path_xx; return; }
 			SafePointer<XI::Module> mdt;
 			if (input.osenv == XA::Environment::Windows) {
 				try {
@@ -523,23 +530,43 @@ namespace Engine
 			} else output.image_base = 0x00400000;
 			SafePointer<XA::IAssemblyTranslator> trans = XA::CreatePlatformTranslator(input.arch, input.osenv);
 			if (!trans) { error.code = LinkerErrorCode::WrongABI; error.object = input.path_xx; return; }
-			auto entry_func = CreateEntryPoint(input, entry, init, sdwn);
-			init.Clear(); sdwn.Clear(); entry = L"_@INITUS";
 			Volumes::Dictionary<string, LinkerCodeFragment> codes; // symbol - fragment
-			Volumes::Set<string> symbols_referenced;
-			LinkerFunctionLoader loader(codes, trans);
-			loader.HandleAbstractFunction(entry, entry_func);
+			Volumes::Set<string> symbols_referenced, pure_functions;
+			LinkerFunctionLoader loader(codes, trans, core);
 			uint32 code_mem_load = 0;
 			uint32 data_mem_load = 0;
 			for (auto & m : modules) {
 				for (auto & f : m.functions) XI::LoadFunction(f.key, f.value, &loader);
 				for (auto & c : m.classes) for (auto & f : c.value.methods) {
-					if ((f.value.code_flags & XI::Module::Function::FunctionClassMask) == XI::Module::Function::FunctionClassNull) continue;
-					XI::LoadFunction(c.key + L"." + f.key, f.value, &loader);
+					if ((f.value.code_flags & XI::Module::Function::FunctionClassMask) == XI::Module::Function::FunctionClassNull) {
+						pure_functions.AddElement(c.key + L"." + f.key);
+					} else XI::LoadFunction(c.key + L"." + f.key, f.value, &loader);
 				}
 			}
+			string effective_entry;
+			Volumes::Set<string> required_traits;
+			if (mdt->subsystem == XI::Module::ExecutionSubsystem::ConsoleUI) required_traits.AddElement(EnvironmentConsole);
+			SafePointer< Volumes::Dictionary<string, string> > metadata = XI::LoadModuleMetadata(main->resources);
+			auto env_config = metadata->GetElementByKey(AttributeEnvironment);
+			if (env_config) {
+				auto words = env_config->Split(L',');
+				for (auto & w : words) if (w.Length()) required_traits.AddElement(w);
+			}
+			metadata = XI::LoadModuleMetadata(mdt->resources);
+			if (!metadata->GetElementByKey(AttributeNoCommCtrl60) && mdt->subsystem == XI::Module::ExecutionSubsystem::GUI) required_traits.AddElement(EnvironmentCommCtrl);
+			for (auto & ee : core.system_entries) {
+				Volumes::Set<string> traits;
+				auto words = ee.key.Split(L',');
+				for (auto & w : words) if (w.Length()) traits.AddElement(w);
+				if ((required_traits ^ traits).IsEmpty()) effective_entry = ee.value;
+			}
+			if (!effective_entry.Length()) { error.code = LinkerErrorCode::NoRootEntryPoint; error.object = input.path_xx; return; }
+			core.main_entry = L"";
+			core.init.Clear();
+			core.sdwn.Clear();
+			core.system_entries.Clear();
 			if (loader.LoadError(error)) return;
-			ReferCodeFragment(codes, symbols_referenced, entry);
+			ReferCodeFragment(codes, symbols_referenced, effective_entry);
 			auto code_element = codes.GetFirst();
 			while (code_element) {
 				auto next = code_element->GetNext();
@@ -582,7 +609,9 @@ namespace Engine
 			output.ds = new DataBlock(windows_block_size);
 			ZeroExpandBlock(output.ds, Align(data_mem_load, windows_block_size));
 			rva_base += Align(data_mem_load, windows_page_size);
+			uint32 class_ordinal = 1;
 			Volumes::Dictionary<string, uint32> variables; // symbol - RVA
+			Volumes::Dictionary<string, uint32> classes; // symbol - ordinal
 			Volumes::List< Volumes::KeyValuePair<string, uint32> > imports; // symbol - offset at CS
 			Array<uint32> relocations(0x1000); // a list of RVAs
 			code_mem_load = data_mem_load = 0;
@@ -591,6 +620,10 @@ namespace Engine
 					uint32 var_rva = v.value.offset.num_bytes + trans->GetWordSize() * v.value.offset.num_words;
 					var_rva += data_mem_load + output.ds_rva;
 					variables.Append(v.key, var_rva);
+				}
+				for (auto & c : m.classes) {
+					classes.Append(c.key, class_ordinal);
+					class_ordinal++;
 				}
 				if (m.data) {
 					MemoryCopy(output.ds->GetBuffer() + data_mem_load, m.data->GetBuffer(), m.data->Length());
@@ -628,6 +661,7 @@ namespace Engine
 				}
 				for (auto & ext : func.extrefs) {
 					if (ext.key[0] == L'S' && ext.key[1] == L':') {
+						bool ref_is_rva = true;
 						auto smbl = ext.key.Fragment(2, -1);
 						uint32 ext_rva;
 						auto ext_code = codes.GetElementByKey(smbl);
@@ -638,18 +672,37 @@ namespace Engine
 							if (ext_var) {
 								ext_rva = *ext_var;
 							} else {
-								error.code = LinkerErrorCode::UnknownSymbolReference;
-								error.object = ext.key;
-								return;
+								ext_var = classes.GetElementByKey(smbl);
+								if (ext_var) {
+									ext_rva = *ext_var;
+									ref_is_rva = false;
+								} else {
+									if (pure_functions.Contains(smbl)) {
+										ext_rva = 0;
+										ref_is_rva = false;
+									} else {
+										error.code = LinkerErrorCode::UnknownSymbolReference;
+										error.object = ext.key;
+										return;
+									}
+								}
 							}
 						}
 						for (auto & rl : ext.value) {
-							if (trans->GetWordSize() == 8) {
-								*reinterpret_cast<uint64 *>(func.code.GetBuffer() + rl) = output.image_base + ext_rva;
-							} else if (trans->GetWordSize() == 4) {
-								*reinterpret_cast<uint32 *>(func.code.GetBuffer() + rl) = output.image_base + ext_rva;
+							if (ref_is_rva) {
+								if (trans->GetWordSize() == 8) {
+									*reinterpret_cast<uint64 *>(func.code.GetBuffer() + rl) = output.image_base + ext_rva;
+								} else if (trans->GetWordSize() == 4) {
+									*reinterpret_cast<uint32 *>(func.code.GetBuffer() + rl) = output.image_base + ext_rva;
+								}
+								relocations << (c.value.code_rva + rl);
+							} else {
+								if (trans->GetWordSize() == 8) {
+									*reinterpret_cast<uint64 *>(func.code.GetBuffer() + rl) = ext_rva;
+								} else if (trans->GetWordSize() == 4) {
+									*reinterpret_cast<uint32 *>(func.code.GetBuffer() + rl) = ext_rva;
+								}
 							}
-							relocations << (c.value.code_rva + rl);
 						}
 					} else if (ext.key[0] == L'/') {
 						for (auto & rl : ext.value) {
@@ -668,14 +721,14 @@ namespace Engine
 				}
 				MemoryCopy(output.cs->GetBuffer() + c.value.cs_offset, func.code.GetBuffer(), func.code.Length());
 			}
-			auto entry_code = codes.GetElementByKey(entry);
+			auto entry_code = codes.GetElementByKey(effective_entry);
 			if (!entry_code) throw InvalidStateException();
 			output.entry_rva = entry_code->code_rva;
 			modules.Clear();
-			entry = L"";
-			entry_func.Clear();
+			effective_entry = L"";
 			codes.Clear();
 			variables.Clear();
+			classes.Clear();
 			if (relocations.Length()) {
 				uint16 rel_flags = 0;
 				if (trans->GetWordSize() == 8) rel_flags = pe_reloc_64;
@@ -768,7 +821,6 @@ namespace Engine
 			imports.Clear();
 			trans.SetReference(0);
 			output.subsystem = mdt->subsystem;
-			SafePointer< Volumes::Dictionary<string, string> > metadata = XI::LoadModuleMetadata(mdt->resources);
 			if (input.osenv == XA::Environment::Windows) {
 				output.rs_rva = rva_base;
 				output.rs = new DataBlock(windows_block_size);

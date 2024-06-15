@@ -32,6 +32,8 @@ BETA-4:
  + XV: Added version control
 
 BETA-5:
+ + Error defining crea() instances for nested classes
+ + Fixed wrong error place report on the object level expression unexpected token compilation error
  + XA FPU and VPU extensions
  + x86-64 FPU and VPU support
  + i386 FPU and VPU support

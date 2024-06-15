@@ -10,7 +10,12 @@ namespace Engine
 {
 	namespace XN
 	{
-		constexpr const widechar * AttributeStdCalll = L"stdcall";
+		constexpr const widechar * IntrinsicGlobalInit	= L"xn/ini/modulos";
+		constexpr const widechar * IntrinsicGlobalSdwn	= L"xn/exi/modulos";
+		constexpr const widechar * IntrinsicGlobalEntry	= L"xn/introitus";
+
+		constexpr const widechar * AttributeStdCall		= L"stdcall";
+		constexpr const widechar * AttributeSysEntry	= L"xn.introitus";
 
 		constexpr const widechar * AttributeRequiredStack	= L"XN.Acervus";
 		constexpr const widechar * AttributeDesiredStack	= L"XN.AcervusMaximus";
@@ -25,6 +30,12 @@ namespace Engine
 		constexpr const widechar * AttributeNoHighDPI		= L"XN.CulicareDensumNullum";
 		constexpr const widechar * AttributeNeedsElevation	= L"XN.ExaltatioNecessaria";
 
+		constexpr const widechar * AttributeEnvironment		= L"XN.Circumiectum";
+		constexpr const widechar * EnvironmentCommCtrl		= L"commctrl";
+		constexpr const widechar * EnvironmentCOM			= L"com";
+		constexpr const widechar * EnvironmentSilentError	= L"silens";
+		constexpr const widechar * EnvironmentConsole		= L"consolatorium";
+
 		enum class LinkerErrorCode {
 			Success					= 0,
 			MainModuleLoadingError	= 1,
@@ -33,7 +44,9 @@ namespace Engine
 			LocalImportInModule		= 4,
 			UnknownSymbolReference	= 5,
 			IllegalSymbolReference	= 6,
-			WrongABI				= 7,
+			NoMainEntryPoint		= 7,
+			NoRootEntryPoint		= 8,
+			WrongABI				= 9,
 		};
 		struct LinkerInput
 		{

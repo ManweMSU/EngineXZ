@@ -202,12 +202,12 @@ namespace Engine
 		struct PESuperHeader32
 		{
 			PEHeaderFull32 hdr;
-			PESection section[5];
+			PESection section[6];
 		};
 		struct PESuperHeader64
 		{
 			PEHeaderFull64 hdr;
-			PESection section[5];
+			PESection section[6];
 		};
 
 		struct PERelocationBlock

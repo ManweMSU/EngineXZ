@@ -185,6 +185,7 @@ namespace Engine
 			} else throw InvalidArgumentException();
 			string path = L"@crea." + xtype->GetCanonicalType();
 			for (auto & i : inputs) path += L"@" + i.GetCanonicalType();
+			path = path.Replace(L".", L"@.");
 			try {
 				SafePointer<XL::LObject> func_create = ctx.QueryObject(path);
 				return func_create->Invoke(argc, argv);
