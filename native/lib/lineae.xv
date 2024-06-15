@@ -33,14 +33,14 @@ spatium lineae {
 				responde (char(data[0] & nint8(0x1F)) << char(6)) | char(data[1] & nint8(0x3F));
 			} alioqui si (ex_long >= 1 && data[0] & nint8(0x80) == nint8(0x00)) {
 				ex_long = 1;
-				responde char(data[0] & nint8(0x3F));
+				responde char(data[0] & nint8(0x7F));
 			} alioqui { ex_long = 0; responde 0; }
 		} alioqui si (ex_cdx == linea.codex.utf16) {
 			var data = (@nint16)(ex);
-			si (ex_long >= 4 && data[0] & nint16(0xFC00) == 0xD800) {
+			si (ex_long >= 4 && data[0] & nint16(0xFC00) == nint16(0xD800)) {
 				ex_long = 4;
 				responde ((char(data[0] & nint16(0x03FF)) << char(10)) | char(data[1] & nint16(0x03FF))) + char(0x10000);
-			} alioqui si (ex_long >= 2) {
+			} alioqui si (ex_long >= 2 && data[0] & nint16(0xFC00) != nint16(0xD800)) {
 				ex_long = 2;
 				responde data[0];
 			} alioqui { ex_long = 0; responde 0; }
@@ -498,7 +498,7 @@ genus linea {
 	[[thiscall_nullum]] structor (@nihil valor, int long, codex cdx) iacit
 	{
 		si (long > 0) {
-			int lc = 0, ls = long;
+			int lc = 0, ls = long * lineae.longitudo_characteris(cdx);
 			var v = (@nint8)(valor);
 			dum (ls) {
 				int l = ls;
@@ -719,7 +719,7 @@ genus linea {
 		alioqui si (primus > l) primus = l;
 		si (ult < 0) ult = 0;
 		alioqui si (ult > l) ult = l;
-		si (ult >= primus) responde linea(@s[primus], 4 * (ult - primus + 1), codex.utf32);
+		si (ult >= primus) responde linea(@s[primus], (ult - primus + 1), codex.utf32);
 		alioqui responde linea();
 	}
 	[[thiscall_nullum]] functio linea surroga(~linea sublinea, ~linea cum) iacit
@@ -894,16 +894,15 @@ genus linea_secura hereditat linea {
 	functio nihil _perde() virtualis { perde ego; }
 	functio linea_secura ad_lineam() virtualis { proba { responde linea("objectum"); } responde linea_secura(); }
 }
-// TODO: IMPLEMENT CLASS HANDLES
-// genus objectum_dynamicum hereditat objectum {
-// 	structor () {}
-// 	functio @nihil converte_dynamice(@nihil gen) iacit virtualis pura;
-// 	functio @nihil para_classem() virtualis pura;
-// }
-// protocollum dynamicum {
-// 	functio @nihil converte_dynamice(@nihil gen) iacit virtualis pura;
-// 	functio @nihil para_classem() virtualis pura;
-// }
+genus objectum_dynamicum hereditat objectum {
+	structor () {}
+	functio @nihil converte_dynamice(@nihil gen) iacit virtualis pura;
+	functio @nihil para_classem() virtualis pura;
+}
+protocollum dynamicum {
+	functio @nihil converte_dynamice(@nihil gen) iacit virtualis pura;
+	functio @nihil para_classem() virtualis pura;
+}
 
 praeforma functio permuta(T) { \cense T genus(_0)\ functio nihil $_(~$T t1, ~$T t2) {
 	ordo [magnitudo_maxima($T)] nint8 m;
@@ -1148,7 +1147,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1) iacit
 	{
@@ -1162,7 +1161,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2) iacit
 	{
@@ -1177,7 +1176,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3) iacit
 	{
@@ -1193,7 +1192,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4) iacit
 	{
@@ -1210,7 +1209,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5) iacit
 	{
@@ -1228,7 +1227,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5, ~linea a6) iacit
 	{
@@ -1247,7 +1246,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5, ~linea a6, ~linea a7) iacit
 	{
@@ -1267,7 +1266,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5, ~linea a6, ~linea a7, ~linea a8) iacit
 	{
@@ -1288,7 +1287,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 	classis functio linea forma(~linea schema, ~linea a0, ~linea a1, ~linea a2, ~linea a3, ~linea a4, ~linea a5, ~linea a6, ~linea a7, ~linea a8, ~linea a9) iacit
 	{
@@ -1310,7 +1309,7 @@ dura linea {
 				alioqui si (schema[i] == char('%')) resp.adde(char('%'));
 			} alioqui resp << schema[i];
 		}
-		responde linea(resp.data, resp.longitudo * 4, codex.utf32);
+		responde linea(resp.data, resp.longitudo, codex.utf32);
 	}
 
 	praeforma functio ex(T) { \cense T genus(_0)\ functio linea $_(~$T t) iacit {
@@ -1355,4 +1354,7 @@ dura linea {
 			\fini\
 		\fini\
 	} }
+}
+spatium actuarius {
+	functio nihil scribe(~linea ln) {}
 }

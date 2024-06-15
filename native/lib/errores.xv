@@ -1,0 +1,48 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Errorum";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+importa lineae;
+
+[[systema] libera]
+
+spatium errores {
+	functio nihil descriptio(nintadl ec, nintadl esc, ~linea error, ~linea sub_error) {
+		proba {
+			si (ec == errores.error_nullus) { error = "Error nullus"; sub_error = ""; }
+			alioqui si (ec == errores.implantatio_nulla) { error = "Implantatio nulla"; sub_error = ""; }
+			alioqui si (ec == errores.memoria_nulla) { error = "Memoria nulla"; sub_error = ""; }
+			alioqui si (ec == errores.argumentum_falsum) { error = "Argumentum falsum"; sub_error = ""; }
+			alioqui si (ec == errores.efformatio_falsa) { error = "Efformatio falsa"; sub_error = ""; }
+			alioqui si (ec == errores.habitus_falsus) { error = "Habitus falsus"; sub_error = ""; }
+			alioqui si (ec == errores.ie_falsum) {
+				error = "Error inponendi/exponendi";
+				si (esc == errores.ie_error_nullus) sub_error = "Error nullus";
+				alioqui si (esc == errores.ie_error_ignotus) sub_error = "Error ignotus";
+				alioqui si (esc == errores.ie_lima_nulla) sub_error = "Lima nulla";
+				alioqui si (esc == errores.ie_semita_nulla) sub_error = "Semita nulla";
+				alioqui si (esc == errores.ie_limae_apertae_nimium) sub_error = "Limae apertae nimium";
+				alioqui si (esc == errores.ie_permissio_nulla) sub_error = "Permissio nulla";
+				alioqui si (esc == errores.ie_manubrium_defectum) sub_error = "Manubrium defectum";
+				alioqui si (esc == errores.ie_memoria_nulla) sub_error = "Memoria nulla";
+				alioqui si (esc == errores.ie_machinatio_defecta) sub_error = "Machinatio defecta";
+				alioqui si (esc == errores.ie_legere_sole) sub_error = "Legere sole";
+				alioqui si (esc == errores.ie_spatium_disci_nullum) sub_error = "Spatium disci nullum";
+				alioqui si (esc == errores.ie_lima_preexistat) sub_error = "Lima preexistat";
+				alioqui si (esc == errores.ie_implantatio_nulla) sub_error = "Implantatio nulla";
+				alioqui si (esc == errores.ie_collectorium_vacuum_non) sub_error = "Collectorium vacuum non est";
+				alioqui si (esc == errores.ie_collectorium_currens_est) sub_error = "Collectorium currens est";
+				alioqui si (esc == errores.ie_machinatio_idem_non) sub_error = "Machinatio idem non est";
+				alioqui si (esc == errores.ie_nomen_semitae_defectum) sub_error = "Nomen semitae defectum est";
+				alioqui si (esc == errores.ie_nomen_limae_largum_nimium) sub_error = "Nomen limae largum nimium";
+				alioqui si (esc == errores.ie_lima_larga_nimium) sub_error = "Lima larga nimium";
+				alioqui si (esc == errores.ie_legere_falsum) sub_error = "Defectio legendi limae";
+				alioqui si (esc == errores.ie_scribere_falsum) sub_error = "Defectio scribendi limae";
+				alioqui si (esc == errores.ie_creare_falsum) sub_error = "Defectio creandi limae";
+				alioqui si (esc == errores.ie_aperire_falsum) sub_error = "Defectio aperiendi limae";
+				alioqui sub_error = "Suberror ignotus";
+			} alioqui { error = "Error ignotus"; sub_error = ""; }
+		}
+	}
+}

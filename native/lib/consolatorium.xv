@@ -1,0 +1,387 @@
+﻿importa canonicalis;
+importa winapi;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Consolatorium";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+genus consolatorium hereditat objectum_dynamicum {
+	enumeratio color {
+		defalta					= -1,
+		niger					= 0,
+		blavius_tenebrosus		= 1,
+		viridis_tenebrosus		= 2,
+		lazulinus_tenebrosus	= 3,
+		ruber_tenebrosus		= 4,
+		purpureus_tenebrosus	= 5,
+		flavus_tenebrosus		= 6,
+		griseus					= 7,
+		griseus_tenebrosus		= 8,
+		blavius					= 9,
+		viridis					= 10,
+		lazulinus				= 11,
+		ruber					= 12,
+		purpureus				= 13,
+		flavus					= 14,
+		albus					= 15
+	}
+	enumeratio codex_eventi {
+		finis_fluminis	= 0,
+		character_in	= 1,
+		tactus_in		= 2,
+		cressatus_est	= 3
+	}
+	enumeratio modus { purus = 0, repulsus = 1 }
+	enumeratio status_tactus { shift = 0x1, ctrl = 0x2, alt = 0x4 }
+
+	structura positus {
+		int x; int y;
+		structor (int xv, int yv) { funda x(xv); funda y(yv); }
+	}
+	structura eventum {
+		codex_eventi codex_eventi;
+		char character;
+		tactus tactus;
+		int status_tactus;
+		positus magnitudines;
+	}
+
+	nintadl _data_in;
+	nintadl _data_ex;
+	nintadl _perm;
+	nint16 _attributa;
+	char _utf32;
+	logicum _modus_in;
+	logicum _modus_ex;
+
+	structor () iacit {
+		_data_in = winapi.GetStdHandle(winapi.index_manubrii_in);
+		_data_ex = winapi.GetStdHandle(winapi.index_manubrii_ex);
+		si (!_data_in || !_data_ex) iace errores.habitus_falsus;
+		nint32 modus;
+		si (winapi.GetConsoleMode(_data_ex, modus)) {
+			_modus_ex = sic;
+			winapi.CONSOLE_SCREEN_BUFFER_INFO inf;
+			winapi.GetConsoleScreenBufferInfo(_data_ex, inf);
+			_attributa = inf.attr;
+		} alioqui {
+			_attributa = 0;
+			_modus_ex = non;
+		}
+		si (winapi.GetConsoleMode(_data_in, modus)) _modus_in = sic;
+		alioqui _modus_in = non;
+		_utf32 = 0;
+		_perm = 0;
+	}
+	functio linea_secura ad_lineam() redefini { proba responde linea_secura(linea("consolatorium")); }
+
+	linea titulus { loca iacit virtualis { winapi.SetConsoleTitle(linea_utf16(valor)); } }
+	color color_primus { loca iacit virtualis {
+		si (_modus_ex) {
+			winapi.CONSOLE_SCREEN_BUFFER_INFO inf;
+			si (!winapi.GetConsoleScreenBufferInfo(_data_ex, inf)) iace errores.ie_falsum, winapi.suberror();
+			si (valor < 0) winapi.SetConsoleTextAttribute(_data_ex, inf.attr & nint16(0xF0) | _attributa & nint16(0x0F));
+			alioqui si (valor < 16) winapi.SetConsoleTextAttribute(_data_ex, inf.attr & nint16(0xF0) | nint16(int(valor)));
+			alioqui iace errores.argumentum_falsum;
+		}
+	} }
+	color color_secundus { loca iacit virtualis {
+		si (_modus_ex) {
+			winapi.CONSOLE_SCREEN_BUFFER_INFO inf;
+			si (!winapi.GetConsoleScreenBufferInfo(_data_ex, inf)) iace errores.ie_falsum, winapi.suberror();
+			si (valor < 0) winapi.SetConsoleTextAttribute(_data_ex, inf.attr & nint16(0x0F) | _attributa & nint16(0xF0));
+			alioqui si (valor < 16) winapi.SetConsoleTextAttribute(_data_ex, inf.attr & nint16(0x0F) | nint16(int(valor) << 4));
+			alioqui iace errores.argumentum_falsum;
+		}
+	} }
+	modus modus_currens { loca iacit virtualis {
+		si (_modus_in) {
+			nint32 md;
+			winapi.GetConsoleMode(_data_in, md);
+			si (valor == modus.repulsus) md |= nint32(6);
+			alioqui si (valor == modus.purus)  md &= ~nint32(6);
+			winapi.FlushConsoleInputBuffer(_data_in);
+			winapi.SetConsoleMode(_data_in, md);
+		}
+	} }
+	logicum culicare_alterum { loca iacit virtualis {
+		si (_modus_in && _modus_ex) {
+			si (valor) {
+				si (!_perm) {
+					var cn = winapi.CreateConsoleScreenBuffer(0xC0000000, 3, nullus, 1, nullus);
+					si (cn == nintadl(-1)) iace errores.ie_falsum, winapi.suberror();
+					si (!winapi.SetConsoleActiveScreenBuffer(cn)) {
+						var se = winapi.suberror();
+						winapi.CloseHandle(cn);
+						iace errores.ie_falsum, se;
+					}
+					_perm = _data_ex;
+					_data_ex = cn;
+				}
+			} alioqui {
+				si (_perm) {
+					si (!winapi.SetConsoleActiveScreenBuffer(_perm)) iace errores.ie_falsum, winapi.suberror();
+					winapi.CloseHandle(_data_ex);
+					_data_ex = _perm;
+					_perm = 0;
+				}
+			}
+		} alioqui iace errores.implantatio_nulla;
+	} }
+	positus cursor {
+		adipisce iacit virtualis {
+			si (_modus_ex) {
+				winapi.CONSOLE_SCREEN_BUFFER_INFO inf;
+				si (!winapi.GetConsoleScreenBufferInfo(_data_ex, inf)) iace errores.ie_falsum, winapi.suberror();
+				responde positus(inf.cur_x, inf.cur_y);
+			} alioqui responde positus(0, 0);
+		}
+		loca iacit virtualis{ si (_modus_ex) winapi.SetConsoleCursorPosition(_data_ex, valor.x | (valor.y << 16)); }
+	}
+	positus magnitudines { adipisce iacit virtualis {
+		si (_modus_ex) {
+			winapi.CONSOLE_SCREEN_BUFFER_INFO inf;
+			si (!winapi.GetConsoleScreenBufferInfo(_data_ex, inf)) iace errores.ie_falsum, winapi.suberror();
+			responde positus(inf.lat, inf.alt);
+		} alioqui responde positus(0, 0);
+	} }
+
+	functio nihil scribe(~linea ln) iacit virtualis {
+		si (_modus_ex) {
+			int long = ln.longitudo - 1;
+			pro (var i : [0, long]) {
+				si (ln[i] >= char(32) || ln[i] == char('\n') || ln[i] == char('\t')) {
+					nint32 data;
+					int l = 4;
+					lineae.scribe_characterem(@data, l, linea.codex.utf16, ln[i]);
+					si (!winapi.WriteConsole(_data_ex, (@nint16)(@data), l / 2, nullus, nullus)) iace errores.ie_falsum, winapi.suberror();
+				}
+			}
+		} alioqui {
+			int long = ln.longitudo - 1;
+			pro (var i : [0, long]) {
+				si (ln[i] >= char(32) || ln[i] == char('\t')) {
+					nint32 data, ls;
+					int l = 4;
+					lineae.scribe_characterem(@data, l, linea.codex.utf8, ln[i]);
+					si (!winapi.WriteFile(_data_ex, @data, l, @ls, nullus)) iace errores.ie_falsum, winapi.suberror();
+				} alioqui si (ln[i] == char('\n')) {
+					nint16 crlf = nint16('\r') | (nint16('\n') << nint16(8));
+					nint32 ls;
+					si (!winapi.WriteFile(_data_ex, @crlf, 2, @ls, nullus)) iace errores.ie_falsum, winapi.suberror();
+				}
+			}
+		}
+	}
+	functio nihil scribe_lineam(~linea ln) iacit virtualis { scribe(ln); scribe("\n"); }
+	functio nihil scribe_lineam() iacit virtualis { scribe("\n"); }
+
+	functio nihil depura_lineam() iacit virtualis {
+		si (_modus_ex) {
+			winapi.CONSOLE_SCREEN_BUFFER_INFO inf;
+			si (!winapi.GetConsoleScreenBufferInfo(_data_ex, inf)) iace errores.ie_falsum, winapi.suberror();
+			nint32 pos = int(inf.cur_y) << 16;
+			winapi.FillConsoleOutputCharacterW(_data_ex, ' ', inf.lat, pos, nint32());
+			winapi.FillConsoleOutputAttribute(_data_ex, inf.attr, inf.lat, pos, nint32());
+			winapi.SetConsoleCursorPosition(_data_ex, pos);
+		}
+	}
+	functio nihil depura_cunctum() iacit virtualis {
+		si (_modus_ex) {
+			winapi.CONSOLE_SCREEN_BUFFER_INFO inf;
+			si (!winapi.GetConsoleScreenBufferInfo(_data_ex, inf)) iace errores.ie_falsum, winapi.suberror();
+			winapi.FillConsoleOutputCharacterW(_data_ex, ' ', int(inf.lat) * int(inf.alt), 0, nint32());
+			winapi.FillConsoleOutputAttribute(_data_ex, inf.attr, int(inf.lat) * int(inf.alt), 0, nint32());
+			winapi.SetConsoleCursorPosition(_data_ex, 0);
+		}
+	}
+
+	functio char lege_characterem() iacit virtualis {
+		si (_modus_in) {
+			dum (sic) {
+				nint32 long;
+				nint16 chr16;
+				si (!winapi.ReadConsole(_data_in, @chr16, 1, @long, nullus)) iace errores.ie_falsum, winapi.suberror();
+				si (long) {
+					si (_utf32) {
+						_utf32 |= nint32(chr16) << nint32(16);
+						var chr = lineae.lege_characterem(@_utf32, 4, linea.codex.utf16);
+						si (!chr) iace errores.efformatio_falsa;
+						_utf32 = 0;
+						responde chr;
+					} alioqui {
+						int l = 2;
+						var chr = lineae.lege_characterem(@chr16, l, linea.codex.utf16);
+						si (l == 2) responde chr;
+						_utf32 = chr16;
+					}
+				} alioqui responde 0xFFFFFFFF;
+			}
+		} alioqui {
+			int long = 0;
+			ordo [4] nint8 data;
+			char chr;
+			dum (sic) {
+				nint32 nl;
+				si (!winapi.ReadFile(_data_in, @data[long], 1, @nl, nullus)) iace errores.ie_falsum, winapi.suberror();
+				si (!nl) {
+					si (long) iace errores.efformatio_falsa;
+					alioqui { chr = 0xFFFFFFFF; exi; }
+				}
+				long++;
+				int l = long;
+				chr = lineae.lege_characterem(@data, l, linea.codex.utf8);
+				si (l == long) {
+					si (chr == char('\xFEFF')) { long = 0; dura; }
+					exi;
+				}
+				si (long == 4) iace errores.efformatio_falsa;
+			}
+			responde chr;
+		}
+	}
+	functio linea lege_lineam() iacit virtualis {
+		ordo char resp;
+		dum (sic) {
+			var chr = lege_characterem();
+			si (chr == 0xFFFFFFFF || chr == char('\n')) exi;
+			si (chr >= char(0x20) || chr == char('\t')) resp << chr;
+		}
+		responde linea(resp.data, resp.longitudo, linea.codex.utf32);
+	}
+	functio nihil lege_eventum(~eventum ev) iacit virtualis {
+		ev.character = 0;
+		ev.tactus = 0;
+		ev.status_tactus = 0;
+		ev.magnitudines.x = ev.magnitudines.y = 0;
+		si (_modus_in) {
+			winapi.INPUT_RECORD data;
+			nint32 leg;
+			dum (sic) {
+				si (!winapi.ReadConsoleInput(_data_in, data, 1, @leg)) iace errores.ie_falsum, winapi.suberror();
+				si (leg) {
+					si (data.eventum == nint16(0x0001)) {
+						si (data.tact_status) {
+							si (data.tact_utf16 >= nint16(32) || data.tact_utf16 == nint16(9) || data.tact_utf16 == nint16(10) || data.tact_utf16 == nint16(13)) {
+								si (_utf32) {
+									_utf32 |= nint32(data.tact_utf16) << nint32(16);
+									var chr = lineae.lege_characterem(@_utf32, 4, linea.codex.utf16);
+									si (!chr) iace errores.efformatio_falsa;
+									_utf32 = 0;
+									ev.codex_eventi = codex_eventi.character_in;
+									ev.character = chr;
+									exi;
+								} alioqui {
+									int l = 2;
+									var chr = lineae.lege_characterem(@data.tact_utf16, l, linea.codex.utf16);
+									si (l == 2) {
+										ev.codex_eventi = codex_eventi.character_in;
+										ev.character = chr;
+										exi;
+									}
+									_utf32 = data.tact_utf16;
+								}
+							} alioqui {
+								ev.codex_eventi = codex_eventi.tactus_in;
+								ev.tactus = data.tact_tactus;
+								ev.status_tactus = 0;
+								si (data.tact_modus & char(0x0010)) ev.status_tactus |= status_tactus.shift;
+								alioqui si (data.tact_modus & char(0x0008)) ev.status_tactus |= status_tactus.ctrl;
+								alioqui si (data.tact_modus & char(0x0004)) ev.status_tactus |= status_tactus.ctrl;
+								alioqui si (data.tact_modus & char(0x0002)) ev.status_tactus |= status_tactus.alt;
+								alioqui si (data.tact_modus & char(0x0001)) ev.status_tactus |= status_tactus.alt;
+								exi;
+							}
+						}
+					} alioqui si (data.eventum == nint16(0x0004)) {
+						ev.codex_eventi = codex_eventi.cressatus_est;
+						ev.magnitudines.x = data.fen_lat;
+						ev.magnitudines.y = data.fen_alt;
+						exi;
+					}
+				} alioqui {
+					ev.codex_eventi = codex_eventi.finis_fluminis;
+					exi;
+				}
+			}
+		} alioqui {
+			var chr = lege_characterem();
+			si (chr == 0xFFFFFFFF) {
+				ev.codex_eventi = codex_eventi.finis_fluminis;
+			} alioqui {
+				ev.codex_eventi = codex_eventi.character_in;
+				ev.character = chr;
+			}
+		}
+	}
+
+	classis functio ~consolatorium operator << (~consolatorium cns, ~linea ln) iacit { cns.scribe(ln); responde cns; }
+	classis functio ~consolatorium operator >> (~consolatorium cns, ~linea ln) iacit { ln = cns.lege_lineam(); responde cns; }
+
+	var !consolatorium _publicum;
+
+	classis functio @consolatorium currens() iacit {
+		si (!_publicum) _publicum = crea(consolatorium);
+		responde _publicum;
+	}
+	classis functio @consolatorium alloca() iacit {
+		winapi.AllocConsole();
+		si (!_publicum) _publicum = crea(consolatorium);
+		responde _publicum;
+	}
+	classis functio logicum annexum_est() { proba currens(); cape responde non; responde sic; }
+
+	genus _codificator hereditat scriptio.codificator {
+		@consolatorium _con;
+		structor (@consolatorium con) { funda _con(con); }
+		functio linea_secura ad_lineam() redefini { proba responde linea_secura(linea("consolatorium")); }
+		functio nihil scribe(~linea ln) iacit virtualis redefini { _con^.scribe(ln); }
+		functio nihil scribe_lineam(~linea ln) iacit virtualis redefini { _con^.scribe_lineam(ln); }
+		functio nihil scribe_lineam() iacit virtualis redefini { _con^.scribe_lineam(); }
+		functio nihil scribe_subscriptionem() iacit virtualis redefini { si (!_con^._modus_ex) scribe("\xFEFF"); }
+	}
+	genus _decodificator hereditat scriptio.decodificator {
+		@consolatorium _con;
+		logicum _finis;
+		structor (@consolatorium con) { funda _con(con); funda _finis(non); }
+		functio linea_secura ad_lineam() redefini { proba responde linea_secura(linea("consolatorium")); }
+		functio char lege_characterem() iacit virtualis redefini {
+			var chr = _con^.lege_characterem();
+			si (chr == scriptio.character_finis) _finis = sic;
+			responde chr;
+		}
+		functio linea lege_lineam() iacit virtualis redefini
+		{
+			ordo char resp;
+			dum (sic) {
+				var chr = lege_characterem();
+				si (chr == 0xFFFFFFFF) _finis = sic;
+				si (chr == 0xFFFFFFFF || chr == char('\n')) exi;
+				si (chr >= char(0x20) || chr == char('\t')) resp << chr;
+			}
+			responde linea(resp.data, resp.longitudo, linea.codex.utf32);
+		}
+		functio linea lege_cunctos() iacit virtualis redefini { iace errores.implantatio_nulla; }
+		logicum finis { adipisce virtualis redefini { responde _finis; } }
+		linea.codex codex { adipisce virtualis redefini {
+			si (_con^._modus_in) responde linea.codex.ignotus;
+			alioqui responde linea.codex.utf8;
+		} }
+	}
+
+	functio @scriptio.codificator expone_classem() iacit {
+		var cdx = (@_codificator)(memoria.alloca(magnitudo(_codificator)));
+		si (cdx == nullus) iace errores.memoria_nulla;
+		initia(cdx, ego);
+		responde cdx;
+	}
+	functio @scriptio.decodificator expone_classem() iacit {
+		var dcx = (@_decodificator)(memoria.alloca(magnitudo(_decodificator)));
+		si (dcx == nullus) iace errores.memoria_nulla;
+		initia(dcx, ego);
+		responde dcx;
+	}
+}

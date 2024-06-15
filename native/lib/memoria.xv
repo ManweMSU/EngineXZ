@@ -35,9 +35,13 @@ spatium memoria {
 	functio @nihil exscribe(@nihil in, @nihil ex, nintadl magn) { pro (nintadl i = 0; i < magn; i++) (@nint8)(in)[i] = (@nint8)(ex)[i]; responde in; }
 }
 
-// TODO: IMPLEMENT NATIVELY
-// functio nint incrementum_securum(~nint valor) { responde winapi.InterlockedIncrement(@valor); }
-// functio nint decrementum_securum(~nint valor) { responde winapi.InterlockedDecrement(@valor); }
-
-functio nint incrementum_securum(~nint valor) { valor++; responde valor; }
-functio nint decrementum_securum(~nint valor) { valor--; responde valor; }
+[[xa]] [[inline]] functio nint incrementum_securum(~nint valor) {
+	DATA DWORD 1
+	INTERFACE W 1=>4:INT
+	CODE { RET { @BLT:4 4=>4(R, @AADD:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } }
+}
+[[xa]] [[inline]] functio nint decrementum_securum(~nint valor) {
+	DATA DWORD -1
+	INTERFACE W 1=>4:INT
+	CODE { RET { @BLT:4 4=>4(R, @AADD:4 4=>4(@PTR_FOLLOW:W 1=>4(A[0]), D[0])) } }
+}

@@ -1,0 +1,461 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Mathematicae Canonicalis";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+importa lineae;
+importa winapi;
+
+[[systema] libera]
+
+spatium math {
+	spatium caecus {
+		functio nihil data(@nihil data, int long) {
+			nint64 alg = nint64('R' | ('N' << 16)) | (nint64('G') << nint64(32));
+			nintadl mnbr;
+			si (winapi.BCryptOpenAlgorithmProvider(mnbr, (@nint16)(@alg), nullus, 0)) responde;
+			winapi.BCryptGenRandom(mnbr, data, long, 0);
+			winapi.BCryptCloseAlgorithmProvider(mnbr, 0);
+		}
+		functio int integer(int min, int max)
+		{
+			si (max <= min) responde min;
+			nint valor;
+			data(@valor, 4);
+			responde int(valor % nint(1 + max - min)) + min;
+		}
+		functio dfrac fractus()
+		{
+			nint64 y, e = 1023;
+			data(@y, 8);
+			y &= nint64(0x000FFFFFFFFFFFFF);
+			y |= e << nint64(52);
+			responde (@dfrac)(@y)^ - 1.0;
+		}
+	}
+
+	functio frac inf_pos_s() { nint32 valor = 0x7F800000; responde (@frac)(@valor)^; }
+	functio frac inf_neg_s() { nint32 valor = 0xFF800000; responde (@frac)(@valor)^; }
+	functio frac nn_s() { nint32 valor = 0xFFFFFFFF; responde (@frac)(@valor)^; }
+	functio dfrac inf_pos_d() { nint64 valor = 0x7FF0000000000000; responde (@dfrac)(@valor)^; }
+	functio dfrac inf_neg_d() { nint64 valor = 0xFFF0000000000000; responde (@dfrac)(@valor)^; }
+	functio dfrac nn_d() { nint64 valor = 0xFFFFFFFFFFFFFFFF; responde (@dfrac)(@valor)^; }
+	functio logicum inf_est(frac valor) { responde (@nint32)(@valor)^ & nint32(0x7F800000) == nint32(0x7F800000) && (@nint32)(@valor)^ & nint32(0x007FFFFF) == nint32(0x00000000); }
+	functio logicum inf_est(dfrac valor) { responde (@nint64)(@valor)^ & nint64(0x7FF0000000000000) == nint64(0x7FF0000000000000) && (@nint64)(@valor)^ & nint64(0x000FFFFFFFFFFFFF) == nint64(0x0000000000000000); }
+	functio logicum nn_est(frac valor) { responde (@nint32)(@valor)^ & nint32(0x7F800000) == nint32(0x7F800000) && (@nint32)(@valor)^ & nint32(0x007FFFFF) != nint32(0x00000000); }
+	functio logicum nn_est(dfrac valor) { responde (@nint64)(@valor)^ & nint64(0x7FF0000000000000) == nint64(0x7FF0000000000000) && (@nint64)(@valor)^ & nint64(0x000FFFFFFFFFFFFF) != nint64(0x0000000000000000); }
+
+	functio int8 sgn(int8 valor) { si (valor < int8(0)) responde -1; alioqui si (valor > int8(0)) responde 1; alioqui responde 0; }
+	functio int16 sgn(int16 valor) { si (valor < int16(0)) responde -1; alioqui si (valor > int16(0)) responde 1; alioqui responde 0; }
+	functio int32 sgn(int32 valor) { si (valor < int32(0)) responde -1; alioqui si (valor > int32(0)) responde 1; alioqui responde 0; }
+	functio int64 sgn(int64 valor) { si (valor < int64(0)) responde -1; alioqui si (valor > int64(0)) responde 1; alioqui responde 0; }
+	functio intadl sgn(intadl valor) { si (valor < intadl(0)) responde -1; alioqui si (valor > intadl(0)) responde 1; alioqui responde 0; }
+	functio frac sgn(frac valor) { si (valor < frac(0.0)) responde -1.0; alioqui si (valor > frac(0.0)) responde 1.0; alioqui responde 0.0; }
+	functio dfrac sgn(dfrac valor) { si (valor < 0.0) responde -1.0; alioqui si (valor > 0.0) responde 1.0; alioqui responde 0.0; }
+
+	functio frac concava(frac valor) { responde trunca(valor + frac(0.5) * sgn(valor)); }
+	functio dfrac concava(dfrac valor) { responde trunca(valor + 0.5 * sgn(valor)); }
+	functio frac trunca(frac valor) {
+		var resp = valor;
+		var ~ data = (@nint32)(@resp)^;
+		var exp = int((nint32(data) & nint32(0x7F800000)) >> nint32(23));
+		si (exp == 0) responde 0.0;
+		alioqui si (exp == 0xFF) responde valor;
+		alioqui {
+			nint32 ind = nint32(0x00800000);
+			si (exp > 127) ind >>= exp - 127; alioqui ind <<= 127 - exp;
+			si (exp > 127 && !ind) responde valor;
+			ind -= 1;
+			si (ind & nint32(0x00800000)) responde 0.0;
+			data &= ~ind;
+		}
+		responde resp;
+	}
+	functio dfrac trunca(dfrac valor) {
+		var resp = valor;
+		var ~ data = (@nint64)(@resp)^;
+		var exp = int((nint64(data) & nint64(0x7FF0000000000000)) >> nint64(52));
+		si (exp == 0) responde 0.0;
+		alioqui si (exp == 0x7FF) responde valor;
+		alioqui {
+			nint64 ind = nint64(0x0010000000000000);
+			si (exp > 1023) ind >>= exp - 1023; alioqui ind <<= 1023 - exp;
+			si (exp > 1023 && !ind) responde valor;
+			ind -= 1;
+			si (ind & nint64(0x0010000000000000)) responde 0.0;
+			data &= ~ind;
+		}
+		responde resp;
+	}
+	functio frac solum(frac valor) { var vt = trunca(valor); si (valor >= frac(0.0) || vt == valor) responde vt; alioqui responde vt - frac(1.0); }
+	functio dfrac solum(dfrac valor) { var vt = trunca(valor); si (valor >= 0.0 || vt == valor) responde vt; alioqui responde vt - 1.0; }
+	functio frac tectum(frac valor) { var vt = trunca(valor); si (valor <= frac(0.0) || vt == valor) responde vt; alioqui responde vt + frac(1.0); }
+	functio dfrac tectum(dfrac valor) { var vt = trunca(valor); si (valor <= 0.0 || vt == valor) responde vt; alioqui responde vt + 1.0; }
+
+	functio nihil _potd_int(frac valor, ~frac pt, ~frac res) {
+		var vi = solum(valor);
+		si (!vi) { pt = 1.0; res = valor; responde; }
+		var ~ data = (@nint32)(@vi)^;
+		var exp = int((nint32(data) & nint32(0x7F800000)) >> nint32(23));
+		si (exp == 0) { pt = 1.0; res = 0.0; responde; }
+		alioqui si (exp == 0xFF) {
+			si (inf_est(valor)) {
+				si (valor > frac(0.0)) { pt = inf_pos_s(); res = 0.0; }
+				alioqui { pt = 0.0; res = 0.0; }
+			} alioqui { pt = nn_s(); res = 0.0; }
+		} alioqui {
+			res = valor - vi;
+			exp -= 127 + 23;
+			si (exp > 8) { pt = inf_pos_s(); res = 0.0; } alioqui {
+				var ptr = data & nint32(0x007FFFFF) | nint32(0x00800000);
+				si (exp > 0) ptr <<= exp; alioqui ptr >>= -exp;
+				si (ptr > nint32(0x7F)) { pt = inf_pos_s(); res = 0.0; } alioqui {
+					si (data & nint32(0x80000000)) (@nint32)(@pt)^ = (nint32(127) - ptr) << nint32(23);
+					alioqui (@nint32)(@pt)^ = (nint32(127) + ptr) << nint32(23);
+				}
+			}
+		}
+	}
+	functio nihil _potd_int(dfrac valor, ~dfrac pt, ~dfrac res) {
+		var vi = solum(valor);
+		si (!vi) { pt = 1.0; res = valor; responde; }
+		var ~ data = (@nint64)(@vi)^;
+		var exp = int((nint64(data) & nint64(0x7FF0000000000000)) >> nint64(52));
+		si (exp == 0) { pt = 1.0; res = 0.0; responde; }
+		alioqui si (exp == 0x7FF) {
+			si (inf_est(valor)) {
+				si (valor > 0.0) { pt = inf_pos_d(); res = 0.0; }
+				alioqui { pt = 0.0; res = 0.0; }
+			} alioqui { pt = nn_d(); res = 0.0; }
+		} alioqui {
+			res = valor - vi;
+			exp -= 1023 + 52;
+			si (exp > 11) { pt = inf_pos_d(); res = 0.0; } alioqui {
+				var ptr = data & nint64(0x000FFFFFFFFFFFFF) | nint64(0x0010000000000000);
+				si (exp > 0) ptr <<= exp; alioqui ptr >>= -exp;
+				si (ptr > nint64(0x3FF)) { pt = inf_pos_d(); res = 0.0; } alioqui {
+					si (data & nint64(0x8000000000000000)) (@nint64)(@pt)^ = (nint64(1023) - ptr) << nint64(52);
+					alioqui (@nint64)(@pt)^ = (nint64(1023) + ptr) << nint64(52);
+				}
+			}
+		}
+	}
+	functio frac _potd(frac valor) {
+		genus(valor) resp, res;
+		_potd_int(valor, resp, res);
+		genus(valor) A = 1.0, M = 1.0;
+		M = M * genus(valor)(0.6931471805599453) * res; A = A + M;
+		M = M * genus(valor)(0.3465735902799726) * res; A = A + M;
+		M = M * genus(valor)(0.2310490601866484) * res; A = A + M;
+		M = M * genus(valor)(0.1732867951399863) * res; A = A + M;
+		M = M * genus(valor)(0.1386294361119891) * res; A = A + M;
+		M = M * genus(valor)(0.1155245300933242) * res; A = A + M;
+		M = M * genus(valor)(0.09902102579427789) * res; A = A + M;
+		M = M * genus(valor)(0.08664339756999316) * res; A = A + M;
+		M = M * genus(valor)(0.07701635339554948) * res; A = A + M;
+		responde resp * A;
+	}
+	functio dfrac _potd(dfrac valor) {
+		genus(valor) resp, res;
+		_potd_int(valor, resp, res);
+		genus(valor) A = 1.0, M = 1.0;
+		M = M * genus(valor)(0.6931471805599453) * res; A = A + M;
+		M = M * genus(valor)(0.3465735902799726) * res; A = A + M;
+		M = M * genus(valor)(0.2310490601866484) * res; A = A + M;
+		M = M * genus(valor)(0.1732867951399863) * res; A = A + M;
+		M = M * genus(valor)(0.1386294361119891) * res; A = A + M;
+		M = M * genus(valor)(0.1155245300933242) * res; A = A + M;
+		M = M * genus(valor)(0.09902102579427789) * res; A = A + M;
+		M = M * genus(valor)(0.08664339756999316) * res; A = A + M;
+		M = M * genus(valor)(0.07701635339554948) * res; A = A + M;
+		M = M * genus(valor)(0.06931471805599453) * res; A = A + M;
+		M = M * genus(valor)(0.06301338005090412) * res; A = A + M;
+		M = M * genus(valor)(0.0577622650466621) * res; A = A + M;
+		M = M * genus(valor)(0.05331901388922656) * res; A = A + M;
+		M = M * genus(valor)(0.04951051289713895) * res; A = A + M;
+		M = M * genus(valor)(0.04620981203732968) * res; A = A + M;
+		M = M * genus(valor)(0.04332169878499658) * res; A = A + M;
+		responde resp * A;
+	}
+
+	functio frac pot(frac valor, frac pot) { si (valor < frac(0.0)) responde nn_s(); responde _potd(pot * lb(valor)); }
+	functio dfrac pot(dfrac valor, dfrac pot) { si (valor < 0.0) responde nn_d(); responde _potd(pot * lb(valor)); }
+
+	functio frac exp(frac valor) { responde _potd(valor * frac(1.4426950408889634073599246810019)); }
+	functio dfrac exp(dfrac valor) { responde _potd(valor * 1.4426950408889634073599246810019); }
+	functio frac ln(frac valor) { responde lb(valor) * genus(valor)(0.69314718055994530941723212145818); }
+	functio dfrac ln(dfrac valor) { responde lb(valor) * genus(valor)(0.69314718055994530941723212145818); }
+	functio frac lb(frac valor) {
+		si (valor < 0.0) responde nn_s();
+		var data = (@nint32)(@valor)^;
+		var exp = int((nint32(data) & nint32(0x7F800000)) >> nint32(23));
+		si (exp == 0) responde inf_neg_s();
+		alioqui si (exp == 0xFF) {
+			si (inf_est(valor)) responde inf_pos_s();
+			alioqui responde nn_s();
+		} alioqui {
+			data &= nint32(0x007FFFFF);
+			data |= nint32(0x3F800000);
+			genus(valor) B = exp - 127;
+			genus(valor) R = radix(radix(radix((@genus(valor))(@data)^))) - genus(valor)(1.0);
+			genus(valor) S = 0.0, M = R;
+			S = genus(valor)(1.442695040888963) * M; M = M * R;
+			S = S - genus(valor)(0.7213475204444817) * M; M = M * R;
+			S = S + genus(valor)(0.4808983469629878) * M; M = M * R;
+			S = S - genus(valor)(0.3606737602222408) * M; M = M * R;
+			S = S + genus(valor)(0.2885390081777927) * M; M = M * R;
+			S = S - genus(valor)(0.2404491734814939) * M; M = M * R;
+			S = S + genus(valor)(0.2060992915555662) * M;
+			responde B + genus(valor)(8.0) * S;
+		}
+	}
+	functio dfrac lb(dfrac valor) {
+		si (valor < 0.0) responde nn_d();
+		var data = (@nint64)(@valor)^;
+		var exp = int((nint64(data) & nint64(0x7FF0000000000000)) >> nint64(52));
+		si (exp == 0) responde inf_neg_d();
+		alioqui si (exp == 0x7FF) {
+			si (inf_est(valor)) responde inf_pos_d();
+			alioqui responde nn_d();
+		} alioqui {
+			data &= nint64(0x000FFFFFFFFFFFFF);
+			data |= nint64(0x3FF0000000000000);
+			genus(valor) B = exp - 1023;
+			genus(valor) R = radix(radix(radix((@genus(valor))(@data)^))) - genus(valor)(1.0);
+			genus(valor) S = 0.0, M = R;
+			S = genus(valor)(1.442695040888963) * M; M = M * R;
+			S = S - genus(valor)(0.7213475204444817) * M; M = M * R;
+			S = S + genus(valor)(0.4808983469629878) * M; M = M * R;
+			S = S - genus(valor)(0.3606737602222408) * M; M = M * R;
+			S = S + genus(valor)(0.2885390081777927) * M; M = M * R;
+			S = S - genus(valor)(0.2404491734814939) * M; M = M * R;
+			S = S + genus(valor)(0.2060992915555662) * M; M = M * R;
+			S = S - genus(valor)(0.1803368801111204) * M; M = M * R;
+			S = S + genus(valor)(0.1602994489876626) * M; M = M * R;
+			S = S - genus(valor)(0.1442695040888963) * M; M = M * R;
+			S = S + genus(valor)(0.1311540946262694) * M; M = M * R;
+			S = S - genus(valor)(0.1202245867407469) * M; M = M * R;
+			S = S + genus(valor)(0.1109765416068433) * M; M = M * R;
+			S = S - genus(valor)(0.1030496457777831) * M; M = M * R;
+			S = S + genus(valor)(0.09617966939259756) * M;
+			responde B + genus(valor)(8.0) * S;
+		}
+	}
+	functio frac lg(frac valor) { responde lb(valor) * genus(valor)(0.30102999566398119521373889472449); }
+	functio dfrac lg(dfrac valor) { responde lb(valor) * genus(valor)(0.30102999566398119521373889472449); }
+
+	functio frac sin(frac valor) {
+		si (inf_est(valor) || nn_est(valor)) responde nn_s();
+		var va = valor * (frac(2.0) / frac.pi);
+		var vp = solum(va);
+		var res = va - vp;
+		si (int64(vp) & int64(1)) {
+			si (int64(vp) & int64(2)) res = res - genus(valor)(1.0);
+			alioqui res = genus(valor)(1.0) - res;
+		} alioqui si (int64(vp) & int64(2)) res = -res;
+		var rr = res * res;
+		var resp = genus(valor)(1.570796326794897) * res; res = res * rr;
+		resp = resp - genus(valor)(0.6459640975062462) * res; res = res * rr;
+		resp = resp + genus(valor)(0.07969262624616703) * res; res = res * rr;
+		resp = resp - genus(valor)(0.004681754135318687) * res; res = res * rr;
+		resp = resp + genus(valor)(0.0001604411847873597) * res; res = res * rr;
+		resp = resp - genus(valor)(0.000003598843235212083) * res;
+		responde resp;
+	}
+	functio dfrac sin(dfrac valor) {
+		si (inf_est(valor) || nn_est(valor)) responde nn_d();
+		var va = valor * (2.0 / dfrac.pi);
+		var vp = solum(va);
+		var res = va - vp;
+		si (int64(vp) & int64(1)) {
+			si (int64(vp) & int64(2)) res = res - genus(valor)(1.0);
+			alioqui res = genus(valor)(1.0) - res;
+		} alioqui si (int64(vp) & int64(2)) res = -res;
+		var rr = res * res;
+		var resp = genus(valor)(1.570796326794897) * res; res = res * rr;
+		resp = resp - genus(valor)(0.6459640975062462) * res; res = res * rr;
+		resp = resp + genus(valor)(0.07969262624616703) * res; res = res * rr;
+		resp = resp - genus(valor)(0.004681754135318687) * res; res = res * rr;
+		resp = resp + genus(valor)(0.0001604411847873597) * res; res = res * rr;
+		resp = resp - genus(valor)(0.000003598843235212083) * res; res = res * rr;
+		resp = resp + genus(valor)(0.00000005692172921967923) * res; res = res * rr;
+		resp = resp - genus(valor)(0.0000000006688035109811461) * res; res = res * rr;
+		resp = resp + genus(valor)(0.00000000000606693573110619) * res; res = res * rr;
+		resp = resp - genus(valor)(0.00000000000004377065467313738) * res; res = res * rr;
+		resp = resp + genus(valor)(0.0000000000000002571422892860471) * res;
+		responde resp;
+	}
+	functio frac cos(frac valor) {
+		si (inf_est(valor) || nn_est(valor)) responde nn_s();
+		var va = valor * (frac(2.0) / frac.pi);
+		var vp = solum(va);
+		var res = va - vp;
+		si (int64(vp) & int64(1)) res = genus(valor)(1.0) - res;
+		var rr = res * res;
+		var resp = genus(valor)(1.0); res = rr;
+		resp = resp - genus(valor)(1.23370055013617) * res; res = res * rr;
+		resp = resp + genus(valor)(0.253669507901048) * res; res = res * rr;
+		resp = resp - genus(valor)(0.02086348076335295) * res; res = res * rr;
+		resp = resp + genus(valor)(0.0009192602748394263) * res; res = res * rr;
+		resp = resp - genus(valor)(0.00002520204237306059) * res; res = res * rr;
+		resp = resp + genus(valor)(0.0000004710874778818169) * res;
+		var vi = int(int64(vp)) & 3;
+		si (vi && vi < 3) resp = -resp;
+		responde resp;
+	}
+	functio dfrac cos(dfrac valor) {
+		si (inf_est(valor) || nn_est(valor)) responde nn_d();
+		var va = valor * (2.0 / dfrac.pi);
+		var vp = solum(va);
+		var res = va - vp;
+		si (int64(vp) & int64(1)) res = genus(valor)(1.0) - res;
+		var rr = res * res;
+		var resp = genus(valor)(1.0); res = rr;
+		resp = resp - genus(valor)(1.23370055013617) * res; res = res * rr;
+		resp = resp + genus(valor)(0.253669507901048) * res; res = res * rr;
+		resp = resp - genus(valor)(0.02086348076335295) * res; res = res * rr;
+		resp = resp + genus(valor)(0.0009192602748394263) * res; res = res * rr;
+		resp = resp - genus(valor)(0.00002520204237306059) * res; res = res * rr;
+		resp = resp + genus(valor)(0.0000004710874778818169) * res; res = res * rr;
+		resp = resp - genus(valor)(0.000000006386603083791847) * res; res = res * rr;
+		resp = resp + genus(valor)(0.00000000006565963114979466) * res; res = res * rr;
+		resp = resp - genus(valor)(0.0000000000005294400200734618) * res; res = res * rr;
+		resp = resp + genus(valor)(0.000000000000003437739179098603) * res;
+		var vi = int(int64(vp)) & 3;
+		si (vi && vi < 3) resp = -resp;
+		responde resp;
+	}
+	functio frac tg(frac valor) { responde sin(valor) / cos(valor); }
+	functio dfrac tg(dfrac valor) { responde sin(valor) / cos(valor); }
+	functio frac ctg(frac valor) { responde cos(valor) / sin(valor); }
+	functio dfrac ctg(dfrac valor) { responde cos(valor) / sin(valor); }
+
+	functio frac arcsin(frac valor) {
+		si (valor < -1.0 || valor > 1.0 || nn_est(valor)) responde nn_d();
+		genus(valor) resp = 0.0;
+		pro (var i : [1, 10]) resp = resp - (sin(resp) - valor) / cos(resp);
+		responde resp;
+	}
+	functio dfrac arcsin(dfrac valor) {
+		si (valor < -1.0 || valor > 1.0 || nn_est(valor)) responde nn_d();
+		genus(valor) resp = 0.0;
+		pro (var i : [1, 10]) resp = resp - (sin(resp) - valor) / cos(resp);
+		responde resp;
+	}
+	functio frac arccos(frac valor) { responde genus(valor).pi / genus(valor)(2.0) - arcsin(valor); }
+	functio dfrac arccos(dfrac valor) { responde genus(valor).pi / genus(valor)(2.0) - arcsin(valor); }
+	functio frac arctg(frac valor) { responde arcsin(valor / radix(genus(valor)(1.0) + valor * valor)); }
+	functio dfrac arctg(dfrac valor) { responde arcsin(valor / radix(genus(valor)(1.0) + valor * valor)); }
+	functio frac arcctg(frac valor) { responde genus(valor).pi / genus(valor)(2.0) - arcsin(valor / radix(genus(valor)(1.0) + valor * valor)); }
+	functio dfrac arcctg(dfrac valor) { responde genus(valor).pi / genus(valor)(2.0) - arcsin(valor / radix(genus(valor)(1.0) + valor * valor)); }
+}
+[[significatio] integer] genus tempus {
+	nint64 momentum;
+
+	classis functio nint64 _momentum_ex_tempo_windows(nint64 t) { responde t / nint64(10000) + nint64(50491123200000); }
+	classis functio nint64 _momentum_ad_tempum_windows(nint64 t) { responde (t - nint64(50491123200000)) * nint64(10000); }
+	classis functio logicum _annus_longus(int annus) {
+		si (!(annus % 400)) responde sic;
+		si (!(annus % 100)) responde non;
+		si (!(annus % 4)) responde sic;
+		responde non;
+	}
+	classis functio int _dies_in_mense(int annus, int mensis) {
+		var m = mensis % 12;
+		si (m == 0 || m == 1 || m == 3 || m == 5 || m == 7 || m == 8 || m == 10) responde 31;
+		si (m == 4 || m == 6 || m == 9 || m == 11) responde 30;
+		si (m == 2) responde _annus_longus(annus) ? 29 : 28;
+	}
+	functio nihil _amd(~nint annus, ~nint mensis, ~nint dies) {
+		nint64 d = momentum / nint64(1000 * 60 * 60 * 24);
+		nint64 c400 = d / nint64(365 * 303 + 366 * 97);
+		d %= nint64(365 * 303 + 366 * 97);
+		nint64 c100 = d / nint64(365 * 76 + 366 * 24);
+		d %= nint64(365 * 76 + 366 * 24);
+		nint64 c4 = d / nint64(365 * 3 + 366);
+		d %= nint64(365 * 3 + 366);
+		nint64 a = d / nint64(365);
+		d %= nint64(365);
+		annus = nint64(1) + a + nint64(4) * c4 + nint64(100) * c100 + nint64(400) * c400;
+		mensis = 1;
+		dum (int(d) >= _dies_in_mense(annus, mensis)) { d -= _dies_in_mense(annus, mensis); mensis++; }
+		dies = d + nint64(1);
+	}
+
+	structor () {}
+	structor (tempus valor) { funda momentum(valor.momentum); }
+	structor (nint64 valor) { funda momentum(valor); }
+	[[thiscall_nullum]] structor (int annus, int mensis, int dies, int hora, int minuta, int secunda, int millisecunda) {
+		momentum = nint64(millisecunda) + (nint64(secunda) + (nint64(minuta) + nint64(hora) * nint64(60)) * nint64(60)) * nint64(1000);
+		int a = annus > 1 ? annus - 1 : 0;
+		int d = dies > 1 ? dies - 1 : 0;
+		pro (var m : [1, mensis - 1]) d += _dies_in_mense(annus, m);
+		int c400 = a / 400;
+		a %= 400;
+		int c100 = a / 100;
+		a %= 100;
+		int c4 = a / 4;
+		a %= 4;
+		d += c400 * (365 * 303 + 366 * 97) + c100 * (365 * 76 + 366 * 24) + c4 * (365 * 3 + 366) + a * 365;
+		momentum += nint64(d) * nint64(1000 * 60 * 60 * 24);
+	}
+	[[thiscall_nullum]] structor (int hora, int minuta, int secunda, int millisecunda) {
+		funda momentum(nint64(millisecunda) + (nint64(secunda) + (nint64(minuta) + nint64(hora) * nint64(60)) * nint64(60)) * nint64(1000));
+	}
+
+	classis functio logicum operator == (tempus a, tempus b) { responde a.momentum == b.momentum; }
+	classis functio logicum operator != (tempus a, tempus b) { responde a.momentum != b.momentum; }
+	classis functio logicum operator <= (tempus a, tempus b) { responde a.momentum <= b.momentum; }
+	classis functio logicum operator >= (tempus a, tempus b) { responde a.momentum >= b.momentum; }
+	classis functio logicum operator < (tempus a, tempus b) { responde a.momentum < b.momentum; }
+	classis functio logicum operator > (tempus a, tempus b) { responde a.momentum > b.momentum; }
+
+	classis functio tempus operator + (tempus a, tempus b) { responde a.momentum + b.momentum; }
+	classis functio tempus operator - (tempus a, tempus b) { responde a.momentum - b.momentum; }
+
+	convertor (nint64) () { responde momentum; }
+	functio ~tempus operator = (tempus t) { momentum = t.momentum; responde ego^; }
+	functio ~tempus operator += (tempus t) { momentum += t.momentum; responde ego^; }
+	functio ~tempus operator -= (tempus t) { momentum -= t.momentum; responde ego^; }
+
+	int annus { [[thiscall_nullum]] adipisce { nint d, m, a; _amd(a, m, d); responde a; } }
+	int mensis { [[thiscall_nullum]] adipisce { nint d, m, a; _amd(a, m, d); responde m; } }
+	int dies_septimanae { [[thiscall_nullum]] adipisce { nint64 dies = momentum / nint64(1000 * 60 * 60 * 24); responde dies % nint64(7); } }
+	int dies { [[thiscall_nullum]] adipisce { nint d, m, a; _amd(a, m, d); responde d; } }
+	int hora { [[thiscall_nullum]] adipisce { responde momentum / nint64(1000 * 60 * 60) % nint64(24); } }
+	int minuta { [[thiscall_nullum]] adipisce { responde momentum / nint64(1000 * 60) % nint64(60); } }
+	int secunda { [[thiscall_nullum]] adipisce { responde momentum / nint64(1000) % nint64(60); } }
+	int millisecunda { [[thiscall_nullum]] adipisce { responde momentum % nint64(1000); } }
+
+	tempus tempus_universalus { [[thiscall_nullum]] adipisce {
+		nint64 conv;
+		winapi.LocalFileTimeToFileTime(@_momentum_ad_tempum_windows(momentum), @conv);
+		responde tempus(_momentum_ex_tempo_windows(conv));
+	} }
+	tempus tempus_localis { [[thiscall_nullum]] adipisce {
+		nint64 conv;
+		winapi.FileTimeToLocalFileTime(@_momentum_ad_tempum_windows(momentum), @conv);
+		responde tempus(_momentum_ex_tempo_windows(conv));
+	} }
+
+	[[thiscall_nullum]] functio linea ad_lineam() iacit {
+		nint d, m, a; _amd(a, m, d);
+		responde linea(nint(d), linea.radix_decima, 2) + "." +
+			linea(nint(m), linea.radix_decima, 2) + "." +
+			linea(nint(a), linea.radix_decima, 4) + " " + ad_lineam_brevem();
+	}
+	[[thiscall_nullum]] functio linea ad_lineam_brevem() iacit {
+		responde linea(nint(hora), linea.radix_decima, 2) + ":" +
+			linea(nint(minuta), linea.radix_decima, 2) + ":" +
+			linea(nint(secunda), linea.radix_decima, 2);
+	}
+
+	classis functio tempus currens() {
+		ordo [8] nint16 tmpsys;
+		nint64 momentum;
+		winapi.GetSystemTime(@tmpsys);
+		si (winapi.SystemTimeToFileTime(@tmpsys, @momentum)) responde tempus(_momentum_ex_tempo_windows(momentum));
+		alioqui responde tempus(nint64(0));
+	}
+	[[thiscall_nullum]] functio int dies_in_mense() { nint d, m, a; _amd(a, m, d); responde _dies_in_mense(a, m); }
+}

@@ -1,0 +1,263 @@
+﻿importa canonicalis;
+importa winapi;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Systema Limarum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+enumeratio modus_limae {
+	modus_nullus		= 0x00,
+	exequi				= 0x01,
+	scribere			= 0x02,
+	legere				= 0x04,
+	ultimus				= 0x07,
+	exequi_et_scribere	= 0x03,
+	exequi_et_legere	= 0x05,
+	scribere_et_legere	= 0x06
+}
+enumeratio modus_creatoris {
+	crea_semper		= 0x01,
+	crea_nova		= 0x02,
+	aperi_semper	= 0x03,
+	aperi_praesens	= 0x04,
+	trunca_praesens	= 0x05
+}
+enumeratio modus_exscribendum {
+	rescribe_ultime		= 0x01,
+	rescribe_partium	= 0x02,
+	rescribere_nullum	= 0x03,
+	rescribere_falsum	= 0x04,
+}
+genus flumen_limae hereditat flumen {
+	structor () {}
+	tempus tempus_creaturae { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	tempus tempus_apertionis { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	tempus tempus_alternationis { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	modus_limae aditus_moderatoris { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	modus_limae aditus_grupi { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+	modus_limae aditus_populum { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+}
+// structura semita hereditat linea {
+// 	structor (~linea sem) iacit { funda((@_systema_limarum)(protocollum(syslim))^.expande(sem)); }
+// 	structor (@char sem) iacit { funda((@_systema_limarum)(protocollum(syslim))^.expande(sem)); }
+// 	structor (~semita radix, ~linea sem) iacit { funda((@_systema_limarum)(protocollum(syslim))^.expande(radix, sem)); }
+// 	structor (~semita radix, @char sem) iacit { funda((@_systema_limarum)(protocollum(syslim))^.expande(radix, sem)); }
+
+// 	semita parens { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.parens(ego^); } }
+// 	linea nomen { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.pars(ego^, 0); } }
+// 	linea nomen_purus { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.pars(ego^, 1); } }
+// 	linea extensio { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.pars(ego^, 2); } }
+
+// 	nint64 memoria { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(ego^, 0); } }
+// 	nint64 memoria_libera { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(ego^, 1); } }
+// 	nint64 memoria_moderatoris_libera { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(ego^, 2); } }
+
+// 	functio adl[dordo_linearum] limae() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, "*", 0); }
+// 	functio adl[dordo_linearum] limae(~linea filtrum) iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, filtrum, 0); }
+// 	functio adl[dordo_linearum] limae_cunctae() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, "*", 1); }
+// 	functio adl[dordo_linearum] limae_cunctae(~linea filtrum) iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, filtrum, 1); }
+// 	functio adl[dordo_linearum] collectoria() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, "*", 2); }
+// 	functio adl[dordo_linearum] collectoria(~linea filtrum) iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_limas(ego^, filtrum, 2); }
+
+// 	logicum lima_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 0); } }
+// 	logicum collectorium_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 1); } }
+// 	logicum adhaesio_est { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.status(ego^, 2); } }
+
+// 	functio adl[flumen_limae] crea_limam(modus_limae ml, modus_creatoris mc) iacit { responde (@_systema_limarum)(protocollum(syslim))^.crea_limam(ego^, ml, mc); }
+// 	functio nihil crea_collectorium() iacit { (@_systema_limarum)(protocollum(syslim))^.crea_collectorium(ego^, 0); }
+// 	functio nihil crea_arborem_collectoriorum() iacit { (@_systema_limarum)(protocollum(syslim))^.crea_collectorium(ego^, 1); }
+// 	functio nihil crea_adhaesio_insolida(~linea ad) iacit { (@_systema_limarum)(protocollum(syslim))^.crea_adhaesio(ego^, ad, 0); }
+// 	functio nihil crea_adhaesio_solida(~semita ad) iacit { (@_systema_limarum)(protocollum(syslim))^.crea_adhaesio(ego^, ad, 1); }
+
+// 	functio linea lege_adhaesionem() iacit { responde (@_systema_limarum)(protocollum(syslim))^.lege_adhaesionem(ego^); }
+// 	functio nihil move(~semita ad) iacit { (@_systema_limarum)(protocollum(syslim))^.move(ego^, ad, 0); }
+// 	functio nihil exscribe(~semita ad, modus_exscribendum modus) iacit { (@_systema_limarum)(protocollum(syslim))^.move(ego^, ad, modus); }
+// 	functio nihil remove() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 0); }
+// 	functio nihil remove_collectoriorum() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 1); }
+// 	functio nihil remove_collectoriorum_cunctum() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 2); }
+
+// 	functio nihil monstra() iacit { (@_systema_limarum)(protocollum(syslim))^.aperi(ego^, 0); }
+// 	functio nihil aperi_externe() iacit { (@_systema_limarum)(protocollum(syslim))^.aperi(ego^, 1); }
+// 	functio nihil aperi_collectorium() iacit { (@_systema_limarum)(protocollum(syslim))^.aperi(ego^, 2); }
+// 	functio nihil aperi_consolatorium() iacit { (@_systema_limarum)(protocollum(syslim))^.aperi(ego^, 3); }
+
+// 	classis functio semita currens() iacit { responde (@_systema_limarum)(protocollum(syslim))^.currens; }
+// 	classis functio semita modulus_primus() iacit { responde (@_systema_limarum)(protocollum(syslim))^.modulus_primus; }
+
+// 	functio nihil loca_currentem() iacit { (@_systema_limarum)(protocollum(syslim))^.currens = ego^; }
+// }
+// structura volumen {
+// 	semita radix;
+// 	linea nomen;
+
+// 	nint64 memoria { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(radix, 0); } }
+// 	nint64 memoria_libera { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(radix, 1); } }
+// 	nint64 memoria_moderatoris_libera { adipisce iacit { responde (@_systema_limarum)(protocollum(syslim))^.memoria_voluminis(radix, 2); } }
+// }
+
+// functio adl[dordo_linearum] para_argumenta() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_argumenta(); }
+// functio adl[ordo volumen] para_volumina() iacit { responde (@_systema_limarum)(protocollum(syslim))^.para_volumina(); }
+
+genus _flumen_manubrii hereditat flumen_limae {
+	nintadl _manubrium;
+	logicum _dimitte;
+
+	structor (nintadl mnbr, logicum dimitte) { funda _manubrium(mnbr); funda _dimitte(dimitte); }
+	destructor () { si (_dimitte) winapi.CloseHandle(_manubrium); }
+	functio linea_secura ad_lineam() redefini { proba responde linea_secura(linea("flumen_limae")); }
+	functio int lege(@nihil data, int long) iacit virtualis redefini {
+		si (long < 0) iace errores.argumentum_falsum;
+		si (long == 0) responde 0;
+		nint32 nl;
+		si (!winapi.ReadFile(_manubrium, data, long, @nl, nullus)) iace errores.ie_falsum, winapi.suberror();
+		responde nl;
+	}
+	functio nihil scribe(@nihil data, int long) iacit virtualis redefini {
+		si (long < 0) iace errores.argumentum_falsum;
+		si (long == 0) responde;
+		nint32 ns;
+		si (!winapi.WriteFile(_manubrium, data, long, @ns, nullus)) iace errores.ie_falsum, winapi.suberror();
+		si (ns != nint32(long)) iace errores.ie_falsum, errores.ie_lima_larga_nimium;
+	}
+	functio int64 quaerita(int64 pos, int origo) iacit virtualis redefini {
+		nint32 org;
+		si (origo == initus) org = 0;
+		alioqui si (origo == currens) org = 1;
+		alioqui si (origo == finis) org = 2;
+		alioqui iace errores.argumentum_falsum;
+		int64 posnov;
+		si (!winapi.SetFilePointerEx(_manubrium, pos, @posnov, org)) iace errores.ie_falsum, winapi.suberror();
+		responde posnov;
+	}
+	int64 longitudo {
+		adipisce iacit virtualis redefini {
+			int64 resp;
+			si (!winapi.GetFileSizeEx(_manubrium, @resp)) iace errores.ie_falsum, winapi.suberror();
+			responde resp;
+		}
+		loca iacit virtualis redefini {
+			si (valor < int64(0)) iace errores.argumentum_falsum;
+			int64 positus;
+			si (!winapi.SetFilePointerEx(_manubrium, 0, @positus, 1)) iace errores.ie_falsum, winapi.suberror();
+			si (!winapi.SetFilePointerEx(_manubrium, valor, nullus, 0)) iace errores.ie_falsum, winapi.suberror();
+			si (!winapi.SetEndOfFile(_manubrium)) {
+				var e = winapi.suberror();
+				winapi.SetFilePointerEx(_manubrium, positus, nullus, 0);
+				iace errores.ie_falsum, e;
+			}
+			si (!winapi.SetFilePointerEx(_manubrium, positus, nullus, 0)) iace errores.ie_falsum, winapi.suberror();
+		}
+	}
+	functio nihil annoda() virtualis redefini { winapi.FlushFileBuffers(_manubrium); }
+	tempus tempus_creaturae {
+		adipisce iacit virtualis redefini {
+			nint64 momentum;
+			si (!winapi.GetFileTime(_manubrium, @momentum, nullus, nullus)) iace errores.ie_falsum, winapi.suberror();
+			responde tempus(tempus._momentum_ex_tempo_windows(momentum));
+		}
+		loca iacit virtualis redefini {
+			nint64 momentum = tempus._momentum_ad_tempum_windows(valor.momentum);
+			si (!winapi.SetFileTime(_manubrium, @momentum, nullus, nullus)) iace errores.ie_falsum, winapi.suberror();
+		}
+	}
+	tempus tempus_apertionis {
+		adipisce iacit virtualis redefini {
+			nint64 momentum;
+			si (!winapi.GetFileTime(_manubrium, nullus, @momentum, nullus)) iace errores.ie_falsum, winapi.suberror();
+			responde tempus(tempus._momentum_ex_tempo_windows(momentum));
+		}
+		loca iacit virtualis redefini {
+			nint64 momentum = tempus._momentum_ad_tempum_windows(valor.momentum);
+			si (!winapi.SetFileTime(_manubrium, nullus, @momentum, nullus)) iace errores.ie_falsum, winapi.suberror();
+		}
+	}
+	tempus tempus_alternationis {
+		adipisce iacit virtualis redefini {
+			nint64 momentum;
+			si (!winapi.GetFileTime(_manubrium, nullus, nullus, @momentum)) iace errores.ie_falsum, winapi.suberror();
+			responde tempus(tempus._momentum_ex_tempo_windows(momentum));
+		}
+		loca iacit virtualis redefini {
+			nint64 momentum = tempus._momentum_ad_tempum_windows(valor.momentum);
+			si (!winapi.SetFileTime(_manubrium, nullus, nullus, @momentum)) iace errores.ie_falsum, winapi.suberror();
+		}
+	}
+	modus_limae aditus_moderatoris {
+		adipisce iacit virtualis redefini { responde modus_limae.ultimus; }
+		loca iacit virtualis redefini { iace errores.implantatio_nulla; }
+	}
+	modus_limae aditus_grupi {
+		adipisce iacit virtualis redefini { responde modus_limae.ultimus; }
+		loca iacit virtualis redefini { iace errores.implantatio_nulla; }
+	}
+	modus_limae aditus_populum {
+		adipisce iacit virtualis redefini { responde modus_limae.ultimus; }
+		loca iacit virtualis redefini { iace errores.implantatio_nulla; }
+	}
+}
+
+functio adl[flumen] flumen_canonicalis_in() iacit {
+	var mnbr = winapi.GetStdHandle(winapi.index_manubrii_in);
+	si (!mnbr) iace errores.habitus_falsus;
+	var fl = crea(_flumen_manubrii, mnbr, non);
+	fl^.contine();
+	responde fl.valor();
+}
+functio adl[flumen] flumen_canonicalis_ex() iacit {
+	var mnbr = winapi.GetStdHandle(winapi.index_manubrii_ex);
+	si (!mnbr) iace errores.habitus_falsus;
+	var fl = crea(_flumen_manubrii, mnbr, non);
+	fl^.contine();
+	responde fl.valor();
+}
+functio adl[flumen] flumen_canonicalis_erroris() iacit {
+	var mnbr = winapi.GetStdHandle(winapi.index_manubrii_er);
+	si (!mnbr) iace errores.habitus_falsus;
+	var fl = crea(_flumen_manubrii, mnbr, non);
+	fl^.contine();
+	responde fl.valor();
+}
+functio adl[flumen_limae] crea_flumenum_limae(~linea sem, modus_limae ml, modus_creatoris mc) iacit {
+	nint32 md_ls, md_cm, md_cr, attr;
+	si (ml == modus_limae.legere) { md_ls = 0x80000000; md_cm = 1; }
+	alioqui si (ml == modus_limae.scribere) { md_ls = 0x40000000; md_cm = 0; }
+	alioqui si (ml == modus_limae.scribere_et_legere) { md_ls = 0xC0000000; md_cm = 0; }
+	alioqui si (ml == modus_limae.modus_nullus) { md_ls = 0x00000000; md_cm = 7; }
+	alioqui iace errores.argumentum_falsum;
+	si (mc == modus_creatoris.crea_semper) md_cr = 2;
+	alioqui si (mc == modus_creatoris.crea_nova) md_cr = 1;
+	alioqui si (mc == modus_creatoris.aperi_semper) md_cr = 4;
+	alioqui si (mc == modus_creatoris.aperi_praesens) md_cr = 3;
+	alioqui si (mc == modus_creatoris.trunca_praesens) md_cr = 5;
+	alioqui iace errores.argumentum_falsum;
+	attr = 0x00000080;
+	var mnbr = winapi.CreateFile(linea_utf16(sem), md_ls, md_cm, nullus, md_cr, attr, 0);
+	si (intadl(mnbr) == intadl(-1)) iace errores.ie_falsum, winapi.suberror();
+	!_flumen_manubrii fl;
+	proba fl = crea(_flumen_manubrii, mnbr, sic); cape (nintadl e, nintadl se) { winapi.CloseHandle(mnbr); iace e, se; }
+	fl^.contine();
+	responde fl.valor();
+}
+functio nihil crea_canale(~!flumen fl_legere, ~!flumen fl_scribere) iacit {
+	nintadl m_leg, m_scr;
+	!_flumen_manubrii f_leg, f_scr;
+	si (!winapi.CreatePipe(@m_leg, @m_scr, nullus, 0)) iace errores.ie_falsum, winapi.suberror();
+	proba {
+		f_leg = crea(_flumen_manubrii, m_leg, sic);
+	} cape (nintadl e, nintadl se) {
+		winapi.CloseHandle(m_leg);
+		winapi.CloseHandle(m_scr);
+		iace e, se;
+	}
+	proba {
+		f_scr = crea(_flumen_manubrii, m_scr, sic);
+	} cape (nintadl e, nintadl se) {
+		winapi.CloseHandle(m_scr);
+		iace e, se;
+	}
+	fl_legere.contine(f_leg);
+	fl_scribere.contine(f_scr);
+}

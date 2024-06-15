@@ -1,0 +1,331 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Flumenis";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+importa winapi;
+importa lineae;
+
+[[systema] libera]
+
+genus flumen hereditat objectum {
+	constatus initus	= 0;
+	constatus currens	= 1;
+	constatus finis		= 2;
+
+	structor () {}
+	functio int lege(@nihil data, int long) iacit virtualis pura;
+	functio nihil scribe(@nihil data, int long) iacit virtualis pura;
+	functio int64 quaerita(int64 pos, int origo) iacit virtualis pura;
+	int64 longitudo {
+		adipisce iacit virtualis pura;
+		loca iacit virtualis pura;
+	}
+	functio nihil annoda() virtualis pura;
+	functio logicum _est_xv() virtualis { responde sic; }
+
+	[[thiscall_nullum]] functio nihil exscribe(@flumen in, int64 long) iacit {
+		var data = memoria.alloca(0x100000);
+		si (data == nullus) iace errores.memoria_nulla;
+		proba {
+			var l = long;
+			dum (l) {
+				int ll;
+				si (l > int64(0x100000) || l < int64(0)) ll = 0x100000;
+				alioqui ll = l;
+				ll = lege(data, ll);
+				si (ll) {
+					in^.scribe(data, ll);
+					si (l >= int64(0)) l -= ll;
+				} alioqui l = 0;
+			}
+		} cape (nintadl e, nintadl se) { memoria.dimitte(data); iace e, se; }
+		memoria.dimitte(data);
+	}
+	[[thiscall_nullum]] functio nihil exscribe(@flumen in) iacit { exscribe(in, -1); }
+	[[thiscall_nullum]] functio adl[dordo_datorum] lege_ordinem(int long) iacit {
+		var resp = crea(dordo_datorum, 1);
+		si (long) {
+			int ll;
+			si (long > 0) ll = long; alioqui {
+				var lf = longitudo;
+				si (lf > int64(0x7FFFFFFF)) iace errores.habitus_falsus;
+				ll = lf;
+			}
+			resp^.longitudo = ll;
+			ll = lege(resp^.data, ll);
+			resp^.longitudo = ll;
+		}
+		responde resp;
+	}
+	[[thiscall_nullum]] functio adl[dordo_datorum] lege_ordinem() iacit { responde lege_ordinem(-1); }
+	[[thiscall_nullum]] functio nihil scribe_ordinem(@dordo_datorum ord) iacit { si (ord != nullus && ord^.longitudo) scribe(ord^.data, ord^.longitudo); }
+}
+genus _flumen_memoriae hereditat flumen {
+	dordo_datorum _data;
+	int _positus;
+
+	structor () { funda _data(0x10000); funda _positus(0); }
+	structor (@nihil data, int long) iacit { funda _data(0x10000); funda _positus(0); si (long < 0) iace errores.argumentum_falsum; _data.longitudo = long; memoria.exscribe(_data.data, data, long); }
+	functio linea_secura ad_lineam() redefini { proba responde linea_secura(linea("flumen_memoriae")); }
+	functio int lege(@nihil data, int long) iacit virtualis redefini {
+		si (long < 0) iace errores.argumentum_falsum;
+		si (long == 0) responde 0;
+		int da = _data.longitudo - _positus;
+		si (da < 0) da = 0;
+		si (da < long) {
+			si (da) {
+				memoria.exscribe(data, @_data.data[_positus], da);
+				_positus += da;
+			}
+			responde da;
+		} alioqui {
+			memoria.exscribe(data, @_data.data[_positus], long);
+			_positus += long;
+			responde long;
+		}
+	}
+	functio nihil scribe(@nihil data, int long) iacit virtualis redefini {
+		si (long < 0) iace errores.argumentum_falsum;
+		si (long == 0) responde;
+		si (int64(_positus) + int64(long) > int64(0x7FFFFFFF)) iace errores.ie_falsum, errores.ie_lima_larga_nimium;
+		si (_positus + long > _data.longitudo) _data.longitudo = _positus + long;
+		memoria.exscribe(@_data.data[_positus], data, long);
+		_positus += long;
+	}
+	functio int64 quaerita(int64 pos, int origo) iacit virtualis redefini {
+		int64 posnov = pos;
+		si (origo == initus);
+		alioqui si (origo == currens) posnov += int64(_positus);
+		alioqui si (origo == finis) posnov += int64(_data.longitudo);
+		alioqui iace errores.argumentum_falsum;
+		si (posnov < int64(0) || posnov > int64(_data.longitudo)) iace errores.argumentum_falsum;
+		_positus = posnov;
+		responde _positus;
+	}
+	int64 longitudo {
+		adipisce iacit virtualis redefini { responde _data.longitudo; }
+		loca iacit virtualis redefini {
+			si (valor > int64(0x7FFFFFFF)) iace errores.ie_falsum, errores.ie_lima_larga_nimium;
+			_data.longitudo = valor;
+		}
+	}
+	functio nihil annoda() virtualis redefini {}
+}
+genus _flumen_auxilii hereditat flumen {
+	@nint8 _data;
+	int _positus;
+	int _long;
+
+	structor (@nihil data, int long) { funda _data((@nint8)(data)); funda _positus(0); funda _long(long); }
+	functio linea_secura ad_lineam() redefini { proba responde linea_secura(linea("flumen_auxilii")); }
+	functio int lege(@nihil data, int long) iacit virtualis redefini {
+		si (long < 0) iace errores.argumentum_falsum;
+		si (long == 0) responde 0;
+		int da = _long - _positus;
+		si (da < 0) da = 0;
+		si (da < long) {
+			si (da) {
+				memoria.exscribe(data, @_data[_positus], da);
+				_positus += da;
+			}
+			responde da;
+		} alioqui {
+			memoria.exscribe(data, @_data[_positus], long);
+			_positus += long;
+			responde long;
+		}
+	}
+	functio nihil scribe(@nihil data, int long) iacit virtualis redefini { iace errores.implantatio_nulla; }
+	functio int64 quaerita(int64 pos, int origo) iacit virtualis redefini {
+		int64 posnov = pos;
+		si (origo == initus);
+		alioqui si (origo == currens) posnov += int64(_positus);
+		alioqui si (origo == finis) posnov += int64(_long);
+		alioqui iace errores.argumentum_falsum;
+		si (posnov < int64(0) || posnov > int64(_long)) iace errores.argumentum_falsum;
+		_positus = posnov;
+		responde _positus;
+	}
+	int64 longitudo {
+		adipisce iacit virtualis redefini { responde _long; }
+		loca iacit virtualis redefini { iace errores.implantatio_nulla; }
+	}
+	functio nihil annoda() virtualis redefini {}
+}
+
+functio adl[flumen] crea_flumenem_in_memoria() iacit {
+	var fl = crea(_flumen_memoriae);
+	fl^.contine();
+	responde fl.valor();
+}
+functio adl[flumen] crea_flumenem_in_memoria(@nihil data, intadl long) iacit {
+	si (long > intadl(0x7FFFFFFF)) iace errores.argumentum_falsum;
+	var fl = crea(_flumen_memoriae, data, long);
+	fl^.contine();
+	responde fl.valor();
+}
+functio adl[flumen] para_auxilium(@nihil mod, ~linea aux_genus, int aux_num) iacit {
+	var mdl = winapi.GetModuleHandle(nullus);
+	var aux = winapi.FindResource(mdl, aux_num, 10);
+	si (!aux) iace errores.argumentum_falsum;
+	var hmem = winapi.LoadResource(mdl, aux);
+	var fl = crea(_flumen_auxilii, winapi.LockResource(hmem), winapi.SizeofResource(mdl, aux));
+	fl^.contine();
+	responde fl.valor();
+}
+
+spatium scriptio {
+	constatus character_finis = 0xFFFFFFFF;
+	genus codificator hereditat objectum {
+		structor () {}
+		functio nihil scribe(~linea ln) iacit virtualis pura;
+		functio nihil scribe_lineam(~linea ln) iacit virtualis pura;
+		functio nihil scribe_lineam() iacit virtualis pura;
+		functio nihil scribe_subscriptionem() iacit virtualis pura;
+
+		classis functio ~codificator operator << (~codificator cdf, ~linea ln) iacit { cdf.scribe(ln); responde cdf; }
+	}
+	genus decodificator hereditat objectum {
+		structor () {}
+		functio char lege_characterem() iacit virtualis pura;
+		functio linea lege_lineam() iacit virtualis pura;
+		functio linea lege_cunctos() iacit virtualis pura;
+
+		logicum finis { adipisce virtualis pura; }
+		linea.codex codex { adipisce virtualis pura; }
+
+		classis functio ~decodificator operator >> (~decodificator cdf, ~linea ln) iacit { ln = cdf.lege_lineam(); responde cdf; }
+	}
+	genus _codificator_flumenis hereditat codificator {
+		!flumen _fl;
+		linea.codex _cdx;
+
+		structor (@flumen fl, linea.codex cdx) {
+			funda _cdx(cdx); _fl.contine(fl);
+			si (_cdx == linea.codex.ignotus) _cdx = linea.codex.utf8;
+		}
+		functio linea_secura ad_lineam() redefini { proba responde linea_secura(linea("codificator_flumenis")); }
+		functio nihil _scribe(@char ln, int l) iacit {
+			dordo_datorum data(l * 8);
+			ordo [4] nint8 ldta;
+			int long;
+			pro (var i = 0; i < l; i++) {
+				si (ln[i] >= char(32) || ln[i] == char('\t')) {
+					long = 4;
+					lineae.scribe_characterem(@ldta, long, _cdx, ln[i]);
+					data.adde(ldta, long);
+				} alioqui si (ln[i] == char('\n')) {
+					long = 4;
+					lineae.scribe_characterem(@ldta, long, _cdx, '\r');
+					data.adde(ldta, long);
+					long = 4;
+					lineae.scribe_characterem(@ldta, long, _cdx, '\n');
+					data.adde(ldta, long);
+				}
+			}
+			_fl^.scribe(data.data, data.longitudo);
+		}
+		functio nihil scribe(~linea ln) iacit virtualis redefini { _scribe(ln, ln.longitudo); }
+		functio nihil scribe_lineam(~linea ln) iacit virtualis redefini { _scribe(ln, ln.longitudo); _scribe("\n", 1); }
+		functio nihil scribe_lineam() iacit virtualis redefini { _scribe("\n", 1); }
+		functio nihil scribe_subscriptionem() iacit virtualis redefini { si (_cdx != linea.codex.ascii) _scribe(@char(0xFEFF), 1); }
+	}
+	genus _decodificator_flumenis hereditat decodificator {
+		!flumen _fl;
+		linea.codex _cdx;
+		logicum _finis;
+
+		structor (@flumen fl, linea.codex cdx) {
+			funda _cdx(cdx); funda _finis(non); _fl.contine(fl);
+			si (_cdx == linea.codex.ignotus) _cdx = linea.codex.ascii;
+		}
+		functio linea_secura ad_lineam() redefini { proba responde linea_secura(linea("decodificator_flumenis")); }
+		functio char lege_characterem() iacit virtualis {
+			var q = lineae.longitudo_characteris(_cdx);
+			char resp;
+			ordo [4] nint8 ldta;
+			var lldta = 0;
+			dum (sic) {
+				var nl = _fl^.lege(@ldta[lldta], q);
+				si (!nl) { resp = character_finis; _finis = sic; exi; }
+				si (nl != q) iace errores.efformatio_falsa;
+				lldta = lldta + q;
+				si (_cdx == linea.codex.ascii && ldta[0] > nint8(0x7F)) {
+					si (ldta[0] != nint8(0xFF)) {
+						_cdx = linea.codex.utf8;
+						dura;
+					}
+					int lp = lldta;
+					si (lineae.lege_characterem(@ldta, lp, linea.codex.utf8) == char(0xFEFF)) {
+						_cdx = linea.codex.utf8;
+						lldta = 0;
+						dura;
+					}
+					lp = lldta;
+					si (lineae.lege_characterem(@ldta, lp, linea.codex.utf16) == char(0xFEFF)) {
+						_cdx = linea.codex.utf16;
+						q = lineae.longitudo_characteris(_cdx);
+						lldta = 0;
+						dura;
+					}
+					lp = lldta;
+					si (lineae.lege_characterem(@ldta, lp, linea.codex.utf32) == char(0xFEFF)) {
+						_cdx = linea.codex.utf32;
+						q = lineae.longitudo_characteris(_cdx);
+						lldta = 0;
+						dura;
+					}
+					si (lldta == 4) iace errores.efformatio_falsa;
+				} alioqui {
+					int ndec = lldta;
+					resp = lineae.lege_characterem(@ldta, ndec, _cdx);
+					si (!ndec) { si (lldta < 4) dura; iace errores.efformatio_falsa; }
+					si (resp == char(0xFEFF)) lldta = 0; alioqui exi;
+				}
+			}
+			responde resp;
+		}
+		functio linea lege_lineam() iacit virtualis {
+			ordo char resp;
+			char chr;
+			fac {
+				chr = lege_characterem();
+				si (chr != character_finis && (chr >= char(0x20) || chr == char('\t'))) resp << chr;
+			} dum (chr != character_finis && chr != char('\n'));
+			responde linea(resp.data, resp.longitudo, linea.codex.utf32);
+		}
+		functio linea lege_cunctos() iacit virtualis {
+			ordo char resp(0x4000);
+			char chr;
+			fac {
+				chr = lege_characterem();
+				si (chr != character_finis) resp << chr;
+			} dum (chr != character_finis);
+			responde linea(resp.data, resp.longitudo, linea.codex.utf32);
+		}
+		logicum finis { adipisce virtualis { responde _finis; } }
+		linea.codex codex { adipisce virtualis { responde _cdx; } }
+	}
+
+	functio adl[codificator] codifica(@flumen fl) iacit {
+		var obj = crea(_codificator_flumenis, fl, linea.codex.utf8);
+		obj^.contine();
+		responde obj.valor();
+	}
+	functio adl[codificator] codifica(@flumen fl, linea.codex codex) iacit {
+		var obj = crea(_codificator_flumenis, fl, codex);
+		obj^.contine();
+		responde obj.valor();
+	}
+	functio adl[decodificator] decodifica(@flumen fl) iacit {
+		var obj = crea(_decodificator_flumenis, fl, linea.codex.ascii);
+		obj^.contine();
+		responde obj.valor();
+	}
+	functio adl[decodificator] decodifica(@flumen fl, linea.codex codex) iacit {
+		var obj = crea(_decodificator_flumenis, fl, codex);
+		obj^.contine();
+		responde obj.valor();
+	}
+}

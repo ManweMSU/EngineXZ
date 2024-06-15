@@ -1,0 +1,170 @@
+﻿auxilium attributum ("NomenModuli") = "Liber WinAPI";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+importa cor;
+
+[[systema] libera]
+
+spatium winapi {
+	constatus index_manubrii_in = nint32(-10);
+	constatus index_manubrii_ex = nint32(-11);
+	constatus index_manubrii_er = nint32(-12);
+
+	structura CONSOLE_SCREEN_BUFFER_INFO {
+		nint16 lat;
+		nint16 alt;
+		nint16 cur_x;
+		nint16 cur_y;
+		nint16 attr;
+		nint16 fen_sin;
+		nint16 fen_sup;
+		nint16 fen_dex;
+		nint16 fen_inf;
+		nint16 fen_max_lat;
+		nint16 fen_max_alt;
+	}
+	[[magnitudo] "20"] structura INPUT_RECORD {
+		[[positus] "0"] nint16 eventum;
+		[[positus] "4"] nint32 tact_status;
+		[[positus] "8"] nint16 tact_repl;
+		[[positus] "10"] nint16 tact_tactus;
+		[[positus] "12"] nint16 tact_codex;
+		[[positus] "14"] nint16 tact_utf16;
+		[[positus] "16"] nint32 tact_modus;
+		[[positus] "4"] nint16 fen_lat;
+		[[positus] "6"] nint16 fen_alt;
+	}
+
+	functio nint suberror()
+	{
+		int cdx = GetLastError();
+		si (cdx == 0) responde errores.ie_error_nullus;
+		si (cdx == 2) responde errores.ie_lima_nulla;
+		si (cdx == 3) responde errores.ie_semita_nulla;
+		si (cdx == 4) responde errores.ie_limae_apertae_nimium;
+		si (cdx == 5) responde errores.ie_permissio_nulla;
+		si (cdx == 6) responde errores.ie_manubrium_defectum;
+		si (cdx == 8) responde errores.ie_memoria_nulla;
+		si (cdx == 14) responde errores.ie_memoria_nulla;
+		si (cdx == 15) responde errores.ie_machinatio_defecta;
+		si (cdx == 16) responde errores.ie_collectorium_currens_est;
+		si (cdx == 17) responde errores.ie_machinatio_idem_non;
+		si (cdx == 19) responde errores.ie_legere_sole;
+		si (cdx == 20) responde errores.ie_machinatio_defecta;
+		si (cdx == 29) responde errores.ie_scribere_falsum;
+		si (cdx == 30) responde errores.ie_legere_falsum;
+		si (cdx == 32) responde errores.ie_permissio_nulla;
+		si (cdx == 33) responde errores.ie_permissio_nulla;
+		si (cdx == 39) responde errores.ie_spatium_disci_nullum;
+		si (cdx == 50) responde errores.ie_implantatio_nulla;
+		si (cdx == 55) responde errores.ie_machinatio_defecta;
+		si (cdx == 80) responde errores.ie_lima_preexistat;
+		si (cdx == 82) responde errores.ie_creare_falsum;
+		si (cdx == 110) responde errores.ie_aperire_falsum;
+		si (cdx == 112) responde errores.ie_spatium_disci_nullum;
+		si (cdx == 120) responde errores.ie_implantatio_nulla;
+		si (cdx == 123) responde errores.ie_nomen_semitae_defectum;
+		si (cdx == 145) responde errores.ie_collectorium_vacuum_non;
+		si (cdx == 161) responde errores.ie_nomen_semitae_defectum;
+		si (cdx == 183) responde errores.ie_lima_preexistat;
+		si (cdx == 206) responde errores.ie_nomen_limae_largum_nimium;
+		si (cdx == 223) responde errores.ie_lima_larga_nimium;
+		si (cdx == 267) responde errores.ie_nomen_semitae_defectum;
+		responde errores.ie_error_ignotus;
+	}
+
+	[[importa] ExitProcess] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nihil ExitProcess(nint cdx);
+	[[importa] "CloseHandle"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum CloseHandle(nintadl mnbr);
+	[[importa] "GetLastError"] [[importa_de] "kernel32"] [stdcall "0"]
+	functio nint32 GetLastError();
+	[[importa] "GetStdHandle"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nintadl GetStdHandle(nint32 index);
+	[[importa] "ReadFile"] [[importa_de] "kernel32"] [stdcall "5"]
+	functio logicum ReadFile(nintadl lim, @nihil ad, nint32 long, @nint32 long_leg, @nihil);
+	[[importa] "ReadConsoleW"] [[importa_de] "kernel32"] [stdcall "5"]
+	functio logicum ReadConsole(nintadl con, @nint16 chr, nint32 num_chr, @nint32 num_chr_leg, @nihil);
+	[[importa] "ReadConsoleInputW"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio logicum ReadConsoleInput(nintadl con, ~INPUT_RECORD data, nint32 long, @nint32 num_leg);
+	[[importa] "WriteFile"] [[importa_de] "kernel32"] [stdcall "5"]
+	functio logicum WriteFile(nintadl lim, @nihil ex, nint32 long, @nint32 long_leg, @nihil);
+	[[importa] "WriteConsoleW"] [[importa_de] "kernel32"] [stdcall "5"]
+	functio logicum WriteConsole(nintadl con, @nint16 chr, nint32 num_chr, @nint32 num_chr_leg, @nihil);
+	[[importa] "GetConsoleMode"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum GetConsoleMode(nintadl con, ~nint32 modus);
+	[[importa] "SetConsoleMode"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum SetConsoleMode(nintadl con, nint32 modus);
+	[[importa] "GetConsoleScreenBufferInfo"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum GetConsoleScreenBufferInfo(nintadl con, ~CONSOLE_SCREEN_BUFFER_INFO modus);
+	[[importa] "SetConsoleTitleW"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum SetConsoleTitle(@nint16 titulus);
+	[[importa] "AllocConsole"] [[importa_de] "kernel32"] [stdcall "0"]
+	functio logicum AllocConsole();
+	[[importa] "FlushConsoleInputBuffer"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum FlushConsoleInputBuffer(nintadl con);
+	[[importa] "SetConsoleTextAttribute"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum SetConsoleTextAttribute(nintadl con, nint16 attr);
+	[[importa] "SetConsoleCursorPosition"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum SetConsoleCursorPosition(nintadl con, nint32 pos);
+	[[importa] "CreateConsoleScreenBuffer"] [[importa_de] "kernel32"] [stdcall "5"]
+	functio nintadl CreateConsoleScreenBuffer(nint32 perm, nint32 comm, @nihil sec, nint32 modus, @nihil data);
+	[[importa] "SetConsoleActiveScreenBuffer"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum SetConsoleActiveScreenBuffer(nintadl con);
+	[[importa] "FillConsoleOutputCharacterW"] [[importa_de] "kernel32"] [stdcall "5"]
+	functio logicum FillConsoleOutputCharacterW(nintadl con, nint16 chr, nint32 long, nint32 pos, ~nint32 ns);
+	[[importa] "FillConsoleOutputAttribute"] [[importa_de] "kernel32"] [stdcall "5"]
+	functio logicum FillConsoleOutputAttribute(nintadl con, nint16 attr, nint32 long, nint32 pos, ~nint32 ns);
+	[[importa] "GetSystemTime"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nihil GetSystemTime(@nihil tmpsys);
+	[[importa] "SystemTimeToFileTime"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum SystemTimeToFileTime(@nihil tmpsys, @nint64 tmp);
+	[[importa] "FileTimeToLocalFileTime"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum FileTimeToLocalFileTime(@nint64 tmp_uni, @nint64 tmp_loc);
+	[[importa] "LocalFileTimeToFileTime"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum LocalFileTimeToFileTime(@nint64 tmp_loc, @nint64 tmp_uni);
+	[[importa] GetModuleHandleW] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nintadl GetModuleHandle(@nint16 nomen);
+	[[importa] FindResourceW] [[importa_de] "kernel32"] [stdcall "3"]
+	functio nintadl FindResource(nintadl mdl, nintadl nomen, nintadl genu);
+	[[importa] LoadResource] [[importa_de] "kernel32"] [stdcall "2"]
+	functio nintadl LoadResource(nintadl mdl, nintadl aux);
+	[[importa] SizeofResource] [[importa_de] "kernel32"] [stdcall "2"]
+	functio nint32 SizeofResource(nintadl mdl, nintadl aux);
+	[[importa] LockResource] [[importa_de] "kernel32"] [stdcall "1"]
+	functio @nihil LockResource(nintadl mem);
+
+	[[importa] "GetFileSizeEx"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum GetFileSizeEx(nintadl lim, @int64 long);
+	[[importa] "SetFilePointerEx"] [[importa_de] "kernel32"] [stdcall "5"]
+	functio logicum SetFilePointerEx(nintadl lim, int64 pos, @int64 posnov, nint32 mth);
+	[[importa] "SetEndOfFile"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum SetEndOfFile(nintadl lim);
+	[[importa] "FlushFileBuffers"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum FlushFileBuffers(nintadl lim);
+	[[importa] "CreatePipe"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio logicum CreatePipe(@nintadl legere, @nintadl scribere, @nihil sec, nint32 magn);
+	[[importa] "CreateFileW"] [[importa_de] "kernel32"] [stdcall "7"]
+	functio nintadl CreateFile(@nint16 nomen, nint32 md, nint32 md_com, @nihil sec, nint32 md_cr, nint32 attr, nintadl praef);
+	[[importa] "GetFileTime"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio logicum GetFileTime(nintadl lim, @nint64 cr, @nint64 lg, @nint64 sc);
+	[[importa] "SetFileTime"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio logicum SetFileTime(nintadl lim, @nint64 cr, @nint64 lg, @nint64 sc);
+
+	[[importa] "BCryptOpenAlgorithmProvider"] [[importa_de] "bcrypt"] [stdcall "4"]
+	functio nint32 BCryptOpenAlgorithmProvider(~nintadl mnbr, @nint16 alg, @nint16 impl, nint32 modus);
+	[[importa] "BCryptCloseAlgorithmProvider"] [[importa_de] "bcrypt"] [stdcall "2"]
+	functio nint32 BCryptCloseAlgorithmProvider(nintadl mnbr, nint32 modus);
+	[[importa] "BCryptGenRandom"] [[importa_de] "bcrypt"] [stdcall "4"]
+	functio nint32 BCryptGenRandom(nintadl mnbr, @nihil data, nint32 long, nint32 modus);
+
+	[[importa] InitCommonControls] [[importa_de] "comctl32"] [stdcall "0"]
+	functio nihil InitCommonControls();
+	[[importa] CoInitializeEx] [[importa_de] "ole32"] [stdcall "2"]
+	functio int32 CoInitializeEx(@nihil, nint32 modus);
+
+	[[importa] MessageBoxW] [[importa_de] "user32"] [stdcall "4"]
+	functio nint MessageBox(nintadl fen, @nint16 sciptio, @nint16 titulus, nint modus);
+}
