@@ -12,6 +12,19 @@ spatium winapi {
 	constatus index_manubrii_ex = nint32(-11);
 	constatus index_manubrii_er = nint32(-12);
 
+	structura SYSTEM_INFO {
+		nint16 arch;
+		nint16 reservatus;
+		nint32 pagina;
+		nintadl min_adl;
+		nintadl max_adl;
+		nintadl proc_ind;
+		nint32 num_proc;
+		nint32 gen_proc;
+		nint32 allocatio;
+		nint16 plan_proc;
+		nint16 rev_proc;
+	}
 	structura CONSOLE_SCREEN_BUFFER_INFO {
 		nint16 lat;
 		nint16 alt;
@@ -75,8 +88,10 @@ spatium winapi {
 		responde errores.ie_error_ignotus;
 	}
 
-	[[importa] ExitProcess] [[importa_de] "kernel32"] [stdcall "1"]
+	[[importa] "ExitProcess"] [[importa_de] "kernel32"] [stdcall "1"]
 	functio nihil ExitProcess(nint cdx);
+	[[importa] "Sleep"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nihil Sleep(nint32 tempus);
 	[[importa] "CloseHandle"] [[importa_de] "kernel32"] [stdcall "1"]
 	functio logicum CloseHandle(nintadl mnbr);
 	[[importa] "GetLastError"] [[importa_de] "kernel32"] [stdcall "0"]
@@ -125,15 +140,15 @@ spatium winapi {
 	functio logicum FileTimeToLocalFileTime(@nint64 tmp_uni, @nint64 tmp_loc);
 	[[importa] "LocalFileTimeToFileTime"] [[importa_de] "kernel32"] [stdcall "2"]
 	functio logicum LocalFileTimeToFileTime(@nint64 tmp_loc, @nint64 tmp_uni);
-	[[importa] GetModuleHandleW] [[importa_de] "kernel32"] [stdcall "1"]
+	[[importa] "GetModuleHandleW"] [[importa_de] "kernel32"] [stdcall "1"]
 	functio nintadl GetModuleHandle(@nint16 nomen);
-	[[importa] FindResourceW] [[importa_de] "kernel32"] [stdcall "3"]
+	[[importa] "FindResourceW"] [[importa_de] "kernel32"] [stdcall "3"]
 	functio nintadl FindResource(nintadl mdl, nintadl nomen, nintadl genu);
-	[[importa] LoadResource] [[importa_de] "kernel32"] [stdcall "2"]
+	[[importa] "LoadResource"] [[importa_de] "kernel32"] [stdcall "2"]
 	functio nintadl LoadResource(nintadl mdl, nintadl aux);
-	[[importa] SizeofResource] [[importa_de] "kernel32"] [stdcall "2"]
+	[[importa] "SizeofResource"] [[importa_de] "kernel32"] [stdcall "2"]
 	functio nint32 SizeofResource(nintadl mdl, nintadl aux);
-	[[importa] LockResource] [[importa_de] "kernel32"] [stdcall "1"]
+	[[importa] "LockResource"] [[importa_de] "kernel32"] [stdcall "1"]
 	functio @nihil LockResource(nintadl mem);
 
 	[[importa] "GetFileSizeEx"] [[importa_de] "kernel32"] [stdcall "2"]
@@ -153,6 +168,28 @@ spatium winapi {
 	[[importa] "SetFileTime"] [[importa_de] "kernel32"] [stdcall "4"]
 	functio logicum SetFileTime(nintadl lim, @nint64 cr, @nint64 lg, @nint64 sc);
 
+	[[importa] "WaitForSingleObject"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio nint32 WaitForSingleObject(nintadl obj, nint32 tmp);
+	[[importa] "CreateSemaphoreW"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio nintadl CreateSemaphore(@nihil sec, nint32 initialis, nint32 maximus, @nint16 nomen);
+	[[importa] "ReleaseSemaphore"] [[importa_de] "kernel32"] [stdcall "3"]
+	functio logicum ReleaseSemaphore(nintadl sem, nint32 valor, @nint32 prist);
+	[[importa] "CreateEventW"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio nintadl CreateEvent(@nihil sec, nint32 manualis, nint32 initialis, @nint16 nomen);
+	[[importa] "SetEvent"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum SetEvent(nintadl eve);
+	[[importa] "ResetEvent"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum ResetEvent(nintadl eve);
+	[[importa] "CreateThread"] [[importa_de] "kernel32"] [stdcall "6"]
+	functio nintadl CreateThread(@nihil sec, nintadl acervus, @nihil intr, @nihil arg, nint32 modus, @nint32 adl_num);
+	[[importa] "GetExitCodeThread"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum GetExitCodeThread(nintadl mnbr, @nint32 cdx);
+
+	[[importa] "GetNativeSystemInfo"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nihil GetNativeSystemInfo(~SYSTEM_INFO inf);
+	[[importa] "GetSystemInfo"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nihil GetSystemInfo(~SYSTEM_INFO inf);
+
 	[[importa] "BCryptOpenAlgorithmProvider"] [[importa_de] "bcrypt"] [stdcall "4"]
 	functio nint32 BCryptOpenAlgorithmProvider(~nintadl mnbr, @nint16 alg, @nint16 impl, nint32 modus);
 	[[importa] "BCryptCloseAlgorithmProvider"] [[importa_de] "bcrypt"] [stdcall "2"]
@@ -160,11 +197,14 @@ spatium winapi {
 	[[importa] "BCryptGenRandom"] [[importa_de] "bcrypt"] [stdcall "4"]
 	functio nint32 BCryptGenRandom(nintadl mnbr, @nihil data, nint32 long, nint32 modus);
 
-	[[importa] InitCommonControls] [[importa_de] "comctl32"] [stdcall "0"]
+	[[importa] "InitCommonControls"] [[importa_de] "comctl32"] [stdcall "0"]
 	functio nihil InitCommonControls();
-	[[importa] CoInitializeEx] [[importa_de] "ole32"] [stdcall "2"]
+	[[importa] "CoInitializeEx"] [[importa_de] "ole32"] [stdcall "2"]
 	functio int32 CoInitializeEx(@nihil, nint32 modus);
 
-	[[importa] MessageBoxW] [[importa_de] "user32"] [stdcall "4"]
+	[[importa] "MessageBoxW"] [[importa_de] "user32"] [stdcall "4"]
 	functio nint MessageBox(nintadl fen, @nint16 sciptio, @nint16 titulus, nint modus);
+
+	[[importa] "timeGetTime"] [[importa_de] "winmm"] [stdcall "0"]
+	functio nint32 timeGetTime();
 }

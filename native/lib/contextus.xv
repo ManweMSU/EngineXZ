@@ -1,0 +1,365 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Contextus";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+importa cor;
+importa lineae;
+importa winapi;
+
+[[systema] libera]
+
+spatium systema {
+	functio nint32 para_tempus_systemae() { responde winapi.timeGetTime(); }
+}
+spatium contextus {
+	genus semaphorum hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		functio logicum opperire(nint ms) virtualis pura;
+		functio nihil aperi() virtualis pura;
+	}
+	genus signale hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		functio logicum opperire(nint ms) virtualis pura;
+		functio nihil erige() virtualis pura;
+		functio nihil inclina() virtualis pura;
+	}
+	genus labos hereditat objectum {
+		structor () {}
+		functio nihil exeque(@objectum ctx) virtualis pura;
+	}
+	genus labos_opperitus hereditat labos {
+		adl[signale] valor_publicus_signale_opperirendi;
+		structor () iacit { valor_publicus_signale_opperirendi = crea_signale(); si (!valor_publicus_signale_opperirendi) iace errores.memoria_nulla; }
+		functio nihil exeque(@objectum ctx) redefini {}
+	}
+	genus filum hereditat objectum {
+		structor () {}
+		functio nihil opperire() virtualis pura;
+		logicum activum { adipisce virtualis pura; }
+		int numerus_exitus { adipisce virtualis pura; }
+	}
+	genus cauda hereditat objectum {
+		structor () {}
+		functio logicum adde(@labos lab) virtualis pura;
+		functio logicum adde(@@labos lab, int num) virtualis pura;
+	}
+	genus cauda_simplex hereditat cauda {
+		structor () {}
+		functio nihil exeque() virtualis pura;
+		functio logicum exeque_semel() virtualis pura;
+		functio adl[filum] exeque_in_filo() virtualis pura;
+		functio nihil siste() virtualis pura;
+		functio nihil linque() virtualis pura;
+		int longitudo { adipisce virtualis pura; }
+	}
+	genus cauda_filorum hereditat cauda {
+		structor () {}
+		functio nihil para_statum(~int num_fil, ~int num_act_fil, ~int num_lab) virtualis pura;
+		functio nihil opperire() virtualis pura;
+	}
+
+	genus _semaphorum hereditat semaphorum {
+		nintadl _mnbr;
+		structor (int valor) iacit {
+			si (valor < 0) iace errores.argumentum_falsum;
+			_mnbr = winapi.CreateSemaphore(nullus, valor, 0x40000000, nullus);
+			si (!_mnbr) iace errores.memoria_nulla;
+		}
+		destructor () { winapi.CloseHandle(_mnbr); }
+		functio linea_secura ad_lineam() redefini { proba responde linea("semaphorum"); }
+		functio nihil opperire() virtualis redefini { winapi.WaitForSingleObject(_mnbr, 0xFFFFFFFF); }
+		functio logicum opperire(nint ms) virtualis redefini { responde !winapi.WaitForSingleObject(_mnbr, ms); }
+		functio nihil aperi() virtualis redefini { winapi.ReleaseSemaphore(_mnbr, 1, nullus); }
+	}
+	genus _signale hereditat signale {
+		nintadl _mnbr;
+		structor () iacit {
+			_mnbr = winapi.CreateEvent(nullus, sic, non, nullus);
+			si (!_mnbr) iace errores.memoria_nulla;
+		}
+		destructor () { winapi.CloseHandle(_mnbr); }
+		functio linea_secura ad_lineam() redefini { proba responde linea("signale"); }
+		functio nihil opperire() virtualis redefini { winapi.WaitForSingleObject(_mnbr, 0xFFFFFFFF); }
+		functio logicum opperire(nint ms) virtualis redefini { responde !winapi.WaitForSingleObject(_mnbr, ms); }
+		functio nihil erige() virtualis redefini { winapi.SetEvent(_mnbr); }
+		functio nihil inclina() virtualis redefini { winapi.ResetEvent(_mnbr); }
+	}
+	genus _filum hereditat filum {
+		nintadl _mnbr;
+		structor () { funda _mnbr(0); }
+		destructor () { si (_mnbr) winapi.CloseHandle(_mnbr); }
+		functio linea_secura ad_lineam() redefini { proba responde linea("filum"); }
+		functio nihil opperire() virtualis redefini { winapi.WaitForSingleObject(_mnbr, 0xFFFFFFFF); }
+		logicum activum { adipisce virtualis redefini {
+			nint32 cdx;
+			var status = winapi.GetExitCodeThread(_mnbr, @cdx);
+			responde status && cdx == nint32(259);
+		} }
+		int numerus_exitus { adipisce virtualis redefini {
+			nint32 cdx;
+			var status = winapi.GetExitCodeThread(_mnbr, @cdx);
+			responde status && cdx != nint32(259) ? int(cdx) : -1;
+		} }
+		classis functio nint32 _introitus(@labos lab) {
+			lab^.exeque(nullus);
+			lab^.dimitte();
+			responde 0;
+		}
+	}
+
+	genus _cauda {
+		structura indivisio {
+			@indivisio prox;
+			!labos lab;
+		}
+		@indivisio _primus;
+		@indivisio _ultimus;
+		int _numerus;
+		structor () { funda _primus(nullus); funda _ultimus(nullus); funda _numerus(0); }
+		destructor () { var ind = _primus; dum (ind != nullus) { var prox = ind^.prox; perde ind; ind = prox; } }
+		functio !labos accipe() {
+			!labos lab;
+			si (_primus != nullus) {
+				var ind = _primus;
+				lab = ind^.lab;
+				_primus = ind^.prox;
+				perde ind;
+				si (_primus == nullus) _ultimus = nullus;
+				_numerus--;
+			}
+			responde lab;
+		}
+		functio nihil adde(@labos lab) iacit {
+			var ind = crea(indivisio);
+			ind^.lab.contine(lab);
+			ind^.prox = nullus;
+			si (_ultimus == nullus) {
+				_ultimus = _primus = ind;
+			} alioqui {
+				_ultimus^.prox = ind;
+				_ultimus = ind;
+			}
+			_numerus++;
+		}
+		functio nihil adde_primum(@labos lab) iacit {
+			var ind = crea(indivisio);
+			ind^.lab.contine(lab);
+			ind^.prox = _primus;
+			si (_primus == nullus) {
+				_ultimus = _primus = ind;
+			} alioqui {
+				_primus = ind;
+			}
+			_numerus++;
+		}
+		int numerus { [[inline]] adipisce { responde _numerus; } }
+	}
+	genus _cauda_simplex hereditat cauda_simplex {
+		!semaphorum _sync;
+		!semaphorum _numerus;
+		_cauda _lab;
+		structor () iacit {
+			_sync = crea_semaphorum(1);
+			_numerus = crea_semaphorum(0);
+			si (!_sync || !_numerus) iace errores.memoria_nulla;
+		}
+		functio linea_secura ad_lineam() redefini { proba responde linea("cauda_simplex"); }
+		functio logicum adde(@labos lab) virtualis redefini { responde adde(@lab, 1); }
+		functio logicum adde(@@labos lab, int num) virtualis redefini {
+			logicum status = sic;
+			_sync^.opperire();
+			pro (var i = 0; i < num; i++) {
+				proba _lab.adde(lab[i]); cape status = non;
+				_numerus^.aperi();
+			}
+			_sync^.aperi();
+			responde status;
+		}
+		functio nihil exeque() virtualis redefini {
+			dum (sic) {
+				_numerus^.opperire();
+				_sync^.opperire();
+				var lab = _lab.accipe();
+				_sync^.aperi();
+				si (lab != nullus) lab^.exeque(ego); alioqui exi;
+			}
+		}
+		functio logicum exeque_semel() virtualis redefini {
+			si (_numerus^.opperire(0)) {
+				_sync^.opperire();
+				var lab = _lab.accipe();
+				_sync^.aperi();
+				si (lab != nullus) lab^.exeque(ego);
+				responde sic;
+			} alioqui responde non;
+		}
+		functio adl[filum] exeque_in_filo() virtualis redefini {
+			!filum resp;
+			proba resp = contextus.exeque(labos ## { exeque(); });
+			responde resp;
+		}
+		functio nihil siste() virtualis redefini {
+			_sync^.opperire();
+			proba _lab.adde_primum(nullus);
+			_numerus^.aperi();
+			_sync^.aperi();
+		}
+		functio nihil linque() virtualis redefini {
+			_sync^.opperire();
+			proba _lab.adde(nullus);
+			_numerus^.aperi();
+			_sync^.aperi();
+		}
+		int longitudo { adipisce virtualis redefini {
+			_sync^.opperire();
+			var num = _lab.numerus;
+			_sync^.aperi();
+			responde num;
+		} }
+	}
+	genus _cauda_filorum hereditat cauda_filorum {
+		!signale _otiosa;
+		!_cauda_simplex _cd;
+		int _num_filorum;
+		int _num_filorum_activum;
+		structor (int num) iacit {
+			_otiosa = crea_signale();
+			si (!_otiosa) iace errores.memoria_nulla;
+			_cd = crea(_cauda_simplex);
+			_num_filorum = num;
+			si (_num_filorum <= 0) {
+				winapi.SYSTEM_INFO inf;
+				winapi.GetSystemInfo(inf);
+				_num_filorum = inf.num_proc + _num_filorum;
+			}
+			si (_num_filorum <= 0) _num_filorum = 1;
+			_num_filorum_activum = _num_filorum;
+			pro (var i = 0; i < _num_filorum; i++) {
+				!filum fl;
+				proba fl = exeque(labos ## {
+					dum (sic) {
+						!labos lab;
+						si (ego^._cd^._numerus^.opperire(0)) {
+							ego^._cd^._sync^.opperire();
+							lab = ego^._cd^._lab.accipe();
+							ego^._cd^._sync^.aperi();
+						} alioqui {
+							ego^._cd^._sync^.opperire();
+							ego^._num_filorum_activum--;
+							si (!ego^._num_filorum_activum) ego^._otiosa^.erige();
+							ego^._cd^._sync^.aperi();
+							ego^._cd^._numerus^.opperire();
+							ego^._cd^._sync^.opperire();
+							lab = ego^._cd^._lab.accipe();
+							si (!ego^._num_filorum_activum) ego^._otiosa^.inclina();
+							ego^._num_filorum_activum++;
+							ego^._cd^._sync^.aperi();
+						}
+						si (lab) {
+							lab^.exeque(ego);
+							lab.depura();
+						} alioqui {
+							ego^._cd^._sync^.opperire();
+							ego^._num_filorum_activum--;
+							si (!ego^._num_filorum_activum) ego^._otiosa^.erige();
+							ego^._cd^._sync^.aperi();
+							exi;
+						}
+					}
+				});
+				si (!fl) {
+					_cd^._sync^.opperire();
+					pro (var j = 0; j < i; j++) { proba _cd^._lab.adde(nullus); _cd^._numerus^.aperi(); }
+					_cd^._sync^.aperi();
+					opperire();
+					iace errores.memoria_nulla;
+				}
+			}
+		}
+		destructor () {
+			opperire();
+			_cd^._sync^.opperire();
+			pro (var j = 0; j < _num_filorum; j++) { proba _cd^._lab.adde(nullus); _cd^._numerus^.aperi(); }
+			_cd^._sync^.aperi();
+			opperire();
+		}
+		functio linea_secura ad_lineam() redefini { proba responde linea("cauda_filorum"); }
+		functio logicum adde(@labos lab) virtualis redefini { responde _cd^.adde(lab); }
+		functio logicum adde(@@labos lab, int num) virtualis redefini { responde _cd^.adde(lab, num); }
+		functio nihil para_statum(~int num_fil, ~int num_act_fil, ~int num_lab) virtualis redefini {
+			_cd^._sync^.opperire();
+			num_fil = _num_filorum;
+			num_act_fil = _num_filorum_activum;
+			num_lab = _cd^._lab.numerus;
+			_cd^._sync^.aperi();
+		}
+		functio nihil opperire() virtualis redefini {
+			dum (sic) {
+				_otiosa^.opperire();
+				_cd^._sync^.opperire();
+				var ex = !_cd^._lab.numerus && !_num_filorum_activum;
+				_cd^._sync^.aperi();
+				si (ex) exi;
+			}
+		}
+	}
+
+	functio nihil dormi(nint ms) { winapi.Sleep(ms); }
+	functio nihil siste(nint valor) { winapi.ExitProcess(valor); }
+
+	functio adl[cauda_simplex] crea_caudam_simplicem() {
+		proba {
+			var cd = crea(_cauda_simplex);
+			cd^.contine();
+			responde cd.valor();
+		} cape responde (!cauda_simplex)();
+	}
+	functio adl[cauda_filorum] crea_caudam_filorum() {
+		proba {
+			var cd = crea(_cauda_filorum, 0);
+			cd^.contine();
+			responde cd.valor();
+		} cape responde (!cauda_filorum)();
+	}
+	functio adl[cauda_filorum] crea_caudam_filorum(int num) {
+		proba {
+			var cd = crea(_cauda_filorum, num);
+			cd^.contine();
+			responde cd.valor();
+		} cape responde (!cauda_filorum)();
+	}
+	functio adl[semaphorum] crea_semaphorum(int valor) {
+		proba {
+			var sem = crea(_semaphorum, valor);
+			sem^.contine();
+			responde sem.valor();
+		} cape responde (!semaphorum)();
+	}
+	functio adl[signale] crea_signale() {
+		proba {
+			var sig = crea(_signale);
+			sig^.contine();
+			responde sig.valor();
+		} cape responde (!signale)();
+	}
+	functio adl[filum] exeque(@labos lab) {
+		si (lab == nullus) responde (!filum)();
+		proba {
+			var fl = crea(_filum);
+			lab^.contine();
+			fl^._mnbr = winapi.CreateThread(nullus, nintadl(0x80000) * magnitudo(nintadl), protocollum("stdcall/1/contextus._filum._introitus"), lab, 0, nullus);
+			si (!fl^._mnbr) { lab^.dimitte(); responde (!filum)(); }
+			fl^.contine();
+			responde fl.valor();
+		} cape responde (!filum)();
+	}
+
+	functio nihil exeque_in_contextu(@cauda ctx, @labos lab) { ctx^.adde(lab); }
+	functio adl[signale] exeque_in_contextu_et_opperire(@cauda ctx, @labos_opperitus lab) { ctx^.adde(lab); responde lab^.valor_publicus_signale_opperirendi; }
+}
+
+praeforma operator muta_contextum(C) { .contextus.exeque_in_contextu($C, .contextus.labos ## { $_ }) }
+praeforma operator muta_contextum_et_opperire(C) { .contextus.exeque_in_contextu_et_opperire($C, .contextus.labos_opperitus ## { $_ }) }

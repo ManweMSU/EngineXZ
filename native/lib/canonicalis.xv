@@ -8,6 +8,7 @@ importa memoria;
 importa lineae;
 importa mathcan;
 importa flumeni;
+importa contextus;
 importa errores;
 
 [[systema] libera]
@@ -44,74 +45,8 @@ spatium systema {
 	}
 
 	[[importa] sys_info]	functio nihil para_informatio(~informatio inf);
-	[[importa] sys_temp]	functio nint32 para_tempus_systemae();
 	[[importa] sys_arch]	functio logicum proba_architecturam(architectura arch);
 }
-spatium contextus {
-	genus semaphorum hereditat objectum {
-		structor () {}
-		functio nihil opperire() virtualis pura;
-		functio logicum opperire(nint ms) virtualis pura;
-		functio nihil aperi() virtualis pura;
-	}
-	genus signale hereditat objectum {
-		structor () {}
-		functio nihil opperire() virtualis pura;
-		functio logicum opperire(nint ms) virtualis pura;
-		functio nihil erige() virtualis pura;
-		functio nihil inclina() virtualis pura;
-	}
-	genus labos hereditat objectum {
-		structor () {}
-		functio nihil exeque(@objectum ctx) virtualis pura;
-	}
-	genus labos_opperitus hereditat labos {
-		adl[signale] valor_publicus_signale_opperirendi;
-		structor () iacit { valor_publicus_signale_opperirendi = crea_signale(); si (!valor_publicus_signale_opperirendi) iace errores.memoria_nulla; }
-		functio nihil exeque(@objectum ctx) redefini {}
-	}
-	genus filum hereditat objectum {
-		structor () {}
-		functio nihil opperire() virtualis pura;
-		logicum activum { adipisce virtualis pura; }
-		int numerus_exitus { adipisce virtualis pura; }
-	}
-	genus cauda hereditat objectum {
-		structor () {}
-		functio logicum adde(@labos lab) virtualis pura;
-		functio logicum adde(@@labos lab, int num) virtualis pura;
-	}
-	genus cauda_simplex hereditat cauda {
-		structor () {}
-		functio nihil exeque() virtualis pura;
-		functio logicum exeque_semel() virtualis pura;
-		functio adl[filum] exeque_in_filo() virtualis pura;
-		functio nihil siste() virtualis pura;
-		functio nihil linque() virtualis pura;
-		int longitudo { adipisce virtualis pura; }
-	}
-	genus cauda_filorum hereditat cauda {
-		structor () {}
-		functio nihil para_statum(~int num_fil, ~int num_act_fil, ~int num_lab) virtualis pura;
-		functio nihil opperire() virtualis pura;
-	}
-
-	[[importa] ctx_dormi] functio nihil dormi(nint ms);
-	[[importa] ctx_siste] functio nihil siste(nint valor);
-
-	[[importa] ctx_ccsim] functio adl[cauda_simplex] crea_caudam_simplicem();
-	[[importa] ctx_ccfl0] functio adl[cauda_filorum] crea_caudam_filorum();
-	[[importa] ctx_ccfl1] functio adl[cauda_filorum] crea_caudam_filorum(int num);
-	[[importa] ctx_crsem] functio adl[semaphorum] crea_semaphorum(int valor);
-	[[importa] ctx_crsgn] functio adl[signale] crea_signale();
-	[[importa] ctx_crfil] functio adl[filum] exeque(@labos lab);
-
-	functio nihil exeque_in_contextu(@cauda ctx, @labos lab) { ctx^.adde(lab); }
-	functio adl[signale] exeque_in_contextu_et_opperire(@cauda ctx, @labos_opperitus lab) { ctx^.adde(lab); responde lab^.valor_publicus_signale_opperirendi; }
-}
-
-praeforma operator muta_contextum(C) { .contextus.exeque_in_contextu($C, .contextus.labos ## { $_ }) }
-praeforma operator muta_contextum_et_opperire(C) { .contextus.exeque_in_contextu_et_opperire($C, .contextus.labos_opperitus ## { $_ }) }
 */
 genus meta hereditat objectum {
 	constatus attributum_nomen_moduli	= "NomenModuli";

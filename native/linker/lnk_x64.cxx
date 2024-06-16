@@ -97,6 +97,28 @@ namespace Engine
 					if (o.opcode == XA::OpcodeConditionalJump) o.attachment.num_bytes = retindex - i - 1;
 				}
 			}
+			void CreateStdCallAdapter(const string & for_func, uint num_words, const string & symbol)
+			{
+				XA::TranslatedFunction func;
+				Array<uint32> refoffs(1);
+				i286_EncoderContext enc(func.code, EncoderMode::i386_32);
+				enc.encode_push(Reg::EBP);
+				enc.encode_mov_reg_reg(4, Reg::EBP, Reg::ESP);
+				enc.encode_arop_reg_imm(AROP::SUB, 4, Reg::ESP, num_words * 4);
+				for (uint i = 0; i < num_words; i++) {
+					enc.encode_mov_reg_mem(4, Reg::EAX, Reg::EBP, Reg::NO, 4 * (i + 2));
+					enc.encode_mov_mem_reg(4, Reg::EBP, Reg::NO, 4 * (i - num_words), Reg::EAX);
+				}
+				enc.encode_mov_reg_imm(4, Reg::EAX, 0xFFFFFFFF);
+				refoffs << (func.code.Length() - 4);
+				enc.encode_call(4, Reg::EAX);
+				enc.encode_arop_reg_imm(AROP::ADD, 4, Reg::ESP, num_words * 4);
+				enc.encode_pop(Reg::EBP);
+				enc.encode_ret(num_words * 4, false);
+				while (func.code.Length() & 0xF) enc.encode_int3();
+				func.extrefs.Append(for_func, refoffs);
+				HandlePlatformFunction(symbol, func);
+			}
 			virtual Platform GetArchitecture(void) noexcept override { return _trans->GetPlatform(); }
 			virtual XA::Environment GetEnvironment(void) noexcept override { return _trans->GetEnvironment(); }
 			virtual void HandleAbstractFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override
@@ -541,6 +563,35 @@ namespace Engine
 					if ((f.value.code_flags & XI::Module::Function::FunctionClassMask) == XI::Module::Function::FunctionClassNull) {
 						pure_functions.AddElement(c.key + L"." + f.key);
 					} else XI::LoadFunction(c.key + L"." + f.key, f.value, &loader);
+				}
+			}
+			for (auto & c : codes) {
+				auto r = c.value.func.extrefs.GetFirst();
+				while (r) {
+					auto next = r->GetNext();
+					auto & value = r->GetValue();
+					if (value.key.Fragment(0, 10) == L"I:stdcall/") {
+						try {
+							string dest;
+							auto p = value.key.Split(L'/');
+							if (p.Length() != 3) throw Exception();
+							auto stdcall_words_on_stack = p[1].ToUInt32();
+							for (auto & f : codes) if (f.key.Fragment(0, p[2].Length()) == p[2]) { dest = L"S:" + f.key; break; }
+							if (!dest.Length()) throw Exception();
+							if (input.arch == Platform::X86) {
+								string name = value.key.Fragment(2, -1);
+								loader.CreateStdCallAdapter(dest, stdcall_words_on_stack, name);
+								dest = L"S:" + name;
+							}
+							c.value.func.extrefs.Append(dest, value.value);
+							c.value.func.extrefs.Remove(value.key);
+						} catch (...) {
+							error.code = LinkerErrorCode::IllegalSymbolReference;
+							error.object = value.key;
+							return;
+						}
+					}
+					r = next;
 				}
 			}
 			string effective_entry;

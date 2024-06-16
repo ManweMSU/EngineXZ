@@ -12,44 +12,24 @@ importa limae;
 
 var ~ consolatorium con = consolatorium.currens()^;
 
-ute winapi;
-
 functio nihil ini() introitus iacit {
 	con.titulus = "Привет! \x1F337";
-	proba {
-		var fl = crea_flumenum_limae("CR.TXT", modus_limae.legere, modus_creatoris.aperi_praesens);
-		var ddx = scriptio.decodifica(fl);
-		con << ddx^.lege_cunctos() << "\n";
-		con << linea.ex(ddx^.codex) << "\n";
-	} cape (nintadl e, nintadl se) {
-		con.color_primus = consolatorium.color.ruber;
-		con << "ERROR " << e << ", SUBERROR " << se << "\n";
-		con.color_primus = consolatorium.color.defalta;
-		iace e, se;
-	}
-	// responde;
 	
-	var aux = para_auxilium(nullus, "", 1);
-	var mem = aux^.lege_ordinem();
+	var cauda = contextus.crea_caudam_filorum();
+	int n1, n2, n3;
+	cauda^.para_statum(n1, n2, n3);
+	con << linea.ex(cauda) << "\n";
+	con << linea.forma("%0, %1, %2\n", n1, n2, n3) << "\n";
 
-	con << linea.ex(aux) << "\n";
-	con << linea.ex(mem) << "\n";
-
-	ordo linea ol;
-	ol << linea(mem^, -1, linea.codex.utf8);
-	ol << (ol[0] + " ?");
-	ol << ol[1].surroga(" ", "💟💟");
-	var data = ol[0].codifica(linea.codex.utf8, sic);
-	ol << linea.ex(ol[0].scinde(' '));
-
-	var valor = linea("234=555555555555555").ad_frac("=");
-
-	MessageBox(0, linea_utf16(linea.ex(ol) + " " + linea(valor)), linea_utf16(ol[1]), 0);
-
-	InitCommonControls();
-	MessageBox(0,
-		linea_utf16("Сука \x1F49C\x1F337 привет!"),
-		linea_utf16(linea(char('\x1F337'), 15)),
-		//linea_utf16("Заголовок"),
-		0x00000040);
+	con << "Locatio #1\n";
+	muta_contextum(cauda) {
+		contextus.dormi(2000);
+	};
+	con << "Locatio #3\n";
+	muta_contextum(cauda) {
+		proba con << "Locatio #2\n";
+	};
+	con << "Locatio #4\n";
+	cauda.depura();
+	con << "Locatio #5\n";
 }
