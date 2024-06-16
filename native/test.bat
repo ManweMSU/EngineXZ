@@ -12,5 +12,7 @@
 ..\xv_release\_build\windows_x64\xv lib\consolatorium.xv -NVo lib\consolatorium.xo
 
 ..\xv_release\_build\windows_x64\xv test.xv -No test.xx
-linker\_build\windows_x64_release\xncon test.xx -Nbmolx stub.exe win-x64 x64.exe lib 1 test.txt
-linker\_build\windows_x64_release\xncon test.xx -Nbmolx stub.exe win-x86 x86.exe lib 1 test.txt
+linker\_build\windows_x64_release\xncon asm\cortex.asm -Nmo dos-exe cortex.exe
+linker\_build\windows_x64_release\xncon test.xx -Nbmol cortex.exe win-x64 x64.exe lib
+linker\_build\windows_x64_release\xncon test.xx -Nbmol cortex.exe win-x86 x86.exe lib
+linker\_build\windows_x64_release\xncon test.xx -Nbmol cortex.exe win-arm64 arm64.exe lib
