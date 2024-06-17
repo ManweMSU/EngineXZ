@@ -157,7 +157,7 @@ genus consolatorium hereditat objectum_dynamicum {
 					nint32 data;
 					int l = 4;
 					lineae.scribe_characterem(@data, l, linea.codex.utf16, ln[i]);
-					si (!winapi.WriteConsole(_data_ex, (@nint16)(@data), l / 2, nullus, nullus)) iace errores.ie_falsum, winapi.suberror();
+					si (!winapi.WriteConsole(_data_ex, (@nint16)(@data), l / 2, @nint(), nullus)) iace errores.ie_falsum, winapi.suberror();
 				}
 			}
 		} alioqui {

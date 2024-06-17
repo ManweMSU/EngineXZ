@@ -13,9 +13,6 @@ importa errores;
 
 [[systema] libera]
 
-
-/*
-// TODO: IMPLEMENT
 spatium systema {
 	enumeratio architectura {
 		ignota	= 0x00,
@@ -44,10 +41,132 @@ spatium systema {
 		int32 versio_systemae_inferna;
 	}
 
-	[[importa] sys_info]	functio nihil para_informatio(~informatio inf);
-	[[importa] sys_arch]	functio logicum proba_architecturam(architectura arch);
+	functio nihil para_informationem(~informatio inf) {
+		var func_para_mem = winapi.dynamice.adloquium.GetPhysicallyInstalledSystemMemory();
+		var func_para_prc = winapi.dynamice.adloquium.GetLogicalProcessorInformation();
+		var func_para_mach_v10 = winapi.dynamice.adloquium.IsWow64Process2();
+		var func_para_mach_v6 = winapi.dynamice.adloquium.GetNativeSystemInfo();
+		inf.systema_machinae = operans.windows;
+		si (func_para_mem != nullus) {
+			winapi.dynamice.invocator.GetPhysicallyInstalledSystemMemory(func_para_mem, @inf.numerus_memoriae);
+		} alioqui {
+			winapi.MEMORYSTATUS stat;
+			winapi.GlobalMemoryStatus(stat);
+			inf.numerus_memoriae = stat.phys_ult;
+		}
+		winapi.SYSTEM_INFO sysinf;
+		winapi.GetSystemInfo(sysinf);
+		inf.numerus_cordium_virtualium = sysinf.num_proc;
+		inf.numerus_cordium_corporalium = sysinf.num_proc;
+		si (func_para_prc != nullus) proba {
+			ordo winapi.SYSTEM_LOGICAL_PROCESSOR_INFORMATION pi;
+			nint32 long = 0;
+			var status = winapi.dynamice.invocator.GetLogicalProcessorInformation(func_para_prc, nullus, @long);
+			si (!status && winapi.GetLastError() == nint32(122)) {
+				pi.longitudo = nintadl(long) / magnitudo(winapi.SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+				si (winapi.dynamice.invocator.GetLogicalProcessorInformation(func_para_prc, pi.data, @long)) {
+					inf.numerus_cordium_corporalium = 0;
+					pro (var i : pi) si (pi[i].relatio == 0) inf.numerus_cordium_corporalium++;
+				}
+			}
+		}
+		var sysver = winapi.GetVersion();
+		inf.versio_systemae_supera = sysver & nint(0xFF);
+		inf.versio_systemae_inferna = (sysver & nint(0xFF00)) >> nint(8);
+		si (func_para_mach_v10 != nullus && func_para_mach_v6 != nullus) {
+			nint16 arch_proc, arch_mach;
+			si (winapi.dynamice.invocator.IsWow64Process2(func_para_mach_v10, winapi.GetCurrentProcess(), @arch_proc, @arch_mach)) {
+				si (arch_mach == nint16(0xAA64)) inf.architectura_machinae = architectura.arm_a64;
+				alioqui si (arch_mach == nint16(0x8664)) inf.architectura_machinae = architectura.x64;
+				alioqui si (arch_mach == nint16(0x01C2)) inf.architectura_machinae = architectura.arm_m32;
+				alioqui si (arch_mach == nint16(0x014C)) inf.architectura_machinae = architectura.i386;
+				alioqui inf.architectura_machinae = architectura.ignota;
+			} alioqui {
+				winapi.dynamice.invocator.GetNativeSystemInfo(func_para_mach_v6, sysinf);
+				si (sysinf.arch == nint16(12)) inf.architectura_machinae = architectura.arm_a64;
+				alioqui si (sysinf.arch == nint16(9)) inf.architectura_machinae = architectura.x64;
+				alioqui si (sysinf.arch == nint16(5)) inf.architectura_machinae = architectura.arm_m32;
+				alioqui si (sysinf.arch == nint16(0)) inf.architectura_machinae = architectura.i386;
+				alioqui inf.architectura_machinae = architectura.ignota;
+			}
+		} alioqui {
+			si (func_para_mach_v6 != nullus) winapi.dynamice.invocator.GetNativeSystemInfo(func_para_mach_v6, sysinf);
+			si (sysinf.arch == nint16(12)) inf.architectura_machinae = architectura.arm_a64;
+			alioqui si (sysinf.arch == nint16(9)) inf.architectura_machinae = architectura.x64;
+			alioqui si (sysinf.arch == nint16(5)) inf.architectura_machinae = architectura.arm_m32;
+			alioqui si (sysinf.arch == nint16(0)) inf.architectura_machinae = architectura.i386;
+			alioqui inf.architectura_machinae = architectura.ignota;
+		} 
+		inf.architectura_processi = __architectura();
+		inf.frequentia_processoris = 0;
+		proba {
+			ordo nint16 nomen;
+			nint32 freq_MHz;
+			nint32 long;
+			nomen.longitudo = 0x100;
+			nintadl hhw, hdesc, hsys, hcp, h0;
+			si (winapi.RegOpenKeyEx(0x80000002, linea_utf16("HARDWARE"), 0, 0x20019, @hhw) == nint32(0)) {
+				si (winapi.RegOpenKeyEx(hhw, linea_utf16("DESCRIPTION"), 0, 0x20019, @hdesc) == nint32(0)) {
+					si (winapi.RegOpenKeyEx(hdesc, linea_utf16("System"), 0, 0x20019, @hsys) == nint32(0)) {
+						si (winapi.RegOpenKeyEx(hsys, linea_utf16("CentralProcessor"), 0, 0x20019, @hcp) == nint32(0)) {
+							si (winapi.RegOpenKeyEx(hcp, linea_utf16("0"), 0, 0x20019, @h0) == nint32(0)) {
+								long = 4;
+								si (winapi.RegQueryValueEx(h0, linea_utf16("~MHz"), nullus, nullus, @freq_MHz, @long) == nint32(0)) {
+									inf.frequentia_processoris = nint64(freq_MHz) * nint64(1000000);
+								}
+								long = nomen.longitudo * 2;
+								si (winapi.RegQueryValueEx(h0, linea_utf16("ProcessorNameString"), nullus, nullus, nomen.data, @long) == nint32(0)) {
+									proba inf.nomen_processoris = linea(nomen.data, int(long) / 2, linea.codex.utf16);
+								}
+								winapi.RegCloseKey(h0);
+							}
+							winapi.RegCloseKey(hcp);
+						}
+						winapi.RegCloseKey(hsys);
+					}
+					winapi.RegCloseKey(hdesc);
+				}
+				winapi.RegCloseKey(hhw);
+			}
+		} cape inf.frequentia_processoris = 0;
+	}
+	functio logicum proba_architecturam(architectura arch) {
+		var func_prob_v11 = winapi.dynamice.adloquium.GetMachineTypeAttributes();
+		var func_prob_v10 = winapi.dynamice.adloquium.IsWow64GuestMachineSupported();
+		var func_prob_v10A = winapi.dynamice.adloquium.IsWow64Process2();
+		var func_prob_v6 = winapi.dynamice.adloquium.GetNativeSystemInfo();
+		si (func_prob_v11 != nullus) {
+			nint16 va;
+			si (arch == architectura.arm_a64) va = 0xAA64;
+			alioqui si (arch == architectura.arm_m32) va = 0x01C2;
+			alioqui si (arch == architectura.x64) va = 0x8664;
+			alioqui si (arch == architectura.i386) va = 0x014C;
+			alioqui responde non;
+			nint32 stat;
+			si (winapi.dynamice.invocator.GetMachineTypeAttributes(func_prob_v11, va, @stat) == 0) responde stat & 1;
+			alioqui responde non;
+		} alioqui si (func_prob_v10 != nullus && func_prob_v10A != nullus) {
+			nint16 va;
+			si (arch == architectura.arm_a64) va = 0xAA64;
+			alioqui si (arch == architectura.arm_m32) va = 0x01C2;
+			alioqui si (arch == architectura.x64) va = 0x8664;
+			alioqui si (arch == architectura.i386) va = 0x014C;
+			alioqui responde non;
+			nint16 ap, am;
+			winapi.dynamice.invocator.IsWow64Process2(func_prob_v10A, winapi.GetCurrentProcess(), @ap, @am);
+			si (am == va) responde sic;
+			nint32 stat;
+			si (winapi.dynamice.invocator.IsWow64GuestMachineSupported(func_prob_v10, va, @stat) == 0) responde stat;
+			alioqui responde non;
+		} alioqui si (func_prob_v6 != nullus) {
+			winapi.SYSTEM_INFO sysinf;
+			winapi.dynamice.invocator.GetNativeSystemInfo(func_prob_v6, sysinf);
+			si (sysinf.arch == nint16(9)) responde arch == architectura.x64 || arch == architectura.i386;
+			alioqui si (sysinf.arch == nint16(0)) responde arch == architectura.i386;
+			alioqui responde non;
+		} alioqui responde arch == architectura.i386;
+	}
 }
-*/
 genus meta hereditat objectum {
 	constatus attributum_nomen_moduli	= "NomenModuli";
 	constatus attributum_creator_moduli	= "CreatorModuli";
@@ -67,6 +186,7 @@ genus meta hereditat objectum {
 	classis functio adl[meta] moduli(@nihil mdl) iacit { iace errores.implantatio_nulla; }
 }
 
+[[importa] "xn/architectura"] functio int __architectura();
 [[importa] "xn/ini/modulos"] functio nihil __ini_modulos() iacit;
 [[importa] "xn/exi/modulos"] functio nihil __exi_modulos() iacit;
 [[importa] "xn/introitus"] functio nihil __introitus_ordinarius() iacit;

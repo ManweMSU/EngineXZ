@@ -2612,8 +2612,8 @@ spatium systema {
 		int32 versio_systemae_inferna;
 	}
 
-	[[importa] sys_info]	functio nihil para_informatio(~informatio inf);
-	[[importa] sys_temp]	functio nint32 para_tempus_systemae();
+	[[importa] sys_info]	functio nihil para_informationem(~informatio inf);
+	[[importa] sys_temp]	functio nint32 para_tempum_systemae();
 	[[importa] sys_arch]	functio logicum proba_architecturam(architectura arch);
 }
 enumeratio tactus {

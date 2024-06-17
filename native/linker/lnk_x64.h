@@ -13,9 +13,12 @@ namespace Engine
 		constexpr const widechar * IntrinsicGlobalInit	= L"xn/ini/modulos";
 		constexpr const widechar * IntrinsicGlobalSdwn	= L"xn/exi/modulos";
 		constexpr const widechar * IntrinsicGlobalEntry	= L"xn/introitus";
+		constexpr const widechar * IntrinsicImageArch	= L"xn/architectura";
 
 		constexpr const widechar * AttributeStdCall		= L"stdcall";
 		constexpr const widechar * AttributeSysEntry	= L"xn.introitus";
+		constexpr const widechar * AttributeDynamicLink	= L"xn.dynamice.adl";
+		constexpr const widechar * AttributeDynamicCall	= L"xn.dynamice.inv";
 
 		constexpr const widechar * AttributeRequiredStack	= L"XN.Acervus";
 		constexpr const widechar * AttributeDesiredStack	= L"XN.AcervusMaximus";

@@ -10,7 +10,7 @@ importa winapi;
 [[systema] libera]
 
 spatium systema {
-	functio nint32 para_tempus_systemae() { responde winapi.timeGetTime(); }
+	functio nint32 para_tempum_systemae() { responde winapi.timeGetTime(); }
 }
 spatium contextus {
 	genus semaphorum hereditat objectum {

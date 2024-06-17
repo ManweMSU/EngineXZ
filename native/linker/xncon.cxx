@@ -405,7 +405,7 @@ int Main(void)
 					} else if (state.osenv == XA::Environment::EFI) {
 						shdr.hdr.hdr_ex.subsystem = XN::pe_subsys_efi;
 					}
-					shdr.hdr.hdr_ex.dynamic_library_flags = XN::pe_library_dynbase | XN::pe_library_nx_awr | XN::pe_library_rnd_awr | XN::pe_library_trm_awr;
+					shdr.hdr.hdr_ex.dynamic_library_flags = XN::pe_library_dynbase | XN::pe_library_nx_awr | XN::pe_library_trm_awr;
 					shdr.hdr.hdr_ex.desired_stack_size = output.desired_stack;
 					shdr.hdr.hdr_ex.initial_stack_size = output.required_stack;
 					shdr.hdr.hdr_ex.desired_heap_size = output.desired_heap;

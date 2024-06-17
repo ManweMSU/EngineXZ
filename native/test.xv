@@ -13,23 +13,13 @@ importa limae;
 var ~ consolatorium con = consolatorium.currens()^;
 
 functio nihil ini() introitus iacit {
-	con.titulus = "Привет! \x1F337";
+	con.titulus = "Привет!";
 	
-	var cauda = contextus.crea_caudam_filorum();
-	int n1, n2, n3;
-	cauda^.para_statum(n1, n2, n3);
-	con << linea.ex(cauda) << "\n";
-	con << linea.forma("%0, %1, %2\n", n1, n2, n3) << "\n";
-
-	con << "Locatio #1\n";
-	muta_contextum(cauda) {
-		contextus.dormi(2000);
-	};
-	con << "Locatio #3\n";
-	muta_contextum(cauda) {
-		proba con << "Locatio #2\n";
-	};
-	con << "Locatio #4\n";
-	cauda.depura();
-	con << "Locatio #5\n";
+	systema.informatio inf;
+	systema.para_informationem(inf);
+	con.scribe_lineam(linea.ex(inf));
+	pro (var arch : systema.architectura) {
+		con.scribe_lineam(linea.forma("%0: %1", linea.ex(arch), systema.proba_architecturam(arch)));
+	}
+	con.lege_lineam();
 }

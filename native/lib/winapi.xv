@@ -25,6 +25,16 @@ spatium winapi {
 		nint16 plan_proc;
 		nint16 rev_proc;
 	}
+	structura MEMORYSTATUS {
+		nint32 long;
+		nint32 valor_onerandi;
+		nintadl phys_ult;
+		nintadl phys;
+		nintadl pag_ult;
+		nintadl pag;
+		nintadl virt_ult;
+		nintadl virt;
+	}
 	structura CONSOLE_SCREEN_BUFFER_INFO {
 		nint16 lat;
 		nint16 alt;
@@ -37,6 +47,14 @@ spatium winapi {
 		nint16 fen_inf;
 		nint16 fen_max_lat;
 		nint16 fen_max_alt;
+	}
+	structura SYSTEM_LOGICAL_PROCESSOR_INFORMATION {
+		nintadl indumentum;
+		nint32 relatio;
+		nint32 data0;
+		nint32 data1;
+		nint32 data2;
+		nintadl data3;
 	}
 	[[magnitudo] "20"] structura INPUT_RECORD {
 		[[positus] "0"] nint16 eventum;
@@ -96,6 +114,8 @@ spatium winapi {
 	functio logicum CloseHandle(nintadl mnbr);
 	[[importa] "GetLastError"] [[importa_de] "kernel32"] [stdcall "0"]
 	functio nint32 GetLastError();
+	[[importa] "GetCurrentProcess"] [[importa_de] "kernel32"] [stdcall "0"]
+	functio nintadl GetCurrentProcess();
 	[[importa] "GetStdHandle"] [[importa_de] "kernel32"] [stdcall "1"]
 	functio nintadl GetStdHandle(nint32 index);
 	[[importa] "ReadFile"] [[importa_de] "kernel32"] [stdcall "5"]
@@ -142,6 +162,8 @@ spatium winapi {
 	functio logicum LocalFileTimeToFileTime(@nint64 tmp_loc, @nint64 tmp_uni);
 	[[importa] "GetModuleHandleW"] [[importa_de] "kernel32"] [stdcall "1"]
 	functio nintadl GetModuleHandle(@nint16 nomen);
+	[[importa] "GetProcAddress"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio @nihil GetProcAddress(nintadl mdl, @nint8 nomen);
 	[[importa] "FindResourceW"] [[importa_de] "kernel32"] [stdcall "3"]
 	functio nintadl FindResource(nintadl mdl, nintadl nomen, nintadl genu);
 	[[importa] "LoadResource"] [[importa_de] "kernel32"] [stdcall "2"]
@@ -185,10 +207,12 @@ spatium winapi {
 	[[importa] "GetExitCodeThread"] [[importa_de] "kernel32"] [stdcall "2"]
 	functio logicum GetExitCodeThread(nintadl mnbr, @nint32 cdx);
 
-	[[importa] "GetNativeSystemInfo"] [[importa_de] "kernel32"] [stdcall "1"]
-	functio nihil GetNativeSystemInfo(~SYSTEM_INFO inf);
 	[[importa] "GetSystemInfo"] [[importa_de] "kernel32"] [stdcall "1"]
 	functio nihil GetSystemInfo(~SYSTEM_INFO inf);
+	[[importa] "GlobalMemoryStatus"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nihil GlobalMemoryStatus(~MEMORYSTATUS stat);
+	[[importa] "GetVersion"] [[importa_de] "kernel32"] [stdcall "0"]
+	functio nint32 GetVersion();
 
 	[[importa] "BCryptOpenAlgorithmProvider"] [[importa_de] "bcrypt"] [stdcall "4"]
 	functio nint32 BCryptOpenAlgorithmProvider(~nintadl mnbr, @nint16 alg, @nint16 impl, nint32 modus);
@@ -207,4 +231,43 @@ spatium winapi {
 
 	[[importa] "timeGetTime"] [[importa_de] "winmm"] [stdcall "0"]
 	functio nint32 timeGetTime();
+
+	[[importa] "RegOpenKeyExW"] [[importa_de] "advapi32"] [stdcall "5"]
+	functio nint32 RegOpenKeyEx(nintadl col, @nint16 nomen, nint32 modus, nint32 perm, @nintadl scol);
+	[[importa] "RegCloseKey"] [[importa_de] "advapi32"] [stdcall "1"]
+	functio nint32 RegCloseKey(nintadl col);
+	[[importa] "RegQueryValueExW"] [[importa_de] "advapi32"] [stdcall "6"]
+	functio nint32 RegQueryValueEx(nintadl col, @nint16 valor, @nihil, @nint32 genu, @nihil data, @nint32 magn);
+
+	spatium dynamice {
+		spatium adloquium {
+			[[importa] "GetPhysicallyInstalledSystemMemory"] [[importa_de] "kernel32"] ["xn.dynamice.adl"]
+			functio @nihil GetPhysicallyInstalledSystemMemory();
+			[[importa] "GetLogicalProcessorInformation"] [[importa_de] "kernel32"] ["xn.dynamice.adl"]
+			functio @nihil GetLogicalProcessorInformation();
+			[[importa] "GetNativeSystemInfo"] [[importa_de] "kernel32"] ["xn.dynamice.adl"]
+			functio @nihil GetNativeSystemInfo();
+			[[importa] "IsWow64Process2"] [[importa_de] "kernel32"] ["xn.dynamice.adl"]
+			functio @nihil IsWow64Process2();
+			[[importa] "IsWow64GuestMachineSupported"] [[importa_de] "kernel32"] ["xn.dynamice.adl"]
+			functio @nihil IsWow64GuestMachineSupported();
+			[[importa] "GetMachineTypeAttributes"] [[importa_de] "kernel32"] ["xn.dynamice.adl"]
+			functio @nihil GetMachineTypeAttributes();
+		}
+		spatium invocator {
+			[[importa] "GetPhysicallyInstalledSystemMemory"] [[importa_de] "kernel32"] ["xn.dynamice.inv" "1"]
+			functio logicum GetPhysicallyInstalledSystemMemory(@nihil func, @int64 mem);
+			[[importa] "GetLogicalProcessorInformation"] [[importa_de] "kernel32"] ["xn.dynamice.inv" "2"]
+			functio logicum GetLogicalProcessorInformation(@nihil func, @SYSTEM_LOGICAL_PROCESSOR_INFORMATION inf, @nint32 long);
+			[[importa] "GetNativeSystemInfo"] [[importa_de] "kernel32"] ["xn.dynamice.inv" "1"]
+			functio nihil GetNativeSystemInfo(@nihil func, ~SYSTEM_INFO inf);
+			[[importa] "IsWow64Process2"] [[importa_de] "kernel32"] ["xn.dynamice.inv" "3"]
+			functio logicum IsWow64Process2(@nihil func, nintadl proc, @nint16 arch_proc, @nint16 arch_mach);
+
+			[[importa] "IsWow64GuestMachineSupported"] [[importa_de] "kernel32"] ["xn.dynamice.inv" "2"]
+			functio int32 IsWow64GuestMachineSupported(@nihil func, nint16 arch, @nint32 status);
+			[[importa] "GetMachineTypeAttributes"] [[importa_de] "kernel32"] ["xn.dynamice.inv" "2"]
+			functio int32 GetMachineTypeAttributes(@nihil func, nint16 arch, @nint32 status);
+		}
+	}
 }

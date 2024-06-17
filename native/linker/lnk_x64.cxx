@@ -119,6 +119,13 @@ namespace Engine
 				func.extrefs.Append(for_func, refoffs);
 				HandlePlatformFunction(symbol, func);
 			}
+			static XA::ExpressionTree CreatePointer(const XA::ExpressionTree & from)
+			{
+				auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformTakePointer, XA::ReferenceFlagInvoke));
+				XA::TH::AddTreeInput(result, from, XA::TH::MakeSpec(0, 1));
+				XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(0, 1));
+				return result;
+			}
 			virtual Platform GetArchitecture(void) noexcept override { return _trans->GetPlatform(); }
 			virtual XA::Environment GetEnvironment(void) noexcept override { return _trans->GetEnvironment(); }
 			virtual void HandleAbstractFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override
@@ -153,58 +160,136 @@ namespace Engine
 					name << _core.main_entry;
 					CreateInvocationList(func, name, true);
 					HandleAbstractFunction(symbol, func);
+				} else if (func_name == IntrinsicImageArch) {
+					XA::Function func;
+					func.retval = XA::TH::MakeSpec(XA::ArgumentSemantics::SignedInteger, 4, 0);
+					if (_trans->GetPlatform() == Platform::X86) func.data << 0x01;
+					else if (_trans->GetPlatform() == Platform::X64) func.data << 0x11;
+					else if (_trans->GetPlatform() == Platform::ARM) func.data << 0x02;
+					else if (_trans->GetPlatform() == Platform::ARM64) func.data << 0x12;
+					else func.data << 0;
+					while (func.data.Length() & 0xF) func.data << 0;
+					auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(move, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceRetVal)), func.retval);
+					XA::TH::AddTreeInput(move, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, 0)), func.retval);
+					XA::TH::AddTreeOutput(move, func.retval);
+					func.instset << XA::TH::MakeStatementReturn(move);
+					HandleAbstractFunction(symbol, func);
 				} else SetError(LinkerErrorCode::LocalImportInModule, symbol);
 			}
 			virtual void HandleFarImport(const string & symbol, const XI::Module::Function & fin, const string & func_name, const string & lib_name) noexcept override
 			{
-				XA::TranslatedFunction func;
-				Array<uint32> refoffs(1);
-				if (_trans->GetPlatform() == Platform::X86) {
-					const string * attr;
-					if (attr = fin.attributes.GetElementByKey(AttributeStdCall)) {
-						uint words_unroll = 0;
-						i286_EncoderContext enc(func.code, EncoderMode::i386_32);
-						try { words_unroll = attr->ToUInt32(); } catch (...) {}
-						if (words_unroll) {
-							enc.encode_arop_reg_imm(AROP::SUB, 4, Reg::ESP, words_unroll * 4);
-							enc.encode_push(Reg::EBP);
-							enc.encode_mov_reg_reg(4, Reg::EBP, Reg::ESP);
-							for (uint i = 0; i < words_unroll + 1; i++) {
-								enc.encode_mov_reg_mem(4, Reg::EAX, Reg::EBP, Reg::NO, 4 * (i + words_unroll + 1));
-								enc.encode_mov_mem_reg(4, Reg::EBP, Reg::NO, 4 * (i + 1), Reg::EAX);
-							}
-							enc.encode_pop(Reg::EBP);
-						}
+				if (fin.attributes.ElementExists(AttributeDynamicCall)) {
+					int numargs = 0;
+					try { numargs = fin.attributes.GetElementByKey(AttributeDynamicCall)->ToUInt32(); } catch (...) {
+						HandleLoadError(symbol, fin, XI::LoadFunctionError::InvalidFunctionFormat);
+						return;
 					}
-					refoffs << (func.code.Length() + 1);
-					// MOV EAX, [address-of-import-table-entry] == jump address
-					func.code << 0xA1;
-					func.code << 0x00 << 0x00 << 0x00 << 0x00;
-					// JMP EAX
-					func.code << 0xFF << 0xE0;
-				} else if (_trans->GetPlatform() == Platform::X64) {
-					refoffs << 2;
-					// MOV RAX, [address-of-import-table-entry] == jump address
-					func.code << 0x48 << 0xA1;
-					func.code << 0x00 << 0x00 << 0x00 << 0x00 << 0x00 << 0x00 << 0x00 << 0x00;
-					// JMP RAX
-					func.code << 0xFF << 0xE0;
-				} else if (_trans->GetPlatform() == Platform::ARM64) {
-					refoffs << 12;
-					uint seq[5];
-					// LDR X16, address-of-import-table-entry == jump address
-					seq[0] = 0x58000000 | 16 | (3 << 5);
-					// LDR X16, X16
-					seq[1] = 0xF8400000 | 16 | (16 << 5);
-					// BR X16
-					seq[2] = 0xD61F0000 | (16 << 5);
-					seq[3] = seq[4] = 0;
-					func.code.SetLength(sizeof(seq));
-					MemoryCopy(func.code.GetBuffer(), &seq, sizeof(seq));
-				} else throw Exception();
-				while (func.code.Length() & 0xF) func.code.Append(0);
-				func.extrefs.Append(L"/" + lib_name + L"/" + func_name, refoffs);
-				HandlePlatformFunction(symbol, func);
+					if (_trans->GetPlatform() == Platform::X86) {
+						XA::TranslatedFunction func;
+						i286_EncoderContext enc(func.code, EncoderMode::i386_32);
+						enc.encode_push(Reg::EBP);
+						enc.encode_mov_reg_reg(4, Reg::EBP, Reg::ESP);
+						enc.encode_arop_reg_imm(AROP::SUB, 4, Reg::ESP, numargs * 4);
+						for (uint i = 0; i < numargs; i++) {
+							enc.encode_mov_reg_mem(4, Reg::EAX, Reg::EBP, Reg::NO, 4 * (i + 3));
+							enc.encode_mov_mem_reg(4, Reg::EBP, Reg::NO, 4 * (i - numargs), Reg::EAX);
+						}
+						enc.encode_mov_reg_mem(4, Reg::EAX, Reg::EBP, Reg::NO, 8);
+						enc.encode_call(4, Reg::EAX);
+						enc.encode_pop(Reg::EBP);
+						enc.encode_ret(0, false);
+						while (func.code.Length() & 0xF) enc.encode_int3();
+						HandlePlatformFunction(symbol, func);
+					} else {
+						XA::Function func;
+						func.retval = XA::TH::MakeSpec(0, 1);
+						for (int i = 0; i <= numargs; i++) func.inputs << func.retval;
+						auto invoke = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformInvoke, XA::ReferenceFlagInvoke));
+						for (int i = 0; i <= numargs; i++) XA::TH::AddTreeInput(invoke, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, i)), XA::TH::MakeSpec(0, 1));
+						XA::TH::AddTreeOutput(invoke, XA::TH::MakeSpec(0, 1));
+						auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+						XA::TH::AddTreeInput(move, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceRetVal)), XA::TH::MakeSpec(0, 1));
+						XA::TH::AddTreeInput(move, invoke, XA::TH::MakeSpec(0, 1));
+						XA::TH::AddTreeOutput(move, XA::TH::MakeSpec(0, 1));
+						func.instset << XA::TH::MakeStatementReturn(move);
+						HandleAbstractFunction(symbol, func);
+					}
+				} else if (fin.attributes.ElementExists(AttributeDynamicLink)) {
+					SafePointer<DataBlock> fn = func_name.EncodeSequence(Encoding::ANSI, true);
+					SafePointer<DataBlock> mn = lib_name.EncodeSequence(Encoding::UTF16, true);
+					uint d0 = 0;
+					uint d1 = fn->Length();
+					XA::Function func;
+					func.extrefs << L"S:winapi.GetModuleHandle:F(Cnintadl)(PCnint16)";
+					func.extrefs << L"S:winapi.GetProcAddress:F(PCnihil)(Cnintadl)(PCnint8)";
+					func.retval = XA::TH::MakeSpec(0, 1);
+					func.data.Append(*fn);
+					func.data.Append(*mn);
+					while (func.data.Length() & 0xF) func.data.Append(0);
+					auto hmodule = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceExternal, 0, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(hmodule, CreatePointer(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, d1))), XA::TH::MakeSpec(0, 1));
+					XA::TH::AddTreeOutput(hmodule, XA::TH::MakeSpec(0, 1));
+					auto procaddr = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceExternal, 1, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(procaddr, hmodule, hmodule.retval_spec);
+					XA::TH::AddTreeInput(procaddr, CreatePointer(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, d0))), XA::TH::MakeSpec(0, 1));
+					XA::TH::AddTreeOutput(procaddr, XA::TH::MakeSpec(0, 1));
+					auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(move, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceRetVal)), XA::TH::MakeSpec(0, 1));
+					XA::TH::AddTreeInput(move, procaddr, XA::TH::MakeSpec(0, 1));
+					XA::TH::AddTreeOutput(move, XA::TH::MakeSpec(0, 1));
+					func.instset << XA::TH::MakeStatementReturn(move);
+					HandleAbstractFunction(symbol, func);
+				} else {
+					XA::TranslatedFunction func;
+					Array<uint32> refoffs(1);
+					if (_trans->GetPlatform() == Platform::X86) {
+						const string * attr;
+						if (attr = fin.attributes.GetElementByKey(AttributeStdCall)) {
+							uint words_unroll = 0;
+							i286_EncoderContext enc(func.code, EncoderMode::i386_32);
+							try { words_unroll = attr->ToUInt32(); } catch (...) {}
+							if (words_unroll) {
+								enc.encode_arop_reg_imm(AROP::SUB, 4, Reg::ESP, words_unroll * 4);
+								enc.encode_push(Reg::EBP);
+								enc.encode_mov_reg_reg(4, Reg::EBP, Reg::ESP);
+								for (uint i = 0; i < words_unroll + 1; i++) {
+									enc.encode_mov_reg_mem(4, Reg::EAX, Reg::EBP, Reg::NO, 4 * (i + words_unroll + 1));
+									enc.encode_mov_mem_reg(4, Reg::EBP, Reg::NO, 4 * (i + 1), Reg::EAX);
+								}
+								enc.encode_pop(Reg::EBP);
+							}
+						}
+						refoffs << (func.code.Length() + 1);
+						// MOV EAX, [address-of-import-table-entry] == jump address
+						func.code << 0xA1;
+						func.code << 0x00 << 0x00 << 0x00 << 0x00;
+						// JMP EAX
+						func.code << 0xFF << 0xE0;
+					} else if (_trans->GetPlatform() == Platform::X64) {
+						refoffs << 2;
+						// MOV RAX, [address-of-import-table-entry] == jump address
+						func.code << 0x48 << 0xA1;
+						func.code << 0x00 << 0x00 << 0x00 << 0x00 << 0x00 << 0x00 << 0x00 << 0x00;
+						// JMP RAX
+						func.code << 0xFF << 0xE0;
+					} else if (_trans->GetPlatform() == Platform::ARM64) {
+						refoffs << 12;
+						uint seq[5];
+						// LDR X16, address-of-import-table-entry == jump address
+						seq[0] = 0x58000000 | 16 | (3 << 5);
+						// LDR X16, X16
+						seq[1] = 0xF8400000 | 16 | (16 << 5);
+						// BR X16
+						seq[2] = 0xD61F0000 | (16 << 5);
+						seq[3] = seq[4] = 0;
+						func.code.SetLength(sizeof(seq));
+						MemoryCopy(func.code.GetBuffer(), &seq, sizeof(seq));
+					} else throw Exception();
+					while (func.code.Length() & 0xF) func.code.Append(0);
+					func.extrefs.Append(L"/" + lib_name + L"/" + func_name, refoffs);
+					HandlePlatformFunction(symbol, func);
+				}
 			}
 			virtual void HandleLoadError(const string & symbol, const XI::Module::Function & fin, XI::LoadFunctionError error) noexcept override
 			{
