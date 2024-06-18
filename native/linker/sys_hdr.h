@@ -125,7 +125,7 @@ namespace Engine
 			uint32 desired_heap_size;
 			uint32 initial_heap_size;
 			uint32 reserved_1;
-			uint32 num_tables; // 6
+			uint32 num_tables; // 16
 		};
 		struct PEHeaderEx64
 		{
@@ -157,7 +157,7 @@ namespace Engine
 			uint64 desired_heap_size;
 			uint64 initial_heap_size;
 			uint32 reserved_1;
-			uint32 num_tables; // 6
+			uint32 num_tables; // 16
 		};
 		struct PETableHeader
 		{
@@ -174,6 +174,7 @@ namespace Engine
 			PETableHeader exception_table;
 			PETableHeader certificate_table;
 			PETableHeader relocation_table;
+			PETableHeader other_tables[10];
 		};
 		struct PEHeaderFull64
 		{
@@ -185,6 +186,7 @@ namespace Engine
 			PETableHeader exception_table;
 			PETableHeader certificate_table;
 			PETableHeader relocation_table;
+			PETableHeader other_tables[10];
 		};
 		struct PESection
 		{

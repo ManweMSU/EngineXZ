@@ -366,7 +366,7 @@ int Main(void)
 					if (state.arch == Platform::X86) shdr.hdr.hdr.machine = XN::pe_machine_80386;
 					shdr.hdr.hdr.num_sections = 0;
 					shdr.hdr.hdr.exhdr_size = sizeof(XN::PEHeaderFull32) - sizeof(XN::PEHeader);
-					shdr.hdr.hdr.flags = XN::pe_flag_executable | XN::pe_flag_nodebug | XN::pe_flag_machine32;
+					shdr.hdr.hdr.flags = XN::pe_flag_executable | XN::pe_flag_machine32;
 					shdr.hdr.hdr_ex.signature = 0x010B;
 					shdr.hdr.hdr_ex.linker_version_major = ENGINE_VI_VERSIONMAJOR;
 					shdr.hdr.hdr_ex.linker_version_minor = ENGINE_VI_VERSIONMINOR;
@@ -435,7 +435,7 @@ int Main(void)
 					else if (state.arch == Platform::ARM64) shdr.hdr.hdr.machine = XN::pe_machine_arm64;
 					shdr.hdr.hdr.num_sections = 0;
 					shdr.hdr.hdr.exhdr_size = sizeof(XN::PEHeaderFull64) - sizeof(XN::PEHeader);
-					shdr.hdr.hdr.flags = XN::pe_flag_executable | XN::pe_flag_nodebug | XN::pe_flag_largeaware;
+					shdr.hdr.hdr.flags = XN::pe_flag_executable | XN::pe_flag_largeaware;
 					shdr.hdr.hdr_ex.signature = 0x020B;
 					shdr.hdr.hdr_ex.linker_version_major = ENGINE_VI_VERSIONMAJOR;
 					shdr.hdr.hdr_ex.linker_version_minor = ENGINE_VI_VERSIONMINOR;
