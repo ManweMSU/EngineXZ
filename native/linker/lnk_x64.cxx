@@ -1037,7 +1037,7 @@ namespace Engine
 		uint Align(uint number, uint alignment) { return (number + alignment - 1) / alignment * alignment; }
 		void AddSection(PESuperHeader32 & hdr, const char * name, DataBlock * ss, uint32 rva, uint32 flags)
 		{
-			if (!ss) return;
+			if (!ss || !ss->Length()) return;
 			auto index = hdr.hdr.hdr.num_sections;
 			hdr.hdr.hdr.num_sections++;
 			auto basement = index ? hdr.section[index - 1].file_offset + hdr.section[index - 1].file_size : hdr.hdr.hdr_ex.headers_size;
@@ -1050,7 +1050,7 @@ namespace Engine
 		}
 		void AddSection(PESuperHeader64 & hdr, const char * name, DataBlock * ss, uint32 rva, uint32 flags)
 		{
-			if (!ss) return;
+			if (!ss || !ss->Length()) return;
 			auto index = hdr.hdr.hdr.num_sections;
 			hdr.hdr.hdr.num_sections++;
 			auto basement = index ? hdr.section[index - 1].file_offset + hdr.section[index - 1].file_size : hdr.hdr.hdr_ex.headers_size;
