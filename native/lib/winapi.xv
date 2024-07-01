@@ -56,6 +56,24 @@ spatium winapi {
 		nint32 data2;
 		nintadl data3;
 	}
+	structura WIN32_FIND_DATA {
+		nint32 attr;
+		nint32 tempus_cr_inf;
+		nint32 tempus_cr_sup;
+		nint32 tempus_lg_inf;
+		nint32 tempus_lg_sup;
+		nint32 tempus_sc_inf;
+		nint32 tempus_sc_sup;
+		nint32 longitudo_inf;
+		nint32 longitudo_sup;
+		nint32 res_0;
+		nint32 res_1;
+		[[non_polire]] ordo [260] nint16 nomen;
+		[[non_polire]] ordo [14] nint16 nomen_alternus;
+		[[non_polire]] nint32 mac_genus;
+		[[non_polire]] nint32 mac_creator;
+		[[non_polire]] nint32 mac_modus;
+	}
 	[[magnitudo] "20"] structura INPUT_RECORD {
 		[[positus] "0"] nint16 eventum;
 		[[positus] "4"] nint32 tact_status;
@@ -114,6 +132,8 @@ spatium winapi {
 	functio logicum CloseHandle(nintadl mnbr);
 	[[importa] "GetLastError"] [[importa_de] "kernel32"] [stdcall "0"]
 	functio nint32 GetLastError();
+	[[importa] "SetLastError"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nihil SetLastError(nint32 error);
 	[[importa] "GetCurrentProcess"] [[importa_de] "kernel32"] [stdcall "0"]
 	functio nintadl GetCurrentProcess();
 	[[importa] "GetStdHandle"] [[importa_de] "kernel32"] [stdcall "1"]
@@ -207,6 +227,46 @@ spatium winapi {
 	[[importa] "GetExitCodeThread"] [[importa_de] "kernel32"] [stdcall "2"]
 	functio logicum GetExitCodeThread(nintadl mnbr, @nint32 cdx);
 
+	[[importa] "GetCurrentDirectoryW"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio nint32 GetCurrentDirectory(nint32 long, @nint16 data);
+	[[importa] "SetCurrentDirectoryW"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum SetCurrentDirectory(@nint16 data);
+	[[importa] "CreateDirectoryW"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum CreateDirectory(@nint16 nomen, @nihil sec);
+	[[importa] "GetFileAttributesW"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nint32 GetFileAttributes(@nint16 nomen);
+	[[importa] "CreateHardLinkW"] [[importa_de] "kernel32"] [stdcall "3"]
+	functio logicum CreateHardLink(@nint16 nomen, @nint16 ad, @nihil sec);
+	[[importa] "CreateSymbolicLinkW"] [[importa_de] "kernel32"] [stdcall "3"]
+	functio logicum CreateSymbolicLink(@nint16 nomen, @nint16 ad, nint32 modus);
+	[[importa] "GetDiskFreeSpaceExW"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio logicum GetDiskFreeSpaceEx(@nint16 semita, @nint64 num_quotus, @nint64 num_ultimus, @nint64 num_liberus);
+	[[importa] "GetModuleFileNameW"] [[importa_de] "kernel32"] [stdcall "3"]
+	functio logicum GetModuleFileName(nintadl mdl, @nint16 data, nint32 long);
+	[[importa] "GetCommandLineW"] [[importa_de] "kernel32"] [stdcall "0"]
+	functio @nint16 GetCommandLine();
+	[[importa] "GetFileInformationByHandleEx"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio logicum GetFileInformationByHandleEx(nintadl mnbr, nint32 cls, @nihil data, nint32 data_long);
+
+	[[importa] "FindFirstFileW"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio nintadl FindFirstFile(@nint16 nomen, ~WIN32_FIND_DATA data);
+	[[importa] "FindNextFileW"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum FindNextFile(nintadl mnbr, ~WIN32_FIND_DATA data);
+	[[importa] "FindClose"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum FindClose(nintadl mnbr);
+	[[importa] "GetLogicalDrives"] [[importa_de] "kernel32"] [stdcall "0"]
+	functio nint32 GetLogicalDrives();
+	[[importa] "GetVolumeInformationW"] [[importa_de] "kernel32"] [stdcall "8"]
+	functio logicum GetVolumeInformation(@nint16 radix, @nint16 nomen, nint32 nomen_long, @nint32 numerus, @nint32 longmax, @nint32 modus, @nint16 sln, nint32 sln_long);
+	[[importa] "GetFinalPathNameByHandleW"] [[importa_de] "kernel32"] [stdcall "4"]
+	functio nint32 GetFinalPathNameByHandle(nintadl mnbr, @nint16 semita, nint32 long, nint32 modus);
+	[[importa] "MoveFileW"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum MoveFile(@nint16 ex, @nint16 ad);
+	[[importa] "DeleteFileW"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum DeleteFile(@nint16 nomen);
+	[[importa] "RemoveDirectoryW"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum RemoveDirectory(@nint16 nomen);
+
 	[[importa] "GetSystemInfo"] [[importa_de] "kernel32"] [stdcall "1"]
 	functio nihil GetSystemInfo(~SYSTEM_INFO inf);
 	[[importa] "GlobalMemoryStatus"] [[importa_de] "kernel32"] [stdcall "1"]
@@ -231,6 +291,12 @@ spatium winapi {
 
 	[[importa] "timeGetTime"] [[importa_de] "winmm"] [stdcall "0"]
 	functio nint32 timeGetTime();
+	[[importa] "CommandLineToArgvW"] [[importa_de] "shell32"] [stdcall "2"]
+	functio @@nint16 CommandLineToArgv(@nint16 imp, @int num);
+	[[importa] "ShellExecuteW"] [[importa_de] "shell32"] [stdcall "6"]
+	functio nintadl ShellExecute(nintadl fenestra, @nint16 imperatum, @nint16 lima, @nint16 argumenta, @nint16 semita, int modus);
+	[[importa] "LocalFree"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio @nihil LocalFree(@nihil mem);
 
 	[[importa] "RegOpenKeyExW"] [[importa_de] "advapi32"] [stdcall "5"]
 	functio nint32 RegOpenKeyEx(nintadl col, @nint16 nomen, nint32 modus, nint32 perm, @nintadl scol);

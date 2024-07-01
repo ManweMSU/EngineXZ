@@ -14,12 +14,11 @@ var ~ consolatorium con = consolatorium.currens()^;
 
 functio nihil ini() introitus iacit {
 	con.titulus = "Привет!";
-	
-	systema.informatio inf;
-	systema.para_informationem(inf);
-	con.scribe_lineam(linea.ex(inf));
-	pro (var arch : systema.architectura) {
-		con.scribe_lineam(linea.forma("%0: %1", linea.ex(arch), systema.proba_architecturam(arch)));
+
+	var vol = para_volumina();
+	pro (var i : vol^) {
+		con.scribe_lineam(linea.forma("Volumen '%0' sup '%1', longitudo: %2", vol^[i].nomen, vol^[i].radix, vol^[i].memoria));
 	}
-	con.lege_lineam();
+	con.scribe_lineam(linea.ex(para_argumenta()));
+
 }
