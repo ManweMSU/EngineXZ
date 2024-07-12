@@ -13,6 +13,7 @@ constatus efformatio_falsa	= "Invalid data format";
 constatus habitus_falsus	= "Invalid object state";
 constatus ie_falsum			= "Invalid I/O operation";
 constatus xe_defectus		= "XE loader failure";
+constatus rete_defectum		= "Invalid network I/O operation";
 
 constatus ie_error_nullus				= "Success";
 constatus ie_error_ignotus				= "Unknown";
@@ -50,3 +51,16 @@ constatus xe_librarium_nullum		= "Error loading dynamic library";
 constatus xe_lib_importus_falsus	= "No such import in dynamic library";
 constatus xe_allocatus_defectus		= "Object allocation failure";
 constatus xe_initium_defectum		= "Module initialization failure";
+
+constatus rete_error_nullus				= "Success";
+constatus rete_error_ignotus			= "Unknown";
+constatus rete_adloquium_occupatum		= "Address required is busy";
+constatus rete_adloquium_paratum_non	= "Address required is not allocated on this machine";
+constatus rete_locale_falsum			= "Local network is unavailable";
+constatus rete_perventio_servi_nulla	= "Destination machine is unreachable";
+constatus rete_perventio_retis_nulla	= "Destination network is unreachable";
+constatus rete_connectio_refusa			= "Connection was refused";
+constatus rete_connectio_demissa		= "Connection was reset";
+constatus rete_protocollum_falsum		= "Invalid protocol being used";
+constatus rete_assectatio_excessa		= "Request timeout exceeded";
+constatus rete_securitas_falsa			= "Connection's security is compromised";

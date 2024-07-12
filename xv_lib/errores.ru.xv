@@ -13,6 +13,7 @@ constatus efformatio_falsa	= "Неверный формат данных";
 constatus habitus_falsus	= "Неверное состояние объекта";
 constatus ie_falsum			= "Неверная операция В/В";
 constatus xe_defectus		= "Сбой загрузчика XE";
+constatus rete_defectum		= "Неверная операция сетевого В/В";
 
 constatus ie_error_nullus				= "Успех";
 constatus ie_error_ignotus				= "Неизвестная ошибка";
@@ -50,3 +51,16 @@ constatus xe_librarium_nullum		= "Сбой загрузки динамическ
 constatus xe_lib_importus_falsus	= "Не найден объект импорта в динамической библиотеке";
 constatus xe_allocatus_defectus		= "Сбой выделения объекта";
 constatus xe_initium_defectum		= "Сбой инициализации модуля";
+
+constatus rete_error_nullus				= "Успех";
+constatus rete_error_ignotus			= "Неизвестная ошибка";
+constatus rete_adloquium_occupatum		= "Требуемый адрес уже занят";
+constatus rete_adloquium_paratum_non	= "Требуемый адрес не предоставляется системой";
+constatus rete_locale_falsum			= "Локальная сеть не доступна";
+constatus rete_perventio_servi_nulla	= "Требуемая машина недостижима";
+constatus rete_perventio_retis_nulla	= "Требуемая сеть недостижима";
+constatus rete_connectio_refusa			= "Соединение было отклонено";
+constatus rete_connectio_demissa		= "Соединение было сброшено";
+constatus rete_protocollum_falsum		= "Использовался некорректный протокол";
+constatus rete_assectatio_excessa		= "Превышено время ожидания запроса";
+constatus rete_securitas_falsa			= "Безопасность соединения скомпрометирована";

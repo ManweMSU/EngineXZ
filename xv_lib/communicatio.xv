@@ -1,0 +1,220 @@
+﻿auxilium attributum (meta.attributum_nomen_moduli) = "Liber Communicationis";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium errores {
+	[error] constatus rete_defectum		= 0x08;
+	[sub_error rete_defectum] constatus rete_error_nullus			= 0x00;
+	[sub_error rete_defectum] constatus rete_error_ignotus			= 0x01;
+	[sub_error rete_defectum] constatus rete_adloquium_occupatum	= 0x02;
+	[sub_error rete_defectum] constatus rete_adloquium_paratum_non	= 0x03;
+	[sub_error rete_defectum] constatus rete_locale_falsum			= 0x04;
+	[sub_error rete_defectum] constatus rete_perventio_servi_nulla	= 0x05;
+	[sub_error rete_defectum] constatus rete_perventio_retis_nulla	= 0x06;
+	[sub_error rete_defectum] constatus rete_connectio_refusa		= 0x07;
+	[sub_error rete_defectum] constatus rete_connectio_demissa		= 0x08;
+	[sub_error rete_defectum] constatus rete_protocollum_falsum		= 0x09;
+	[sub_error rete_defectum] constatus rete_assectatio_excessa		= 0x0A;
+	[sub_error rete_defectum] constatus rete_securitas_falsa		= 0x0B;
+}
+spatium communicatio {
+	structura adloquium hereditat objectum_dynamicum {
+		structor (~adloquium) { funda(); }
+		convertor (linea) () iacit { responde valor_scriptus; }
+		linea valor_scriptus { adipisce iacit virtualis { responde "nullum"; } loca iacit virtualis { iace errores.implantatio_nulla; } }
+		!dordo_datorum valor_purus { adipisce iacit virtualis { responde crea(dordo_datorum); } loca iacit virtualis { iace errores.implantatio_nulla; } }
+		functio linea_secura ad_lineam() redefini { proba responde valor_scriptus; }
+	}
+	structura adloquium_localis hereditat adloquium {
+		linea nomen;
+		structor (~linea nm) iacit { funda nomen(nm); }
+		convertor (linea) () iacit { responde valor_scriptus; }
+		linea valor_scriptus {
+			adipisce iacit redefini { responde nomen; }
+			loca iacit redefini { nomen = valor; }
+		}
+		!dordo_datorum valor_purus {
+			adipisce iacit redefini { responde nomen.codifica(linea.codex.ascii, non); }
+			loca iacit redefini {
+				si (!valor || !valor^.longitudo) iace errores.argumentum_falsum;
+				nomen = linea(valor^.data, valor^.longitudo, linea.codex.ascii);
+			}
+		}
+	}
+	structura adloquium_ipv4 hereditat adloquium {
+		ordo [4] nint8 valor;
+		nint16 portus;
+		structor (~linea ad) iacit { valor_scriptus = ad; }
+		structor (nint8 v0, nint8 v1, nint8 v2, nint8 v3, nint16 p) { funda portus(p); valor[0] = v0; valor[1] = v1; valor[2] = v2; valor[3] = v3; }
+		convertor (linea) () iacit { responde valor_scriptus; }
+		linea valor_scriptus {
+			adipisce iacit redefini {
+				si (portus) responde linea(valor[0]) + "." + linea(valor[1]) + "." + linea(valor[2]) + "." + linea(valor[3]) + ":" + linea(portus);
+				alioqui responde linea(valor[0]) + "." + linea(valor[1]) + "." + linea(valor[2]) + "." + linea(valor[3]);
+			}
+			loca iacit redefini {
+				int p;
+				!dordo_linearum ip;
+				si ((p = valor.reperi_primum(":")) >= 0) {
+					portus = valor.fragmentum(p + 1, -1).ad_nint32();
+					ip = valor.fragmentum(0, p).scinde('.');
+				} alioqui {
+					portus = 0;
+					ip = valor.scinde('.');
+				}
+				si (ip^.longitudo != 4) iace errores.argumentum_falsum;
+				pro (var i : [0, 3]) ego^.valor[i] = ip^[i].ad_nint32();
+			}
+		}
+		!dordo_datorum valor_purus {
+			adipisce iacit redefini {
+				var resp = crea(dordo_datorum, 1);
+				resp^.longitudo = 6;
+				memoria.exscribe(resp^.data, @valor, 6);
+				responde resp;
+			}
+			loca iacit redefini {
+				si (!valor || valor^.longitudo != 6) iace errores.argumentum_falsum;
+				memoria.exscribe(@ego^.valor, valor^.data, 6);
+			}
+		}
+		functio nihil loca_cyclum(nint16 p) { valor[0] = 127; valor[1] = 0; valor[2] = 0; valor[3] = 1; portus = p; }
+		functio nihil loca_ullum(nint16 p) { valor[0] = 0; valor[1] = 0; valor[2] = 0; valor[3] = 0; portus = p; }
+	}
+	structura adloquium_ipv6 hereditat adloquium {
+		ordo [8] nint16 valor;
+		nint16 portus;
+		structor (~linea ad) iacit { valor_scriptus = ad; }
+		structor (nint16 v0, nint16 v1, nint16 v2, nint16 v3, nint16 v4, nint16 v5, nint16 v6, nint16 v7, nint16 p) { funda portus(p); valor[0] = v0; valor[1] = v1; valor[2] = v2; valor[3] = v3; valor[4] = v4; valor[5] = v5; valor[6] = v6; valor[7] = v7; }
+		convertor (linea) () iacit { responde valor_scriptus; }
+		linea valor_scriptus {
+			adipisce iacit redefini {
+				var ip = "[" +
+					linea(nint32(valor[0]), "0123456789abcdef", 4) + ":" + linea(nint32(valor[1]), "0123456789abcdef", 4) + ":" +
+					linea(nint32(valor[2]), "0123456789abcdef", 4) + ":" + linea(nint32(valor[3]), "0123456789abcdef", 4) + ":" +
+					linea(nint32(valor[4]), "0123456789abcdef", 4) + ":" + linea(nint32(valor[5]), "0123456789abcdef", 4) + ":" +
+					linea(nint32(valor[6]), "0123456789abcdef", 4) + ":" + linea(nint32(valor[7]), "0123456789abcdef", 4) + "]";
+				si (portus) responde ip + ":" + linea(portus);
+				alioqui responde ip;
+			}
+			loca iacit redefini {
+				var ipi = valor.reperi_primum("[");
+				var ipe = valor.reperi_ultimum("]");
+				si (ipi != 0 || ipe < 0) iace errores.argumentum_falsum;
+				var ip = valor.fragmentum(ipi + 1, ipe - ipi - 1).scinde(':');
+				si (valor.longitudo > ipe + 1) {
+					si (valor[ipe + 1] == char(':')) {
+						portus = valor.fragmentum(ipe + 2, -1).ad_nint32();
+					} alioqui iace errores.argumentum_falsum;
+				} alioqui portus = 0;
+				pro (var i : [0, 7]) ego^.valor[i] = 0;
+				int s = 0;
+				pro (var i : ip^) {
+					si (!ip^[i].longitudo) exi;
+					si (ip^[i].reperi_primum(".") >= 0) {
+						si (s > 6) iace errores.argumentum_falsum;
+						adloquium_ipv4 v4(ip^[i]);
+						ego^.valor[s] = (int(v4.valor[0]) << 8) | int(v4.valor[1]);
+						ego^.valor[s + 1] = (int(v4.valor[2]) << 8) | int(v4.valor[3]);
+						s += 2;
+					} alioqui {
+						si (s > 7) iace errores.argumentum_falsum;
+						ego^.valor[s] = ip^[i].ad_nint32(linea.radix_sextadecima);
+						s++;
+					}
+				}
+				s = 7;
+				pro (var i : ~ip^) {
+					si (!ip^[i].longitudo) exi;
+					si (ip^[i].reperi_primum(".") >= 0) {
+						si (s < 1) iace errores.argumentum_falsum;
+						adloquium_ipv4 v4(ip^[i]);
+						ego^.valor[s - 1] = (int(v4.valor[0]) << 8) | int(v4.valor[1]);
+						ego^.valor[s] = (int(v4.valor[2]) << 8) | int(v4.valor[3]);
+						s -= 2;
+					} alioqui {
+						si (s < 0) iace errores.argumentum_falsum;
+						ego^.valor[s] = ip^[i].ad_nint32(linea.radix_sextadecima);
+						s--;
+					}
+				}
+			}
+		}
+		!dordo_datorum valor_purus {
+			adipisce iacit redefini {
+				var resp = crea(dordo_datorum, 1);
+				resp^.longitudo = 18;
+				memoria.exscribe(resp^.data, @valor, 18);
+				responde resp;
+			}
+			loca iacit redefini {
+				si (!valor || valor^.longitudo != 18) iace errores.argumentum_falsum;
+				memoria.exscribe(@ego^.valor, valor^.data, 18);
+			}
+		}
+		functio nihil loca_cyclum(nint16 p) { pro (var i : [0, 6]) valor[i] = 0; valor[7] = 1; portus = p; }
+		functio nihil loca_ullum(nint16 p) { pro (var i : [0, 7]) valor[i] = 0; portus = p; }
+	}
+	structura securitas {
+		!dordo_datorum certificatus;
+		linea dominatus;
+		logicum neglege;
+	}
+	structura status_erroris {
+		nintadl error;
+		nintadl suberror;
+		functio nihil modera() iacit { si (error) iace error, suberror; }
+	}
+
+	genus canale hereditat objectum {
+		functio nihil conjunge(~adloquium adl, @status_erroris status, @contextus.labos labos) iacit virtualis pura;
+		functio nihil conjunge(~adloquium adl, ~securitas sec, @status_erroris status, @contextus.labos labos) iacit virtualis pura;
+		functio nihil mitte(@nihil data, int longitudo, @status_erroris status, @int longitudo_processa, @contextus.labos labos) iacit virtualis pura;
+		functio nihil admitte(@nihil data, int longitudo, @status_erroris status, @int longitudo_processa, @contextus.labos labos) iacit virtualis pura;
+		functio nihil clode(logicum ultime) iacit virtualis pura;
+	}
+	genus attentor hereditat objectum {
+		functio nihil adnecte(~adloquium adl) iacit virtualis pura;
+		functio nihil adnecte(~adloquium adl, ~securitas sec) iacit virtualis pura;
+		functio nihil accipe(@status_erroris status, @!canale can, @!adloquium adl, @contextus.labos labos) iacit virtualis pura;
+		functio nihil clode() iacit virtualis pura;
+	}
+
+	structura virtualis _fabricatio_adloquiorum {
+		functio !adloquium_localis crea_localis(!dordo_datorum data) virtualis iacit {
+			var resp = crea(adloquium_localis);
+			resp^.valor_purus = data;
+			responde resp;
+		}
+		functio !adloquium_ipv4 crea_ipv4(!dordo_datorum data) virtualis iacit {
+			var resp = crea(adloquium_ipv4);
+			resp^.valor_purus = data;
+			responde resp;
+		}
+		functio !adloquium_ipv6 crea_ipv6(!dordo_datorum data) virtualis iacit {
+			var resp = crea(adloquium_ipv6);
+			resp^.valor_purus = data;
+			responde resp;
+		}
+	}
+	dura _fabricatio_adloquiorum {
+		var _fabricatio_adloquiorum globalis;
+	}
+
+	[[importa] "cm_ca"]	functio !attentor _crea_attentorem(~_fabricatio_adloquiorum fa) iacit;
+	[[importa] "cm_la"]	functio !ordo !adloquium _lege_adloquia(~_fabricatio_adloquiorum fa, ~linea dominatus, nint16 portus, @nihil genus_adloquii) iacit;
+
+	[[importa] "cm_cc"]	functio !canale crea_canale() iacit;
+						functio !attentor crea_attentorem() iacit { responde _crea_attentorem(_fabricatio_adloquiorum.globalis); }
+						functio !ordo !adloquium lege_adloquia(~linea dominatus, nint16 portus, @nihil genus_adloquii) iacit { responde _lege_adloquia(_fabricatio_adloquiorum.globalis, dominatus, portus, genus_adloquii); }
+
+	[[importa] "cm_pd"]	functio linea dominatus_ex_punycodice(~linea ln) iacit;
+	[[importa] "cm_dp"]	functio linea dominatus_ad_punycodicem(~linea ln) iacit;
+	[[importa] "cm_pl"]	functio linea linea_ex_punycodice(~linea ln) iacit;
+	[[importa] "cm_lp"]	functio linea linea_ad_punycodicem(~linea ln) iacit;
+	[[importa] "cm_bd"]	functio !dordo_datorum data_ex_base64(~linea ln) iacit;
+	[[importa] "cm_db"]	functio linea data_ad_basem64(@nihil data, int longitudo) iacit;
+}

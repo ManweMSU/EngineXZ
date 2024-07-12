@@ -42,6 +42,7 @@ copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vs
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\mathcolorum.xv     -NVoml  xv_release\_build\com\mathcolorum.xo    xv_lib\mathcolorum.xvm      xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\mathgraphici.xv    -NVoml  xv_release\_build\com\mathgraphici.xo   xv_lib\mathgraphici.xvm     xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\typographica.xv    -NVoml  xv_release\_build\com\typographica.xo   xv_lib\typographica.xvm     xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\communicatio.xv    -NVoml  xv_release\_build\com\communicatio.xo   xv_lib\communicatio.xvm     xv_release\_build\com
 xcopy /BY xv_release\_build\com\* xv_release\_build\windows_%ARCH%\xvcl\
 xcopy /BY xv_lib\*.xvm xv_release\_build\windows_%ARCH%\xvcl\
 estrtab xv_com\locale\ru.txt :binary xv_release\_build\windows_%ARCH%\xv.loc\ru.ecst
