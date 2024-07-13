@@ -28,6 +28,8 @@ CompileList {
 	AAAAAV = "..\\xenv\\xe_stdext.cxx"
 	AAAAAW = "..\\xenv\\xe_tpgrph.cxx"
 	AAAAAX = "..\\xenv\\xe_wndapi.cxx"
+	__A = "..\\xenv\\xe_netapi.cxx"
+	__B = "..\\xenv\\xe_netapi_unix.cxx"
 	AAAAAY = "..\\xexec\\xx_com.cxx"
 	AAAAAZ = "..\\xexec\\xx_com_xe.cxx"
 	AAAABA = "..\\xexec\\xx_machine.cxx"

@@ -64,3 +64,4 @@ constatus rete_connectio_demissa		= "Connection was reset";
 constatus rete_protocollum_falsum		= "Invalid protocol being used";
 constatus rete_assectatio_excessa		= "Request timeout exceeded";
 constatus rete_securitas_falsa			= "Connection's security is compromised";
+constatus rete_adloquium_nullum			= "No address for the domain name";

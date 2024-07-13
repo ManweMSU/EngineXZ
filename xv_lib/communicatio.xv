@@ -19,6 +19,7 @@ spatium errores {
 	[sub_error rete_defectum] constatus rete_protocollum_falsum		= 0x09;
 	[sub_error rete_defectum] constatus rete_assectatio_excessa		= 0x0A;
 	[sub_error rete_defectum] constatus rete_securitas_falsa		= 0x0B;
+	[sub_error rete_defectum] constatus rete_adloquium_nullum		= 0x0C;
 }
 spatium communicatio {
 	structura adloquium hereditat objectum_dynamicum {
@@ -28,8 +29,8 @@ spatium communicatio {
 		!dordo_datorum valor_purus { adipisce iacit virtualis { responde crea(dordo_datorum); } loca iacit virtualis { iace errores.implantatio_nulla; } }
 		functio linea_secura ad_lineam() redefini { proba responde valor_scriptus; }
 	}
-	structura adloquium_localis hereditat adloquium {
-		linea nomen;
+	[[magnitudo] "0:3"] structura adloquium_localis hereditat adloquium {
+		[[positus] "0:2"] linea nomen;
 		structor (~linea nm) iacit { funda nomen(nm); }
 		convertor (linea) () iacit { responde valor_scriptus; }
 		linea valor_scriptus {
@@ -44,9 +45,9 @@ spatium communicatio {
 			}
 		}
 	}
-	structura adloquium_ipv4 hereditat adloquium {
-		ordo [4] nint8 valor;
-		nint16 portus;
+	[[magnitudo] "8:2"] structura adloquium_ipv4 hereditat adloquium {
+		[[positus] "4:1"] ordo [4] nint8 valor;
+		[[positus] "8:1"] nint16 portus;
 		structor (~linea ad) iacit { valor_scriptus = ad; }
 		structor (nint8 v0, nint8 v1, nint8 v2, nint8 v3, nint16 p) { funda portus(p); valor[0] = v0; valor[1] = v1; valor[2] = v2; valor[3] = v3; }
 		convertor (linea) () iacit { responde valor_scriptus; }
@@ -84,9 +85,9 @@ spatium communicatio {
 		functio nihil loca_cyclum(nint16 p) { valor[0] = 127; valor[1] = 0; valor[2] = 0; valor[3] = 1; portus = p; }
 		functio nihil loca_ullum(nint16 p) { valor[0] = 0; valor[1] = 0; valor[2] = 0; valor[3] = 0; portus = p; }
 	}
-	structura adloquium_ipv6 hereditat adloquium {
-		ordo [8] nint16 valor;
-		nint16 portus;
+	[[magnitudo] "24:2"] structura adloquium_ipv6 hereditat adloquium {
+		[[positus] "4:1"] ordo [8] nint16 valor;
+		[[positus] "20:1"] nint16 portus;
 		structor (~linea ad) iacit { valor_scriptus = ad; }
 		structor (nint16 v0, nint16 v1, nint16 v2, nint16 v3, nint16 v4, nint16 v5, nint16 v6, nint16 v7, nint16 p) { funda portus(p); valor[0] = v0; valor[1] = v1; valor[2] = v2; valor[3] = v3; valor[4] = v4; valor[5] = v5; valor[6] = v6; valor[7] = v7; }
 		convertor (linea) () iacit { responde valor_scriptus; }
@@ -172,33 +173,21 @@ spatium communicatio {
 	genus canale hereditat objectum {
 		functio nihil conjunge(~adloquium adl, @status_erroris status, @contextus.labos labos) iacit virtualis pura;
 		functio nihil conjunge(~adloquium adl, ~securitas sec, @status_erroris status, @contextus.labos labos) iacit virtualis pura;
-		functio nihil mitte(@nihil data, int longitudo, @status_erroris status, @int longitudo_processa, @contextus.labos labos) iacit virtualis pura;
-		functio nihil admitte(@nihil data, int longitudo, @status_erroris status, @int longitudo_processa, @contextus.labos labos) iacit virtualis pura;
+		functio nihil mitte(@dordo_datorum data, @status_erroris status, @int longitudo_processa, @contextus.labos labos) iacit virtualis pura;
+		functio nihil admitte(int longitudo, @status_erroris status, @!dordo_datorum data, @contextus.labos labos) iacit virtualis pura;
 		functio nihil clode(logicum ultime) iacit virtualis pura;
 	}
 	genus attentor hereditat objectum {
 		functio nihil adnecte(~adloquium adl) iacit virtualis pura;
 		functio nihil adnecte(~adloquium adl, ~securitas sec) iacit virtualis pura;
-		functio nihil accipe(@status_erroris status, @!canale can, @!adloquium adl, @contextus.labos labos) iacit virtualis pura;
+		functio nihil accipe(int limes, @status_erroris status, @!canale can, @!adloquium adl, @contextus.labos labos) iacit virtualis pura;
 		functio nihil clode() iacit virtualis pura;
 	}
 
 	structura virtualis _fabricatio_adloquiorum {
-		functio !adloquium_localis crea_localis(!dordo_datorum data) virtualis iacit {
-			var resp = crea(adloquium_localis);
-			resp^.valor_purus = data;
-			responde resp;
-		}
-		functio !adloquium_ipv4 crea_ipv4(!dordo_datorum data) virtualis iacit {
-			var resp = crea(adloquium_ipv4);
-			resp^.valor_purus = data;
-			responde resp;
-		}
-		functio !adloquium_ipv6 crea_ipv6(!dordo_datorum data) virtualis iacit {
-			var resp = crea(adloquium_ipv6);
-			resp^.valor_purus = data;
-			responde resp;
-		}
+		functio !adloquium_localis crea_localis() virtualis iacit { var resp = crea(adloquium_localis); responde resp; }
+		functio !adloquium_ipv4 crea_ipv4() virtualis iacit { var resp = crea(adloquium_ipv4); responde resp; }
+		functio !adloquium_ipv6 crea_ipv6() virtualis iacit { var resp = crea(adloquium_ipv6); responde resp; }
 	}
 	dura _fabricatio_adloquiorum {
 		var _fabricatio_adloquiorum globalis;
@@ -217,4 +206,7 @@ spatium communicatio {
 	[[importa] "cm_lp"]	functio linea linea_ad_punycodicem(~linea ln) iacit;
 	[[importa] "cm_bd"]	functio !dordo_datorum data_ex_base64(~linea ln) iacit;
 	[[importa] "cm_db"]	functio linea data_ad_basem64(@nihil data, int longitudo) iacit;
+
+	[[importa] "cm_in"] [[initium]]	functio nihil _ini_retem() iacit;
+	[[importa] "cm_fi"] [[finis]]	functio nihil _fini_retem();
 }
