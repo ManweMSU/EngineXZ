@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <atomic>
 
 #define XE_TRY_INTRO try {
 #define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
@@ -111,6 +112,7 @@ namespace Engine
 		};
 		class NetworkRequestQueue : public Object
 		{
+			static std::atomic_flag _dispatch_control;
 			static SafePointer<Thread> _dispatch_thread;
 			static int _command_in;
 			static int _command_out;
@@ -354,8 +356,13 @@ namespace Engine
 				_local_sync->Open();
 				return result;
 			}
-			void _control_send(uintptr cmd) noexcept
+			bool _control_send(uintptr cmd) noexcept
 			{
+				while (_dispatch_control.test_and_set(std::memory_order_acquire));
+				if (_command_in < 0) {
+					_dispatch_control.clear(std::memory_order_release);
+					return false;
+				}
 				uintptr command[2];
 				command[0] = cmd;
 				command[1] = uintptr(this);
@@ -365,12 +372,15 @@ namespace Engine
 					int wa = write(_command_in, &command, length - wp);
 					if (wa == -1) {
 						auto errid = errno;
-						if (errid == EINTR) continue;
-						else if (errid == EPIPE) break;
-						else abort();
+						if (errid == EINTR) continue; else {
+							_dispatch_control.clear(std::memory_order_release);
+							return false;
+						}
 					} else wp += wa;
 				}
 				Retain();
+				_dispatch_control.clear(std::memory_order_release);
+				return true;
 			}
 			void _common_init(void) { _local_sync = CreateSemaphore(1); if (!_local_sync) throw OutOfMemoryException(); }
 			void _make_sockaddr(DataBlock & dest, NetworkAddress * address, string * ulnk)
@@ -518,7 +528,13 @@ namespace Engine
 							auto errid = errno;
 							if (errid == EINPROGRESS) {
 								_requests.Push(req);
-								_control_send(1);
+								if (!_control_send(1)) {
+									_requests.RemoveLast();
+									_local_sync->Open();
+									if (req.out.status) SetXEError(*req.out.status, 0x8, 0x4);
+									if (req.out.handler) req.out.handler->DoTask(0);
+									return;
+								}
 								break;
 							} else if (errid == EINTR) {
 								continue;
@@ -546,7 +562,13 @@ namespace Engine
 				_local_sync->Wait();
 				try {
 					_requests.Push(req);
-					_control_send(1);
+					if (!_control_send(1)) {
+						_requests.RemoveLast();
+						_local_sync->Open();
+						if (req.out.status) SetXEError(*req.out.status, 0x8, 0x4);
+						if (req.out.handler) req.out.handler->DoTask(0);
+						return;
+					}
 				} catch (...) {
 					_local_sync->Open();
 					throw;
@@ -557,7 +579,10 @@ namespace Engine
 			static void StopDispatch(void) noexcept
 			{
 				if (InterlockedDecrement(_service_refcnt) == 0) {
+					while (_dispatch_control.test_and_set(std::memory_order_acquire));
 					close(_command_in);
+					_command_in = -1;
+					_dispatch_control.clear(std::memory_order_release);
 					_dispatch_thread->Wait();
 				}
 			}
@@ -690,9 +715,10 @@ namespace Engine
 			}
 		};
 
+		std::atomic_flag NetworkRequestQueue::_dispatch_control = ATOMIC_FLAG_INIT;
 		SafePointer<Thread> NetworkRequestQueue::_dispatch_thread;
-		int NetworkRequestQueue::_command_in = 0;
-		int NetworkRequestQueue::_command_out = 0;
+		int NetworkRequestQueue::_command_in = -1;
+		int NetworkRequestQueue::_command_out = -1;
 		uint NetworkRequestQueue::_service_refcnt = 0;
 
 		void NetworkRequestQueue::_allocate_connection(NewNetworkConnection & con, ErrorContext & ectx) noexcept

@@ -176,14 +176,71 @@ spatium communicatio {
 		functio nihil mitte(@dordo_datorum data, @status_erroris status, @int longitudo_processa, @contextus.labos labos) iacit virtualis pura;
 		functio nihil admitte(int longitudo, @status_erroris status, @!dordo_datorum data, @contextus.labos labos) iacit virtualis pura;
 		functio nihil clode(logicum ultime) iacit virtualis pura;
+
+		functio nihil conjunge_synchrone(~adloquium adl) iacit {
+			_labos_synchronizandi lab;
+			status_erroris error;
+			conjunge(adl, @error, @lab);
+			lab.opperire();
+			error.modera();
+		}
+		functio nihil conjunge_synchrone(~adloquium adl, ~securitas sec) iacit {
+			_labos_synchronizandi lab;
+			status_erroris error;
+			conjunge(adl, sec, @error, @lab);
+			lab.opperire();
+			error.modera();
+		}
+		functio int mitte_synchrone(@dordo_datorum data) iacit {
+			_labos_synchronizandi lab;
+			status_erroris error;
+			int resp;
+			mitte(data, @error, @resp, @lab);
+			lab.opperire();
+			error.modera();
+			responde resp;
+		}
+		functio !dordo_datorum admitte_synchrone(int longitudo) iacit {
+			_labos_synchronizandi lab;
+			status_erroris error;
+			!dordo_datorum resp;
+			admitte(longitudo, @error, @resp, @lab);
+			lab.opperire();
+			error.modera();
+			responde resp;
+		}
 	}
 	genus attentor hereditat objectum {
 		functio nihil adnecte(~adloquium adl) iacit virtualis pura;
 		functio nihil adnecte(~adloquium adl, ~securitas sec) iacit virtualis pura;
 		functio nihil accipe(int limes, @status_erroris status, @!canale can, @!adloquium adl, @contextus.labos labos) iacit virtualis pura;
 		functio nihil clode() iacit virtualis pura;
+
+		functio !canale accipe_synchrone() iacit {
+			_labos_synchronizandi lab;
+			status_erroris error;
+			!canale resp;
+			accipe(1, @error, @resp, nullus, @lab);
+			lab.opperire();
+			error.modera();
+			responde resp;
+		}
+		functio !canale accipe_synchrone(~!adloquium adloquium_novum) iacit {
+			_labos_synchronizandi lab;
+			status_erroris error;
+			!canale resp;
+			accipe(1, @error, @resp, @adloquium_novum, @lab);
+			lab.opperire();
+			error.modera();
+			responde resp;
+		}
 	}
 
+	genus _labos_synchronizandi hereditat contextus.labos_opperitus {
+		structor () iacit {}
+		functio nihil exeque(@objectum) redefini { valor_publicus_signale_opperirendi^.erige(); }
+		functio nihil opperire() { valor_publicus_signale_opperirendi^.opperire(); }
+	}
 	structura virtualis _fabricatio_adloquiorum {
 		functio !adloquium_localis crea_localis() virtualis iacit { var resp = crea(adloquium_localis); responde resp; }
 		functio !adloquium_ipv4 crea_ipv4() virtualis iacit { var resp = crea(adloquium_ipv4); responde resp; }
@@ -192,6 +249,51 @@ spatium communicatio {
 	dura _fabricatio_adloquiorum {
 		var _fabricatio_adloquiorum globalis;
 	}
+	genus _labos_conjungendi hereditat contextus.labos {
+		status_erroris valor_publicus_status_operationis;
+		structor () {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_conjungendi lab, @canale cnl, ~adloquium adl, ~securitas sec) iacit {
+			cnl^.conjunge(adl, sec, @lab^.valor_publicus_status_operationis, lab);
+		}
+		classis functio nihil age(@_labos_conjungendi lab, @canale cnl, ~adloquium adl) iacit {
+			cnl^.conjunge(adl, @lab^.valor_publicus_status_operationis, lab);
+		}
+	}
+	genus _labos_mittendi hereditat contextus.labos {
+		status_erroris valor_publicus_status_operationis;
+		int valor_publicus_longitudo_missa;
+		structor () {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_mittendi lab, @canale cnl, @dordo_datorum data) iacit {
+			cnl^.mitte(data, @lab^.valor_publicus_status_operationis, @lab^.valor_publicus_longitudo_missa, lab);
+		}
+	}
+	genus _labos_admittendi hereditat contextus.labos {
+		status_erroris valor_publicus_status_operationis;
+		!dordo_datorum valor_publicus_data_recepta;
+		structor () {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_admittendi lab, @canale cnl, int longitudo) iacit {
+			cnl^.admitte(longitudo, @lab^.valor_publicus_status_operationis, @lab^.valor_publicus_data_recepta, lab);
+		}
+	}
+	genus _labos_accipendi hereditat contextus.labos {
+		status_erroris valor_publicus_status_operationis;
+		!canale valor_publicus_canale_novum;
+		!adloquium valor_publicus_adloquium_novum;
+		structor () {}
+		functio nihil exeque(@objectum ctx) redefini {}
+		classis functio nihil age(@_labos_accipendi lab, @attentor att, int limes) iacit {
+			att^.accipe(limes, @lab^.valor_publicus_status_operationis, @lab^.valor_publicus_canale_novum, @lab^.valor_publicus_adloquium_novum, lab);
+		}
+	}
+
+	praeforma operator conjunge_canale(C, A) { .communicatio._labos_conjungendi.age(.communicatio._labos_conjungendi ## { $_ }, $C, $A) }
+	praeforma operator conjunge_canale_secure(C, A, S) { .communicatio._labos_conjungendi.age(.communicatio._labos_conjungendi ## { $_ }, $C, $A, $S) }
+	praeforma operator mitte_data(C, D) { .communicatio._labos_mittendi.age(.communicatio._labos_mittendi ## { $_ }, $C, $D) }
+	praeforma operator admitte_data(C, L) { .communicatio._labos_admittendi.age(.communicatio._labos_admittendi ## { $_ }, $C, $L) }
+	praeforma operator accipe_canale(A, L) { .communicatio._labos_accipendi.age(.communicatio._labos_accipendi ## { $_ }, $A, $L) }
 
 	[[importa] "cm_ca"]	functio !attentor _crea_attentorem(~_fabricatio_adloquiorum fa) iacit;
 	[[importa] "cm_la"]	functio !ordo !adloquium _lege_adloquia(~_fabricatio_adloquiorum fa, ~linea dominatus, nint16 portus, @nihil genus_adloquii) iacit;
