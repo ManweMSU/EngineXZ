@@ -2,6 +2,7 @@
 
 #include "xe_netapi.h"
 #include "xe_netapi_unix.h"
+#include "xe_netapi_macosx.h"
 
 #define XE_TRY_INTRO try {
 #define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
@@ -35,9 +36,10 @@ namespace Engine
 			virtual void ConnectB(NetworkAddress * address, NetworkSecurityDescriptor & sec, ErrorContext * error, IDispatchTask * hdlr, ErrorContext & ectx) noexcept override
 			{
 				if (_interface) _interface->ConnectB(address, sec, error, hdlr, ectx); else {
-
-					// TODO: IMPLEMENT
-
+					XE_TRY_INTRO
+					_interface = CreateNetworkChannelS();
+					XE_TRY_OUTRO()
+					_interface->ConnectB(address, sec, error, hdlr, ectx);
 				}
 			}
 			virtual void Send(DataBlock * data, ErrorContext * error, int * sent, IDispatchTask * hdlr, ErrorContext & ectx) noexcept override
@@ -73,12 +75,13 @@ namespace Engine
 					_interface->BindA(address, ectx);
 				}
 			}
-			virtual void BindB(NetworkAddress * address, NetworkSecurityDescriptor & sec, ErrorContext & ectx) noexcept override
+			virtual void BindB(NetworkAddress * address, NetworkIdentityDescriptor & idesc, ErrorContext & ectx) noexcept override
 			{
-				if (_interface) _interface->BindB(address, sec, ectx); else {
-
-					// TODO: IMPLEMENT
-
+				if (_interface) _interface->BindB(address, idesc, ectx); else {
+					XE_TRY_INTRO
+					_interface = CreateNetworkListenerS(_factory);
+					XE_TRY_OUTRO()
+					_interface->BindB(address, idesc, ectx);
 				}
 			}
 			virtual void Accept(int limit, ErrorContext * error, SafePointer<INetworkChannel> * channel, SafePointer<NetworkAddress> * address, IDispatchTask * hdlr, ErrorContext & ectx) noexcept override
@@ -109,9 +112,7 @@ namespace Engine
 			virtual ~NetworkAPI(void) override {}
 			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				if (string::Compare(routine_name, L"cm_in") == 0) return reinterpret_cast<const void *>(&_network_init);
-				if (string::Compare(routine_name, L"cm_fi") == 0) return reinterpret_cast<const void *>(&NetworkEngineStop);
-				if (string::Compare(routine_name, L"cm_dp") < 0) {
+				if (string::Compare(routine_name, L"cm_fi") < 0) {
 					if (string::Compare(routine_name, L"cm_cc") < 0) {
 						if (string::Compare(routine_name, L"cm_ca") < 0) {
 							if (string::Compare(routine_name, L"cm_bd") == 0) return reinterpret_cast<const void *>(&_convert_base64_to_data);
@@ -122,15 +123,23 @@ namespace Engine
 						if (string::Compare(routine_name, L"cm_db") < 0) {
 							if (string::Compare(routine_name, L"cm_cc") == 0) return reinterpret_cast<const void *>(&_create_channel);
 						} else {
-							if (string::Compare(routine_name, L"cm_db") == 0) return reinterpret_cast<const void *>(&_convert_data_to_base64);
+							if (string::Compare(routine_name, L"cm_dp") < 0) {
+								if (string::Compare(routine_name, L"cm_db") == 0) return reinterpret_cast<const void *>(&_convert_data_to_base64);
+							} else {
+								if (string::Compare(routine_name, L"cm_dp") == 0) return reinterpret_cast<const void *>(&_convert_domain_to_punycode);
+							}
 						}
 					}
 				} else {
 					if (string::Compare(routine_name, L"cm_lp") < 0) {
-						if (string::Compare(routine_name, L"cm_la") < 0) {
-							if (string::Compare(routine_name, L"cm_dp") == 0) return reinterpret_cast<const void *>(&_convert_domain_to_punycode);
+						if (string::Compare(routine_name, L"cm_in") < 0) {
+							if (string::Compare(routine_name, L"cm_fi") == 0) return reinterpret_cast<const void *>(&NetworkEngineStop);
 						} else {
-							if (string::Compare(routine_name, L"cm_la") == 0) return reinterpret_cast<const void *>(&GetNetworkAddresses);
+							if (string::Compare(routine_name, L"cm_la") < 0) {
+								if (string::Compare(routine_name, L"cm_in") == 0) return reinterpret_cast<const void *>(&_network_init);
+							} else {
+								if (string::Compare(routine_name, L"cm_la") == 0) return reinterpret_cast<const void *>(&GetNetworkAddresses);
+							}
 						}
 					} else {
 						if (string::Compare(routine_name, L"cm_pd") < 0) {

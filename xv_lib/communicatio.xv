@@ -32,6 +32,7 @@ spatium communicatio {
 	[[magnitudo] "0:3"] structura adloquium_localis hereditat adloquium {
 		[[positus] "0:2"] linea nomen;
 		structor (~linea nm) iacit { funda nomen(nm); }
+		structor (@char nm) iacit { funda nomen(nm); }
 		convertor (linea) () iacit { responde valor_scriptus; }
 		linea valor_scriptus {
 			adipisce iacit redefini { responde nomen; }
@@ -163,6 +164,12 @@ spatium communicatio {
 		!dordo_datorum certificatus;
 		linea dominatus;
 		logicum neglege;
+		structor (~linea dom) iacit { funda dominatus(dom); funda neglege(non); }
+		structor (@char dom) iacit { funda dominatus(dom); funda neglege(non); }
+	}
+	structura indentitas {
+		!dordo_datorum data;
+		linea clavis;
 	}
 	structura status_erroris {
 		nintadl error;
@@ -178,59 +185,59 @@ spatium communicatio {
 		functio nihil clode(logicum ultime) iacit virtualis pura;
 
 		functio nihil conjunge_synchrone(~adloquium adl) iacit {
-			_labos_synchronizandi lab;
+			var lab = crea(_labos_synchronizandi);
 			status_erroris error;
-			conjunge(adl, @error, @lab);
-			lab.opperire();
+			conjunge(adl, @error, lab);
+			lab^.opperire();
 			error.modera();
 		}
 		functio nihil conjunge_synchrone(~adloquium adl, ~securitas sec) iacit {
-			_labos_synchronizandi lab;
+			var lab = crea(_labos_synchronizandi);
 			status_erroris error;
-			conjunge(adl, sec, @error, @lab);
-			lab.opperire();
+			conjunge(adl, sec, @error, lab);
+			lab^.opperire();
 			error.modera();
 		}
 		functio int mitte_synchrone(@dordo_datorum data) iacit {
-			_labos_synchronizandi lab;
+			var lab = crea(_labos_synchronizandi);
 			status_erroris error;
 			int resp;
-			mitte(data, @error, @resp, @lab);
-			lab.opperire();
+			mitte(data, @error, @resp, lab);
+			lab^.opperire();
 			error.modera();
 			responde resp;
 		}
 		functio !dordo_datorum admitte_synchrone(int longitudo) iacit {
-			_labos_synchronizandi lab;
+			var lab = crea(_labos_synchronizandi);
 			status_erroris error;
 			!dordo_datorum resp;
-			admitte(longitudo, @error, @resp, @lab);
-			lab.opperire();
+			admitte(longitudo, @error, @resp, lab);
+			lab^.opperire();
 			error.modera();
 			responde resp;
 		}
 	}
 	genus attentor hereditat objectum {
 		functio nihil adnecte(~adloquium adl) iacit virtualis pura;
-		functio nihil adnecte(~adloquium adl, ~securitas sec) iacit virtualis pura;
+		functio nihil adnecte(~adloquium adl, ~indentitas ind) iacit virtualis pura;
 		functio nihil accipe(int limes, @status_erroris status, @!canale can, @!adloquium adl, @contextus.labos labos) iacit virtualis pura;
 		functio nihil clode() iacit virtualis pura;
 
 		functio !canale accipe_synchrone() iacit {
-			_labos_synchronizandi lab;
+			var lab = crea(_labos_synchronizandi);
 			status_erroris error;
 			!canale resp;
-			accipe(1, @error, @resp, nullus, @lab);
-			lab.opperire();
+			accipe(1, @error, @resp, nullus, lab);
+			lab^.opperire();
 			error.modera();
 			responde resp;
 		}
 		functio !canale accipe_synchrone(~!adloquium adloquium_novum) iacit {
-			_labos_synchronizandi lab;
+			var lab = crea(_labos_synchronizandi);
 			status_erroris error;
 			!canale resp;
-			accipe(1, @error, @resp, @adloquium_novum, @lab);
-			lab.opperire();
+			accipe(1, @error, @resp, @adloquium_novum, lab);
+			lab^.opperire();
 			error.modera();
 			responde resp;
 		}

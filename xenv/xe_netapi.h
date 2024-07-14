@@ -38,6 +38,11 @@ namespace Engine
 			string Domain;
 			bool IgnoreSecurity;
 		};
+		struct NetworkIdentityDescriptor
+		{
+			SafePointer<DataBlock> Data;
+			string Password;
+		};
 
 		class INetworkChannel : public Object
 		{
@@ -52,7 +57,7 @@ namespace Engine
 		{
 		public:
 			virtual void BindA(NetworkAddress * address, ErrorContext & ectx) noexcept = 0;
-			virtual void BindB(NetworkAddress * address, NetworkSecurityDescriptor & sec, ErrorContext & ectx) noexcept = 0;
+			virtual void BindB(NetworkAddress * address, NetworkIdentityDescriptor & idesc, ErrorContext & ectx) noexcept = 0;
 			virtual void Accept(int limit, ErrorContext * error, SafePointer<INetworkChannel> * channel, SafePointer<NetworkAddress> * address, IDispatchTask * hdlr, ErrorContext & ectx) noexcept = 0;
 			virtual void Close(ErrorContext & ectx) noexcept = 0;
 		};
