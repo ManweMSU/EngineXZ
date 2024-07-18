@@ -3,6 +3,8 @@
 #include "xe_netapi.h"
 #include "xe_netapi_unix.h"
 #include "xe_netapi_macosx.h"
+#include "xe_netapi_windows.h"
+#include "xe_netapi_schannel.h"
 
 #define XE_TRY_INTRO try {
 #define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
@@ -28,7 +30,7 @@ namespace Engine
 			{
 				if (_interface) _interface->ConnectA(address, error, hdlr, ectx); else {
 					XE_TRY_INTRO
-					_interface = CreateNetworkChannel();
+					_interface = CreateNetworkChannel(address);
 					XE_TRY_OUTRO()
 					_interface->ConnectA(address, error, hdlr, ectx);
 				}
@@ -37,7 +39,7 @@ namespace Engine
 			{
 				if (_interface) _interface->ConnectB(address, sec, error, hdlr, ectx); else {
 					XE_TRY_INTRO
-					_interface = CreateNetworkChannelS();
+					_interface = CreateNetworkChannelS(address);
 					XE_TRY_OUTRO()
 					_interface->ConnectB(address, sec, error, hdlr, ectx);
 				}
@@ -70,7 +72,7 @@ namespace Engine
 			{
 				if (_interface) _interface->BindA(address, ectx); else {
 					XE_TRY_INTRO
-					_interface = CreateNetworkListener(_factory);
+					_interface = CreateNetworkListener(address, _factory);
 					XE_TRY_OUTRO()
 					_interface->BindA(address, ectx);
 				}
@@ -79,7 +81,7 @@ namespace Engine
 			{
 				if (_interface) _interface->BindB(address, idesc, ectx); else {
 					XE_TRY_INTRO
-					_interface = CreateNetworkListenerS(_factory);
+					_interface = CreateNetworkListenerS(address, _factory);
 					XE_TRY_OUTRO()
 					_interface->BindB(address, idesc, ectx);
 				}
@@ -157,6 +159,12 @@ namespace Engine
 			}
 			virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }
 		};
+
+		string & NetworkAddressLocal::Name(void) noexcept { return *reinterpret_cast<string *>(reinterpret_cast<char *>(this) + 2 * sizeof(void*)); }
+		uint32 & NetworkAddressIPv4::IP(void) noexcept { return *reinterpret_cast<uint32 *>(reinterpret_cast<char *>(this) + 2 * sizeof(void*)); }
+		uint16 & NetworkAddressIPv4::Port(void) noexcept { return *reinterpret_cast<uint16 *>(reinterpret_cast<char *>(this) + 2 * sizeof(void*) + 4); }
+		uint32 & NetworkAddressIPv6::IP(void) noexcept { return *reinterpret_cast<uint32 *>(reinterpret_cast<char *>(this) + 2 * sizeof(void*)); }
+		uint16 & NetworkAddressIPv6::Port(void) noexcept { return *reinterpret_cast<uint16 *>(reinterpret_cast<char *>(this) + 2 * sizeof(void*) + 16); }
 
 		void ClearXEError(ErrorContext & ectx) noexcept { ectx.error_code = ectx.error_subcode = 0; }
 		void SetXEError(ErrorContext & ectx, int error, int suberror) noexcept { ectx.error_code = error; ectx.error_subcode = suberror; }

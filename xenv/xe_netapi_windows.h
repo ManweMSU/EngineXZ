@@ -2,18 +2,11 @@
 
 #include "xe_netapi.h"
 
-#ifdef ENGINE_UNIX
+#ifdef ENGINE_WINDOWS
 namespace Engine
 {
 	namespace XE
 	{
-		void SetPosixError(int error, ErrorContext & ectx) noexcept;
-		void SetPosixError(ErrorContext & ectx) noexcept;
-		void SetDNSError(int error, ErrorContext & ectx) noexcept;
-
-		void SocketAddressInit(DataBlock & dest, NetworkAddress * address, string * ulnk);
-		void SocketAddressRead(void * src, NetworkAddressFactory * factory, NetworkAddress ** address);
-
 		void NetworkEngineInit(void);
 		void NetworkEngineStop(void) noexcept;
 		SafePointer<INetworkChannel> CreateNetworkChannel(NetworkAddress * address);

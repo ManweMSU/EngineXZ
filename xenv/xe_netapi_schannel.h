@@ -2,7 +2,7 @@
 
 #include "xe_netapi.h"
 
-#ifdef ENGINE_MACOSX
+#ifdef ENGINE_WINDOWS
 namespace Engine
 {
 	namespace XE

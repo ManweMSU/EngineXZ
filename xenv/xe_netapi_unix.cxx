@@ -66,6 +66,8 @@ namespace Engine
 			else if (error == ENXIO) SetXEError(ectx, 0x06, 8);
 			else if (error == EFBIG) SetXEError(ectx, 0x06, 18);
 			else if (error == EBUSY) SetXEError(ectx, 0x06, 5);
+			else if (error == EISCONN) SetXEError(ectx, 0x05, 0);
+			else if (error == ESHUTDOWN) SetXEError(ectx, 0x05, 0);
 			else SetXEError(ectx, 0x08, 0x01);
 		}
 		void SetPosixError(ErrorContext & ectx) noexcept { SetPosixError(errno, ectx); }
@@ -93,7 +95,7 @@ namespace Engine
 					ZeroMemory(&sa.sun_path, sizeof(sa.sun_path));
 					string path;
 					SafePointer<DataBlock> ascii;
-					if (addr.Name[0] == L'/') path = addr.Name; else path = L"/tmp/" + addr.Name;
+					if (addr.Name()[0] == L'/') path = addr.Name(); else path = L"/tmp/" + addr.Name();
 					ascii = path.EncodeSequence(Encoding::ANSI, true);
 					if (ulnk) *ulnk = path;
 					MemoryCopy(&sa.sun_path, ascii->GetBuffer(), min(ascii->Length(), int(sizeof(sa.sun_path))));
@@ -103,8 +105,8 @@ namespace Engine
 					auto & sa = *reinterpret_cast<sockaddr_in *>(dest.GetBuffer());
 					sa.sin_len = sizeof(sockaddr_in);
 					sa.sin_family = AF_INET;
-					sa.sin_port = Network::InverseEndianess(addr.Port);
-					MemoryCopy(&sa.sin_addr, &addr.IP, 4);
+					sa.sin_port = Network::InverseEndianess(addr.Port());
+					MemoryCopy(&sa.sin_addr, &addr.IP(), 4);
 					ZeroMemory(&sa.sin_zero, sizeof(sa.sin_zero));
 				} else if (reinterpret_cast<ClassSymbol *>(address->GetType())->GetClassName() == L"communicatio.adloquium_ipv6") {
 					auto & addr = *reinterpret_cast<NetworkAddressIPv6 *>(address);
@@ -112,9 +114,9 @@ namespace Engine
 					auto & sa = *reinterpret_cast<sockaddr_in6 *>(dest.GetBuffer());
 					sa.sin6_len = sizeof(sockaddr_in6);
 					sa.sin6_family = AF_INET6;
-					sa.sin6_port = Network::InverseEndianess(addr.Port);
+					sa.sin6_port = Network::InverseEndianess(addr.Port());
 					sa.sin6_flowinfo = 0;
-					MemoryCopy(&sa.sin6_addr, &addr.IP, 16);
+					MemoryCopy(&sa.sin6_addr, &addr.IP(), 16);
 					for (int i = 0; i < 16; i += 2) swap(sa.sin6_addr.s6_addr[i], sa.sin6_addr.s6_addr[i + 1]);
 					sa.sin6_scope_id = 0;
 				} else throw Exception();
@@ -129,15 +131,15 @@ namespace Engine
 				auto address = factory->CreateLocal(ectx);
 				if (ectx.error_code) throw OutOfMemoryException();
 				auto & sa_local = *reinterpret_cast<const sockaddr_un *>(src);
-				address->Name = string(&sa_local.sun_path, sizeof(sa_local.sun_path), Encoding::UTF8);
+				address->Name() = string(&sa_local.sun_path, sizeof(sa_local.sun_path), Encoding::UTF8);
 				address->Retain();
 				*dest = address;
 			} else if (sa.sa_family == PF_INET) {
 				auto address = factory->CreateIPv4(ectx);
 				if (ectx.error_code) throw OutOfMemoryException();
 				auto & sa_ipv4 = *reinterpret_cast<const sockaddr_in *>(src);
-				MemoryCopy(&address->IP, &sa_ipv4.sin_addr, 4);
-				address->Port = Network::InverseEndianess(sa_ipv4.sin_port);
+				MemoryCopy(&address->IP(), &sa_ipv4.sin_addr, 4);
+				address->Port() = Network::InverseEndianess(sa_ipv4.sin_port);
 				address->Retain();
 				*dest = address;
 			} else if (sa.sa_family == PF_INET6) {
@@ -145,8 +147,8 @@ namespace Engine
 				if (ectx.error_code) throw OutOfMemoryException();
 				auto & sa_ipv6 = *reinterpret_cast<sockaddr_in6 *>(src);
 				for (int i = 0; i < 16; i += 2) swap(sa_ipv6.sin6_addr.s6_addr[i], sa_ipv6.sin6_addr.s6_addr[i + 1]);
-				MemoryCopy(&address->IP, &sa_ipv6.sin6_addr, 16);
-				address->Port = Network::InverseEndianess(sa_ipv6.sin6_port);
+				MemoryCopy(&address->IP(), &sa_ipv6.sin6_addr, 16);
+				address->Port() = Network::InverseEndianess(sa_ipv6.sin6_port);
 				address->Retain();
 				*dest = address;
 			} else throw InvalidStateException();
@@ -624,13 +626,18 @@ namespace Engine
 			static void CreateDispatch(void)
 			{
 				if (InterlockedIncrement(_service_refcnt) == 1) {
-					int p[2];
-					if (pipe(p) == -1) throw OutOfMemoryException();
-					_command_in = p[1];
-					_command_out = p[0];
-					if (fcntl(_command_out, F_SETFL, O_NONBLOCK) == -1) { close(_command_in); close(_command_out); throw OutOfMemoryException(); }
-					_dispatch_thread = CreateThread(_dispatch);
-					if (!_dispatch_thread) { close(_command_in); close(_command_out); throw OutOfMemoryException(); }
+					try {
+						int p[2];
+						if (pipe(p) == -1) throw OutOfMemoryException();
+						_command_in = p[1];
+						_command_out = p[0];
+						if (fcntl(_command_out, F_SETFL, O_NONBLOCK) == -1) { close(_command_in); close(_command_out); throw OutOfMemoryException(); }
+						_dispatch_thread = CreateThread(_dispatch);
+						if (!_dispatch_thread) { close(_command_in); close(_command_out); throw OutOfMemoryException(); }
+					} catch (...) {
+						InterlockedDecrement(_service_refcnt);
+						throw;
+					}
 				}
 			}
 		};
@@ -774,8 +781,8 @@ namespace Engine
 
 		void NetworkEngineInit(void) { NetworkRequestQueue::CreateDispatch(); }
 		void NetworkEngineStop(void) noexcept { NetworkRequestQueue::StopDispatch(); }
-		SafePointer<INetworkChannel> CreateNetworkChannel(void) { return new UnixNetworkChannel; }
-		SafePointer<INetworkListener> CreateNetworkListener(NetworkAddressFactory & factory) { return new UnixNetworkListener(factory); }
+		SafePointer<INetworkChannel> CreateNetworkChannel(NetworkAddress * address) { return new UnixNetworkChannel; }
+		SafePointer<INetworkListener> CreateNetworkListener(NetworkAddress * address, NetworkAddressFactory & factory) { return new UnixNetworkListener(factory); }
 		SafePointer< ObjectArray<NetworkAddress> > GetNetworkAddresses(NetworkAddressFactory & factory, const string & domain, uint16 port, const ClassSymbol * nns, ErrorContext & ectx) noexcept
 		{
 			XE_TRY_INTRO
@@ -803,16 +810,16 @@ namespace Engine
 						auto addr = factory.CreateIPv4(ectx);
 						if (ectx.error_code) { freeaddrinfo(info); return 0; }
 						sockaddr_in * ipv4 = reinterpret_cast<sockaddr_in *>(current->ai_addr);
-						MemoryCopy(&addr->IP, &ipv4->sin_addr, 4);
-						addr->Port = Network::InverseEndianess(ipv4->sin_port);
+						MemoryCopy(&addr->IP(), &ipv4->sin_addr, 4);
+						addr->Port() = Network::InverseEndianess(ipv4->sin_port);
 						result->Append(addr);
 					} else if (current->ai_family == AF_INET6) {
 						auto addr = factory.CreateIPv6(ectx);
 						if (ectx.error_code) { freeaddrinfo(info); return 0; }
 						sockaddr_in6 * ipv6 = reinterpret_cast<sockaddr_in6 *>(current->ai_addr);
 						for (int i = 0; i < 16; i += 2) swap(ipv6->sin6_addr.s6_addr[i], ipv6->sin6_addr.s6_addr[i + 1]);
-						MemoryCopy(&addr->IP, &ipv6->sin6_addr, 16);
-						addr->Port = Network::InverseEndianess(ipv6->sin6_port);
+						MemoryCopy(&addr->IP(), &ipv6->sin6_addr, 16);
+						addr->Port() = Network::InverseEndianess(ipv6->sin6_port);
 						result->Append(addr);
 					}
 					current = current->ai_next;

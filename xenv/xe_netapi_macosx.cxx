@@ -7,6 +7,7 @@
 #include "xe_netapi_unix.h"
 
 #include <PlatformDependent/CocoaInterop2.h>
+#include <Network/Punycode.h>
 
 #define XE_TRY_INTRO try {
 #define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
@@ -62,8 +63,9 @@ namespace Engine
 				VerifyDesc(const NetworkSecurityDescriptor & sec) : _host(1), _root(0), _root_array(0)
 				{
 					if (sec.Domain.Length()) {
-						_host.SetLength(sec.Domain.GetEncodedLength(Encoding::UTF8) + 1);
-						sec.Domain.Encode(_host.GetBuffer(), Encoding::UTF8, true);
+						auto punycoded = Network::DomainNameToPunycode(sec.Domain);
+						_host.SetLength(punycoded.GetEncodedLength(Encoding::UTF8) + 1);
+						punycoded.Encode(_host.GetBuffer(), Encoding::UTF8, true);
 					}
 					if (sec.Certificate) {
 						auto data_ref = CFDataCreateWithBytesNoCopy(0, sec.Certificate->GetBuffer(), sec.Certificate->Length(), kCFAllocatorNull);
@@ -635,8 +637,8 @@ namespace Engine
 			}
 		};
 
-		SafePointer<INetworkChannel> CreateNetworkChannelS(void) { return new NWNetworkChannel; }
-		SafePointer<INetworkListener> CreateNetworkListenerS(NetworkAddressFactory & factory) { return new NWNetworkListener(factory); }
+		SafePointer<INetworkChannel> CreateNetworkChannelS(NetworkAddress * address) { return new NWNetworkChannel; }
+		SafePointer<INetworkListener> CreateNetworkListenerS(NetworkAddress * address, NetworkAddressFactory & factory) { return new NWNetworkListener(factory); }
 	}
 }
 #endif

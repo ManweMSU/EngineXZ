@@ -1,10 +1,10 @@
 @echo off
-ertbuild xcon\xc.ertproj -Nar %ARCH%
-ertbuild xx_xx\xx.ertproj -Nar %ARCH%
-ertbuild xx_xxf\xxf.ertproj -Nar %ARCH%
-ertbuild xx_xxsc\xxsc.ertproj -Nar %ARCH%
-ertbuild shellex_windows\extension\xxcomex.ertproj -Nar %ARCH%
-ertbuild shellex_windows\installer\es_installer.ertproj -Nar %ARCH%
+ertbuild xcon\xc.ertproj -Nac %ARCH% %MODE%
+ertbuild xx_xx\xx.ertproj -Nac %ARCH% %MODE%
+ertbuild xx_xxf\xxf.ertproj -Nac %ARCH% %MODE%
+ertbuild xx_xxsc\xxsc.ertproj -Nac %ARCH% %MODE%
+ertbuild shellex_windows\extension\xxcomex.ertproj -Nac %ARCH% %MODE%
+ertbuild shellex_windows\installer\es_installer.ertproj -Nac %ARCH% %MODE%
 mkdir xx_release\_build
 mkdir xx_release\_build\com
 del /S /Q xx_release\_build\windows_%ARCH%\*
@@ -14,17 +14,17 @@ mkdir xx_release\_build\windows_%ARCH%\xx
 mkdir xx_release\_build\windows_%ARCH%\xxcl
 mkdir xx_release\_build\windows_%ARCH%\xxi
 
-copy /B xcon\_build\windows_%ARCH%_release\xc.exe xx_release\_build\windows_%ARCH%\xc\xc.exe
-copy /B xcon\_build\windows_%ARCH%_release\ertwndfx.dll xx_release\_build\windows_%ARCH%\xc\ertwndfx.dll
+copy /B xcon\_build\windows_%ARCH%_%MODE%\xc.exe xx_release\_build\windows_%ARCH%\xc\xc.exe
+copy /B xcon\_build\windows_%ARCH%_%MODE%\ertwndfx.dll xx_release\_build\windows_%ARCH%\xc\ertwndfx.dll
 copy /B xcon\xc.ini xx_release\_build\windows_%ARCH%\xc\xc.ini
-copy /B xx_xx\_build\windows_%ARCH%_release\xx.exe xx_release\_build\windows_%ARCH%\xx\xx.exe
+copy /B xx_xx\_build\windows_%ARCH%_%MODE%\xx.exe xx_release\_build\windows_%ARCH%\xx\xx.exe
 copy /B xx_xx\xx_win.ini xx_release\_build\windows_%ARCH%\xx\xx.ini
 copy /B xx_xx\xe.ini xx_release\_build\windows_%ARCH%\xe.ini
-copy /B xx_xxf\_build\windows_%ARCH%_release\xxf.exe xx_release\_build\windows_%ARCH%\xx\xxf.exe
-copy /B xx_xxf\_build\windows_%ARCH%_release\ertwndfx.dll xx_release\_build\windows_%ARCH%\xx\ertwndfx.dll
-copy /B xx_xxsc\_build\windows_%ARCH%_release\xxsc.exe xx_release\_build\windows_%ARCH%\xxsc.exe
-copy /B shellex_windows\extension\_build\windows_%ARCH%_release\xxcomex.dll xx_release\_build\windows_%ARCH%\xxcomex.dll
-copy /B shellex_windows\installer\_build\windows_%ARCH%_release\es_installer.exe xx_release\_build\windows_%ARCH%\es_installer.exe
+copy /B xx_xxf\_build\windows_%ARCH%_%MODE%\xxf.exe xx_release\_build\windows_%ARCH%\xx\xxf.exe
+copy /B xx_xxf\_build\windows_%ARCH%_%MODE%\ertwndfx.dll xx_release\_build\windows_%ARCH%\xx\ertwndfx.dll
+copy /B xx_xxsc\_build\windows_%ARCH%_%MODE%\xxsc.exe xx_release\_build\windows_%ARCH%\xxsc.exe
+copy /B shellex_windows\extension\_build\windows_%ARCH%_%MODE%\xxcomex.dll xx_release\_build\windows_%ARCH%\xxcomex.dll
+copy /B shellex_windows\installer\_build\windows_%ARCH%_%MODE%\es_installer.exe xx_release\_build\windows_%ARCH%\es_installer.exe
 
 xv_release\_build\windows_%XVC_ARCH%\xv xv_lib\errores.ru.xv    -NVo xx_release\_build\com\errores.ru.xo
 xv_release\_build\windows_%XVC_ARCH%\xv xv_lib\errores.en.xv    -NVo xx_release\_build\com\errores.en.xo

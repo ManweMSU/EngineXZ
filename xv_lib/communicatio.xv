@@ -29,8 +29,8 @@ spatium communicatio {
 		!dordo_datorum valor_purus { adipisce iacit virtualis { responde crea(dordo_datorum); } loca iacit virtualis { iace errores.implantatio_nulla; } }
 		functio linea_secura ad_lineam() redefini { proba responde valor_scriptus; }
 	}
-	[[magnitudo] "0:3"] structura adloquium_localis hereditat adloquium {
-		[[positus] "0:2"] linea nomen;
+	structura adloquium_localis hereditat adloquium {
+		linea nomen;
 		structor (~linea nm) iacit { funda nomen(nm); }
 		structor (@char nm) iacit { funda nomen(nm); }
 		convertor (linea) () iacit { responde valor_scriptus; }
@@ -46,9 +46,9 @@ spatium communicatio {
 			}
 		}
 	}
-	[[magnitudo] "8:2"] structura adloquium_ipv4 hereditat adloquium {
-		[[positus] "4:1"] ordo [4] nint8 valor;
-		[[positus] "8:1"] nint16 portus;
+	structura adloquium_ipv4 hereditat adloquium {
+		ordo [4] nint8 valor;
+		nint16 portus;
 		structor (~linea ad) iacit { valor_scriptus = ad; }
 		structor (nint8 v0, nint8 v1, nint8 v2, nint8 v3, nint16 p) { funda portus(p); valor[0] = v0; valor[1] = v1; valor[2] = v2; valor[3] = v3; }
 		convertor (linea) () iacit { responde valor_scriptus; }
@@ -83,12 +83,12 @@ spatium communicatio {
 				memoria.exscribe(@ego^.valor, valor^.data, 6);
 			}
 		}
-		functio nihil loca_cyclum(nint16 p) { valor[0] = 127; valor[1] = 0; valor[2] = 0; valor[3] = 1; portus = p; }
-		functio nihil loca_ullum(nint16 p) { valor[0] = 0; valor[1] = 0; valor[2] = 0; valor[3] = 0; portus = p; }
+		classis functio adloquium_ipv4 cyclus(nint16 p) { responde adloquium_ipv4(127, 0, 0, 1, p); }
+		classis functio adloquium_ipv4 servus(nint16 p) { responde adloquium_ipv4(0, 0, 0, 0, p); }
 	}
-	[[magnitudo] "24:2"] structura adloquium_ipv6 hereditat adloquium {
-		[[positus] "4:1"] ordo [8] nint16 valor;
-		[[positus] "20:1"] nint16 portus;
+	structura adloquium_ipv6 hereditat adloquium {
+		ordo [8] nint16 valor;
+		nint16 portus;
 		structor (~linea ad) iacit { valor_scriptus = ad; }
 		structor (nint16 v0, nint16 v1, nint16 v2, nint16 v3, nint16 v4, nint16 v5, nint16 v6, nint16 v7, nint16 p) { funda portus(p); valor[0] = v0; valor[1] = v1; valor[2] = v2; valor[3] = v3; valor[4] = v4; valor[5] = v5; valor[6] = v6; valor[7] = v7; }
 		convertor (linea) () iacit { responde valor_scriptus; }
@@ -157,8 +157,8 @@ spatium communicatio {
 				memoria.exscribe(@ego^.valor, valor^.data, 18);
 			}
 		}
-		functio nihil loca_cyclum(nint16 p) { pro (var i : [0, 6]) valor[i] = 0; valor[7] = 1; portus = p; }
-		functio nihil loca_ullum(nint16 p) { pro (var i : [0, 7]) valor[i] = 0; portus = p; }
+		classis functio adloquium_ipv6 cyclus(nint16 p) { responde adloquium_ipv6(0, 0, 0, 0, 0, 0, 0, 1, p); }
+		classis functio adloquium_ipv6 servus(nint16 p) { responde adloquium_ipv6(0, 0, 0, 0, 0, 0, 0, 0, p); }
 	}
 	structura securitas {
 		!dordo_datorum certificatus;

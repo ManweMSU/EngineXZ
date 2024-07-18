@@ -13,24 +13,24 @@ namespace Engine
 		class NetworkAddress : public DynamicObject {};
 		struct NetworkAddressLocal : public NetworkAddress
 		{
-			string Name;
+			string & Name(void) noexcept;
 		};
 		struct NetworkAddressIPv4 : public NetworkAddress
 		{
-			uint8 IP[4];
-			uint16 Port;
+			uint32 & IP(void) noexcept;
+			uint16 & Port(void) noexcept;
 		};
 		struct NetworkAddressIPv6 : public NetworkAddress
 		{
-			uint16 IP[8];
-			uint16 Port;
+			uint32 & IP(void) noexcept;
+			uint16 & Port(void) noexcept;
 		};
 		class NetworkAddressFactory
 		{
 		public:
-			virtual SafePointer<NetworkAddressLocal> CreateLocal( ErrorContext & ectx) = 0;
-			virtual SafePointer<NetworkAddressIPv4> CreateIPv4(ErrorContext & ectx) = 0;
-			virtual SafePointer<NetworkAddressIPv6> CreateIPv6(ErrorContext & ectx) = 0;
+			virtual SafePointer<NetworkAddressLocal> CreateLocal( ErrorContext & ectx) noexcept = 0;
+			virtual SafePointer<NetworkAddressIPv4> CreateIPv4(ErrorContext & ectx) noexcept = 0;
+			virtual SafePointer<NetworkAddressIPv6> CreateIPv6(ErrorContext & ectx) noexcept = 0;
 		};
 		struct NetworkSecurityDescriptor
 		{
