@@ -24,6 +24,22 @@ catch (Engine::IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_su
 catch (Engine::Exception &) { ectx.error_code = 1; ectx.error_subcode = 0; return DRV; } \
 catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; }
 
+#define REQUEST_ATTRIBUTE_POLL_READ		0x001
+#define REQUEST_ATTRIBUTE_POLL_WRITE	0x002
+#define REQUEST_ATTRIBUTE_CONNECT_BIT	0x010
+#define REQUEST_ATTRIBUTE_ACCEPT_BIT	0x020
+#define REQUEST_ATTRIBUTE_RECEIVE_BIT	0x040
+#define REQUEST_ATTRIBUTE_SEND_BIT		0x080
+#define REQUEST_ATTRIBUTE_REMOVE		0x100
+
+#define REQUEST_ATTRIBUTE_POLL_MASK		0x00F
+#define REQUEST_ATTRIBUTE_ACTION_MASK	0x0F0
+
+#define REQUEST_ATTRIBUTE_CONNECT	(REQUEST_ATTRIBUTE_CONNECT_BIT	| REQUEST_ATTRIBUTE_POLL_WRITE)
+#define REQUEST_ATTRIBUTE_ACCEPT	(REQUEST_ATTRIBUTE_ACCEPT_BIT	| REQUEST_ATTRIBUTE_POLL_READ)
+#define REQUEST_ATTRIBUTE_RECEIVE	(REQUEST_ATTRIBUTE_RECEIVE_BIT	| REQUEST_ATTRIBUTE_POLL_READ)
+#define REQUEST_ATTRIBUTE_SEND		(REQUEST_ATTRIBUTE_SEND_BIT		| REQUEST_ATTRIBUTE_POLL_WRITE)
+
 namespace Engine
 {
 	namespace XE
@@ -156,7 +172,7 @@ namespace Engine
 
 		struct NetworkRequestInput
 		{
-			int request; // 0x1 - connect, 0x9 - read, 0x2 - send, 0xA - accept
+			uint attributes;
 			int length, pointer; // read length, read/write execution pointer
 			SafePointer<DataBlock> data; // address structure or data to send
 		};
@@ -194,18 +210,181 @@ namespace Engine
 			int _socket, _address_size;
 			SafePointer<DataBlock> _unlink_on_close;
 			SafePointer<Semaphore> _local_sync;
-			Volumes::Queue<NetworkRequest> _requests;
+			Volumes::Queue<NetworkRequest> _requests_read;
+			Volumes::Queue<NetworkRequest> _requests_write;
 			NetworkAddressFactory * _factory;
 		private:
+			typedef Volumes::Dictionary<SafePointer<NetworkRequestQueue>, uint> QueueList;
+			typedef Volumes::KeyValuePair<SafePointer<NetworkRequestQueue>, uint> QueueItem;
+			static bool _handle_connection(int pollstat, QueueItem & item, uint attribute, int & remove_list) noexcept
+			{
+				bool revise = false;
+				SafePointer<IDispatchTask> hdlr;
+				item.key->_local_sync->Wait();
+				Volumes::Queue<NetworkRequest> * queue = 0;
+				if (attribute == REQUEST_ATTRIBUTE_POLL_READ) queue = &item.key->_requests_read;
+				else if (attribute == REQUEST_ATTRIBUTE_POLL_WRITE) queue = &item.key->_requests_write;
+				auto req_ptr = queue ? queue->GetFirst() : 0;
+				if (req_ptr) try {
+					auto & req = req_ptr->GetValue();
+					if (req.in.attributes & REQUEST_ATTRIBUTE_CONNECT_BIT) {
+						bool finish;
+						ErrorContext error;
+						int status = connect(item.key->_socket, reinterpret_cast<sockaddr *>(req.in.data->GetBuffer()), req.in.data->Length());
+						if (status == 0) {
+							finish = true;
+							ClearXEError(error);
+						} else if (status == -1) {
+							if (errno == EINTR || errno == EAGAIN || errno == EINPROGRESS) {
+								finish = false;
+							} else if (errno == EISCONN) {
+								finish = true;
+								ClearXEError(error);
+							} else {
+								finish = true;
+								SetPosixError(error);
+							}
+						} else {
+							finish = true;
+							SetXEError(error, 5, 0);
+						}
+						if (finish) {
+							if (req.out.status) *req.out.status = error;
+							hdlr = req.out.handler;
+							queue->RemoveFirst();
+							revise = true;
+						}
+					} else if (req.in.attributes & REQUEST_ATTRIBUTE_SEND_BIT) {
+						bool finish;
+						ErrorContext error;
+						if (pollstat & POLLHUP) {
+							finish = true;
+							SetXEError(error, 0x08, 0x08);
+						} else {
+							int rem = req.in.length - req.in.pointer;
+							int status = send(item.key->_socket, req.in.data->GetBuffer() + req.in.pointer, rem, 0);
+							if (status >= 0) {
+								req.in.pointer += status;
+								if (req.in.pointer == req.in.length) {
+									finish = true;
+									ClearXEError(error);
+								} else finish = false;
+							} else {
+								if (errno == EAGAIN || errno == EINTR) {
+									finish = false;
+								} else {
+									finish = true;
+									SetPosixError(error);
+								}
+							}
+						}
+						if (finish) {
+							if (req.out.status) *req.out.status = error;
+							if (req.out.length) *req.out.length = req.in.pointer;
+							hdlr = req.out.handler;
+							queue->RemoveFirst();
+							revise = true;
+						}
+					} else if (req.in.attributes & REQUEST_ATTRIBUTE_RECEIVE_BIT) {
+						bool finish;
+						ErrorContext error;
+						int rem = req.in.length - req.in.pointer;
+						int status = recv(item.key->_socket, req.in.data->GetBuffer() + req.in.pointer, rem, 0);
+						if (status > 0) {
+							req.in.pointer += status;
+							if (req.in.pointer == req.in.length) {
+								finish = true;
+								ClearXEError(error);
+							} else finish = false;
+						} else if (status == 0) {
+							finish = true;
+							ClearXEError(error);
+						} else {
+							if (errno == EAGAIN || errno == EINTR) {
+								finish = false;
+							} else {
+								finish = true;
+								SetPosixError(error);
+							}
+						}
+						if (finish) {
+							req.in.data->SetLength(req.in.pointer);
+							if (req.out.status) *req.out.status = error;
+							if (req.out.data) *req.out.data = req.in.data;
+							hdlr = req.out.handler;
+							queue->RemoveFirst();
+							revise = true;
+						}
+					} else if (req.in.attributes & REQUEST_ATTRIBUTE_ACCEPT_BIT) {
+						bool process;
+						uint8 sa[0x100];
+						ErrorContext error;
+						socklen_t length = sizeof(sa);
+						int socket_accepted = accept(item.key->_socket, reinterpret_cast<sockaddr *>(&sa), &length);
+						if (socket_accepted == -1) {
+							if (errno == EINTR || errno == EWOULDBLOCK) {
+								process = false;
+							} else {
+								process = true;
+								SetPosixError(error);
+							}
+						} else {
+							process = true;
+							ClearXEError(error);
+						}
+						if (process) {
+							NewNetworkConnection con;
+							con.in_factory = item.key->_factory;
+							con.in_socket = socket_accepted;
+							con.in_address = &sa;
+							con.in_address_length = length;
+							if (socket_accepted >= 0) _allocate_connection(con, error);
+							if (req.out.status) *req.out.status = error;
+							if (req.out.channel) *req.out.channel = con.out_channel;
+							if (req.out.address) *req.out.address = con.out_address;
+							hdlr = req.out.handler;
+							if (req.in.pointer > 0) {
+								req.in.pointer--;
+								if (!req.in.pointer) {
+									queue->RemoveFirst();
+									revise = true;
+								}
+							}
+						}
+					} else throw InvalidStateException();
+				} catch (...) {
+					item.key->_local_sync->Open();
+					return false;
+				}
+				item.key->_local_sync->Open();
+				if (hdlr) hdlr->DoTask(0);
+				if (revise) {
+					auto next_rd = item.key->_peek_request(REQUEST_ATTRIBUTE_POLL_READ);
+					auto next_wr = item.key->_peek_request(REQUEST_ATTRIBUTE_POLL_WRITE);
+					if (next_rd || next_wr) {
+						item.value = 0;
+						if (next_rd) item.value |= next_rd->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+						if (next_wr) item.value |= next_wr->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+					} else {
+						item.value = REQUEST_ATTRIBUTE_REMOVE;
+						remove_list++;
+					}
+				}
+				return true;
+			}
 			static void _allocate_connection(NewNetworkConnection & con, ErrorContext & ectx) noexcept;
 			static int _dispatch(void * arg)
 			{
 				try {
-					Volumes::Dictionary<SafePointer<NetworkRequestQueue>, uint> clients; // client : operation class (1 - read, 0 - write)
+					QueueList clients; // client : poll attribute
 					Array<pollfd> poll_data(0x100);
 					int poll_volume = 1;
+					uint resize_counter = 0;
 					while (true) {
-						if (poll_volume > poll_data.Length()) poll_data.SetLength(poll_volume);
+						if (poll_volume != poll_data.Length()) {
+							resize_counter++;
+							if (poll_volume > poll_data.Length() || !(resize_counter & 0x1FF)) poll_data.SetLength(poll_volume);
+						}
 						poll_data[0].fd = _command_out;
 						poll_data[0].events = POLLIN;
 						poll_data[0].revents = 0;
@@ -213,8 +392,8 @@ namespace Engine
 						for (auto & c : clients) {
 							poll_data[i].fd = c.key->_peek_handle();
 							poll_data[i].events = poll_data[i].revents = 0;
-							if (c.value) poll_data[i].events |= POLLIN;
-							else poll_data[i].events |= POLLOUT;
+							if (c.value & REQUEST_ATTRIBUTE_POLL_READ) poll_data[i].events |= POLLIN;
+							if (c.value & REQUEST_ATTRIBUTE_POLL_WRITE) poll_data[i].events |= POLLOUT;
 							i++;
 						}
 						int status = poll(poll_data, poll_volume, -1);
@@ -222,155 +401,11 @@ namespace Engine
 							int remove_list = 0;
 							i = 1;
 							for (auto & c : clients) {
-								if (poll_data[i].revents) {
-									bool revise = false;
-									SafePointer<IDispatchTask> hdlr;
-									c.key->_local_sync->Wait();
-									auto req_ptr = c.key->_requests.GetFirst();
-									if (req_ptr) try {
-										auto & req = req_ptr->GetValue();
-										if (req.in.request == 0x1) {
-											bool finish;
-											ErrorContext error;
-											status = connect(c.key->_socket, reinterpret_cast<sockaddr *>(req.in.data->GetBuffer()), req.in.data->Length());
-											if (status == 0) {
-												finish = true;
-												ClearXEError(error);
-											} else if (status == -1) {
-												if (errno == EINTR || errno == EAGAIN || errno == EINPROGRESS) {
-													finish = false;
-												} else if (errno == EISCONN) {
-													finish = true;
-													ClearXEError(error);
-												} else {
-													finish = true;
-													SetPosixError(error);
-												}
-											} else {
-												finish = true;
-												SetXEError(error, 5, 0);
-											}
-											if (finish) {
-												if (req.out.status) *req.out.status = error;
-												hdlr = req.out.handler;
-												c.key->_requests.RemoveFirst();
-												revise = true;
-											}
-										} else if (req.in.request == 0x2) {
-											bool finish;
-											ErrorContext error;
-											if (poll_data[i].revents == POLL_HUP) {
-												finish = true;
-												SetXEError(error, 0x08, 0x08);
-											} else {
-												int rem = req.in.length - req.in.pointer;
-												status = send(c.key->_socket, req.in.data->GetBuffer() + req.in.pointer, rem, 0);
-												if (status >= 0) {
-													req.in.pointer += status;
-													if (req.in.pointer == req.in.length) {
-														finish = true;
-														ClearXEError(error);
-													} else finish = false;
-												} else {
-													if (errno == EAGAIN || errno == EINTR) {
-														finish = false;
-													} else {
-														finish = true;
-														SetPosixError(error);
-													}
-												}
-											}
-											if (finish) {
-												if (req.out.status) *req.out.status = error;
-												if (req.out.length) *req.out.length = req.in.pointer;
-												hdlr = req.out.handler;
-												c.key->_requests.RemoveFirst();
-												revise = true;
-											}
-										} else if (req.in.request == 0x9) {
-											bool finish;
-											ErrorContext error;
-											int rem = req.in.length - req.in.pointer;
-											status = recv(c.key->_socket, req.in.data->GetBuffer() + req.in.pointer, rem, 0);
-											if (status > 0) {
-												req.in.pointer += status;
-												if (req.in.pointer == req.in.length) {
-													finish = true;
-													ClearXEError(error);
-												} else finish = false;
-											} else if (status == 0) {
-												finish = true;
-												ClearXEError(error);
-											} else {
-												if (errno == EAGAIN || errno == EINTR) {
-													finish = false;
-												} else {
-													finish = true;
-													SetPosixError(error);
-												}
-											}
-											if (finish) {
-												req.in.data->SetLength(req.in.pointer);
-												if (req.out.status) *req.out.status = error;
-												if (req.out.data) *req.out.data = req.in.data;
-												hdlr = req.out.handler;
-												c.key->_requests.RemoveFirst();
-												revise = true;
-											}
-										} else if (req.in.request == 0xA) {
-											bool process;
-											int socket_accepted = -1;
-											uint8 sa[0x100];
-											ErrorContext error;
-											socklen_t length = sizeof(sa);
-											socket_accepted = accept(c.key->_socket, reinterpret_cast<sockaddr *>(&sa), &length);
-											if (socket_accepted == -1) {
-												if (errno == EINTR || errno == EWOULDBLOCK) {
-													process = false;
-												} else {
-													process = true;
-													SetPosixError(error);
-												}
-											} else {
-												process = true;
-												ClearXEError(error);
-											}
-											if (process) {
-												NewNetworkConnection con;
-												con.in_factory = c.key->_factory;
-												con.in_socket = socket_accepted;
-												con.in_address = &sa;
-												con.in_address_length = length;
-												if (socket_accepted >= 0) _allocate_connection(con, error);
-												if (req.out.status) *req.out.status = error;
-												if (req.out.channel) *req.out.channel = con.out_channel;
-												if (req.out.address) *req.out.address = con.out_address;
-												hdlr = req.out.handler;
-												if (req.in.pointer > 0) {
-													req.in.pointer--;
-													if (!req.in.pointer) {
-														c.key->_requests.RemoveFirst();
-														revise = true;
-													}
-												}
-											}
-										} else throw InvalidStateException();
-									} catch (...) {
-										c.key->_local_sync->Open();
-										break;
-									}
-									c.key->_local_sync->Open();
-									if (hdlr) hdlr->DoTask(0);
-									if (revise) {
-										auto next = c.key->_peek_request();
-										if (next) {
-											if (next->in.request & 0x8) c.value = 1;
-											else c.value = 0;
-										} else {
-											c.value = 0xFF;
-											remove_list++;
-										}
-									}
+								if ((poll_data[i].revents & POLLERR) || (poll_data[i].revents & POLLHUP) || (poll_data[i].revents & POLLIN)) {
+									if (!_handle_connection(poll_data[i].revents, c, REQUEST_ATTRIBUTE_POLL_READ, remove_list)) break;
+								}
+								if ((poll_data[i].revents & POLLERR) || (poll_data[i].revents & POLLHUP) || (poll_data[i].revents & POLLOUT)) {
+									if (!_handle_connection(poll_data[i].revents, c, REQUEST_ATTRIBUTE_POLL_WRITE, remove_list)) break;
 								}
 								i++;
 							}
@@ -378,7 +413,7 @@ namespace Engine
 								auto current = clients.GetFirst();
 								while (current) {
 									auto next = current->GetNext();
-									if (current->GetValue().value == 0xFF) { clients.BinaryTree::Remove(current); poll_volume--; }
+									if (current->GetValue().value & REQUEST_ATTRIBUTE_REMOVE) { clients.BinaryTree::Remove(current); poll_volume--; }
 									current = next;
 								}
 							}
@@ -398,12 +433,14 @@ namespace Engine
 								SafePointer<NetworkRequestQueue> queue = reinterpret_cast<NetworkRequestQueue *>(command[1]);
 								if (command[0]) {
 									bool created;
-									auto request = queue->_peek_request();
-									if (request) {
-										auto element = clients.FindElement(Volumes::KeyValuePair<SafePointer<NetworkRequestQueue>, uint>(queue, 0), true, &created);
+									auto rd_rq = queue->_peek_request(REQUEST_ATTRIBUTE_POLL_READ);
+									auto wr_rq = queue->_peek_request(REQUEST_ATTRIBUTE_POLL_WRITE);
+									if (rd_rq || wr_rq) {
+										auto element = clients.FindElement(QueueItem(queue, 0), true, &created);
 										if (created) poll_volume++;
-										if (request->in.request & 0x8) element->GetValue().value = 1;
-										else element->GetValue().value = 0;
+										element->GetValue().value = 0;
+										if (rd_rq) element->GetValue().value |= rd_rq->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+										if (wr_rq) element->GetValue().value |= wr_rq->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
 									} else command[0] = 0;
 								}
 								if (!command[0]) {
@@ -414,20 +451,20 @@ namespace Engine
 									}
 								}
 							}
-						} else if (status == -1) {
-							if (errno == EINVAL) break;
-						}
+						} else if (status == -1) { if (errno == EINVAL) break; }
 					}
 				} catch (...) {}
 				close(_command_out);
 				return 0;
 			}
 			int _peek_handle(void) noexcept { return _socket; }
-			NetworkRequest * _peek_request(void) noexcept
+			NetworkRequest * _peek_request(uint attribute) noexcept
 			{
 				NetworkRequest * result = 0;
 				_local_sync->Wait();
-				auto first = _requests.GetFirst();
+				Volumes::Queue<NetworkRequest>::Element * first = 0;
+				if ((attribute & REQUEST_ATTRIBUTE_POLL_MASK) == REQUEST_ATTRIBUTE_POLL_READ) first = _requests_read.GetFirst();
+				else if ((attribute & REQUEST_ATTRIBUTE_POLL_MASK) == REQUEST_ATTRIBUTE_POLL_WRITE) first = _requests_write.GetFirst();
 				if (first) result = &first->GetValue();
 				_local_sync->Open();
 				return result;
@@ -513,7 +550,11 @@ namespace Engine
 			}
 			virtual ~NetworkRequestQueue(void)
 			{
-				for (auto & r : _requests) {
+				for (auto & r : _requests_read) {
+					if (r.out.status) SetXEError(*r.out.status, 0x08, 0x08);
+					if (r.out.handler) r.out.handler->DoTask(0);
+				}
+				for (auto & r : _requests_write) {
 					if (r.out.status) SetXEError(*r.out.status, 0x08, 0x08);
 					if (r.out.handler) r.out.handler->DoTask(0);
 				}
@@ -550,7 +591,7 @@ namespace Engine
 				_local_sync->Wait();
 				try {
 					NetworkRequest req;
-					req.in.request = 0x1;
+					req.in.attributes = REQUEST_ATTRIBUTE_CONNECT;
 					req.in.length = req.in.pointer = 0;
 					req.in.data = new DataBlock(1);
 					req.out.handler.SetRetain(hdlr);
@@ -564,9 +605,9 @@ namespace Engine
 						if (connect(_socket, reinterpret_cast<sockaddr *>(req.in.data->GetBuffer()), req.in.data->Length()) == -1) {
 							auto errid = errno;
 							if (errid == EINPROGRESS) {
-								_requests.Push(req);
+								_requests_write.Push(req);
 								if (!_control_send(1)) {
-									_requests.RemoveLast();
+									_requests_write.RemoveLast();
 									_local_sync->Open();
 									if (req.out.status) SetXEError(*req.out.status, 0x8, 0x4);
 									if (req.out.handler) req.out.handler->DoTask(0);
@@ -598,9 +639,13 @@ namespace Engine
 			{
 				_local_sync->Wait();
 				try {
-					_requests.Push(req);
+					Volumes::Queue<NetworkRequest> * queue = 0;
+					if (req.in.attributes & REQUEST_ATTRIBUTE_POLL_READ) queue = &_requests_read;
+					if (req.in.attributes & REQUEST_ATTRIBUTE_POLL_WRITE) queue = &_requests_write;
+					if (!queue) throw InvalidArgumentException();
+					queue->Push(req);
 					if (!_control_send(1)) {
-						_requests.RemoveLast();
+						queue->RemoveLast();
 						_local_sync->Open();
 						if (req.out.status) SetXEError(*req.out.status, 0x8, 0x4);
 						if (req.out.handler) req.out.handler->DoTask(0);
@@ -669,7 +714,7 @@ namespace Engine
 				}
 				XE_TRY_INTRO
 				NetworkRequest req;
-				req.in.request = 0x2;
+				req.in.attributes = REQUEST_ATTRIBUTE_SEND;
 				req.in.length = data->Length();
 				req.in.pointer = 0;
 				req.in.data.SetRetain(data);
@@ -696,7 +741,7 @@ namespace Engine
 				}
 				responce->SetLength(length);
 				NetworkRequest req;
-				req.in.request = 0x9;
+				req.in.attributes = REQUEST_ATTRIBUTE_RECEIVE;
 				req.in.length = length;
 				req.in.pointer = 0;
 				req.in.data = responce;
@@ -738,7 +783,7 @@ namespace Engine
 				if (!limit) return;
 				XE_TRY_INTRO
 				NetworkRequest req;
-				req.in.request = 0xA;
+				req.in.attributes = REQUEST_ATTRIBUTE_ACCEPT;
 				req.in.length = 0;
 				req.in.pointer = limit > 0 ? limit : -1;
 				req.out.handler.SetRetain(hdlr);

@@ -610,13 +610,14 @@ namespace Engine
 			class ReceiveRequest : public INetworkRequest
 			{
 				SafePointer<InterfaceHolder> _interface;
+				int _pointer;
 				SafePointer<DataBlock> _buffer;
 				ErrorContext * _error;
 				SafePointer<DataBlock> * _data;
 				SafePointer<IDispatchTask> _handler;
 				OVERLAPPED _overlapped;
 			public:
-				ReceiveRequest(InterfaceHolder * interface, int length, ErrorContext * error, SafePointer<DataBlock> * data, IDispatchTask * hdlr)
+				ReceiveRequest(InterfaceHolder * interface, int length, ErrorContext * error, SafePointer<DataBlock> * data, IDispatchTask * hdlr) : _pointer(0)
 				{
 					_interface.SetRetain(interface);
 					_buffer = new DataBlock(1);
@@ -628,6 +629,7 @@ namespace Engine
 				virtual ~ReceiveRequest(void) override {}
 				virtual RequestStatus InitiateRequest(void) noexcept override
 				{
+				InitiateReceiveRequestRetry:
 					if (_interface->ReadClosed()) {
 						_buffer->SetLength(0);
 						if (_error) ClearXEError(*_error);
@@ -637,13 +639,23 @@ namespace Engine
 					}
 					ZeroMemory(&_overlapped, sizeof(_overlapped));
 					DWORD num_received = 0;
-					if (ReadFile(_interface->Handle(), _buffer->GetBuffer(), _buffer->Length(), &num_received, &_overlapped)) {
-						if (!num_received) _interface->ReadClosed() = true;
-						_buffer->SetLength(num_received);
-						if (_error) ClearXEError(*_error);
-						if (_data) *_data = _buffer;
-						if (_handler) _handler->DoTask(0);
-						return RequestStatus::Complete;
+					if (ReadFile(_interface->Handle(), _buffer->GetBuffer() + _pointer, _buffer->Length() - _pointer, &num_received, &_overlapped)) {
+						if (num_received) {
+							_pointer += num_received;
+							if (_pointer == _buffer->Length()) {
+								if (_error) ClearXEError(*_error);
+								if (_data) *_data = _buffer;
+								if (_handler) _handler->DoTask(0);
+								return RequestStatus::Complete;
+							} else goto InitiateReceiveRequestRetry;
+						} else {
+							_interface->ReadClosed() = true;
+							_buffer->SetLength(_pointer);
+							if (_error) ClearXEError(*_error);
+							if (_data) *_data = _buffer;
+							if (_handler) _handler->DoTask(0);
+							return RequestStatus::Complete;
+						}
 					} else {
 						auto errid = GetLastError();
 						if (errid == ERROR_IO_PENDING) {
@@ -667,12 +679,22 @@ namespace Engine
 					}
 					DWORD transferred;
 					if (GetOverlappedResult(_interface->Handle(), &_overlapped, &transferred, FALSE)) {
-						if (!transferred) _interface->ReadClosed() = true;
-						_buffer->SetLength(transferred);
-						if (_error) ClearXEError(*_error);
-						if (_data) *_data = _buffer;
-						if (_handler) _handler->DoTask(0);
-						return RequestStatus::Complete;
+						if (transferred) {
+							_pointer += transferred;
+							if (_pointer == _buffer->Length()) {
+								if (_error) ClearXEError(*_error);
+								if (_data) *_data = _buffer;
+								if (_handler) _handler->DoTask(0);
+								return RequestStatus::Complete;
+							} else return InitiateRequest();
+						} else {
+							_interface->ReadClosed() = true;
+							_buffer->SetLength(_pointer);
+							if (_error) ClearXEError(*_error);
+							if (_data) *_data = _buffer;
+							if (_handler) _handler->DoTask(0);
+							return RequestStatus::Complete;
+						}
 					} else {
 						auto errid = GetLastError();
 						if (errid == ERROR_IO_INCOMPLETE) {
