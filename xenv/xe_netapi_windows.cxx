@@ -1126,8 +1126,8 @@ namespace Engine
 					ZeroMemory(&_overlapped, sizeof(_overlapped));
 					_buffer_desc.buf = reinterpret_cast<char *>(_buffer->GetBuffer()) + _pointer;
 					_buffer_desc.len = _buffer->Length() - _pointer;
-					DWORD num_sent = 0;
-					auto status = WSASend(_interface->Socket(), &_buffer_desc, 1, &num_sent, 0, &_overlapped, 0);
+					DWORD num_sent = 0, flags = 0;
+					auto status = WSASend(_interface->Socket(), &_buffer_desc, 1, 0, 0, &_overlapped, 0);
 					if (status == SOCKET_ERROR) {
 						auto errid = WSAGetLastError();
 						if (errid == WSA_IO_PENDING) {
@@ -1139,13 +1139,26 @@ namespace Engine
 							return RequestStatus::Complete;
 						}
 					} else {
-						_pointer += num_sent;
-						if (!num_sent || _pointer == _buffer->Length()) {
-							if (_error) ClearXEError(*_error);
-							if (_sent) *_sent = _pointer;
-							if (_handler) _handler->DoTask(0);
-							return RequestStatus::Complete;
-						} else goto InitiateSendRequestRetry;
+						DWORD transferred, flags;
+						if (WSAGetOverlappedResult(_interface->Socket(), &_overlapped, &transferred, FALSE, &flags)) {
+							_pointer += transferred;
+							if (!transferred || _pointer == _buffer->Length()) {
+								if (_error) ClearXEError(*_error);
+								if (_sent) *_sent = _pointer;
+								if (_handler) _handler->DoTask(0);
+								return RequestStatus::Complete;
+							} else goto InitiateSendRequestRetry;
+						} else {
+							auto errid = WSAGetLastError();
+							if (errid == WSA_IO_INCOMPLETE) {
+								return RequestStatus::Await;
+							} else {
+								if (_error) SetWSAError(errid, *_error);
+								if (_sent) *_sent = transferred;
+								if (_handler) _handler->DoTask(0);
+								return RequestStatus::Complete;
+							}
+						}
 					}
 				}
 				virtual RequestStatus CompleteRequest(void) noexcept override
@@ -1208,7 +1221,7 @@ namespace Engine
 					_buffer_desc.buf = reinterpret_cast<char *>(_buffer->GetBuffer()) + _pointer;
 					_buffer_desc.len = _buffer->Length() - _pointer;
 					DWORD num_received = 0, flags = 0;
-					auto status = WSARecv(_interface->Socket(), &_buffer_desc, 1, &num_received, &flags, &_overlapped, 0);
+					auto status = WSARecv(_interface->Socket(), &_buffer_desc, 1, 0, &flags, &_overlapped, 0);
 					if (status == SOCKET_ERROR) {
 						auto errid = WSAGetLastError();
 						if (errid == WSA_IO_PENDING) {
@@ -1220,14 +1233,27 @@ namespace Engine
 							return RequestStatus::Complete;
 						}
 					} else {
-						_pointer += num_received;
-						if (!num_received || _pointer == _buffer->Length()) {
-							_buffer->SetLength(_pointer);
-							if (_error) ClearXEError(*_error);
-							if (_data) *_data = _buffer;
-							if (_handler) _handler->DoTask(0);
-							return RequestStatus::Complete;
-						} else goto InitiateReceiveRequestRetry;
+						DWORD transferred, flags;
+						if (WSAGetOverlappedResult(_interface->Socket(), &_overlapped, &transferred, FALSE, &flags)) {
+							_pointer += transferred;
+							if (!transferred || _pointer == _buffer->Length()) {
+								_buffer->SetLength(_pointer);
+								if (_error) ClearXEError(*_error);
+								if (_data) *_data = _buffer;
+								if (_handler) _handler->DoTask(0);
+								return RequestStatus::Complete;
+							} else goto InitiateReceiveRequestRetry;
+						} else {
+							auto errid = WSAGetLastError();
+							if (errid == WSA_IO_INCOMPLETE) {
+								return RequestStatus::Await;
+							} else {
+								if (_error) SetWSAError(errid, *_error);
+								if (_data) *_data = 0;
+								if (_handler) _handler->DoTask(0);
+								return RequestStatus::Complete;
+							}
+						}
 					}
 				}
 				virtual RequestStatus CompleteRequest(void) noexcept override

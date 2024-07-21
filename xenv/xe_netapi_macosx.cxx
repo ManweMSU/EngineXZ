@@ -112,6 +112,7 @@ namespace Engine
 					CFRelease(trust);
 					return trusted;
 				}
+				const char * GetHostName(void) noexcept { return _host.Length() ? _host.GetBuffer() : 0; }
 			};
 			class SendDesc : public Object
 			{
@@ -184,6 +185,8 @@ namespace Engine
 					endpoint = nw_endpoint_create_address(reinterpret_cast<sockaddr *>(sa.GetBuffer()));
 					if (!endpoint) throw OutOfMemoryException();
 					params = nw_parameters_create_secure_tcp(^(nw_protocol_options_t options) {
+						auto host = verify->GetHostName();
+						if (host) sec_protocol_options_set_tls_server_name((sec_protocol_options_t) options, host);
 						sec_protocol_options_set_verify_block((sec_protocol_options_t) options, ^(sec_protocol_metadata_t metadata, sec_trust_t trust_ref, sec_protocol_verify_complete_t complete) {
 							complete(verify->Verify(metadata, trust_ref));
 						}, dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
