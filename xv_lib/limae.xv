@@ -24,11 +24,11 @@ enumeratio modus_creatoris {
 	aperi_praesens	= 0x04,
 	trunca_praesens	= 0x05
 }
-enumeratio modus_exscribendum {
+enumeratio modus_exscribendi {
 	rescribe_ultime		= 0x01,
 	rescribe_partium	= 0x02,
-	rescribere_nullum	= 0x03,
-	rescribere_falsum	= 0x04,
+	rescribere_nulle	= 0x03,
+	rescribere_false	= 0x04,
 }
 genus flumen_limae hereditat flumen {
 	tempus tempus_creaturae { adipisce iacit virtualis pura; loca iacit virtualis pura; }
@@ -72,7 +72,7 @@ structura semita hereditat linea {
 
 	functio linea lege_adhaesionem() iacit { responde (@_systema_limarum)(protocollum(syslim))^.lege_adhaesionem(ego^); }
 	functio nihil move(~semita ad) iacit { (@_systema_limarum)(protocollum(syslim))^.move(ego^, ad, 0); }
-	functio nihil exscribe(~semita ad, modus_exscribendum modus) iacit { (@_systema_limarum)(protocollum(syslim))^.move(ego^, ad, modus); }
+	functio nihil exscribe(~semita ad, modus_exscribendi modus) iacit { (@_systema_limarum)(protocollum(syslim))^.move(ego^, ad, modus); }
 	functio nihil remove() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 0); }
 	functio nihil remove_collectoriorum() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 1); }
 	functio nihil remove_collectoriorum_cunctum() iacit { (@_systema_limarum)(protocollum(syslim))^.remove(ego^, 2); }

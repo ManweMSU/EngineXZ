@@ -25,11 +25,11 @@ enumeratio modus_creatoris {
 	aperi_praesens	= 0x04,
 	trunca_praesens	= 0x05
 }
-enumeratio modus_exscribendum {
+enumeratio modus_exscribendi {
 	rescribe_ultime		= 0x01,
 	rescribe_partium	= 0x02,
-	rescribere_nullum	= 0x03,
-	rescribere_falsum	= 0x04,
+	rescribere_nulle	= 0x03,
+	rescribere_false	= 0x04,
 }
 genus flumen_limae hereditat flumen {
 	structor () {}
@@ -96,9 +96,9 @@ structura semita hereditat linea {
 		ad^.tempus_alternationis = ex^.tempus_alternationis;
 		ad^.tempus_apertionis = ex^.tempus_apertionis;
 	}
-	classis functio nihil _exscribe_interne(~semita ex, ~semita ad, modus_exscribendum modus) iacit {
+	classis functio nihil _exscribe_interne(~semita ex, ~semita ad, modus_exscribendi modus) iacit {
 		si (int(modus) < 1 || int(modus) > 4) iace errores.argumentum_falsum;
-		si (modus == modus_exscribendum.rescribe_ultime) {
+		si (modus == modus_exscribendi.rescribe_ultime) {
 			si (ad.lima_est) ad.remove();
 			alioqui si (ad.collectorium_est) {
 				si (ad.adhaesio_est) ad.remove_collectoriorum();
@@ -106,12 +106,12 @@ structura semita hereditat linea {
 			}
 		}
 		si (ex.lima_est) {
-			si (modus == modus_exscribendum.rescribere_falsum) {
+			si (modus == modus_exscribendi.rescribere_false) {
 				var ex_fl = ex.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens);
 				var ad_fl = ad.crea_limam(modus_limae.scribere, modus_creatoris.crea_nova);
 				ex_fl^.exscribe(ad_fl);
 				_exscribe_attributa(ex_fl, ad_fl);
-			} alioqui si (modus == modus_exscribendum.rescribere_nullum) {
+			} alioqui si (modus == modus_exscribendi.rescribere_nulle) {
 				var ex_fl = ex.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens);
 				proba {
 					var ad_fl = ad.crea_limam(modus_limae.scribere, modus_creatoris.crea_nova);
@@ -309,7 +309,7 @@ structura semita hereditat linea {
 		responde resp;
 	}
 	functio nihil move(~semita ad) iacit { si (!winapi.MoveFile(linea_utf16(_semita_universalis(ego^)), linea_utf16(_semita_universalis(ad)))) iace errores.ie_falsum, winapi.suberror(); }
-	functio nihil exscribe(~semita ad, modus_exscribendum modus) iacit { si (int(modus)) _exscribe_interne(ego^, ad, modus); alioqui move(ad); }
+	functio nihil exscribe(~semita ad, modus_exscribendi modus) iacit { si (int(modus)) _exscribe_interne(ego^, ad, modus); alioqui move(ad); }
 	functio nihil remove() iacit { si (!winapi.DeleteFile(linea_utf16(_semita_universalis(ego^)))) iace errores.ie_falsum, winapi.suberror(); }
 	functio nihil remove_collectoriorum() iacit { si (!winapi.RemoveDirectory(linea_utf16(_semita_universalis(ego^)))) iace errores.ie_falsum, winapi.suberror(); }
 	functio nihil remove_collectoriorum_cunctum() iacit {

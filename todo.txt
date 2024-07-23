@@ -43,7 +43,7 @@ BETA-5:
  - Cast Priorities
  + Extended Mathematics: vectors, complex numbers, quaternions, complex vectors, matrices, complex matrices, colors, accessory functions for graphics
  - Collections
- - Communication API (Sockets: local, TCP, SSL; DNS)
+ + Communication API (Sockets: local, TCP, SSL; DNS)
  + Printing and PDF API
 
 OTHER RELEASES:
