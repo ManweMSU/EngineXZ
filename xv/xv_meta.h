@@ -94,6 +94,11 @@ namespace Engine
 			constexpr const widechar * AttributeSThis	= L"ego";
 			constexpr const widechar * AttributeSRTTI	= L"genus";
 			constexpr const widechar * AttributeSError	= L"error";
+			constexpr const widechar * AttributeCnvrtr	= L"[convertor]";
+			constexpr const widechar * AttributeCExt	= L"extendens";
+			constexpr const widechar * AttributeCNar	= L"angustans";
+			constexpr const widechar * AttributeCInv	= L"conformis";
+			constexpr const widechar * AttributeCExp	= L"pretiosus";
 
 			constexpr const widechar * ConstructorZero	= L"vacuus";
 			constexpr const widechar * ConstructorMove	= L"motus";

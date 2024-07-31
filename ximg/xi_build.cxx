@@ -53,6 +53,10 @@ namespace Engine
 			if (fn->GetValueBoolean(L"ThisCall")) func.code_flags |= Module::Function::FunctionThisCall;
 			if (fn->GetValueBoolean(L"Prototype")) func.code_flags |= Module::Function::FunctionPrototype;
 			if (fn->GetValueBoolean(L"Inline")) func.code_flags |= Module::Function::FunctionInline;
+			if (fn->GetValueBoolean(L"Expanding")) func.code_flags |= Module::Function::ConvertorExpanding;
+			if (fn->GetValueBoolean(L"Narrowing")) func.code_flags |= Module::Function::ConvertorNarrowing;
+			if (fn->GetValueBoolean(L"Expensive")) func.code_flags |= Module::Function::ConvertorExpensive;
+			if (fn->GetValueBoolean(L"Similar")) func.code_flags |= Module::Function::ConvertorSimilar;
 			SafePointer<Storage::RegistryNode> attrs = fn->OpenNode(L"Attributes");
 			if (attrs) if (!BuildAttributes(attrs, func.attributes, status)) return false;
 			return true;

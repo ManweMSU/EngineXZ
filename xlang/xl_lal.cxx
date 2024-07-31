@@ -437,6 +437,10 @@ namespace Engine
 				uint flags = 0;
 				if (c.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
 				if (c.value.code_flags & XI::Module::Function::FunctionInline) flags |= FunctionInline;
+				if (c.value.code_flags & XI::Module::Function::ConvertorExpanding) flags |= FunctionCExpanding;
+				if (c.value.code_flags & XI::Module::Function::ConvertorNarrowing) flags |= FunctionCNarrowing;
+				if (c.value.code_flags & XI::Module::Function::ConvertorExpensive) flags |= FunctionCExpensive;
+				if (c.value.code_flags & XI::Module::Function::ConvertorSimilar) flags |= FunctionCSimilar;
 				auto fver = fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false);
 				if (!_idle_mode) FunctionLoader::Load(fver, c.value);
 			} catch (...) {}
@@ -496,6 +500,10 @@ namespace Engine
 					if (m.value.code_flags & XI::Module::Function::FunctionThisCall) flags |= FunctionThisCall;
 					if (m.value.code_flags & XI::Module::Function::FunctionThrows) flags |= FunctionThrows;
 					if (m.value.code_flags & XI::Module::Function::FunctionInline) flags |= FunctionInline;
+					if (m.value.code_flags & XI::Module::Function::ConvertorExpanding) flags |= FunctionCExpanding;
+					if (m.value.code_flags & XI::Module::Function::ConvertorNarrowing) flags |= FunctionCNarrowing;
+					if (m.value.code_flags & XI::Module::Function::ConvertorExpensive) flags |= FunctionCExpensive;
+					if (m.value.code_flags & XI::Module::Function::ConvertorSimilar) flags |= FunctionCSimilar;
 					auto fver = fd->AddOverload(retval, input_refs.Length(), input_refs.GetBuffer(), flags, false, m.value.vft_index);
 					if (!_idle_mode) FunctionLoader::Load(fver, m.value);
 				}

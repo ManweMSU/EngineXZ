@@ -78,10 +78,18 @@ namespace Engine
 		constexpr const widechar * IteratorPreBegin	= L"prae_initus";
 		constexpr const widechar * IteratorPostEnd	= L"post_finis";
 
+		constexpr int CastPriorityIdentity	= 300;
+		constexpr int CastPrioritySimilar	= 200; // Parent class/interface or type to reference
+		constexpr int CastPriorityConverter	= 100;
+		constexpr int CastPriorityExplicit	= 000;
 		constexpr int CastPriorityNoCast	= -1;
-		constexpr int CastPriorityExplicit	= 0;
-		constexpr int CastPriorityConverter	= 1;
-		constexpr int CastPrioritySimilar	= 2; // Parent class/interface or type to reference
-		constexpr int CastPriorityIdentity	= 3;
+
+		constexpr int CastCostUndefined		= 10;
+		constexpr int CastCostExpensive		= 0;
+
+		constexpr int CastQualityIdentical	= 3;
+		constexpr int CastQualityExpanding	= 2;
+		constexpr int CastQualityNarrowing	= 1;
+		constexpr int CastQualityUndefined	= 0;
 	}
 }

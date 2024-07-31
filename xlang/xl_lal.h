@@ -8,16 +8,20 @@ namespace Engine
 	namespace XL
 	{
 		enum FunctionFlags {
-			FunctionVirtual		= 0x001,
-			FunctionInitializer	= 0x002,
-			FunctionFinalizer	= 0x004,
-			FunctionMain		= 0x008,
-			FunctionMethod		= 0x010,
-			FunctionThrows		= 0x020,
-			FunctionThisCall	= 0x040,
-			FunctionPureCall	= 0x080,
-			FunctionOverride	= 0x100,
-			FunctionInline		= 0x200,
+			FunctionVirtual		= 0x0001,
+			FunctionInitializer	= 0x0002,
+			FunctionFinalizer	= 0x0004,
+			FunctionMain		= 0x0008,
+			FunctionMethod		= 0x0010,
+			FunctionThrows		= 0x0020,
+			FunctionThisCall	= 0x0040,
+			FunctionPureCall	= 0x0080,
+			FunctionOverride	= 0x0100,
+			FunctionInline		= 0x0200,
+			FunctionCExpanding	= 0x1000,
+			FunctionCNarrowing	= 0x2000,
+			FunctionCExpensive	= 0x4000,
+			FunctionCSimilar	= 0x8000,
 		};
 		enum CreateMethodsFlags {
 			CreateMethodConstructorInit	= 0x001,

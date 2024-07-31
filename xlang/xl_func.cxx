@@ -485,7 +485,7 @@ namespace Engine
 						if (o.value->NeedsInstance() && !allow_instance) continue;
 						SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(o.key).GetFunctionSignature();
 						if (sgn->Length() != argc + 1) continue;
-						int compliance_level = CastPriorityIdentity;
+						int common_level = 0;
 						for (int i = 0; i < argc; i++) {
 							SafePointer<LObject> arg_type = argv[i]->GetType();
 							if (arg_type->GetClass() != Class::Type) throw InvalidStateException();
@@ -493,10 +493,14 @@ namespace Engine
 							if (argv[i]->GetClass() == Class::NullLiteral) type_from = 0;
 							SafePointer<XType> type_to = CreateType(sgn->ElementAt(i + 1).QueryCanonicalName(), _ctx);
 							int type_compliance_level = CheckCastPossibility(type_to, type_from, CastPriorityConverter);
-							if (type_compliance_level < compliance_level) compliance_level = type_compliance_level;
+							if (type_compliance_level == CastPriorityNoCast) {
+								common_level = CastPriorityNoCast;
+								break;
+							}
+							common_level += type_compliance_level;
 						}
-						if (compliance_level > best_compliance_level) {
-							best_compliance_level = compliance_level;
+						if (common_level > best_compliance_level) {
+							best_compliance_level = common_level;
 							best_compliance_key = o.key;
 						}
 					}
@@ -533,6 +537,10 @@ namespace Engine
 					if (flags & FunctionThrows) overload->GetFlags() |= XI::Module::Function::FunctionThrows;
 					if (flags & FunctionInline) overload->GetFlags() |= XI::Module::Function::FunctionInline;
 					if (flags & FunctionThisCall) overload->GetFlags() |= XI::Module::Function::FunctionThisCall;
+					if (flags & FunctionCExpanding) overload->GetFlags() |= XI::Module::Function::ConvertorExpanding;
+					if (flags & FunctionCNarrowing) overload->GetFlags() |= XI::Module::Function::ConvertorNarrowing;
+					if (flags & FunctionCExpensive) overload->GetFlags() |= XI::Module::Function::ConvertorExpensive;
+					if (flags & FunctionCSimilar) overload->GetFlags() |= XI::Module::Function::ConvertorSimilar;
 					uint base_flags;
 					auto probe_vfd = _instance_type->FindVirtualFunctionInfo(_name, fcn, base_flags);
 					if (probe_vfd.vf_index >= 0 && probe_vfd.vft_index >= 0) flags |= FunctionVirtual;
@@ -590,6 +598,10 @@ namespace Engine
 					if (flags & FunctionMain) overload->GetFlags() |= XI::Module::Function::FunctionEntryPoint;
 					if (flags & FunctionThrows) overload->GetFlags() |= XI::Module::Function::FunctionThrows;
 					if (flags & FunctionInline) overload->GetFlags() |= XI::Module::Function::FunctionInline;
+					if (flags & FunctionCExpanding) overload->GetFlags() |= XI::Module::Function::ConvertorExpanding;
+					if (flags & FunctionCNarrowing) overload->GetFlags() |= XI::Module::Function::ConvertorNarrowing;
+					if (flags & FunctionCExpensive) overload->GetFlags() |= XI::Module::Function::ConvertorExpensive;
+					if (flags & FunctionCSimilar) overload->GetFlags() |= XI::Module::Function::ConvertorSimilar;
 					auto & func = overload->GetImplementationDesc()._xa;
 					func.retval = static_cast<XType *>(retval)->GetArgumentSpecification();
 					for (int i = 0; i < argc; i++) func.inputs << static_cast<XType *>(argv[i])->GetArgumentSpecification();

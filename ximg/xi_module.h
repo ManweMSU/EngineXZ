@@ -118,6 +118,11 @@ namespace Engine
 					FunctionPrototype	= 0x00004000,
 					FunctionInline		= 0x00008000,
 
+					ConvertorExpanding	= 0x00010000,
+					ConvertorNarrowing	= 0x00020000,
+					ConvertorExpensive	= 0x00040000,
+					ConvertorSimilar	= 0x00080000,
+
 					FunctionMiscMask	= 0xFFFFFF00,
 				};
 			public:

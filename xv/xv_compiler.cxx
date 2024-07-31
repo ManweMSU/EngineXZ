@@ -1148,6 +1148,16 @@ namespace Engine
 				for (auto & attr : attributes) {
 					if (attr.key == Lexic::AttributeNoTC) flags &= ~XL::FunctionThisCall;
 					else if (attr.key == Lexic::AttributeInline) flags |= XL::FunctionInline;
+					else if (attr.key == Lexic::AttributeCnvrtr) {
+						auto traits = attr.value.Split(L':');
+						for (auto & t : traits) {
+							if (t == Lexic::AttributeCExt) flags |= XL::FunctionCExpanding;
+							else if (t == Lexic::AttributeCNar) flags |= XL::FunctionCNarrowing;
+							else if (t == Lexic::AttributeCInv) flags |= XL::FunctionCSimilar;
+							else if (t == Lexic::AttributeCExp) flags |= XL::FunctionCExpensive;
+							else Abort(CompilerStatus::InapproptiateAttribute, definition);
+						}
+					}
 				}
 				XL::LObject * func;
 				try {
@@ -1193,6 +1203,7 @@ namespace Engine
 							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 						} else if (attr.key == Lexic::AttributeInline) {
 							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+						} else if (attr.key == Lexic::AttributeCnvrtr) {
 						} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 					} else func->AddAttribute(attr.key, attr.value);
 				}

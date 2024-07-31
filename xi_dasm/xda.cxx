@@ -210,6 +210,10 @@ int Main(void)
 					if (f.value->code_flags & XI::Module::Function::FunctionThisCall) console << L"  " << Localized(411) << LineFeed();
 					if (f.value->code_flags & XI::Module::Function::FunctionPrototype) console << L"  " << Localized(412) << LineFeed();
 					if (f.value->code_flags & XI::Module::Function::FunctionInline) console << L"  " << Localized(413) << LineFeed();
+					if (f.value->code_flags & XI::Module::Function::ConvertorExpanding) console << L"  " << Localized(414) << LineFeed();
+					if (f.value->code_flags & XI::Module::Function::ConvertorNarrowing) console << L"  " << Localized(415) << LineFeed();
+					if (f.value->code_flags & XI::Module::Function::ConvertorExpensive) console << L"  " << Localized(416) << LineFeed();
+					if (f.value->code_flags & XI::Module::Function::ConvertorSimilar) console << L"  " << Localized(417) << LineFeed();
 					console << TextColorDefault();
 				}
 				if (state.extract_mask & ExtractAssembler) {

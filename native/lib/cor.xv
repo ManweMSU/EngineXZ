@@ -1663,651 +1663,651 @@ nomen_alternum frac64 = dfrac;
 nomen_alternum char = nint32;
 
 dura logicum {
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "extendens"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "extendens"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "extendens"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:1=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:1=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:INT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:INT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
 }
 dura int8 {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "conformis"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "extendens"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "extendens"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:SINT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:SINT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
 }
 dura nint8 {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:1=>1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "conformis"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "extendens"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:1=>2(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "extendens"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:1=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:1=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:1=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:1=>W 1(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:1:INT=>4(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:1:INT=>8(@PTR_FOLLOW:W 1=>1(A[0]))) } }
 	}
 }
 dura int16 {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:2=>1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:2=>1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "conformis"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "extendens"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:2=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:2=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:2=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:2=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:2:SINT=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:2:SINT=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
 }
 dura nint16 {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:2=>2(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:2=>1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:2=>1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "conformis"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "extendens"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:2=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:2=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:2=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:2=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:2=>W 1(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:2:INT=>4(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:2:INT=>8(@PTR_FOLLOW:W 1=>2(A[0]))) } }
 	}
 }
 dura int32 {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "angustans"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:4=>2(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:4=>2(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "conformis"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:4:SINT=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:4:SINT=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
 }
 dura nint32 {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:4=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "angustans"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:4=>2(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:4=>2(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "conformis"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "extendens"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:4=>W 1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:4:INT=>4(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "extendens:pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:4:INT=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
 }
 dura int64 {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "angustans"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:8=>2(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:8=>2(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "angustans"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "conformis"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "angustans"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "angustans"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @S_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:8:SINT=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:8:SINT=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
 }
 dura nint64 {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:8=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "angustans"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:8=>2(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:8=>2(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "angustans"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "conformis"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "angustans"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "angustans"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @U_RESIZE:8=>W 1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:8:INT=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:8:INT=>8(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
 }
 dura intadl {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:W 1=>1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @S_RESIZE:W 1=>1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "angustans"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:W 1=>2(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @S_RESIZE:W 1=>2(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "angustans"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:W 1=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @S_RESIZE:W 1=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:W 1=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @S_RESIZE:W 1=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nintadl) () {
+	[[xa]] [[convertor] "conformis"] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : UINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:W 1:SINT=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:W 1:SINT=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
 }
 dura nintadl {
-	[[xa]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @NOTZERO:W 1=>W 1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans"] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:W 1=>1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : UINT
 		CODE { RET { @BLT:1 1=>1(R, @U_RESIZE:W 1=>1(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (int16) () {
+	[[xa]] [[convertor] "angustans"] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:W 1=>2(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nint16) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : UINT
 		CODE { RET { @BLT:2 2=>2(R, @U_RESIZE:W 1=>2(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (int32) () {
+	[[xa]] [[convertor] "angustans"] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:W 1=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nint32) () {
+	[[xa]] [[convertor] "angustans"] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : UINT
 		CODE { RET { @BLT:4 4=>4(R, @U_RESIZE:W 1=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (int64) () {
+	[[xa]] [[convertor] "extendens"] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:W 1=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (nint64) () {
+	[[xa]] [[convertor] "extendens"] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : UINT
 		CODE { RET { @BLT:8 8=>8(R, @U_RESIZE:W 1=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] convertor (intadl) () {
+	[[xa]] [[convertor] "conformis"] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_GATHER_32:W 1:INT=>4(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_GATHER_64:W 1:INT=>8(@PTR_FOLLOW:W 1=>W 1(A[0]))) } }
 	}
 }
 dura frac {
-	[[xa]] [[inline]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @FP_NOTZERO_32:4=>1(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_32:4=>1:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : INT
 		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_32:4=>1:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (int16) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_32:4=>2:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nint16) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : INT
 		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_32:4=>2:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (int32) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_32:4=>4:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nint32) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : INT
 		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_32:4=>4:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (int64) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_32:4=>8:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nint64) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : INT
 		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_32:4=>8:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (intadl) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_32:4=>W 1:SINT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nintadl) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : INT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_32:4=>W 1:INT(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (dfrac) () {
+	[[xa]] [[convertor] "extendens"] [[inline]] convertor (dfrac) () {
 		INTERFACE W 1 : THIS => 8 : FLOAT
 		CODE { RET { @BLT:8 8=>8(R, @FP_RESIZE_32:4=>8(@PTR_FOLLOW:W 1=>4(A[0]))) } }
 	}
 }
 dura dfrac {
-	[[xa]] [[inline]] convertor (logicum) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (logicum) () {
 		INTERFACE W 1 : THIS => 1
 		CODE { RET { @BLT:1 1=>1(R, @FP_NOTZERO_64:8=>1(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (int8) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (int8) () {
 		INTERFACE W 1 : THIS => 1 : SINT
 		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_64:8=>1:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nint8) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (nint8) () {
 		INTERFACE W 1 : THIS => 1 : INT
 		CODE { RET { @BLT:1 1=>1(R, @FP_INTEGER_64:8=>1:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (int16) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (int16) () {
 		INTERFACE W 1 : THIS => 2 : SINT
 		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_64:8=>2:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nint16) () {
+	[[xa]] [[convertor] "angustans:pretiosus"] [[inline]] convertor (nint16) () {
 		INTERFACE W 1 : THIS => 2 : INT
 		CODE { RET { @BLT:2 2=>2(R, @FP_INTEGER_64:8=>2:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (int32) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (int32) () {
 		INTERFACE W 1 : THIS => 4 : SINT
 		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_64:8=>4:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nint32) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (nint32) () {
 		INTERFACE W 1 : THIS => 4 : INT
 		CODE { RET { @BLT:4 4=>4(R, @FP_INTEGER_64:8=>4:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (int64) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (int64) () {
 		INTERFACE W 1 : THIS => 8 : SINT
 		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_64:8=>8:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nint64) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (nint64) () {
 		INTERFACE W 1 : THIS => 8 : INT
 		CODE { RET { @BLT:8 8=>8(R, @FP_INTEGER_64:8=>8:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (intadl) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (intadl) () {
 		INTERFACE W 1 : THIS => W 1 : SINT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_64:8=>W 1:SINT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (nintadl) () {
+	[[xa]] [[convertor] "pretiosus"] [[inline]] convertor (nintadl) () {
 		INTERFACE W 1 : THIS => W 1 : INT
 		CODE { RET { @BLT:W 1 W 1=>W 1(R, @FP_INTEGER_64:8=>W 1:INT(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
-	[[xa]] [[inline]] convertor (frac) () {
+	[[xa]] [[convertor] "angustans"] [[inline]] convertor (frac) () {
 		INTERFACE W 1 : THIS => 4 : FLOAT
 		CODE { RET { @BLT:4 4=>4(R, @FP_RESIZE_64:8=>4(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}

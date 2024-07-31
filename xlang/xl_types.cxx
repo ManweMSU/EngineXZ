@@ -97,6 +97,7 @@ namespace Engine
 		};
 		class TBaseFunctionOverload : public XFunctionOverload
 		{
+			uint _internal_flags;
 		public:
 			virtual Class GetClass(void) override { return Class::FunctionOverload; }
 			virtual string GetName(void) override { return L""; }
@@ -114,7 +115,7 @@ namespace Engine
 			virtual FunctionImplementationDesc & GetImplementationDesc(void) override { throw InvalidStateException(); }
 			virtual bool NeedsInstance(void) override { return true; }
 			virtual bool Throws(void) override { return false; }
-			virtual uint & GetFlags(void) override { throw InvalidStateException(); }
+			virtual uint & GetFlags(void) override { _internal_flags = 0; return _internal_flags; }
 			virtual XClass * GetInstanceType(void) override { throw InvalidStateException(); }
 			virtual string GetCanonicalType(void) override { throw InvalidStateException(); }
 			virtual bool CheckForInline(void) override { return true; }
@@ -1400,6 +1401,17 @@ namespace Engine
 				return node;
 			}
 		};
+		int GetConvertorTraitsImpact(XFunctionOverload * func)
+		{
+			int impact = 0;
+			auto attr = func->GetFlags();
+			if (attr & XI::Module::Function::ConvertorExpensive) impact += CastCostExpensive;
+			else impact += CastCostUndefined;
+			if (attr & XI::Module::Function::ConvertorExpanding) impact += CastQualityExpanding;
+			if (attr & XI::Module::Function::ConvertorNarrowing) impact += CastQualityNarrowing;
+			if (attr & XI::Module::Function::ConvertorSimilar) impact += CastQualityIdentical;
+			return impact;
+		}
 		int CheckCastPossibility(XType * dest, XType * src, int min_level)
 		{
 			if (min_level <= CastPriorityIdentity && src) {
@@ -1429,7 +1441,10 @@ namespace Engine
 						if (sgn->Length() > 1) continue;
 						SafePointer<XType> retval = CreateType(sgn->ElementAt(0).QueryCanonicalName(), src->GetContext());
 						retval->GetTypesConformsTo(conf2);
-						for (auto & c : conf2) if (dest->GetCanonicalType() == c.GetCanonicalType()) return CastPriorityConverter;
+						for (auto & c : conf2) if (dest->GetCanonicalType() == c.GetCanonicalType()) {
+							auto conv_over = static_cast<XFunction *>(conv.Inner())->GetOverloadT(fcn, true);
+							return CastPriorityConverter + GetConvertorTraitsImpact(conv_over);
+						}
 					}
 				} catch (...) {}
 				ObjectArray<XType> conf(0x20);
@@ -1443,7 +1458,9 @@ namespace Engine
 				for (auto & c : conf) {
 					try {
 						SafePointer<LObject> ctor = pre_dest->GetConstructorCast(&c);
-						return CastPriorityConverter;
+						if (ctor->GetClass() == Class::FunctionOverload) {
+							return CastPriorityConverter + GetConvertorTraitsImpact(static_cast<XFunctionOverload *>(ctor.Inner()));
+						} else return CastPriorityConverter;
 					} catch (...) {}
 				}
 			}
