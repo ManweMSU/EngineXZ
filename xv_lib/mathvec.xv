@@ -17,7 +17,7 @@ structura frac2 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~frac2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @PTR_FOLLOW:W 1=>8(A[1])) } } }
-	structor (frac s) { funda x(s); funda y(s); }
+	[[convertor] "extendens"] structor (frac s) { funda x(s); funda y(s); }
 	structor (frac ix, frac iy) { funda x(ix); funda y(iy); }
 	[[xa]] [[inline]] functio frac2 operator - () {
 		INTERFACE W 1 : THIS => 8 : OBJECT
@@ -67,7 +67,7 @@ structura frac2 {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_32:8 8=>1(@PTR_FOLLOW:W 1=>8(A[0]), @PTR_FOLLOW:W 1=>8(A[1])))) } }
 	}
-	convertor (linea) () iacit { responde linea.forma("(%0, %1)", x, y); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1)", x, y); }
 	[[inline]] functio ~frac operator [] (int i) { responde _c[i]; }
 }
 structura frac3 {
@@ -84,7 +84,7 @@ structura frac3 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~frac3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:12 12=>12(@PTR_FOLLOW:W 1=>12(A[0]), @PTR_FOLLOW:W 1=>12(A[1])) } } }
-	structor (frac s) { funda x(s); funda y(s); funda z(s); }
+	[[convertor] "extendens"] structor (frac s) { funda x(s); funda y(s); funda z(s); }
 	structor (frac ix, frac iy, frac iz) { funda x(ix); funda y(iy); funda z(iz); }
 	[[xa]] [[inline]] functio frac3 operator - () {
 		INTERFACE W 1 : THIS => 12 : OBJECT
@@ -134,7 +134,7 @@ structura frac3 {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_32:12 12=>1(@PTR_FOLLOW:W 1=>12(A[0]), @PTR_FOLLOW:W 1=>12(A[1])))) } }
 	}
-	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2)", x, y, z); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1, %2)", x, y, z); }
 	[[inline]] functio ~frac operator [] (int i) { responde _c[i]; }
 }
 structura frac4 {
@@ -154,7 +154,7 @@ structura frac4 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~frac4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])) } } }
-	structor (frac s) { funda x(s); funda y(s); funda z(s); funda w(s); }
+	[[convertor] "extendens"] structor (frac s) { funda x(s); funda y(s); funda z(s); funda w(s); }
 	structor (frac ix, frac iy, frac iz, frac iw) { funda x(ix); funda y(iy); funda z(iz); funda w(iw); }
 	[[xa]] [[inline]] functio frac4 operator - () {
 		INTERFACE W 1 : THIS => 16 : OBJECT
@@ -204,7 +204,7 @@ structura frac4 {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_32:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])))) } }
 	}
-	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", x, y, z, w); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", x, y, z, w); }
 	[[inline]] functio ~frac operator [] (int i) { responde _c[i]; }
 }
 
@@ -220,7 +220,7 @@ structura dfrac2 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~dfrac2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])) } } }
-	structor (dfrac s) { funda x(s); funda y(s); }
+	[[convertor] "extendens"] structor (dfrac s) { funda x(s); funda y(s); }
 	structor (dfrac ix, dfrac iy) { funda x(ix); funda y(iy); }
 	[[xa]] [[inline]] functio dfrac2 operator - () {
 		INTERFACE W 1 : THIS => 16 : OBJECT
@@ -270,7 +270,7 @@ structura dfrac2 {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_64:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])))) } }
 	}
-	convertor (linea) () iacit { responde linea.forma("(%0, %1)", x, y); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1)", x, y); }
 	[[inline]] functio ~dfrac operator [] (int i) { responde _c[i]; }
 }
 structura dfrac3 {
@@ -287,7 +287,7 @@ structura dfrac3 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~dfrac3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:24 24=>24(@PTR_FOLLOW:W 1=>24(A[0]), @PTR_FOLLOW:W 1=>24(A[1])) } } }
-	structor (dfrac s) { funda x(s); funda y(s); funda z(s); }
+	[[convertor] "extendens"] structor (dfrac s) { funda x(s); funda y(s); funda z(s); }
 	structor (dfrac ix, dfrac iy, dfrac iz) { funda x(ix); funda y(iy); funda z(iz); }
 	[[xa]] [[inline]] functio dfrac3 operator - () {
 		INTERFACE W 1 : THIS => 24 : OBJECT
@@ -337,7 +337,7 @@ structura dfrac3 {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_64:24 24=>1(@PTR_FOLLOW:W 1=>24(A[0]), @PTR_FOLLOW:W 1=>24(A[1])))) } }
 	}
-	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2)", x, y, z); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1, %2)", x, y, z); }
 	[[inline]] functio ~dfrac operator [] (int i) { responde _c[i]; }
 }
 structura dfrac4 {
@@ -357,7 +357,7 @@ structura dfrac4 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~dfrac4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])) } } }
-	structor (dfrac s) { funda x(s); funda y(s); funda z(s); funda w(s); }
+	[[convertor] "extendens"] structor (dfrac s) { funda x(s); funda y(s); funda z(s); funda w(s); }
 	structor (dfrac ix, dfrac iy, dfrac iz, dfrac iw) { funda x(ix); funda y(iy); funda z(iz); funda w(iw); }
 	[[xa]] [[inline]] functio dfrac4 operator - () {
 		INTERFACE W 1 : THIS => 32 : OBJECT
@@ -407,42 +407,42 @@ structura dfrac4 {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_64:32 32=>1(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])))) } }
 	}
-	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", x, y, z, w); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", x, y, z, w); }
 	[[inline]] functio ~dfrac operator [] (int i) { responde _c[i]; }
 }
 
 dura frac2 {
-	[[xa]] [[inline]] convertor (dfrac2) () {
+	[[xa]] [[inline]] [[convertor] "extendens"] convertor (dfrac2) () {
 		INTERFACE W 1 : THIS => 16 : OBJECT
 		CODE { RET { @BLT:16 16=>16(R, @FP_RESIZE_32:8=>16(@PTR_FOLLOW:W 1=>8(A[0]))) } }
 	}
 }
 dura frac3 {
-	[[xa]] [[inline]] convertor (dfrac3) () {
+	[[xa]] [[inline]] [[convertor] "extendens"] convertor (dfrac3) () {
 		INTERFACE W 1 : THIS => 24 : OBJECT
 		CODE { RET { @BLT:24 24=>24(R, @FP_RESIZE_32:12=>24(@PTR_FOLLOW:W 1=>12(A[0]))) } }
 	}
 }
 dura frac4 {
-	[[xa]] [[inline]] convertor (dfrac4) () {
+	[[xa]] [[inline]] [[convertor] "extendens"] convertor (dfrac4) () {
 		INTERFACE W 1 : THIS => 32 : OBJECT
 		CODE { RET { @BLT:32 32=>32(R, @FP_RESIZE_32:16=>32(@PTR_FOLLOW:W 1=>16(A[0]))) } }
 	}
 }
 dura dfrac2 {
-	[[xa]] [[inline]] convertor (frac2) () {
+	[[xa]] [[inline]] [[convertor] "angustans"] convertor (frac2) () {
 		INTERFACE W 1 : THIS => 8 : OBJECT
 		CODE { RET { @BLT:8 8=>8(R, @FP_RESIZE_64:16=>8(@PTR_FOLLOW:W 1=>16(A[0]))) } }
 	}
 }
 dura dfrac3 {
-	[[xa]] [[inline]] convertor (frac3) () {
+	[[xa]] [[inline]] [[convertor] "angustans"] convertor (frac3) () {
 		INTERFACE W 1 : THIS => 12 : OBJECT
 		CODE { RET { @BLT:12 12=>12(R, @FP_RESIZE_64:24=>12(@PTR_FOLLOW:W 1=>24(A[0]))) } }
 	}
 }
 dura dfrac4 {
-	[[xa]] [[inline]] convertor (frac4) () {
+	[[xa]] [[inline]] [[convertor] "angustans"] convertor (frac4) () {
 		INTERFACE W 1 : THIS => 16 : OBJECT
 		CODE { RET { @BLT:16 16=>16(R, @FP_RESIZE_64:32=>16(@PTR_FOLLOW:W 1=>32(A[0]))) } }
 	}

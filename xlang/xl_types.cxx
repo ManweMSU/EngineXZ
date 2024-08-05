@@ -18,7 +18,7 @@ namespace Engine
 				return GetContext().QueryTypePointer(void_type);
 			} catch (...) { throw ObjectHasNoTypeException(this); }
 		}
-		LObject * XType::Invoke(int argc, LObject ** argv)
+		LObject * XType::Invoke(int argc, LObject ** argv, LObject ** actual)
 		{
 			try {
 				ObjectArray<XType> input_types(argc);
@@ -28,12 +28,15 @@ namespace Engine
 					input_types.Append(static_cast<XType *>(type.Inner()));
 				}
 				if (argc == 1) {
+					if (actual) { *actual = this; Retain(); }
 					return PerformTypeCast(this, argv[0], CastPriorityExplicit, true);
 				} else if (argc == 0) {
 					SafePointer<LObject> ctor = GetConstructorInit();
+					if (actual) { *actual = ctor; ctor->Retain(); }
 					return ConstructObject(this, ctor, 0, 0);
 				} else {
 					SafePointer<LObject> ctor = GetMember(NameConstructor);
+					if (actual) { *actual = ctor; ctor->Retain(); }
 					return ConstructObject(this, ctor, argc, argv);
 				}
 			} catch (...) { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
@@ -106,7 +109,7 @@ namespace Engine
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override { throw ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw ObjectHasNoAttributesException(this); }
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
@@ -157,10 +160,11 @@ namespace Engine
 		public:
 			PointerConstructorInstance(LContext & ctx, PointerConstructorClass cls, LObject * instance) : _ctx(ctx), _cls(cls) { _instance.SetRetain(instance); }
 			virtual ~PointerConstructorInstance(void) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (_cls == PointerConstructorClass::Init && argc) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 				if (_cls == PointerConstructorClass::Copy && argc != 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
 				SafePointer<_computable> com = new _computable;
 				SafePointer<LObject> type = _instance->GetType();
 				com->_cls = _cls;
@@ -802,8 +806,9 @@ namespace Engine
 			public:
 				_array_instanced_method(XArray * base, LObject * instance, const string & method) : _method(method) { _base.SetRetain(base); _instance.SetRetain(instance); }
 				virtual ~_array_instanced_method(void) override {}
-				virtual LObject * Invoke(int argc, LObject ** argv) override
+				virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 				{
+					if (actual) { *actual = this; Retain(); }
 					if (_method == OperatorSubscript) {
 						if (!argc) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 						SafePointer<XType> element = _base->GetElementType();
@@ -1038,9 +1043,10 @@ namespace Engine
 			public:
 				_pointer_operator_instance(const string & op, XPointer * ptr, LObject * inst) : _op(op) { _ptr_type.SetRetain(ptr); _instance.SetRetain(inst); }
 				virtual ~_pointer_operator_instance(void) override {}
-				virtual LObject * Invoke(int argc, LObject ** argv) override
+				virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 				{
 					SafePointer<_pointer_operator_computable> com = new _pointer_operator_computable;
+					if (actual) { *actual = this; Retain(); }
 					com->_op = _op;
 					com->_ptr_type = _ptr_type;
 					com->_instance = _instance;

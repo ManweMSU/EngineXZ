@@ -69,9 +69,10 @@ namespace Engine
 			XAddressOf(LContext & ctx) : _ctx(ctx) {}
 			virtual ~XAddressOf(void) override {}
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (argc != 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
 				SafePointer<_computable> com = new _computable;
 				SafePointer<LObject> type = argv[0]->GetType();
 				SafePointer<LObject> ptr = _ctx.QueryTypePointer(type);
@@ -111,9 +112,10 @@ namespace Engine
 			XLogicalOr(LContext & ctx) : _ctx(ctx) {}
 			virtual ~XLogicalOr(void) override {}
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (argc < 2) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
 				SafePointer<_computable> com = new _computable;
 				com->_boolean = CreateType(XI::Module::TypeReference::MakeClassReference(NameBoolean), _ctx);
 				for (int i = 0; i < argc; i++) {
@@ -152,9 +154,10 @@ namespace Engine
 			XLogicalAnd(LContext & ctx) : _ctx(ctx) {}
 			virtual ~XLogicalAnd(void) override {}
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (argc < 2) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
 				SafePointer<_computable> com = new _computable;
 				com->_boolean = CreateType(XI::Module::TypeReference::MakeClassReference(NameBoolean), _ctx);
 				for (int i = 0; i < argc; i++) {
@@ -173,9 +176,10 @@ namespace Engine
 			XTypeOf(void) {}
 			virtual ~XTypeOf(void) override {}
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (argc != 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
 				return argv[0]->GetType();
 			}
 			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override
@@ -218,9 +222,10 @@ namespace Engine
 			XSizeOf(LContext & ctx, bool max_size) : _ctx(ctx), _mx(max_size) {}
 			virtual ~XSizeOf(void) override {}
 			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (argc != 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
 				SafePointer<LObject> type;
 				if (argv[0]->GetClass() == Class::Type) type.SetRetain(argv[0]);
 				else type = argv[0]->GetType();

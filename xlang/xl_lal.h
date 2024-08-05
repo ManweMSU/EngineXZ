@@ -123,7 +123,7 @@ namespace Engine
 			virtual LObject * GetType(void) = 0;
 			virtual LObject * GetMember(const string & name) = 0;
 			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) = 0;
-			virtual LObject * Invoke(int argc, LObject ** argv) = 0;
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual = 0) = 0;
 			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) = 0;
 			virtual void AddMember(const string & name, LObject * child) = 0;
 			virtual void AddAttribute(const string & key, const string & value) = 0;

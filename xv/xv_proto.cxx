@@ -65,7 +65,11 @@ namespace Engine
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { return _proto->Instantiate(argc, argv); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
+			{
+				if (actual) { *actual = this; Retain(); }
+				return _proto->Instantiate(argc, argv);
+			}
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override
 			{
 				XL::InvokationDesc result;
@@ -371,7 +375,7 @@ namespace Engine
 				else throw XL::ObjectHasNoSuchMemberException(this, name);
 			}
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override { list.Append(XL::OperatorSubscript, XL::Class::Internal); }
-			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { if (!_attributes.Append(key, value)) throw XL::ObjectMemberRedefinitionException(this, key); }
@@ -465,10 +469,10 @@ namespace Engine
 			FunctionPrototype(ICompilationContext & ctx, const string & name, const string & path, bool local) : BasePrototype(ctx, name, path, local) {}
 			FunctionPrototype(ICompilationContext & ctx, const string & name, const string & path, bool local, const DataBlock & data) : BasePrototype(ctx, name, path, local, data) {}
 			virtual ~FunctionPrototype(void) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { return PartialInvoke(0, 0, argc, argv); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override { return PartialInvoke(0, 0, argc, argv, actual); }
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual PrototypeClass GetPrototypeClass(void) { return PrototypeClass::Function; }
-			virtual LObject * PartialInvoke(int inst_argc, LObject ** inst_argv, int argc, LObject ** argv)
+			virtual LObject * PartialInvoke(int inst_argc, LObject ** inst_argv, int argc, LObject ** argv, LObject ** actual)
 			{
 				ObjectArray<Object> retain(_args.Length());
 				Array<XL::LObject *> inst_args(_args.Length());
@@ -480,7 +484,7 @@ namespace Engine
 					inst_args << arg;
 				}
 				SafePointer<XL::LObject> instance = Instantiate(inst_args.Length(), inst_args.GetBuffer());
-				return instance->Invoke(argc, argv);
+				return instance->Invoke(argc, argv, actual);
 			}
 		};
 		class BlockAwaitPrototype : public VPrototype
@@ -606,7 +610,7 @@ namespace Engine
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
@@ -648,9 +652,10 @@ namespace Engine
 			virtual ~BlockPrototype(void) override {}
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (argc != _args.Length()) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
 				return new BlockAwaitPrototype(_ctx, _impl, _args, argc, argv);
 			}
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override
@@ -687,7 +692,7 @@ namespace Engine
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { return _proto->PartialInvoke(_argc, _argv, argc, argv); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override { return _proto->PartialInvoke(_argc, _argv, argc, argv, actual); }
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
@@ -750,8 +755,9 @@ namespace Engine
 			virtual LObject * GetType(void) override { throw XL::ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw XL::ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
+				if (actual) { *actual = this; Retain(); }
 				if (_name == TraitSameTypes) {
 					if (argc != 2) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
 					if (argv[0]->GetClass() != XL::Class::Type || argv[1]->GetClass() != XL::Class::Type) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);

@@ -513,7 +513,7 @@ namespace Engine
 					} else { ReadNextToken(); }
 					Array<XL::LObject *> input(0x20);
 					for (auto & arg : args) input << &arg;
-					try { return ctx.QueryFunctionPointer(retval, input.Length(), input.GetBuffer()); }
+					try { object = ctx.QueryFunctionPointer(retval, input.Length(), input.GetBuffer()); }
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					AssignTokenInfo(definition, object, false, false);
 				} else if (IsKeyword(Lexic::KeywordNull)) {
@@ -578,11 +578,12 @@ namespace Engine
 								AssertPunct(L")"); ReadNextToken();
 							} else { ReadNextToken(); }
 							Array<XL::LObject *> input(0x20);
+							SafePointer<XL::LObject> actual;
 							for (auto & arg : args) input << &arg;
-							try { object = object->Invoke(input.Length(), input.GetBuffer()); }
+							try { object = object->Invoke(input.Length(), input.GetBuffer(), actual.InnerRef()); }
 							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
-							AssignTokenInfo(op, object, false, false);
-							AssignTokenInfo(end, object, false, false);
+							AssignTokenInfo(op, actual, false, false);
+							AssignTokenInfo(end, actual, false, false);
 						} else if (op.contents == L".") {
 							if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) AssignAutocomplete(object);
 							AssertIdent();
@@ -612,11 +613,12 @@ namespace Engine
 								AssertPunct(L"]"); ReadNextToken();
 							} else { ReadNextToken(); }
 							Array<XL::LObject *> input(0x20);
+							SafePointer<XL::LObject> actual;
 							for (auto & arg : args) input << &arg;
-							try { object = subscript->Invoke(input.Length(), input.GetBuffer()); }
+							try { object = subscript->Invoke(input.Length(), input.GetBuffer(), actual.InnerRef()); }
 							catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
-							AssignTokenInfo(op, subscript, false, false);
-							AssignTokenInfo(end, subscript, false, false);
+							AssignTokenInfo(op, actual, false, false);
+							AssignTokenInfo(end, actual, false, false);
 						} else if (op.contents == Lexic::KeywordAs) {
 							AssertPunct(L"("); ReadNextToken();
 							SafePointer<XL::LObject> type_into = ProcessTypeExpression(ssl, ssc);
@@ -773,11 +775,12 @@ namespace Engine
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionUnary(ssl, ssc), op_obj;
 					try { op_obj = ctx.QueryObject(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-					AssignTokenInfo(op, op_obj, false, false);
+					SafePointer<XL::LObject> actual;
 					try {
 						XL::LObject * opv[2] = { object.Inner(), rs.Inner() };
-						object = op_obj->Invoke(2, opv);
+						object = op_obj->Invoke(2, opv, actual.InnerRef());
 					} catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+					AssignTokenInfo(op, actual, false, false);
 				}
 				object->Retain();
 				return object;
@@ -791,11 +794,12 @@ namespace Engine
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionMultiplicative(ssl, ssc), op_obj;
 					try { op_obj = ctx.QueryObject(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-					AssignTokenInfo(op, op_obj, false, false);
+					SafePointer<XL::LObject> actual;
 					try {
 						XL::LObject * opv[2] = { object.Inner(), rs.Inner() };
-						object = op_obj->Invoke(2, opv);
+						object = op_obj->Invoke(2, opv, actual.InnerRef());
 					} catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+					AssignTokenInfo(op, actual, false, false);
 				}
 				object->Retain();
 				return object;
@@ -809,11 +813,12 @@ namespace Engine
 					ReadNextToken();
 					SafePointer<XL::LObject> rs = ProcessExpressionAdditive(ssl, ssc), op_obj;
 					try { op_obj = ctx.QueryObject(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-					AssignTokenInfo(op, op_obj, false, false);
+					SafePointer<XL::LObject> actual;
 					try {
 						XL::LObject * opv[2] = { object.Inner(), rs.Inner() };
-						object = op_obj->Invoke(2, opv);
+						object = op_obj->Invoke(2, opv, actual.InnerRef());
 					} catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+					AssignTokenInfo(op, actual, false, false);
 				}
 				object->Retain();
 				return object;
@@ -898,8 +903,9 @@ namespace Engine
 					} else {
 						SafePointer<XL::LObject> op_obj;
 						try { op_obj = object->GetMember(op.contents); } catch (...) { Abort(CompilerStatus::NoSuchSymbol, op); }
-						AssignTokenInfo(op, op_obj, false, false);
-						try { object = op_obj->Invoke(1, rs.InnerRef()); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						SafePointer<XL::LObject> actual;
+						try { object = op_obj->Invoke(1, rs.InnerRef(), actual.InnerRef()); } catch (...) { Abort(CompilerStatus::NoSuchOverload, op); }
+						AssignTokenInfo(op, actual, false, false);
 					}
 				}
 				object->Retain();

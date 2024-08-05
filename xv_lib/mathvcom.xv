@@ -20,9 +20,9 @@ structura complex2 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~complex2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])) } } }
-	structor (complex s) { funda x(s); funda y(s); }
-	structor (frac2 v) { funda x(v.x); funda y(v.y); }
-	structor (dfrac2 v) { funda x(v.x); funda y(v.y); }
+	[[convertor] "extendens"] structor (complex s) { funda x(s); funda y(s); }
+	[[convertor] "extendens"] structor (frac2 v) { funda x(v.x); funda y(v.y); }
+	[[convertor] "extendens"] structor (dfrac2 v) { funda x(v.x); funda y(v.y); }
 	structor (complex ix, complex iy) { funda x(ix); funda y(iy); }
 	functio complex2 operator - () { responde complex2(-x, -y); }
 	[[xa]] functio ~complex2 operator = (~complex2 src) {
@@ -39,7 +39,7 @@ structura complex2 {
 	classis functio complex2 operator / (~complex2 a, ~complex2 b) { responde complex2(a.x / b.x, a.y / b.y); }
 	classis functio logicum operator == (~complex2 a, ~complex2 b) { responde a.x == b.x && a.y == b.y; }
 	classis functio logicum operator != (~complex2 a, ~complex2 b) { responde a.x != b.x || a.y != b.y; }
-	convertor (linea) () iacit { responde linea.forma("(%0, %1)", x, y); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1)", x, y); }
 	[[inline]] functio ~complex operator [] (int i) { responde _c[i]; }
 }
 structura complex3 {
@@ -56,9 +56,9 @@ structura complex3 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~complex3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:48 48=>48(@PTR_FOLLOW:W 1=>48(A[0]), @PTR_FOLLOW:W 1=>48(A[1])) } } }
-	structor (complex s) { funda x(s); funda y(s); funda z(s); }
-	structor (frac3 v) { funda x(v.x); funda y(v.y); funda z(v.z); }
-	structor (dfrac3 v) { funda x(v.x); funda y(v.y); funda z(v.z); }
+	[[convertor] "extendens"] structor (complex s) { funda x(s); funda y(s); funda z(s); }
+	[[convertor] "extendens"] structor (frac3 v) { funda x(v.x); funda y(v.y); funda z(v.z); }
+	[[convertor] "extendens"] structor (dfrac3 v) { funda x(v.x); funda y(v.y); funda z(v.z); }
 	structor (complex ix, complex iy, complex iz) { funda x(ix); funda y(iy); funda z(iz); }
 	functio complex3 operator - () { responde complex3(-x, -y, -z); }
 	[[xa]] functio ~complex3 operator = (~complex3 src) {
@@ -75,7 +75,7 @@ structura complex3 {
 	classis functio complex3 operator / (~complex3 a, ~complex3 b) { responde complex3(a.x / b.x, a.y / b.y, a.z / b.z); }
 	classis functio logicum operator == (~complex3 a, ~complex3 b) { responde a.x == b.x && a.y == b.y && a.z == b.z; }
 	classis functio logicum operator != (~complex3 a, ~complex3 b) { responde a.x != b.x || a.y != b.y || a.z != b.z; }
-	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2)", x, y, z); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1, %2)", x, y, z); }
 	[[inline]] functio ~complex operator [] (int i) { responde _c[i]; }
 }
 structura complex4 {
@@ -95,9 +95,9 @@ structura complex4 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~complex4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:64 64=>64(@PTR_FOLLOW:W 1=>64(A[0]), @PTR_FOLLOW:W 1=>64(A[1])) } } }
-	structor (complex s) { funda x(s); funda y(s); funda z(s); funda w(s); }
-	structor (frac4 v) { funda x(v.x); funda y(v.y); funda z(v.z); funda w(v.w); }
-	structor (dfrac4 v) { funda x(v.x); funda y(v.y); funda z(v.z); funda w(v.w); }
+	[[convertor] "extendens"] structor (complex s) { funda x(s); funda y(s); funda z(s); funda w(s); }
+	[[convertor] "extendens"] structor (frac4 v) { funda x(v.x); funda y(v.y); funda z(v.z); funda w(v.w); }
+	[[convertor] "extendens"] structor (dfrac4 v) { funda x(v.x); funda y(v.y); funda z(v.z); funda w(v.w); }
 	structor (complex ix, complex iy, complex iz, complex iw) { funda x(ix); funda y(iy); funda z(iz); funda w(iw); }
 	functio complex4 operator - () { responde complex4(-x, -y, -z, -w); }
 	[[xa]] functio ~complex4 operator = (~complex4 src) {
@@ -114,7 +114,7 @@ structura complex4 {
 	classis functio complex4 operator / (~complex4 a, ~complex4 b) { responde complex4(a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w); }
 	classis functio logicum operator == (~complex4 a, ~complex4 b) { responde a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w; }
 	classis functio logicum operator != (~complex4 a, ~complex4 b) { responde a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w; }
-	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", x, y, z, w); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", x, y, z, w); }
 	[[inline]] functio ~complex operator [] (int i) { responde _c[i]; }
 }
 

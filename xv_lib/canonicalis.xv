@@ -2525,12 +2525,12 @@ genus linea {
 	[[importa] "spu_compareo"]			classis functio int operator <=> (~linea a, ~linea b);
 	[[importa] "spu_compareo_2"]		classis functio int operator # (~linea a, ~linea b);
 
-	classis functio logicum operator == (~linea a, ~linea b) iacit { responde a <=> b == 0; }
-	classis functio logicum operator != (~linea a, ~linea b) iacit { responde a <=> b != 0; }
-	classis functio logicum operator <= (~linea a, ~linea b) iacit { responde a <=> b <= 0; }
-	classis functio logicum operator >= (~linea a, ~linea b) iacit { responde a <=> b >= 0; }
-	classis functio logicum operator < (~linea a, ~linea b) iacit { responde a <=> b < 0; }
-	classis functio logicum operator > (~linea a, ~linea b) iacit { responde a <=> b > 0; }
+	classis functio logicum operator == (~linea a, ~linea b) { responde a <=> b == 0; }
+	classis functio logicum operator != (~linea a, ~linea b) { responde a <=> b != 0; }
+	classis functio logicum operator <= (~linea a, ~linea b) { responde a <=> b <= 0; }
+	classis functio logicum operator >= (~linea a, ~linea b) { responde a <=> b >= 0; }
+	classis functio logicum operator < (~linea a, ~linea b) { responde a <=> b < 0; }
+	classis functio logicum operator > (~linea a, ~linea b) { responde a <=> b > 0; }
 
 	[[importa] "spu_reperi_primus"]		[[thiscall_nullum]] functio int reperi_primum(~linea valor);
 	[[importa] "spu_reperi_ultimus"]	[[thiscall_nullum]] functio int reperi_ultimum(~linea valor);

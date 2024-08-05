@@ -21,9 +21,9 @@ structura complex2x2 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~complex2x2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:64 64=>64(@PTR_FOLLOW:W 1=>64(A[0]), @PTR_FOLLOW:W 1=>64(A[1])) } } }
-	structor (dfrac2x2 re) { series[0] = complex2(re[0]); series[1] = complex2(re[1]); }
-	structor (complex diag) { series[0] = complex2(diag, 0.0); series[1] = complex2(0.0, diag); }
-	structor (complex2 diag) { series[0] = complex2(diag.x, 0.0); series[1] = complex2(0.0, diag.y); }
+	[[convertor] "extendens"] structor (dfrac2x2 re) { series[0] = complex2(re[0]); series[1] = complex2(re[1]); }
+	[[convertor] "extendens:pretiosus"] structor (complex diag) { series[0] = complex2(diag, 0.0); series[1] = complex2(0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (complex2 diag) { series[0] = complex2(diag.x, 0.0); series[1] = complex2(0.0, diag.y); }
 	structor (complex2 s1, complex2 s2) { series[0] = s1; series[1] = s2; }
 	functio complex2x2 operator - () { responde complex2x2(-series[0], -series[1]); }
 	[[xa]] functio ~complex2x2 operator = (~complex2x2 src) {
@@ -55,7 +55,7 @@ structura complex2x2 {
 	}
 	classis functio logicum operator == (~complex2x2 a, ~complex2x2 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1]; }
 	classis functio logicum operator != (~complex2x2 a, ~complex2x2 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n", series[0], series[1]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n", series[0], series[1]); }
 	[[inline]] functio ~complex2 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~complex operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio complex2 operator () (int i) { responde complex2(series[0][i], series[1][i]); }
@@ -89,9 +89,9 @@ structura complex3x3 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~complex3x3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:144 144=>144(@PTR_FOLLOW:W 1=>144(A[0]), @PTR_FOLLOW:W 1=>144(A[1])) } } }
-	structor (dfrac3x3 re) { series[0] = complex3(re[0]); series[1] = complex3(re[1]); series[2] = complex3(re[2]); }
-	structor (complex diag) { series[0] = complex3(diag, 0.0, 0.0); series[1] = complex3(0.0, diag, 0.0); series[2] = complex3(0.0, 0.0, diag); }
-	structor (complex3 diag) { series[0] = complex3(diag.x, 0.0, 0.0); series[1] = complex3(0.0, diag.y, 0.0); series[2] = complex3(0.0, 0.0, diag.z); }
+	[[convertor] "extendens"] structor (dfrac3x3 re) { series[0] = complex3(re[0]); series[1] = complex3(re[1]); series[2] = complex3(re[2]); }
+	[[convertor] "extendens:pretiosus"] structor (complex diag) { series[0] = complex3(diag, 0.0, 0.0); series[1] = complex3(0.0, diag, 0.0); series[2] = complex3(0.0, 0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (complex3 diag) { series[0] = complex3(diag.x, 0.0, 0.0); series[1] = complex3(0.0, diag.y, 0.0); series[2] = complex3(0.0, 0.0, diag.z); }
 	structor (complex3 s1, complex3 s2, complex3 s3) { series[0] = s1; series[1] = s2; series[2] = s3; }
 	functio complex3x3 operator - () { responde complex3x3(-series[0], -series[1], -series[2]); }
 	[[xa]] functio ~complex3x3 operator = (~complex3x3 src) {
@@ -123,7 +123,7 @@ structura complex3x3 {
 	}
 	classis functio logicum operator == (~complex3x3 a, ~complex3x3 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2]; }
 	classis functio logicum operator != (~complex3x3 a, ~complex3x3 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n", series[0], series[1], series[2]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n", series[0], series[1], series[2]); }
 	[[inline]] functio ~complex3 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~complex operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio complex3 operator () (int i) { responde complex3(series[0][i], series[1][i], series[2][i]); }
@@ -186,9 +186,9 @@ structura complex4x4 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~complex4x4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:256 256=>256(@PTR_FOLLOW:W 1=>256(A[0]), @PTR_FOLLOW:W 1=>256(A[1])) } } }
-	structor (dfrac4x4 re) { series[0] = complex4(re[0]); series[1] = complex4(re[1]); series[2] = complex4(re[2]); series[3] = complex4(re[3]); }
-	structor (complex diag) { series[0] = complex4(diag, 0.0, 0.0, 0.0); series[1] = complex4(0.0, diag, 0.0, 0.0); series[2] = complex4(0.0, 0.0, diag, 0.0); series[3] = complex4(0.0, 0.0, 0.0, diag); }
-	structor (complex4 diag) { series[0] = complex4(diag.x, 0.0, 0.0, 0.0); series[1] = complex4(0.0, diag.y, 0.0, 0.0); series[2] = complex4(0.0, 0.0, diag.z, 0.0); series[3] = complex4(0.0, 0.0, 0.0, diag.w); }
+	[[convertor] "extendens"] structor (dfrac4x4 re) { series[0] = complex4(re[0]); series[1] = complex4(re[1]); series[2] = complex4(re[2]); series[3] = complex4(re[3]); }
+	[[convertor] "extendens:pretiosus"] structor (complex diag) { series[0] = complex4(diag, 0.0, 0.0, 0.0); series[1] = complex4(0.0, diag, 0.0, 0.0); series[2] = complex4(0.0, 0.0, diag, 0.0); series[3] = complex4(0.0, 0.0, 0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (complex4 diag) { series[0] = complex4(diag.x, 0.0, 0.0, 0.0); series[1] = complex4(0.0, diag.y, 0.0, 0.0); series[2] = complex4(0.0, 0.0, diag.z, 0.0); series[3] = complex4(0.0, 0.0, 0.0, diag.w); }
 	structor (complex4 s1, complex4 s2, complex4 s3, complex4 s4) { series[0] = s1; series[1] = s2; series[2] = s3; series[3] = s4; }
 	functio complex4x4 operator - () { responde complex4x4(-series[0], -series[1], -series[2], -series[3]); }
 	[[xa]] functio ~complex4x4 operator = (~complex4x4 src) {
@@ -220,7 +220,7 @@ structura complex4x4 {
 	}
 	classis functio logicum operator == (~complex4x4 a, ~complex4x4 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2] && a.series[3] == b.series[3]; }
 	classis functio logicum operator != (~complex4x4 a, ~complex4x4 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2] || a.series[3] != b.series[3]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n%3\n", series[0], series[1], series[2], series[3]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n%3\n", series[0], series[1], series[2], series[3]); }
 	[[inline]] functio ~complex4 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~complex operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio complex4 operator () (int i) { responde complex4(series[0][i], series[1][i], series[2][i], series[3][i]); }

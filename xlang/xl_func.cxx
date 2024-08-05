@@ -104,9 +104,10 @@ namespace Engine
 			virtual LObject * GetType(void) override { return _parent->GetType(); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (_parent->GetFlags() & XI::Module::Function::FunctionInstance) {
+					if (actual) { *actual = this; Retain(); }
 					if (argc == 0 && _instance->GetClass() == Class::Literal) {
 						auto op = GetName().Fragment(0, GetName().FindFirst(L':'));
 						SafePointer<LObject> lit = ProcessLiteralTransform(GetContext(), op, static_cast<XLiteral *>(_instance.Inner()), 0);
@@ -161,7 +162,7 @@ namespace Engine
 					}
 					if (provider->_throws) provider->_tree_node.input_specs << XA::TH::MakeSpec(XA::ArgumentSemantics::ErrorData, 0, 1);
 					return CreateComputable(GetContext(), provider);
-				} else return _parent->Invoke(argc, argv);
+				} else return _parent->Invoke(argc, argv, actual);
 			}
 			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override { _parent->ListInvokations(first, list); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
@@ -288,9 +289,10 @@ namespace Engine
 			}
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				if (_flags & XI::Module::Function::FunctionInstance) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
 				if (argc == 2 && argv[0]->GetClass() == Class::Literal && argv[1]->GetClass() == Class::Literal) {
 					auto op = _path.Fragment(0, _path.FindFirst(L':'));
 					SafePointer<LObject> lit = ProcessLiteralTransform(_ctx, op, static_cast<XLiteral *>(argv[0]), static_cast<XLiteral *>(argv[1]));
@@ -399,10 +401,10 @@ namespace Engine
 			virtual LObject * GetType(void) override { return _parent->GetType(); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				SafePointer<XMethodOverload> over = GetOverloadV(argc, argv);
-				return over->Invoke(argc, argv);
+				return over->Invoke(argc, argv, actual);
 			}
 			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override { _parent->ListInvokations(first, list); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
@@ -445,10 +447,10 @@ namespace Engine
 			virtual LObject * GetType(void) override { if (_singular) return _singular->GetType(); else throw ObjectHasNoTypeException(this); }
 			virtual LObject * GetMember(const string & name) override { throw ObjectHasNoSuchMemberException(this, name); }
 			virtual void ListMembers(Volumes::Dictionary<string, Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				SafePointer<XFunctionOverload> over = GetOverloadV(argc, argv);
-				return over->Invoke(argc, argv);
+				return over->Invoke(argc, argv, actual);
 			}
 			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override { for (auto & v : _overloads) v.value->ListInvokations(first, list); }
 			virtual void AddMember(const string & name, LObject * child) override { throw LException(this); }
@@ -485,7 +487,7 @@ namespace Engine
 						if (o.value->NeedsInstance() && !allow_instance) continue;
 						SafePointer< Array<XI::Module::TypeReference> > sgn = XI::Module::TypeReference(o.key).GetFunctionSignature();
 						if (sgn->Length() != argc + 1) continue;
-						int common_level = 0;
+						int common_level = argc ? 0 : CastPriorityIdentity;
 						for (int i = 0; i < argc; i++) {
 							SafePointer<LObject> arg_type = argv[i]->GetType();
 							if (arg_type->GetClass() != Class::Type) throw InvalidStateException();

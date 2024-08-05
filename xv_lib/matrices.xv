@@ -17,8 +17,8 @@ structura frac2x2 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~frac2x2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])) } } }
-	structor (frac diag) { series[0] = frac2(diag, 0.0); series[1] = frac2(0.0, diag); }
-	structor (frac2 diag) { series[0] = frac2(diag.x, 0.0); series[1] = frac2(0.0, diag.y); }
+	[[convertor] "extendens:pretiosus"] structor (frac diag) { series[0] = frac2(diag, 0.0); series[1] = frac2(0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (frac2 diag) { series[0] = frac2(diag.x, 0.0); series[1] = frac2(0.0, diag.y); }
 	structor (frac2 s1, frac2 s2) { series[0] = s1; series[1] = s2; }
 	functio frac2x2 operator - () { responde frac2x2(-series[0], -series[1]); }
 	[[xa]] functio ~frac2x2 operator = (~frac2x2 src) {
@@ -42,7 +42,7 @@ structura frac2x2 {
 	classis functio frac2 operator * (~frac2x2 a, ~frac2 b) { responde frac2(math.prs(a[0], b), math.prs(a[1], b)); }
 	classis functio logicum operator == (~frac2x2 a, ~frac2x2 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1]; }
 	classis functio logicum operator != (~frac2x2 a, ~frac2x2 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n", series[0], series[1]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n", series[0], series[1]); }
 	[[inline]] functio ~frac2 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~frac operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio frac2 operator () (int i) { responde frac2(series[0][i], series[1][i]); }
@@ -73,8 +73,8 @@ structura frac3x3 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~frac3x3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:36 36=>36(@PTR_FOLLOW:W 1=>36(A[0]), @PTR_FOLLOW:W 1=>36(A[1])) } } }
-	structor (frac diag) { series[0] = frac3(diag, 0.0, 0.0); series[1] = frac3(0.0, diag, 0.0); series[2] = frac3(0.0, 0.0, diag); }
-	structor (frac3 diag) { series[0] = frac3(diag.x, 0.0, 0.0); series[1] = frac3(0.0, diag.y, 0.0); series[2] = frac3(0.0, 0.0, diag.z); }
+	[[convertor] "extendens:pretiosus"] structor (frac diag) { series[0] = frac3(diag, 0.0, 0.0); series[1] = frac3(0.0, diag, 0.0); series[2] = frac3(0.0, 0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (frac3 diag) { series[0] = frac3(diag.x, 0.0, 0.0); series[1] = frac3(0.0, diag.y, 0.0); series[2] = frac3(0.0, 0.0, diag.z); }
 	structor (frac3 s1, frac3 s2, frac3 s3) { series[0] = s1; series[1] = s2; series[2] = s3; }
 	functio frac3x3 operator - () { responde frac3x3(-series[0], -series[1], -series[2]); }
 	[[xa]] functio ~frac3x3 operator = (~frac3x3 src) {
@@ -98,7 +98,7 @@ structura frac3x3 {
 	classis functio frac3 operator * (~frac3x3 a, ~frac3 b) { responde frac3(math.prs(a[0], b), math.prs(a[1], b), math.prs(a[2], b)); }
 	classis functio logicum operator == (~frac3x3 a, ~frac3x3 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2]; }
 	classis functio logicum operator != (~frac3x3 a, ~frac3x3 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n", series[0], series[1], series[2]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n", series[0], series[1], series[2]); }
 	[[inline]] functio ~frac3 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~frac operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio frac3 operator () (int i) { responde frac3(series[0][i], series[1][i], series[2][i]); }
@@ -158,8 +158,8 @@ structura frac4x4 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~frac4x4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:64 64=>64(@PTR_FOLLOW:W 1=>64(A[0]), @PTR_FOLLOW:W 1=>64(A[1])) } } }
-	structor (frac diag) { series[0] = frac4(diag, 0.0, 0.0, 0.0); series[1] = frac4(0.0, diag, 0.0, 0.0); series[2] = frac4(0.0, 0.0, diag, 0.0); series[3] = frac4(0.0, 0.0, 0.0, diag); }
-	structor (frac4 diag) { series[0] = frac4(diag.x, 0.0, 0.0, 0.0); series[1] = frac4(0.0, diag.y, 0.0, 0.0); series[2] = frac4(0.0, 0.0, diag.z, 0.0); series[3] = frac4(0.0, 0.0, 0.0, diag.w); }
+	[[convertor] "extendens:pretiosus"] structor (frac diag) { series[0] = frac4(diag, 0.0, 0.0, 0.0); series[1] = frac4(0.0, diag, 0.0, 0.0); series[2] = frac4(0.0, 0.0, diag, 0.0); series[3] = frac4(0.0, 0.0, 0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (frac4 diag) { series[0] = frac4(diag.x, 0.0, 0.0, 0.0); series[1] = frac4(0.0, diag.y, 0.0, 0.0); series[2] = frac4(0.0, 0.0, diag.z, 0.0); series[3] = frac4(0.0, 0.0, 0.0, diag.w); }
 	structor (frac4 s1, frac4 s2, frac4 s3, frac4 s4) { series[0] = s1; series[1] = s2; series[2] = s3; series[3] = s4; }
 	functio frac4x4 operator - () { responde frac4x4(-series[0], -series[1], -series[2], -series[3]); }
 	[[xa]] functio ~frac4x4 operator = (~frac4x4 src) {
@@ -183,7 +183,7 @@ structura frac4x4 {
 	classis functio frac4 operator * (~frac4x4 a, ~frac4 b) { responde frac4(math.prs(a[0], b), math.prs(a[1], b), math.prs(a[2], b), math.prs(a[3], b)); }
 	classis functio logicum operator == (~frac4x4 a, ~frac4x4 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2] && a.series[3] == b.series[3]; }
 	classis functio logicum operator != (~frac4x4 a, ~frac4x4 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2] || a.series[3] != b.series[3]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n%3\n", series[0], series[1], series[2], series[3]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n%3\n", series[0], series[1], series[2], series[3]); }
 	[[inline]] functio ~frac4 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~frac operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio frac4 operator () (int i) { responde frac4(series[0][i], series[1][i], series[2][i], series[3][i]); }
@@ -198,8 +198,8 @@ structura dfrac2x2 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~dfrac2x2 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])) } } }
-	structor (dfrac diag) { series[0] = dfrac2(diag, 0.0); series[1] = dfrac2(0.0, diag); }
-	structor (dfrac2 diag) { series[0] = dfrac2(diag.x, 0.0); series[1] = dfrac2(0.0, diag.y); }
+	[[convertor] "extendens:pretiosus"] structor (dfrac diag) { series[0] = dfrac2(diag, 0.0); series[1] = dfrac2(0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (dfrac2 diag) { series[0] = dfrac2(diag.x, 0.0); series[1] = dfrac2(0.0, diag.y); }
 	structor (dfrac2 s1, dfrac2 s2) { series[0] = s1; series[1] = s2; }
 	functio dfrac2x2 operator - () { responde dfrac2x2(-series[0], -series[1]); }
 	[[xa]] functio ~dfrac2x2 operator = (~dfrac2x2 src) {
@@ -223,7 +223,7 @@ structura dfrac2x2 {
 	classis functio dfrac2 operator * (~dfrac2x2 a, ~dfrac2 b) { responde dfrac2(math.prs(a[0], b), math.prs(a[1], b)); }
 	classis functio logicum operator == (~dfrac2x2 a, ~dfrac2x2 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1]; }
 	classis functio logicum operator != (~dfrac2x2 a, ~dfrac2x2 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n", series[0], series[1]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n", series[0], series[1]); }
 	[[inline]] functio ~dfrac2 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~dfrac operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio dfrac2 operator () (int i) { responde dfrac2(series[0][i], series[1][i]); }
@@ -254,8 +254,8 @@ structura dfrac3x3 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~dfrac3x3 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:72 72=>72(@PTR_FOLLOW:W 1=>72(A[0]), @PTR_FOLLOW:W 1=>72(A[1])) } } }
-	structor (dfrac diag) { series[0] = dfrac3(diag, 0.0, 0.0); series[1] = dfrac3(0.0, diag, 0.0); series[2] = dfrac3(0.0, 0.0, diag); }
-	structor (dfrac3 diag) { series[0] = dfrac3(diag.x, 0.0, 0.0); series[1] = dfrac3(0.0, diag.y, 0.0); series[2] = dfrac3(0.0, 0.0, diag.z); }
+	[[convertor] "extendens:pretiosus"] structor (dfrac diag) { series[0] = dfrac3(diag, 0.0, 0.0); series[1] = dfrac3(0.0, diag, 0.0); series[2] = dfrac3(0.0, 0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (dfrac3 diag) { series[0] = dfrac3(diag.x, 0.0, 0.0); series[1] = dfrac3(0.0, diag.y, 0.0); series[2] = dfrac3(0.0, 0.0, diag.z); }
 	structor (dfrac3 s1, dfrac3 s2, dfrac3 s3) { series[0] = s1; series[1] = s2; series[2] = s3; }
 	functio dfrac3x3 operator - () { responde dfrac3x3(-series[0], -series[1], -series[2]); }
 	[[xa]] functio ~dfrac3x3 operator = (~dfrac3x3 src) {
@@ -279,7 +279,7 @@ structura dfrac3x3 {
 	classis functio dfrac3 operator * (~dfrac3x3 a, ~dfrac3 b) { responde dfrac3(math.prs(a[0], b), math.prs(a[1], b), math.prs(a[2], b)); }
 	classis functio logicum operator == (~dfrac3x3 a, ~dfrac3x3 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2]; }
 	classis functio logicum operator != (~dfrac3x3 a, ~dfrac3x3 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n", series[0], series[1], series[2]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n", series[0], series[1], series[2]); }
 	[[inline]] functio ~dfrac3 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~dfrac operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio dfrac3 operator () (int i) { responde dfrac3(series[0][i], series[1][i], series[2][i]); }
@@ -339,8 +339,8 @@ structura dfrac4x4 {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~dfrac4x4 s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:128 128=>128(@PTR_FOLLOW:W 1=>128(A[0]), @PTR_FOLLOW:W 1=>128(A[1])) } } }
-	structor (dfrac diag) { series[0] = dfrac4(diag, 0.0, 0.0, 0.0); series[1] = dfrac4(0.0, diag, 0.0, 0.0); series[2] = dfrac4(0.0, 0.0, diag, 0.0); series[3] = dfrac4(0.0, 0.0, 0.0, diag); }
-	structor (dfrac4 diag) { series[0] = dfrac4(diag.x, 0.0, 0.0, 0.0); series[1] = dfrac4(0.0, diag.y, 0.0, 0.0); series[2] = dfrac4(0.0, 0.0, diag.z, 0.0); series[3] = dfrac4(0.0, 0.0, 0.0, diag.w); }
+	[[convertor] "extendens:pretiosus"] structor (dfrac diag) { series[0] = dfrac4(diag, 0.0, 0.0, 0.0); series[1] = dfrac4(0.0, diag, 0.0, 0.0); series[2] = dfrac4(0.0, 0.0, diag, 0.0); series[3] = dfrac4(0.0, 0.0, 0.0, diag); }
+	[[convertor] "extendens:pretiosus"] structor (dfrac4 diag) { series[0] = dfrac4(diag.x, 0.0, 0.0, 0.0); series[1] = dfrac4(0.0, diag.y, 0.0, 0.0); series[2] = dfrac4(0.0, 0.0, diag.z, 0.0); series[3] = dfrac4(0.0, 0.0, 0.0, diag.w); }
 	structor (dfrac4 s1, dfrac4 s2, dfrac4 s3, dfrac4 s4) { series[0] = s1; series[1] = s2; series[2] = s3; series[3] = s4; }
 	functio dfrac4x4 operator - () { responde dfrac4x4(-series[0], -series[1], -series[2], -series[3]); }
 	[[xa]] functio ~dfrac4x4 operator = (~dfrac4x4 src) {
@@ -364,27 +364,27 @@ structura dfrac4x4 {
 	classis functio dfrac4 operator * (~dfrac4x4 a, ~dfrac4 b) { responde dfrac4(math.prs(a[0], b), math.prs(a[1], b), math.prs(a[2], b), math.prs(a[3], b)); }
 	classis functio logicum operator == (~dfrac4x4 a, ~dfrac4x4 b) { responde a.series[0] == b.series[0] && a.series[1] == b.series[1] && a.series[2] == b.series[2] && a.series[3] == b.series[3]; }
 	classis functio logicum operator != (~dfrac4x4 a, ~dfrac4x4 b) { responde a.series[0] != b.series[0] || a.series[1] != b.series[1] || a.series[2] != b.series[2] || a.series[3] != b.series[3]; }
-	convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n%3\n", series[0], series[1], series[2], series[3]); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("%0\n%1\n%2\n%3\n", series[0], series[1], series[2], series[3]); }
 	[[inline]] functio ~dfrac4 operator [] (int i) { responde series[i]; }
 	[[inline]] functio ~dfrac operator [] (int i, int j) { responde series[i]._c[j]; }
 	functio dfrac4 operator () (int i) { responde dfrac4(series[0][i], series[1][i], series[2][i], series[3][i]); }
 }
 
 dura frac2x2 {
-	convertor (dfrac2x2) () { responde dfrac2x2(series[0], series[1]); }
+	[[convertor] "extendens"] convertor (dfrac2x2) () { responde dfrac2x2(series[0], series[1]); }
 }
 dura frac3x3 {
-	convertor (dfrac3x3) () { responde dfrac3x3(series[0], series[1], series[2]); }
+	[[convertor] "extendens"] convertor (dfrac3x3) () { responde dfrac3x3(series[0], series[1], series[2]); }
 }
 dura frac4x4 {
-	convertor (dfrac4x4) () { responde dfrac4x4(series[0], series[1], series[2], series[3]); }
+	[[convertor] "extendens"] convertor (dfrac4x4) () { responde dfrac4x4(series[0], series[1], series[2], series[3]); }
 }
 dura dfrac2x2 {
-	convertor (frac2x2) () { responde frac2x2(series[0], series[1]); }
+	[[convertor] "angustans"] convertor (frac2x2) () { responde frac2x2(series[0], series[1]); }
 }
 dura dfrac3x3 {
-	convertor (frac3x3) () { responde frac3x3(series[0], series[1], series[2]); }
+	[[convertor] "angustans"] convertor (frac3x3) () { responde frac3x3(series[0], series[1], series[2]); }
 }
 dura dfrac4x4 {
-	convertor (frac4x4) () { responde frac4x4(series[0], series[1], series[2], series[3]); }
+	[[convertor] "angustans"] convertor (frac4x4) () { responde frac4x4(series[0], series[1], series[2], series[3]); }
 }

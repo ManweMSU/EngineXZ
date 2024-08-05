@@ -44,10 +44,11 @@ namespace Engine
 			}
 			VOperatorNew(XL::LContext & ctx) : _ctx(ctx) {}
 			virtual ~VOperatorNew(void) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				try {
 					if (argc < 1) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
+					if (actual) { *actual = this; Retain(); }
 					return CreateNew(_ctx, argv[0], argc - 1, argv + 1);
 				} catch (...) { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			}
@@ -73,10 +74,11 @@ namespace Engine
 		public:
 			VOperatorConstruct(XL::LContext & ctx) : _ctx(ctx) {}
 			virtual ~VOperatorConstruct(void) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
 			{
 				try {
 					if (argc < 1) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
+					if (actual) { *actual = this; Retain(); }
 					return CreateConstruct(_ctx, argv[0], argc - 1, argv + 1);
 				} catch (...) { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			}
@@ -115,7 +117,7 @@ namespace Engine
 				if (value) return _ctx.QueryLiteral(*value); else return _ctx.QueryLiteral(string(L""));
 			}
 			virtual void ListMembers(Volumes::Dictionary<string, XL::Class> & list) override {}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
@@ -938,7 +940,7 @@ namespace Engine
 				}
 				for (auto & v : _vlist) v->ListMembers(list);
 			}
-			virtual LObject * Invoke(int argc, LObject ** argv) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override { throw XL::ObjectHasNoSuchOverloadException(this, argc, argv); }
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
 			virtual void AddAttribute(const string & key, const string & value) override { throw XL::ObjectHasNoAttributesException(this); }
@@ -1125,7 +1127,7 @@ namespace Engine
 			} else if (tr.GetReferenceClass() == XI::Module::TypeReference::Class::Function) {
 				SafePointer< Array<XI::Module::TypeReference> > sgn = tr.GetFunctionSignature();
 				DynamicString result;
-				result += L"functio " + RegularizeTypeName(sgn->ElementAt(0)) + L"(";
+				result += L"functio (" + RegularizeTypeName(sgn->ElementAt(0)) + L") (";
 				for (int i = 1; i < sgn->Length(); i++) {
 					if (i > 1) result += L", ";
 					result += RegularizeTypeName(sgn->ElementAt(i));

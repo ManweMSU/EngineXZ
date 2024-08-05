@@ -16,19 +16,19 @@ spatium math {
 			[[positus] "16"] dfrac B;
 			[[positus] "24"] dfrac A;
 
-			structor (dfrac4 vec) { funda(vec); }
-			structor (imago.color clr) { funda R(dfrac(clr.r) / 255.0); funda G(dfrac(clr.g) / 255.0); funda B(dfrac(clr.b) / 255.0); funda A(dfrac(clr.a) / 255.0); }
+			[[convertor] "conformis"] structor (dfrac4 vec) { funda(vec); }
+			[[convertor] "extendens"] structor (imago.color clr) { funda R(dfrac(clr.r) / 255.0); funda G(dfrac(clr.g) / 255.0); funda B(dfrac(clr.b) / 255.0); funda A(dfrac(clr.a) / 255.0); }
 			structor (dfrac r, dfrac g, dfrac b) { funda R(r); funda G(g); funda B(b); funda A(1.0); }
 			structor (dfrac r, dfrac g, dfrac b, dfrac a) { funda R(r); funda G(g); funda B(b); funda A(a); }
-			[[xa]] [[inline]] convertor (ordo [4] dfrac4) () {
+			[[convertor] "conformis"] [[xa]] [[inline]] convertor (ordo [4] dfrac4) () {
 				INTERFACE W 1 : THIS => 32 : OBJECT
 				CODE { RET { @BLT:32 32=>32(R, @PTR_FOLLOW:W 1=>32(A[0])) } }
 			}
-			[[xa]] [[inline]] convertor (ordo [4] frac4) () {
+			[[convertor] "conformis"] [[xa]] [[inline]] convertor (ordo [4] frac4) () {
 				INTERFACE W 1 : THIS => 16 : OBJECT
 				CODE { RET { @BLT:16 16=>16(R, @FP_RESIZE_64:32=>16(@PTR_FOLLOW:W 1=>32(A[0]))) } }
 			}
-			[[inline]] convertor (linea) () iacit { responde linea.forma("R: %0, B: %1, G: %2, A: %3", R, G, B, A); }
+			[[convertor] "extendens:pretiosus"] [[inline]] convertor (linea) () iacit { responde linea.forma("R: %0, B: %1, G: %2, A: %3", R, G, B, A); }
 		}
 		structura HSV {
 			dfrac H;
@@ -36,10 +36,10 @@ spatium math {
 			dfrac V;
 			dfrac A;
 			
-			structor (imago.color clr) { ego^ = HSV(RGB(clr)); }
+			[[convertor] "extendens"] structor (imago.color clr) { ego^ = HSV(RGB(clr)); }
 			structor (dfrac h, dfrac s, dfrac v) { funda H(h); funda S(s); funda V(v); funda A(1.0); }
 			structor (dfrac h, dfrac s, dfrac v, dfrac a) { funda H(h); funda S(s); funda V(v); funda A(a); }
-			[[inline]] convertor (linea) () iacit { responde linea.forma("H: %0, S: %1, V: %2, A: %3", H, S, V, A); }
+			[[convertor] "extendens:pretiosus"] [[inline]] convertor (linea) () iacit { responde linea.forma("H: %0, S: %1, V: %2, A: %3", H, S, V, A); }
 		}
 		structura HSL {
 			dfrac H;
@@ -47,10 +47,10 @@ spatium math {
 			dfrac L;
 			dfrac A;
 			
-			structor (imago.color clr) { ego^ = HSL(RGB(clr)); }
+			[[convertor] "extendens"] structor (imago.color clr) { ego^ = HSL(RGB(clr)); }
 			structor (dfrac h, dfrac s, dfrac l) { funda H(h); funda S(s); funda L(l); funda A(1.0); }
 			structor (dfrac h, dfrac s, dfrac l, dfrac a) { funda H(h); funda S(s); funda L(l); funda A(a); }
-			[[inline]] convertor (linea) () iacit { responde linea.forma("H: %0, S: %1, L: %2, A: %3", H, S, L, A); }
+			[[convertor] "extendens:pretiosus"] [[inline]] convertor (linea) () iacit { responde linea.forma("H: %0, S: %1, L: %2, A: %3", H, S, L, A); }
 		}
 		structura CMY {
 			dfrac C;
@@ -58,10 +58,10 @@ spatium math {
 			dfrac Y;
 			dfrac A;
 			
-			structor (imago.color clr) { ego^ = CMY(RGB(clr)); }
+			[[convertor] "extendens"] structor (imago.color clr) { ego^ = CMY(RGB(clr)); }
 			structor (dfrac c, dfrac m, dfrac y) { funda C(c); funda M(m); funda Y(y); funda A(1.0); }
 			structor (dfrac c, dfrac m, dfrac y, dfrac a) { funda C(c); funda M(m); funda Y(y); funda A(a); }
-			[[inline]] convertor (linea) () iacit { responde linea.forma("C: %0, M: %1, Y: %2, A: %3", C, M, Y, A); }
+			[[convertor] "extendens:pretiosus"] [[inline]] convertor (linea) () iacit { responde linea.forma("C: %0, M: %1, Y: %2, A: %3", C, M, Y, A); }
 		}
 		structura CMYK {
 			dfrac C;
@@ -70,14 +70,14 @@ spatium math {
 			dfrac K;
 			dfrac A;
 			
-			structor (imago.color clr) { ego^ = CMYK(RGB(clr)); }
+			[[convertor] "extendens"] structor (imago.color clr) { ego^ = CMYK(RGB(clr)); }
 			structor (dfrac c, dfrac m, dfrac y, dfrac k) { funda C(c); funda M(m); funda Y(y); funda K(k); funda A(1.0); }
 			structor (dfrac c, dfrac m, dfrac y, dfrac k, dfrac a) { funda C(c); funda M(m); funda Y(y); funda K(k); funda A(a); }
-			[[inline]] convertor (linea) () iacit { responde linea.forma("C: %0, M: %1, Y: %2, K: %3, A: %4", C, M, Y, K, A); }
+			[[convertor] "extendens:pretiosus"] [[inline]] convertor (linea) () iacit { responde linea.forma("C: %0, M: %1, Y: %2, K: %3, A: %4", C, M, Y, K, A); }
 		}
 
 		dura RGB {
-			convertor (HSV) () {
+			[[convertor] "conformis"] convertor (HSV) () {
 				HSV conv;
 				conv.A = A;
 				dfrac mx, mn;
@@ -103,7 +103,7 @@ spatium math {
 				conv.V = mx;
 				responde conv;
 			}
-			convertor (HSL) () {
+			[[convertor] "conformis"] convertor (HSL) () {
 				var hsv = HSV(ego^);
 				HSL hsl;
 				hsl.H = hsv.H; hsl.A = hsv.A;
@@ -124,9 +124,9 @@ spatium math {
 				alioqui si (hsl.S < 0.0) hsl.S = 0.0;
 				responde hsl;
 			}
-			convertor (CMY) () { CMY conv; conv.C = 1.0 - R; conv.M = 1.0 - G; conv.Y = 1.0 - B; conv.A = A; responde conv; }
-			convertor (CMYK) () { responde CMYK(CMY(ego^)); }
-			convertor (imago.color) () {
+			[[convertor] "conformis"] convertor (CMY) () { CMY conv; conv.C = 1.0 - R; conv.M = 1.0 - G; conv.Y = 1.0 - B; conv.A = A; responde conv; }
+			[[convertor] "conformis"] convertor (CMYK) () { responde CMYK(CMY(ego^)); }
+			[[convertor] "angustans"] convertor (imago.color) () {
 				imago.color conv;
 				conv.r = int(R * 255.0 + 0.5);
 				conv.g = int(G * 255.0 + 0.5);
@@ -136,7 +136,7 @@ spatium math {
 			}
 		}
 		dura HSV {
-			convertor (RGB) () {
+			[[convertor] "conformis"] convertor (RGB) () {
 				var Hi = int(3.0 * H / dfrac.pi);
 				var Hr = (H - dfrac(Hi) * dfrac.pi / 3.0) * 3.0 / dfrac.pi;
 				var Vmin = (1.0 - S) * V;
@@ -151,13 +151,13 @@ spatium math {
 				alioqui si (Hi == 5) responde RGB(V, Vmin, Vdec, A);
 				responde RGB(0.0, 0.0, 0.0, A);
 			}
-			convertor (HSL) () { responde HSL(RGB(ego^)); }
-			convertor (CMY) () { responde CMY(RGB(ego^)); }
-			convertor (CMYK) () { responde CMYK(RGB(ego^)); }
-			convertor (imago.color) () { responde imago.color(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (HSL) () { responde HSL(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (CMY) () { responde CMY(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (CMYK) () { responde CMYK(RGB(ego^)); }
+			[[convertor] "angustans"] convertor (imago.color) () { responde imago.color(RGB(ego^)); }
 		}
 		dura HSL {
-			convertor (HSV) () {
+			[[convertor] "conformis"] convertor (HSV) () {
 				HSV conv;
 				var mx = (L < 0.5) ? (1.0 + S) * L : (1.0 - S) * L + S;
 				var mn = 2.0 * L - mx;
@@ -166,14 +166,14 @@ spatium math {
 				conv.S = mx ? 1.0 - mn / mx : 0.0;
 				responde conv;
 			}
-			convertor (RGB) () { responde RGB(HSV(ego^)); }
-			convertor (CMY) () { responde CMY(RGB(ego^)); }
-			convertor (CMYK) () { responde CMYK(RGB(ego^)); }
-			convertor (imago.color) () { responde imago.color(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (RGB) () { responde RGB(HSV(ego^)); }
+			[[convertor] "conformis"] convertor (CMY) () { responde CMY(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (CMYK) () { responde CMYK(RGB(ego^)); }
+			[[convertor] "angustans"] convertor (imago.color) () { responde imago.color(RGB(ego^)); }
 		}
 		dura CMY {
-			convertor (RGB) () { RGB conv; conv.R = 1.0 - C; conv.G = 1.0 - M; conv.B = 1.0 - Y; conv.A = A; responde conv; }
-			convertor (CMYK) () {
+			[[convertor] "conformis"] convertor (RGB) () { RGB conv; conv.R = 1.0 - C; conv.G = 1.0 - M; conv.B = 1.0 - Y; conv.A = A; responde conv; }
+			[[convertor] "conformis"] convertor (CMYK) () {
 				CMYK conv;
 				si (C <= Y && C <= M) conv.K = C;
 				alioqui si (Y <= C && Y <= M) conv.K = Y;
@@ -186,16 +186,16 @@ spatium math {
 				conv.A = A;
 				responde conv;
 			}
-			convertor (HSV) () { responde HSV(RGB(ego^)); }
-			convertor (HSL) () { responde HSL(RGB(ego^)); }
-			convertor (imago.color) () { responde imago.color(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (HSV) () { responde HSV(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (HSL) () { responde HSL(RGB(ego^)); }
+			[[convertor] "angustans"] convertor (imago.color) () { responde imago.color(RGB(ego^)); }
 		}
 		dura CMYK {
-			convertor (CMY) () { responde CMY(C * (1.0 - K) + K, M * (1.0 - K) + K, Y * (1.0 - K) + K, A); }
-			convertor (RGB) () { responde RGB(CMY(ego^)); }
-			convertor (HSV) () { responde HSV(RGB(ego^)); }
-			convertor (HSL) () { responde HSL(RGB(ego^)); }
-			convertor (imago.color) () { responde imago.color(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (CMY) () { responde CMY(C * (1.0 - K) + K, M * (1.0 - K) + K, Y * (1.0 - K) + K, A); }
+			[[convertor] "conformis"] convertor (RGB) () { responde RGB(CMY(ego^)); }
+			[[convertor] "conformis"] convertor (HSV) () { responde HSV(RGB(ego^)); }
+			[[convertor] "conformis"] convertor (HSL) () { responde HSL(RGB(ego^)); }
+			[[convertor] "angustans"] convertor (imago.color) () { responde imago.color(RGB(ego^)); }
 		}
 	}
 }

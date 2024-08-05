@@ -40,10 +40,10 @@ namespace Engine
 				for (auto & c : conf) try { c.ListMembers(list); } catch (...) {}
 			} catch (...) {}
 		}
-		LObject * XComputable::Invoke(int argc, LObject ** argv)
+		LObject * XComputable::Invoke(int argc, LObject ** argv, LObject ** actual)
 		{
 			SafePointer<LObject> inv = GetMember(OperatorInvoke);
-			return inv->Invoke(argc, argv);
+			return inv->Invoke(argc, argv, actual);
 		}
 		void XComputable::ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list)
 		{

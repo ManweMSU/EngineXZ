@@ -13,8 +13,8 @@ structura complex {
 
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~complex s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])) } } }
-	structor (frac re) { funda Re(re); funda Im(0.0); }
-	structor (dfrac re) { funda Re(re); funda Im(0.0); }
+	[[convertor] "extendens"] structor (frac re) { funda Re(re); funda Im(0.0); }
+	[[convertor] "extendens"] structor (dfrac re) { funda Re(re); funda Im(0.0); }
 	structor (dfrac re, dfrac im) { funda Re(re); funda Im(im); }
 	[[xa]] [[inline]] functio complex operator - () { INTERFACE W 1 : THIS => 16 : OBJECT CODE { RET { @BLT:16 16=>16(R, @FP_NEG_64:16=>16(@PTR_FOLLOW:W 1=>16(A[0]))) } } }
 	[[xa]] functio ~complex operator = (~complex src) {
@@ -49,7 +49,7 @@ structura complex {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_64:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])))) } }
 	}
-	convertor (linea) () iacit { responde linea.forma("(%0, %1)", Re, Im); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1)", Re, Im); }
 }
 
 dura complex {

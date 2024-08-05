@@ -12,14 +12,14 @@ structura quaternus {
 	dfrac Re; dfrac3 Im;
 
 	quaternus conjugatus { adipisce { responde quaternus(Re, -Im); } }
-	quaternus inversus { adipisce { var A = Re * Re + math.prs(Im, Im); responde quaternus(Re / A, -Im / A); } }
+	quaternus inversus { adipisce { var A = Re * Re + math.prs(Im, Im); responde quaternus(Re / A, -Im / dfrac3(A)); } }
 		
 	[[xa]] structor () { INTERFACE W 1 : THIS => 0 CODE { RET } }
 	[[xa]] structor (~quaternus s) { INTERFACE W 1 : THIS W 1 => 0 CODE { RET { @BLT:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])) } } }
-	structor (frac re) { funda Re(re); funda Im(0.0); }
-	structor (dfrac re) { funda Re(re); funda Im(0.0); }
-	structor (complex valor) { funda Re(valor.Re); funda Im(valor.Im, 0.0, 0.0); }
-	structor (dfrac3 im) { funda Re(0.0); funda Im(im); }
+	[[convertor] "extendens:pretiosus"] structor (frac re) { funda Re(re); funda Im(0.0); }
+	[[convertor] "extendens:pretiosus"] structor (dfrac re) { funda Re(re); funda Im(0.0); }
+	[[convertor] "extendens:pretiosus"] structor (complex valor) { funda Re(valor.Re); funda Im(valor.Im, 0.0, 0.0); }
+	[[convertor] "extendens:pretiosus"] structor (dfrac3 im) { funda Re(0.0); funda Im(im); }
 	structor (dfrac re, dfrac3 im) { funda Re(re); funda Im(im); }
 	structor (dfrac re, dfrac im1, dfrac im2, dfrac im3) { funda Re(re); funda Im(im1, im2, im3); }
 	[[xa]] [[inline]] functio quaternus operator - () { INTERFACE W 1 : THIS => 32 : OBJECT CODE { RET { @BLT:32 32=>32(R, @FP_NEG_64:32=>32(@PTR_FOLLOW:W 1=>32(A[0]))) } } }
@@ -44,8 +44,8 @@ structura quaternus {
 		CODE { RET { @BLT:32 32=>32(R, @FP_SUB_64:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1]))) } }
 	}
 	classis functio quaternus operator * (quaternus a, quaternus b) { responde quaternus(a.Re * b.Re - math.prs(a.Im, b.Im), a.Re * b.Im + b.Re * a.Im + math.prv(a.Im, b.Im)); }
-	classis functio quaternus operator * (quaternus a, dfrac b) { responde quaternus(a.Re * b, a.Im * b); }
-	classis functio quaternus operator / (quaternus a, dfrac b) { responde quaternus(a.Re / b, a.Im / b); }
+	classis functio quaternus operator * (quaternus a, dfrac b) { responde quaternus(a.Re * b, a.Im * dfrac3(b)); }
+	classis functio quaternus operator / (quaternus a, dfrac b) { responde quaternus(a.Re / b, a.Im / dfrac3(b)); }
 	[[xa]] [[inline]] classis functio logicum operator == (~quaternus a, ~quaternus b) {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @FP_EQ_64:32 32=>1(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1]))) } }
@@ -54,7 +54,7 @@ structura quaternus {
 		INTERFACE W 1 W 1 => 1
 		CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_64:32 32=>1(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])))) } }
 	}
-	convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", Re, Im.x, Im.y, Im.z); }
+	[[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde linea.forma("(%0, %1, %2, %3)", Re, Im.x, Im.y, Im.z); }
 }
 
 dura quaternus {
