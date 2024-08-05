@@ -1,0 +1,892 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Collectionum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium collectiones {
+	enumeratio exolutio_collisionis {
+		crea_exclusive = 0,
+		crea_aut_rescribe = 1,
+		crea_aut_remane = 2,
+		rescribe_exclusive = 3
+	}
+
+	praeforma genus sequentia(V) { genus $_ hereditat objectum {
+		nomen_alternum genus_objectum = $V;
+
+		genus elementum {
+			@elementum _pristinus;
+			@elementum _proximus;
+			$V valor;
+
+			structor (~$V v) iacit { funda _pristinus(nullus); funda _proximus(nullus); funda valor(v); }
+
+			@elementum pristinus { [[inline]] adipisce { responde _pristinus; } }
+			@elementum proximus { [[inline]] adipisce { responde _proximus; } }
+		}
+		structura adnexus_elementi {
+			@elementum valor;
+			structor (@elementum ae) { funda valor(ae); }
+			functio ~adnexus_elementi operator ++ () { valor = valor^._proximus; responde ego^; }
+			functio ~adnexus_elementi operator -- () { valor = valor^._pristinus; responde ego^; }
+			functio ~elementum operator ^ () { responde valor^; }
+			classis functio logicum operator == (~adnexus_elementi a, ~adnexus_elementi b) { responde a.valor == b.valor; }
+			classis functio logicum operator != (~adnexus_elementi a, ~adnexus_elementi b) { responde a.valor != b.valor; }
+		}
+
+		@elementum _primus;
+		@elementum _ultimus;
+
+		structor () { funda _primus(nullus); funda _ultimus(nullus); }
+		structor (~sequentia[$V] valor) iacit {
+			funda _primus(nullus); funda _ultimus(nullus);
+			var e = valor._primus;
+			dum (e != nullus) { insere_ultimum(e^.valor); e = e^._proximus; }
+		}
+		destructor () redefini {
+			var v = _primus;
+			dum (v != nullus) { var prox = v^._proximus; perde(v); v = prox; }
+		}
+		functio ~sequentia[$V] operator = (~sequentia[$V] valor) iacit {
+			si (ego == @valor) responde ego^;
+			depura();
+			var e = valor._primus;
+			dum (e != nullus) { insere_ultimum(e^.valor); e = e^._proximus; }
+			responde ego^;
+		}
+		functio linea_secura ad_lineam() redefini {
+			proba {
+				linea resp = "sequentia : [";
+				var v = _primus;
+				dum (v != nullus) {
+					resp += linea.ex(v^.valor);
+					v = v^._proximus;
+					si (v != nullus) resp += ", ";
+				}
+				responde resp + "]";
+			} cape responde linea_secura();
+		}
+
+		@elementum primus { [[inline]] adipisce { responde _primus; } }
+		@elementum ultimus { [[inline]] adipisce { responde _ultimus; } }
+		logicum vacua { [[inline]] adipisce { responde _primus == nullus; } }
+
+		functio @elementum insere_primum(~$V valor) iacit {
+			var e = crea(elementum, valor);
+			e^._proximus = _primus;
+			si (_primus == nullus) {
+				_primus = _ultimus = e;
+			} alioqui {
+				_primus^._pristinus = e;
+				_primus = e;
+			}
+			responde e;
+		}
+		functio @elementum insere_ultimum(~$V valor) iacit {
+			var e = crea(elementum, valor);
+			e^._pristinus = _ultimus;
+			si (_ultimus == nullus) {
+				_primus = _ultimus = e;
+			} alioqui {
+				_ultimus^._proximus = e;
+				_ultimus = e;
+			}
+			responde e;
+		}
+		functio @elementum insere_proximum(@elementum relative, ~$V valor) iacit {
+			si (relative == nullus) iace errores.argumentum_falsum;
+			si (relative^._proximus == nullus) responde insere_ultimum(valor);
+			var e = crea(elementum, valor);
+			e^._pristinus = relative;
+			e^._proximus = relative^._proximus;
+			e^._pristinus^._proximus = e^._proximus^._pristinus = e;
+			responde e;
+		}
+		functio @elementum insere_pristinum(@elementum relative, ~$V valor) iacit {
+			si (relative == nullus) iace errores.argumentum_falsum;
+			si (relative^._pristinus == nullus) responde insere_primum(valor);
+			var e = crea(elementum, valor);
+			e^._pristinus = relative^._pristinus;
+			e^._proximus = relative;
+			e^._pristinus^._proximus = e^._proximus^._pristinus = e;
+			responde e;
+		}
+		functio nihil remove(@elementum e) {
+			si (e == nullus) responde;
+			si (e^._proximus == nullus) _ultimus = e^._pristinus; alioqui e^._proximus^._pristinus = e^._pristinus;
+			si (e^._pristinus == nullus) _primus = e^._proximus; alioqui e^._pristinus^._proximus = e^._proximus;
+			perde(e);
+		}
+		functio nihil remove_primum(@elementum e) { remove(_primus); }
+		functio nihil remove_ultimum(@elementum e) { remove(_ultimus); }
+		functio nihil depura() {
+			var v = _primus;
+			dum (v != nullus) { var prox = v^._proximus; perde(v); v = prox; }
+			_primus = _ultimus = nullus;
+		}
+
+		[[inline]] functio adnexus_elementi initus() { responde _primus; }
+		[[inline]] functio adnexus_elementi finis() { responde _ultimus; }
+		[[inline]] functio adnexus_elementi prae_initus() { responde adnexus_elementi(nullus); }
+		[[inline]] functio adnexus_elementi post_finis() { responde adnexus_elementi(nullus); }
+
+		int longitudo { adipisce { int r = 0; pro (var i : ego^) r++; responde r; } }
+		functio ~$V operator [] (int i) iacit {
+			si (i < 0) iace errores.argumentum_falsum;
+			var p = i;
+			var e = _primus;
+			dum (p > 0) {
+				si (e == nullus) iace errores.argumentum_falsum;
+				e = e^._proximus; p--;
+			}
+			si (e == nullus) iace errores.argumentum_falsum;
+			responde e^.valor;
+		}
+	} }
+	praeforma genus arbor(V) { genus $_ hereditat objectum {
+		nomen_alternum genus_objectum = $V;
+
+		genus elementum {
+			@elementum _sinister;
+			@elementum _dextrus;
+			@elementum _parens;
+			$V valor;
+			logicum _niger;
+
+			structor (~$V v) iacit { funda _sinister(nullus); funda _dextrus(nullus); funda _parens(nullus); funda valor(v); funda _niger(non); }
+			structor (~elementum e, @elementum radix) iacit {
+				funda valor(e.valor);
+				funda _parens(radix);
+				funda _niger(e._niger);
+				@elementum sin = nullus, dex = nullus;
+				proba {
+					si (e._sinister != nullus) sin = crea(elementum, e._sinister^, ego);
+					si (e._dextrus != nullus) dex = crea(elementum, e._dextrus^, ego);
+				} cape (nintadl e, nintadl se) {
+					si (sin != nullus) sin^._perde();
+					si (dex != nullus) dex^._perde();
+					iace e, se;
+				}
+				_sinister = sin;
+				_dextrus = dex;
+			}
+
+			@elementum sinister { [[inline]] adipisce { responde _sinister; } }
+			@elementum dextrus { [[inline]] adipisce { responde _dextrus; } }
+			@elementum parens { [[inline]] adipisce { responde _parens; } }
+
+			@elementum pristinus { adipisce {
+				si (_sinister != nullus) {
+					var e = _sinister;
+					dum (e^._dextrus != nullus) e = e^._dextrus;
+					responde e;
+				} alioqui {
+					var prest = ego;
+					var cur = _parens;
+					dum (cur != nullus) {
+						si (cur^._sinister == prest) {
+							prest = cur;
+							cur = cur^._parens;
+						} alioqui responde cur;
+					}
+					responde nullus;
+				}
+			} }
+			@elementum proximus { adipisce {
+				si (_dextrus != nullus) {
+					var e = _dextrus;
+					dum (e^._sinister != nullus) e = e^._sinister;
+					responde e;
+				} alioqui {
+					var prest = ego;
+					var cur = _parens;
+					dum (cur != nullus) {
+						si (cur^._dextrus == prest) {
+							prest = cur;
+							cur = cur^._parens;
+						} alioqui responde cur;
+					}
+					responde nullus;
+				}
+			} }
+
+			int _numerus { adipisce {
+				int r = 1;
+				si (_sinister != nullus) r += _sinister^._numerus;
+				si (_dextrus != nullus) r += _dextrus^._numerus;
+				responde r;
+			} }
+			functio nihil _perde() {
+				si (_sinister != nullus) _sinister^._perde();
+				si (_dextrus != nullus) _dextrus^._perde();
+				perde(ego);
+			}
+		}
+		structura adnexus_elementi {
+			@elementum valor;
+			structor (@elementum ae) { funda valor(ae); }
+			functio ~adnexus_elementi operator ++ () { valor = valor^.proximus; responde ego^; }
+			functio ~adnexus_elementi operator -- () { valor = valor^.pristinus; responde ego^; }
+			functio ~elementum operator ^ () { responde valor^; }
+			classis functio logicum operator == (~adnexus_elementi a, ~adnexus_elementi b) { responde a.valor == b.valor; }
+			classis functio logicum operator != (~adnexus_elementi a, ~adnexus_elementi b) { responde a.valor != b.valor; }
+		}
+
+		@elementum _radix;
+
+		functio nihil _remanda_super_creandum(@elementum origo) {
+			var cur = origo;
+			dum (cur != nullus) {
+				si (cur^._parens != nullus && !cur^._parens^._niger) {
+					var parens = cur^._parens;
+					var suppar = parens^._parens;
+					si (suppar != nullus) {
+						si (suppar^._sinister != nullus && suppar^._dextrus != nullus && !suppar^._sinister^._niger && !suppar^._dextrus^._niger) {
+							si (suppar^._sinister != nullus) suppar^._sinister^._niger = sic;
+							si (suppar^._dextrus != nullus) suppar^._dextrus^._niger = sic;
+							suppar^._niger = non;
+							cur = suppar;
+						} alioqui {
+							si (parens == suppar^._sinister && cur == parens^._dextrus) {
+								var c1 = parens^._sinister;
+								var c2 = cur^._sinister;
+								var c3 = cur^._dextrus;
+								suppar^._sinister = cur;
+								cur^._parens = suppar;
+								cur^._sinister = parens;
+								parens^._parens = cur;
+								parens^._sinister = c1;
+								parens^._dextrus = c2;
+								cur^._dextrus = c3;
+								si (c1 != nullus) c1^._parens = parens;
+								si (c2 != nullus) c2^._parens = parens;
+								si (c3 != nullus) c3^._parens = cur;
+								cur = parens;
+							} alioqui si (parens == suppar^._dextrus && cur == parens^._sinister) {
+								var c1 = cur^._sinister;
+								var c2 = cur^._dextrus;
+								var c3 = parens^._dextrus;
+								suppar^._dextrus = cur;
+								cur^._parens = suppar;
+								cur^._dextrus = parens;
+								parens^._parens = cur;
+								cur^._sinister = c1;
+								parens^._sinister = c2;
+								parens^._dextrus = c3;
+								si (c1 != nullus) c1^._parens = cur;
+								si (c2 != nullus) c2^._parens = parens;
+								si (c3 != nullus) c3^._parens = parens;
+								cur = parens;
+							} alioqui {
+								var super = suppar^._parens;
+								@@elementum super_adl;
+								si (super != nullus) {
+									si (super^._sinister == suppar) super_adl = @super^._sinister;
+									alioqui super_adl = @super^._dextrus;
+								} alioqui super_adl = @_radix;
+								si (parens == suppar^._sinister) {
+									var c1 = cur^._sinister;
+									var c2 = cur^._dextrus;
+									var c3 = parens^._dextrus;
+									var c4 = suppar^._dextrus;
+									super_adl^ = parens;
+									parens^._parens = super;
+									parens^._sinister = cur;
+									parens^._dextrus = suppar;
+									cur^._parens = parens;
+									suppar^._parens = parens;
+									parens^._sinister^._sinister = c1;
+									parens^._sinister^._dextrus = c2;
+									parens^._dextrus^._sinister = c3;
+									parens^._dextrus^._dextrus = c4;
+									si (c1 != nullus) c1^._parens = parens^._sinister;
+									si (c2 != nullus) c2^._parens = parens^._sinister;
+									si (c3 != nullus) c3^._parens = parens^._dextrus;
+									si (c4 != nullus) c4^._parens = parens^._dextrus;
+								} alioqui {
+									var c1 = suppar^._sinister;
+									var c2 = parens^._sinister;
+									var c3 = cur^._sinister;
+									var c4 = cur^._dextrus;
+									super_adl^ = parens;
+									parens^._parens = super;
+									parens^._sinister = suppar;
+									parens^._dextrus = cur;
+									cur^._parens = parens;
+									suppar^._parens = parens;
+									parens^._sinister^._sinister = c1;
+									parens^._sinister^._dextrus = c2;
+									parens^._dextrus^._sinister = c3;
+									parens^._dextrus^._dextrus = c4;
+									si (c1 != nullus) c1^._parens = parens^._sinister;
+									si (c2 != nullus) c2^._parens = parens^._sinister;
+									si (c3 != nullus) c3^._parens = parens^._dextrus;
+									si (c4 != nullus) c4^._parens = parens^._dextrus;
+								}
+								suppar^._niger = non;
+								parens^._niger = sic;
+								exi;
+							}
+						}
+					} alioqui {
+						parens^._niger = sic;
+						exi;
+					}
+				} alioqui exi;
+			}
+		}
+		functio nihil _remanda_super_perdendum(@elementum origo, @@elementum directio) {
+			var cur = origo;
+			var dir = directio;
+			dum (cur != nullus) {
+				@@elementum diralt;
+				si (dir == @cur^._sinister) diralt = @cur^._dextrus;
+				alioqui diralt = @cur^._sinister;
+				var siblis = diralt^;
+				si (siblis == nullus) responde;
+				si ((siblis^._sinister == nullus || siblis^._sinister^._niger) && (siblis^._dextrus == nullus || siblis^._dextrus^._niger)) {
+					si (!cur^._niger) {
+						cur^._niger = sic;
+						siblis^._niger = non;
+						responde;
+					} alioqui si (!siblis^._niger) {
+						@@elementum ad;
+						_adloquium_adloquii_elementi(cur, @ad);
+						si (dir == @cur^._sinister) {
+							var c2 = siblis^._sinister;
+							var c3 = siblis^._dextrus;
+							ad^ = siblis;
+							siblis^._parens = cur^._parens;
+							siblis^._sinister = cur;
+							siblis^._dextrus = c3;
+							cur^._parens = siblis;
+							cur^._dextrus = c2;
+							si (c2 != nullus) c2^._parens = cur;
+							si (c3 != nullus) c3^._parens = siblis;
+						} alioqui {
+							var c1 = siblis^._sinister;
+							var c2 = siblis^._dextrus;
+							ad^ = siblis;
+							siblis^._parens = cur^._parens;
+							siblis^._sinister = c1;
+							siblis^._dextrus = cur;
+							si (c1 != nullus) c1^._parens = siblis;
+							cur^._parens = siblis;
+							cur^._sinister = c2;
+							si (c2 != nullus) c2^._parens = cur;
+						}
+						siblis^._niger = sic;
+						cur^._niger = non;
+					} alioqui {
+						siblis^._niger = non;
+						_adloquium_adloquii_elementi(cur, @dir);
+						cur = cur^._parens;
+					}
+				} alioqui {
+					si (dir == @cur^._sinister && siblis^._sinister != nullus && !siblis^._sinister^._niger) {
+						var sin = siblis^._sinister;
+						var c = sin^._dextrus;
+						cur^._dextrus = sin;
+						sin^._parens = cur;
+						sin^._dextrus = siblis;
+						siblis^._parens = sin;
+						siblis^._sinister = c;
+						si (c != nullus) c^._parens = siblis;
+						sin^._niger = sic;
+						siblis^._niger = non;
+					} alioqui si (dir == @cur^._dextrus && siblis^._dextrus != nullus && !siblis^._dextrus^._niger) {
+						var dex = siblis^._dextrus;
+						var c = dex^._sinister;
+						cur^._sinister = dex;
+						dex^._parens = cur;
+						dex^._sinister = siblis;
+						siblis^._parens = dex;
+						siblis^._dextrus = c;
+						si (c != nullus) c^._parens = siblis;
+						dex^._niger = sic;
+						siblis^._niger = non;
+					} alioqui si (dir == @cur^._sinister && siblis^._dextrus != nullus && !siblis^._dextrus^._niger) {
+						@@elementum ad;
+						_adloquium_adloquii_elementi(cur, @ad);
+						var sin = siblis^._sinister;
+						var dex = siblis^._dextrus;
+						ad^ = siblis;
+						siblis^._parens = cur^._parens;
+						siblis^._sinister = cur;
+						siblis^._dextrus = dex;
+						cur^._parens = siblis;
+						cur^._dextrus = sin;
+						dex^._parens = siblis;
+						si (sin != nullus) sin^._parens = cur;
+						siblis^._niger = cur^._niger;
+						cur^._niger = sic;
+						dex^._niger = sic;
+						responde;
+					} alioqui si (dir == @cur^._dextrus && siblis^._sinister != nullus && !siblis^._sinister^._niger) {
+						@@elementum ad;
+						_adloquium_adloquii_elementi(cur, @ad);
+						var sin = siblis^._sinister;
+						var dex = siblis^._dextrus;
+						ad^ = siblis;
+						siblis^._parens = cur^._parens;
+						siblis^._sinister = sin;
+						siblis^._dextrus = cur;
+						cur^._parens = siblis;
+						cur^._sinister = dex;
+						sin^._parens = siblis;
+						si (dex != nullus) dex^._parens = cur;
+						siblis^._niger = cur^._niger;
+						cur^._niger = sic;
+						sin^._niger = sic;
+						responde;
+					} alioqui responde;
+				}
+			}
+		}
+		functio nihil _adloquium_adloquii_elementi(@elementum e, @@@elementum ad) {
+			si (e^._parens != nullus) {
+				si (e^._parens^._sinister == e) ad^ = @e^._parens^._sinister;
+				alioqui ad^ = @e^._parens^._dextrus;
+			} alioqui ad^ = @_radix;
+		}
+		functio nihil _permuta_elementa(@elementum sup, @elementum sub) {
+			@@elementum sup_adl, sub_adl;
+			_adloquium_adloquii_elementi(sup, @sup_adl);
+			_adloquium_adloquii_elementi(sub, @sub_adl);
+			permuta(sup^._sinister, sub^._sinister);
+			permuta(sup^._dextrus, sub^._dextrus);
+			permuta(sup^._parens, sub^._parens);
+			permuta(sup^._niger, sub^._niger);
+			si (sub^._sinister == sub) sub^._sinister = sup;
+			alioqui si (sub^._dextrus == sub) sub^._dextrus = sup;
+			alioqui sub_adl^ = sup;
+			si (sup^._parens == sup) sup^._parens = sub;
+			sup_adl^ = sub;
+			si (sub^._sinister != nullus) sub^._sinister^._parens = sub;
+			si (sub^._dextrus != nullus) sub^._dextrus^._parens = sub;
+			si (sup^._sinister != nullus) sup^._sinister^._parens = sup;
+			si (sup^._dextrus != nullus) sup^._dextrus^._parens = sup;
+		}
+
+		structor () { funda _radix(nullus); }
+		structor (~arbor[$V] valor) iacit {
+			si (valor._radix != nullus) _radix = crea(elementum, valor._radix^, nullus);
+			alioqui _radix = nullus;
+		}
+		destructor () redefini { si (_radix != nullus) _radix^._perde(); }
+		functio ~arbor[$V] operator = (~arbor[$V] valor) iacit {
+			si (ego == @valor) responde ego^;
+			si (valor._radix != nullus) {
+				var radix_nova = crea(elementum, valor._radix^, nullus);
+				si (_radix != nullus) _radix^._perde();
+				_radix = radix_nova;
+			} alioqui {
+				si (_radix != nullus) _radix^._perde();
+				_radix = nullus;
+			}
+			responde ego^;
+		}
+		functio linea_secura ad_lineam() redefini {
+			proba {
+				linea resp = "arbor : [";
+				var v = primus;
+				dum (v != nullus) {
+					resp += linea.ex(v^.valor);
+					v = v^.proximus;
+					si (v != nullus) resp += ", ";
+				}
+				responde resp + "]";
+			} cape responde linea_secura();
+		}
+
+		@elementum radix { [[inline]] adipisce { responde _radix; } }
+		@elementum primus { adipisce {
+			var e = _radix;
+			dum (e != nullus && e^._sinister != nullus) e = e^._sinister;
+			responde e;
+		} }
+		@elementum ultimus { adipisce {
+			var e = _radix;
+			dum (e != nullus && e^._dextrus != nullus) e = e^._dextrus;
+			responde e;
+		} }
+		logicum vacuus { [[inline]] adipisce { responde _radix == nullus; } }
+
+		[[inline]] functio adnexus_elementi initus() { responde primus; }
+		[[inline]] functio adnexus_elementi finis() { responde ultimus; }
+		[[inline]] functio adnexus_elementi prae_initus() { responde adnexus_elementi(nullus); }
+		[[inline]] functio adnexus_elementi post_finis() { responde adnexus_elementi(nullus); }
+
+		\si tractus.habet($V, "primus")\
+			nomen_alternum genus_reperiendi = genus($V.primus);
+			classis functio int _compare(~$V a, ~$V b) {
+				proba si (a.primus < b.primus) responde -1;
+				alioqui si (a.primus > b.primus) responde 1;
+				responde 0;
+			}
+			classis functio int _compare_2(~$V a, ~genus_reperiendi b) {
+				proba si (a.primus < b) responde -1;
+				alioqui si (a.primus > b) responde 1;
+				responde 0;
+			}
+		\fini\
+		\si !tractus.habet($V, "primus")\
+			nomen_alternum genus_reperiendi = genus_objectum;
+			classis functio int _compare(~$V a, ~$V b) {
+				proba si (a < b) responde -1;
+				alioqui si (a > b) responde 1;
+				responde 0;
+			}
+			nomen_alternum _compare_2 = _compare;
+		\fini\
+
+		functio @elementum reperi_elementum(~genus_reperiendi valor) {
+			var cur = _radix;
+			dum (cur != nullus) {
+				var com = _compare_2(cur^.valor, valor);
+				si (com > 0) cur = cur^._sinister;
+				alioqui si (com < 0) cur = cur^._dextrus;
+				alioqui responde cur;
+			}
+			responde cur;
+		}
+		functio @elementum adde_elementum(~genus_objectum valor, exolutio_collisionis exc, @logicum creatum_est) iacit {
+			si (_radix == nullus) {
+				si (exc != exolutio_collisionis.rescribe_exclusive) {
+					_radix = crea(elementum, valor);
+					si (creatum_est != nullus) creatum_est^ = sic;
+					responde _radix;
+				} alioqui responde nullus;
+			} alioqui {
+				var cur = _radix;
+				dum (cur != nullus) {
+					var com = _compare(cur^.valor, valor);
+					si (com > 0) {
+						si (cur^._sinister == nullus && exc != exolutio_collisionis.rescribe_exclusive) {
+							si (creatum_est != nullus) creatum_est^ = sic;
+							var e = crea(elementum, valor);
+							e^._parens = cur;
+							cur^._sinister = e;
+							_remanda_super_creandum(e);
+							responde e;
+						}
+						cur = cur^._sinister;
+					} alioqui si (com < 0) {
+						si (cur^._dextrus == nullus && exc != exolutio_collisionis.rescribe_exclusive) {
+							si (creatum_est != nullus) creatum_est^ = sic;
+							var e = crea(elementum, valor);
+							e^._parens = cur;
+							cur^._dextrus = e;
+							_remanda_super_creandum(e);
+							responde e;
+						}
+						cur = cur^._dextrus;
+					} alioqui {
+						si (creatum_est != nullus) creatum_est^ = non;
+						si (exc == exolutio_collisionis.crea_exclusive) {
+							responde nullus;
+						} alioqui si (exc == exolutio_collisionis.crea_aut_rescribe) {
+							cur^.valor = valor;
+							responde cur;
+						} alioqui si (exc == exolutio_collisionis.crea_aut_remane) {
+							responde cur;
+						} alioqui si (exc == exolutio_collisionis.rescribe_exclusive) {
+							cur^.valor = valor;
+							responde cur;
+						}
+						responde cur;
+					}
+				}
+				responde cur;
+			}
+		}
+		functio nihil remove_elementum(@elementum e) {
+			si (e == nullus) responde;
+			si (e^._parens != nullus || e^._sinister != nullus || e^._dextrus != nullus) {
+				var cur = e;
+				dum (sic) {
+					si (cur^._sinister != nullus && cur^._dextrus != nullus) {
+						var prist = cur^.pristinus;
+						_permuta_elementa(cur, prist);
+					} alioqui si (cur^._sinister != nullus) {
+						@@elementum ad;
+						_adloquium_adloquii_elementi(cur, @ad);
+						cur^._sinister^._niger = sic;
+						cur^._sinister^._parens = cur^._parens;
+						ad^ = cur^._sinister;
+						perde(cur);
+						responde;
+					} alioqui si (cur^._dextrus != nullus) {
+						@@elementum ad;
+						_adloquium_adloquii_elementi(cur, @ad);
+						cur^._dextrus^._niger = sic;
+						cur^._dextrus^._parens = cur^._parens;
+						ad^ = cur^._dextrus;
+						perde(cur);
+						responde;
+					} alioqui {
+						@@elementum ad;
+						_adloquium_adloquii_elementi(cur, @ad);
+						var niger = cur^._niger;
+						var parens = cur^._parens;
+						perde(cur);
+						ad^ = nullus;
+						si (niger) _remanda_super_perdendum(parens, ad);
+						responde;
+					}
+				}
+			} alioqui { perde(e); _radix = nullus; }
+		}
+		functio nihil depura() { si (_radix != nullus) _radix^._perde(); _radix = nullus; }
+
+		int longitudo { adipisce { responde _radix != nullus ? _radix^._numerus : 0; } }
+		functio ~$V elementum_linearis(int i) iacit {
+			si (i < 0) iace errores.argumentum_falsum;
+			var p = i;
+			var e = primus;
+			dum (p > 0) {
+				si (e == nullus) iace errores.argumentum_falsum;
+				e = e^.proximus; p--;
+			}
+			si (e == nullus) iace errores.argumentum_falsum;
+			responde e^.valor;
+		}
+	} }
+	praeforma genus copia(V) { genus $_ hereditat arbor[$V] {
+		structor () {}
+		structor (~copia[$V] valor) iacit { funda(valor); }
+		functio ~copia[$V] operator = (~copia[$V] valor) iacit { (@arbor[$V])(ego)^ = valor; responde ego^; }
+
+		functio nihil adde(~$V valor) iacit { adde_elementum(valor, exolutio_collisionis.crea_aut_remane, nullus); }
+		functio nihil remove(~$V valor) { remove_elementum(reperi_elementum(valor)); }
+		functio logicum operator [] (~$V valor) { responde reperi_elementum(valor) != nullus; }
+
+		classis functio copia[$V] operator + (~copia[$V] a, ~copia[$V] b) iacit {
+			copia[$V] r;
+			var i1 = a.primus;
+			var i2 = b.primus;
+			dum (i1 != nullus || i2 != nullus) {
+				si (i1 != nullus && i2 != nullus) {
+					var com = arbor[$V]._compare(i1^.valor, i2^.valor);
+					si (com > 0) {
+						r.adde(i2^.valor);
+						i2 = i2^.proximus;
+					} alioqui si (com < 0) {
+						r.adde(i1^.valor);
+						i1 = i1^.proximus;
+					} alioqui {
+						r.adde(i1^.valor);
+						i1 = i1^.proximus;
+						i2 = i2^.proximus;
+					}
+				} alioqui si (i1 != nullus) {
+					r.adde(i1^.valor);
+					i1 = i1^.proximus;
+				} alioqui {
+					r.adde(i2^.valor);
+					i2 = i2^.proximus;
+				}
+			}
+			responde r;
+		}
+		classis functio copia[$V] operator * (~copia[$V] a, ~copia[$V] b) iacit {
+			copia[$V] r;
+			var i1 = a.primus;
+			var i2 = b.primus;
+			dum (i1 != nullus && i2 != nullus) {
+				var com = arbor[$V]._compare(i1^.valor, i2^.valor);
+				si (com > 0) {
+					i2 = i2^.proximus;
+				} alioqui si (com < 0) {
+					i1 = i1^.proximus;
+				} alioqui {
+					r.adde(i1^.valor);
+					i1 = i1^.proximus;
+					i2 = i2^.proximus;
+				}
+			}
+			responde r;
+		}
+		classis functio copia[$V] operator - (~copia[$V] a, ~copia[$V] b) iacit {
+			copia[$V] r;
+			var i1 = a.primus;
+			var i2 = b.primus;
+			dum (i1 != nullus) {
+				si (i2 != nullus) {
+					var com = arbor[$V]._compare(i1^.valor, i2^.valor);
+					si (com > 0) {
+						i2 = i2^.proximus;
+					} alioqui si (com < 0) {
+						r.adde(i1^.valor);
+						i1 = i1^.proximus;
+					} alioqui {
+						i1 = i1^.proximus;
+						i2 = i2^.proximus;
+					}
+				} alioqui {
+					r.adde(i1^.valor);
+					i1 = i1^.proximus;
+				}
+			}
+			responde r;
+		}
+		classis functio copia[$V] operator # (~copia[$V] a, ~copia[$V] b) iacit {
+			copia[$V] r;
+			var i1 = a.primus;
+			var i2 = b.primus;
+			dum (i1 != nullus || i2 != nullus) {
+				si (i1 != nullus && i2 != nullus) {
+					var com = arbor[$V]._compare(i1^.valor, i2^.valor);
+					si (com > 0) {
+						r.adde(i2^.valor);
+						i2 = i2^.proximus;
+					} alioqui si (com < 0) {
+						r.adde(i1^.valor);
+						i1 = i1^.proximus;
+					} alioqui {
+						i1 = i1^.proximus;
+						i2 = i2^.proximus;
+					}
+				} alioqui si (i1 != nullus) {
+					r.adde(i1^.valor);
+					i1 = i1^.proximus;
+				} alioqui {
+					r.adde(i2^.valor);
+					i2 = i2^.proximus;
+				}
+			}
+			responde r;
+		}
+		classis functio logicum operator == (~copia[$V] a, ~copia[$V] b) iacit {
+			var i1 = a.primus;
+			var i2 = b.primus;
+			dum (i1 != nullus || i2 != nullus) {
+				si (i1 != nullus && i2 != nullus) {
+					si (arbor[$V]._compare(i1^.valor, i2^.valor) != 0) responde non;
+					i1 = i1^.proximus;
+					i2 = i2^.proximus;
+				} alioqui responde non;
+			}
+			responde sic;
+		}
+		[[inline]] classis functio copia[$V] operator | (~copia[$V] a, ~copia[$V] b) iacit { responde a + b; }
+		[[inline]] classis functio copia[$V] operator & (~copia[$V] a, ~copia[$V] b) iacit { responde a * b; }
+		[[inline]] classis functio logicum operator != (~copia[$V] a, ~copia[$V] b) iacit { responde !(a == b); }
+	} }
+	praeforma genus dictionarium(C, V) { genus $_ hereditat arbor[($C, $V)] {
+		structor () {}
+		structor (~dictionarium[$C, $V] valor) iacit { funda(valor); }
+		functio ~dictionarium[$C, $V] operator = (~dictionarium[$C, $V] valor) iacit { (@arbor[($C, $V)])(ego)^ = valor; responde ego^; }
+
+		functio logicum adde(~$C clavis, ~$V valor) iacit {
+			logicum creatum;
+			adde_elementum((clavis, valor), exolutio_collisionis.crea_aut_remane, @creatum);
+			responde creatum;
+		}
+		functio logicum rescribe(~$C clavis, ~$V valor) iacit {
+			logicum creatum;
+			adde_elementum((clavis, valor), exolutio_collisionis.crea_aut_rescribe, @creatum);
+			responde creatum;
+		}
+		functio nihil remove(~$C clavis) { remove_elementum(reperi_elementum(clavis)); }
+		functio logicum habet(~$C clavis) { responde reperi_elementum(clavis) != nullus; }
+		functio @$V operator [] (~$C clavis) {
+			var e = reperi_elementum(clavis);
+			si (e != nullus) responde @e^.valor.secundus; alioqui responde nullus;
+		}
+	} }
+
+	praeforma functio _comparator_universalis(V) { \cense V genus(_0)\ functio int $_(~$V a, ~$V b) { si (a < b) responde -1; alioqui si (a > b) responde 1; responde 0; } }
+	praeforma functio _comparator_universalis_inversus(V) { \cense V genus(_0)\ functio int $_(~$V a, ~$V b) { si (a < b) responde 1; alioqui si (a > b) responde -1; responde 0; } }
+	praeforma functio _ordina_dorsum(O, C) {
+		\cense O genus(_0)\ \cense C genus(_1)\
+		functio nihil $_(~$O ord, $C com, int mn, int mx) {
+			si (mx - mn < 2) responde;
+			var md = (mn + mx) / 2;
+			var sin = mn - 1;
+			var dex = mx;
+			dum (sic) {
+				fac sin++; dum (com(ord[sin], ord[md]) < 0);
+				fac dex--; dum (com(ord[dex], ord[md]) > 0);
+				si (sin >= dex) {
+					si (sin > dex) md = dex; alioqui si (dex == mx - 1) md = dex - 1; alioqui md = dex;
+					exi;
+				}
+				permuta(ord[sin], ord[dex]);
+				si (md == sin) md = dex; alioqui si (md == dex) md = sin;
+			}
+			_ordina_dorsum[$O, $C](ord, com, mn, md + 1);
+			_ordina_dorsum[$O, $C](ord, com, md + 1, mx);
+		}
+	}
+	praeforma functio ordina(O, C) {
+		\cense O genus(_0)\ \cense C genus(_1)\
+		[[inline]] functio nihil $_(~$O ord, $C com) {
+			\si tractus.est_ordo($O)\	_ordina_dorsum(ord, com, 0, tractus.destinatio($O));	\fini\
+			\si !tractus.est_ordo($O)\	_ordina_dorsum(ord, com, 0, ord.longitudo);				\fini\
+		}
+	}
+	praeforma functio ordina_acclive(O) { \cense O genus(_0)\ [[inline]] functio nihil $_(~$O ord) { ordina(ord, _comparator_universalis[genus($O()[0])]); } }
+	praeforma functio ordina_declive(O) { \cense O genus(_0)\ [[inline]] functio nihil $_(~$O ord) { ordina(ord, _comparator_universalis_inversus[genus($O()[0])]); } }
+
+	praeforma functio maximum(O, F) {
+		\cense O genus(_0)\ \cense F genus(_1)\
+		functio genus($F()($O()[0])) $_(~$O ord, $F f, @int a) iacit {
+			genus($F()($O()[0])) mx;
+			var arg = -1;
+			pro (var i : ord) {
+				var v = f(ord[i]);
+				si (arg < 0 || v > mx) { mx = v; arg = i; }
+			}
+			si (arg < 0) iace errores.argumentum_falsum;
+			si (a != nullus) a^ = arg;
+			responde mx;
+		}
+	}
+	praeforma functio minimum(O, F) {
+		\cense O genus(_0)\ \cense F genus(_1)\
+		functio genus($F()($O()[0])) $_(~$O ord, $F f, @int a) iacit {
+			genus($F()($O()[0])) mn;
+			var arg = -1;
+			pro (var i : ord) {
+				var v = f(ord[i]);
+				si (arg < 0 || v < mn) { mn = v; arg = i; }
+			}
+			si (arg < 0) iace errores.argumentum_falsum;
+			si (a != nullus) a^ = arg;
+			responde mn;
+		}
+	}
+	praeforma functio elementum_maximum(O) {
+		\cense O genus(_0)\
+		functio genus($O()[0]) $_(~$O ord, @int a) iacit {
+			genus($O()[0]) mx;
+			var arg = -1;
+			pro (var i : ord) {
+				var ~ v = ord[i];
+				si (arg < 0 || v > mx) { mx = v; arg = i; }
+			}
+			si (arg < 0) iace errores.argumentum_falsum;
+			si (a != nullus) a^ = arg;
+			responde mx;
+		}
+	}
+	praeforma functio elementum_minimum(O) {
+		\cense O genus(_0)\
+		functio genus($O()[0]) $_(~$O ord, @int a) iacit {
+			genus($O()[0]) mn;
+			var arg = -1;
+			pro (var i : ord) {
+				var ~ v = ord[i];
+				si (arg < 0 || v < mn) { mn = v; arg = i; }
+			}
+			si (arg < 0) iace errores.argumentum_falsum;
+			si (a != nullus) a^ = arg;
+			responde mn;
+		}
+	}
+}

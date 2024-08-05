@@ -42,18 +42,20 @@ BETA-5:
  + XVSL Performance Improvments
  + Cast Priorities
  + Extended Mathematics: vectors, complex numbers, quaternions, complex vectors, matrices, complex matrices, colors, accessory functions for graphics
- - Collections
+ + Collections
  + Communication API (Sockets: local, TCP, SSL; DNS)
  + Printing and PDF API
 
-OTHER RELEASES:
+BETA-6:
  - Multimedia API
  - Serialization API: ECSO, JSON
+ - Communication and Serialization: RPC
  - Communication API-2 (Shared Memory; HTTP Client and Server; ECF)
- - Block Transforms: Cryptography and Compression
- - Remote Procedure Call
+ - Stream Transforms: Cryptography and Compression
+
+OTHER RELEASES:
  - GUI and CUI libraries
- - XB framework: XX to native bundle wrapper
  - XU framework: XV extension for UI
  - XW framework: XV extension for GPU
  - Module version control
+ - XB framework: XX to native bundle wrapper
