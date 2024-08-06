@@ -11,8 +11,8 @@ functio nihil patch() introitus iacit
 			var bpatch = semita(arg^[1]);
 			var info_file = semita(bpatch, "Contents/Info.plist");
 			var info = scriptio.decodifica(info_file.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens), linea.codex.utf8)^.lege_cunctos();
-			var ref1 = info.reperi_primus("<key>CFBundleDocumentTypes</key>");
-			var ref2 = info.reperi_ultimus("</array>");
+			var ref1 = info.reperi_primum("<key>CFBundleDocumentTypes</key>");
+			var ref2 = info.reperi_ultimum("</array>");
 			var ref3 = ref2 + 8;
 			info = info.fragmentum(0, ref3) +
 				"\n\t<key>NSAppleEventsUsageDescription</key>\n\t<string>Application scripting.</string>" +
