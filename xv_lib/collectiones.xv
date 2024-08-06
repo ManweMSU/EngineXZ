@@ -121,8 +121,8 @@ spatium collectiones {
 			si (e^._pristinus == nullus) _primus = e^._proximus; alioqui e^._pristinus^._proximus = e^._proximus;
 			perde(e);
 		}
-		functio nihil remove_primum(@elementum e) { remove(_primus); }
-		functio nihil remove_ultimum(@elementum e) { remove(_ultimus); }
+		functio nihil remove_primum() { remove(_primus); }
+		functio nihil remove_ultimum() { remove(_ultimus); }
 		functio nihil depura() {
 			var v = _primus;
 			dum (v != nullus) { var prox = v^._proximus; perde(v); v = prox; }
