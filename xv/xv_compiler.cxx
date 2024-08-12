@@ -1473,7 +1473,7 @@ namespace Engine
 				desc.namespace_search_list.Append(ns);
 				AssertPunct(L";"); ReadNextToken();
 			}
-			void ProcessAttributeDefinition(Volumes::Dictionary<string, string> & attributes)
+			void ProcessAttributeDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
 				Token definition;
 				string key, value;
@@ -1483,6 +1483,13 @@ namespace Engine
 					definition = current_token;
 					key = L"[" + current_token.contents + L"]";
 					ReadNextToken(); AssertPunct(L"]"); ReadNextToken();
+				} else if (IsPunct(L"(")) {
+					ReadNextToken();
+					definition = current_token;
+					SafePointer<XL::LObject> expr = ProcessExpression(desc);
+					AssertPunct(L")"); ReadNextToken();
+					try { key = ctx.QueryLiteralString(expr); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 				} else if (IsGenericIdent()) {
 					definition = current_token;
 					key = current_token.contents;
@@ -1497,6 +1504,13 @@ namespace Engine
 				if (IsGenericIdent()) {
 					value = current_token.contents;
 					ReadNextToken();
+				} else if (IsPunct(L"(")) {
+					ReadNextToken();
+					auto xtoken = current_token;
+					SafePointer<XL::LObject> expr = ProcessExpression(desc);
+					AssertPunct(L")"); ReadNextToken();
+					try { value = ctx.QueryLiteralString(expr); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, xtoken); }
 				}
 				AssertPunct(L"]"); ReadNextToken();
 				if (key == Lexic::AttributeSystem) {
@@ -1540,7 +1554,7 @@ namespace Engine
 						AssignAutocomplete(Lexic::IdentifierSet, CodeRangeTag::IdentifierFunction);
 					}
 					if (IsPunct(L"[")) {
-						ProcessAttributeDefinition(attributes);
+						ProcessAttributeDefinition(attributes, desc);
 					} else {
 						AssertIdent();
 						bool setter;
@@ -1756,7 +1770,7 @@ namespace Engine
 						ExpressionAutocomplete(desc);
 					}
 					if (IsPunct(L"[")) {
-						ProcessAttributeDefinition(attributes);
+						ProcessAttributeDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordClass) || IsKeyword(Lexic::KeywordInterface) || IsKeyword(Lexic::KeywordStructure)) {
 						ProcessClassDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordContinue)) {
@@ -1872,7 +1886,7 @@ namespace Engine
 						AssignAutocomplete(Lexic::KeywordResource, CodeRangeTag::Keyword);
 					}
 					if (IsPunct(L"[")) {
-						ProcessAttributeDefinition(attributes);
+						ProcessAttributeDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordNamespace)) {
 						if (!attributes.IsEmpty()) Abort(CompilerStatus::InapproptiateAttribute, current_token);
 						ReadNextToken(); AssertIdent();
