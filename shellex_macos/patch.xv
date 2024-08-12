@@ -23,7 +23,7 @@ functio nihil patch() introitus iacit
 				info = info.fragmentum(0, ref1) + ffpatch.fragmentum(1, -1) + info.fragmentum(ref3, -1);
 				var plugins_path = semita(bpatch, "Contents/Library/QuickLook");
 				plugins_path.crea_arborem_collectoriorum();
-				bpatch_with.exscribe(semita(plugins_path, "XXQL.qlgenerator"), modus_exscribendum.rescribe_ultime);
+				bpatch_with.exscribe(semita(plugins_path, "XXQL.qlgenerator"), modus_exscribendi.rescribe_ultime);
 			}
 			scriptio.codifica(info_file.crea_limam(modus_limae.scribere, modus_creatoris.trunca_praesens), linea.codex.utf8)^.scribe(info);
 			con.scribe_lineam("Patch done!");
