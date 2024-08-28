@@ -7,7 +7,7 @@ auxilium attributum ("Versio") = "1.0.0.1";
 
 structura frac2 {
 	frac x; frac y;
-	[[positus] "0"] ordo [2] frac _c;
+	[[positus] "0"] [serializa_nulle] ordo [2] frac _c;
 
 	frac longitudo { [[xa]] [[inline]] adipisce {
 		INTERFACE W 1 : THIS => 4 : FLOAT
@@ -72,9 +72,9 @@ structura frac2 {
 }
 structura frac3 {
 	frac x; frac y; frac z;
-	[[positus] "0"] ordo [3] frac _c;
-	[[positus] "0"] frac2 xy;
-	[[positus] "4"] frac2 yz;
+	[[positus] "0"] [serializa_nulle] ordo [3] frac _c;
+	[[positus] "0"] [serializa_nulle] frac2 xy;
+	[[positus] "4"] [serializa_nulle] frac2 yz;
 
 	frac longitudo { [[xa]] [[inline]] adipisce {
 		INTERFACE W 1 : THIS => 4 : FLOAT
@@ -139,12 +139,12 @@ structura frac3 {
 }
 structura frac4 {
 	frac x; frac y; frac z; frac w;
-	[[positus] "0"] ordo [4] frac _c;
-	[[positus] "0"] frac2 xy;
-	[[positus] "4"] frac2 yz;
-	[[positus] "8"] frac2 zw;
-	[[positus] "0"] frac3 xyz;
-	[[positus] "4"] frac3 yzw;
+	[[positus] "0"] [serializa_nulle] ordo [4] frac _c;
+	[[positus] "0"] [serializa_nulle] frac2 xy;
+	[[positus] "4"] [serializa_nulle] frac2 yz;
+	[[positus] "8"] [serializa_nulle] frac2 zw;
+	[[positus] "0"] [serializa_nulle] frac3 xyz;
+	[[positus] "4"] [serializa_nulle] frac3 yzw;
 
 	frac longitudo { [[xa]] [[inline]] adipisce {
 		INTERFACE W 1 : THIS => 4 : FLOAT
@@ -210,7 +210,7 @@ structura frac4 {
 
 structura dfrac2 {
 	dfrac x; dfrac y;
-	[[positus] "0"] ordo [2] dfrac _c;
+	[[positus] "0"] [serializa_nulle] ordo [2] dfrac _c;
 
 	dfrac longitudo { [[xa]] [[inline]] adipisce {
 		INTERFACE W 1 : THIS => 8 : FLOAT
@@ -275,9 +275,9 @@ structura dfrac2 {
 }
 structura dfrac3 {
 	dfrac x; dfrac y; dfrac z;
-	[[positus] "0"] ordo [3] dfrac _c;
-	[[positus] "0"] dfrac2 xy;
-	[[positus] "8"] dfrac2 yz;
+	[[positus] "0"] [serializa_nulle] ordo [3] dfrac _c;
+	[[positus] "0"] [serializa_nulle] dfrac2 xy;
+	[[positus] "8"] [serializa_nulle] dfrac2 yz;
 
 	dfrac longitudo { [[xa]] [[inline]] adipisce {
 		INTERFACE W 1 : THIS => 8 : FLOAT
@@ -342,12 +342,12 @@ structura dfrac3 {
 }
 structura dfrac4 {
 	dfrac x; dfrac y; dfrac z; dfrac w;
-	[[positus] "0"] ordo [4] dfrac _c;
-	[[positus] "0"] dfrac2 xy;
-	[[positus] "8"] dfrac2 yz;
-	[[positus] "16"] dfrac2 zw;
-	[[positus] "0"] dfrac3 xyz;
-	[[positus] "8"] dfrac3 yzw;
+	[[positus] "0"] [serializa_nulle] ordo [4] dfrac _c;
+	[[positus] "0"] [serializa_nulle] dfrac2 xy;
+	[[positus] "8"] [serializa_nulle] dfrac2 yz;
+	[[positus] "16"] [serializa_nulle] dfrac2 zw;
+	[[positus] "0"] [serializa_nulle] dfrac3 xyz;
+	[[positus] "8"] [serializa_nulle] dfrac3 yzw;
 
 	dfrac longitudo { [[xa]] [[inline]] adipisce {
 		INTERFACE W 1 : THIS => 8 : FLOAT

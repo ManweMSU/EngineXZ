@@ -48,8 +48,8 @@ BETA-5:
 
 BETA-6:
  - Multimedia API
- - Serialization API: ECSO, JSON
- - Communication and Serialization: RPC
+ + Serialization API: XESL, ECSO, JSON
+ + Communication and Serialization: RPC
  - Communication API-2 (Shared Memory; HTTP Client and Server; ECF)
  - Stream Transforms: Cryptography and Compression
 

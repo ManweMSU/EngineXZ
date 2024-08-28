@@ -1,0 +1,657 @@
+﻿importa serializatio;
+importa mathcom;
+importa imago;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber ECSO Serializandi";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium serializatio {
+	spatium ecso {
+		genus serializator hereditat .serializatio.serializator {
+			structura _portio {
+				dordo_datorum data;
+				ordo int relocationes;
+			}
+			structura _deductorium {
+				int cls; // 0 - корень, 1 - структура, 2 - массив
+				_portio portio;
+
+				int numerus;
+				int ert_genus;
+				linea nomen;
+				ordo _portio portiones;
+			}
+
+			!flumen _dest;
+			collectiones.sequentia[_deductorium] _ded;
+
+			structor (@flumen fl) iacit { _dest.contine(fl); }
+			functio nihil da_nomen_valori(~linea nomen) iacit redefini { _ded.ultimus^.valor.nomen = nomen; }
+			functio nihil exordi_serializandum_communaliter() iacit redefini {
+				_deductorium ded;
+				ded.cls = 0;
+				ded.numerus = 0;
+				ded.ert_genus = -1;
+				_ded.insere_ultimum(ded);
+			}
+			functio nihil ende_serializandum_communaliter() iacit redefini {
+				si (_ded.primus^.valor.portio.data.longitudo == 0) {
+					_ded.depura();
+					iace errores.habitus_falsus;
+				}
+				nint64 valor;
+				valor = 0x007463656A626F65;
+				_dest^.scribe(@valor, 8);
+				valor = 0;
+				_dest^.scribe(@valor, 4);
+				valor = _ded.primus^.valor.portio.data.longitudo;
+				_dest^.scribe(@valor, 4);
+				_dest^.scribe_ordinem(@_ded.primus^.valor.portio.data);
+				_ded.depura();
+			}
+			functio nihil exordi_serializandum_structurae() iacit redefini {
+				_deductorium ded;
+				ded.cls = 1;
+				ded.numerus = 0;
+				ded.ert_genus = -1;
+				ded.portio.data.longitudo = 4;
+				_ded.insere_ultimum(ded);
+			}
+			functio nihil ende_serializandum_structurae() iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				var ~ sd = _ded.ultimus^.pristinus^.valor;
+				(@int)(@d.portio.data.data[0])^ = d.numerus;
+				pro (var i = 0; i < d.numerus; i++) {
+					int p = d.portio.data.longitudo;
+					(@int)(@d.portio.data.data[i * 16 + 4])^ += p;
+					(@int)(@d.portio.data.data[i * 16 + 16])^ += p;
+					d.portio.relocationes << (i * 16 + 4);
+					d.portio.relocationes << (i * 16 + 16);
+					pro (var j : d.portiones[i].relocationes) {
+						(@int)(@d.portiones[i].data.data[d.portiones[i].relocationes[j]])^ += p;
+						d.portio.relocationes << (d.portiones[i].relocationes[j] + p);
+					}
+					d.portio.data.adde(d.portiones[i].data);
+				}
+				si (sd.cls == 0) {
+					sd.portio = d.portio;
+				} alioqui si (sd.cls == 1) {
+					sd.portio.data.longitudo += 16;
+					int longnom = sd.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@sd.portio.data.data[sd.portio.data.longitudo - 16])^ = 0;
+					(@int)(@sd.portio.data.data[sd.portio.data.longitudo - 12])^ = 22;
+					(@int)(@sd.portio.data.data[sd.portio.data.longitudo - 8])^ = 0;
+					(@int)(@sd.portio.data.data[sd.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom;
+					sd.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					pro (var i : d.portio.relocationes) {
+						(@int)(@d.portio.data.data[d.portio.relocationes[i]])^ += longnom;
+						e.relocationes << (d.portio.relocationes[i] + longnom);
+					}
+					e.data.adde(d.portio.data);
+					sd.numerus++;
+					sd.portiones.adde(e);
+				} alioqui si (sd.cls == 2) {
+					si (sd.ert_genus < 0) sd.ert_genus = 22;
+					si (sd.ert_genus == 22) {
+						sd.portio.data.longitudo = 4 * (d.numerus + 1);
+						sd.portiones << d.portio;
+						sd.numerus++;
+					}
+				}
+				_ded.remove_ultimum();
+			}
+			functio nihil exordi_serializandum_ordinis() iacit redefini {
+				_deductorium ded;
+				ded.cls = 2;
+				ded.numerus = 0;
+				ded.ert_genus = -1;
+				_ded.insere_ultimum(ded);
+			}
+			functio nihil ende_serializandum_ordinis() iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				var ~ sd = _ded.ultimus^.pristinus^.valor;
+				pro (var i : d.portiones) {
+					int p = d.portio.data.longitudo;
+					(@int)(@d.portio.data.data[i * 4])^ = p;
+					d.portio.relocationes << (i * 4);
+					pro (var j : d.portiones[i].relocationes) {
+						(@int)(@d.portiones[i].data.data[d.portiones[i].relocationes[j]])^ += p;
+						d.portio.relocationes << (d.portiones[i].relocationes[j] + p);
+					}
+					d.portio.data.adde(d.portiones[i].data);
+				}
+				si (sd.cls == 1) {
+					sd.portio.data.longitudo += 16;
+					int longnom = sd.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@sd.portio.data.data[sd.portio.data.longitudo - 16])^ = 0;
+					(@int)(@sd.portio.data.data[sd.portio.data.longitudo - 12])^ = d.ert_genus >= 0 ? d.ert_genus : 0;
+					(@int)(@sd.portio.data.data[sd.portio.data.longitudo - 8])^ = d.numerus ? d.numerus : -1;
+					(@int)(@sd.portio.data.data[sd.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom;
+					sd.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					pro (var i : d.portio.relocationes) {
+						(@int)(@d.portio.data.data[d.portio.relocationes[i]])^ += longnom;
+						e.relocationes << (d.portio.relocationes[i] + longnom);
+					}
+					e.data.adde(d.portio.data);
+					sd.numerus++;
+					sd.portiones.adde(e);
+				} alioqui iace errores.argumentum_falsum;
+				_ded.remove_ultimum();
+			}
+			functio nihil serializa_nullum() iacit redefini {}
+			functio nihil serializa(@logicum valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 11;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 1;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@logicum)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 11;
+					si (d.ert_genus == 11) {
+						d.portio.data.longitudo = d.numerus + numerus;
+						memoria.exscribe(@d.portio.data.data[d.numerus], valores, numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@int8 valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 1;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@int8)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 1;
+					si (d.ert_genus == 1) {
+						d.portio.data.longitudo = d.numerus + numerus;
+						memoria.exscribe(@d.portio.data.data[d.numerus], valores, numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@nint8 valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 1;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@nint8)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 0;
+					si (d.ert_genus == 0) {
+						d.portio.data.longitudo = d.numerus + numerus;
+						memoria.exscribe(@d.portio.data.data[d.numerus], valores, numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@int16 valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 3;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 2;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@int16)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 3;
+					si (d.ert_genus == 3) {
+						d.portio.data.longitudo = 2 * (d.numerus + numerus);
+						memoria.exscribe(@d.portio.data.data[2 * d.numerus], valores, 2 * numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@nint16 valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 2;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 2;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@nint16)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 2;
+					si (d.ert_genus == 2) {
+						d.portio.data.longitudo = 2 * (d.numerus + numerus);
+						memoria.exscribe(@d.portio.data.data[2 * d.numerus], valores, 2 * numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@int32 valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 5;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 4;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@int32)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 5;
+					si (d.ert_genus == 5) {
+						d.portio.data.longitudo = 4 * (d.numerus + numerus);
+						memoria.exscribe(@d.portio.data.data[4 * d.numerus], valores, 4 * numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@nint32 valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 4;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 4;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@nint32)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 4;
+					si (d.ert_genus == 4) {
+						d.portio.data.longitudo = 4 * (d.numerus + numerus);
+						memoria.exscribe(@d.portio.data.data[4 * d.numerus], valores, 4 * numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@int64 valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 7;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 8;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@int64)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 7;
+					si (d.ert_genus == 7) {
+						d.portio.data.longitudo = 8 * (d.numerus + numerus);
+						memoria.exscribe(@d.portio.data.data[8 * d.numerus], valores, 8 * numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@nint64 valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 6;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 8;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@nint64)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 6;
+					si (d.ert_genus == 6) {
+						d.portio.data.longitudo = 8 * (d.numerus + numerus);
+						memoria.exscribe(@d.portio.data.data[8 * d.numerus], valores, 8 * numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@frac valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 8;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 4;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@frac)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 8;
+					si (d.ert_genus == 8) {
+						d.portio.data.longitudo = 4 * (d.numerus + numerus);
+						memoria.exscribe(@d.portio.data.data[4 * d.numerus], valores, 4 * numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@dfrac valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 9;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + 8;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					(@dfrac)(@e.data.data[longnom])^ = valores^;
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 9;
+					si (d.ert_genus == 9) {
+						d.portio.data.longitudo = 8 * (d.numerus + numerus);
+						memoria.exscribe(@d.portio.data.data[8 * d.numerus], valores, 8 * numerus);
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio nihil serializa(@linea valores, int numerus) iacit redefini {
+				var ~ d = _ded.ultimus^.valor;
+				si (d.cls == 1) {
+					d.portio.data.longitudo += 16;
+					int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 12;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+					(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+					_portio e;
+					e.data.longitudo = longnom + valores^.longitudo_codicis(linea.codex.utf8) + 1;
+					d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+					valores^.codifica(@e.data.data[longnom], linea.codex.utf8, sic);
+					d.numerus++;
+					d.portiones.adde(e);
+				} alioqui si (d.cls == 2) {
+					si (d.ert_genus < 0) d.ert_genus = 12;
+					si (d.ert_genus == 12) {
+						d.portio.data.longitudo = 4 * (d.numerus + numerus);
+						pro (var i = 0; i < numerus; i++) {
+							_portio e;
+							e.data.longitudo = valores[i].longitudo_codicis(linea.codex.utf8) + 1;
+							valores[i].codifica(e.data.data, linea.codex.utf8, sic);
+							d.portiones << e;
+						}
+						d.numerus += numerus;
+					}
+				}
+			}
+			functio logicum serializa_alterne(@nihil objadl, @repulsus.generis objgen, int numerus) iacit redefini {
+				si (!objgen^.classis_est) responde non;
+				si (objgen^.manubrium == complex) {
+					var ~ d = _ded.ultimus^.valor;
+					si (d.cls == 1) {
+						d.portio.data.longitudo += 16;
+						int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 10;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+						_portio e;
+						e.data.longitudo = longnom + 16;
+						d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+						(@complex)(@e.data.data[longnom])^ = (@complex)(objadl)^;
+						d.numerus++;
+						d.portiones.adde(e);
+					} alioqui si (d.cls == 2) {
+						si (d.ert_genus < 0) d.ert_genus = 10;
+						si (d.ert_genus == 10) {
+							d.portio.data.longitudo = 16 * (d.numerus + numerus);
+							memoria.exscribe(@d.portio.data.data[16 * d.numerus], objadl, 16 * numerus);
+							d.numerus += numerus;
+						}
+					}
+					responde sic;
+				} alioqui si (objgen^.manubrium == imago.color) {
+					var ~ d = _ded.ultimus^.valor;
+					si (d.cls == 1) {
+						d.portio.data.longitudo += 16;
+						int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 13;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+						_portio e;
+						e.data.longitudo = longnom + 4;
+						d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+						(@imago.color)(@e.data.data[longnom])^ = (@imago.color)(objadl)^;
+						d.numerus++;
+						d.portiones.adde(e);
+					} alioqui si (d.cls == 2) {
+						si (d.ert_genus < 0) d.ert_genus = 13;
+						si (d.ert_genus == 13) {
+							d.portio.data.longitudo = 4 * (d.numerus + numerus);
+							memoria.exscribe(@d.portio.data.data[4 * d.numerus], objadl, 4 * numerus);
+							d.numerus += numerus;
+						}
+					}
+					responde sic;
+				} alioqui si (objgen^.manubrium == tempus) {
+					var ~ d = _ded.ultimus^.valor;
+					si (d.cls == 1) {
+						d.portio.data.longitudo += 16;
+						int longnom = d.nomen.longitudo_codicis(linea.codex.utf8) + 1;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 16])^ = 0;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 12])^ = 14;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 8])^ = 0;
+						(@int)(@d.portio.data.data[d.portio.data.longitudo - 4])^ = longnom;
+						_portio e;
+						e.data.longitudo = longnom + 8;
+						d.nomen.codifica(e.data.data, linea.codex.utf8, sic);
+						(@tempus)(@e.data.data[longnom])^ = (@tempus)(objadl)^;
+						d.numerus++;
+						d.portiones.adde(e);
+					} alioqui si (d.cls == 2) {
+						si (d.ert_genus < 0) d.ert_genus = 14;
+						si (d.ert_genus == 14) {
+							d.portio.data.longitudo = 8 * (d.numerus + numerus);
+							memoria.exscribe(@d.portio.data.data[8 * d.numerus], objadl, 8 * numerus);
+							d.numerus += numerus;
+						}
+					}
+					responde sic;
+				} alioqui responde non;
+			}
+		}
+		genus deserializator hereditat .serializatio.deserializator {
+			!dordo_datorum data;
+
+			structura _rectangulis {
+				[[non_polire]] int sin_a;
+				[[non_polire]] dfrac sin_s;
+				[[non_polire]] dfrac sin_r;
+				[[non_polire]] int sup_a;
+				[[non_polire]] dfrac sup_s;
+				[[non_polire]] dfrac sup_r;
+				[[non_polire]] int dex_a;
+				[[non_polire]] dfrac dex_s;
+				[[non_polire]] dfrac dex_r;
+				[[non_polire]] int inf_a;
+				[[non_polire]] dfrac inf_s;
+				[[non_polire]] dfrac inf_r;
+			}
+			functio nihil _deserializa_valores(int pos, int gen, int num, @reflexor_deserializandi stor) iacit {
+				si (num) stor^.exordi_serializandum_ordinis();
+				si (num >= 0) {
+					var numc = num > 0 ? num : 1;
+					si (gen == 0) stor^.serializa((@nint8)(@data^.data[pos]), numc);
+					alioqui si (gen == 1) stor^.serializa((@int8)(@data^.data[pos]), numc);
+					alioqui si (gen == 2) stor^.serializa((@nint16)(@data^.data[pos]), numc);
+					alioqui si (gen == 3) stor^.serializa((@int16)(@data^.data[pos]), numc);
+					alioqui si (gen == 4) stor^.serializa((@nint32)(@data^.data[pos]), numc);
+					alioqui si (gen == 5) stor^.serializa((@int32)(@data^.data[pos]), numc);
+					alioqui si (gen == 6) stor^.serializa((@nint64)(@data^.data[pos]), numc);
+					alioqui si (gen == 7) stor^.serializa((@int64)(@data^.data[pos]), numc);
+					alioqui si (gen == 8) stor^.serializa((@frac)(@data^.data[pos]), numc);
+					alioqui si (gen == 9) stor^.serializa((@dfrac)(@data^.data[pos]), numc);
+					alioqui si (gen == 10) {
+						var cplx = repulsus.expone_genus(modulus(), complex);
+						pro (var i = 0; i < numc; i++) {
+							si (!stor^.serializa_alterne(@data^.data[pos + i * 16], cplx, 1)) {
+								stor^.exordi_serializandum_structurae();
+								stor^.da_nomen_valori("re");
+								stor^.serializa((@dfrac)(@data^.data[pos + i * 16]), 1);
+								stor^.da_nomen_valori("im");
+								stor^.serializa((@dfrac)(@data^.data[pos + i * 16 + 8]), 1);
+								stor^.ende_serializandum_structurae();
+							}
+						}
+					} alioqui si (gen == 11) stor^.serializa((@logicum)(@data^.data[pos]), numc);
+					alioqui si (gen == 12) {
+						si (num > 0) {
+							pro (var i = 0; i < num; i++) {
+								var subpos = (@int)(@data^.data[pos + i * 4])^;
+								var ln = linea(@data^.data[subpos], -1, linea.codex.utf8);
+								stor^.serializa(@ln, 1);
+							}
+						} alioqui {
+							var ln = linea(@data^.data[pos], -1, linea.codex.utf8);
+							stor^.serializa(@ln, 1);
+						}
+					} alioqui si (gen == 13) {
+						var clr = repulsus.expone_genus(modulus(), imago.color);
+						pro (var i = 0; i < numc; i++) {
+							si (!stor^.serializa_alterne(@data^.data[pos + i * 4], clr, 1)) {
+								stor^.serializa((@nint32)(@data^.data[pos + i * 4]), 1);
+							}
+						}
+					} alioqui si (gen == 14) stor^.serializa((@nint64)(@data^.data[pos]), numc);
+					alioqui si (gen == 19) {
+						pro (var i = 0; i < numc; i++) {
+							var ~ rect = (@_rectangulis)(@data^.data[pos + i * magnitudo_maxima(_rectangulis)])^;
+							stor^.exordi_serializandum_structurae();
+							stor^.da_nomen_valori("sin_a");
+							stor^.serializa(@rect.sin_a, 1);
+							stor^.da_nomen_valori("sin_s");
+							stor^.serializa(@rect.sin_s, 1);
+							stor^.da_nomen_valori("sin_r");
+							stor^.serializa(@rect.sin_r, 1);
+							stor^.da_nomen_valori("sup_a");
+							stor^.serializa(@rect.sup_a, 1);
+							stor^.da_nomen_valori("sup_s");
+							stor^.serializa(@rect.sup_s, 1);
+							stor^.da_nomen_valori("sup_r");
+							stor^.serializa(@rect.sup_r, 1);
+							stor^.da_nomen_valori("dex_a");
+							stor^.serializa(@rect.dex_a, 1);
+							stor^.da_nomen_valori("dex_s");
+							stor^.serializa(@rect.dex_s, 1);
+							stor^.da_nomen_valori("dex_r");
+							stor^.serializa(@rect.dex_r, 1);
+							stor^.da_nomen_valori("inf_a");
+							stor^.serializa(@rect.inf_a, 1);
+							stor^.da_nomen_valori("inf_s");
+							stor^.serializa(@rect.inf_s, 1);
+							stor^.da_nomen_valori("inf_r");
+							stor^.serializa(@rect.inf_r, 1);
+							stor^.ende_serializandum_structurae();
+						}
+					} alioqui si (gen == 22) {
+						si (num > 0) {
+							pro (var i = 0; i < num; i++) {
+								var subpos = (@int)(@data^.data[pos + i * 4])^;
+								_deserializa_structuram(subpos, stor);
+							}
+						} alioqui _deserializa_structuram(pos, stor);
+					}
+				}
+				si (num) stor^.ende_serializandum_ordinis();
+			}
+			functio nihil _deserializa_structuram(int pos, @reflexor_deserializandi stor) iacit {
+				stor^.exordi_serializandum_structurae();
+				si (pos + 4 > data^.longitudo) iace errores.efformatio_falsa;
+				int num = (@int)(@data^.data[pos])^;
+				si (pos + 4 + num * 16 > data^.longitudo) iace errores.efformatio_falsa;
+				pro (var i = 0; i < num; i++) {
+					var nomen_adl = (@int)(@data^.data[pos + 4 + 16 * i])^;
+					var gen = (@int)(@data^.data[pos + 8 + 16 * i])^;
+					var ordlong = (@int)(@data^.data[pos + 12 + 16 * i])^;
+					var valor_adl = (@int)(@data^.data[pos + 16 + 16 * i])^;
+					var nomen = linea(@data^.data[nomen_adl], -1, linea.codex.utf8);
+					stor^.da_nomen_valori(nomen);
+					_deserializa_valores(valor_adl, gen, ordlong, stor);
+				}
+				stor^.ende_serializandum_structurae();
+			}
+
+			structor (@flumen fl) iacit {
+				nint64 subs;
+				nint32 vers, long;
+				fl^.lege(@subs, 8);
+				fl^.lege(@vers, 4);
+				fl^.lege(@long, 4);
+				si (subs != nint64(0x007463656A626F65) || vers != 0) iace errores.efformatio_falsa;
+				data = fl^.lege_ordinem(long);
+			}
+			functio nihil deserializa(@reflexor_deserializandi stor) iacit redefini {
+				stor^.exordi_serializandum_communaliter();
+				_deserializa_structuram(0, stor);
+				stor^.ende_serializandum_communaliter();
+			}
+		}
+	}
+}

@@ -1,0 +1,801 @@
+﻿importa repulsus;
+importa collectiones;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Serializationis";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium serializatio {
+	spatium attributa {
+		constatus serializa_nulle		= "serializa_nulle";
+		constatus serializa_semper		= "serializa_semper";
+		constatus nomen_serializandi	= "nomen_serializandi";
+	}
+
+	genus universalis : dynamicum {
+		@nihil _data;
+		@nihil _genus;
+
+		functio nihil _exscribe(~universalis valor) iacit {
+			_genus = valor._genus;
+			si (_genus == logicum) _data = crea(logicum, (@logicum)(valor._data)^);
+			alioqui si (_genus == int8) _data = crea(int8, (@int8)(valor._data)^);
+			alioqui si (_genus == nint8) _data = crea(nint8, (@nint8)(valor._data)^);
+			alioqui si (_genus == int16) _data = crea(int16, (@int16)(valor._data)^);
+			alioqui si (_genus == nint16) _data = crea(nint16, (@nint16)(valor._data)^);
+			alioqui si (_genus == int32) _data = crea(int32, (@int32)(valor._data)^);
+			alioqui si (_genus == nint32) _data = crea(nint32, (@nint32)(valor._data)^);
+			alioqui si (_genus == int64) _data = crea(int64, (@int64)(valor._data)^);
+			alioqui si (_genus == nint64) _data = crea(nint64, (@nint64)(valor._data)^);
+			alioqui si (_genus == frac) _data = crea(frac, (@frac)(valor._data)^);
+			alioqui si (_genus == dfrac) _data = crea(dfrac, (@dfrac)(valor._data)^);
+			alioqui si (_genus == linea) _data = crea(linea, (@linea)(valor._data)^);
+			alioqui si (_genus == structura_universalis) {
+				(@structura_universalis)(_data) = (@structura_universalis)(valor._data);
+				(@structura_universalis)(_data)^.contine();
+			} alioqui si (_genus == ordo_universalis) {
+				(@ordo_universalis)(_data) = (@ordo_universalis)(valor._data);
+				(@ordo_universalis)(_data)^.contine();
+			}
+		}
+		functio nihil _perde() {
+			si (_genus == logicum) perde((@logicum)(_data));
+			alioqui si (_genus == int8) perde((@int8)(_data));
+			alioqui si (_genus == nint8) perde((@nint8)(_data));
+			alioqui si (_genus == int16) perde((@int16)(_data));
+			alioqui si (_genus == nint16) perde((@nint16)(_data));
+			alioqui si (_genus == int32) perde((@int32)(_data));
+			alioqui si (_genus == nint32) perde((@nint32)(_data));
+			alioqui si (_genus == int64) perde((@int64)(_data));
+			alioqui si (_genus == nint64) perde((@nint64)(_data));
+			alioqui si (_genus == frac) perde((@frac)(_data));
+			alioqui si (_genus == dfrac) perde((@dfrac)(_data));
+			alioqui si (_genus == linea) perde((@linea)(_data));
+			alioqui si (_genus == structura_universalis) (@structura_universalis)(_data)^.dimitte();
+			alioqui si (_genus == ordo_universalis) (@ordo_universalis)(_data)^.dimitte();
+		}
+		structor () { funda _genus(nullus); funda _data(nullus); }
+		structor (~universalis valor) iacit { _exscribe(valor); }
+		destructor () { _perde(); }
+		functio ~universalis operator = (~universalis valor) iacit {
+			si (ego == @valor) responde ego^;
+			_perde();
+			proba { _exscribe(valor); } cape (nintadl e, nintadl se) { _genus = nullus; _data = nullus; iace e, se; }
+			responde ego^;
+		}
+
+		structor (logicum valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (int8 valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (nint8 valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (int16 valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (nint16 valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (int32 valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (nint32 valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (int64 valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (nint64 valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (frac valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (dfrac valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+		structor (~linea valor) iacit { funda _genus(genus(valor)); funda _data(crea(genus(valor), valor)); }
+
+		functio @nihil para_classem() redefini { responde _genus; }
+		functio @nihil converte_dynamice(@nihil ad) iacit redefini {
+			si (ad == universalis) {
+				responde ego;
+			} alioqui si (ad == _genus) {
+				si (_genus == structura_universalis || _genus == ordo_universalis) (@objectum)(_data)^.contine();
+				responde _data;
+			} alioqui iace errores.implantatio_nulla;
+		}
+		convertor (linea) () iacit {
+			si (_genus == nullus) responde "nullus";
+			alioqui si (_genus == logicum) responde (@logicum)(_data)^;
+			alioqui si (_genus == int8) responde (@int8)(_data)^;
+			alioqui si (_genus == nint8) responde (@nint8)(_data)^;
+			alioqui si (_genus == int16) responde (@int16)(_data)^;
+			alioqui si (_genus == nint16) responde (@nint16)(_data)^;
+			alioqui si (_genus == int32) responde (@int32)(_data)^;
+			alioqui si (_genus == nint32) responde (@nint32)(_data)^;
+			alioqui si (_genus == int64) responde (@int64)(_data)^;
+			alioqui si (_genus == nint64) responde (@nint64)(_data)^;
+			alioqui si (_genus == frac) responde (@frac)(_data)^;
+			alioqui si (_genus == dfrac) responde (@dfrac)(_data)^;
+			alioqui si (_genus == linea) responde (@linea)(_data)^;
+			alioqui si (_genus == structura_universalis) {
+				linea r = "structura universalis : [\n";
+				pro (var e : (@structura_universalis)(_data)^) {
+					r += e^.valor.primus + " = " + linea.ex(e^.valor.secundus) + "\n";
+				}
+				responde r + "]";
+			} alioqui si (_genus == ordo_universalis) responde (@objectum)(_data)^.ad_lineam();
+			alioqui responde "?";
+		}
+	}
+	nomen_alternum structura_universalis = collectiones.dictionarium[linea, universalis];
+	nomen_alternum ordo_universalis = ordo universalis;
+	dura universalis {
+		structor (@structura_universalis valor) iacit {
+			_genus = structura_universalis;
+			(@structura_universalis)(_data) = valor;
+			(@structura_universalis)(_data)^.contine();
+		}
+		structor (@ordo_universalis valor) iacit {
+			_genus = ordo_universalis;
+			(@ordo_universalis)(_data) = valor;
+			(@ordo_universalis)(_data)^.contine();
+		}
+	}
+
+	genus serializator hereditat objectum {
+		structor () {}
+		functio nihil da_nomen_valori(~linea nomen) iacit virtualis pura;
+		functio nihil exordi_serializandum_communaliter() iacit virtualis pura;
+		functio nihil ende_serializandum_communaliter() iacit virtualis pura;
+		functio nihil exordi_serializandum_structurae() iacit virtualis pura;
+		functio nihil ende_serializandum_structurae() iacit virtualis pura;
+		functio nihil exordi_serializandum_ordinis() iacit virtualis pura;
+		functio nihil ende_serializandum_ordinis() iacit virtualis pura;
+		functio nihil serializa_nullum() iacit virtualis pura;
+		functio nihil serializa(@logicum valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@int8 valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@nint8 valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@int16 valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@nint16 valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@int32 valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@nint32 valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@int64 valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@nint64 valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@frac valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@dfrac valores, int numerus) iacit virtualis pura;
+		functio nihil serializa(@linea valores, int numerus) iacit virtualis pura;
+		functio logicum serializa_alterne(@nihil objadl, @repulsus.generis objgen, int numerus) iacit virtualis pura;
+	}
+	functio nihil _serializa_structuram(@nihil objadl, @repulsus.symbolum_generis cls, @serializator stor, logicum aperi) iacit {
+		var vlrs = cls^.valores_siti();
+		si (!vlrs^.longitudo && aperi) {
+			proba {
+				var super = cls^.parens;
+				var gen = repulsus.expone_genus(super^.contextus, super^.manubrium);
+				_serializa_interne(objadl, 1, gen, stor);
+			} cape {
+				stor^.exordi_serializandum_structurae();
+				stor^.ende_serializandum_structurae();
+			}
+		} alioqui {
+			si (aperi) stor^.exordi_serializandum_structurae();
+			pro (var i : vlrs^) {
+				var attr = vlrs^[i]^.attributa;
+				linea nomen;
+				proba nomen = attr^[attributa.nomen_serializandi]; cape nomen = vlrs^[i]^.nomen;
+				logicum neclege = nomen[0] == char('_');
+				proba { attr^[attributa.serializa_semper]; neclege = non; }
+				proba { attr^[attributa.serializa_nulle]; neclege = sic; }
+				si (neclege) dura;
+				stor^.da_nomen_valori(nomen);
+				_serializa_interne(vlrs^[i]^.adloquium(objadl), 1, vlrs^[i]^.genu, stor);
+			}
+			proba {
+				var super = cls^.parens;
+				_serializa_structuram(objadl, super, stor, non);
+			}
+			si (aperi) stor^.ende_serializandum_structurae();
+		}
+	}
+	functio nintadl _longitudo_generis(@repulsus.generis gen) iacit {
+		si (gen^.classis_est) responde gen^.symbolum^.longitudo;
+		alioqui si (gen^.ordo_est) responde _longitudo_generis(gen^.indivisio) * gen^.longitudo;
+		alioqui responde 0;
+	}
+	functio nihil _serializa_interne(@nihil objadl, int numerus, @repulsus.generis objgen, @serializator stor) iacit {
+		si (objgen == nullus) {
+			stor^.serializa_nullum();
+		} alioqui si (!stor^.serializa_alterne(objadl, objgen, numerus)) {
+			si (objgen^.ordo_est) {
+				var long = numerus > 1 ? _longitudo_generis(objgen) : 0;
+				pro (var i = 0; i < numerus; i++) {
+					stor^.exordi_serializandum_ordinis();
+					_serializa_interne((@nihil)(nintadl(objadl) + i * long), objgen^.longitudo, objgen^.indivisio, stor);
+					stor^.ende_serializandum_ordinis();
+				}
+			} alioqui si (objgen^.praeforma_est && objgen^.basis == "dordo") {
+				var long = numerus > 1 ? _longitudo_generis(objgen) : 0;
+				var cls = objgen^.symbolum;
+				var vlrs = cls^.valores_siti();
+				!repulsus.symbolum_generis.valor_situs valor_data, valor_numerus;
+				pro (var i : vlrs^) {
+					si (vlrs^[i]^.nomen == "_data") valor_data = vlrs^[i];
+					alioqui si (vlrs^[i]^.nomen == "_numerus") valor_numerus = vlrs^[i];
+				}
+				si (!valor_data || !valor_numerus) iace errores.habitus_falsus;
+				var subcls = valor_data^.genu^.indivisio;
+				pro (var i = 0; i < numerus; i++) {
+					var obj = (@nihil)(nintadl(objadl) + i * long);
+					var data_adl = (@@nihil)(valor_data^.adloquium(obj));
+					var numerus_adl = (@int)(valor_numerus^.adloquium(obj));
+					stor^.exordi_serializandum_ordinis();
+					_serializa_interne(data_adl^, numerus_adl^, subcls, stor);
+					stor^.ende_serializandum_ordinis();
+				}
+			} alioqui si (objgen^.classis_est) {
+				var mnbr = objgen^.manubrium;
+				si (mnbr == universalis) {
+					var uni = (@universalis)(objadl);
+					pro (var i = 0; i < numerus; i++) {
+						si (uni[i]._genus == nullus) stor[i].serializa_nullum();
+						alioqui si (uni[i]._genus == structura_universalis) {
+							var ~ dict = (@structura_universalis)(uni[i]._data)^;
+							stor^.exordi_serializandum_structurae();
+							pro (var e : dict) {
+								stor^.da_nomen_valori(e^.valor.primus);
+								_serializa_interne(@e^.valor.secundus, 1, objgen, stor);
+							}
+							stor^.ende_serializandum_structurae();
+						} alioqui _serializa_interne(uni[i]._data, 1, repulsus.expone_genus(objgen^.contextus, uni[i]._genus), stor);
+					}
+				} alioqui si (mnbr == logicum) stor^.serializa((@logicum)(objadl), numerus);
+				alioqui si (mnbr == int8) stor^.serializa((@int8)(objadl), numerus);
+				alioqui si (mnbr == nint8) stor^.serializa((@nint8)(objadl), numerus);
+				alioqui si (mnbr == int16) stor^.serializa((@int16)(objadl), numerus);
+				alioqui si (mnbr == nint16) stor^.serializa((@nint16)(objadl), numerus);
+				alioqui si (mnbr == int32) stor^.serializa((@int32)(objadl), numerus);
+				alioqui si (mnbr == nint32) stor^.serializa((@nint32)(objadl), numerus);
+				alioqui si (mnbr == int64) stor^.serializa((@int64)(objadl), numerus);
+				alioqui si (mnbr == nint64) stor^.serializa((@nint64)(objadl), numerus);
+				alioqui si (mnbr == frac) stor^.serializa((@frac)(objadl), numerus);
+				alioqui si (mnbr == dfrac) stor^.serializa((@dfrac)(objadl), numerus);
+				alioqui si (mnbr == linea) stor^.serializa((@linea)(objadl), numerus); alioqui {
+					var cls = objgen^.symbolum;
+					var long = cls^.longitudo;
+					pro (var i = 0; i < numerus; i++) _serializa_structuram((@nihil)(nintadl(objadl) + i * long), cls, stor, sic);
+				}
+			}
+		}
+	}
+	functio nihil serializa_generaliter(@nihil objadl, @repulsus.generis objgen, @serializator stor) iacit {
+		si (stor == nullus || (objadl == nullus) != (objgen == nullus)) iace errores.argumentum_falsum;
+		stor^.exordi_serializandum_communaliter();
+		_serializa_interne(objadl, 1, objgen, stor);
+		stor^.ende_serializandum_communaliter();
+	}
+	praeforma functio serializa(V) {
+		\cense V genus(_0)\
+		[[inline]] functio nihil $_ (~$V obj, @serializator stor) iacit { serializa_generaliter(@obj, repulsus.expone_genus(modulus(), genus(obj)), stor); }
+	}
+
+	genus reflexor_deserializandi hereditat serializator {
+		structor () {}
+		@repulsus.generis genus_objecti_proximi { adipisce iacit virtualis pura; }
+		functio @nihil serializa_proximum_alterne() iacit virtualis pura;
+	}
+	genus deserializator hereditat objectum {
+		structor () {}
+		functio nihil deserializa(@reflexor_deserializandi stor) iacit virtualis pura;
+	}
+	genus _reflexor_deserializandi hereditat reflexor_deserializandi {
+		structura status {
+			int modus; // 0 - структура, 1 - статический массив, 2 - динамический массив
+			@nihil selector;
+			!repulsus.generis genus_selectoris;
+			@nihil basis;
+
+			logicum universalis;
+			collectiones.dictionarium[linea, !repulsus.symbolum_generis.valor_situs] valores;
+			
+			nintadl objmagn;
+			nintadl positus;
+			nintadl ordmagn;
+
+			!repulsus.invocator scribe_longitudinem;
+			@@nihil dataval;
+		}
+		collectiones.sequentia[status] stati;
+		functio nihil prox_objectum(int num) iacit {
+			var ~ s = stati.ultimus^.valor;
+			si (s.modus == 0) {
+			} alioqui si (s.modus == 1) {
+				si (s.positus + num <= s.ordmagn) {
+					s.selector = (@nihil)(nintadl(s.basis) + s.objmagn * s.positus);
+					s.positus += num;
+				} alioqui {
+					s.selector = nullus;
+					s.genus_selectoris.depura();
+				}
+			} alioqui si (s.modus == 2) {
+				s.scribe_longitudinem^.invoca(nullus, s.basis, (@@nihil)(@@int(s.positus + num)));
+				s.selector = (@nihil)(nintadl(s.dataval^) + s.objmagn * s.positus);
+				s.positus += num;
+			}
+		}
+		classis functio logicum conformis(@repulsus.symbolum_generis cls, @nihil dest) {
+			proba {
+				var cd = repulsus.expone_symbolum(modulus(), dest);
+				cls^.converte_ad(cd, nullus);
+				responde sic;
+			} cape responde non;
+		}
+
+		structor (@nihil objadl, @repulsus.generis objgen) iacit {
+			stati.insere_ultimum(status());
+			var ~ s = stati.ultimus^.valor;
+			s.modus = 0;
+			s.selector = objadl;
+			s.genus_selectoris.contine(objgen);
+			s.basis = nullus;
+			s.universalis = non;
+		}
+		functio nihil da_nomen_valori(~linea nomen) iacit redefini {
+			var ~ s = stati.ultimus^.valor;
+			si (s.modus == 0 && s.basis != nullus) {
+				si (s.universalis) {
+					var su = (@structura_universalis)(s.basis);
+					si (su^.adde(nomen, universalis())) {
+						s.selector = su^[nomen];
+						s.genus_selectoris = repulsus.expone_genus(modulus(), universalis);
+					}
+				} alioqui {
+					var vlr = s.valores[nomen];
+					si (vlr != nullus) {
+						s.selector = vlr^^.adloquium(s.basis);
+						s.genus_selectoris = vlr^^.genu;
+						s.valores.remove(nomen);
+					}
+				}
+			}
+		}
+		functio nihil exordi_serializandum_communaliter() iacit redefini {}
+		functio nihil ende_serializandum_communaliter() iacit redefini {}
+		functio nihil exordi_serializandum_structurae() iacit redefini {
+			prox_objectum(1);
+			var ~ s = stati.ultimus^.valor;
+			status sn;
+			sn.modus = 0;
+			sn.selector = nullus;
+			sn.basis = s.selector;
+			si (s.selector != nullus) {
+				si (s.genus_selectoris^.classis_est) {
+					si (s.genus_selectoris^.manubrium == universalis) {
+						sn.universalis = sic;
+						var su = crea(structura_universalis);
+						(@universalis)(s.selector)^ = universalis(su.valor());
+						sn.basis = su;
+					} alioqui {
+						sn.universalis = non;
+						var cls = s.genus_selectoris^.symbolum;
+						dum (cls) {
+							var vlrs = cls^.valores_siti();
+							pro (var i : vlrs^) {
+								var attr = vlrs^[i]^.attributa;
+								linea nomen;
+								proba nomen = attr^[attributa.nomen_serializandi]; cape nomen = vlrs^[i]^.nomen;
+								logicum neclege = nomen[0] == char('_');
+								proba { attr^[attributa.serializa_semper]; neclege = non; }
+								proba { attr^[attributa.serializa_nulle]; neclege = sic; }
+								si (!neclege) sn.valores.adde(nomen, vlrs^[i]);
+							}
+							proba cls = cls^.parens; cape cls.depura();
+						}
+					}
+				} alioqui sn.basis = nullus;
+			}
+			stati.insere_ultimum(sn);
+		}
+		functio nihil ende_serializandum_structurae() iacit redefini { stati.remove_ultimum(); }
+		functio nihil exordi_serializandum_ordinis() iacit redefini {
+			prox_objectum(1);
+			var ~ s = stati.ultimus^.valor;
+			status sn;
+			sn.modus = 0;
+			sn.selector = nullus;
+			sn.basis = nullus;
+			sn.universalis = non;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.ordo_est) {
+					sn.modus = 1;
+					sn.basis = s.selector;
+					sn.genus_selectoris = s.genus_selectoris^.indivisio;
+					sn.objmagn = _longitudo_generis(sn.genus_selectoris);
+					sn.positus = 0;
+					sn.ordmagn = s.genus_selectoris^.longitudo;
+				} alioqui si (s.genus_selectoris^.classis_est) {
+					var ordadl = s.selector;
+					var ordgen = s.genus_selectoris;
+					si (ordgen^.manubrium == universalis) {
+						var ou = crea(ordo_universalis);
+						(@universalis)(ordadl)^ = universalis(ou.valor());
+						ordadl = ou;
+						ordgen = repulsus.expone_genus(modulus(), ordo_universalis);
+					}
+					si (ordgen^.praeforma_est && ordgen^.basis == "dordo") {
+						var cls = ordgen^.symbolum;
+						var vlrss = cls^.valores_siti();
+						var vlrsf = cls^.valores_functionales();
+						sn.modus = 2;
+						sn.basis = ordadl;
+						sn.genus_selectoris = ordgen^.argumenta^[0];
+						sn.objmagn = _longitudo_generis(sn.genus_selectoris);
+						sn.positus = sn.ordmagn = 0;
+						sn.dataval = nullus;
+						pro (var i : vlrss^) si (vlrss^[i]^.nomen == "_data") {
+							sn.dataval = (@@nihil)(vlrss^[i]^.adloquium(sn.basis));
+							exi;
+						}
+						si (sn.dataval == nullus) iace errores.habitus_falsus;
+						pro (var i : vlrsf^) si (vlrsf^[i]^.nomen == "longitudo") {
+							var mth = vlrsf^[i]^.methodus_scribendi;
+							var inv = repulsus.crea_invocatores(@mth, 1);
+							sn.scribe_longitudinem = inv^[0];
+							exi;
+						}
+						si (!sn.scribe_longitudinem) iace errores.habitus_falsus;
+					}
+				}
+			}
+			stati.insere_ultimum(sn);
+		}
+		functio nihil ende_serializandum_ordinis() iacit redefini { stati.remove_ultimum(); }
+		functio nihil serializa_nullum() iacit redefini {
+			prox_objectum(1);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) (@universalis)(s.selector)^ = universalis(); alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, logicum)) (@logicum)(s.selector)^ = non;
+					alioqui si (conformis(cls, int8) || conformis(cls, nint8)) (@nint8)(s.selector)^ = 0;
+					alioqui si (conformis(cls, int16) || conformis(cls, nint16)) (@nint16)(s.selector)^ = 0;
+					alioqui si (conformis(cls, int32) || conformis(cls, nint32)) (@nint32)(s.selector)^ = 0;
+					alioqui si (conformis(cls, int64) || conformis(cls, nint64)) (@nint64)(s.selector)^ = 0;
+					alioqui si (conformis(cls, frac)) (@frac)(s.selector)^ = math.nn_s();
+					alioqui si (conformis(cls, dfrac)) (@dfrac)(s.selector)^ = math.nn_d();
+					alioqui si (conformis(cls, linea)) (@linea)(s.selector)^ = "";
+				}
+			}
+		}
+		functio nihil serializa(@logicum valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, logicum) || conformis(cls, int8) || conformis(cls, nint8)) {
+						memoria.exscribe(s.selector, valores, numerus);
+					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
+						pro (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
+						pro (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
+						pro (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@int8 valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, int8) || conformis(cls, nint8)) {
+						memoria.exscribe(s.selector, valores, numerus);
+					} alioqui si (conformis(cls, logicum)) {
+						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
+						pro (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
+						pro (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
+						pro (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@nint8 valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, int8) || conformis(cls, nint8)) {
+						memoria.exscribe(s.selector, valores, numerus);
+					} alioqui si (conformis(cls, logicum)) {
+						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
+						pro (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
+						pro (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
+						pro (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@int16 valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, int16) || conformis(cls, nint16)) {
+						memoria.exscribe(s.selector, valores, numerus * 2);
+					} alioqui si (conformis(cls, logicum)) {
+						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
+						pro (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
+						pro (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
+						pro (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@nint16 valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, int16) || conformis(cls, nint16)) {
+						memoria.exscribe(s.selector, valores, numerus * 2);
+					} alioqui si (conformis(cls, logicum)) {
+						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
+						pro (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
+						pro (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
+						pro (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@int32 valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, int32) || conformis(cls, nint32)) {
+						memoria.exscribe(s.selector, valores, numerus * 4);
+					} alioqui si (conformis(cls, logicum)) {
+						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
+						pro (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
+						pro (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
+						pro (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@nint32 valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, int32) || conformis(cls, nint32)) {
+						memoria.exscribe(s.selector, valores, numerus * 4);
+					} alioqui si (conformis(cls, logicum)) {
+						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
+						pro (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
+						pro (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
+						pro (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@int64 valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, int64) || conformis(cls, nint64)) {
+						memoria.exscribe(s.selector, valores, numerus * 8);
+					} alioqui si (conformis(cls, logicum)) {
+						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
+						pro (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
+						pro (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
+						pro (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@nint64 valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, int64) || conformis(cls, nint64)) {
+						memoria.exscribe(s.selector, valores, numerus * 8);
+					} alioqui si (conformis(cls, logicum)) {
+						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
+						pro (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
+						pro (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
+						pro (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@frac valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, frac)) {
+						memoria.exscribe(s.selector, valores, numerus * 4);
+					} alioqui si (conformis(cls, dfrac)) {
+						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@dfrac valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, dfrac)) {
+						memoria.exscribe(s.selector, valores, numerus * 8);
+					} alioqui si (conformis(cls, frac)) {
+						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+					} alioqui si (conformis(cls, linea)) {
+						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					}
+				}
+			}
+		}
+		functio nihil serializa(@linea valores, int numerus) iacit redefini {
+			prox_objectum(numerus);
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.manubrium == universalis) {
+					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+				} alioqui {
+					var cls = s.genus_selectoris^.symbolum;
+					si (conformis(cls, linea)) pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+				}
+			}
+		}
+		functio logicum serializa_alterne(@nihil objadl, @repulsus.generis objgen, int numerus) iacit redefini {
+			si (numerus != 1) iace errores.argumentum_falsum;
+			var ~ s = stati.ultimus^.valor;
+			si (s.genus_selectoris) {
+				si (s.genus_selectoris^.classis_est && objgen^.classis_est) {
+					var cls = s.genus_selectoris^.symbolum;
+					var cls2 = objgen^.symbolum;
+					si (cls^.nomen == cls2^.nomen) {
+						prox_objectum(1);
+						si (s.genus_selectoris) {
+							var mth = cls^.methodi();
+							!repulsus.invocator exscribe;
+							pro (var i : mth^) si (mth^[i]^.nomen == "=") {
+								var func = mth^[i]^.implantatio^.genu;
+								var arg = func^.argumenta;
+								si (func^.indivisio^.referens_est && arg^.longitudo == 1) {
+									var arg0 = arg^[0];
+									si (arg0^.referens_est) arg0 = arg0^.indivisio;
+									si (arg0^.classis_est && arg0^.symbolum^.nomen == cls^.nomen) {
+										exscribe = repulsus.crea_invocatores(@mth^[i], 1)^[0];
+										exi;
+									}
+								}
+							}
+							si (exscribe) { @nihil ref; exscribe^.invoca(@ref, s.selector, @objadl); }
+						}
+						responde sic;
+					} alioqui responde non;
+				} alioqui responde non;
+			} alioqui responde non;
+		}
+		@repulsus.generis genus_objecti_proximi { adipisce iacit redefini { var ~ s = stati.ultimus^.valor; responde s.genus_selectoris; } }
+		functio @nihil serializa_proximum_alterne() iacit redefini {
+			var ~ s = stati.ultimus^.valor;
+			prox_objectum(1);
+			si (s.genus_selectoris) responde s.selector;
+			alioqui responde nullus;
+		}
+	}
+	functio nihil deserializa_generaliter(@nihil objadl, @repulsus.generis objgen, @deserializator dstor) iacit {
+		si (dstor == nullus || objadl == nullus || objgen == nullus) iace errores.argumentum_falsum;
+		_reflexor_deserializandi rfx(objadl, objgen);
+		dstor^.deserializa(@rfx);
+	}
+	praeforma functio deserializa(V) {
+		\cense V genus(_0)\
+		[[inline]] functio nihil $_ (~$V obj, @deserializator dstor) iacit { deserializa_generaliter(@obj, repulsus.expone_genus(modulus(), genus(obj)), dstor); }
+	}
+}

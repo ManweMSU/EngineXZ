@@ -14,6 +14,7 @@ constatus habitus_falsus	= "Invalid object state";
 constatus ie_falsum			= "Invalid I/O operation";
 constatus xe_defectus		= "XE loader failure";
 constatus rete_defectum		= "Invalid network I/O operation";
+constatus ifr_defecta		= "Remote procedure call failure";
 
 constatus ie_error_nullus				= "Success";
 constatus ie_error_ignotus				= "Unknown";
@@ -65,3 +66,10 @@ constatus rete_protocollum_falsum		= "Invalid protocol being used";
 constatus rete_assectatio_excessa		= "Request timeout exceeded";
 constatus rete_securitas_falsa			= "Connection's security is compromised";
 constatus rete_adloquium_nullum			= "No address for the domain name";
+
+constatus ifr_error_nullus				= "Success";
+constatus ifr_error_ignotus				= "Unknown";
+constatus ifr_objectum_falsum			= "Wrong object number";
+constatus ifr_selector_falsus			= "Wrong selector number";
+constatus ifr_error_serializandi		= "Serialization failure";
+constatus ifr_error_communicationis		= "Communication failure";

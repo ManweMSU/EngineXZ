@@ -1,0 +1,473 @@
+﻿importa serializatio;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Efformationis Serializandi Linearis";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium remota {
+	genus objectum hereditat .objectum_dynamicum {
+		structor () {}
+		functio @nihil converte_dynamice(@nihil genu) iacit redefini { responde converte_dynamice(repulsus.expone_symbolum(modulus(), genu)^.nomen); }
+		logicum remotum_est { adipisce virtualis { responde non; } }
+		nint64 numerus_regerendi { adipisce virtualis { responde 0; } }
+		@.objectum regestor { adipisce virtualis { responde nullus; } }
+		functio linea para_protocollum() iacit virtualis { responde "remota.objectum"; }
+		functio @nihil converte_dynamice(~linea prot) iacit virtualis { si (prot == "remota.objectum") { contine(); responde ego; } alioqui iace errores.implantatio_nulla; }
+		functio nihil invoca(int selector, @serializatio.deserializator in, @serializatio.serializator ex) iacit virtualis {
+			si (selector == 1) {
+				proba serializatio.serializa(para_protocollum(), ex); cape iace 9, 4;
+			} alioqui si (selector == 2) {
+				linea prot;
+				proba serializatio.deserializa(prot, in); cape iace 9, 4;
+				var resp = (!remota.objectum)((@remota.objectum)(converte_dynamice(prot)));
+				proba serializatio.serializa(resp, ex); cape iace 9, 4;
+			} alioqui iace 9, 3;
+		}
+	}
+	genus regestor hereditat .objectum {
+		structor () {}
+
+		functio nint64 regere(@objectum obj) iacit virtualis pura;
+		functio nihil deregere(nint64 numerus) virtualis pura;
+		functio @objectum para(nint64 numerus) iacit virtualis pura;
+
+		functio !objectum crea_exemplar_remotum(~linea prot) iacit virtualis pura;
+		functio !objectum crea_exemplar_remotum(@nihil prot) iacit { responde crea_exemplar_remotum(repulsus.expone_symbolum(modulus(), prot)^.nomen); }
+
+		functio @serializatio.serializator initia_invocationem() iacit virtualis pura;
+		functio @serializatio.deserializator exordi_invocationem(nint64 objectum, int selector) iacit virtualis pura;
+		functio nihil ende_invocationem() iacit virtualis pura;
+
+		functio nihil exeque() iacit virtualis pura;
+		functio nihil clode() iacit virtualis pura;
+	}
+	dura objectum {
+		classis functio !objectum crea_per_protocollo(~linea prot, @.remota.regestor reg, nint64 num) iacit {
+			var smbl = repulsus.para_symbolum(modulus(), prot + ".__crea_versionem_remotam:F(C@praeformae.I0(Cadl)(Cremota.objectum))(PCremota.regestor)(Cnint64)") acsi (repulsus.symbolum_functionis);
+			responde (functio (!objectum)(@.remota.regestor, nint64))(smbl^.adloquium)(reg, num);
+		}
+
+		classis functio nihil __perde_objectum_remotum(@.remota.regestor reg, nint64 num) {
+			proba {
+				reg^.initia_invocationem();
+				reg^.exordi_invocationem(num, 0);
+				reg^.ende_invocationem();
+			} cape (nintadl e, nintadl se) {
+				proba reg^.ende_invocationem();
+				proba reg^.clode();
+			}
+		}
+		classis functio linea __para_protocollum_objecti_remoti(@.remota.regestor reg, nint64 num) iacit {
+			linea resp;
+			reg^.initia_invocationem();
+			var dstor = reg^.exordi_invocationem(num, 1);
+			proba serializatio.deserializa(resp, dstor); cape { reg^.ende_invocationem(); iace 9, 4; }
+			reg^.ende_invocationem();
+			responde resp;
+		}
+		classis functio @nihil __converte_objectum_remotum_dynamice(@.remota.regestor reg, nint64 num, ~linea prot) iacit {
+			var stor = reg^.initia_invocationem();
+			proba serializatio.serializa(prot, stor); cape { reg^.ende_invocationem(); iace 9, 4; }
+			var dstor = reg^.exordi_invocationem(num, 2);
+			nint64 numerus_novus;
+			proba serializatio.deserializa(numerus_novus, dstor); cape { reg^.ende_invocationem(); iace 9, 4; }
+			reg^.ende_invocationem();
+			var resp = crea_per_protocollo(prot, reg, numerus_novus);
+			resp^.contine();
+			responde resp.valor();
+		}
+
+		genus __versio_remota hereditat objectum {
+			nint64 _num;
+			!.remota.regestor _reg;
+			structor (nint64 num, @.objectum reg) { funda _num(num); _reg.contine((@.remota.regestor)(reg)); }
+			destructor () { __perde_objectum_remotum(_reg, _num); }
+			functio @nihil converte_dynamice(@nihil genu) iacit redefini { responde converte_dynamice(repulsus.expone_symbolum(modulus(), genu)^.nomen); }
+			logicum remotum_est { adipisce redefini { responde sic; } }
+			nint64 numerus_regerendi { adipisce redefini { responde _num; } }
+			@.objectum regestor { adipisce redefini { responde _reg; } }
+			functio linea para_protocollum() iacit redefini { responde __para_protocollum_objecti_remoti(_reg, _num); }
+			functio @nihil converte_dynamice(~linea prot) iacit redefini { responde __converte_objectum_remotum_dynamice(_reg, _num, prot); }
+			functio nihil invoca(int selector, @serializatio.deserializator in, @serializatio.serializator ex) iacit redefini {
+				si (selector == 1) {
+					proba serializatio.serializa(para_protocollum(), ex); cape iace 9, 4;
+				} alioqui si (selector == 2) {
+					linea prot;
+					proba serializatio.deserializa(prot, in); cape iace 9, 4;
+					var resp = (!remota.objectum)((@remota.objectum)(converte_dynamice(prot)));
+					proba serializatio.serializa(resp, ex); cape iace 9, 4;
+				} alioqui iace 9, 3;
+			}
+		}
+
+		classis functio !remota.objectum __crea_versionem_remotam(@.remota.regestor r, nint64 n) {
+			proba {
+				!remota.objectum resp;
+				resp.contine(crea(__versio_remota, n, r));
+				responde resp;
+			} cape responde (!remota.objectum)();
+		}
+	}
+}
+spatium serializatio {
+	spatium xesl {
+		spatium atomi {
+			constatus xesl = nint32(5002053);
+			constatus stru = nint32(1970435187);
+			constatus ordo_ = nint32(1868853871);
+			constatus nome = nint32(1701670766);
+			constatus NULL = nint32(1280070990);
+			constatus N1 = nint32(12622);
+			constatus N8 = nint32(14414);
+			constatus N16 = nint32(3551566);
+			constatus N32 = nint32(3289934);
+			constatus N64 = nint32(3421774);
+			constatus I8 = nint32(14409);
+			constatus I16 = nint32(3551561);
+			constatus I32 = nint32(3289929);
+			constatus I64 = nint32(3421769);
+			constatus F32 = nint32(3289926);
+			constatus F64 = nint32(3421766);
+			constatus LINE = nint32(1162758476);
+			constatus EOBJ = nint32(1245859653);
+			constatus IOBJ = nint32(1245859657);
+		}
+		genus serializator hereditat .serializatio.serializator {
+			!flumen _fl_dest;
+			!dordo_datorum _data;
+			!remota.regestor _reg;
+
+			ordo int _initia;
+			linea _nomen;
+			functio nihil _ini_atomum(nint32 genu) iacit {
+				int ref = _data^.longitudo;
+				_data^.longitudo += 8;
+				(@nint32)(@_data^[ref])[0] = genu;
+				(@int)(@_data^[ref])[1] = -1;
+				_initia << ref;
+			}
+			functio nihil _ini_atomum(nint32 genu, ~int ref) iacit {
+				ref = _data^.longitudo;
+				_data^.longitudo += 8;
+				(@nint32)(@_data^[ref])[0] = genu;
+				(@int)(@_data^[ref])[1] = -1;
+			}
+			functio nihil _ende_atomum() iacit {
+				int ref = _initia.ultimus();
+				_initia.remove_ultimum();
+				int long = _data^.longitudo - ref - 8;
+				(@int)(@_data^[ref])[1] = long;
+			}
+			functio nihil _ende_atomum(int ref) iacit {
+				int long = _data^.longitudo - ref - 8;
+				(@int)(@_data^[ref])[1] = long;
+			}
+			functio nihil _crea_atomum_lineae(nint32 genu, ~linea ln) iacit {
+				int ref;
+				_ini_atomum(genu, ref);
+				_data^.longitudo += ln.longitudo_codicis(linea.codex.utf8);
+				ln.codifica(@_data^[ref + 8], linea.codex.utf8, non);
+				_ende_atomum(ref);
+			}
+			functio nihil _crea_atomum_nomini() iacit { si (_nomen.longitudo) { _crea_atomum_lineae(atomi.nome, _nomen); _nomen = ""; } }
+
+			structor (@flumen fl) iacit {
+				_fl_dest.contine(fl);
+				_data = crea(dordo_datorum, 0x1000);
+			}
+			structor (@flumen fl, @remota.regestor reg) iacit {
+				_fl_dest.contine(fl);
+				_data = crea(dordo_datorum, 0x1000);
+				_reg.contine(reg);
+			}
+			structor (@dordo_datorum dest) iacit {
+				_data.contine(dest);
+			}
+			structor (@dordo_datorum dest, @remota.regestor reg) iacit {
+				_data.contine(dest);
+				_reg.contine(reg);
+			}
+			@dordo_datorum destinatio {
+				[[inline]] adipisce { responde _data; }
+				[[inline]] loca { _data.contine(valor); }
+			}
+			functio nihil da_nomen_valori(~linea nomen) iacit redefini { _nomen = nomen; }
+			functio nihil exordi_serializandum_communaliter() iacit redefini {
+				si (!_data) iace errores.habitus_falsus;
+				_ini_atomum(atomi.xesl);
+			}
+			functio nihil ende_serializandum_communaliter() iacit redefini {
+				_ende_atomum();
+				_nomen = "";
+				si (_fl_dest) {
+					_fl_dest^.scribe_ordinem(_data);
+					_data^.longitudo = 0;
+				}
+			}
+			functio nihil exordi_serializandum_structurae() iacit redefini { _crea_atomum_nomini(); _ini_atomum(atomi.stru); }
+			functio nihil ende_serializandum_structurae() iacit redefini { _ende_atomum(); _nomen = ""; }
+			functio nihil exordi_serializandum_ordinis() iacit redefini { _crea_atomum_nomini(); _ini_atomum(atomi.ordo_); }
+			functio nihil ende_serializandum_ordinis() iacit redefini { _ende_atomum(); _nomen = ""; }
+			functio nihil serializa_nullum() iacit redefini { _crea_atomum_nomini(); int ref; _ini_atomum(atomi.NULL, ref); _ende_atomum(ref); }
+			functio nihil serializa(@logicum valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.N1, ref);
+				_data^.longitudo += numerus;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@int8 valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.I8, ref);
+				_data^.longitudo += numerus;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@nint8 valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.N8, ref);
+				_data^.longitudo += numerus;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@int16 valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.I16, ref);
+				_data^.longitudo += numerus * 2;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus * 2);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@nint16 valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.N16, ref);
+				_data^.longitudo += numerus * 2;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus * 2);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@int32 valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.I32, ref);
+				_data^.longitudo += numerus * 4;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus * 4);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@nint32 valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.N32, ref);
+				_data^.longitudo += numerus * 4;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus * 4);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@int64 valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.I64, ref);
+				_data^.longitudo += numerus * 8;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus * 8);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@nint64 valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.N64, ref);
+				_data^.longitudo += numerus * 8;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus * 8);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@frac valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.F32, ref);
+				_data^.longitudo += numerus * 4;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus * 4);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@dfrac valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				int ref;
+				_ini_atomum(atomi.F64, ref);
+				_data^.longitudo += numerus * 8;
+				memoria.exscribe(@_data^[ref + 8], valores, numerus * 8);
+				_ende_atomum(ref);
+			}
+			functio nihil serializa(@linea valores, int numerus) iacit redefini {
+				_crea_atomum_nomini();
+				pro (var i = 0; i < numerus; i++) _crea_atomum_lineae(atomi.LINE, valores[i]);
+			}
+			functio logicum serializa_alterne(@nihil objadl, @repulsus.generis objgen, int numerus) iacit redefini {
+				si (!_reg) responde non;
+				!repulsus.generis cls;
+				si (objgen^.praeforma_est && objgen^.basis == "adl") cls = objgen^.argumenta^[0];
+				alioqui si (objgen^.adloquium_est) cls = objgen^.indivisio;
+				alioqui responde non;
+				si (!cls^.classis_est) responde non;
+				var smbl = cls^.symbolum;
+				proba smbl^.converte_ad(repulsus.expone_symbolum(modulus(), remota.objectum), nullus);
+				cape responde non;
+				var adla = (@@remota.objectum)(objadl);
+				_crea_atomum_nomini();
+				pro (var i = 0; i < numerus; i++) {
+					int ref;
+					si (adla[i] == nullus) {
+						_ini_atomum(atomi.IOBJ, ref);
+						_data^.longitudo += 8;
+						memoria.exscribe(@_data^[ref + 8], @nint64(0), 8);
+						_ende_atomum(ref);
+					} alioqui si (adla[i]^.remotum_est && adla[i]^.regestor == _reg.valor()) {
+						_ini_atomum(atomi.IOBJ, ref);
+						_data^.longitudo += 8;
+						memoria.exscribe(@_data^[ref + 8], @adla[i]^.numerus_regerendi, 8);
+						_ende_atomum(ref);
+					} alioqui {
+						_ini_atomum(atomi.EOBJ, ref);
+						_data^.longitudo += 8;
+						memoria.exscribe(@_data^[ref + 8], @_reg^.regere(adla[i]), 8);
+						_ende_atomum(ref);
+					}
+				}
+				responde sic;
+			}
+		}
+		genus deserializator hereditat .serializatio.deserializator {
+			!flumen _fl;
+			!dordo_datorum _data;
+			!remota.regestor _reg;
+			int _pos;
+
+			structor (@flumen fl) iacit {
+				_fl.contine(fl);
+				_data = crea(dordo_datorum, 0x1000);
+				_pos = 0;
+			}
+			structor (@flumen fl, @remota.regestor reg) iacit {
+				_fl.contine(fl);
+				_data = crea(dordo_datorum, 0x1000);
+				_reg.contine(reg);
+				_pos = 0;
+			}
+			structor (@dordo_datorum data) iacit {
+				_data.contine(data);
+				_pos = 0;
+			}
+			structor (@dordo_datorum data, @remota.regestor reg) iacit {
+				_data.contine(data);
+				_reg.contine(reg);
+				_pos = 0;
+			}
+			@dordo_datorum origo {
+				[[inline]] adipisce { responde _data; }
+				[[inline]] loca { _data.contine(valor); _pos = 0; }
+			}
+			functio int _lege_atomum(int pos, int magn, @reflexor_deserializandi stor) iacit {
+				si (magn < 8) iace errores.efformatio_falsa;
+				nint32 genu = (@nint32)(@_data^.data[pos])^;
+				int long = (@int)(@_data^.data[pos + 4])^;
+				si (long < 0 || magn < 8 + long) iace errores.efformatio_falsa;
+				si (genu == atomi.xesl) {
+					stor^.exordi_serializandum_communaliter();
+					int p = 8;
+					dum (p < long + 8) p += _lege_atomum(pos + p, magn - p, stor);
+					stor^.ende_serializandum_communaliter();
+				} alioqui si (genu == atomi.stru) {
+					stor^.exordi_serializandum_structurae();
+					int p = 8;
+					dum (p < long + 8) p += _lege_atomum(pos + p, magn - p, stor);
+					stor^.ende_serializandum_structurae();
+				} alioqui si (genu == atomi.ordo_) {
+					stor^.exordi_serializandum_ordinis();
+					int p = 8;
+					dum (p < long + 8) p += _lege_atomum(pos + p, magn - p, stor);
+					stor^.ende_serializandum_ordinis();
+				} alioqui si (genu == atomi.nome) {
+					stor^.da_nomen_valori(linea(@_data^[pos + 8], long, linea.codex.utf8));
+				} alioqui si (genu == atomi.NULL) {
+					stor^.serializa_nullum();
+				} alioqui si (genu == atomi.LINE) {
+					stor^.serializa(@linea(@_data^[pos + 8], long, linea.codex.utf8), 1);
+				} alioqui si (genu == atomi.N1) {
+					stor^.serializa((@logicum)(@_data^[pos + 8]), long);
+				} alioqui si (genu == atomi.N8) {
+					stor^.serializa((@nint8)(@_data^[pos + 8]), long);
+				} alioqui si (genu == atomi.I8) {
+					stor^.serializa((@int8)(@_data^[pos + 8]), long);
+				} alioqui si (genu == atomi.N16) {
+					stor^.serializa((@nint16)(@_data^[pos + 8]), long / 2);
+				} alioqui si (genu == atomi.I16) {
+					stor^.serializa((@int16)(@_data^[pos + 8]), long / 2);
+				} alioqui si (genu == atomi.N32) {
+					stor^.serializa((@nint32)(@_data^[pos + 8]), long / 4);
+				} alioqui si (genu == atomi.I32) {
+					stor^.serializa((@int32)(@_data^[pos + 8]), long / 4);
+				} alioqui si (genu == atomi.F32) {
+					stor^.serializa((@frac)(@_data^[pos + 8]), long / 4);
+				} alioqui si (genu == atomi.N64) {
+					stor^.serializa((@nint64)(@_data^[pos + 8]), long / 8);
+				} alioqui si (genu == atomi.I64) {
+					stor^.serializa((@int64)(@_data^[pos + 8]), long / 8);
+				} alioqui si (genu == atomi.F64) {
+					stor^.serializa((@dfrac)(@_data^[pos + 8]), long / 8);
+				} alioqui si (_reg && long == 8) {
+					var num = (@nint64)(@_data^[pos + 8])[0];
+					si (genu == atomi.IOBJ) {
+						var objgen = stor^.genus_objecti_proximi;
+						si (objgen^.praeforma_est && objgen^.basis == "adl") {
+							var obj = objgen^.argumenta^[0];
+							si (obj^.classis_est) {
+								var dest = (@!remota.objectum)(stor^.serializa_proximum_alterne());
+								si (dest != nullus) {
+									si (num) {
+										var o = _reg^.para(num);
+										si (o != nullus) {
+											var adlc = (@remota.objectum)(o^.converte_dynamice(obj^.symbolum^.nomen));
+											dest^ = (!remota.objectum)(adlc);
+										} alioqui dest^.depura();
+									} alioqui dest^.depura();
+								}
+							}
+						}
+					} alioqui si (genu == atomi.EOBJ) {
+						var objgen = stor^.genus_objecti_proximi;
+						si (objgen^.praeforma_est && objgen^.basis == "adl") {
+							var obj = objgen^.argumenta^[0];
+							si (obj^.classis_est) {
+								var dest = (@!remota.objectum)(stor^.serializa_proximum_alterne());
+								si (dest != nullus) {
+									si (num) dest^ = remota.objectum.crea_per_protocollo(obj^.symbolum^.nomen, _reg, num);
+									alioqui dest^.depura();
+								}
+							}
+						} alioqui stor^.serializa(@num, 1);
+					}
+				}
+				responde 8 + long;
+			}
+			functio nihil deserializa(@reflexor_deserializandi stor) iacit redefini {
+				si (_pos >= _data^.longitudo) {
+					si (_fl) {
+						_pos = 0;
+						_data^.longitudo = 8;
+						var nl = _fl^.lege(_data^.data, 8);
+						si (nl < 8) iace errores.efformatio_falsa;
+						si ((@nint32)(@_data^[0])^ != atomi.xesl) iace errores.efformatio_falsa;
+						int long = (@int)(@_data^[4])^;
+						si (long < 0) iace errores.efformatio_falsa;
+						_data^.longitudo = 8 + long;
+						nl = _fl^.lege(@_data^.data[8], long);
+						si (nl < long) iace errores.efformatio_falsa;
+					} alioqui iace errores.habitus_falsus;
+				}
+				_pos += _lege_atomum(_pos, _data^.longitudo - _pos, stor);
+			}
+		}
+	}
+}

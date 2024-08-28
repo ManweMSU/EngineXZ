@@ -48,6 +48,11 @@ xx shellex_macos/patch.xx xx_release/_build/macosx_${ARCH}/XX.app/XX.app
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/typographica.xo  -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/typographica.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/communicatio.xo  -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/communicatio.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/collectiones.xo  -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/collectiones.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/serializatio.xo  -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/serializatio.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/xesl.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/xesl.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/json.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/json.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/ecso.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/ecso.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/ifr.xo           -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/ifr.xo
 
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.ru.xo    -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/errores.ru.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.en.xo    -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/errores.en.xo

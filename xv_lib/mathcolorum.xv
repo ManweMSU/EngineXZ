@@ -11,10 +11,10 @@ importa imago;
 spatium math {
 	spatium colores {
 		structura RGB hereditat dfrac4 {
-			[[positus] "0"] dfrac R;
-			[[positus] "8"] dfrac G;
-			[[positus] "16"] dfrac B;
-			[[positus] "24"] dfrac A;
+			[[positus] "0"] [serializa_nulle] dfrac R;
+			[[positus] "8"] [serializa_nulle] dfrac G;
+			[[positus] "16"] [serializa_nulle] dfrac B;
+			[[positus] "24"] [serializa_nulle] dfrac A;
 
 			[[convertor] "conformis"] structor (dfrac4 vec) { funda(vec); }
 			[[convertor] "extendens"] structor (imago.color clr) { funda R(dfrac(clr.r) / 255.0); funda G(dfrac(clr.g) / 255.0); funda B(dfrac(clr.b) / 255.0); funda A(dfrac(clr.a) / 255.0); }

@@ -1,0 +1,312 @@
+﻿importa communicatio;
+importa xesl;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Invocationum Remotarum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium errores {
+	[error] constatus ifr_defecta = 0x09;
+	[sub_error ifr_defecta] constatus ifr_error_nullus			= 0x00;
+	[sub_error ifr_defecta] constatus ifr_error_ignotus			= 0x01;
+	[sub_error ifr_defecta] constatus ifr_objectum_falsum		= 0x02;
+	[sub_error ifr_defecta] constatus ifr_selector_falsus		= 0x03;
+	[sub_error ifr_defecta] constatus ifr_error_serializandi	= 0x04;
+	[sub_error ifr_defecta] constatus ifr_error_communicationis	= 0x05;
+}
+
+spatium remota {
+	spatium attributa {
+		constatus exportatum	= "ifr_protocollum_exportatum";
+	}
+
+	genus servus hereditat regestor {
+		constatus _ifr_versio_0 = nint(810698313);
+
+		!communicatio.canale _canale;
+		!contextus.cauda _cauda;
+		!contextus.semaphorum _sync;
+		!contextus.semaphorum _sync_inv;
+		!contextus.signale _sync_resp;
+		!contextus.labos _labos_closionis;
+		!serializatio.xesl.serializator _stor;
+		!serializatio.xesl.deserializator _dstor;
+		collectiones.dictionarium[nint64, !remota.objectum] _objecta;
+		collectiones.dictionarium[linea, (nintadl, !repulsus.invocator)] _exportata;
+		communicatio.status_erroris _status_invocationis;
+		!dordo_datorum _data_invocationis;
+
+		structor (@communicatio.canale canale, @contextus.cauda processor) iacit {
+			si (canale == nullus || processor == nullus) iace errores.argumentum_falsum;
+			_canale.contine(canale);
+			_cauda.contine(processor);
+			_sync = contextus.crea_semaphorum(1);
+			_sync_inv = contextus.crea_semaphorum(1);
+			_sync_resp = contextus.crea_signale();
+			_stor = crea(serializatio.xesl.serializator, crea(dordo_datorum), ego);
+			_dstor = crea(serializatio.xesl.deserializator, crea(dordo_datorum), ego);
+			si (!_sync || !_sync_inv || !_sync_resp) iace errores.memoria_nulla;
+			var impl = repulsus.para_symbola(modulus(), repulsus.symbola.generis, attributa.exportatum);
+			ordo !repulsus.symbolum_generis impl_gen;
+			ordo !repulsus.symbolum_generis.methodus impl_ctor;
+			pro (var i : impl^) {
+				!repulsus.symbolum_generis.methodus meth;
+				var gen = impl^[i] acsi (repulsus.symbolum_generis);
+				var methi = gen^.methodi();
+				pro (var j : methi^) si (methi^[j]^.nomen == "@crea:F(Cnihil)") { meth = methi^[j]; exi; }
+				si (meth) { impl_gen << gen; impl_ctor << meth; }
+			}
+			var inv = repulsus.crea_invocatores(impl_ctor, impl_ctor.longitudo);
+			pro (var i : impl_ctor) {
+				var nomen = impl_gen[i]^.attributa^[attributa.exportatum];
+				si (!nomen.longitudo) nomen = impl_gen[i]^.nomen;
+				_exportata.adde(nomen, (impl_gen[i]^.longitudo, inv^[i]));
+			}
+		}
+		functio nihil _procede(@dordo_datorum titulus, @dordo_datorum data) {
+			si ((@nint)(@titulus^[8])^ == 0) {
+				var selector = (@int)(@titulus^[12])^;
+				var numerus = (@nint64)(@titulus^[16])^;
+				!dordo_datorum dti, r;
+				communicatio.status_erroris sti;
+				sti.error = sti.suberror = 0;
+				proba {
+					dti = crea(dordo_datorum);
+					r = crea(dordo_datorum);
+					si (numerus) {
+						_sync^.opperire();
+						!remota.objectum obj;
+						var objadl = _objecta[numerus];
+						si (objadl != nullus) obj.contine(objadl^);
+						_sync^.aperi();
+						si (objadl == nullus) iace errores.ifr_defecta, errores.ifr_objectum_falsum;
+						si (selector) {
+							serializatio.xesl.serializator stor(dti, ego);
+							serializatio.xesl.deserializator dstor(data, ego);
+							obj^.invoca(selector, @dstor, @stor);
+						} alioqui deregere(numerus);
+					} alioqui si (selector == 1) {
+						serializatio.xesl.serializator stor(dti, ego);
+						serializatio.xesl.deserializator dstor(data, ego);
+						linea cls;
+						proba serializatio.deserializa(cls, @dstor); cape iace errores.ifr_defecta, errores.ifr_error_serializandi;
+						_sync^.opperire();
+						var clcr = _exportata[cls];
+						nintadl longitudo;
+						!repulsus.invocator constructor;
+						si (clcr != nullus) {
+							longitudo = clcr^.primus;
+							constructor = clcr^.secundus;
+						}
+						_sync^.aperi();
+						si (!constructor) iace errores.implantatio_nulla;
+						var mem = memoria.alloca(longitudo);
+						si (mem == nullus) iace errores.memoria_nulla;
+						proba constructor^.invoca(nullus, mem, nullus); cape (nintadl e, nintadl se) {
+							memoria.dimitte(mem);
+							iace e, se;
+						}
+						!remota.objectum obj = (@remota.objectum)(mem);
+						proba serializatio.serializa(obj, @stor); cape iace errores.ifr_defecta, errores.ifr_error_serializandi;
+					} alioqui iace errores.ifr_defecta, errores.ifr_selector_falsus;
+				} cape (nintadl e, nintadl se) { sti.error = e; sti.suberror = se; }
+				proba {
+					si (sti.error) dti^.longitudo = 0;
+					r^.longitudo = 24 + dti^.longitudo;
+					(@nint)(@r^[0])^ = _ifr_versio_0;
+					(@int)(@r^[4])^ = dti^.longitudo;
+					(@nint)(@r^[8])^ = 1;
+					(@int)(@r^[12])^ = 0;
+					(@nint)(@r^[16])^ = sti.error;
+					(@nint)(@r^[20])^ = sti.suberror;
+					memoria.exscribe(@r^[24], dti^.data, dti^.longitudo);
+					_sync^.opperire();
+					var con = _canale;
+					_sync^.aperi();
+					si (!con) iace errores.habitus_falsus;
+					communicatio.mitte_data(con, r) {
+						si (status_operationis.error) {
+							proba clode();
+							_status_invocationis.error = errores.ifr_defecta;
+							_status_invocationis.suberror = errores.ifr_error_communicationis;
+							_sync_resp^.erige();
+						}
+					};
+				} cape {
+					proba clode();
+					_status_invocationis.error = errores.ifr_defecta;
+					_status_invocationis.suberror = errores.ifr_error_communicationis;
+					_sync_resp^.erige();
+				}
+			} alioqui si ((@nint)(@titulus^[8])^ == 1) {
+				_sync^.opperire();
+				_status_invocationis.error = (@nint)(@titulus^[16])^;
+				_status_invocationis.suberror = (@nint)(@titulus^[20])^;
+				_data_invocationis.contine(data);
+				_sync^.aperi();
+				_sync_resp^.erige();
+			}
+		}
+		functio nint64 regere(@objectum obj) iacit redefini {
+			_sync^.opperire();
+			var ult = _objecta.ultimus;
+			nint64 num = ult != nullus ? ult^.valor.primus + 1 : 1;
+			si (!num) {
+				nint64 prist = 0;
+				pro (var e : _objecta) {
+					si (e^.valor.primus - prist > 1) { num = prist + 1; exi; }
+					prist = e^.valor.primus;
+				}
+			}
+			!objectum o;
+			o.contine(obj);
+			proba _objecta.adde(num, o); cape (nintadl e, nintadl se) {
+				_sync^.aperi();
+				iace e, se;
+			}
+			_sync^.aperi();
+			responde num;
+		}
+		functio nihil deregere(nint64 numerus) redefini
+		{
+			_sync^.opperire();
+			_objecta.remove(numerus);
+			_sync^.aperi();
+		}
+		functio @objectum para(nint64 numerus) iacit redefini {
+			_sync^.opperire();
+			var v = _objecta[numerus];
+			_sync^.aperi();
+			si (v == nullus) iace errores.argumentum_falsum;
+			responde v^;
+		}
+		functio !objectum crea_exemplar_remotum(~linea prot) iacit redefini {
+			!objectum resp;
+			var stor = initia_invocationem();
+			proba serializatio.serializa(prot, stor); cape {
+				ende_invocationem();
+				iace errores.ifr_defecta, errores.ifr_error_serializandi;
+			}
+			var dstor = exordi_invocationem(0, 1);
+			proba serializatio.deserializa(resp, dstor); cape {
+				ende_invocationem();
+				iace errores.ifr_defecta, errores.ifr_error_serializandi;
+			}
+			ende_invocationem();
+			responde resp;
+		}
+		functio @serializatio.serializator initia_invocationem() iacit redefini {
+			var data = crea(dordo_datorum);
+			_sync_inv^.opperire();
+			responde _stor;
+		}
+		functio @serializatio.deserializator exordi_invocationem(nint64 objectum, int selector) iacit redefini {
+			var data = crea(dordo_datorum);
+			_sync^.opperire();
+			proba {
+				data^.longitudo = 24 + _stor^.destinatio^.longitudo;
+				(@nint)(@data^[0])^ = _ifr_versio_0;
+				(@int)(@data^[4])^ = _stor^.destinatio^.longitudo;
+				(@nint)(@data^[8])^ = 0;
+				(@int)(@data^[12])^ = selector;
+				(@nint64)(@data^[16])^ = objectum;
+				memoria.exscribe(@data^[24], _stor^.destinatio^.data, _stor^.destinatio^.longitudo);
+			} cape (nintadl e, nintadl se) {
+				_sync^.aperi();
+				ende_invocationem();
+				iace e, se;
+			}
+			var con = _canale;
+			_sync^.aperi();
+			proba {
+				si (con) communicatio.mitte_data(con, data) {
+					si (status_operationis.error) {
+						proba clode();
+						_status_invocationis.error = errores.ifr_defecta;
+						_status_invocationis.suberror = errores.ifr_error_communicationis;
+						_sync_resp^.erige();
+					}
+				}; alioqui iace errores.ifr_defecta, errores.ifr_error_communicationis;
+			} cape iace errores.ifr_defecta, errores.ifr_error_communicationis;
+			_sync_resp^.opperire();
+			si (_status_invocationis.error) {
+				ende_invocationem();
+				_status_invocationis.modera();
+			}
+			_sync^.opperire();
+			_dstor^.origo = _data_invocationis;
+			_data_invocationis.depura();
+			_sync^.aperi();
+			responde _dstor;
+		}
+		functio nihil ende_invocationem() iacit redefini {
+			_sync^.opperire();
+			_stor^.destinatio^.depura();
+			_dstor^.origo^.depura();
+			_sync^.aperi();
+			_sync_resp^.inclina();
+			_sync_inv^.aperi();
+		}
+		functio nihil exeque() iacit redefini {
+			_sync^.opperire();
+			var con = _canale;
+			_sync^.aperi();
+			si (!con) iace errores.ifr_defecta, errores.ifr_error_communicationis;
+			proba communicatio.admitte_data(con, 24) {
+				si (status_operationis.error || data_recepta^.longitudo != 24 || (@nint)(@data_recepta^[0])^ != _ifr_versio_0) {
+					proba clode();
+					_status_invocationis.error = errores.ifr_defecta;
+					_status_invocationis.suberror = errores.ifr_error_communicationis;
+					_sync_resp^.erige();
+					responde;
+				}
+				var titulus = data_recepta;
+				var longitudo = (@int)(@data_recepta^[4])^;
+				proba communicatio.admitte_data(con, longitudo) {
+					si (status_operationis.error || data_recepta^.longitudo != longitudo) {
+						proba clode();
+						_status_invocationis.error = errores.ifr_defecta;
+						_status_invocationis.suberror = errores.ifr_error_communicationis;
+						_sync_resp^.erige();
+						responde;
+					}
+					proba {
+						exeque();
+						muta_contextum(_cauda) { _procede(titulus, data_recepta); };
+					} cape {
+						proba clode();
+						_status_invocationis.error = errores.ifr_defecta;
+						_status_invocationis.suberror = errores.ifr_error_communicationis;
+						_sync_resp^.erige();
+					}
+				}; cape {
+					proba clode();
+					_status_invocationis.error = errores.ifr_defecta;
+					_status_invocationis.suberror = errores.ifr_error_communicationis;
+					_sync_resp^.erige();
+				}
+			}; cape iace errores.ifr_defecta, errores.ifr_error_communicationis;
+		}
+		functio nihil clode() iacit redefini {
+			_sync^.opperire();
+			var con = _canale;
+			var lab = _labos_closionis;
+			_canale.depura();
+			_objecta.depura();
+			_labos_closionis.depura();
+			_sync^.aperi();
+			si (con) con^.clode(sic);
+			si (lab) _cauda^.adde(lab);
+		}
+		@contextus.labos labos_closionis {
+			adipisce { _sync^.opperire(); var lab = _labos_closionis; _sync^.aperi(); responde lab; }
+			loca { _sync^.opperire(); _labos_closionis.contine(valor); _sync^.aperi(); }
+		}
+	}
+
+	functio !objectum crea_exemplar(@regestor reg, ~linea prot) iacit { responde reg^.crea_exemplar_remotum(prot); }
+	functio !objectum crea_exemplar(@regestor reg, @nihil prot) iacit { responde reg^.crea_exemplar_remotum(prot); }
+}

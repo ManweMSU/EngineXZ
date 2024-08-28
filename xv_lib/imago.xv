@@ -45,7 +45,7 @@ spatium imago {
 		nint8 g;
 		nint8 b;
 		nint8 a;
-		[[positus] "0"] nint32 valor;
+		[[positus] "0"] [serializa_nulle] nint32 valor;
 
 		structor (nint8 _r, nint8 _g, nint8 _b, nint8 _a) { funda r(_r); funda g(_g); funda b(_b); funda a(_a); }
 		structor (nint8 _r, nint8 _g, nint8 _b) { funda r(_r); funda g(_g); funda b(_b); funda a(255); }

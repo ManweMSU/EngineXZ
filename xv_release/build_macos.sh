@@ -51,6 +51,11 @@ cp xv_lib/potentia.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/typographica.xv     -NVol xv_release/_build/com/typographica.xo     xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/communicatio.xv     -NVol xv_release/_build/com/communicatio.xo     xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/collectiones.xv     -NVol xv_release/_build/com/collectiones.xo     xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/serializatio.xv     -NVol xv_release/_build/com/serializatio.xo     xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/xesl.xv             -NVol xv_release/_build/com/xesl.xo             xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/json.xv             -NVol xv_release/_build/com/json.xo             xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/ecso.xv             -NVol xv_release/_build/com/ecso.xo             xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/ifr.xv              -NVol xv_release/_build/com/ifr.xo              xv_release/_build/com
 cp xv_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
 cp xv_release/_build/com/*.xo xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
 estrtab xv_com/locale/ru.txt :binary xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/ru.ecst

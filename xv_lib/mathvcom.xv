@@ -10,7 +10,7 @@ importa mathcom;
 
 structura complex2 {
 	complex x; complex y;
-	[[positus] "0"] ordo [2] complex _c;
+	[[positus] "0"] [serializa_nulle] ordo [2] complex _c;
 
 	dfrac2 Re { adipisce { responde dfrac2(x.Re, y.Re); } }
 	dfrac2 Im { adipisce { responde dfrac2(x.Im, y.Im); } }
@@ -44,9 +44,9 @@ structura complex2 {
 }
 structura complex3 {
 	complex x; complex y; complex z;
-	[[positus] "0"] ordo [3] complex _c;
-	[[positus] "0"] complex2 xy;
-	[[positus] "16"] complex2 yz;
+	[[positus] "0"] [serializa_nulle] ordo [3] complex _c;
+	[[positus] "0"] [serializa_nulle] complex2 xy;
+	[[positus] "16"] [serializa_nulle] complex2 yz;
 
 	dfrac3 Re { adipisce { responde dfrac3(x.Re, y.Re, z.Re); } }
 	dfrac3 Im { adipisce { responde dfrac3(x.Im, y.Im, z.Im); } }
@@ -80,12 +80,12 @@ structura complex3 {
 }
 structura complex4 {
 	complex x; complex y; complex z; complex w;
-	[[positus] "0"] ordo [4] complex _c;
-	[[positus] "0"] complex2 xy;
-	[[positus] "16"] complex2 yz;
-	[[positus] "32"] complex2 zw;
-	[[positus] "0"] complex3 xyz;
-	[[positus] "16"] complex3 yzw;
+	[[positus] "0"] [serializa_nulle] ordo [4] complex _c;
+	[[positus] "0"] [serializa_nulle] complex2 xy;
+	[[positus] "16"] [serializa_nulle] complex2 yz;
+	[[positus] "32"] [serializa_nulle] complex2 zw;
+	[[positus] "0"] [serializa_nulle] complex3 xyz;
+	[[positus] "16"] [serializa_nulle] complex3 yzw;
 
 	dfrac4 Re { adipisce { responde dfrac4(x.Re, y.Re, z.Re, w.Re); } }
 	dfrac4 Im { adipisce { responde dfrac4(x.Im, y.Im, z.Im, w.Im); } }

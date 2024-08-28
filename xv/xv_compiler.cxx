@@ -4,6 +4,7 @@
 #include "xv_lexical.h"
 #include "xv_proto.h"
 #include "xv_oapi.h"
+#include "xv_ext_rpc.h"
 #include "../xlang/xl_code.h"
 #include "../xasm/xa_compiler.h"
 #include "../ximg/xi_resources.h"
@@ -1286,6 +1287,7 @@ namespace Engine
 					AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
 				}
 				bool is_abstract = IsKeyword(Lexic::KeywordVirtual) || is_interface;
+				bool enable_rpc = false;
 				if (IsKeyword(Lexic::KeywordVirtual)) ReadNextToken();
 				AssertIdent();
 				auto definition = current_token;
@@ -1344,6 +1346,9 @@ namespace Engine
 							else if (attr.value == Lexic::AttributeSRTTI) ctx.SetClassSemantics(type, XA::ArgumentSemantics::RTTI);
 							else if (attr.value == Lexic::AttributeSError) ctx.SetClassSemantics(type, XA::ArgumentSemantics::ErrorData);
 							else Abort(CompilerStatus::InapproptiateAttribute, definition);
+						} else if (attr.key == Lexic::AttributeRPC) {
+							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							enable_rpc = true;
 						} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 					} else type->AddAttribute(attr.key, attr.value);
 				}
@@ -1356,11 +1361,14 @@ namespace Engine
 				ProcessClass(type, is_interface, false, subdesc);
 				AssertPunct(L"}"); ReadNextToken();
 				ObjectArray<XL::LObject> vft_init_seq(0x40);
+				try { if (enable_rpc) CreateRPCServiceRoutines(type); }
+				catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
 				CreateTypeServiceRoutines(type);
 				ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor, vft_init_seq);
 				if (is_structure) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit |
 					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
 					XL::CreateMethodAssign, vft_init_seq);
+				else if (enable_rpc) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit, vft_init_seq);
 				ctx.LockClass(type, false);
 				AssignTokenInfo(definition, type, true, false);
 				if (documentation && !NameIsPrivate(type->GetFullName())) {
@@ -1382,6 +1390,8 @@ namespace Engine
 						inh->SetContents(L"", inh_text);
 					}
 				}
+				try { if (enable_rpc) CreateRPCServiceObjects(type, vft_init_seq); }
+				catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 			}
 			void ProcessAliasDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)

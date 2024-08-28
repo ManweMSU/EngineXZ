@@ -14,6 +14,7 @@ constatus habitus_falsus	= "Неверное состояние объекта";
 constatus ie_falsum			= "Неверная операция В/В";
 constatus xe_defectus		= "Сбой загрузчика XE";
 constatus rete_defectum		= "Неверная операция сетевого В/В";
+constatus ifr_defecta		= "Сбой удалённого вызова процедуры";
 
 constatus ie_error_nullus				= "Успех";
 constatus ie_error_ignotus				= "Неизвестная ошибка";
@@ -65,3 +66,10 @@ constatus rete_protocollum_falsum		= "Использовался некорре�
 constatus rete_assectatio_excessa		= "Превышено время ожидания запроса";
 constatus rete_securitas_falsa			= "Безопасность соединения скомпрометирована";
 constatus rete_adloquium_nullum			= "Нет адреса для указанного домена";
+
+constatus ifr_error_nullus				= "Успех";
+constatus ifr_error_ignotus				= "Неизвестная ошибка";
+constatus ifr_objectum_falsum			= "Неверный номер объекта";
+constatus ifr_selector_falsus			= "Неверный номер селектора";
+constatus ifr_error_serializandi		= "Сбой сериализации";
+constatus ifr_error_communicationis		= "Сбой обмена данными";

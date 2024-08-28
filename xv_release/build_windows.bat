@@ -44,6 +44,11 @@ copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vs
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\typographica.xv    -NVoml  xv_release\_build\com\typographica.xo   xv_lib\typographica.xvm     xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\communicatio.xv    -NVoml  xv_release\_build\com\communicatio.xo   xv_lib\communicatio.xvm     xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\collectiones.xv    -NVoml  xv_release\_build\com\collectiones.xo   xv_lib\collectiones.xvm     xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\serializatio.xv    -NVoml  xv_release\_build\com\serializatio.xo   xv_lib\serializatio.xvm     xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\xesl.xv            -NVoml  xv_release\_build\com\xesl.xo           xv_lib\xesl.xvm             xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\json.xv            -NVoml  xv_release\_build\com\json.xo           xv_lib\json.xvm             xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\ecso.xv            -NVoml  xv_release\_build\com\ecso.xo           xv_lib\ecso.xvm             xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\ifr.xv             -NVoml  xv_release\_build\com\ifr.xo            xv_lib\ifr.xvm              xv_release\_build\com
 xcopy /BY xv_release\_build\com\* xv_release\_build\windows_%ARCH%\xvcl\
 xcopy /BY xv_lib\*.xvm xv_release\_build\windows_%ARCH%\xvcl\
 estrtab xv_com\locale\ru.txt :binary xv_release\_build\windows_%ARCH%\xv.loc\ru.ecst

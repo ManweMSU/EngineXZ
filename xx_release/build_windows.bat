@@ -51,6 +51,11 @@ xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\mathgraphici.xo   
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\typographica.xo   -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\typographica.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\communicatio.xo   -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\communicatio.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\collectiones.xo   -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\collectiones.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\serializatio.xo   -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\serializatio.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\xesl.xo           -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\xesl.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\json.xo           -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\json.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\ecso.xo           -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\ecso.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\ifr.xo            -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\ifr.xo
 
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.ru.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.ru.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.en.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.en.xo

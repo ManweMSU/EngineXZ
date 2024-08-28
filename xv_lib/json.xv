@@ -1,0 +1,382 @@
+﻿importa serializatio;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber JSON Serializandi";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium serializatio {
+	spatium json {
+		genus serializator hereditat .serializatio.serializator {
+			enumeratio modus {
+				condensus			= 0x0001,
+				permitte_ucs_altum	= 0x0002,
+				permitte_non_ascii	= 0x0004,
+				linea_nova_in_fine	= 0x0008
+			}
+			structura descriptio {
+				nint modus;
+				char indentio;
+				int longitudo_indentionis;
+			}
+
+			!scriptio.codificator _fl;
+			descriptio _desc;
+
+			int _status_modus; // 1 - был записан элемент (требуется запятая), 2 - требуется новая строка
+			int _indentio;
+			linea _status_nomen;
+			functio linea _forma_lineam(~linea basis) iacit {
+				ordo char acc;
+				acc << char('\"');
+				pro (var i : basis) {
+					var ch = basis[i];
+					si (ch == char('\"') || ch == char('\\')) {
+						acc << char('\\') << ch;
+					} alioqui si (ch == char('\b')) {
+						acc << char('\\') << char('b');
+					} alioqui si (ch == char('\f')) {
+						acc << char('\\') << char('f');
+					} alioqui si (ch == char('\n')) {
+						acc << char('\\') << char('n');
+					} alioqui si (ch == char('\r')) {
+						acc << char('\\') << char('r');
+					} alioqui si (ch == char('\t')) {
+						acc << char('\\') << char('t');
+					} alioqui {
+						logicum regularis;
+						si (ch >= char(0x20)) {
+							si (ch <= char(0x7F)) regularis = sic;
+							alioqui si (ch <= char(0xFFFF) && _desc.modus & modus.permitte_non_ascii) regularis = sic;
+							alioqui si (_desc.modus & modus.permitte_ucs_altum) regularis = sic;
+							alioqui regularis = non;
+						} alioqui regularis = non;
+						si (regularis) {
+							acc << ch;
+						} alioqui {
+							linea ev;
+							si (ch <= char(0xFFFF)) {
+								ev = "\\u" + linea(ch, linea.radix_sextadecima, 4);
+							} alioqui {
+								var v = ch - char(0x10000);
+								ev =	"\\u" + linea(char(0xD800) + (v >> char(10)), linea.radix_sextadecima, 4) +
+										"\\u" + linea(char(0xDC00) + (v & char(0x3FF)), linea.radix_sextadecima, 4);
+							}
+							pro (var j : ev) acc << ev[j];
+						}
+					}
+				}
+				acc << char('\"') << char(0);
+				responde linea(acc.data);
+			}
+			functio nihil _ini_valorem() iacit {
+				si (_status_modus & 1) {
+					_fl^ << ",";
+				}
+				si (_status_modus & 2 && !(_desc.modus & modus.condensus)) {
+					_fl^ << "\n" << linea(_desc.indentio, _desc.longitudo_indentionis * _indentio);
+				}
+				si (_status_nomen.longitudo) {
+					_fl^ << _forma_lineam(_status_nomen);
+					_status_nomen = "";
+					si (_desc.modus & modus.condensus) _fl^ << ":";
+					alioqui _fl^ << " : ";
+				}
+				_status_modus |= 3;
+			}
+
+			structor (@flumen fl, ~descriptio desc) iacit {
+				funda _desc(desc);
+				_fl = scriptio.codifica(fl, linea.codex.utf8);
+			}
+			structor (@flumen fl) iacit {
+				_desc.modus = modus.linea_nova_in_fine;
+				_desc.indentio = ' ';
+				_desc.longitudo_indentionis = 2;
+				_fl = scriptio.codifica(fl, linea.codex.utf8);
+			}
+			structor (@scriptio.codificator fl, ~descriptio desc) iacit {
+				funda _desc(desc);
+				_fl.contine(fl);
+			}
+			structor (@scriptio.codificator fl) iacit {
+				_desc.modus = modus.linea_nova_in_fine;
+				_desc.indentio = ' ';
+				_desc.longitudo_indentionis = 2;
+				_fl.contine(fl);
+			}
+			functio nihil da_nomen_valori(~linea nomen) iacit redefini { _status_nomen = nomen; }
+			functio nihil exordi_serializandum_communaliter() iacit redefini { _status_modus = _indentio = 0; _status_nomen = ""; }
+			functio nihil ende_serializandum_communaliter() iacit redefini { si (_desc.modus & modus.linea_nova_in_fine) _fl^ << "\n"; }
+			functio nihil exordi_serializandum_structurae() iacit redefini {
+				_ini_valorem();
+				_fl^ << "{";
+				_indentio++;
+				_status_nomen = "";
+				_status_modus = 2;
+			}
+			functio nihil ende_serializandum_structurae() iacit redefini {
+				_indentio--;
+				si (_status_modus & 1 && !(_desc.modus & modus.condensus)) {
+					_fl^ << "\n" << linea(_desc.indentio, _desc.longitudo_indentionis * _indentio);
+				}
+				_fl^ << "}";
+				_status_nomen = "";
+				_status_modus = 3;
+			}
+			functio nihil exordi_serializandum_ordinis() iacit redefini {
+				_ini_valorem();
+				_fl^ << "[";
+				_indentio++;
+				_status_nomen = "";
+				_status_modus = 2;
+			}
+			functio nihil ende_serializandum_ordinis() iacit redefini {
+				_indentio--;
+				si (_status_modus & 1 && !(_desc.modus & modus.condensus)) {
+					_fl^ << "\n" << linea(_desc.indentio, _desc.longitudo_indentionis * _indentio);
+				}
+				_fl^ << "]";
+				_status_nomen = "";
+				_status_modus = 3;
+			}
+			functio nihil serializa_nullum() iacit redefini { _ini_valorem(); _fl^ << "null"; }
+			functio nihil serializa(@logicum valores, int numerus) iacit redefini {
+				pro (int i = 0; i < numerus; i++) {
+					_ini_valorem();
+					si (valores[i]) _fl^ << "true";
+					alioqui _fl^ << "false";
+				}
+			}
+			functio nihil serializa(@int8 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@nint8 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@int16 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@nint16 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@int32 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@nint32 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@int64 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@nint64 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@frac valores, int numerus) iacit redefini {
+				pro (int i = 0; i < numerus; i++) si (!math.nn_est(valores[i]) && !math.inf_est(valores[i])) {
+					_ini_valorem();
+					var lit = linea(valores[i]);
+					si (lit.reperi_primum(".") < 0) lit += ".0";
+					_fl^ << lit;
+				} alioqui serializa_nullum();
+			}
+			functio nihil serializa(@dfrac valores, int numerus) iacit redefini {
+				pro (int i = 0; i < numerus; i++) si (!math.nn_est(valores[i]) && !math.inf_est(valores[i])) {
+					_ini_valorem();
+					var lit = linea(valores[i]);
+					si (lit.reperi_primum(".") < 0) lit += ".0";
+					_fl^ << lit;
+				} alioqui serializa_nullum();
+			}
+			functio nihil serializa(@linea valores, int numerus) iacit redefini {
+				pro (int i = 0; i < numerus; i++) {
+					_ini_valorem();
+					_fl^ << _forma_lineam(valores[i]);
+				}
+			}
+			functio logicum serializa_alterne(@nihil objadl, @repulsus.generis objgen, int numerus) iacit redefini { responde non; }
+		}
+		genus deserializator hereditat .serializatio.deserializator {
+			ordo nint16 _data;
+			int _positus;
+
+			int _genus_verbi; // 0 - системный, 1 - строка, 2 - целочисленное >= 0, 3 - целочисленное < 0, 4 - с плавающей запятой, 5 - прочие литералы
+			linea _verbum_l;
+			nint64 _verbum_n;
+			int64 _verbum_i;
+			dfrac _verbum_f;
+
+			structor (@flumen fl) iacit {
+				funda _positus(0);
+				var ddx = scriptio.decodifica(fl, linea.codex.utf8);
+				var data = ddx^.lege_cunctos();
+				_data.longitudo = data.longitudo_codicis(linea.codex.utf16);
+				data.codifica(_data.data, linea.codex.utf16, non);
+			}
+			structor (@scriptio.decodificator fl) iacit {
+				funda _positus(0);
+				var data = fl^.lege_cunctos();
+				_data.longitudo = data.longitudo_codicis(linea.codex.utf16);
+				data.codifica(_data.data, linea.codex.utf16, non);
+			}
+			structor (~linea ln) iacit {
+				funda _positus(0);
+				_data.longitudo = ln.longitudo_codicis(linea.codex.utf16);
+				ln.codifica(_data.data, linea.codex.utf16, non);
+			}
+			functio nihil _lege_verbum() iacit {
+				dum (sic) {
+					dum (_positus < _data.longitudo && (_data[_positus] == nint16(' ') || _data[_positus] == nint16('\t') ||
+						_data[_positus] == nint16('\r') || _data[_positus] == nint16('\n'))) _positus++;
+					si (_positus >= _data.longitudo) { _genus_verbi = 0; _verbum_l = ""; responde; }
+					si (_data[_positus] == nint16('/')) {
+						_positus++;
+						si (_positus < _data.longitudo) {
+							si (_data[_positus] == nint16('/')) {
+								dum (_positus < _data.longitudo && _data[_positus] != nint16('\n')) _positus++;
+							} alioqui si (_data[_positus] == nint16('*')) {
+								dum (_positus < _data.longitudo - 1 && (_data[_positus] != nint16('*') || _data[_positus + 1] != nint16('/'))) _positus++;
+								_positus += 2;
+							} alioqui iace errores.efformatio_falsa;
+						} alioqui iace errores.efformatio_falsa;
+					} alioqui si (_data[_positus] >= nint16('a') && _data[_positus] <= nint16('z')) {
+						int s = _positus;
+						dum (_positus < _data.longitudo && _data[_positus] >= nint16('a') && _data[_positus] <= nint16('z')) _positus++;
+						_genus_verbi = 5;
+						_verbum_l = linea(@_data[s], _positus - s, linea.codex.utf16);
+						responde;
+					} alioqui si (_data[_positus] == nint16('\"')) {
+						_genus_verbi = 1;
+						ordo nint16 ll;
+						_positus++;
+						dum (sic) {
+							si (_positus >= _data.longitudo) iace errores.efformatio_falsa;
+							si (_data[_positus] == nint16('\"')) {
+								_positus++; exi;
+							} alioqui si (_data[_positus] == nint16('\\')) {
+								_positus++;
+								si (_positus >= _data.longitudo) iace errores.efformatio_falsa;
+								si (_data[_positus] == nint16('\"') || _data[_positus] == nint16('\\') || _data[_positus] == nint16('/')) {
+									ll << _data[_positus]; _positus++;
+								} alioqui si (_data[_positus] == nint16('b') || _data[_positus] == nint16('B')) {
+									ll << nint16('\b'); _positus++;
+								} alioqui si (_data[_positus] == nint16('f') || _data[_positus] == nint16('F')) {
+									ll << nint16('\f'); _positus++;
+								} alioqui si (_data[_positus] == nint16('n') || _data[_positus] == nint16('N')) {
+									ll << nint16('\n'); _positus++;
+								} alioqui si (_data[_positus] == nint16('r') || _data[_positus] == nint16('R')) {
+									ll << nint16('\r'); _positus++;
+								} alioqui si (_data[_positus] == nint16('t') || _data[_positus] == nint16('T')) {
+									ll << nint16('\t'); _positus++;
+								} alioqui si ((_data[_positus] == nint16('u') || _data[_positus] == nint16('U')) && _positus + 4 < _data.longitudo) {
+									nint16 ucs2 = linea(@_data[_positus + 1], 4, linea.codex.utf16).ad_nint32(linea.radix_sextadecima);
+									ll << ucs2;
+									_positus += 5;
+								} alioqui iace errores.efformatio_falsa;
+							} alioqui si (_data[_positus] >= nint16(' ')) {
+								ll << _data[_positus]; _positus++;
+							} alioqui iace errores.efformatio_falsa;
+						}
+						_verbum_l = linea(ll.data, ll.longitudo, linea.codex.utf16);
+						responde;
+					} alioqui si (_data[_positus] == nint16('-') || (_data[_positus] >= nint16('0') && _data[_positus] <= nint16('9'))) {
+						logicum negativus = _data[_positus] == nint16('-');
+						si (negativus) _positus++;
+						int s = _positus;
+						dum (_positus < _data.longitudo && ((_data[_positus] >= nint16('0') && _data[_positus] <= nint16('9')) ||
+							_data[_positus] == nint16('.') || _data[_positus] == nint16('+') || _data[_positus] == nint16('-') ||
+							_data[_positus] == nint16('e') || _data[_positus] == nint16('E'))) _positus++;
+						var lit = linea(@_data[s], _positus - s, linea.codex.utf16);
+						si (lit.reperi_primum(".") >= 0 || lit.reperi_primum("e") >= 0 || lit.reperi_primum("E") >= 0) {
+							_genus_verbi = 4;
+							var e = lit.reperi_primum("e");
+							var E = lit.reperi_primum("E");
+							si ((e >= 0) == (E >= 0)) iace errores.efformatio_falsa;
+							int exp;
+							si (E >= 0) e = E;
+							si (e >= 0) {
+								si (lit[e + 1] == char('+')) exp = lit.fragmentum(e + 2, -1).ad_int32();
+								alioqui si (lit[e + 1] == char('-')) exp = -lit.fragmentum(e + 2, -1).ad_int32();
+								alioqui exp = lit.fragmentum(e + 1, -1).ad_int32();
+							} alioqui exp = 0;
+							dfrac valor = lit.fragmentum(0, e).ad_dfrac();
+							si (negativus) valor = -valor;
+							dum (exp > 0) { valor *= 10.0; exp--; }
+							dum (exp < 0) { valor /= 10.0; exp++; }
+							_verbum_f = valor;
+						} alioqui {
+							_verbum_n = lit.ad_nint64();
+							si (negativus) {
+								_genus_verbi = 3;
+								si (_verbum_n > 0x8000000000000000) iace errores.efformatio_falsa;
+								_verbum_i = -_verbum_n;
+							} alioqui _genus_verbi = 2;
+						}
+						responde;
+					} alioqui {
+						_genus_verbi = 0;
+						_verbum_l = linea(@_data[_positus], 1, linea.codex.utf16);
+						_positus++;
+						responde;
+					}
+				}
+			}
+			functio nihil _deserializa_valorem(@reflexor_deserializandi stor) iacit {
+				si (_genus_verbi == 0 && _verbum_l == "{") {
+					stor^.exordi_serializandum_structurae();
+					_lege_verbum();
+					dum (sic) {
+						si (_genus_verbi == 1) {
+							stor^.da_nomen_valori(_verbum_l);
+							_lege_verbum();
+							si (_genus_verbi != 0 || _verbum_l != ":") iace errores.efformatio_falsa;
+							_lege_verbum();
+							_deserializa_valorem(stor);
+							si (_genus_verbi == 0 && _verbum_l == ",") _lege_verbum();
+							alioqui si (_genus_verbi != 0 || _verbum_l != "}") iace errores.efformatio_falsa;
+						} alioqui si (_genus_verbi == 0 && _verbum_l == "}") {
+							_lege_verbum(); exi;
+						} alioqui iace errores.efformatio_falsa;
+					}
+					stor^.ende_serializandum_structurae();
+				} alioqui si (_genus_verbi == 0 && _verbum_l == "[") {
+					stor^.exordi_serializandum_ordinis();
+					_lege_verbum();
+					dum (sic) {
+						si (_genus_verbi == 0 && _verbum_l == "]") {
+							_lege_verbum(); exi;
+						} alioqui {
+							_deserializa_valorem(stor);
+							si (_genus_verbi == 0 && _verbum_l == ",") _lege_verbum();
+							alioqui si (_genus_verbi != 0 || _verbum_l != "]") iace errores.efformatio_falsa;
+						}
+					}
+					stor^.ende_serializandum_ordinis();
+				} alioqui si (_genus_verbi == 1) {
+					stor^.serializa(@_verbum_l, 1);
+					_lege_verbum();
+				} alioqui si (_genus_verbi == 2) {
+					si (_verbum_n < nint64(0x80000000)) stor^.serializa((@int32)(@_verbum_n), 1);
+					alioqui si (_verbum_n < nint64(0x100000000)) stor^.serializa((@nint32)(@_verbum_n), 1);
+					alioqui si (_verbum_n < nint64(0x8000000000000000)) stor^.serializa((@int64)(@_verbum_n), 1);
+					alioqui stor^.serializa(@_verbum_n, 1);
+					_lege_verbum();
+				} alioqui si (_genus_verbi == 3) {
+					si (_verbum_n <= nint64(0x80000000)) stor^.serializa((@int32)(@_verbum_i), 1);
+					alioqui stor^.serializa(@_verbum_i, 1);
+					_lege_verbum();
+				} alioqui si (_genus_verbi == 4) {
+					stor^.serializa(@_verbum_f, 1);
+					_lege_verbum();
+				} alioqui si (_genus_verbi == 5 && _verbum_l == "null") {
+					stor^.serializa_nullum();
+					_lege_verbum();
+				} alioqui si (_genus_verbi == 5 && _verbum_l == "true") {
+					stor^.serializa(@sic, 1);
+					_lege_verbum();
+				} alioqui si (_genus_verbi == 5 && _verbum_l == "false") {
+					stor^.serializa(@non, 1);
+					_lege_verbum();
+				} alioqui iace errores.efformatio_falsa;
+			}
+			functio nihil deserializa(@reflexor_deserializandi stor) iacit redefini {
+				_positus = 0;
+				_genus_verbi = -1;
+				_verbum_l = "";
+				_verbum_n = _verbum_i = 0;
+				_verbum_f = 0.0;
+				_lege_verbum();
+				stor^.exordi_serializandum_communaliter();
+				_deserializa_valorem(stor);
+				stor^.ende_serializandum_communaliter();
+				si (_genus_verbi != 0 || _verbum_l != "") iace errores.efformatio_falsa;
+			}
+		}
+	}
+}
