@@ -36,5 +36,6 @@ namespace Engine
 		DynamicObject * CreateWindowContext(Windows::I2DPresentationEngine * pres);
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context);
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context, DynamicObject * supercontext);
+		Graphics::IDevice * GetWrappedDevice(Object * wrapper);
 	}
 }

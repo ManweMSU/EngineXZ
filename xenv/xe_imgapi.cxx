@@ -621,6 +621,7 @@ namespace Engine
 					return new XWindowSurface(layer, this);
 				} catch (...) { return 0; }
 			}
+			Graphics::IDevice * GetDevice(void) noexcept { return _device; }
 		};
 		class X2DContext : public DynamicObject
 		{
@@ -1195,5 +1196,6 @@ namespace Engine
 		DynamicObject * CreateWindowContext(Windows::I2DPresentationEngine * pres) { return new XWindowContext(pres); }
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context) { return new X2DContext(context); }
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context, DynamicObject * supercontext) { return new X2DContext(context, supercontext); }
+		Graphics::IDevice * GetWrappedDevice(Object * wrapper) { return static_cast<XDevice *>(wrapper)->GetDevice(); }
 	}
 }

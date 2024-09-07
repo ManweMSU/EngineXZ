@@ -23,7 +23,7 @@ functio nihil genera(~ordo informatio inf, ~linea praev, int primus, int long, ~
 		cdx.scribe_lineam(praev + "} else {");
 		genera(inf, praev + "    ", med, primus + long - med, cdx);
 		cdx.scribe_lineam(praev + "}");
-	} alioqui {
+	} alioqui si (long == 1) {
 		cdx.scribe_lineam(praev + "if (string::Compare(routine_name, L\"" + inf[med].nomen + "\") == 0) return reinterpret_cast<const void *>(&" + inf[med].func + ");");
 	}
 }
@@ -40,7 +40,6 @@ functio nihil primus() introitus iacit
 	pro (var i : lineae) {
 		si (lineae[i].reperi_primum("ExposeRoutine") >= 0) ini = i;
 		alioqui si (lineae[i].reperi_primum("ExposeInterface") >= 0) fin = i;
-		si (ini >= 0 && fin >= 0) exi;
 	}
 	si (ini < 0 || fin < 0) iace errores.efformatio_falsa;
 	ordo linea selecti;

@@ -47,11 +47,13 @@ BETA-5:
  + Printing and PDF API
 
 BETA-6:
- - Multimedia API
+ + Multimedia API
  + Serialization API: XESL, ECSO, JSON
  + Communication and Serialization: RPC
- - Communication API-2 (Shared Memory; HTTP Client and Server; ECF)
- - Stream Transforms: Cryptography and Compression
+ + Communication API: Shared Memory
+ - Communication API: HTTP Client
+ - Communication API: HTTP Server
+ + Cryptography API
 
 OTHER RELEASES:
  - GUI and CUI libraries

@@ -13,6 +13,9 @@
 #include "../xenv/xe_wndapi.h"
 #include "../xenv/xe_tpgrph.h"
 #include "../xenv/xe_netapi.h"
+#include "../xenv/xe_crypto.h"
+#include "../xenv/xe_commem.h"
+#include "../xenv/xe_mm.h"
 
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
@@ -1053,6 +1056,9 @@ namespace Engine
 				XE::ActivateWindowsIO(*loader);
 				XE::ActivateTypographyIO(*loader);
 				XE::ActivateNetworkAPI(*loader);
+				XE::ActivateCryptography(*loader);
+				XE::ActivateSharedMemory(*loader);
+				XE::ActivateMultimedia(*loader);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;
 				if (environment_configuration.locale_override.Length()) Assembly::CurrentLocale = environment_configuration.locale_override;
