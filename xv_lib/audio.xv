@@ -1,0 +1,145 @@
+﻿importa media;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Auditorum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium audio {
+	spatium codex {
+		constatus WAV	= "WAV";
+		constatus MP3	= "MP3";
+		constatus AAC	= "AAC";
+		constatus FLAC	= "FLAC";
+		constatus ALAC	= "ALAC";
+	}
+	enumeratio formatus hereditat nint {
+		falsus = 0,
+		P8_norm = 0x00030008, P16_norm = 0x00030010, P24_norm = 0x00030018, P32_norm = 0x00030020,
+		P8_snorm = 0x00010008, P16_snorm = 0x00010010, P24_snorm = 0x00010018, P32_snorm = 0x00010020,
+		P32_frac = 0x00020020, P64_frac = 0x00020040
+	}
+	enumeratio dispositio_canalium hereditat nint {
+		sinistrum = 0x00001, dextrum = 0x00002, centratum = 0x00004,
+		subfrequens = 0x00008,
+		sinistrum_dorsuale = 0x00010, dextrum_dorsuale = 0x00020,
+		sinistrum_princeps = 0x00040, dextrum_princeps = 0x00080,
+		centratum_dorsuale = 0x00100,
+		sinistrum_laterale = 0x00200, dextrum_laterale = 0x00400,
+		centratum_superum = 0x00800,
+		sinistrum_dorsuale_superum = 0x01000, centratum_dorsuale_superum = 0x02000, dextrum_dorsuale_superum = 0x04000,
+		sinistrum_princeps_superum = 0x08000, centratum_princeps_superum = 0x10000, dextrum_princeps_superum = 0x20000
+	}
+	enumeratio eventum hereditat nint { activa_est = 0, inactiva_est = 1, defalta_mutata_est = 2 }
+	enumeratio genus_machinationis hereditat nint { ignotus = 0, expositio = 1, inpositio = 2 }
+	structura descriptio {
+		formatus formatus;
+		nint numerus_canalium;
+		nint ratio_replorum;
+	}
+	genus descriptio_portionis hereditat media.descriptio_portionis {
+		[[importa] "mm_audp"] classis functio !descriptio_portionis alloca(~linea cdx, ~descriptio desc, nint dispcan) iacit;
+		descriptio descriptio { adipisce virtualis pura; }
+		nint dispositio_canalium { adipisce virtualis pura; }
+	}
+	genus fluctus hereditat objectum {
+		[[importa] "mm_aucf"] classis functio !fluctus alloca(~descriptio desc, nint64 numerus_replorum) iacit;
+
+		functio !fluctus cloniza() iacit virtualis pura;
+		functio !fluctus converte_formatum(formatus novus) iacit virtualis pura;
+		functio nihil converte_formatum(formatus novus, @fluctus ad) iacit virtualis pura;
+		functio !fluctus converte_rationem_replorum(nint rps) iacit virtualis pura;
+		functio nihil converte_rationem_replorum(nint rps, @fluctus ad) iacit virtualis pura;
+		functio !fluctus remisce_canalia(nint numerus, @dfrac matrix) iacit virtualis pura;
+		functio nihil remisce_canalia(nint numerus, @dfrac matrix, @fluctus ad) iacit virtualis pura;
+		functio !fluctus permuta_canalia(nint numerus, @int index) iacit virtualis pura;
+		functio nihil permuta_canalia(nint numerus, @int index, @fluctus ad) iacit virtualis pura;
+		functio !fluctus realloca_canalia(nint numerus) iacit virtualis pura;
+		functio nihil realloca_canalia(nint numerus, @fluctus ad) iacit virtualis pura;
+
+		descriptio descriptio { adipisce virtualis pura; }
+		nint64 numerus_replorum { adipisce virtualis pura; }
+		nint64 repla_usa { adipisce virtualis pura; loca virtualis pura; }
+		nint64 longitudo { adipisce virtualis pura; }
+		nint64 longitudo_usa { adipisce virtualis pura; }
+		@nihil data { adipisce virtualis pura; }
+		nint ratio_replorum { adipisce virtualis pura; loca virtualis pura; }
+
+		functio int lege_integrum(nint64 index, nint canale) virtualis pura;
+		functio dfrac lege_fractionem(nint64 index, nint canale) virtualis pura;
+		functio nihil scribe(nint64 index, nint canale, int indivisio) virtualis pura;
+		functio nihil scribe(nint64 index, nint canale, dfrac indivisio) virtualis pura;
+	}
+
+	genus objectum_auditum hereditat objectum {
+		descriptio descriptio { adipisce virtualis pura; }
+		nint dispositio_canalium { adipisce virtualis pura; }
+	}
+	genus sessio hereditat objectum_auditum {
+		linea codex { adipisce iacit virtualis pura; }
+		descriptio descriptio_nativa { adipisce virtualis pura; }
+		functio logicum remitte() virtualis pura;
+		int numerus_talearum { adipisce virtualis pura; }
+		int numerus_replorum { adipisce virtualis pura; }
+		
+		functio logicum scribe_taleam(~media.talea_portionis tl) virtualis pura;
+		functio logicum lege_taleam(~media.talea_portionis tl) virtualis pura;
+		functio logicum scribe_fluctum(@fluctus fl) virtualis pura;
+		functio logicum scribe_fluctum() virtualis pura;
+		functio logicum lege_fluctum(@fluctus fl) virtualis pura;
+
+		!descriptio_portionis descriptio_portionis { adipisce iacit virtualis pura; }
+	}
+	genus flumen hereditat objectum_auditum {
+		linea codex { adipisce iacit virtualis pura; }
+		descriptio descriptio_nativa { adipisce virtualis pura; }
+		nint64 duratio { adipisce iacit virtualis pura; }
+		nint64 positus { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		!media.portio portio { adipisce iacit virtualis pura; }
+
+		functio logicum scribe_fluctum(@fluctus fl) virtualis pura;
+		functio logicum scribe_fluctum() virtualis pura;
+		functio logicum lege_fluctum(@fluctus fl) virtualis pura;
+	}
+
+	[[importa] "mm_audc"] functio !sessio decodifica(@media.descriptio_portionis desc, @descriptio exposita) iacit;
+	[[importa] "mm_aucd"] functio !sessio codifica(~linea cdx, ~descriptio desc, nint num_opt, @nint optiones) iacit;
+
+	[[importa] "mm_aufd1"] functio !flumen crea_flumenum_decodificandi(@media.portio portio, @descriptio exposita) iacit;
+	[[importa] "mm_aufd2"] functio !flumen crea_flumenum_decodificandi(@media.continens cont, @descriptio exposita) iacit;
+	[[importa] "mm_aufd3"] functio !flumen crea_flumenum_decodificandi(@.flumen fl, @descriptio exposita) iacit;
+	[[importa] "mm_aufc1"] functio !flumen crea_flumenum_codificandi(@media.continens cont, ~linea cdx, ~descriptio desc, nint num_opt, @nint optiones) iacit;
+	[[importa] "mm_aufc2"] functio !flumen crea_flumenum_codificandi(@.flumen fl, ~linea cdx_md, ~linea cdx, ~descriptio desc, nint num_opt, @nint optiones) iacit;
+
+	protocollum responsor {
+		functio nihil procede_eventum_auditum(eventum eventum, genus_machinationis mach, ~linea ind) virtualis pura;
+	}
+	genus machinatio hereditat objectum_auditum {
+		linea indentitas { adipisce iacit virtualis pura; }
+		dfrac postestas { adipisce virtualis pura; loca virtualis pura; }
+		functio logicum age() virtualis pura;
+		functio logicum pausa() virtualis pura;
+		functio logicum ende() virtualis pura;
+	}
+	genus machinatio_exponendi hereditat machinatio {
+		functio logicum scribe(@fluctus fl, @logicum status, @contextus.labos lab) virtualis pura;
+	}
+	genus machinatio_inponendi hereditat machinatio {
+		functio logicum lege(@fluctus fl, @logicum status, @contextus.labos lab) virtualis pura;
+	}
+	genus fabricatio hereditat objectum {
+		!ordo (linea, linea) machinationes_exponendi { adipisce iacit virtualis pura; }
+		!ordo (linea, linea) machinationes_inponendi { adipisce iacit virtualis pura; }
+		functio !machinatio_exponendi crea_machinationem_exponendi(~linea nomen) virtualis pura;
+		functio !machinatio_exponendi crea_machinationem_exponendi_defaltam() virtualis pura;
+		functio !machinatio_inponendi crea_machinationem_inponendi(~linea nomen) virtualis pura;
+		functio !machinatio_inponendi crea_machinationem_inponendi_defaltam() virtualis pura;
+		functio logicum adde_responsorem(@responsor resp) virtualis pura;
+		functio logicum remove_responsorem(@responsor resp) virtualis pura;
+	}
+
+	[[importa] "mm_aucfb"] functio !fabricatio crea_fabricationem() iacit;
+	[[importa] "mm_aurud"] functio nihil rude();
+}

@@ -1,0 +1,181 @@
+﻿importa imago;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Mediorum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium media {
+	spatium codex {
+		constatus MP3	= "MP3";
+		constatus MPEG4	= "MPEG4";
+		constatus FLAC	= "FLAC";
+		constatus RIFF	= "RIFF/WAV";
+	}
+	genus meta hereditat objectum {
+		enumeratio clavis hereditat nint {
+			titulus = 0x00010000, album = 0x00010001, artifex = 0x00010002, artifex_albi = 0x00010003,
+			annus = 0x00010004, genera = 0x00010005, compositor = 0x00010006, codificator = 0x00010007,
+			iura_exempli = 0x00010008, descriptio = 0x00010009, publicator = 0x0001000A,
+			annotatio = 0x00020000, lyra = 0x00020001,
+			numerus_acti = 0x00030000, numerus_actorum = 0x00030001, numerus_disci = 0x00030002, numerus_discorum = 0x00030003,
+			pulsus_per_minuta = 0x00030004, index_generis = 0x00030005,
+			operimentum = 0x00040000
+		}
+
+		[[importa] "mm_mdcr"] classis functio !meta alloca() iacit;
+
+		!ordo clavis claves { adipisce iacit virtualis pura; }
+		functio linea lege_lineam(clavis cl) iacit virtualis pura;
+		functio nint lege_integrum(clavis cl) iacit virtualis pura;
+		functio !dordo_datorum lege_imaginem(clavis cl) iacit virtualis pura;
+
+		functio nihil scribe_lineam(clavis cl, ~linea ln) iacit virtualis pura;
+		functio nihil scribe_integrum(clavis cl, nint vl) iacit virtualis pura;
+		functio nihil scribe_imaginem(clavis cl, @dordo_datorum dt, ~linea cd) iacit virtualis pura;
+
+		functio nihil remove(clavis cl) virtualis pura;
+		functio nihil depura() virtualis pura;
+		functio !meta cloniza() iacit virtualis pura;
+	}
+
+	enumeratio optio_codicis hereditat nint {
+		dispositio_canalium = 0x0001,
+		data_suggesta_per_secunda = 0x0002,
+		repla_per_talea = 0x0003,
+		modus_aac = 0x0004,
+		modus_h264 = 0x0005,
+		periodus_replorum_gravium_maximus = 0x0006
+	}
+	enumeratio modus_aac hereditat nint {
+		AAC_L2 = 0x29,
+		AAC_L4 = 0x2A,
+		AAC_L5 = 0x2B,
+		V1_HE_AAC_L2 = 0x2C,
+		V1_HE_AAC_L4 = 0x2E,
+		V1_HE_AAC_L5 = 0x2F,
+		V2_HE_AAC_L2 = 0x30,
+		V2_HE_AAC_L3 = 0x31,
+		V2_HE_AAC_L4 = 0x32,
+		V2_HE_AAC_L5 = 0x33
+	}
+	enumeratio modus_h264 hereditat nint { basis = 0x0001, princeps = 0x0002, altus = 0x0003 }
+	enumeratio genus_portionis hereditat nint { ignotus = 0, audio = 1, video = 2, subscriptiones = 3 }
+
+	genus descriptio_portionis hereditat objectum_dynamicum {
+		genus_portionis genus_portionis { adipisce virtualis pura; }
+		linea nomen_codicis { adipisce iacit virtualis pura; }
+		!dordo_datorum data_interna { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		functio !descriptio_portionis cloniza() iacit virtualis pura;
+	}
+	structura talea_portionis {
+		nint64 tempus_decodificandi;
+		nint64 tempus_exhibitionis;
+		nint64 duratio;
+		!dordo_datorum data;
+		int longitudo;
+		logicum gravis_est;
+	}
+
+	genus portio hereditat objectum {
+		genus_portionis genus_portionis { adipisce virtualis pura; }
+		!descriptio_portionis descriptio_portionis { adipisce iacit virtualis pura; }
+		linea nomen { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		linea lingua { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		logicum visibilis { adipisce virtualis pura; loca iacit virtualis pura; }
+		logicum automatica { adipisce virtualis pura; loca iacit virtualis pura; }
+		int grupus { adipisce virtualis pura; loca iacit virtualis pura; }
+
+		nint64 scala { adipisce iacit virtualis pura; }
+		nint64 duratio { adipisce iacit virtualis pura; }
+		nint64 positus { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		nint64 numerus_taleae { adipisce iacit virtualis pura; }
+		nint64 numerus_talearum { adipisce iacit virtualis pura; }
+		functio logicum lege_taleam(~talea_portionis tp) virtualis pura;
+
+		functio logicum scribe_taleam(~talea_portionis tp) virtualis pura;
+		functio logicum rescribe_data_interna(@dordo_datorum data) virtualis pura;
+		functio logicum ende() virtualis pura;
+		logicum terminalis { adipisce virtualis pura; }
+	}
+	genus continens hereditat objectum {
+		!meta meta { adipisce iacit virtualis pura; }
+		int numerus_portionum { adipisce virtualis pura; }
+		functio !media.portio portio(int index) iacit virtualis pura;
+
+		nint64 duratio { adipisce iacit virtualis pura; }
+		functio logicum rescribe_metam(@media.meta mt) virtualis pura;
+		functio logicum rescribe_metam(@media.meta mt, @flumen dest) virtualis pura;
+
+		functio !media.portio crea_portionem(@descriptio_portionis desc) iacit virtualis pura;
+		functio logicum ende() virtualis pura;
+		logicum automatica { adipisce virtualis pura; loca iacit virtualis pura; }
+	}
+
+	[[importa] "mm_mmap"] functio !continens aperi_continentem(@flumen fl) iacit;
+	[[importa] "mm_mmcr"] functio !continens crea_continentem(@flumen fl, ~linea cdx) iacit;
+}
+spatium subscriptiones {
+	spatium codex {
+		constatus TT3GPP	= "3GTX";
+	}
+	enumeratio modus hereditat nint {
+		regularis = 0x0000,
+		coactivus = 0x0001,
+		omnia_coactiva = 0x0002,
+		permitte_involvere = 0x0004
+	}
+	structura descriptio {
+		nint scala;
+		nint modus;
+	}
+	structura indivisio {
+		linea scriptio;
+		nint modus;
+		nint scala;
+		nint exhibe;
+		nint duratio;
+	}
+	genus descriptio_portionis hereditat media.descriptio_portionis {
+		[[importa] "mm_ssdp"] classis functio !descriptio_portionis alloca(~linea cdx, ~descriptio desc) iacit;
+		descriptio descriptio { adipisce virtualis pura; }
+	}
+
+	genus sessio hereditat objectum {
+		descriptio descriptio { adipisce virtualis pura; }
+		linea codex { adipisce iacit virtualis pura; }
+		functio logicum remitte() virtualis pura;
+		int numerus_talearum { adipisce virtualis pura; }
+		int numerus_indivisionum { adipisce virtualis pura; }
+		
+		functio logicum scribe_taleam(~media.talea_portionis tl) virtualis pura;
+		functio logicum lege_taleam(~media.talea_portionis tl) virtualis pura;
+		functio logicum scribe_indivisionem(~indivisio ind) virtualis pura;
+		functio logicum scribe_indivisionem() virtualis pura;
+		functio logicum lege_indivisionem(~indivisio ind) virtualis pura;
+
+		!descriptio_portionis descriptio_portionis { adipisce iacit virtualis pura; }
+	}
+	genus flumen hereditat objectum {
+		descriptio descriptio { adipisce virtualis pura; }
+		linea codex { adipisce iacit virtualis pura; }
+		nint64 duratio { adipisce iacit virtualis pura; }
+		nint64 positus { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		!media.portio portio { adipisce iacit virtualis pura; }
+
+		functio logicum scribe_indivisionem(~indivisio ind) virtualis pura;
+		functio logicum scribe_indivisionem() virtualis pura;
+		functio logicum lege_indivisionem(~indivisio ind) virtualis pura;
+	}
+
+	[[importa] "mm_ssdc"] functio !sessio decodifica(@media.descriptio_portionis desc) iacit;
+	[[importa] "mm_sscd"] functio !sessio codifica(~linea cdx, ~descriptio desc) iacit;
+
+	[[importa] "mm_ssfd1"] functio !flumen crea_flumenum_decodificandi(@media.portio portio) iacit;
+	[[importa] "mm_ssfd2"] functio !flumen crea_flumenum_decodificandi(@media.continens cont) iacit;
+	[[importa] "mm_ssfd3"] functio !flumen crea_flumenum_decodificandi(@.flumen fl) iacit;
+	[[importa] "mm_ssfc1"] functio !flumen crea_flumenum_codificandi(@media.continens cont, ~linea cdx, ~descriptio desc) iacit;
+	[[importa] "mm_ssfc2"] functio !flumen crea_flumenum_codificandi(@.flumen fl, ~linea cdx_md, ~linea cdx, ~descriptio desc) iacit;
+}

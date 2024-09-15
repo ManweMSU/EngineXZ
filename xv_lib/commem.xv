@@ -1,0 +1,19 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Memoriae Communalis";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium memoria {
+	genus communalis hereditat objectum {
+		[[importa] "commem"] classis functio !communalis alloca(~linea nomen, nint longitudo, logicum crea_novam) iacit;
+
+		linea nomen { adipisce iacit virtualis pura; }
+		nint longitudo { adipisce virtualis pura; }
+		functio logicum designa(@@nihil adloquium, logicum permitte_legere, logicum permitte_scribere) virtualis pura;
+		functio nihil remitte() virtualis pura;
+	}
+}

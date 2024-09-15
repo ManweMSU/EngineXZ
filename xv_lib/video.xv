@@ -1,0 +1,109 @@
+﻿importa media;
+importa graphicum;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Visorum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium video {
+	spatium codex {
+		constatus RGB	= "RGB";
+		constatus H264	= "H264";
+	}
+	structura descriptio {
+		nint latitudo;
+		nint altitudo;
+		nint tempus_exhibitionis;
+		nint duratio;
+		nint scala;
+		@graphicum.machinatio machinatio;
+	}
+	genus descriptio_portionis hereditat media.descriptio_portionis {
+		[[importa] "mm_vidp"] classis functio !descriptio_portionis alloca(~linea cdx, ~descriptio desc, nint ind_lat, int ind_alt) iacit;
+		descriptio descriptio { adipisce virtualis pura; }
+		nint latitudo_punctorum { adipisce virtualis pura; }
+		nint altitudo_punctorum { adipisce virtualis pura; }
+	}
+
+	genus objectum_visum hereditat objectum {
+		descriptio descriptio { adipisce virtualis pura; }
+		nintadl _formatus { adipisce virtualis pura; }
+	}
+	genus replum hereditat objectum_visum {
+		nint tempus_exhibitionis { adipisce virtualis pura; loca virtualis pura; }
+		nint duratio { adipisce virtualis pura; loca virtualis pura; }
+		nint scala { adipisce virtualis pura; loca virtualis pura; }
+		!imago.replum data { adipisce iacit virtualis pura; }
+	}
+	genus translator hereditat objectum {
+		functio logicum pone_formatum_inponendi(@objectum_visum obj) virtualis pura;
+		functio logicum pone_formatum_inponendi(graphicum.formatus_puncti fmt, imago.modus_alpha alpha, ~descriptio desc) virtualis pura;
+		functio logicum pone_formatum_exponendi(@objectum_visum obj) virtualis pura;
+		functio logicum pone_formatum_exponendi(graphicum.formatus_puncti fmt, imago.modus_alpha alpha, ~descriptio desc) virtualis pura;
+		functio logicum remitte() virtualis pura;
+		logicum activus { adipisce virtualis pura; }
+		functio logicum procede(@replum ad, @graphicum.textura ex, ~(int, int) subaux) virtualis pura;
+		functio logicum procede(@graphicum.textura ad, @replum ex, ~(int, int) subaux) virtualis pura;
+	}
+
+	genus sessio hereditat objectum_visum {
+		linea codex { adipisce iacit virtualis pura; }
+		functio logicum remitte() virtualis pura;
+		logicum exponens { adipisce virtualis pura; }
+		
+		functio logicum scribe_taleam(~media.talea_portionis tl) virtualis pura;
+		functio logicum lege_taleam(~media.talea_portionis tl) virtualis pura;
+		functio logicum scribe_replum(@replum rpl, logicum gravis) virtualis pura;
+		functio logicum scribe_replum() virtualis pura;
+		functio logicum lege_replum(~!replum rpl) virtualis pura;
+
+		!descriptio_portionis descriptio_portionis { adipisce iacit virtualis pura; }
+	}
+	genus flumen hereditat objectum_visum {
+		linea codex { adipisce iacit virtualis pura; }
+		nint64 duratio { adipisce iacit virtualis pura; }
+		nint64 positus { adipisce iacit virtualis pura; loca iacit virtualis pura; }
+		nint64 scala { adipisce iacit virtualis pura; }
+		!media.portio portio { adipisce iacit virtualis pura; }
+
+		functio logicum scribe_replum(@replum rpl, logicum gravis) virtualis pura;
+		functio logicum scribe_replum() virtualis pura;
+		functio logicum lege_replum(~!replum rpl) virtualis pura;
+	}
+
+	[[importa] "mm_vidc"] functio !sessio decodifica(@media.descriptio_portionis desc, @graphicum.machinatio machinatio) iacit;
+	[[importa] "mm_vicd"] functio !sessio codifica(~linea cdx, ~descriptio desc, nint num_opt, @nint optiones) iacit;
+
+	[[importa] "mm_vifd1"] functio !flumen crea_flumenum_decodificandi(@media.portio portio, @graphicum.machinatio machinatio) iacit;
+	[[importa] "mm_vifd2"] functio !flumen crea_flumenum_decodificandi(@media.continens cont, @graphicum.machinatio machinatio) iacit;
+	[[importa] "mm_vifd3"] functio !flumen crea_flumenum_decodificandi(@.flumen fl, @graphicum.machinatio machinatio) iacit;
+	[[importa] "mm_vifc1"] functio !flumen crea_flumenum_codificandi(@media.continens cont, ~linea cdx, ~descriptio desc, nint num_opt, @nint optiones) iacit;
+	[[importa] "mm_vifc2"] functio !flumen crea_flumenum_codificandi(@.flumen fl, ~linea cdx_md, ~linea cdx, ~descriptio desc, nint num_opt, @nint optiones) iacit;
+
+	genus machinatio hereditat objectum_visum {
+		linea indentitas { adipisce iacit virtualis pura; }
+		!ordo descriptio formati { adipisce iacit virtualis pura; }
+		functio logicum pone_formatum(~descriptio desc) virtualis pura;
+		functio logicum para_rationes(@nint num_min, @nint den_min, @nint num_max, @nint den_max) virtualis pura;
+		functio logicum pone_rationem(nint num, nint den) virtualis pura;
+		functio logicum exordi() virtualis pura;
+		functio logicum age() virtualis pura;
+		functio logicum pausa() virtualis pura;
+		functio logicum ende() virtualis pura;
+		functio logicum lege(@!replum rpl, @logicum status, @contextus.labos lab) virtualis pura;
+	}
+	genus fabricatio hereditat objectum {
+		!ordo (linea, linea) machinationes { adipisce iacit virtualis pura; }
+		functio !machinatio crea_machinationem(~linea nomen, @graphicum.machinatio machinatio) virtualis pura;
+		functio !machinatio crea_machinationem_defaltam(@graphicum.machinatio machinatio) virtualis pura;
+		functio !machinatio crea_machinationem_culicaris(@graphicum.objectum_visificum cul, @graphicum.machinatio machinatio) virtualis pura;
+		functio !replum crea_replum(@imago.replum rpl, @graphicum.machinatio machinatio) virtualis pura;
+		functio !replum crea_replum(graphicum.formatus_puncti fmt, imago.modus_alpha alpha, ~descriptio desc) virtualis pura;
+		functio !translator crea_translatorem() virtualis pura;
+	}
+
+	[[importa] "mm_vicfb"] functio !fabricatio crea_fabricationem() iacit;
+}

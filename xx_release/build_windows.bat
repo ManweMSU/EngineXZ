@@ -56,6 +56,11 @@ xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\xesl.xo           
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\json.xo           -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\json.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\ecso.xo           -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\ecso.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\ifr.xo            -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\ifr.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\commem.xo         -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\commem.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\cryptographia.xo  -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\cryptographia.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\media.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\media.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\audio.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\audio.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\video.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\video.xo
 
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.ru.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.ru.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.en.xo     -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.en.xo

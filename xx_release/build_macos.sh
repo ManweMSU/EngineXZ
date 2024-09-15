@@ -53,6 +53,11 @@ xx shellex_macos/patch.xx xx_release/_build/macosx_${ARCH}/XX.app/XX.app
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/json.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/json.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/ecso.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/ecso.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/ifr.xo           -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/ifr.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/commem.xo        -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/commem.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/cryptographia.xo -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/cryptographia.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/media.xo         -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/media.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/audio.xo         -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/audio.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/video.xo         -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/video.xo
 
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.ru.xo    -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/errores.ru.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.en.xo    -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/errores.en.xo

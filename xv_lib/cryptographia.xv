@@ -1,0 +1,32 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Cryptographiae";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2024";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium cryptographia {
+	enumeratio modus_cifrandi { librosus = 0, affigens = 1 }
+	enumeratio digestum { MD5 = 0, SHA1 = 1, SHA256 = 2, SHA384 = 3, SHA512 = 4 }
+	enumeratio sifrator { AES = 0 }
+
+	structura descriptio_sifrandi {
+		@nihil data_clavis;
+		int longitudo_clavis;
+		modus_cifrandi modus;
+		sifrator sifrator;
+	}
+	genus clavis hereditat objectum {
+		functio !dordo_datorum sifra(@nihil data, int longitudo, @nihil vi, int lvi) iacit virtualis pura;
+		functio !dordo_datorum desifra(@nihil data, int longitudo, @nihil vi, int lvi) iacit virtualis pura;
+		functio !dordo_datorum sifra(@dordo_datorum data, @nihil vi, int lvi) iacit { responde sifra(data^.data, data^.longitudo, vi, lvi); }
+		functio !dordo_datorum desifra(@dordo_datorum data, @nihil vi, int lvi) iacit { responde desifra(data^.data, data^.longitudo, vi, lvi); }
+	}
+
+	[[importa] "cy_crcl"] functio !clavis crea_clavem(~descriptio_sifrandi desc) iacit;
+	[[importa] "cy_crdg"] functio !dordo_datorum crea_digestum(digestum dig, @nihil data, int longitudo) iacit;
+	[[importa] "cy_crcc"] functio !dordo_datorum crea_caeca(int longitudo) iacit;
+	functio !dordo_datorum crea_digestum(digestum dig, @dordo_datorum data) iacit { responde crea_digestum(dig, data^.data, data^.longitudo); }
+}
