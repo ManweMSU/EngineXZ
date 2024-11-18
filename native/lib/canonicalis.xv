@@ -49,6 +49,7 @@ spatium systema {
 		inf.systema_machinae = operans.windows;
 		si (func_para_mem != nullus) {
 			winapi.dynamice.invocator.GetPhysicallyInstalledSystemMemory(func_para_mem, @inf.numerus_memoriae);
+			inf.numerus_memoriae *= 0x400;
 		} alioqui {
 			winapi.MEMORYSTATUS stat;
 			winapi.GlobalMemoryStatus(stat);
