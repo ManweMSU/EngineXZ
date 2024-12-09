@@ -52,15 +52,15 @@ spatium remota {
 			var impl = repulsus.para_symbola(modulus(), repulsus.symbola.generis, attributa.exportatum);
 			ordo !repulsus.symbolum_generis impl_gen;
 			ordo !repulsus.symbolum_generis.methodus impl_ctor;
-			pro (var i : impl^) {
+			per (var i : impl^) {
 				!repulsus.symbolum_generis.methodus meth;
 				var gen = impl^[i] acsi (repulsus.symbolum_generis);
 				var methi = gen^.methodi();
-				pro (var j : methi^) si (methi^[j]^.nomen == "@crea:F(Cnihil)") { meth = methi^[j]; exi; }
+				per (var j : methi^) si (methi^[j]^.nomen == "@crea:F(Cnihil)") { meth = methi^[j]; exi; }
 				si (meth) { impl_gen << gen; impl_ctor << meth; }
 			}
 			var inv = repulsus.crea_invocatores(impl_ctor, impl_ctor.longitudo);
-			pro (var i : impl_ctor) {
+			per (var i : impl_ctor) {
 				var nomen = impl_gen[i]^.attributa^[attributa.exportatum];
 				si (!nomen.longitudo) nomen = impl_gen[i]^.nomen;
 				_exportata.adde(nomen, (impl_gen[i]^.longitudo, inv^[i]));
@@ -156,7 +156,7 @@ spatium remota {
 			nint64 num = ult != nullus ? ult^.valor.primus + 1 : 1;
 			si (!num) {
 				nint64 prist = 0;
-				pro (var e : _objecta) {
+				per (var e : _objecta) {
 					si (e^.valor.primus - prist > 1) { num = prist + 1; exi; }
 					prist = e^.valor.primus;
 				}

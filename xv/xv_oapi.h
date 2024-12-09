@@ -16,6 +16,7 @@ namespace Engine
 		XL::LObject * CreateFree(XL::LObject * object);
 		XL::LObject * CreateDestruct(XL::LObject * object);
 		XL::LObject * CreateDynamicCast(XL::LObject * object, XL::LObject * type_into);
+		XL::LObject * CreateBlockTransfer(XL::LContext & ctx);
 
 		XL::LObject * CreateDefinitionNamespace(XL::LContext & ctx, const Volumes::Dictionary<string, string> & dict);
 

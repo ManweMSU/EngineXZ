@@ -161,7 +161,7 @@ spatium imago {
 			si (repli.longitudo == 0) iace errores.habitus_falsus;
 			var vr = repli[0];
 			var err = math.abs(lat - repli[0]^.latitudo) + math.abs(alt - repli[0]^.altitudo);
-			pro (var i : repli) {
+			per (var i : repli) {
 				var err_loc = math.abs(lat - repli[i]^.latitudo) + math.abs(alt - repli[i]^.altitudo);
 				si (err_loc < err) { err = err_loc; vr = repli[i]; }
 			}
@@ -172,7 +172,7 @@ spatium imago {
 			si (repli.longitudo == 0) iace errores.habitus_falsus;
 			var vr = repli[0];
 			var err = math.abs(consc - repli[0]^.conscendens);
-			pro (var i : repli) {
+			per (var i : repli) {
 				var err_loc = math.abs(consc - repli[i]^.conscendens);
 				si (err_loc < err) { err = err_loc; vr = repli[i]; }
 			}
@@ -180,13 +180,13 @@ spatium imago {
 		}
 		functio adl[replum] operator [] (consuetudo cons) iacit
 		{
-			pro (var i : repli) si (repli[i]^.consuetudo == cons) responde repli[i];
+			per (var i : repli) si (repli[i]^.consuetudo == cons) responde repli[i];
 			iace errores.habitus_falsus;
 		}
 		convertor (linea) () iacit
 		{
 			linea res = "collectus : [\n";
-			pro (var i : repli) res += linea.ex(repli[i]^) + "\n";
+			per (var i : repli) res += linea.ex(repli[i]^) + "\n";
 			responde res + "]";
 		}
 	}

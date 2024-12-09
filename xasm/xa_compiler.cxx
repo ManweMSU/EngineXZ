@@ -162,12 +162,13 @@ namespace Engine
 				if (i == L"PTR_FOLLOW") ref.index = TransformFollowPointer;
 				else if (i == L"PTR_TAKE") ref.index = TransformTakePointer;
 				else if (i == L"OFFSET") ref.index = TransformAddressOffset;
-				else if (i == L"BLT") ref.index = TransformBlockTransfer;
+				else if (i == L"BLT") ref.index = TransformMove;
 				else if (i == L"CALL") ref.index = TransformInvoke;
 				else if (i == L"NEW") ref.index = TransformTemporary;
 				else if (i == L"BREAKIF") ref.index = TransformBreakIf;
 				else if (i == L"SPLIT") ref.index = TransformSplit;
 				else if (i == L"AADD") ref.index = TransformAtomicAdd;
+				else if (i == L"ABLT") ref.index = TransformAtomicSet;
 				// Logical
 				else if (i == L"ALL") ref.index = TransformLogicalAnd;
 				else if (i == L"ANY") ref.index = TransformLogicalOr;

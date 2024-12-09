@@ -731,7 +731,7 @@ namespace Engine
 						self = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformFollowPointer, XA::ReferenceFlagInvoke));
 						XA::TH::AddTreeInput(self, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, 0)), XA::TH::MakeSpec(0, 1));
 						XA::TH::AddTreeOutput(self, rspec);
-						vft = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+						vft = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke));
 						XA::TH::AddTreeInput(vft, self, rspec);
 						XA::TH::AddTreeInput(vft, call, rspec);
 						XA::TH::AddTreeOutput(vft, rspec);

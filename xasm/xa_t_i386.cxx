@@ -1621,7 +1621,7 @@ namespace Engine
 										disp->flags = DispositionDiscard;
 									}
 									encode_restore(base.reg, reg_in_use, disp->reg, !idle);
-								} else if (node.self.index == TransformBlockTransfer) {
+								} else if (node.self.index == TransformMove) {
 									if (node.inputs.Length() != 2) throw InvalidArgumentException();
 									uint size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
 									InternalDisposition dest_d, src_d;
@@ -1784,6 +1784,37 @@ namespace Engine
 											encode_lea(copy, Reg32::EBP, offset);
 										}
 									} else disp->flags = DispositionDiscard;
+								} else if (node.self.index == TransformAtomicSet) {
+									if (node.inputs.Length() != 2) throw InvalidArgumentException();
+									auto size = object_size(node.input_specs[0].size);
+									Reg ptr, value;
+									value = disp->reg;
+									if (value == Reg32::NO) value = Reg32::EAX;
+									ptr = (value == Reg32::EDI) ? Reg32::EBX : Reg32::EDI;
+									InternalDisposition a1, a2;
+									a1.flags = DispositionPointer;
+									a1.reg = ptr;
+									a1.size = a2.size = size;
+									a2.flags = DispositionRegister;
+									a2.reg = value;
+									encode_preserve(ptr, reg_in_use, 0, !idle);
+									_encode_tree_node(node.inputs[0], idle, mem_load, &a1, reg_in_use | ptr);
+									encode_preserve(value, reg_in_use | ptr, disp->reg, !idle);
+									_encode_tree_node(node.inputs[1], idle, mem_load, &a2, reg_in_use | ptr | value);
+									if (!idle) encode_xchg(size, ptr, value);
+									encode_restore(value, reg_in_use | ptr, disp->reg, !idle);
+									encode_restore(ptr, reg_in_use, 0, !idle);
+									if (disp->flags & DispositionRegister) {
+										disp->flags = DispositionRegister;
+									} else if (disp->flags & DispositionPointer) {
+										disp->flags = DispositionPointer;
+										*mem_load += word_align(node.input_specs[0].size);
+										if (!idle) {
+											int offset = allocate_temporary(node.input_specs[0].size);
+											encode_mov_mem_reg(size, Reg32::EBP, offset, value);
+											encode_lea(value, Reg32::EBP, offset);
+										}
+									} else disp->flags = DispositionDiscard;
 								} else throw InvalidArgumentException();
 							} else if (node.self.index >= 0x010 && node.self.index < 0x013) {
 								_encode_logics(node, idle, mem_load, disp, reg_in_use);
@@ -1791,6 +1822,10 @@ namespace Engine
 								_encode_arithmetics(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x080 && node.self.index < 0x100) {
 								_encode_floating_point(node, idle, mem_load, disp, reg_in_use);
+							} else if (node.self.index >= 0x100 && node.self.index < 0x180) {
+								throw InvalidArgumentException();
+								// for (uint i = 0; i < 16; i++) encode_preserve(1 << i, reg_in_use, 0, !idle);
+								// for (uint i = 16; i > 0; i--) encode_restore(1 << (i - 1), reg_in_use, 0, !idle);
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);

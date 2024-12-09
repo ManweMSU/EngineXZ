@@ -37,18 +37,18 @@ structura complex2x2 {
 	classis functio complex2x2 operator - (~complex2x2 a, ~complex2x2 b) { responde complex2x2(a[0] - b[0], a[1] - b[1]); }
 	classis functio complex2x2 operator * (~complex2x2 a, ~complex2x2 b) {
 		complex2x2 r;
-		pro (var i : [0, 1]) pro (var j : [0, 1]) {
+		per (var i : [0, 1]) per (var j : [0, 1]) {
 			complex A = 0.0;
-			pro (var k : [0, 1]) A += a[i, k] * b[k, j];
+			per (var k : [0, 1]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;
 	}
 	classis functio complex2 operator * (~complex2x2 a, ~complex2 b) {
 		complex2 r;
-		pro (var i : [0, 1]) {
+		per (var i : [0, 1]) {
 			complex A = 0.0;
-			pro (var k : [0, 1]) A += a[i, k] * b[k];
+			per (var k : [0, 1]) A += a[i, k] * b[k];
 			r[i] = A;
 		}
 		responde r;
@@ -105,18 +105,18 @@ structura complex3x3 {
 	classis functio complex3x3 operator - (~complex3x3 a, ~complex3x3 b) { responde complex3x3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
 	classis functio complex3x3 operator * (~complex3x3 a, ~complex3x3 b) {
 		complex3x3 r;
-		pro (var i : [0, 2]) pro (var j : [0, 2]) {
+		per (var i : [0, 2]) per (var j : [0, 2]) {
 			complex A = 0.0;
-			pro (var k : [0, 2]) A += a[i, k] * b[k, j];
+			per (var k : [0, 2]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;
 	}
 	classis functio complex3 operator * (~complex3x3 a, ~complex3 b) {
 		complex3 r;
-		pro (var i : [0, 2]) {
+		per (var i : [0, 2]) {
 			complex A = 0.0;
-			pro (var k : [0, 2]) A += a[i, k] * b[k];
+			per (var k : [0, 2]) A += a[i, k] * b[k];
 			r[i] = A;
 		}
 		responde r;
@@ -202,18 +202,18 @@ structura complex4x4 {
 	classis functio complex4x4 operator - (~complex4x4 a, ~complex4x4 b) { responde complex4x4(a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]); }
 	classis functio complex4x4 operator * (~complex4x4 a, ~complex4x4 b) {
 		complex4x4 r;
-		pro (var i : [0, 3]) pro (var j : [0, 3]) {
+		per (var i : [0, 3]) per (var j : [0, 3]) {
 			complex A = 0.0;
-			pro (var k : [0, 3]) A += a[i, k] * b[k, j];
+			per (var k : [0, 3]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;
 	}
 	classis functio complex4 operator * (~complex4x4 a, ~complex4 b) {
 		complex4 r;
-		pro (var i : [0, 3]) {
+		per (var i : [0, 3]) {
 			complex A = 0.0;
-			pro (var k : [0, 3]) A += a[i, k] * b[k];
+			per (var k : [0, 3]) A += a[i, k] * b[k];
 			r[i] = A;
 		}
 		responde r;

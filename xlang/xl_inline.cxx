@@ -120,7 +120,7 @@ namespace Engine
 						} else if (sign->Length() == 2 && sign->ElementAt(1).GetClassName() == cls) {
 							SafePointer<XType> xtype = CreateType(XI::Module::TypeReference::MakeClassReference(cls), *ctx);
 							SafePointer<InlineComputable> inl = new InlineComputable(ctx, NameVoid);
-							inl->tree.self = XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke);
+							inl->tree.self = XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke);
 							inl->tree.retval_spec = xtype->GetArgumentSpecification();
 							inl->tree.input_specs << xtype->GetArgumentSpecification();
 							inl->tree.input_specs << xtype->GetArgumentSpecification();
@@ -366,7 +366,7 @@ namespace Engine
 			if (src_xa.instset[0].opcode == XA::OpcodeOpenScope && src_xa.instset.Length() == 1) return false;
 			if (src_xa.instset[0].opcode == XA::OpcodeOpenScope && src_xa.instset[1].opcode != XA::OpcodeControlReturn) return false;
 			auto & src_node = src_xa.instset[0].opcode == XA::OpcodeOpenScope ? src_xa.instset[1].tree : src_xa.instset[0].tree;
-			if (src_node.self.qword != XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke).qword) return false;
+			if (src_node.self.qword != XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke).qword) return false;
 			if (src_node.inputs.Length() != 2) return false;
 			if (src_node.inputs[0].self.qword != XA::TH::MakeRef(XA::ReferenceRetVal).qword) return false;
 			auto substitute = src_node.inputs[1];

@@ -67,7 +67,7 @@ spatium systema {
 				pi.longitudo = nintadl(long) / magnitudo(winapi.SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
 				si (winapi.dynamice.invocator.GetLogicalProcessorInformation(func_para_prc, pi.data, @long)) {
 					inf.numerus_cordium_corporalium = 0;
-					pro (var i : pi) si (pi[i].relatio == 0) inf.numerus_cordium_corporalium++;
+					per (var i : pi) si (pi[i].relatio == 0) inf.numerus_cordium_corporalium++;
 				}
 			}
 		}

@@ -171,7 +171,7 @@ spatium contextus {
 		functio logicum adde(@@labos lab, int num) virtualis redefini {
 			logicum status = sic;
 			_sync^.opperire();
-			pro (var i = 0; i < num; i++) {
+			per (var i = 0; i < num; i++) {
 				proba _lab.adde(lab[i]); cape status = non;
 				_numerus^.aperi();
 			}
@@ -237,7 +237,7 @@ spatium contextus {
 			}
 			si (_num_filorum <= 0) _num_filorum = 1;
 			_num_filorum_activum = _num_filorum;
-			pro (var i = 0; i < _num_filorum; i++) {
+			per (var i = 0; i < _num_filorum; i++) {
 				!filum fl;
 				proba fl = exeque(labos ## {
 					dum (sic) {
@@ -272,7 +272,7 @@ spatium contextus {
 				});
 				si (!fl) {
 					_cd^._sync^.opperire();
-					pro (var j = 0; j < i; j++) { proba _cd^._lab.adde(nullus); _cd^._numerus^.aperi(); }
+					per (var j = 0; j < i; j++) { proba _cd^._lab.adde(nullus); _cd^._numerus^.aperi(); }
 					_cd^._sync^.aperi();
 					opperire();
 					iace errores.memoria_nulla;
@@ -282,7 +282,7 @@ spatium contextus {
 		destructor () {
 			opperire();
 			_cd^._sync^.opperire();
-			pro (var j = 0; j < _num_filorum; j++) { proba _cd^._lab.adde(nullus); _cd^._numerus^.aperi(); }
+			per (var j = 0; j < _num_filorum; j++) { proba _cd^._lab.adde(nullus); _cd^._numerus^.aperi(); }
 			_cd^._sync^.aperi();
 			opperire();
 		}

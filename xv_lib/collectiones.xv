@@ -134,7 +134,7 @@ spatium collectiones {
 		[[inline]] functio adnexus_elementi prae_initus() { responde adnexus_elementi(nullus); }
 		[[inline]] functio adnexus_elementi post_finis() { responde adnexus_elementi(nullus); }
 
-		int longitudo { adipisce { int r = 0; pro (var i : ego^) r++; responde r; } }
+		int longitudo { adipisce { int r = 0; per (var i : ego^) r++; responde r; } }
 		functio ~$V operator [] (int i) iacit {
 			si (i < 0) iace errores.argumentum_falsum;
 			var p = i;
@@ -838,7 +838,7 @@ spatium collectiones {
 		functio genus($F()($O()[0])) $_(~$O ord, $F f, @int a) iacit {
 			genus($F()($O()[0])) mx;
 			var arg = -1;
-			pro (var i : ord) {
+			per (var i : ord) {
 				var v = f(ord[i]);
 				si (arg < 0 || v > mx) { mx = v; arg = i; }
 			}
@@ -852,7 +852,7 @@ spatium collectiones {
 		functio genus($F()($O()[0])) $_(~$O ord, $F f, @int a) iacit {
 			genus($F()($O()[0])) mn;
 			var arg = -1;
-			pro (var i : ord) {
+			per (var i : ord) {
 				var v = f(ord[i]);
 				si (arg < 0 || v < mn) { mn = v; arg = i; }
 			}
@@ -866,7 +866,7 @@ spatium collectiones {
 		functio genus($O()[0]) $_(~$O ord, @int a) iacit {
 			genus($O()[0]) mx;
 			var arg = -1;
-			pro (var i : ord) {
+			per (var i : ord) {
 				var ~ v = ord[i];
 				si (arg < 0 || v > mx) { mx = v; arg = i; }
 			}
@@ -880,7 +880,7 @@ spatium collectiones {
 		functio genus($O()[0]) $_(~$O ord, @int a) iacit {
 			genus($O()[0]) mn;
 			var arg = -1;
-			pro (var i : ord) {
+			per (var i : ord) {
 				var ~ v = ord[i];
 				si (arg < 0 || v < mn) { mn = v; arg = i; }
 			}

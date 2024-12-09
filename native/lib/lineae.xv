@@ -203,7 +203,7 @@ genus linea {
 		valor[0] = num[0];
 		valor[1] = num[1];
 		char vec = 0;
-		pro (int i : [2, int(num[0]) + 1]) {
+		per (int i : [2, int(num[0]) + 1]) {
 			char num = vec * char(10) + num[i];
 			valor[i] = num / char(2);
 			vec = num % char(2);
@@ -226,9 +226,9 @@ genus linea {
 			valor[0] = valor[1] = long;
 			char vec;
 			int ns = long;
-			pro (int j = 0; j < pt; j++) {
+			per (int j = 0; j < pt; j++) {
 				vec = 0;
-				pro (var i : ~[2, long + 1]) {
+				per (var i : ~[2, long + 1]) {
 					char num = valor[i] * char(2) + vec;
 					valor[i] = num % char(10);
 					vec = num / char(10);
@@ -239,7 +239,7 @@ genus linea {
 		} alioqui {
 			@char unus = (@char)(memoria.alloca(12));
 			unus[0] = unus[1] = unus[2] = 1;
-			pro (int i = 0; i < -pt; i++) unus = _divide(unus);
+			per (int i = 0; i < -pt; i++) unus = _divide(unus);
 			responde unus;
 		}
 	}
@@ -259,7 +259,7 @@ genus linea {
 		resp[0] = ni + nf;
 		resp[1] = ni;
 		char vec = 0;
-		pro (var i : ~[2, int(resp[0]) + 1]) {
+		per (var i : ~[2, int(resp[0]) + 1]) {
 			var ir = i - int(resp[1]) - 1;
 			var i1 = ir + int(addendum[1]) + 1;
 			var i2 = ir + int(valor[1]) + 1;
@@ -281,8 +281,8 @@ genus linea {
 		dum (i < long && i - initium < prec) i++;
 		char vec = 0;
 		si (i < long && num[i] >= char(5)) vec = 1;
-		pro (var j : [i, long - 1]) num[j] = 0;
-		pro (var j : ~[2, i - 1]) {
+		per (var j : [i, long - 1]) num[j] = 0;
+		per (var j : ~[2, i - 1]) {
 			char ad = num[j] + vec;
 			num[j] = ad % char(10);
 			vec = ad / char(10);
@@ -292,7 +292,7 @@ genus linea {
 		i = num[1] + char(1);
 		dum (initium < i && !num[initium]) initium++;
 		si (initium > 2) {
-			pro (i : [2, long + 1 - initium]) num[i] = num[i + initium - 2];
+			per (i : [2, long + 1 - initium]) num[i] = num[i + initium - 2];
 			num[0] -= initium - 2;
 			num[1] -= initium - 2;
 		}
@@ -321,7 +321,7 @@ genus linea {
 		int long_num = long_scr;
 		long_scr = 0;
 		si (signum) { _data[long_scr] = '-'; long_scr++; }
-		pro (var i = long_num - 1; i >= 0; i--) { _data[long_scr] = ord[i]; long_scr++; }
+		per (var i = long_num - 1; i >= 0; i--) { _data[long_scr] = ord[i]; long_scr++; }
 		_data[long_scr] = 0;
 		memoria.dimitte(ord);
 	}
@@ -348,7 +348,7 @@ genus linea {
 		si (_data == nullus) { memoria.dimitte(numerus); iace errores.memoria_nulla; }
 		int ps = 0;
 		si (signum) { _data[ps] = '-'; ps++; }
-		pro (int i : [2, int(numerus[0]) + 1]) {
+		per (int i : [2, int(numerus[0]) + 1]) {
 			si (i == int(numerus[1]) + 2) { _data[ps] = punctum; ps++; }
 			_data[ps] = char('0') + numerus[i]; ps++;
 		}
@@ -491,7 +491,7 @@ genus linea {
 		si (long > 0) {
 			_data = (@char)(memoria.alloca(4 * long + 4));
 			si (_data == nullus) iace errores.memoria_nulla;
-			pro (int i = 0; i < long; i++) _data[i] = valor;
+			per (int i = 0; i < long; i++) _data[i] = valor;
 			_data[long] = 0;
 		} alioqui _data = nullus;
 	}
@@ -512,7 +512,7 @@ genus linea {
 			_data = (@char)(memoria.alloca(4 * (lc + 1)));
 			si (_data == nullus) iace errores.memoria_nulla;
 			v = (@nint8)(valor);
-			pro (var i : [0, lc - 1]) {
+			per (var i : [0, lc - 1]) {
 				int l = 4;
 				_data[i] = lineae.lege_characterem(v, l, cdx);
 				v = @v[l];
@@ -532,7 +532,7 @@ genus linea {
 			_data = (@char)(memoria.alloca(4 * (lc + 1)));
 			si (_data == nullus) iace errores.memoria_nulla;
 			v = (@nint8)(valor);
-			pro (var i : [0, lc - 1]) {
+			per (var i : [0, lc - 1]) {
 				int l = 4;
 				_data[i] = lineae.lege_characterem(v, l, cdx);
 				v = @v[l];
@@ -651,7 +651,7 @@ genus linea {
 	linea inferna { [[thiscall_nullum]] adipisce iacit {
 		linea resp(ego^);
 		int long = longitudo - 1;
-		pro (var i : [0, long]) {
+		per (var i : [0, long]) {
 			int l = 4;
 			ordo [2] nint16 utf16;
 			lineae.scribe_characterem(@utf16, l, codex.utf16, resp[i]);
@@ -665,7 +665,7 @@ genus linea {
 	linea supera { [[thiscall_nullum]] adipisce iacit {
 		linea resp(ego^);
 		int long = longitudo - 1;
-		pro (var i : [0, long]) {
+		per (var i : [0, long]) {
 			int l = 4;
 			ordo [2] nint16 utf16;
 			lineae.scribe_characterem(@utf16, l, codex.utf16, resp[i]);
@@ -690,9 +690,9 @@ genus linea {
 		var s = _data_effectiva;
 		var ll = valor.longitudo;
 		var ss = valor._data_effectiva;
-		pro (var i : [0, l - ll]) {
+		per (var i : [0, l - ll]) {
 			logicum id = sic;
-			pro (var j : [0, ll - 1]) si (s[i + j] != ss[j]) { id = non; exi; }
+			per (var j : [0, ll - 1]) si (s[i + j] != ss[j]) { id = non; exi; }
 			si (id) responde i;
 		}
 		responde -1;
@@ -703,9 +703,9 @@ genus linea {
 		var s = _data_effectiva;
 		var ll = valor.longitudo;
 		var ss = valor._data_effectiva;
-		pro (var i : ~[0, l - ll]) {
+		per (var i : ~[0, l - ll]) {
 			logicum id = sic;
-			pro (var j : [0, ll - 1]) si (s[i + j] != ss[j]) { id = non; exi; }
+			per (var j : [0, ll - 1]) si (s[i + j] != ss[j]) { id = non; exi; }
 			si (id) responde i;
 		}
 		responde -1;
@@ -746,7 +746,7 @@ genus linea {
 		var fin = termina ? longitudo : longitudo - 1;
 		var dta = (@nint8)(data);
 		var ps = 0;
-		pro (var i : [0, fin]) {
+		per (var i : [0, fin]) {
 			int pss = 4;
 			lineae.scribe_characterem(@dta[ps], pss, cdx, _data_effectiva[i]);
 			ps += pss;
@@ -774,7 +774,7 @@ genus linea {
 		int i = 0;
 		dum (vlr[i]) {
 			int num = -1;
-			pro (var j : [0, rdx_long - 1]) si (vlr[i] == rdx[j]) { num = j; exi; }
+			per (var j : [0, rdx_long - 1]) si (vlr[i] == rdx[j]) { num = j; exi; }
 			si (num == -1) iace errores.efformatio_falsa;
 			si (valor >= valor_maximus) iace errores.efformatio_falsa;
 			valor *= rdx_long;
@@ -794,22 +794,22 @@ genus linea {
 		si (ln[0] == char('-')) { initium = 1; sgn = sic; }
 		alioqui si (ln[0] == char('+')) { initium = 1; }
 		int fp = long;
-		pro (var i : [0, num_punct - 1]) {
+		per (var i : [0, num_punct - 1]) {
 			var fpr = ln.reperi_primum(linea(puncta[i], 1));
 			si (fpr != -1 && fpr < fp) fp = fpr;
 		}
-		pro (var i : [0, num_punct - 1]) {
+		per (var i : [0, num_punct - 1]) {
 			var fpr = ln.reperi_ultimum(linea(puncta[i], 1));
 			si (fpr > fp) iace errores.efformatio_falsa;
 		}
-		pro (var i : [initium, fp - 1]) {
+		per (var i : [initium, fp - 1]) {
 			si (ln[i] < char('0') || ln[i] > char('9')) iace errores.efformatio_falsa;
 			var num = ln[i] - char('0');
 			valor *= 10.0;
 			valor += dfrac(num);
 		}
 		dfrac E = 1.0;
-		pro (var i : [fp + 1, long - 1]) {
+		per (var i : [fp + 1, long - 1]) {
 			si (ln[i] < char('0') || ln[i] > char('9')) iace errores.efformatio_falsa;
 			var num = ln[i] - char('0');
 			E /= 10.0;
@@ -950,20 +950,20 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 		_data = nullus;
 		_realloca(_numerus);
 		int i = 0;
-		proba { pro (i = 0; i < _numerus; i++) initia(@_data[i], valor._data[i]); } cape (intadl e, intadl se) {
-			pro (int j = i - 1; j >= 0; j--) fini(_data[i]);
+		proba { per (i = 0; i < _numerus; i++) initia(@_data[i], valor._data[i]); } cape (intadl e, intadl se) {
+			per (int j = i - 1; j >= 0; j--) fini(_data[i]);
 			memoria.dimitte(_data);
 			iace e, se;
 		}
 	}
 	structor (int talea) { funda _numerus(0); funda _allocatus(0); funda _talea(talea); _data = nullus; }
-	destructor() redefini { pro (int i = 0; i < _numerus; i++) fini(_data[i]); memoria.dimitte(_data); }
+	destructor() redefini { per (int i = 0; i < _numerus; i++) fini(_data[i]); memoria.dimitte(_data); }
 
 	functio ~dordo[$V] operator = (~dordo[$V] valor) iacit
 	{
 		si (ego == @valor) responde ego^;
 		dordo[$V] copia(valor);
-		pro (int i = 0; i < _numerus; i++) fini(_data[i]);
+		per (int i = 0; i < _numerus; i++) fini(_data[i]);
 		memoria.dimitte(_data);
 		_data = copia._data;
 		_numerus = copia._numerus;
@@ -983,34 +983,34 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 	{
 		si (ego == @o) iace errores.argumentum_falsum;
 		_realloca(_numerus + o._numerus);
-		pro (int i = 0; i < o._numerus; i++) _adde(o._data[i]);
+		per (int i = 0; i < o._numerus; i++) _adde(o._data[i]);
 	}
 	functio nihil adde(@$V v, int numerus) iacit
 	{
 		si (!numerus) responde;
 		si (v == _data) iace errores.argumentum_falsum;
 		_realloca(_numerus + numerus);
-		pro (int i = 0; i < numerus; i++) _adde(v[i]);
+		per (int i = 0; i < numerus; i++) _adde(v[i]);
 	}
 	functio nihil permuta(int i, int j) { .permuta(_data[i], _data[j]); }
 	functio nihil insere(~$V v, int pos) iacit
 	{
 		_realloca(_numerus + 1);
-		pro (int i = _numerus - 1; i >= pos; i--) .permuta(_data[i], _data[i + 1]);
+		per (int i = _numerus - 1; i >= pos; i--) .permuta(_data[i], _data[i + 1]);
 		proba { initia(@_data[pos], v); _numerus++; }
-		cape (intadl e, intadl se) { pro (int i = pos; i < _numerus; i++) .permuta(_data[i], _data[i + 1]); iace e, se; }
+		cape (intadl e, intadl se) { per (int i = pos; i < _numerus; i++) .permuta(_data[i], _data[i + 1]); iace e, se; }
 	}
 	functio nihil remove(int pos)
 	{
 		fini _data[pos];
-		pro (int i = pos; i < _numerus - 1; i++) .permuta(_data[i], _data[i + 1]);
+		per (int i = pos; i < _numerus - 1; i++) .permuta(_data[i], _data[i + 1]);
 		_numerus--; _realloca_secura(_numerus);
 	}
 	functio nihil remove_primum() { remove(0); }
 	functio nihil remove_ultimum() { remove(_numerus - 1); }
 	functio nihil depura()
 	{
-		pro (int i = 0; i < _numerus; i++) fini(_data[i]);
+		per (int i = 0; i < _numerus; i++) fini(_data[i]);
 		memoria.dimitte(_data);
 		_data = nullus;
 		_numerus = _allocatus = 0;
@@ -1022,7 +1022,7 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 	{
 		proba {
 			linea resp = "ordo : [";
-			pro (int i = 0; i < _numerus; i++) {
+			per (int i = 0; i < _numerus; i++) {
 				si (i) resp += ", ";
 				resp += linea.ex(_data[i]);
 			}
@@ -1036,12 +1036,12 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 		\si tractus.habet_structor($V)\ loca iacit {
 			si (valor > _numerus) {
 				_realloca(valor); int i;
-				proba { pro (i = _numerus; i < valor; i++) initia(@_data[i]); }
-				cape (intadl e, intadl se) { pro (int j = i - 1; j >= _numerus; j--) fini _data[j]; iace e, se; }
+				proba { per (i = _numerus; i < valor; i++) initia(@_data[i]); }
+				cape (intadl e, intadl se) { per (int j = i - 1; j >= _numerus; j--) fini _data[j]; iace e, se; }
 				_numerus = valor;
 			} alioqui si (valor < _numerus) {
 				si (valor < 0) iace errores.argumentum_falsum;
-				pro (int i = valor; i < _numerus; i++) fini _data[i];
+				per (int i = valor; i < _numerus; i++) fini _data[i];
 				_numerus = valor; _realloca_secura(valor);
 			}
 		} \fini\
@@ -1140,7 +1140,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1153,7 +1153,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1167,7 +1167,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1182,7 +1182,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1198,7 +1198,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1215,7 +1215,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1233,7 +1233,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1252,7 +1252,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1272,7 +1272,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);
@@ -1293,7 +1293,7 @@ dura linea {
 	{
 		ordo char resp;
 		var long = schema.longitudo;
-		pro (var i = 0; i < long; i++) {
+		per (var i = 0; i < long; i++) {
 			si (schema[i] == char('%')) {
 				i++;
 				si (schema[i] == char('0')) resp.adde(a0, a0.longitudo);

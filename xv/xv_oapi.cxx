@@ -99,6 +99,160 @@ namespace Engine
 				}
 			}
 		};
+		class VOperatorBlockTransfer : public VOperator
+		{
+			XL::LContext & _ctx;
+		private:
+			class _computable : public Object, public XL::IComputableProvider
+			{
+			public:
+				XL::LContext & _ctx;
+				SafePointer<DataBlock> _ddesc, _sdesc;
+				SafePointer<XL::LObject> _sizes, _dest, _src, _bf;
+				int _opcode;
+				int _dim;
+				bool _short;
+			public:
+				_computable(XL::LContext & ctx) : _ctx(ctx) {}
+				virtual ~_computable(void) override {}
+				virtual Object * ComputableProviderQueryObject(void) override { return this; }
+				virtual XL::XType * ComputableGetType(void) override
+				{
+					SafePointer<XL::XType> nihil = XL::CreateType(L"Cnihil", _ctx);
+					nihil->Retain();
+					return nihil;
+				}
+				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+				{
+					XA::ExpressionTree result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, _opcode, XA::ReferenceFlagInvoke));
+					if (_short) result.self.ref_flags |= XA::ReferenceFlagShort;
+					XA::TH::AddTreeInput(result, _sizes->Evaluate(func, error_ctx), XA::TH::MakeSpec(0, _dim));
+					XA::TH::AddTreeInput(result, _dest->Evaluate(func, error_ctx), XA::TH::MakeSpec(0, _dim));
+					XA::TH::AddTreeInput(result, XL::MakeConstant(func, _ddesc->GetBuffer(), _ddesc->Length()), XA::TH::MakeSpec(_ddesc->Length(), 0));
+					if (_short) {
+						SafePointer<XL::LObject> type = _src->GetType();
+						XA::TH::AddTreeInput(result, _src->Evaluate(func, error_ctx), static_cast<XL::XType *>(type.Inner())->GetArgumentSpecification());
+					} else XA::TH::AddTreeInput(result, _src->Evaluate(func, error_ctx), XA::TH::MakeSpec(0, _dim));
+					XA::TH::AddTreeInput(result, XL::MakeConstant(func, _sdesc->GetBuffer(), _sdesc->Length()), XA::TH::MakeSpec(_sdesc->Length(), 0));
+					if (_bf) {
+						SafePointer<XL::LObject> bft = _bf->GetType();
+						XA::TH::AddTreeInput(result, _bf->Evaluate(func, error_ctx), static_cast<XL::XType *>(bft.Inner())->GetArgumentSpecification());
+					}
+					XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(0, 0));
+					return result;
+				}
+			};
+			DataBlock * _create_format_descriptor(const string & text)
+			{
+				SafePointer<DataBlock> result = XA::TH::CreateSampleDescription();
+				int length = text.Length();
+				int i = 0;
+				while (i < length) {
+					int channel = 0, format = 0;
+					if (text[i] == L'A') { i++;
+						if (text[i] == L'*') {
+							channel = XA::BlockTransferChannelAlphaPremultiplied; i++;
+						} else channel = XA::BlockTransferChannelAlphaStraight;
+					} else if (text[i] == L'B') {
+						channel = XA::BlockTransferChannelData0; i++;
+					} else if (text[i] == L'C') {
+						channel = XA::BlockTransferChannelData1; i++;
+					} else if (text[i] == L'D') {
+						channel = XA::BlockTransferChannelData2; i++;
+					} else if (text[i] == L'E') {
+						channel = XA::BlockTransferChannelData3; i++;
+					} else if (text[i] == L'M') {
+						channel = XA::BlockTransferChannelDataAverage; i++;
+					} else if (text[i] == L'I') {
+						channel = XA::BlockTransferChannelUnusedSetOne; i++;
+					} else if (text[i] == L'O') {
+						channel = XA::BlockTransferChannelUnusedSetZero; i++;
+					} else throw InvalidArgumentException();
+					int s = i;
+					while (i < length && (text[i] >= L'0' && text[i] <= L'9')) i++;
+					int bits = text.Fragment(s, i - s).ToInt32();
+					if (text[i] == L'I') { i++;
+						if (text[i] == L'*') {
+							format = XA::BlockTransferFormatSInt; i++;
+						} else format = XA::BlockTransferFormatUInt;
+					} else if (text[i] == L'N') { i++;
+						if (text[i] == L'*') {
+							format = XA::BlockTransferFormatSNorm; i++;
+						} else format = XA::BlockTransferFormatUNorm;
+					} else if (text[i] == L'F') {
+						format = XA::BlockTransferFormatFloat; i++;
+					} else throw InvalidArgumentException();
+					if (text[i] == L'~') { format |= XA::BlockTransferFormatBE; i++; }
+					if (text[i] == L'!') { format |= XA::BlockTransferFormatReadOnly; i++; }
+					XA::TH::AppendSampleDescription(result, channel, format, bits);
+					if (text[i] == L'-') i++;
+				}
+				result->Retain();
+				return result;
+			}
+		public:
+			VOperatorBlockTransfer(XL::LContext & ctx) : _ctx(ctx) {}
+			virtual ~VOperatorBlockTransfer(void) override {}
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
+			{
+				if (argc < 7 || argc > 8) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
+				SafePointer<_computable> com = new _computable(_ctx);
+				auto opcode = _ctx.QueryLiteralString(argv[0]);
+				auto dim = _ctx.QueryLiteralValue(argv[1]);
+				if (opcode == L"MOV") { com->_opcode = XA::TransformBltCopy; com->_short = false; }
+				else if (opcode == L"MOV*") { com->_opcode = XA::TransformBltCopy; com->_short = true; }
+				else if (opcode == L"ET") { com->_opcode = XA::TransformBltAnd; com->_short = false; }
+				else if (opcode == L"ET*") { com->_opcode = XA::TransformBltAnd; com->_short = true; }
+				else if (opcode == L"AUT") { com->_opcode = XA::TransformBltOr; com->_short = false; }
+				else if (opcode == L"AUT*") { com->_opcode = XA::TransformBltOr; com->_short = true; }
+				else if (opcode == L"XAUT") { com->_opcode = XA::TransformBltXor; com->_short = false; }
+				else if (opcode == L"XAUT*") { com->_opcode = XA::TransformBltXor; com->_short = true; }
+				else if (opcode == L"!MOV") { com->_opcode = XA::TransformBltNotCopy; com->_short = false; }
+				else if (opcode == L"!MOV*") { com->_opcode = XA::TransformBltNotCopy; com->_short = true; }
+				else if (opcode == L"!ET") { com->_opcode = XA::TransformBltNotAnd; com->_short = false; }
+				else if (opcode == L"!ET*") { com->_opcode = XA::TransformBltNotAnd; com->_short = true; }
+				else if (opcode == L"!AUT") { com->_opcode = XA::TransformBltNotOr; com->_short = false; }
+				else if (opcode == L"!AUT*") { com->_opcode = XA::TransformBltNotOr; com->_short = true; }
+				else if (opcode == L"!XAUT") { com->_opcode = XA::TransformBltNotXor; com->_short = false; }
+				else if (opcode == L"!XAUT*") { com->_opcode = XA::TransformBltNotXor; com->_short = true; }
+				else if (opcode == L"ETI") { com->_opcode = XA::TransformBltAndInv; com->_short = false; }
+				else if (opcode == L"ETI*") { com->_opcode = XA::TransformBltAndInv; com->_short = true; }
+				else if (opcode == L"AUTI") { com->_opcode = XA::TransformBltOrInv; com->_short = false; }
+				else if (opcode == L"AUTI*") { com->_opcode = XA::TransformBltOrInv; com->_short = true; }
+				else if (opcode == L"XAUTI") { com->_opcode = XA::TransformBltXorInv; com->_short = false; }
+				else if (opcode == L"XAUTI*") { com->_opcode = XA::TransformBltXorInv; com->_short = true; }
+				else if (opcode == L"ETR") { com->_opcode = XA::TransformBltAndRev; com->_short = false; }
+				else if (opcode == L"ETR*") { com->_opcode = XA::TransformBltAndRev; com->_short = true; }
+				else if (opcode == L"AUTR") { com->_opcode = XA::TransformBltOrRev; com->_short = false; }
+				else if (opcode == L"AUTR*") { com->_opcode = XA::TransformBltOrRev; com->_short = true; }
+				else if (opcode == L"XAUTR") { com->_opcode = XA::TransformBltXorRev; com->_short = false; }
+				else if (opcode == L"XAUTR*") { com->_opcode = XA::TransformBltXorRev; com->_short = true; }
+				else if (opcode == L"ADD") { com->_opcode = XA::TransformBltAdd; com->_short = false; }
+				else if (opcode == L"ADD*") { com->_opcode = XA::TransformBltAdd; com->_short = true; }
+				else if (opcode == L"SUB") { com->_opcode = XA::TransformBltSubtract; com->_short = false; }
+				else if (opcode == L"SUB*") { com->_opcode = XA::TransformBltSubtract; com->_short = true; }
+				else if (opcode == L"SUBI") { com->_opcode = XA::TransformBltSubtractRev; com->_short = false; }
+				else if (opcode == L"SUBI*") { com->_opcode = XA::TransformBltSubtractRev; com->_short = true; }
+				else if (opcode == L"MAX") { com->_opcode = XA::TransformBltMaximum; com->_short = false; }
+				else if (opcode == L"MAX*") { com->_opcode = XA::TransformBltMaximum; com->_short = true; }
+				else if (opcode == L"MIN") { com->_opcode = XA::TransformBltMinimum; com->_short = false; }
+				else if (opcode == L"MIN*") { com->_opcode = XA::TransformBltMinimum; com->_short = true; }
+				else if (opcode == L"MIX") { com->_opcode = XA::TransformBltBlend; com->_short = false; }
+				else if (opcode == L"MIX*") { com->_opcode = XA::TransformBltBlend; com->_short = true; }
+				else throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (dim < 0 || dim > 3) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
+				com->_dim = dim;
+				com->_ddesc = _create_format_descriptor(_ctx.QueryLiteralString(argv[2]));
+				com->_sdesc = _create_format_descriptor(_ctx.QueryLiteralString(argv[3]));
+				com->_sizes.SetRetain(argv[4]);
+				com->_dest.SetRetain(argv[5]);
+				com->_src.SetRetain(argv[6]);
+				if (argc == 8) com->_bf.SetRetain(argv[7]);
+				return XL::CreateComputable(_ctx, com);
+			}
+			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
+		};
 		class VNamespace : public XL::XObject
 		{
 			XL::LContext & _ctx;
@@ -350,6 +504,7 @@ namespace Engine
 			return static_cast<XL::XType *>(src_type.Inner())->TransformTo(instance, dest_type, true);
 		}
 		XL::LObject * CreateDefinitionNamespace(XL::LContext & ctx, const Volumes::Dictionary<string, string> & dict) { return new VNamespace(ctx, dict); }
+		XL::LObject * CreateBlockTransfer(XL::LContext & ctx) { return new VOperatorBlockTransfer(ctx); }
 
 		void EncodeSelectorRetval(XA::Function & xa, int rv, const XA::ArgumentSpecification & rv_spec)
 		{

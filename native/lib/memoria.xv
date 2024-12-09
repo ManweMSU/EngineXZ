@@ -31,8 +31,8 @@ spatium memoria {
 		alioqui { winapi.HeapFree(winapi.GetProcessHeap(), 0, mem); responde nullus; }
 	}
 	functio nihil dimitte(@nihil mem) { si (mem != nullus) winapi.HeapFree(winapi.GetProcessHeap(), 0, mem); }
-	functio nihil relabe(@nihil mem, nintadl magn) { pro (nintadl i = 0; i < magn; i++) (@nint8)(mem)[i] = 0; }
-	functio @nihil exscribe(@nihil in, @nihil ex, nintadl magn) { pro (nintadl i = 0; i < magn; i++) (@nint8)(in)[i] = (@nint8)(ex)[i]; responde in; }
+	functio nihil relabe(@nihil mem, nintadl magn) { per (nintadl i = 0; i < magn; i++) (@nint8)(mem)[i] = 0; }
+	functio @nihil exscribe(@nihil in, @nihil ex, nintadl magn) { per (nintadl i = 0; i < magn; i++) (@nint8)(in)[i] = (@nint8)(ex)[i]; responde in; }
 }
 
 [[xa]] [[inline]] functio nint incrementum_securum(~nint valor) {

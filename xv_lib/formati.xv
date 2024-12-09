@@ -254,8 +254,8 @@ spatium formati {
 		{
 			var cdx = scriptio.codifica(fl, _desc.codex);
 			cdx^.scribe_subscriptionem();
-			pro (var y : [0, _altitudo - 1]) {
-				pro (var x : [0, _latitudo - 1]) {
+			per (var y : [0, _altitudo - 1]) {
+				per (var x : [0, _latitudo - 1]) {
 					si (x > 0) cdx^.scribe(linea(_desc.limitans, 1));
 					cdx^.scribe(lege(x, y));
 				}

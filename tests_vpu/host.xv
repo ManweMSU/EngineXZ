@@ -21,7 +21,7 @@ functio nihil probatio(~linea nomen, int r) iacit
 	con.color_primus = consolatorium.color.defalta;
 	si (!r) iace 1;
 }
-functio nihil invalida(~ordo [8] int r) { pro (var i : [0, 7]) r[i] = 0; }
+functio nihil invalida(~ordo [8] int r) { per (var i : [0, 7]) r[i] = 0; }
 
 functio nihil ini() introitus iacit
 {

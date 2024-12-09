@@ -1770,7 +1770,7 @@ namespace Engine
 										disp->flags = DispositionDiscard;
 									}
 									encode_restore(base.reg, reg_in_use, disp->reg, !idle);
-								} else if (node.self.index == TransformBlockTransfer) {
+								} else if (node.self.index == TransformMove) {
 									if (node.inputs.Length() != 2) throw InvalidArgumentException();
 									uint size = node.input_specs[0].size.num_bytes + WordSize * node.input_specs[0].size.num_words;
 									InternalDisposition dest_d, src_d;
@@ -1933,6 +1933,37 @@ namespace Engine
 											encode_lea(copy, Reg64::RBP, offset);
 										}
 									} else disp->flags = DispositionDiscard;
+								} else if (node.self.index == TransformAtomicSet) {
+									if (node.inputs.Length() != 2) throw InvalidArgumentException();
+									auto size = object_size(node.input_specs[0].size);
+									Reg ptr, value;
+									value = disp->reg;
+									if (value == Reg64::NO) value = Reg64::RAX;
+									ptr = (value == Reg64::RDI) ? Reg64::RBX : Reg64::RDI;
+									InternalDisposition a1, a2;
+									a1.flags = DispositionPointer;
+									a1.reg = ptr;
+									a1.size = a2.size = size;
+									a2.flags = DispositionRegister;
+									a2.reg = value;
+									encode_preserve(ptr, reg_in_use, 0, !idle);
+									_encode_tree_node(node.inputs[0], idle, mem_load, &a1, reg_in_use | ptr);
+									encode_preserve(value, reg_in_use | ptr, disp->reg, !idle);
+									_encode_tree_node(node.inputs[1], idle, mem_load, &a2, reg_in_use | ptr | value);
+									if (!idle) encode_xchg(size, ptr, value);
+									encode_restore(value, reg_in_use | ptr, disp->reg, !idle);
+									encode_restore(ptr, reg_in_use, 0, !idle);
+									if (disp->flags & DispositionRegister) {
+										disp->flags = DispositionRegister;
+									} else if (disp->flags & DispositionPointer) {
+										disp->flags = DispositionPointer;
+										*mem_load += word_align(node.input_specs[0].size);
+										if (!idle) {
+											int offset = allocate_temporary(node.input_specs[0].size);
+											encode_mov_mem_reg(size, Reg64::RBP, offset, value);
+											encode_lea(value, Reg64::RBP, offset);
+										}
+									} else disp->flags = DispositionDiscard;
 								} else throw InvalidArgumentException();
 							} else if (node.self.index >= 0x010 && node.self.index < 0x013) {
 								_encode_logics(node, idle, mem_load, disp, reg_in_use);
@@ -1971,6 +2002,51 @@ namespace Engine
 										disp->flags = DispositionDiscard;
 									} else throw InvalidArgumentException();
 								} else _encode_floating_point_ir(node, idle, mem_load, disp, reg_in_use);
+							} else if (node.self.index >= 0x100 && node.self.index < 0x180) {
+								throw InvalidArgumentException();
+								// if (node.inputs.Length() < 5 || node.inputs.Length() > 6) throw InvalidArgumentException();
+								// if (node.inputs[2].self.ref_class != ReferenceData) throw InvalidArgumentException();
+								// if (node.inputs[4].self.ref_class != ReferenceData) throw InvalidArgumentException();
+								// if (!TH::ValidateSampleDescription(_src.data.GetBuffer() + node.inputs[2].self.index, _src.data.Length() - node.inputs[2].self.index)) throw InvalidArgumentException();
+								// if (!TH::ValidateSampleDescription(_src.data.GetBuffer() + node.inputs[4].self.index, _src.data.Length() - node.inputs[4].self.index)) throw InvalidArgumentException();
+								// int dimsize = object_size(node.input_specs[0].size);
+								// if (dimsize % WordSize || dimsize < WordSize || dimsize > 3 * WordSize) throw InvalidArgumentException();
+								// int dim = dimsize / WordSize;
+								// for (uint i = 0; i < 32; i++) encode_preserve(1 << i, reg_in_use, 0, !idle);
+								// InternalDisposition sizes, dest, src;
+								// Reg bfr = Reg64::NO;
+								// ArgumentSpecification bfs = TH::MakeSpec();
+								// sizes.reg = Reg64::RBX;
+								// dest.reg = Reg64::RDI;
+								// src.reg = Reg64::RSI;
+								// sizes.size = dimsize;
+								// dest.size = object_size(node.input_specs[1].size);
+								// src.size = object_size(node.input_specs[3].size);
+								// sizes.flags = dest.flags = src.flags = DispositionPointer;
+								// _encode_tree_node(node.inputs[0], idle, mem_load, &sizes, 0);
+								// _encode_tree_node(node.inputs[1], idle, mem_load, &dest, sizes.reg);
+								// _encode_tree_node(node.inputs[3], idle, mem_load, &src, sizes.reg | dest.reg);
+								// if (node.inputs.Length() == 6) {
+								// 	bfs.semantics = node.input_specs[5].semantics;
+								// 	if (node.input_specs[5].semantics == ArgumentSemantics::FloatingPoint) {
+								// 		VectorDisposition bf;
+								// 		bfr = bf.reg_lo = Reg64::XMM0;
+								// 		bf.reg_hi = Reg64::NO;
+								// 		bfs.size.num_bytes = bf.size = object_size(node.input_specs[5].size);
+								// 		bfs.size.num_words = 0;
+								// 		_encode_floating_point(node.inputs[5], idle, mem_load, &bf, sizes.reg | dest.reg | src.reg, bf.reg_lo);
+								// 	} else {
+								// 		InternalDisposition bf;
+								// 		bfr = bf.reg = Reg64::R15;
+								// 		bf.flags = DispositionRegister;
+								// 		bfs.size.num_bytes = bf.size = object_size(node.input_specs[5].size);
+								// 		bfs.size.num_words = 0;
+								// 		_encode_tree_node(node.inputs[5], idle, mem_load, &bf, sizes.reg | dest.reg | src.reg);
+								// 	}
+								// }
+								// if (!idle) encode_block_transfer(node.self.index, dim, _src.data.GetBuffer() + node.inputs[2].self.index, _src.data.GetBuffer() + node.inputs[4].self.index,
+								// 	node.self.ref_flags & ReferenceFlagShort, sizes.reg, dest.reg, src.reg, bfr, bfs);
+								// for (uint i = 32; i > 0; i--) encode_restore(1 << (i - 1), reg_in_use, 0, !idle);
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);

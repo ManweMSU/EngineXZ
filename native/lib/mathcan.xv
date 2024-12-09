@@ -333,13 +333,13 @@ spatium math {
 	functio frac arcsin(frac valor) {
 		si (valor < -1.0 || valor > 1.0 || nn_est(valor)) responde nn_d();
 		genus(valor) resp = 0.0;
-		pro (var i : [1, 10]) resp = resp - (sin(resp) - valor) / cos(resp);
+		per (var i : [1, 10]) resp = resp - (sin(resp) - valor) / cos(resp);
 		responde resp;
 	}
 	functio dfrac arcsin(dfrac valor) {
 		si (valor < -1.0 || valor > 1.0 || nn_est(valor)) responde nn_d();
 		genus(valor) resp = 0.0;
-		pro (var i : [1, 10]) resp = resp - (sin(resp) - valor) / cos(resp);
+		per (var i : [1, 10]) resp = resp - (sin(resp) - valor) / cos(resp);
 		responde resp;
 	}
 	functio frac arccos(frac valor) { responde genus(valor).pi / genus(valor)(2.0) - arcsin(valor); }
@@ -389,7 +389,7 @@ spatium math {
 		momentum = nint64(millisecunda) + (nint64(secunda) + (nint64(minuta) + nint64(hora) * nint64(60)) * nint64(60)) * nint64(1000);
 		int a = annus > 1 ? annus - 1 : 0;
 		int d = dies > 1 ? dies - 1 : 0;
-		pro (var m : [1, mensis - 1]) d += _dies_in_mense(annus, m);
+		per (var m : [1, mensis - 1]) d += _dies_in_mense(annus, m);
 		int c400 = a / 400;
 		a %= 400;
 		int c100 = a / 100;

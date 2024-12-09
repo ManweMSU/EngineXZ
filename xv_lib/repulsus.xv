@@ -136,7 +136,7 @@ spatium repulsus {
 			_magnitudo = objectum_classis^.longitudo;
 			ordo [2] !symbolum_generis.methodus meth;
 			var methodi = objectum_classis^.methodi();
-			pro (var i : methodi^) {
+			per (var i : methodi^) {
 				si (methodi^[i]^.nomen == "@crea:F(Cnihil)") meth[0] = methodi^[i];
 				alioqui si (methodi^[i]^.nomen == "@perde:F(Cnihil)") meth[1] = methodi^[i];
 			}
@@ -175,7 +175,7 @@ spatium repulsus {
 			_magnitudo = objectum_classis^.longitudo;
 			!symbolum_generis.methodus meth;
 			var methodi = objectum_classis^.methodi();
-			pro (var i : methodi^) {
+			per (var i : methodi^) {
 				si (methodi^[i]^.nomen == "@crea:F(Cnihil)") meth = methodi^[i];
 			}
 			si (!meth) iace errores.implantatio_nulla;

@@ -147,7 +147,7 @@ namespace Engine
 						if (static_cast<XType *>(type.Inner())->GetCanonicalTypeClass() == XI::Module::TypeReference::Class::Reference) {
 							uw = UnwarpObject(_source);
 						} else uw.SetRetain(_source);
-						auto tree = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+						auto tree = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke));
 						XA::TH::AddTreeInput(tree, _instance->Evaluate(func, error_ctx), XA::TH::MakeSpec(0, 1));
 						XA::TH::AddTreeInput(tree, uw->Evaluate(func, error_ctx), XA::TH::MakeSpec(0, 1));
 						XA::TH::AddTreeOutput(tree, XA::TH::MakeSpec(0, 1));
@@ -1027,7 +1027,7 @@ namespace Engine
 					} else if (_op == OperatorFollow) {
 						return _instance->Evaluate(func, error_ctx);
 					} else if (_op == OperatorAssign) {
-						auto node = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+						auto node = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke));
 						XA::TH::AddTreeInput(node, _instance->Evaluate(func, error_ctx), _ptr_type->GetArgumentSpecification());
 						XA::TH::AddTreeInput(node, _argv[0].Evaluate(func, error_ctx), _ptr_type->GetArgumentSpecification());
 						XA::TH::AddTreeOutput(node, _ptr_type->GetArgumentSpecification());

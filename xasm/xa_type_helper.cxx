@@ -275,6 +275,108 @@ namespace Engine
 				result.tree = retval_init;
 				return result;
 			}
+			DataBlock * CreateSampleDescription(void)
+			{
+				SafePointer<DataBlock> result = new DataBlock(0x20);
+				result->SetLength(2);
+				result->ElementAt(0) = result->ElementAt(1) = 0;
+				result->Retain();
+				return result;
+			}
+			void AppendSampleDescription(DataBlock * desc, int usage, int format, int bits)
+			{
+				if (!desc || bits <= 0 || bits > 64 || usage < 0 || format < 0 || usage > 511 || format > 511) throw InvalidArgumentException();
+				uint16 word = (bits << 9) | usage | format;
+				int length = desc->Length();
+				if (length & 1 || length < 2) throw InvalidArgumentException();
+				desc->SetLength(length + 2);
+				*reinterpret_cast<uint16 *>(desc->GetBuffer() + length - 2) = word;
+				*reinterpret_cast<uint16 *>(desc->GetBuffer() + length) = 0;
+			}
+			bool ValidateSampleDescription(const void * address, int maxlength)
+			{
+				if (!address) return false;
+				auto data = reinterpret_cast<const uint16 *>(address);
+				int index = 0;
+				while (true) {
+					if (2 * index + 1 >= maxlength) return false;
+					if (!data[index]) return true;
+					index++;
+				}
+			}
+			bool SampleDescriptionAreSame(const void * a, const void * b)
+			{
+				auto d1 = reinterpret_cast<const uint16 *>(a);
+				auto d2 = reinterpret_cast<const uint16 *>(b);
+				int index = 0;
+				while (true) {
+					if ((d1[index] & ~BlockTransferFormatReadOnly) != (d2[index] & ~BlockTransferFormatReadOnly)) return false;
+					if (!d1[index]) return true;
+					index++;
+				}
+			}
+			int GetSampleDescriptionNumberOfChannels(const void * desc)
+			{
+				if (!desc) return 0;
+				int count = 0;
+				auto data = reinterpret_cast<const uint16 *>(desc);
+				while (data[count]) count++;
+				return count;
+			}
+			int GetSampleDescriptionBitLength(const void * desc)
+			{
+				if (!desc) return 0;
+				auto data = reinterpret_cast<const uint16 *>(desc);
+				auto channels = GetSampleDescriptionNumberOfChannels(desc);
+				int length = 0;
+				for (int i = 0; i < channels; i++) length += (int(data[i]) >> 9);
+				return length;
+			}
+			int GetSampleDescriptionChannelUsage(const void * desc, int index)
+			{
+				if (!desc) return 0;
+				auto data = reinterpret_cast<const uint16 *>(desc);
+				return data[index] & BlockTransferMaskChannel;
+			}
+			bool GetSampleDescriptionEndianness(const void * desc)
+			{
+				if (!desc) return false;
+				auto data = reinterpret_cast<const uint16 *>(desc);
+				return (data[0] & BlockTransferFormatBE) ? true : false;
+			}
+			void GetSampleDescriptionChannelByIndex(const void * desc, int index, int * first_bit, int * bit_length, int * format)
+			{
+				if (!desc) return;
+				auto data = reinterpret_cast<const uint16 *>(desc);
+				int offset = 0;
+				for (int i = 0; i < index; i++) {
+					int bl = int(data[i]) >> 9;
+					offset += bl;
+				}
+				int bl = int(data[index]) >> 9;
+				if (first_bit) *first_bit = offset;
+				if (bit_length) *bit_length = bl;
+				if (format) *format = data[index] & BlockTransferMaskFormat;
+			}
+			bool GetSampleDescriptionChannelByUsage(const void * desc, int usage, int * first_bit, int * bit_length, int * format)
+			{
+				if (!desc) return false;
+				auto data = reinterpret_cast<const uint16 *>(desc);
+				int offset = 0;
+				int index = 0;
+				while (data[index]) {
+					int bl = int(data[index]) >> 9;
+					if ((data[index] & BlockTransferMaskChannel) == usage) {
+						if (first_bit) *first_bit = offset;
+						if (bit_length) *bit_length = bl;
+						if (format) *format = data[index] & BlockTransferMaskFormat;
+						return true;
+					}
+					offset += bl;
+					index++;
+				}
+				return false;
+			}
 		}
 	}
 }

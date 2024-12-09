@@ -152,7 +152,7 @@ genus consolatorium hereditat objectum_dynamicum {
 	functio nihil scribe(~linea ln) iacit virtualis {
 		si (_modus_ex) {
 			int long = ln.longitudo - 1;
-			pro (var i : [0, long]) {
+			per (var i : [0, long]) {
 				si (ln[i] >= char(32) || ln[i] == char('\n') || ln[i] == char('\t')) {
 					nint32 data;
 					int l = 4;
@@ -162,7 +162,7 @@ genus consolatorium hereditat objectum_dynamicum {
 			}
 		} alioqui {
 			int long = ln.longitudo - 1;
-			pro (var i : [0, long]) {
+			per (var i : [0, long]) {
 				si (ln[i] >= char(32) || ln[i] == char('\t')) {
 					nint32 data, ls;
 					int l = 4;

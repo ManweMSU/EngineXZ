@@ -112,12 +112,13 @@ namespace Engine
 					if (ref.index == TransformFollowPointer) output << L"PTR_FOLLOW";
 					else if (ref.index == TransformTakePointer) output << L"PTR_TAKE";
 					else if (ref.index == TransformAddressOffset) output << L"OFFSET";
-					else if (ref.index == TransformBlockTransfer) output << L"BLT";
+					else if (ref.index == TransformMove) output << L"BLT";
 					else if (ref.index == TransformInvoke) output << L"CALL";
 					else if (ref.index == TransformTemporary) output << L"NEW";
 					else if (ref.index == TransformBreakIf) output << L"BREAKIF";
 					else if (ref.index == TransformSplit) output << L"SPLIT";
 					else if (ref.index == TransformAtomicAdd) output << L"AADD";
+					else if (ref.index == TransformAtomicSet) output << L"ABLT";
 					else if (ref.index == TransformLogicalAnd) output << L"ALL";
 					else if (ref.index == TransformLogicalOr) output << L"ANY";
 					else if (ref.index == TransformLogicalFork) output << L"FORK";
@@ -180,12 +181,12 @@ namespace Engine
 						else if (ref.index == TransformFloatInverse) output << L"NEG";
 						else if (ref.index == TransformFloatSqrt) output << L"SQRT";
 						else if (ref.index == TransformFloatReduce) output << L"REDUCE";
-						else throw InvalidArgumentException();
+						else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 						if (ref.ref_flags & ReferenceFlagVectorCom) output << L"V";
 						if (ref.ref_flags & ReferenceFlagShort) output << L"_16";
 						else if (ref.ref_flags & ReferenceFlagLong) output << L"_64";
 						else output << L"_32";
-					} else throw InvalidArgumentException();
+					} else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 				} else if (ref.ref_class == ReferenceLiteral) {
 				} else if (ref.index) {
 					output << L"[" << string(ref.index) << L"]";

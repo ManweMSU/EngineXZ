@@ -128,8 +128,8 @@ structura semita hereditat linea {
 			var limae = ex.limae();
 			var coll = ex.collectoria();
 			proba ad.crea_collectorium();
-			pro (var i : limae^) { semita lim = limae^[i]; _exscribe_interne(lim, semita(ad, lim.nomen), modus); }
-			pro (var i : coll^) { semita lim = coll^[i]; _exscribe_interne(lim, semita(ad, lim.nomen), modus); }
+			per (var i : limae^) { semita lim = limae^[i]; _exscribe_interne(lim, semita(ad, lim.nomen), modus); }
+			per (var i : coll^) { semita lim = coll^[i]; _exscribe_interne(lim, semita(ad, lim.nomen), modus); }
 		} alioqui iace errores.ie_falsum, errores.ie_lima_nulla;
 	}
 	functio int _stat_obj() {
@@ -172,7 +172,7 @@ structura semita hereditat linea {
 		}
 		si (rec) {
 			var subcoll = collectoria();
-			pro (var i : subcoll^) semita(subcoll^[i])._limae(ord, filtrum, coll, rec);
+			per (var i : subcoll^) semita(subcoll^[i])._limae(ord, filtrum, coll, rec);
 		}
 	}
 	functio adl[dordo_linearum] _limae(@char filtrum, logicum coll, logicum rec) iacit {
@@ -314,9 +314,9 @@ structura semita hereditat linea {
 	functio nihil remove_collectoriorum() iacit { si (!winapi.RemoveDirectory(linea_utf16(_semita_universalis(ego^)))) iace errores.ie_falsum, winapi.suberror(); }
 	functio nihil remove_collectoriorum_cunctum() iacit {
 		var limae = ego^.limae();
-		pro (var i : limae^) semita(limae^[i]).remove();
+		per (var i : limae^) semita(limae^[i]).remove();
 		limae = ego^.collectoria();
-		pro (var i : limae^) semita(limae^[i]).remove_collectoriorum_cunctum();
+		per (var i : limae^) semita(limae^[i]).remove_collectoriorum_cunctum();
 		remove_collectoriorum();
 	}
 
@@ -424,7 +424,7 @@ functio adl[dordo_linearum] para_argumenta() iacit {
 	var imp = winapi.CommandLineToArgv(winapi.GetCommandLine(), @num);
 	si (imp == nullus) iace errores.habitus_falsus;
 	proba {
-		pro (var i = 0; i < num; i++) resp^.adde(linea(imp[i], -1, linea.codex.utf16));
+		per (var i = 0; i < num; i++) resp^.adde(linea(imp[i], -1, linea.codex.utf16));
 	} cape (nintadl e, nintadl se) {
 		winapi.LocalFree(imp);
 		iace e, se;
@@ -441,7 +441,7 @@ functio adl[ordo volumen] para_volumina() iacit {
 	sem[1] = nint16(':');
 	sem[2] = nint16('\\');
 	sem[3] = nint16(0);
-	pro (var i : [0, 31]) si (int(vol) & (1 << i)) {
+	per (var i : [0, 31]) si (int(vol) & (1 << i)) {
 		sem[0] = nint16('A' + i);
 		volumen vadde;
 		si (winapi.GetVolumeInformation(sem, nomen.data, nomen.longitudo, nullus, nullus, nullus, nullus, 0)) {

@@ -57,7 +57,7 @@ namespace Engine
 		}
 		XA::ExpressionTree MakeBlt(const XA::ExpressionTree & dest, const XA::ExpressionTree & src, const XA::ObjectSize & size)
 		{
-			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+			auto result = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke));
 			XA::TH::AddTreeInput(result, dest, XA::TH::MakeSpec(size));
 			XA::TH::AddTreeInput(result, src, XA::TH::MakeSpec(size));
 			XA::TH::AddTreeOutput(result, XA::TH::MakeSpec(size));

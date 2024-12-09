@@ -523,6 +523,8 @@ namespace Engine
 					object = CreateOperatorNew(ctx); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
 				} else if (IsKeyword(Lexic::KeywordConstruct)) {
 					object = CreateOperatorConstruct(ctx); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
+				} else if (IsKeyword(Lexic::KeywordBLT)) {
+					object = CreateBlockTransfer(ctx); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
 				} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				object->Retain();
 				return object;

@@ -210,7 +210,7 @@ spatium scriptio {
 			dordo_datorum data(l * 8);
 			ordo [4] nint8 ldta;
 			int long;
-			pro (var i = 0; i < l; i++) {
+			per (var i = 0; i < l; i++) {
 				si (ln[i] >= char(32) || ln[i] == char('\t')) {
 					long = 4;
 					lineae.scribe_characterem(@ldta, long, _cdx, ln[i]);

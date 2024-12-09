@@ -275,6 +275,7 @@ int Main(void)
 				}
 			}
 		} catch (...) { return 0x3F; }
+		return 0;
 	} else {
 		if (!state.silent) try {
 			auto length = Localized(100).ToInt32();

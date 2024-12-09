@@ -12,7 +12,7 @@ structura informatio {
 
 functio nihil dirime(~ordo informatio inf) iacit
 {
-	pro (var i : [0, inf.longitudo - 2]) pro (var j : [i + 1, inf.longitudo - 1]) si (inf[j].nomen < inf[i].nomen) inf.permuta(i, j);
+	per (var i : [0, inf.longitudo - 2]) per (var j : [i + 1, inf.longitudo - 1]) si (inf[j].nomen < inf[i].nomen) inf.permuta(i, j);
 }
 functio nihil genera(~ordo informatio inf, ~linea praev, int primus, int long, ~scriptio.codificator cdx) iacit
 {
@@ -37,15 +37,15 @@ functio nihil primus() introitus iacit
 	ordo linea lineae;
 	dum (!in^.finis) { lineae << in^.lege_lineam(); }
 	int ini = -1, fin = -1;
-	pro (var i : lineae) {
+	per (var i : lineae) {
 		si (lineae[i].reperi_primum("ExposeRoutine") >= 0) ini = i;
 		alioqui si (lineae[i].reperi_primum("ExposeInterface") >= 0) fin = i;
 	}
 	si (ini < 0 || fin < 0) iace errores.efformatio_falsa;
 	ordo linea selecti;
-	pro (var i : [ini + 1, fin - 1]) si (lineae[i].reperi_primum("==") >= 0) selecti << lineae[i];
+	per (var i : [ini + 1, fin - 1]) si (lineae[i].reperi_primum("==") >= 0) selecti << lineae[i];
 	ordo informatio inf;
-	pro (var i : selecti) {
+	per (var i : selecti) {
 		var ~ ln = selecti[i];
 		int nds = ln.reperi_primum("\"");
 		int ndd = ln.reperi_ultimum("\"");
@@ -56,5 +56,5 @@ functio nihil primus() introitus iacit
 	}
 	dirime(inf);
 	genera(inf, "", 0, inf.longitudo, out^);
-	pro (var i : inf) con.scribe_lineam(linea.ex(inf[i]));
+	per (var i : inf) con.scribe_lineam(linea.ex(inf[i]));
 }

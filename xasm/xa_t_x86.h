@@ -148,9 +148,12 @@ namespace Engine
 				void encode_and(Reg reg, int literal);
 				void encode_xor(Reg reg, int literal);
 				void encode_xadd(uint quant, Reg dest_ptr, Reg src);
+				void encode_xchg(uint quant, Reg dest_ptr, Reg src);
 				void encode_test(uint quant, Reg reg, int literal);
 				void encode_operation(uint quant, arOp op, Reg to, Reg value_ptr, bool indirect = false, int value_offset = 0);
 				void encode_mul_div(uint quant, mdOp op, Reg value_ptr, bool indirect = false, int value_offset = 0);
+				void encode_mul(uint quant, Reg to, Reg value, bool indirect = false, int value_offset = 0);
+				void encode_mul3(uint quant, Reg to, Reg value1, int value2, bool indirect = false, int value_offset = 0);
 				void encode_fld(uint quant, Reg src_ptr, int src_offset);
 				void encode_fild(uint quant, Reg src_ptr, int src_offset);
 				void encode_fldz(void);
@@ -173,6 +176,7 @@ namespace Engine
 				void encode_shr(Reg reg, int bits);
 				void encode_call(Reg func_ptr, bool indirect);
 				void encode_put_addr_of(Reg dest, const ObjectReference & value);
+				// void encode_block_transfer(int opcode, int dim, const void * df, const void * sf, bool ss, Reg dimptr, Reg ddptr, Reg sdptr, Reg bf, ArgumentSpecification bfs);
 			public:
 				void encode_debugger_trap(void);
 				void encode_pure_ret(int bytes_unroll = 0);

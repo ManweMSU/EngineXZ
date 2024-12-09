@@ -65,13 +65,13 @@ spatium serializatio {
 				var ~ d = _ded.ultimus^.valor;
 				var ~ sd = _ded.ultimus^.pristinus^.valor;
 				(@int)(@d.portio.data.data[0])^ = d.numerus;
-				pro (var i = 0; i < d.numerus; i++) {
+				per (var i = 0; i < d.numerus; i++) {
 					int p = d.portio.data.longitudo;
 					(@int)(@d.portio.data.data[i * 16 + 4])^ += p;
 					(@int)(@d.portio.data.data[i * 16 + 16])^ += p;
 					d.portio.relocationes << (i * 16 + 4);
 					d.portio.relocationes << (i * 16 + 16);
-					pro (var j : d.portiones[i].relocationes) {
+					per (var j : d.portiones[i].relocationes) {
 						(@int)(@d.portiones[i].data.data[d.portiones[i].relocationes[j]])^ += p;
 						d.portio.relocationes << (d.portiones[i].relocationes[j] + p);
 					}
@@ -89,7 +89,7 @@ spatium serializatio {
 					_portio e;
 					e.data.longitudo = longnom;
 					sd.nomen.codifica(e.data.data, linea.codex.utf8, sic);
-					pro (var i : d.portio.relocationes) {
+					per (var i : d.portio.relocationes) {
 						(@int)(@d.portio.data.data[d.portio.relocationes[i]])^ += longnom;
 						e.relocationes << (d.portio.relocationes[i] + longnom);
 					}
@@ -116,11 +116,11 @@ spatium serializatio {
 			functio nihil ende_serializandum_ordinis() iacit redefini {
 				var ~ d = _ded.ultimus^.valor;
 				var ~ sd = _ded.ultimus^.pristinus^.valor;
-				pro (var i : d.portiones) {
+				per (var i : d.portiones) {
 					int p = d.portio.data.longitudo;
 					(@int)(@d.portio.data.data[i * 4])^ = p;
 					d.portio.relocationes << (i * 4);
-					pro (var j : d.portiones[i].relocationes) {
+					per (var j : d.portiones[i].relocationes) {
 						(@int)(@d.portiones[i].data.data[d.portiones[i].relocationes[j]])^ += p;
 						d.portio.relocationes << (d.portiones[i].relocationes[j] + p);
 					}
@@ -136,7 +136,7 @@ spatium serializatio {
 					_portio e;
 					e.data.longitudo = longnom;
 					sd.nomen.codifica(e.data.data, linea.codex.utf8, sic);
-					pro (var i : d.portio.relocationes) {
+					per (var i : d.portio.relocationes) {
 						(@int)(@d.portio.data.data[d.portio.relocationes[i]])^ += longnom;
 						e.relocationes << (d.portio.relocationes[i] + longnom);
 					}
@@ -430,7 +430,7 @@ spatium serializatio {
 					si (d.ert_genus < 0) d.ert_genus = 12;
 					si (d.ert_genus == 12) {
 						d.portio.data.longitudo = 4 * (d.numerus + numerus);
-						pro (var i = 0; i < numerus; i++) {
+						per (var i = 0; i < numerus; i++) {
 							_portio e;
 							e.data.longitudo = valores[i].longitudo_codicis(linea.codex.utf8) + 1;
 							valores[i].codifica(e.data.data, linea.codex.utf8, sic);
@@ -550,7 +550,7 @@ spatium serializatio {
 					alioqui si (gen == 9) stor^.serializa((@dfrac)(@data^.data[pos]), numc);
 					alioqui si (gen == 10) {
 						var cplx = repulsus.expone_genus(modulus(), complex);
-						pro (var i = 0; i < numc; i++) {
+						per (var i = 0; i < numc; i++) {
 							si (!stor^.serializa_alterne(@data^.data[pos + i * 16], cplx, 1)) {
 								stor^.exordi_serializandum_structurae();
 								stor^.da_nomen_valori("re");
@@ -563,7 +563,7 @@ spatium serializatio {
 					} alioqui si (gen == 11) stor^.serializa((@logicum)(@data^.data[pos]), numc);
 					alioqui si (gen == 12) {
 						si (num > 0) {
-							pro (var i = 0; i < num; i++) {
+							per (var i = 0; i < num; i++) {
 								var subpos = (@int)(@data^.data[pos + i * 4])^;
 								var ln = linea(@data^.data[subpos], -1, linea.codex.utf8);
 								stor^.serializa(@ln, 1);
@@ -574,14 +574,14 @@ spatium serializatio {
 						}
 					} alioqui si (gen == 13) {
 						var clr = repulsus.expone_genus(modulus(), imago.color);
-						pro (var i = 0; i < numc; i++) {
+						per (var i = 0; i < numc; i++) {
 							si (!stor^.serializa_alterne(@data^.data[pos + i * 4], clr, 1)) {
 								stor^.serializa((@nint32)(@data^.data[pos + i * 4]), 1);
 							}
 						}
 					} alioqui si (gen == 14) stor^.serializa((@nint64)(@data^.data[pos]), numc);
 					alioqui si (gen == 19) {
-						pro (var i = 0; i < numc; i++) {
+						per (var i = 0; i < numc; i++) {
 							var ~ rect = (@_rectangulis)(@data^.data[pos + i * magnitudo_maxima(_rectangulis)])^;
 							stor^.exordi_serializandum_structurae();
 							stor^.da_nomen_valori("sin_a");
@@ -612,7 +612,7 @@ spatium serializatio {
 						}
 					} alioqui si (gen == 22) {
 						si (num > 0) {
-							pro (var i = 0; i < num; i++) {
+							per (var i = 0; i < num; i++) {
 								var subpos = (@int)(@data^.data[pos + i * 4])^;
 								_deserializa_structuram(subpos, stor);
 							}
@@ -626,7 +626,7 @@ spatium serializatio {
 				si (pos + 4 > data^.longitudo) iace errores.efformatio_falsa;
 				int num = (@int)(@data^.data[pos])^;
 				si (pos + 4 + num * 16 > data^.longitudo) iace errores.efformatio_falsa;
-				pro (var i = 0; i < num; i++) {
+				per (var i = 0; i < num; i++) {
 					var nomen_adl = (@int)(@data^.data[pos + 4 + 16 * i])^;
 					var gen = (@int)(@data^.data[pos + 8 + 16 * i])^;
 					var ordlong = (@int)(@data^.data[pos + 12 + 16 * i])^;

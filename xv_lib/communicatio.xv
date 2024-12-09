@@ -68,7 +68,7 @@ spatium communicatio {
 					ip = valor.scinde('.');
 				}
 				si (ip^.longitudo != 4) iace errores.efformatio_falsa;
-				pro (var i : [0, 3]) ego^.valor[i] = ip^[i].ad_nint32();
+				per (var i : [0, 3]) ego^.valor[i] = ip^[i].ad_nint32();
 			}
 		}
 		!dordo_datorum valor_purus {
@@ -112,9 +112,9 @@ spatium communicatio {
 						portus = valor.fragmentum(ipe + 2, -1).ad_nint32();
 					} alioqui iace errores.efformatio_falsa;
 				} alioqui portus = 0;
-				pro (var i : [0, 7]) ego^.valor[i] = 0;
+				per (var i : [0, 7]) ego^.valor[i] = 0;
 				int s = 0;
-				pro (var i : ip^) {
+				per (var i : ip^) {
 					si (!ip^[i].longitudo) exi;
 					si (ip^[i].reperi_primum(".") >= 0) {
 						si (s > 6) iace errores.efformatio_falsa;
@@ -129,7 +129,7 @@ spatium communicatio {
 					}
 				}
 				s = 7;
-				pro (var i : ~ip^) {
+				per (var i : ~ip^) {
 					si (!ip^[i].longitudo) exi;
 					si (ip^[i].reperi_primum(".") >= 0) {
 						si (s < 1) iace errores.efformatio_falsa;

@@ -16,7 +16,7 @@ functio nihil ini() introitus iacit {
 	con.titulus = "Привет!";
 
 	var vol = para_volumina();
-	pro (var i : vol^) {
+	per (var i : vol^) {
 		con.scribe_lineam(linea.forma("Volumen '%0' sup '%1', longitudo: %2", vol^[i].nomen, vol^[i].radix, vol^[i].memoria));
 	}
 	con.scribe_lineam(linea.ex(para_argumenta()));

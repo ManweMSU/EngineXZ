@@ -51,7 +51,7 @@ namespace Engine
 			constexpr const widechar * KeywordElse		= L"alioqui";
 			constexpr const widechar * KeywordWhile		= L"dum";
 			constexpr const widechar * KeywordDo		= L"fac";
-			constexpr const widechar * KeywordFor		= L"pro";
+			constexpr const widechar * KeywordFor		= L"per";
 			constexpr const widechar * KeywordBreak		= L"exi";
 			constexpr const widechar * KeywordNull		= L"nullus";
 			constexpr const widechar * KeywordOverride	= L"redefini";
@@ -66,6 +66,7 @@ namespace Engine
 			constexpr const widechar * KeywordEnum		= L"enumeratio";
 			constexpr const widechar * KeywordAs		= L"acsi";
 			constexpr const widechar * KeywordTrap		= L"__decipula__";
+			constexpr const widechar * KeywordBLT		= L"__ttl__";
 
 			constexpr const widechar * AttributeSystem	= L"[systema]";
 			constexpr const widechar * AttributeExtens	= L"[extensio]";

@@ -31,7 +31,7 @@ spatium serializatio {
 			functio linea _forma_lineam(~linea basis) iacit {
 				ordo char acc;
 				acc << char('\"');
-				pro (var i : basis) {
+				per (var i : basis) {
 					var ch = basis[i];
 					si (ch == char('\"') || ch == char('\\')) {
 						acc << char('\\') << ch;
@@ -64,7 +64,7 @@ spatium serializatio {
 								ev =	"\\u" + linea(char(0xD800) + (v >> char(10)), linea.radix_sextadecima, 4) +
 										"\\u" + linea(char(0xDC00) + (v & char(0x3FF)), linea.radix_sextadecima, 4);
 							}
-							pro (var j : ev) acc << ev[j];
+							per (var j : ev) acc << ev[j];
 						}
 					}
 				}
@@ -144,22 +144,22 @@ spatium serializatio {
 			}
 			functio nihil serializa_nullum() iacit redefini { _ini_valorem(); _fl^ << "null"; }
 			functio nihil serializa(@logicum valores, int numerus) iacit redefini {
-				pro (int i = 0; i < numerus; i++) {
+				per (int i = 0; i < numerus; i++) {
 					_ini_valorem();
 					si (valores[i]) _fl^ << "true";
 					alioqui _fl^ << "false";
 				}
 			}
-			functio nihil serializa(@int8 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
-			functio nihil serializa(@nint8 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
-			functio nihil serializa(@int16 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
-			functio nihil serializa(@nint16 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
-			functio nihil serializa(@int32 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
-			functio nihil serializa(@nint32 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
-			functio nihil serializa(@int64 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
-			functio nihil serializa(@nint64 valores, int numerus) iacit redefini { pro (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@int8 valores, int numerus) iacit redefini { per (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@nint8 valores, int numerus) iacit redefini { per (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@int16 valores, int numerus) iacit redefini { per (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@nint16 valores, int numerus) iacit redefini { per (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@int32 valores, int numerus) iacit redefini { per (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@nint32 valores, int numerus) iacit redefini { per (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@int64 valores, int numerus) iacit redefini { per (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
+			functio nihil serializa(@nint64 valores, int numerus) iacit redefini { per (int i = 0; i < numerus; i++) { _ini_valorem(); _fl^ << linea(valores[i]); } }
 			functio nihil serializa(@frac valores, int numerus) iacit redefini {
-				pro (int i = 0; i < numerus; i++) si (!math.nn_est(valores[i]) && !math.inf_est(valores[i])) {
+				per (int i = 0; i < numerus; i++) si (!math.nn_est(valores[i]) && !math.inf_est(valores[i])) {
 					_ini_valorem();
 					var lit = linea(valores[i]);
 					si (lit.reperi_primum(".") < 0) lit += ".0";
@@ -167,7 +167,7 @@ spatium serializatio {
 				} alioqui serializa_nullum();
 			}
 			functio nihil serializa(@dfrac valores, int numerus) iacit redefini {
-				pro (int i = 0; i < numerus; i++) si (!math.nn_est(valores[i]) && !math.inf_est(valores[i])) {
+				per (int i = 0; i < numerus; i++) si (!math.nn_est(valores[i]) && !math.inf_est(valores[i])) {
 					_ini_valorem();
 					var lit = linea(valores[i]);
 					si (lit.reperi_primum(".") < 0) lit += ".0";
@@ -175,7 +175,7 @@ spatium serializatio {
 				} alioqui serializa_nullum();
 			}
 			functio nihil serializa(@linea valores, int numerus) iacit redefini {
-				pro (int i = 0; i < numerus; i++) {
+				per (int i = 0; i < numerus; i++) {
 					_ini_valorem();
 					_fl^ << _forma_lineam(valores[i]);
 				}

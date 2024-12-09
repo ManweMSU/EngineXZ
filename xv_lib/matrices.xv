@@ -32,9 +32,9 @@ structura frac2x2 {
 	classis functio frac2x2 operator - (~frac2x2 a, ~frac2x2 b) { responde frac2x2(a[0] - b[0], a[1] - b[1]); }
 	classis functio frac2x2 operator * (~frac2x2 a, ~frac2x2 b) {
 		frac2x2 r;
-		pro (var i : [0, 1]) pro (var j : [0, 1]) {
+		per (var i : [0, 1]) per (var j : [0, 1]) {
 			frac A = 0.0;
-			pro (var k : [0, 1]) A += a[i, k] * b[k, j];
+			per (var k : [0, 1]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;
@@ -88,9 +88,9 @@ structura frac3x3 {
 	classis functio frac3x3 operator - (~frac3x3 a, ~frac3x3 b) { responde frac3x3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
 	classis functio frac3x3 operator * (~frac3x3 a, ~frac3x3 b) {
 		frac3x3 r;
-		pro (var i : [0, 2]) pro (var j : [0, 2]) {
+		per (var i : [0, 2]) per (var j : [0, 2]) {
 			frac A = 0.0;
-			pro (var k : [0, 2]) A += a[i, k] * b[k, j];
+			per (var k : [0, 2]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;
@@ -173,9 +173,9 @@ structura frac4x4 {
 	classis functio frac4x4 operator - (~frac4x4 a, ~frac4x4 b) { responde frac4x4(a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]); }
 	classis functio frac4x4 operator * (~frac4x4 a, ~frac4x4 b) {
 		frac4x4 r;
-		pro (var i : [0, 3]) pro (var j : [0, 3]) {
+		per (var i : [0, 3]) per (var j : [0, 3]) {
 			frac A = 0.0;
-			pro (var k : [0, 3]) A += a[i, k] * b[k, j];
+			per (var k : [0, 3]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;
@@ -213,9 +213,9 @@ structura dfrac2x2 {
 	classis functio dfrac2x2 operator - (~dfrac2x2 a, ~dfrac2x2 b) { responde dfrac2x2(a[0] - b[0], a[1] - b[1]); }
 	classis functio dfrac2x2 operator * (~dfrac2x2 a, ~dfrac2x2 b) {
 		dfrac2x2 r;
-		pro (var i : [0, 1]) pro (var j : [0, 1]) {
+		per (var i : [0, 1]) per (var j : [0, 1]) {
 			dfrac A = 0.0;
-			pro (var k : [0, 1]) A += a[i, k] * b[k, j];
+			per (var k : [0, 1]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;
@@ -269,9 +269,9 @@ structura dfrac3x3 {
 	classis functio dfrac3x3 operator - (~dfrac3x3 a, ~dfrac3x3 b) { responde dfrac3x3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
 	classis functio dfrac3x3 operator * (~dfrac3x3 a, ~dfrac3x3 b) {
 		dfrac3x3 r;
-		pro (var i : [0, 2]) pro (var j : [0, 2]) {
+		per (var i : [0, 2]) per (var j : [0, 2]) {
 			dfrac A = 0.0;
-			pro (var k : [0, 2]) A += a[i, k] * b[k, j];
+			per (var k : [0, 2]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;
@@ -354,9 +354,9 @@ structura dfrac4x4 {
 	classis functio dfrac4x4 operator - (~dfrac4x4 a, ~dfrac4x4 b) { responde dfrac4x4(a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]); }
 	classis functio dfrac4x4 operator * (~dfrac4x4 a, ~dfrac4x4 b) {
 		dfrac4x4 r;
-		pro (var i : [0, 3]) pro (var j : [0, 3]) {
+		per (var i : [0, 3]) per (var j : [0, 3]) {
 			dfrac A = 0.0;
-			pro (var k : [0, 3]) A += a[i, k] * b[k, j];
+			per (var k : [0, 3]) A += a[i, k] * b[k, j];
 			r[i, j] = A;
 		}
 		responde r;

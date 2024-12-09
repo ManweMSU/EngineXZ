@@ -105,7 +105,7 @@ spatium serializatio {
 			alioqui si (_genus == linea) responde (@linea)(_data)^;
 			alioqui si (_genus == structura_universalis) {
 				linea r = "structura universalis : [\n";
-				pro (var e : (@structura_universalis)(_data)^) {
+				per (var e : (@structura_universalis)(_data)^) {
 					r += e^.valor.primus + " = " + linea.ex(e^.valor.secundus) + "\n";
 				}
 				responde r + "]";
@@ -165,7 +165,7 @@ spatium serializatio {
 			}
 		} alioqui {
 			si (aperi) stor^.exordi_serializandum_structurae();
-			pro (var i : vlrs^) {
+			per (var i : vlrs^) {
 				var attr = vlrs^[i]^.attributa;
 				linea nomen;
 				proba nomen = attr^[attributa.nomen_serializandi]; cape nomen = vlrs^[i]^.nomen;
@@ -194,7 +194,7 @@ spatium serializatio {
 		} alioqui si (!stor^.serializa_alterne(objadl, objgen, numerus)) {
 			si (objgen^.ordo_est) {
 				var long = numerus > 1 ? _longitudo_generis(objgen) : 0;
-				pro (var i = 0; i < numerus; i++) {
+				per (var i = 0; i < numerus; i++) {
 					stor^.exordi_serializandum_ordinis();
 					_serializa_interne((@nihil)(nintadl(objadl) + i * long), objgen^.longitudo, objgen^.indivisio, stor);
 					stor^.ende_serializandum_ordinis();
@@ -204,13 +204,13 @@ spatium serializatio {
 				var cls = objgen^.symbolum;
 				var vlrs = cls^.valores_siti();
 				!repulsus.symbolum_generis.valor_situs valor_data, valor_numerus;
-				pro (var i : vlrs^) {
+				per (var i : vlrs^) {
 					si (vlrs^[i]^.nomen == "_data") valor_data = vlrs^[i];
 					alioqui si (vlrs^[i]^.nomen == "_numerus") valor_numerus = vlrs^[i];
 				}
 				si (!valor_data || !valor_numerus) iace errores.habitus_falsus;
 				var subcls = valor_data^.genu^.indivisio;
-				pro (var i = 0; i < numerus; i++) {
+				per (var i = 0; i < numerus; i++) {
 					var obj = (@nihil)(nintadl(objadl) + i * long);
 					var data_adl = (@@nihil)(valor_data^.adloquium(obj));
 					var numerus_adl = (@int)(valor_numerus^.adloquium(obj));
@@ -222,12 +222,12 @@ spatium serializatio {
 				var mnbr = objgen^.manubrium;
 				si (mnbr == universalis) {
 					var uni = (@universalis)(objadl);
-					pro (var i = 0; i < numerus; i++) {
+					per (var i = 0; i < numerus; i++) {
 						si (uni[i]._genus == nullus) stor[i].serializa_nullum();
 						alioqui si (uni[i]._genus == structura_universalis) {
 							var ~ dict = (@structura_universalis)(uni[i]._data)^;
 							stor^.exordi_serializandum_structurae();
-							pro (var e : dict) {
+							per (var e : dict) {
 								stor^.da_nomen_valori(e^.valor.primus);
 								_serializa_interne(@e^.valor.secundus, 1, objgen, stor);
 							}
@@ -248,7 +248,7 @@ spatium serializatio {
 				alioqui si (mnbr == linea) stor^.serializa((@linea)(objadl), numerus); alioqui {
 					var cls = objgen^.symbolum;
 					var long = cls^.longitudo;
-					pro (var i = 0; i < numerus; i++) _serializa_structuram((@nihil)(nintadl(objadl) + i * long), cls, stor, sic);
+					per (var i = 0; i < numerus; i++) _serializa_structuram((@nihil)(nintadl(objadl) + i * long), cls, stor, sic);
 				}
 			}
 		}
@@ -365,7 +365,7 @@ spatium serializatio {
 						var cls = s.genus_selectoris^.symbolum;
 						dum (cls) {
 							var vlrs = cls^.valores_siti();
-							pro (var i : vlrs^) {
+							per (var i : vlrs^) {
 								var attr = vlrs^[i]^.attributa;
 								linea nomen;
 								proba nomen = attr^[attributa.nomen_serializandi]; cape nomen = vlrs^[i]^.nomen;
@@ -417,12 +417,12 @@ spatium serializatio {
 						sn.objmagn = _longitudo_generis(sn.genus_selectoris);
 						sn.positus = sn.ordmagn = 0;
 						sn.dataval = nullus;
-						pro (var i : vlrss^) si (vlrss^[i]^.nomen == "_data") {
+						per (var i : vlrss^) si (vlrss^[i]^.nomen == "_data") {
 							sn.dataval = (@@nihil)(vlrss^[i]^.adloquium(sn.basis));
 							exi;
 						}
 						si (sn.dataval == nullus) iace errores.habitus_falsus;
-						pro (var i : vlrsf^) si (vlrsf^[i]^.nomen == "longitudo") {
+						per (var i : vlrsf^) si (vlrsf^[i]^.nomen == "longitudo") {
 							var mth = vlrsf^[i]^.methodus_scribendi;
 							var inv = repulsus.crea_invocatores(@mth, 1);
 							sn.scribe_longitudinem = inv^[0];
@@ -457,23 +457,23 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, logicum) || conformis(cls, int8) || conformis(cls, nint8)) {
 						memoria.exscribe(s.selector, valores, numerus);
 					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
-						pro (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
-						pro (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
-						pro (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -483,25 +483,25 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, int8) || conformis(cls, nint8)) {
 						memoria.exscribe(s.selector, valores, numerus);
 					} alioqui si (conformis(cls, logicum)) {
-						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
-						pro (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
-						pro (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
-						pro (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -511,25 +511,25 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, int8) || conformis(cls, nint8)) {
 						memoria.exscribe(s.selector, valores, numerus);
 					} alioqui si (conformis(cls, logicum)) {
-						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
-						pro (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
-						pro (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
-						pro (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -539,25 +539,25 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, int16) || conformis(cls, nint16)) {
 						memoria.exscribe(s.selector, valores, numerus * 2);
 					} alioqui si (conformis(cls, logicum)) {
-						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
-						pro (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
-						pro (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
-						pro (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -567,25 +567,25 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, int16) || conformis(cls, nint16)) {
 						memoria.exscribe(s.selector, valores, numerus * 2);
 					} alioqui si (conformis(cls, logicum)) {
-						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
-						pro (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
-						pro (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
-						pro (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -595,25 +595,25 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, int32) || conformis(cls, nint32)) {
 						memoria.exscribe(s.selector, valores, numerus * 4);
 					} alioqui si (conformis(cls, logicum)) {
-						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
-						pro (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
-						pro (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
-						pro (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int64)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -623,25 +623,25 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, int32) || conformis(cls, nint32)) {
 						memoria.exscribe(s.selector, valores, numerus * 4);
 					} alioqui si (conformis(cls, logicum)) {
-						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
-						pro (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
-						pro (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int64) || conformis(cls, nint64)) {
-						pro (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint64)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -651,25 +651,25 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, int64) || conformis(cls, nint64)) {
 						memoria.exscribe(s.selector, valores, numerus * 8);
 					} alioqui si (conformis(cls, logicum)) {
-						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
-						pro (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int8)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
-						pro (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int16)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
-						pro (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@int32)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -679,25 +679,25 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, int64) || conformis(cls, nint64)) {
 						memoria.exscribe(s.selector, valores, numerus * 8);
 					} alioqui si (conformis(cls, logicum)) {
-						pro (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@logicum)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int8) || conformis(cls, nint8)) {
-						pro (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint8)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int16) || conformis(cls, nint16)) {
-						pro (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint16)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, int32) || conformis(cls, nint32)) {
-						pro (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@nint32)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -707,15 +707,15 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, frac)) {
 						memoria.exscribe(s.selector, valores, numerus * 4);
 					} alioqui si (conformis(cls, dfrac)) {
-						pro (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@dfrac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -725,15 +725,15 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
 					si (conformis(cls, dfrac)) {
 						memoria.exscribe(s.selector, valores, numerus * 8);
 					} alioqui si (conformis(cls, frac)) {
-						pro (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@frac)(s.selector)[i] = valores[i];
 					} alioqui si (conformis(cls, linea)) {
-						pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+						per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 					}
 				}
 			}
@@ -743,10 +743,10 @@ spatium serializatio {
 			var ~ s = stati.ultimus^.valor;
 			si (s.genus_selectoris) {
 				si (s.genus_selectoris^.manubrium == universalis) {
-					pro (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
+					per (var i = 0; i < numerus; i++) (@universalis)(s.selector)[i] = universalis(valores[i]);
 				} alioqui {
 					var cls = s.genus_selectoris^.symbolum;
-					si (conformis(cls, linea)) pro (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
+					si (conformis(cls, linea)) per (var i = 0; i < numerus; i++) (@linea)(s.selector)[i] = valores[i];
 				}
 			}
 		}
@@ -762,7 +762,7 @@ spatium serializatio {
 						si (s.genus_selectoris) {
 							var mth = cls^.methodi();
 							!repulsus.invocator exscribe;
-							pro (var i : mth^) si (mth^[i]^.nomen == "=") {
+							per (var i : mth^) si (mth^[i]^.nomen == "=") {
 								var func = mth^[i]^.implantatio^.genu;
 								var arg = func^.argumenta;
 								si (func^.indivisio^.referens_est && arg^.longitudo == 1) {

@@ -302,7 +302,7 @@ spatium serializatio {
 			}
 			functio nihil serializa(@linea valores, int numerus) iacit redefini {
 				_crea_atomum_nomini();
-				pro (var i = 0; i < numerus; i++) _crea_atomum_lineae(atomi.LINE, valores[i]);
+				per (var i = 0; i < numerus; i++) _crea_atomum_lineae(atomi.LINE, valores[i]);
 			}
 			functio logicum serializa_alterne(@nihil objadl, @repulsus.generis objgen, int numerus) iacit redefini {
 				si (!_reg) responde non;
@@ -316,7 +316,7 @@ spatium serializatio {
 				cape responde non;
 				var adla = (@@remota.objectum)(objadl);
 				_crea_atomum_nomini();
-				pro (var i = 0; i < numerus; i++) {
+				per (var i = 0; i < numerus; i++) {
 					int ref;
 					si (adla[i] == nullus) {
 						_ini_atomum(atomi.IOBJ, ref);

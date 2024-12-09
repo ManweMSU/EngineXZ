@@ -188,10 +188,10 @@ structura callback : responsor_fenestrae, responsor_applicationis {
 		dsvd.valor_depurandi_altitudinis = 1.0;
 		dsvd.valor_depurandi_praeformae = 0;
 		si (ctx^.exordi_reddendum(1, @rtvd, @dsvd)) {
-			var a1 = frac(systema.para_tempus_systemae() % nint(10000)) * frac.pi / frac(5000);
+			var a1 = frac(systema.para_tempum_systemae() % nint(10000)) * frac.pi / frac(5000);
 			var c = math.cos(a1);
 			var s = math.sin(a1);
-			var a2 = frac(systema.para_tempus_systemae() % nint(15000)) * frac.pi / frac(7500);
+			var a2 = frac(systema.para_tempum_systemae() % nint(15000)) * frac.pi / frac(7500);
 			var o = frac3(frac(4.0) * c, frac(4.0) * s, 8.0);
 			conf.proj = math.graphicum.projector_perspectivus_angulatus(frac.pi / frac(4.0), frac(dest^.latitudo) / frac(dest^.altitudo), 0.01, 100.0) *
 				math.graphicum.spectator(o, -o, frac3(0.0, 0.0, 1.0));

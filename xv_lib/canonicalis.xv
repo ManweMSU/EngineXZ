@@ -2814,20 +2814,20 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 		_data = nullus;
 		_realloca(_numerus);
 		int i = 0;
-		proba { pro (i = 0; i < _numerus; i++) initia(@_data[i], valor._data[i]); } cape (intadl e, intadl se) {
-			pro (int j = i - 1; j >= 0; j--) fini(_data[i]);
+		proba { per (i = 0; i < _numerus; i++) initia(@_data[i], valor._data[i]); } cape (intadl e, intadl se) {
+			per (int j = i - 1; j >= 0; j--) fini(_data[i]);
 			memoria.dimitte(_data);
 			iace e, se;
 		}
 	}
 	structor (int talea) { funda _numerus(0); funda _allocatus(0); funda _talea(talea); _data = nullus; }
-	destructor() redefini { pro (int i = 0; i < _numerus; i++) fini(_data[i]); memoria.dimitte(_data); }
+	destructor() redefini { per (int i = 0; i < _numerus; i++) fini(_data[i]); memoria.dimitte(_data); }
 
 	functio ~dordo[$V] operator = (~dordo[$V] valor) iacit
 	{
 		si (ego == @valor) responde ego^;
 		dordo[$V] copia(valor);
-		pro (int i = 0; i < _numerus; i++) fini(_data[i]);
+		per (int i = 0; i < _numerus; i++) fini(_data[i]);
 		memoria.dimitte(_data);
 		_data = copia._data;
 		_numerus = copia._numerus;
@@ -2847,34 +2847,34 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 	{
 		si (ego == @o) iace errores.argumentum_falsum;
 		_realloca(_numerus + o._numerus);
-		pro (int i = 0; i < o._numerus; i++) _adde(o._data[i]);
+		per (int i = 0; i < o._numerus; i++) _adde(o._data[i]);
 	}
 	functio nihil adde(@$V v, int numerus) iacit
 	{
 		si (!numerus) responde;
 		si (v == _data) iace errores.argumentum_falsum;
 		_realloca(_numerus + numerus);
-		pro (int i = 0; i < numerus; i++) _adde(v[i]);
+		per (int i = 0; i < numerus; i++) _adde(v[i]);
 	}
 	functio nihil permuta(int i, int j) { .permuta(_data[i], _data[j]); }
 	functio nihil insere(~$V v, int pos) iacit
 	{
 		_realloca(_numerus + 1);
-		pro (int i = _numerus - 1; i >= pos; i--) .permuta(_data[i], _data[i + 1]);
+		per (int i = _numerus - 1; i >= pos; i--) .permuta(_data[i], _data[i + 1]);
 		proba { initia(@_data[pos], v); _numerus++; }
-		cape (intadl e, intadl se) { pro (int i = pos; i < _numerus; i++) .permuta(_data[i], _data[i + 1]); iace e, se; }
+		cape (intadl e, intadl se) { per (int i = pos; i < _numerus; i++) .permuta(_data[i], _data[i + 1]); iace e, se; }
 	}
 	functio nihil remove(int pos)
 	{
 		fini _data[pos];
-		pro (int i = pos; i < _numerus - 1; i++) .permuta(_data[i], _data[i + 1]);
+		per (int i = pos; i < _numerus - 1; i++) .permuta(_data[i], _data[i + 1]);
 		_numerus--; _realloca_secura(_numerus);
 	}
 	functio nihil remove_primum() { remove(0); }
 	functio nihil remove_ultimum() { remove(_numerus - 1); }
 	functio nihil depura()
 	{
-		pro (int i = 0; i < _numerus; i++) fini(_data[i]);
+		per (int i = 0; i < _numerus; i++) fini(_data[i]);
 		memoria.dimitte(_data);
 		_data = nullus;
 		_numerus = _allocatus = 0;
@@ -2886,7 +2886,7 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 	{
 		proba {
 			linea resp = "ordo : [";
-			pro (int i = 0; i < _numerus; i++) {
+			per (int i = 0; i < _numerus; i++) {
 				si (i) resp += ", ";
 				resp += linea.ex(_data[i]);
 			}
@@ -2900,12 +2900,12 @@ praeforma genus dordo(V) { genus $_ hereditat objectum {
 		\si tractus.habet_structor($V)\ loca iacit {
 			si (valor > _numerus) {
 				_realloca(valor); int i;
-				proba { pro (i = _numerus; i < valor; i++) initia(@_data[i]); }
-				cape (intadl e, intadl se) { pro (int j = i - 1; j >= _numerus; j--) fini _data[j]; iace e, se; }
+				proba { per (i = _numerus; i < valor; i++) initia(@_data[i]); }
+				cape (intadl e, intadl se) { per (int j = i - 1; j >= _numerus; j--) fini _data[j]; iace e, se; }
 				_numerus = valor;
 			} alioqui si (valor < _numerus) {
 				si (valor < 0) iace errores.argumentum_falsum;
-				pro (int i = valor; i < _numerus; i++) fini _data[i];
+				per (int i = valor; i < _numerus; i++) fini _data[i];
 				_numerus = valor; _realloca_secura(valor);
 			}
 		} \fini\

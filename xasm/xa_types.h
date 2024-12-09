@@ -47,12 +47,13 @@ namespace Engine
 			TransformFollowPointer	= 0x0001, // 1 argument - pointer type; retval - destination
 			TransformTakePointer	= 0x0002, // 1 argument - any type; retval - pointer
 			TransformAddressOffset	= 0x0003, // 3 arguments - base object; offset, literals allowed; offset scale = 1, literals allowed; retval - sub object
-			TransformBlockTransfer	= 0x0004, // 2 arguments - dest; src; retval - dest
+			TransformMove			= 0x0004, // 2 arguments - dest; src; retval - dest
 			TransformInvoke			= 0x0005, // N + 1 arguments - the function to invoke pointer; its arguments then; retval - the function's one
 			TransformTemporary		= 0x0006, // 1 argument - no type data; retval - new entity, finilizer supplied
 			TransformBreakIf		= 0x0007, // 3 arguments - anything; integer; literal; retval - anything
 			TransformSplit			= 0x0008, // 1 argument - anything; retval - anything
 			TransformAtomicAdd		= 0x0009, // 2 arguments - destination integer; integer; retval - a copy of the new destination
+			TransformAtomicSet		= 0x000A, // 2 arguments - destination integer; integer; retval - a copy of the previous destination
 			TransformLogicalAnd		= 0x0010, // any number of integer arguments; retval - integer
 			TransformLogicalOr		= 0x0011, // any number of integer arguments; retval - integer
 			TransformLogicalFork	= 0x0012, // 3 arguments - integer; no type; no type; retval - no type
@@ -115,6 +116,30 @@ namespace Engine
 			TransformFloatInverse	= 0x00A7, // 1 argument - a vector; retval - vector
 			TransformFloatSqrt		= 0x00A8, // 1 argument - a vector; retval - vector
 			TransformFloatReduce	= 0x00A9, // 1 argument - a vector; retval - scalar
+			// Block Transfer Extension:
+			//   arguments: dimensions, (destination descriptor, destination format), (source descriptor, source format), extra parameter; retval - no
+			//   short argument flag if the source is a scalar
+			//   for transfers other than 'copy' the source and the destination must have the same formats
+			TransformBltCopy		= 0x0100, // destination := source
+			TransformBltAnd			= 0x0101, // destination := destination & source
+			TransformBltOr			= 0x0102, // destination := destination | source
+			TransformBltXor			= 0x0103, // destination := destination ^ source
+			TransformBltNotCopy		= 0x0104, // destination := !(source)
+			TransformBltNotAnd		= 0x0105, // destination := !(destination & source)
+			TransformBltNotOr		= 0x0106, // destination := !(destination | source)
+			TransformBltNotXor		= 0x0107, // destination := !(destination ^ source)
+			TransformBltAndInv		= 0x0108, // destination := destination & !source
+			TransformBltOrInv		= 0x0109, // destination := destination | !source
+			TransformBltXorInv		= 0x010A, // destination := destination ^ !source
+			TransformBltAndRev		= 0x010B, // destination := !destination & source
+			TransformBltOrRev		= 0x010C, // destination := !destination | source
+			TransformBltXorRev		= 0x010D, // destination := !destination ^ source
+			TransformBltAdd			= 0x0110, // destination := destination + source
+			TransformBltSubtract	= 0x0111, // destination := destination - source
+			TransformBltSubtractRev	= 0x0112, // destination := source - destination
+			TransformBltMaximum		= 0x0113, // destination := max(destination, source)
+			TransformBltMinimum		= 0x0114, // destination := min(destination, source)
+			TransformBltBlend		= 0x0115, // destination := alpha-blend(destination, source, extra)
 		};
 		enum StatementOpcodes : uint32
 		{
@@ -127,6 +152,29 @@ namespace Engine
 			OpcodeUnconditionalJump	= 0x0006,
 			OpcodeConditionalJump	= 0x0007,
 			OpcodeControlReturn		= 0x0008,
+		};
+		enum BlockTransferSampleDesc : uint16
+		{
+			BlockTransferChannelData0				= 0x0000,
+			BlockTransferChannelData1				= 0x0001,
+			BlockTransferChannelData2				= 0x0002,
+			BlockTransferChannelData3				= 0x0003,
+			BlockTransferChannelDataAverage			= 0x0004,
+			BlockTransferChannelAlphaStraight		= 0x0005,
+			BlockTransferChannelAlphaPremultiplied	= 0x0006,
+			BlockTransferChannelUnusedSetZero		= 0x0007,
+			BlockTransferChannelUnusedSetOne		= 0x0008,
+			BlockTransferFormatUInt					= 0x0000,
+			BlockTransferFormatSInt					= 0x0010,
+			BlockTransferFormatUNorm				= 0x0020,
+			BlockTransferFormatSNorm				= 0x0030,
+			BlockTransferFormatFloat				= 0x0040,
+			BlockTransferFormatLE					= 0x0000,
+			BlockTransferFormatBE					= 0x0080,
+			BlockTransferFormatReadOnly				= 0x0100,
+			BlockTransferMaskChannel				= 0x000F,
+			BlockTransferMaskFormat					= 0x01F0,
+			BlockTransferMaskSize					= 0xFE00,
 		};
 
 		struct ObjectSize

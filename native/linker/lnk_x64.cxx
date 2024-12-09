@@ -169,7 +169,7 @@ namespace Engine
 					else if (_trans->GetPlatform() == Platform::ARM64) func.data << 0x12;
 					else func.data << 0;
 					while (func.data.Length() & 0xF) func.data << 0;
-					auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+					auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke));
 					XA::TH::AddTreeInput(move, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceRetVal)), func.retval);
 					XA::TH::AddTreeInput(move, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, 0)), func.retval);
 					XA::TH::AddTreeOutput(move, func.retval);
@@ -208,7 +208,7 @@ namespace Engine
 						auto invoke = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformInvoke, XA::ReferenceFlagInvoke));
 						for (int i = 0; i <= numargs; i++) XA::TH::AddTreeInput(invoke, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceArgument, i)), XA::TH::MakeSpec(0, 1));
 						XA::TH::AddTreeOutput(invoke, XA::TH::MakeSpec(0, 1));
-						auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+						auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke));
 						XA::TH::AddTreeInput(move, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceRetVal)), XA::TH::MakeSpec(0, 1));
 						XA::TH::AddTreeInput(move, invoke, XA::TH::MakeSpec(0, 1));
 						XA::TH::AddTreeOutput(move, XA::TH::MakeSpec(0, 1));
@@ -234,7 +234,7 @@ namespace Engine
 					XA::TH::AddTreeInput(procaddr, hmodule, hmodule.retval_spec);
 					XA::TH::AddTreeInput(procaddr, CreatePointer(XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceData, d0))), XA::TH::MakeSpec(0, 1));
 					XA::TH::AddTreeOutput(procaddr, XA::TH::MakeSpec(0, 1));
-					auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformBlockTransfer, XA::ReferenceFlagInvoke));
+					auto move = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformMove, XA::ReferenceFlagInvoke));
 					XA::TH::AddTreeInput(move, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceRetVal)), XA::TH::MakeSpec(0, 1));
 					XA::TH::AddTreeInput(move, procaddr, XA::TH::MakeSpec(0, 1));
 					XA::TH::AddTreeOutput(move, XA::TH::MakeSpec(0, 1));

@@ -1531,7 +1531,7 @@ namespace Engine
 									} else if (disp->flags & DispositionDiscard) {
 										disp->flags = DispositionDiscard;
 									}
-								} else if (node.self.index == TransformBlockTransfer) {
+								} else if (node.self.index == TransformMove) {
 									if (node.inputs.Length() != 2) throw InvalidArgumentException();
 									uint size = _size_eval(node.input_specs[0].size);
 									_internal_disposition dest_d, src_d;
@@ -1679,6 +1679,48 @@ namespace Engine
 											encode_emulate_lea(accumulator, Reg::FP, offset);
 										}
 									} else disp->flags = DispositionDiscard;
+								} else if (node.self.index == TransformAtomicSet) {
+									if (node.inputs.Length() != 2) throw InvalidArgumentException();
+									auto size = _size_eval(node.input_specs[0].size);
+									Reg ptr, set, get, status;
+									get = disp->reg;
+									if (get == Reg::NO) get = _reg_alloc(reg_in_use, 0);
+									set = _reg_alloc(reg_in_use, uint(get));
+									ptr = _reg_alloc(reg_in_use, uint(get) | uint(set));
+									status = _reg_alloc(reg_in_use, uint(get) | uint(set) | uint(ptr));
+									_internal_disposition a1, a2;
+									a1.flags = DispositionPointer;
+									a1.reg = ptr;
+									a1.size = a2.size = size;
+									a2.flags = DispositionRegister;
+									a2.reg = set;
+									_encode_preserve(uint(ptr), reg_in_use, 0, !idle);
+									_encode_tree_node(node.inputs[0], idle, mem_load, &a1, reg_in_use | uint(ptr));
+									_encode_preserve(uint(set), reg_in_use | uint(ptr), 0, !idle);
+									_encode_tree_node(node.inputs[1], idle, mem_load, &a2, reg_in_use | uint(ptr) | uint(set));
+									_encode_preserve(uint(get), reg_in_use | uint(ptr) | uint(set), uint(disp->reg), !idle);
+									_encode_preserve(uint(status), reg_in_use | uint(ptr) | uint(set) | uint(get), 0, !idle);
+									if (!idle) {
+										encode_dsb();
+										encode_load_exclusive(size, get, ptr);
+										encode_store_exclusive(size, ptr, set, status);
+										encode_branch_nz(4, status, -2);
+									}
+									_encode_restore(uint(status), reg_in_use | uint(ptr) | uint(set) | uint(get), 0, !idle);
+									_encode_restore(uint(get), reg_in_use | uint(ptr) | uint(set), uint(disp->reg), !idle);
+									_encode_restore(uint(set), reg_in_use | uint(ptr), 0, !idle);
+									_encode_restore(uint(ptr), reg_in_use, 0, !idle);
+									if (disp->flags & DispositionRegister) {
+										disp->flags = DispositionRegister;
+									} else if (disp->flags & DispositionPointer) {
+										disp->flags = DispositionPointer;
+										*mem_load += _word_align(node.input_specs[0].size);
+										if (!idle) {
+											int offset = _allocate_temporary(node.input_specs[0].size);
+											encode_store(size, Reg::FP, offset, get);
+											encode_emulate_lea(get, Reg::FP, offset);
+										}
+									} else disp->flags = DispositionDiscard;
 								} else throw InvalidArgumentException();
 							} else if (node.self.index >= 0x010 && node.self.index < 0x013) {
 								_encode_logics(node, idle, mem_load, disp, reg_in_use);
@@ -1716,6 +1758,10 @@ namespace Engine
 										disp->flags = DispositionDiscard;
 									} else throw InvalidArgumentException();
 								} else _encode_floating_point_ir(node, idle, mem_load, disp, reg_in_use);
+							} else if (node.self.index >= 0x100 && node.self.index < 0x180) {
+								throw InvalidArgumentException();
+								// _encode_preserve(reg_in_use, reg_in_use, 0, !idle);
+								// _encode_restore(reg_in_use, reg_in_use, 0, !idle);
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);
