@@ -93,7 +93,7 @@ VersionInformation {
 	ApplicationName = "XV Monstrans Manualis"
 	CompanyIdentifier = "EngineSoftware"
 	CompanyName = "Engine Software"
-	Copyright = "© Engine Software. 2024"
+	Copyright = "© Engine Software. 2025"
 	InternalName = "xvm"
 	Version = "1.0.0.1"
 }

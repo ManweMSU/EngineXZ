@@ -52,7 +52,7 @@ VersionInformation {
 	ApplicationName = "Engine XX"
 	CompanyIdentifier = "EngineSoftware"
 	CompanyName = "Engine Software"
-	Copyright = "© Engine Software. 2024"
+	Copyright = "© Engine Software. 2025"
 	InternalName = "xx"
 	Version = "1.0.0.1"
 }

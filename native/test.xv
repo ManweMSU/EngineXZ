@@ -1,6 +1,6 @@
 ﻿auxilium attributum ("NomenModuli") = "MODULUS EXPERIMENTI";
 auxilium attributum ("CreatorModuli") = "Engine Software";
-auxilium attributum ("IuraExempli") = "© Engine Software. 2024";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2025";
 auxilium attributum ("Versio") = "1.0.0.1";
 
 auxilium icon (1) = "../artworks/xn_icon.eiwv";

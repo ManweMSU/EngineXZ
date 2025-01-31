@@ -63,7 +63,7 @@ VersionInformation {
 	ApplicationName = "Engine XV Compilator"
 	CompanyIdentifier = "EngineSoftware"
 	CompanyName = "Engine Software"
-	Copyright = "© Engine Software. 2024"
+	Copyright = "© Engine Software. 2025"
 	InternalName = "xv"
 	Version = "1.0.0.1"
 }
