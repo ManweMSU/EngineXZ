@@ -20,8 +20,6 @@
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
 
-#include <ClusterClient.h>
-
 #define XE_TRY_INTRO try {
 #define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
 catch (Engine::InvalidFormatException &) { ectx.error_code = 4; ectx.error_subcode = 0; return DRV; } \
@@ -94,22 +92,6 @@ namespace Engine
 				else _output->WriteEncodingSignature();
 			}
 			virtual ~FileLogger(void) override {}
-			virtual void Log(const string & line) noexcept override { try { _output->WriteLine(line); } catch (...) {} }
-		};
-		class ClusterLogger : public XLoggerSink
-		{
-			SafePointer<Cluster::Client> _client;
-			SafePointer<Streaming::ITextWriter> _output;
-		public:
-			ClusterLogger(void)
-			{
-				_client = new Cluster::Client;
-				_client->SetConnectionServiceID(L"engine.xx");
-				_client->SetConnectionServiceName(L"XX");
-				_client->Connect();
-				_output = _client->CreateLoggingService();
-			}
-			virtual ~ClusterLogger(void) override {}
 			virtual void Log(const string & line) noexcept override { try { _output->WriteLine(line); } catch (...) {} }
 		};
 		class ConsoleBackground : public Object
@@ -811,12 +793,10 @@ namespace Engine
 							if (desc.flags & 0x020) act_mode = EnvironmentLoggerNull;
 							else if (desc.flags & 0x040) act_mode = EnvironmentLoggerConsole;
 							else if (desc.flags & 0x080) act_mode = EnvironmentLoggerFile;
-							else if (desc.flags & 0x100) act_mode = EnvironmentLoggerCluster;
 							else if (desc.flags & 0x200) act_mode = self._ec.logger_type;
 							if (act_mode == EnvironmentLoggerNull) { args << L"--xx-act" << L"nullus"; }
 							else if (act_mode == EnvironmentLoggerConsole) { args << L"--xx-act" << L"consolatorium"; }
 							else if (act_mode == EnvironmentLoggerFile) { args << L"--xx-act" << L"lima" << desc.log_path; }
-							else if (act_mode == EnvironmentLoggerCluster) { args << L"--xx-act" << L"cluster"; }
 						}
 					}
 					args.Append(desc.argv, desc.argc);
@@ -864,6 +844,19 @@ namespace Engine
 					return 0;
 				} catch (...) { return 0; }
 			}
+			static void _get_xversion(int * xxv, int * ev) noexcept
+			{
+				if (xxv) {
+					xxv[0] = ENGINE_VI_VERSIONMAJOR;
+					xxv[1] = ENGINE_VI_VERSIONMINOR;
+					xxv[2] = ENGINE_VI_SUBVERSION;
+					xxv[3] = ENGINE_VI_BUILD;
+				}
+				if (ev) {
+					ev[0] = ENGINE_RUNTIME_VERSION_MAJOR;
+					ev[1] = ENGINE_RUNTIME_VERSION_MINOR;
+				}
+			}
 		public:
 			LauncherServices(EnvironmentConfiguration & ec, LaunchConfiguration & lc) : _ec(ec), _lc(lc) {}
 			virtual ~LauncherServices(void) override {}
@@ -871,6 +864,7 @@ namespace Engine
 			{
 				if (routine_name == L"xx_crpr") return reinterpret_cast<const void *>(_create_process);
 				else if (routine_name == L"xx_onmd") return reinterpret_cast<const void *>(_load_library);
+				else if (routine_name == L"xx_pxxv") return reinterpret_cast<const void *>(_get_xversion);
 				else return 0;
 			}
 			virtual const void * ExposeInterface(const string & interface) noexcept override { if (interface == L"xx") return this; else return 0; }
@@ -950,7 +944,6 @@ namespace Engine
 						if (args[i] == L"nullus") conf.logger_type = EnvironmentLoggerNull;
 						else if (args[i] == L"consolatorium") conf.logger_type = EnvironmentLoggerConsole;
 						else if (args[i] == L"lima") conf.logger_type = EnvironmentLoggerFile;
-						else if (args[i] == L"cluster") conf.logger_type = EnvironmentLoggerCluster;
 						else throw Exception();
 						if (conf.logger_type == EnvironmentLoggerFile) {
 							i++;
@@ -1005,7 +998,6 @@ namespace Engine
 				if (environment_configuration.logger_type == EnvironmentLoggerNull) logger = new NullLogger;
 				else if (environment_configuration.logger_type == EnvironmentLoggerConsole) logger = new ConsoleLogger;
 				else if (environment_configuration.logger_type == EnvironmentLoggerFile) logger = new FileLogger(environment_configuration.logger_file);
-				else if (environment_configuration.logger_type == EnvironmentLoggerCluster) logger = new ClusterLogger;
 				else logger = new NullLogger;
 				XE::SetLoggerSink(*xctx, logger);
 				LoadLaunchConfiguration(environment_configuration.xi_executable, launch_configuration);

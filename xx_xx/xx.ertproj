@@ -45,8 +45,7 @@ CompileList {
 	AAAABM = "xx.cxx"
 }
 LinkWith {
-	AAAAAA = "ECFC"
-	AAAAAB = "Typography"
+	AAAAAA = "Typography"
 }
 VersionInformation {
 	ApplicationIdentifier = "XX"

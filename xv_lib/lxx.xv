@@ -34,7 +34,6 @@ spatium xx {
 		actuarius_nullus		= 0x020,
 		actuarius_consolatorium	= 0x040,
 		actuarius_lima			= 0x080,
-		actuarius_cluster		= 0x100,
 		actuarius_parentis		= 0x200
 	}
 
@@ -158,6 +157,7 @@ spatium xx {
 
 	[[importa] xx_crpr] functio logicum _crea_processum(@nihil xx, ~descriptio_processi desc);
 	[[importa] xx_onmd] functio adl[modulus_dynamicus] _onera_modulum_dynamicum(@nihil xx, ~semita imago, nint modus);
+	[[importa] xx_pxxv] functio nihil para_versionem(@(int, int, int, int) xxv, @(int, int) iv);
 
 	functio logicum crea_processum(~descriptio_processi desc) { responde _crea_processum(protocollum(xx), desc); }
 	functio adl[modulus_dynamicus] onera_modulum_dynamicum(~semita imago, nint modus) { responde _onera_modulum_dynamicum(protocollum(xx), imago, modus); }

@@ -10,7 +10,6 @@ namespace Engine
 			EnvironmentLoggerNull		= 0x0000,
 			EnvironmentLoggerConsole	= 0x0001,
 			EnvironmentLoggerFile		= 0x0002,
-			EnvironmentLoggerCluster	= 0x0004,
 
 			EnvironmentConsoleDisable	= 0x0000,
 			EnvironmentConsoleSystem	= 0x0008,

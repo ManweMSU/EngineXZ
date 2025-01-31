@@ -50,8 +50,7 @@ CompileList {
 	AAAABM = "xxf.cxx"
 }
 LinkWith {
-	AAAAAA = "ECFC"
-	AAAAAB = "Typography"
+	AAAAAA = "Typography"
 }
 Resources {
 	COM = "@com_en.ecst"
