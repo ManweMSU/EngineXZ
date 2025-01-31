@@ -60,9 +60,6 @@ EngineStore {
 	ShellPath = "."
 	StoreLinkFile = "store.ecs"
 }
-LinkWith {
-	AAAAAA = "ECFC"
-}
 VersionInformation {
 	ApplicationIdentifier = "XVSL"
 	ApplicationName = "Engine XV Servus Linguae"

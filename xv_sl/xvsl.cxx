@@ -1,5 +1,4 @@
-﻿#include <ClusterClient.h>
-#include "../xexec/xx_com.h"
+﻿#include "../xexec/xx_com.h"
 #include "../xv/xv_compiler.h"
 #include "../ximg/xi_module.h"
 #include "xvsl_struct.h"
@@ -10,7 +9,6 @@ using namespace Engine::IO;
 using namespace Engine::Storage;
 
 SafePointer<StringTable> localization;
-SafePointer<Cluster::Client> debug_client;
 SafePointer<Streaming::ITextWriter> debug_console;
 SafePointer<ThreadPool> pool;
 SafePointer<Semaphore> access_sync;
@@ -894,11 +892,11 @@ int Main(void)
 		SafePointer< Array<string> > args = GetCommandLine();
 		for (int i = 1; i < args->Length(); i++) {
 			if (args->ElementAt(i) == L"--act") {
-				debug_client = new Cluster::Client;
-				debug_client->SetConnectionServiceName(L"XV Servus Linguae");
-				debug_client->SetConnectionServiceID(L"engine.xv.sl");
-				debug_client->Connect();
-				debug_console = debug_client->CreateLoggingService();
+				string log_path;
+				if (i + 1 < args->Length()) { i++; log_path = ExpandPath(args->ElementAt(i)); } else return 2;
+				SafePointer<Streaming::Stream> log = new Streaming::FileStream(log_path, Streaming::AccessWrite, Streaming::OpenAlways);
+				log->Seek(0, Streaming::End);
+				debug_console = new Streaming::TextWriter(log, Encoding::UTF8);
 				debug_console->WriteLine("Salve!");
 			} else if (args->ElementAt(i) == L"--opera") {
 				run = true;
@@ -1022,9 +1020,6 @@ int Main(void)
 		if (debug_console) {
 			debug_console->WriteLine("Vale!");
 			debug_console.SetReference(0);
-			debug_client->Disconnect();
-			debug_client->Wait();
-			debug_client.SetReference(0);
 		}
 	} catch (Exception & e) {
 		if (debug_console) debug_console->WriteLine(L"Error: " + e.ToString());
