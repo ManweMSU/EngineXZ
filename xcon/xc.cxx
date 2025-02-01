@@ -3,6 +3,7 @@
 #include "xc_buffer.h"
 #include "xc_window.h"
 #include "xc_io.h"
+#include "../xexec/xx_app_activate.h"
 
 using namespace Engine;
 using namespace Engine::IO;
@@ -16,6 +17,11 @@ struct {
 int Main(void)
 {
 	try {
+		#ifdef ENGINE_MACOSX
+		Engine::IO::SetStandardOutput(Engine::IO::InvalidHandle);
+		Engine::IO::SetStandardInput(Engine::IO::InvalidHandle);
+		Engine::IO::SetStandardError(Engine::IO::InvalidHandle);
+		#endif
 		Windows::GetWindowSystem();
 		Codec::InitializeDefaultCodecs();
 		SafePointer< Array<string> > args = GetCommandLine();
@@ -50,7 +56,10 @@ int Main(void)
 	try {
 		WindowSubsystemInitialize();
 		CreateConsoleWindow(console, console_create_mode);
-		if (attach) Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([attach]() { attach->LaunchService(); }));
+		if (attach) Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([attach]() {
+			attach->LaunchService();
+			XX::EnforceApplicationActivation();
+		}));
 	} catch (...) { return 3; }
 	RunConsoleWindow();
 	if (attach) attach->CloseService();

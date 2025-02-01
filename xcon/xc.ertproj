@@ -1,5 +1,5 @@
 ﻿ApplicationIcon = "../artworks/xc_icon.eiwv"
-Languages = "ru,en"
+Languages = "la,ru,en"
 NoDockIcon = true
 Subsystem = "gui"
 UsesWindowEffects = true
@@ -11,15 +11,19 @@ Attachments {
 	}
 }
 CompileList {
-	AAAAAA = "common\\xc_channel.cxx"
-	AAAAAB = "xc.cxx"
+	AAAAAA = "../xexec/xx_app_activate.cxx"
+	AAAAAB = "common/xc_channel.cxx"
 	AAAAAC = "xc_buffer.cxx"
 	AAAAAD = "xc_io.cxx"
 	AAAAAE = "xc_window.cxx"
 	AAAAAF = "xc_window.egsl"
+	AAAAAG = "xc.cxx"
 }
 Resources {
-	COM = "@com_en.ecst"
+	COM = "@com_la.ecst"
+	en {
+		COM = "@com_en.ecst"
+	}
 	ru {
 		COM = "@com_ru.ecst"
 	}

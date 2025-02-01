@@ -18,6 +18,12 @@ namespace Engine
 				if (event == ApplicationHandler::Terminate) return true;
 				else return false;
 			}
+			virtual bool IsWindowEventAccessible(WindowHandler handler) override
+			{
+				if (handler == WindowHandler::Copy) return true;
+				else if (handler == WindowHandler::Paste) return true;
+				else return false;
+			}
 			virtual bool Terminate(void) override
 			{
 				if (_hosted_window) {
@@ -41,6 +47,7 @@ namespace Engine
 			Volumes::ObjectDictionary<uint, IFont> _fonts;
 			IWindow * _window;
 			Point _cell;
+			Box _selection;
 			bool _fullscreen, _caret_moved;
 		private:
 			IFont * _query_font(uint flags)
@@ -135,6 +142,7 @@ namespace Engine
 			{
 				int vp_width, vp_height;
 				int rect_left, rect_top, rect_right, rect_bottom;
+				int sel_left, sel_top, sel_right, sel_bottom;
 				int cell_x, cell_y;
 			};
 			class _view_control : public Control
@@ -148,6 +156,31 @@ namespace Engine
 				SafePointer<IPipelineState> _foreground_state, _background_state;
 				SafePointer<ITexture> _preprint, _foreground, _background;
 				SafePointer<Codec::Frame> _foreground_frame, _background_frame;
+				Point _sel_from, _sel_to;
+				Point _cell_coord_from_mouse(Point mouse)
+				{
+					if (!_callback._cell.x || !_callback._cell.y) return Point(-1, -1);
+					auto marg = int(CurrentScaleFactor * _callback._console->GetMargin());
+					auto scroll_delta = _callback._console->GetBufferOffset();
+					int x = (mouse.x - marg) / _callback._cell.x;
+					int y = (mouse.y - marg) / _callback._cell.y + scroll_delta;
+					if (x >= 0 && x < _callback._console->GetBufferWidth() && y >= 0 && y < _callback._console->GetBufferHeight()) return Point(x, y);
+					else return Point(-1, -1);
+				}
+				void _update_selection(Point end_coord)
+				{
+					if (end_coord.x < 0) return;
+					_sel_to = end_coord;
+					Box sel;
+					sel.Left = max(min(min(_sel_from.x, _sel_to.x), _callback._console->GetBufferWidth() - 1), 0);
+					sel.Right = max(min(max(_sel_from.x, _sel_to.x), _callback._console->GetBufferWidth() - 1), 0) + 1;
+					sel.Top = max(min(min(_sel_from.y, _sel_to.y), _callback._console->GetBufferHeight() - 1), 0);
+					sel.Bottom = max(min(max(_sel_from.y, _sel_to.y), _callback._console->GetBufferHeight() - 1), 0) + 1;
+					if (sel != _callback._selection) {
+						_callback._selection = sel;
+						Invalidate();
+					}
+				}
 			public:
 				_view_control(WindowCallback & callback) : _callback(callback), _id(0), _lines(0x100)
 				{
@@ -168,6 +201,7 @@ namespace Engine
 					_foreground_state = device->CreateRenderingPipelineState(desc);
 					desc.PixelShader = background;
 					_background_state = device->CreateRenderingPipelineState(desc);
+					_sel_from = _sel_to = Point(-1, -1);
 				}
 				virtual ~_view_control(void) override {}
 				virtual void Render(Graphics::I2DDeviceContext * device, const Box & at) override
@@ -285,6 +319,10 @@ namespace Engine
 					rs.rect_top = at.Top;
 					rs.rect_right = rs.rect_left + ww;
 					rs.rect_bottom = rs.rect_top + (line_to - line_from) * _callback._cell.y;
+					rs.sel_left = _callback._selection.Left;
+					rs.sel_top = _callback._selection.Top - line_from;
+					rs.sel_right = _callback._selection.Right;
+					rs.sel_bottom = _callback._selection.Bottom - line_from;
 					rs.cell_x = _callback._cell.x;
 					rs.cell_y = _callback._cell.y;
 					ctx->SetViewport(0.0f, 0.0f, _callback._primary_surface->GetWidth(), _callback._primary_surface->GetHeight(), 0.0f, 1.0f);
@@ -371,6 +409,33 @@ namespace Engine
 					}
 				}
 				virtual void FocusChanged(bool got_focus) override { Invalidate(); }
+				virtual void CaptureChanged(bool got_capture) override { if (!got_capture && _sel_from.x >= 0) _sel_from = _sel_to = Point(-1, -1); }
+				virtual void LeftButtonDown(Point at) override { SetFocus(); }
+				virtual void LeftButtonUp(Point at) override
+				{
+					if (_sel_from.x >= 0) _update_selection(_cell_coord_from_mouse(at));
+					if (GetCapture() == this) ReleaseCapture();
+					_sel_from = _sel_to = Point(-1, -1);
+				}
+				virtual void LeftButtonDoubleClick(Point at) override
+				{
+					auto coord = _cell_coord_from_mouse(at);
+					if (coord.x >= 0) {
+						_sel_from = coord;
+						_update_selection(coord);
+						SetCapture();
+					}
+				}
+				virtual void RightButtonDown(Point at) override
+				{
+					SetFocus();
+					if (_callback._selection.Left >= 0) {
+						_sel_from = _sel_to = Point(-1, -1);
+						_callback._selection = Box(-1, -1, -1, -1);
+						Invalidate();
+					}
+				}
+				virtual void MouseMove(Point at) override { if (_sel_from.x >= 0) _update_selection(_cell_coord_from_mouse(at)); }
 				virtual void ScrollVertically(double delta) override { _callback._scroll->SetScrollerPosition(_callback._scroll->Position + delta); }
 				virtual bool KeyDown(int key_code) override
 				{
@@ -398,6 +463,7 @@ namespace Engine
 				_view = new _view_control(*this);
 				_scroll = new Controls::VerticalScrollBar;
 				_view->SetID(101);
+				_selection = Box(-1, -1, -1, -1);
 				_scroll->ID = 102;
 				_scroll->ViewBarNormal = _color_shape(Color(0, 0, 0, 128));
 				_scroll->ViewScrollerNormal = _color_shape(Color(255, 255, 255, 128));
@@ -446,7 +512,7 @@ namespace Engine
 				if (flags & CommonEventWindowSetBlur) _recreate();
 				if (flags & CommonEventCaretMove) { _caret_moved = true; _window->InvalidateContents(); }
 				if (flags & CommonEventCaretReshape) _window->InvalidateContents();
-				if (flags & CommonEventBufferReset) { _view->ResetCache(); _align(); }
+				if (flags & CommonEventBufferReset) { _selection = Box(-1, -1, -1, -1); _view->ResetCache(); _align(); }
 				if (flags & CommonEventBufferScroll) _window->InvalidateContents();
 				if (flags & CommonEventWindowSetFont) _recreate();
 				if (flags & CommonEventWindowSetMargins) _align();
@@ -476,6 +542,7 @@ namespace Engine
 				}
 				_view->_lines.SetLength(_view->_lines.Length() - count);
 				_align();
+				_selection = Box(-1, -1, -1, -1);
 				_window->InvalidateContents();
 			}
 			virtual void InsertLines(int line_from, int count) noexcept override
@@ -487,6 +554,7 @@ namespace Engine
 				}
 				for (int i = 0; i < count; i++) _view->_lines[line_from + i].Invalidate();
 				_align();
+				_selection = Box(-1, -1, -1, -1);
 				_window->InvalidateContents();
 			}
 			virtual void MoveLines(int line_from, int count, int dy) noexcept override
@@ -499,6 +567,7 @@ namespace Engine
 					for (int i = line_from + count - 1; i >= line_from - dy; i--) _view->_lines[i] = _view->_lines[i + dy];
 					for (int i = 0; i < min(-dy, count); i++) _view->_lines[line_from + i].Invalidate();
 				}
+				_selection = Box(-1, -1, -1, -1);
 				_window->InvalidateContents();
 			}
 			virtual void Created(IWindow * window) override
@@ -633,6 +702,41 @@ namespace Engine
 				if (size.x <= 0 || size.y <= 0) return;
 				_align();
 				_layer->ResizeSurface(size.x, size.y);
+			}
+			virtual bool IsWindowEventEnabled(IWindow * window, WindowHandler handler) override
+			{
+				if (handler == WindowHandler::Copy) {
+					return _selection.Left >= 0;
+				} else if (handler == WindowHandler::Paste) {
+					return Clipboard::IsFormatAvailable(Clipboard::Format::Text);
+				} else return false;
+			}
+			virtual void HandleWindowEvent(IWindow * window, WindowHandler handler) override
+			{
+				if (handler == WindowHandler::Copy) {
+					if (_selection.Left >= 0) {
+						try {
+							DynamicString data;
+							int height = _console->GetBufferHeight();
+							for (int y = _selection.Top; y < _selection.Bottom; y++) if (y >= 0 && y < height) {
+								const Cell * cells;
+								int length;
+								_console->ReadLine(y, &cells, &length);
+								for (int x = 0; x < length; x++) if (x >= _selection.Left && x < _selection.Right) {
+									if (cells[x].ucs <= 32U) data << L' ';
+									else data << string(cells + x, 1, Encoding::UTF32);
+								}
+								while (data.Length() && data[data.Length() - 1] == L' ') data.RemoveRange(data.Length() - 1, 1);
+								if (y + 1 != _selection.Bottom) data << IO::LineFeedSequence;
+							}
+							_selection = Box(-1, -1, -1, -1);
+							window->InvalidateContents();
+							Clipboard::SetData(data.ToString());
+						} catch (...) {}
+					}
+				} else if (handler == WindowHandler::Paste) {
+					_console->HandleKey(KeyCodes::V, IO::ConsoleKeyFlagControl);
+				}
 			}
 			virtual void HandleControlEvent(Windows::IWindow * window, int ID, ControlEvent event, Control * sender) override
 			{

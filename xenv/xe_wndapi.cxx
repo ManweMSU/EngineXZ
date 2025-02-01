@@ -4,6 +4,7 @@
 #include "xe_filesys.h"
 #include "xe_imgapi.h"
 #include "../ximg/xi_resources.h"
+#include "../xexec/xx_app_activate.h"
 
 #define XE_TRY_INTRO try {
 #define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
@@ -872,7 +873,11 @@ namespace Engine
 				#endif
 			}
 		public:
-			IWindowSystem(const Array<string> * files) : XDispatchContext(Windows::GetWindowSystem()), _system(Windows::GetWindowSystem()), _exit_on_last_window(false) { if (files && files->Length()) _system->SetFilesToOpen(files->GetBuffer() + 1, files->Length() - 1); }
+			IWindowSystem(const Array<string> * files) : XDispatchContext(Windows::GetWindowSystem()), _system(Windows::GetWindowSystem()), _exit_on_last_window(false)
+			{
+				XX::EnforceApplicationActivation();
+				if (files && files->Length()) _system->SetFilesToOpen(files->GetBuffer() + 1, files->Length() - 1);
+			}
 			virtual SafePointer<IVisualTheme> GetSystemTheme(ErrorContext & ectx) noexcept
 			{
 				XE_TRY_INTRO

@@ -92,6 +92,8 @@ namespace Engine
 			SafePointer<IChannel> _output_sink;
 			SafePointer<Semaphore> _sync;
 			SafePointer<ConsoleState> _console;
+			SafePointer<TaskQueue> _loader_queue;
+			SafePointer<Thread> _loader_thread;
 			Array<_client_state> _clients;
 			Volumes::Queue<_event> _events;
 		public:
@@ -205,10 +207,7 @@ namespace Engine
 				} else if (verb == 11) {
 					_console->ClearScreen();
 				} else if (verb == 12) {
-					Point pos;
-					_console->GetCaretPosition(pos);
-					_console->SetCaretPosition(Point(0, pos.y));
-					_console->Erase(false, 0);
+					_console->ClearLine();
 				} else if (verb == 13 && data && data->Length() == 8) {
 					Point pos;
 					pos.x = reinterpret_cast<int *>(data->GetBuffer())[0];
@@ -327,11 +326,15 @@ namespace Engine
 				} else if (verb == 45 && data && data->Length()) {
 					try {
 						auto path = string(data->GetBuffer(), data->Length(), Encoding::UTF8);
-						SafePointer<Streaming::Stream> input = new Streaming::FileStream(path, Streaming::AccessRead, Streaming::OpenExisting);
-						SafePointer<Codec::Frame> frame = Codec::DecodeFrame(input);
-						if (!frame) throw Exception();
-						SafePointer<WrappedPicture> picture = new WrappedPicture(frame);
-						_console->SetPicture(picture);
+						_loader_queue->SubmitTask(CreateFunctionalTask([path, con_ref = _console]() {
+							SafePointer<Streaming::Stream> input = new Streaming::FileStream(path, Streaming::AccessRead, Streaming::OpenExisting);
+							SafePointer<Codec::Frame> frame = Codec::DecodeFrame(input);
+							if (!frame) throw Exception();
+							SafePointer<WrappedPicture> picture = new WrappedPicture(frame);
+							Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([picture, con_ref]() {
+								con_ref->SetPicture(picture);
+							}));
+						}));
 					} catch (...) {}
 				} else if (verb == 46) {
 					_console->SetPicture(0);
@@ -355,11 +358,17 @@ namespace Engine
 					_console->NotifyPictureUpdated();
 				} else if (verb == 50 && data) {
 					try {
-						SafePointer<Streaming::Stream> input = new Streaming::MemoryStream(data->GetBuffer(), data->Length());
-						SafePointer<Codec::Frame> frame = Codec::DecodeFrame(input);
-						if (!frame) throw Exception();
-						SafePointer<WrappedPicture> picture = new WrappedPicture(frame);
-						_console->SetPicture(picture);
+						SafePointer<DataBlock> data_ref;
+						data_ref.SetRetain(data);
+						_loader_queue->SubmitTask(CreateFunctionalTask([data_ref, con_ref = _console]() {
+							SafePointer<Streaming::Stream> input = new Streaming::MemoryStream(data_ref->GetBuffer(), data_ref->Length());
+							SafePointer<Codec::Frame> frame = Codec::DecodeFrame(input);
+							if (!frame) throw Exception();
+							SafePointer<WrappedPicture> picture = new WrappedPicture(frame);
+							Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([picture, con_ref]() {
+								con_ref->SetPicture(picture);
+							}));
+						}));
 					} catch (...) {}
 				}
 			}
@@ -373,7 +382,7 @@ namespace Engine
 					Request req;
 					if (!channel->ReadRequest(req)) break;
 					if (req.verb == 0) break;
-					Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([v = req.verb, d = req.data, channel, self]() { self->_process_request(v, d, channel); }));
+					Windows::GetWindowSystem()->SubmitTask(CreateFunctionalTask([v = req.verb, d = req.data, channel, self]() { try { self->_process_request(v, d, channel); } catch (...) {} }));
 				}
 				self->_sync->Wait();
 				for (int i = 0; i < self->_clients.Length(); i++) if (self->_clients[i].channel.Inner() == channel.Inner()) {
@@ -422,7 +431,11 @@ namespace Engine
 				_attach_io = ConnectChannel(path);
 				_sync = CreateSemaphore(1);
 			}
-			virtual ~AttachIO(void) override {}
+			virtual ~AttachIO(void) override
+			{
+				if (_loader_queue) _loader_queue->Break();
+				if (_loader_thread) _loader_thread->Wait();
+			}
 			virtual bool Communicate(const string & init_title, const string & init_preset) noexcept override
 			{
 				try {
@@ -468,6 +481,10 @@ namespace Engine
 			}
 			virtual bool LaunchService(void) noexcept override
 			{
+				if (!_loader_queue) try {
+					_loader_queue = new TaskQueue;
+					if (!_loader_queue->ProcessAsSeparateThread(_loader_thread.InnerRef())) { _loader_queue.SetReference(0); return false; }
+				} catch (...) { return false; }
 				Retain();
 				SafePointer<Thread> listener = CreateThread(_listener_thread, this);
 				if (!listener) { Release(); return false; }

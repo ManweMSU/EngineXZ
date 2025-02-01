@@ -30,6 +30,7 @@ public:
 	{
 		if (event == ApplicationHandler::CreateFile) return true;
 		else if (event == ApplicationHandler::OpenExactFile) return true;
+		else if (event == ApplicationHandler::Terminate) return true;
 		else return false;
 	}
 	virtual void CreateNewFile(void) override
@@ -47,6 +48,7 @@ public:
 		}));
 		return true;
 	}
+	virtual bool Terminate(void) override { GetWindowSystem()->ExitMainLoop(); }
 };
 
 int Main(void)

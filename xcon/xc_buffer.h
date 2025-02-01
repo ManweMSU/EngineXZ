@@ -106,6 +106,7 @@ namespace Engine
 			Windows::ImageRenderMode _picture_mode;
 			SafePointer<IPictureProvider> _picture;
 			int _scroll_region_from, _scroll_region_num_lines, _scroll_offset;
+			int _clear_line_origin;
 		public:
 			ScreenBuffer(const CellAttribute & attr);
 			virtual ~ScreenBuffer(void) override;
@@ -156,6 +157,7 @@ namespace Engine
 			int GetBufferOffset(void) const;
 			void SetBufferOffset(int offset) const;
 			void ScrollCurrentRange(int by);
+			void LineFeed(bool move_line_origin);
 			void LineFeed(void);
 			void CarriageReturn(void);
 			void Print(const uint32 * codes, int length);
@@ -179,6 +181,7 @@ namespace Engine
 			void SetBackgroundColorIndex(int index);
 			void Erase(bool screen, int part);
 			void ClearScreen(void);
+			void ClearLine(void);
 			void CreateScreenBuffer(const Point & size, bool scrollable);
 			void RemoveScreenBuffer(void);
 			void SwapScreenBuffers(void);

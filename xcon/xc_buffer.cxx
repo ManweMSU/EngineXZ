@@ -15,6 +15,7 @@ namespace Engine
 			_picture_mode = Windows::ImageRenderMode::Stretch;
 			_scroll_region_from = _scroll_region_num_lines = -1;
 			_scroll_offset = 0;
+			_clear_line_origin = 0;
 		}
 		ScreenBuffer::~ScreenBuffer(void) {}
 
@@ -154,6 +155,7 @@ namespace Engine
 				screen._size.y = height;
 				if (_presentation_callback) _presentation_callback->InsertLines(height - dh, dh);
 			}
+			if (screen._clear_line_origin >= screen._size.y) screen._clear_line_origin = screen._size.y - 1;
 			if (screen._caret.y >= screen._size.y) {
 				screen._caret.y = screen._size.y - 1;
 				if (_presentation_callback) _presentation_callback->CommonEvent(CommonEventCaretMove);
@@ -191,6 +193,9 @@ namespace Engine
 				screen._caret.y -= by;
 				if (screen._caret.y < srm) screen._caret.y = srm;
 				else if (screen._caret.y > srx) screen._caret.y = srx;
+				screen._clear_line_origin -= by;
+				if (screen._clear_line_origin < srm) screen._clear_line_origin = srm;
+				else if (screen._clear_line_origin > srx) screen._clear_line_origin = srx;
 			} else {
 				int num_scroll = max(num_lines + by, 0);
 				int num_rem = num_lines - num_scroll;
@@ -204,10 +209,13 @@ namespace Engine
 				screen._caret.y -= by;
 				if (screen._caret.y < srm) screen._caret.y = srm;
 				else if (screen._caret.y > srx) screen._caret.y = srx;
+				screen._clear_line_origin -= by;
+				if (screen._clear_line_origin < srm) screen._clear_line_origin = srm;
+				else if (screen._clear_line_origin > srx) screen._clear_line_origin = srx;
 			}
 			if (_presentation_callback) _presentation_callback->CommonEvent(CommonEventCaretMove);
 		}
-		void ConsoleState::LineFeed(void)
+		void ConsoleState::LineFeed(bool move_line_origin)
 		{
 			if (_screen->_caret.y == _screen->_scroll_region_from + _screen->_scroll_region_num_lines - 1) {
 				ScrollCurrentRange(1);
@@ -216,11 +224,13 @@ namespace Engine
 				else ResizeBufferEnforced(_screen->_size.x, _screen->_size.y + 1);
 			}
 			_screen->_caret.y++;
+			if (move_line_origin) _screen->_clear_line_origin = _screen->_caret.y;
 			if (_presentation_callback) {
 				if (_state_current._caret_style != CaretStyle::Null) _presentation_callback->ScrollToLine(_screen->_caret.y);
 				_presentation_callback->CommonEvent(CommonEventCaretMove);
 			}
 		}
+		void ConsoleState::LineFeed(void) { LineFeed(true); }
 		void ConsoleState::CarriageReturn(void)
 		{
 			if (_screen->_caret.x) {
@@ -236,7 +246,7 @@ namespace Engine
 				if (codes[i] >= 32) {
 					if (_screen->_caret.x >= _screen->_size.x) {
 						if (cl_inv) { if (_presentation_callback) _presentation_callback->InvalidateLines(_screen->_caret.y, 1); cl_inv = false; }
-						LineFeed();
+						LineFeed(false);
 						CarriageReturn();
 					}
 					int index = _screen->_caret.x + _screen->_caret.y * _screen->_size.x;
@@ -257,12 +267,12 @@ namespace Engine
 					com_notify |= CommonEventCaretMove;
 				} else if (codes[i] == L'\n') {
 					if (cl_inv) { if (_presentation_callback) _presentation_callback->InvalidateLines(_screen->_caret.y, 1); cl_inv = false; }
-					LineFeed();
+					LineFeed(true);
 				} else if (codes[i] == L'\v') {
 					do {
 						int y = _screen->_caret.y;
 						if (cl_inv) { if (_presentation_callback) _presentation_callback->InvalidateLines(_screen->_caret.y, 1); cl_inv = false; }
-						LineFeed();
+						LineFeed(true);
 						if (y == _screen->_caret.y) break;
 					} while (_screen->_caret.y % _tab_size.y);
 				} else if (codes[i] == L'\r') {
@@ -302,6 +312,7 @@ namespace Engine
 			if (_screen->_scrollable && caret.y >= _screen->_size.y) ResizeBufferEnforced(_screen->_size.x, min(caret.y + 1, _max_height));
 			_screen->_caret.x = max(min(caret.x, _screen->_size.x - 1), 0);
 			_screen->_caret.y = max(min(caret.y, _screen->_size.y - 1), 0);
+			_screen->_clear_line_origin = _screen->_caret.y;
 			if (_presentation_callback) _presentation_callback->CommonEvent(CommonEventCaretMove);
 		}
 		bool ConsoleState::ReadCell(int x, int y, Cell & cell) const
@@ -414,12 +425,28 @@ namespace Engine
 		{
 			if (_screen->_scrollable) ResizeBufferEnforced(_screen->_size.x, 1);
 			_screen->_caret = Point(0, 0);
+			_screen->_clear_line_origin = 0;
 			for (int i = 0; i < _screen->_size.x * _screen->_size.y; i++) {
 				_screen->_cells[i].ucs = L' ';
 				_screen->_cells[i].attr = _state_current._attribute;
 			}
 			if (_presentation_callback) {
 				_presentation_callback->InvalidateLines(0, _screen->_size.y);
+				_presentation_callback->CommonEvent(CommonEventCaretMove);
+			}
+		}
+		void ConsoleState::ClearLine(void)
+		{
+			int ymx = _screen->_caret.y;
+			int ymm = min(_screen->_clear_line_origin, ymx);
+			_screen->_caret = Point(0, ymm);
+			_screen->_clear_line_origin = ymm;
+			for (int i = _screen->_size.x * ymm; i < _screen->_size.x * (ymx + 1); i++) {
+				_screen->_cells[i].ucs = L' ';
+				_screen->_cells[i].attr = _state_current._attribute;
+			}
+			if (_presentation_callback) {
+				_presentation_callback->InvalidateLines(ymm, ymx - ymm + 1);
 				_presentation_callback->CommonEvent(CommonEventCaretMove);
 			}
 		}
@@ -453,6 +480,7 @@ namespace Engine
 		{
 			if (_screen->_caret_stack.Length()) {
 				_screen->_caret = _screen->_caret_stack.LastElement();
+				_screen->_clear_line_origin = _screen->_caret.y;
 				_screen->_caret_stack.RemoveLast();
 				if (_presentation_callback) _presentation_callback->CommonEvent(CommonEventCaretMove);
 			}

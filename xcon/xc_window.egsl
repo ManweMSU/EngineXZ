@@ -4,6 +4,7 @@ struct State
 {
 	int vp_width, vp_height;
 	int rect_left, rect_top, rect_right, rect_bottom;
+	int sel_left, sel_top, sel_right, sel_bottom;
 	int cell_x, cell_y;
 }
 struct Vertex
@@ -33,10 +34,21 @@ pixel punctum_primum(
 	in texture text : texture[1],
 	out float4 color : color[0]
 ) {
-	float4 clr = map[int3((vert.position.x - state.rect_left) / state.cell_x, (vert.position.y - state.rect_top) / state.cell_y, 0)];
+	int3 idx = int3((vert.position.x - state.rect_left) / state.cell_x, (vert.position.y - state.rect_top) / state.cell_y, 0);
+	bool selected = idx.x >= state.sel_left && idx.x < state.sel_right && idx.y >= state.sel_top && idx.y < state.sel_bottom;
+	float4 clr = map[idx];
 	float4 mask = text[int3(vert.position.x - state.rect_left, vert.position.y - state.rect_top, 0)];
 	color = clr * mask;
 	color.rgb *= clr.a;
+	if (selected) {
+		int dist_l = (vert.position.x - state.rect_left) - state.sel_left * state.cell_x;
+		int dist_r = state.sel_right * state.cell_x - (vert.position.x - state.rect_left) - 1;
+		int dist_t = (vert.position.y - state.rect_top) - state.sel_top * state.cell_y;
+		int dist_b = state.sel_bottom * state.cell_y - (vert.position.y - state.rect_top) - 1;
+		int dist = min(min(dist_l, dist_r), min(dist_t, dist_b));
+		if (dist == 0 || dist == 2 || dist == 4) color = float4(1.0, 1.0, 1.0, 1.0);
+		else if (dist == 1 || dist == 3 || dist == 5) color = float4(0.0, 0.0, 0.0, 1.0);
+	}
 }
 pixel punctum_secundum(
 	in Vertex vert,
@@ -44,6 +56,7 @@ pixel punctum_secundum(
 	in texture map : texture[0],
 	out float4 color : color[0]
 ) {
-	color = map[int3((vert.position.x - state.rect_left) / state.cell_x, (vert.position.y - state.rect_top) / state.cell_y, 0)];
+	int3 idx = int3((vert.position.x - state.rect_left) / state.cell_x, (vert.position.y - state.rect_top) / state.cell_y, 0);
+	color = map[idx];
 	color.rgb *= color.a;
 }
