@@ -1,0 +1,10 @@
+﻿UseVersionDefines = true
+VersionInformation {
+	ApplicationIdentifier = "XZ"
+	ApplicationName = "Engine XZ"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2025"
+	InternalName = "xz"
+	Version = "1.0.0.1"
+}
