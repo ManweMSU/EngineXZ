@@ -1,4 +1,4 @@
-cd /Users/manwe/Documents/GitHub/EngineJIT
+cd ~/Documents/GitHub/EngineXZ
 ARCH=arm64
 XVC_ARCH=x64
 if [ "$1" == "debug" ]; then

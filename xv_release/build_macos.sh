@@ -63,9 +63,9 @@ cp xv_lib/potentia.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/video.xv            -NVol xv_release/_build/com/video.xo            xv_release/_build/com
 cp xv_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
 cp xv_release/_build/com/*.xo xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
-estrtab xv_com/locale/ru.txt :binary xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/ru.ecst
-estrtab xv_com/locale/en.txt :binary xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/en.ecst
-estrtab xi_tool/locale/ru.txt :binary xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/ru.ecst
-estrtab xi_tool/locale/en.txt :binary xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/en.ecst
-estrtab xi_dasm/locale/ru.txt :binary xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc/ru.ecst
-estrtab xi_dasm/locale/en.txt :binary xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc/en.ecst
+estrtab xv_com/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/ru.ecst
+estrtab xv_com/locale/en.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/en.ecst
+estrtab xi_tool/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/ru.ecst
+estrtab xi_tool/locale/en.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/en.ecst
+estrtab xi_dasm/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc/ru.ecst
+estrtab xi_dasm/locale/en.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc/en.ecst

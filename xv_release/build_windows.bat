@@ -56,9 +56,9 @@ copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vs
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\video.xv           -NVoml  xv_release\_build\com\video.xo          xv_lib\video.xvm            xv_release\_build\com
 xcopy /BY xv_release\_build\com\* xv_release\_build\windows_%ARCH%\xvcl\
 xcopy /BY xv_lib\*.xvm xv_release\_build\windows_%ARCH%\xvcl\
-estrtab xv_com\locale\ru.txt :binary xv_release\_build\windows_%ARCH%\xv.loc\ru.ecst
-estrtab xv_com\locale\en.txt :binary xv_release\_build\windows_%ARCH%\xv.loc\en.ecst
-estrtab xi_tool\locale\ru.txt :binary xv_release\_build\windows_%ARCH%\xi.loc\ru.ecst
-estrtab xi_tool\locale\en.txt :binary xv_release\_build\windows_%ARCH%\xi.loc\en.ecst
-estrtab xi_dasm\locale\ru.txt :binary xv_release\_build\windows_%ARCH%\xda.loc\ru.ecst
-estrtab xi_dasm\locale\en.txt :binary xv_release\_build\windows_%ARCH%\xda.loc\en.ecst
+estrtab xv_com\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xv.loc\ru.ecst
+estrtab xv_com\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xv.loc\en.ecst
+estrtab xi_tool\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xi.loc\ru.ecst
+estrtab xi_tool\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xi.loc\en.ecst
+estrtab xi_dasm\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xda.loc\ru.ecst
+estrtab xi_dasm\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xda.loc\en.ecst
