@@ -49,6 +49,7 @@ copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vs
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\json.xv            -NVoml  xv_release\_build\com\json.xo           xv_lib\json.xvm             xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\ecso.xv            -NVoml  xv_release\_build\com\ecso.xo           xv_lib\ecso.xvm             xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\ifr.xv             -NVoml  xv_release\_build\com\ifr.xo            xv_lib\ifr.xvm              xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\http.xv            -NVoml  xv_release\_build\com\http.xo           xv_lib\http.xvm             xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\commem.xv          -NVoml  xv_release\_build\com\commem.xo         xv_lib\commem.xvm           xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\cryptographia.xv   -NVoml  xv_release\_build\com\cryptographia.xo  xv_lib\cryptographia.xvm    xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\media.xv           -NVoml  xv_release\_build\com\media.xo          xv_lib\media.xvm            xv_release\_build\com

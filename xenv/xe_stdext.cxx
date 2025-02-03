@@ -1071,7 +1071,7 @@ namespace Engine
 			{
 				SafePointer<Semaphore> _sem;
 			public:
-				_semaphore(Semaphore * sem) { _sem.SetRetain(sem); }
+				_semaphore(Semaphore * sem) { _sem.SetRetain(sem); if (!_sem) throw OutOfMemoryException(); }
 				virtual ~_semaphore(void) override {}
 				virtual string ToString(void) const override { try { return L"XE Semaphore"; } catch (...) { return L""; } }
 				virtual void _wait(void) noexcept { _sem->Wait(); }
@@ -1080,20 +1080,15 @@ namespace Engine
 			};
 			class _signal : public Object
 			{
-				SafePointer<Semaphore> _sem;
+				SafePointer<Signal> _sgn;
 			public:
-				_signal(void) { _sem = CreateSemaphore(0); if (!_sem) throw Exception(); }
+				_signal(void) { _sgn = CreateSignal(false); if (!_sgn) throw OutOfMemoryException(); }
 				virtual ~_signal(void) override {}
 				virtual string ToString(void) const override { try { return L"XE Signal"; } catch (...) { return L""; } }
-				virtual void _wait(void) noexcept { _sem->Wait(); _sem->Open(); }
-				virtual bool _wait_for(uint quant) noexcept
-				{
-					bool result = quant ? _sem->WaitFor(quant) : _sem->TryWait();
-					if (result) _sem->Open();
-					return result;
-				}
-				virtual void _raise(void) noexcept { _sem->Open(); }
-				virtual void _lower(void) noexcept { _sem->Wait(); }
+				virtual void _wait(void) noexcept { _sgn->Wait(); }
+				virtual bool _wait_for(uint quant) noexcept { if (quant) return _sgn->WaitFor(quant); else return _sgn->TryWait(); }
+				virtual void _raise(void) noexcept { _sgn->Raise(); }
+				virtual void _lower(void) noexcept { _sgn->Reset(); }
 			};
 			class _thread : public Object
 			{

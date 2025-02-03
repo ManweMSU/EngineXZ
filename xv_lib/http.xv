@@ -1,0 +1,465 @@
+﻿importa communicatio;
+importa collectiones;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Protocolli HTTP";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2025";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+[[systema] libera]
+
+spatium http {
+	constatus portus_http			= 80;
+	constatus portus_https			= 443;
+	constatus portus_http_alternus	= 8080;
+
+	enumeratio methodus { adnecte, dele, para, caput, optiones, rescribe, mitte, pone, retrahe }
+	nomen_alternum ordo_titulorum = collectiones.dictionarium[linea, linea];
+
+	genus responsor hereditat objectum {
+		structor () {}
+		functio nihil requisitum_completum_est(@objectum req, int status, ~ordo_titulorum tituli) iacit virtualis {}
+		functio nihil requisitum_praecompletum_est(@objectum req, int status, ~ordo_titulorum tituli) iacit virtualis {}
+		functio nihil requisitum_cancellatum_est(@objectum req) iacit virtualis {}
+		functio nihil requisitum_falsum_est(@objectum req, ~communicatio.status_erroris error) iacit virtualis {}
+	}
+	genus requisitum hereditat objectum {
+		methodus methodus;
+		linea auxilium_requisitum;
+		ordo_titulorum tituli;
+		!flumen data_in;
+		!flumen data_ex;
+		!responsor responsor;
+
+		!objectum addendum;
+		nintadl valor;
+
+		structor (~linea aux) iacit { funda methodus(http.methodus.para); funda auxilium_requisitum(aux); }
+		structor (~linea aux, http.methodus meth) iacit { funda methodus(meth); funda auxilium_requisitum(aux); }
+	}
+
+	structura descriptio_sessionis {
+		linea nomen_applicationis;
+		linea dominatus;
+		int portus_defaltus;
+		logicum secura;
+		logicum dominatum_convalida;
+		communicatio.securitas securitas;
+	}
+	enumeratio status_sessionis { creabatur = 0, activa = 1, closa = 2, falsa = 3 }
+	genus sessio hereditat objectum {
+		!contextus.cauda _cauda;
+		!contextus.semaphorum _sync;
+		!communicatio.canale _canale;
+		collectiones.sequentia[!requisitum] _req;
+
+		status_sessionis _status;
+		communicatio.status_erroris _error;
+		linea _applicatio;
+		linea _dominatus;
+		linea _praeverbium;
+		logicum _procedens;
+
+		structor (~descriptio_sessionis desc, @contextus.cauda cd) iacit {
+			si (cd == nullus) iace errores.argumentum_falsum;
+			_sync = contextus.crea_semaphorum(1);
+			si (!_sync) iace errores.memoria_nulla;
+			_cauda.contine(cd);
+			_canale = communicatio.crea_canale();
+			_status = status_sessionis.creabatur;
+			_error.error = _error.suberror = 0;
+			_applicatio = desc.nomen_applicationis;
+			_dominatus = desc.dominatus;
+			_praeverbium = (desc.secura ? "https://" : "http://") + desc.dominatus;
+			_procedens = sic;
+			si (!_applicatio.longitudo) _applicatio = "XE.HTTP";
+			int ip = _dominatus.reperi_ultimum(']');
+			int ic = _dominatus.reperi_ultimum(':');
+			linea nomen;
+			nint64 portus;
+			si (ic >= 0 && ic > ip) {
+				nomen = _dominatus.fragmentum(0, ic);
+				portus = _dominatus.fragmentum(ic + 1, -1).ad_nint32();
+			} alioqui {
+				nomen = _dominatus;
+				si (desc.portus_defaltus) portus = desc.portus_defaltus;
+				alioqui si (desc.secura) portus = portus_https;
+				alioqui portus = portus_http;
+			}
+			_dominatus = nomen;
+			!communicatio.adloquium adloq;
+			proba {
+				var a = crea(communicatio.adloquium_ipv6, nomen);
+				a^.portus = portus;
+				adloq.contine(a);
+			} cape proba {
+				var a = crea(communicatio.adloquium_ipv4, nomen);
+				a^.portus = portus;
+				adloq.contine(a);
+			} cape {
+				var adla = communicatio.lege_adloquia(nomen, portus, communicatio.adloquium_ipv6);
+				si (!adla^.longitudo) iace errores.rete_defectum, errores.rete_adloquium_nullum;
+				adloq = adla^[0];
+			}
+			si (desc.secura) {
+				communicatio.securitas sec = desc.securitas;
+				si (desc.dominatum_convalida) {
+					si (!sec.dominatus.longitudo) sec.dominatus = nomen;
+				} alioqui sec.dominatus = "";
+				communicatio.conjunge_canale_secure(_canale, adloq^, sec) { _resume(status_operationis); };
+			} alioqui communicatio.conjunge_canale(_canale, adloq^) { _resume(status_operationis); };
+		}
+		destructor () {}
+
+		status_sessionis status { adipisce {
+			_sync^.opperire();
+			var resp = _status;
+			_sync^.aperi();
+			responde resp;
+		} }
+		communicatio.status_erroris error { adipisce {
+			_sync^.opperire();
+			var resp = _error;
+			_sync^.aperi();
+			responde resp;
+		} }
+		linea praeverbium { adipisce iacit { responde _praeverbium; } }
+		int numerus_requisitorum { adipisce {
+			_sync^.opperire();
+			var resp = _req.longitudo;
+			si (_procedens) resp++;
+			_sync^.aperi();
+			responde resp;
+		} }
+
+		functio nihil _resume(~communicatio.status_erroris error) {
+			_sync^.opperire();
+			si (error.error) {
+				_procedens = non;
+				_sync^.aperi();
+				_siste(error.error, error.suberror);
+				responde;
+			} alioqui {
+				si (_status == status_sessionis.creabatur) _status = status_sessionis.activa;
+				si (_status != status_sessionis.activa) { _procedens = non; _sync^.aperi(); responde; }
+				!requisitum req;
+				si (!_req.vacua) {
+					req = _req.primus^.valor;
+					_req.remove_primum();
+				}
+				_procedens = req;
+				_sync^.aperi();
+				si (req) _perfunge_requisitum(ego, req);
+			}
+		}
+		functio nihil _siste(nintadl e, nintadl se) {
+			_sync^.opperire();
+			var stat = _status;
+			_status = status_sessionis.falsa;
+			_error.error = e;
+			_error.suberror = se;
+			_procedens = non;
+			si (stat != status_sessionis.creabatur) proba _canale^.clode(sic);
+			per (var r : _req) _cancella_requisitum(ego, r.valor^.valor, e, se);
+			_req.depura();
+			_cauda.depura();
+			_sync^.aperi();
+		}
+		functio nihil clode() {
+			_sync^.opperire();
+			var stat = _status;
+			_status = status_sessionis.closa;
+			_error.error = _error.suberror = 0;
+			_procedens = non;
+			si (stat != status_sessionis.creabatur) proba _canale^.clode(sic);
+			per (var r : _req) _cancella_requisitum(ego, r.valor^.valor, 0, 0);
+			_req.depura();
+			_cauda.depura();
+			_sync^.aperi();
+		}
+		functio nihil require(@requisitum req) iacit {
+			_sync^.opperire();
+			var resumere = !_procedens;
+			proba {
+				si (_status == status_sessionis.closa) iace errores.habitus_falsus;
+				si (_status == status_sessionis.falsa) iace _error.error, _error.suberror;
+				!requisitum rq;
+				rq.contine(req);
+				_req.insere_ultimum(rq);
+			} cape (nintadl e, nintadl se) {
+				_sync^.aperi();
+				_siste(e, se);
+				iace e, se;
+			}
+			_sync^.aperi();
+			si (resumere) {
+				communicatio.status_erroris se;
+				se.error = se.suberror = 0;
+				_resume(se);
+			}
+		}
+	}
+
+	genus _processor_requisiti hereditat contextus.labos {
+		!sessio _sessio;
+		!requisitum _req;
+		// 0 - sending header, 1 - sending data (high part - substate),
+		// 2 - receiving line (high part - substate), 3 - receiving data (high part - substate)
+		int _phasa;
+		int _status;
+		int64 _longitudo;
+		!dordo_datorum _ie_data;
+		!dordo_datorum _ie_data_recv;
+		communicatio.status_erroris _ie_error;
+
+		structor (@sessio s, !requisitum r) {
+			funda _req(r);
+			funda _phasa(0);
+			funda _status(0);
+			funda _longitudo(0);
+			_sessio.contine(s);
+		}
+		classis functio logicum nomen_malus(~linea n, ~linea r) { responde n # r == 0 && n != r; }
+		classis functio logicum nomen_malus(~linea n) iacit { responde nomen_malus(n, "Host") || nomen_malus(n, "User-Agent") || nomen_malus(n, "Connection") || nomen_malus(n, "Content-Length") || nomen_malus(n, "Transfer-Encoding"); }
+		functio nihil ende() iacit {
+			si (_sessio^._cauda) proba muta_contextum(_sessio^._cauda) {
+				proba si (_req^.responsor) {
+					_req^.responsor^.requisitum_completum_est(_req, _status, _req^.tituli);
+				}
+				_req^.data_ex.depura();
+				_req^.responsor.depura();
+				_req^.addendum.depura();
+			};
+			_ie_error.error = _ie_error.suberror = 0;
+			_sessio^._resume(_ie_error);
+		}
+		functio nihil exeque(@objectum ctx) redefini {
+			proba {
+				var p = _phasa & 0xF;
+				si (p == 0) {
+					linea verbum;
+					si (_req^.methodus == methodus.adnecte) {
+						verbum = "CONNECT ";
+						_req^.data_in.depura();
+					} alioqui si (_req^.methodus == methodus.dele) {
+						verbum = "DELETE ";
+					} alioqui si (_req^.methodus == methodus.para) {
+						verbum = "GET ";
+						_req^.data_in.depura();
+					} alioqui si (_req^.methodus == methodus.caput) {
+						verbum = "HEAD ";
+						_req^.data_in.depura();
+					} alioqui si (_req^.methodus == methodus.optiones) {
+						verbum = "OPTIONS ";
+						_req^.data_in.depura();
+					} alioqui si (_req^.methodus == methodus.rescribe) {
+						verbum = "PATCH ";
+					} alioqui si (_req^.methodus == methodus.mitte) {
+						verbum = "POST ";
+					} alioqui si (_req^.methodus == methodus.pone) {
+						verbum = "PUT ";
+					} alioqui si (_req^.methodus == methodus.retrahe) {
+						verbum = "TRACE ";
+						_req^.data_in.depura();
+					} alioqui iace errores.argumentum_falsum;
+					_ie_data = linea(verbum + _req^.auxilium_requisitum + " HTTP/1.1\r\n").codifica(linea.codex.ascii, non);
+					_req^.tituli.rescribe("Host", _sessio^._dominatus);
+					_req^.tituli.rescribe("User-Agent", _sessio^._applicatio);
+					_req^.tituli.rescribe("Connection", "keep-alive");
+					si (_req^.data_in) {
+						proba {
+							_longitudo = _req^.data_in^.longitudo;
+							_phasa = 0x001;
+							_req^.tituli.rescribe("Content-Length", _longitudo);
+						} cape {
+							_longitudo = -1;
+							_phasa = 0x101;
+							_req^.tituli.rescribe("Transfer-Encoding", "chunked");
+						}
+					} alioqui {
+						_longitudo = 0;
+						_phasa = 0x001;
+						_req^.tituli.rescribe("Content-Length", "0");
+					}
+					per (var t : _req^.tituli) {
+						var ~ v = t.valor^.valor;
+						si (nomen_malus(v.primus)) iace errores.argumentum_falsum;
+						_ie_data^.adde(linea(v.primus + ": " + v.secundus + "\r\n").codifica(linea.codex.ascii, non)^);
+					}
+					_ie_data^.adde(linea("\r\n").codifica(linea.codex.ascii, non)^);
+					_sessio^._canale^.mitte(_ie_data, @_ie_error, nullus, ego);
+				}
+				alioqui si (p == 1) {
+					_ie_error.modera();
+					si (_longitudo) {
+						var talea = _req^.data_in^.lege_ordinem(0x10000);
+						si (_longitudo > 0) {
+							si (talea^.longitudo) {
+								_longitudo -= talea^.longitudo;
+								si (_longitudo < 0) iace errores.habitus_falsus;
+								_sessio^._canale^.mitte(talea, @_ie_error, nullus, ego);
+							} alioqui iace errores.habitus_falsus;
+						} alioqui {
+							_ie_data = linea(linea(nint(talea^.longitudo), linea.radix_sextadecima, 0) + "\r\n").codifica(linea.codex.ascii, non);
+							_ie_data^.adde(talea^);
+							_ie_data^.adde(linea("\r\n").codifica(linea.codex.ascii, non)^);
+							si (!talea^.longitudo) _longitudo = 0;
+							_sessio^._canale^.mitte(_ie_data, @_ie_error, nullus, ego);
+						}
+					} alioqui {
+						_phasa = 0x002;
+						_ie_data = crea(dordo_datorum);
+						_req^.tituli.depura();
+						_req^.data_in.depura();
+						_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+					}
+				}
+				alioqui si (p == 2) {
+					// 2-th digit: 0 - read status, 1 - read header, 2 - read chunked length, 3 - read chunked end
+					_ie_error.modera();
+					si (!_ie_data_recv^.longitudo) iace errores.efformatio_falsa;
+					_ie_data^.adde(_ie_data_recv^);
+					var l = _ie_data^.longitudo;
+					si (l >= 2 && _ie_data^[l - 2] == '\r' && _ie_data^[l - 1] == '\n') {
+						var ln = linea(_ie_data^.data, l - 2, linea.codex.ascii);
+						si (_phasa & 0xF00 == 0x000) {
+							var lns = ln.scinde(' ');
+							si (lns^.longitudo < 2) iace errores.efformatio_falsa;
+							si (lns^[0] != "HTTP/1.1") iace errores.efformatio_falsa;
+							_status = lns^[1].ad_int32();
+							_phasa = 0x102;
+							_ie_data = crea(dordo_datorum);
+							_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+						} alioqui si (_phasa & 0xF00 == 0x100) {
+							si (ln.longitudo) {
+								var del = ln.reperi_primum(": ");
+								si (del < 0) iace errores.efformatio_falsa;
+								_req^.tituli.adde(ln.fragmentum(0, del).inferna, ln.fragmentum(del + 2, -1));
+								_ie_data = crea(dordo_datorum);
+								_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+							} alioqui {
+								var t = _req^.tituli["transfer-encoding"];
+								si (t != nullus) {
+									si (t^ == "chunked") _longitudo = -1;
+									alioqui iace errores.efformatio_falsa;
+								} alioqui {
+									t = _req^.tituli["content-length"];
+									si (t != nullus) _longitudo = t^.ad_nint64();
+									alioqui _longitudo = 0;
+								}
+								si (_req^.methodus == methodus.adnecte || _req^.methodus == methodus.caput) _longitudo = 0;
+								si (_req^.responsor) proba _req^.responsor^.requisitum_praecompletum_est(_req, _status, _req^.tituli);
+								si (_longitudo == 0) {
+									ende();
+								} alioqui si (_longitudo > 0) {
+									int adm = 0x10000;
+									si (_longitudo < adm) adm = _longitudo;
+									_phasa = 0x003;
+									_sessio^._canale^.admitte(adm, @_ie_error, @_ie_data, ego);
+								} alioqui {
+									_phasa = 0x202;
+									_ie_data = crea(dordo_datorum);
+									_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+								}
+							}
+						} alioqui si (_phasa & 0xF00 == 0x200) {
+							var long = ln.ad_nint32(linea.radix_sextadecima);
+							si (long) {
+								_phasa = 0x103;
+								_sessio^._canale^.admitte(long, @_ie_error, @_ie_data, ego);
+							} alioqui {
+								_longitudo = 0;
+								_phasa = 0x302;
+								_ie_data = crea(dordo_datorum);
+								_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+							}
+						} alioqui si (_phasa & 0xF00 == 0x300) {
+							si (_longitudo) {
+								_phasa = 0x202;
+								_ie_data = crea(dordo_datorum);
+								_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+							} alioqui {
+								ende();
+							}
+						}
+					} alioqui _sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+				}
+				alioqui si (p == 3) {
+					_ie_error.modera();
+					si (_phasa == 0x003) {
+						si (_ie_data) {
+							_longitudo -= _ie_data^.longitudo;
+							si (_req^.data_ex) _req^.data_ex^.scribe_ordinem(_ie_data);
+							si (_longitudo < 0) {
+								iace errores.habitus_falsus;
+							} alioqui si (_longitudo == 0) {
+								ende();
+							} alioqui {
+								int adm = 0x10000;
+								si (_longitudo < adm) adm = _longitudo;
+								_sessio^._canale^.admitte(adm, @_ie_error, @_ie_data, ego);
+							}
+						} alioqui errores.habitus_falsus;
+					} alioqui si (_phasa == 0x103) {
+						si (_ie_data) {
+							si (_req^.data_ex) _req^.data_ex^.scribe_ordinem(_ie_data);
+							_phasa = 0x302;
+							_ie_data = crea(dordo_datorum);
+							_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+						} alioqui errores.habitus_falsus;
+					}
+				}
+			} cape (nintadl e, nintadl se) {
+				_req^.data_in.depura();
+				_req^.data_ex.depura();
+				si (_sessio^._cauda) proba muta_contextum(_sessio^._cauda) {
+					proba si (_req^.responsor) {
+						communicatio.status_erroris error;
+						error.error = e;
+						error.suberror = se;
+						_req^.responsor^.requisitum_falsum_est(_req, error);
+					}
+					_req^.responsor.depura();
+					_req^.addendum.depura();
+				};
+				_sessio^._siste(e, se);
+			}
+		}
+	}
+	functio nihil _perfunge_requisitum(@sessio s, !requisitum r) {
+		proba {
+			var proc = crea(_processor_requisiti, s, r);
+			proc^.exeque(nullus);
+		} cape (nintadl e, nintadl se) {
+			r^.data_in.depura();
+			r^.data_ex.depura();
+			si (s^._cauda) proba muta_contextum(s^._cauda) {
+				proba si (r^.responsor) {
+					communicatio.status_erroris error;
+					error.error = e;
+					error.suberror = se;
+					r^.responsor^.requisitum_falsum_est(r, error);
+				}
+				r^.responsor.depura();
+				r^.addendum.depura();
+			};
+			s^._siste(e, se);
+		}
+	}
+	functio nihil _cancella_requisitum(@sessio s, !requisitum r, nintadl e, nintadl se) {
+		r^.data_in.depura();
+		r^.data_ex.depura();
+		si (s^._cauda) proba muta_contextum(s^._cauda) {
+			proba si (r^.responsor) {
+				si (e) {
+					communicatio.status_erroris error;
+					error.error = e;
+					error.suberror = se;
+					r^.responsor^.requisitum_falsum_est(r, error);
+				} alioqui r^.responsor^.requisitum_cancellatum_est(r);
+			}
+			r^.responsor.depura();
+			r^.addendum.depura();
+		};
+	}
+}

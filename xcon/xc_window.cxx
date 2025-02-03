@@ -443,7 +443,10 @@ namespace Engine
 					if (Keyboard::IsKeyPressed(KeyCodes::Shift)) flags |= IO::ConsoleKeyFlagShift;
 					if (Keyboard::IsKeyPressed(KeyCodes::Control)) flags |= IO::ConsoleKeyFlagControl;
 					if (Keyboard::IsKeyPressed(KeyCodes::Alternative)) flags |= IO::ConsoleKeyFlagAlternative;
-					return _callback._console->HandleKey(key_code, flags);
+					if (key_code == KeyCodes::C && flags == IO::ConsoleKeyFlagControl && _callback._selection.Left >= 0) {
+						_callback.HandleWindowEvent(_callback._window, WindowHandler::Copy);
+						return true;
+					} else return _callback._console->HandleKey(key_code, flags);
 				}
 				virtual void CharDown(uint32 ucs_code) override { _callback._console->HandleChar(ucs_code); }
 				virtual ControlRefreshPeriod GetFocusedRefreshPeriod(void) override { return ControlRefreshPeriod::CaretBlink; }
@@ -542,7 +545,9 @@ namespace Engine
 				}
 				_view->_lines.SetLength(_view->_lines.Length() - count);
 				_align();
-				_selection = Box(-1, -1, -1, -1);
+				if (_selection.Top >= line_from && _selection.Top < line_from + count) _selection = Box(-1, -1, -1, -1);
+				else if (_selection.Bottom > line_from && _selection.Bottom <= line_from + count) _selection = Box(-1, -1, -1, -1);
+				else if (_selection.Top >= line_from) { _selection.Top -= count; _selection.Bottom -= count; }
 				_window->InvalidateContents();
 			}
 			virtual void InsertLines(int line_from, int count) noexcept override
@@ -554,7 +559,8 @@ namespace Engine
 				}
 				for (int i = 0; i < count; i++) _view->_lines[line_from + i].Invalidate();
 				_align();
-				_selection = Box(-1, -1, -1, -1);
+				if (_selection.Top < line_from && _selection.Bottom > line_from) _selection = Box(-1, -1, -1, -1);
+				else if (_selection.Top >= line_from) { _selection.Top += count; _selection.Bottom += count; }
 				_window->InvalidateContents();
 			}
 			virtual void MoveLines(int line_from, int count, int dy) noexcept override
@@ -567,7 +573,15 @@ namespace Engine
 					for (int i = line_from + count - 1; i >= line_from - dy; i--) _view->_lines[i] = _view->_lines[i + dy];
 					for (int i = 0; i < min(-dy, count); i++) _view->_lines[line_from + i].Invalidate();
 				}
-				_selection = Box(-1, -1, -1, -1);
+				if (_selection.Top >= line_from && _selection.Top < line_from + count) {
+					_selection.Top -= dy;
+					_selection.Top = min(max(_selection.Top, line_from), line_from + count);
+				}
+				if (_selection.Bottom > line_from && _selection.Bottom <= line_from + count) {
+					_selection.Bottom -= dy;
+					_selection.Bottom = min(max(_selection.Bottom, line_from), line_from + count);
+				}
+				if (_selection.Top >= _selection.Bottom) _selection = Box(-1, -1, -1, -1);
 				_window->InvalidateContents();
 			}
 			virtual void Created(IWindow * window) override

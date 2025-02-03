@@ -53,6 +53,7 @@ xx shellex_macos/patch.xx xx_release/_build/macosx_${ARCH}/XX.app/XX.app
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/json.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/json.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/ecso.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/ecso.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/ifr.xo           -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/ifr.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/http.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/http.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/commem.xo        -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/commem.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/cryptographia.xo -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/cryptographia.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/media.xo         -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/media.xo

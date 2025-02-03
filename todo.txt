@@ -51,8 +51,7 @@ BETA-6:
  + Serialization API: XESL, ECSO, JSON
  + Communication and Serialization: RPC
  + Communication API: Shared Memory
- - Communication API: HTTP Client
- - Communication API: HTTP Server
+ + Communication API: HTTP Client
  + Cryptography API
  + 'pro' -> 'per'
  + Atomic exchange
@@ -64,3 +63,4 @@ OTHER RELEASES:
  - Module version control
  - XB framework: XX to native bundle wrapper
  - Bitmap block transfer
+ - Communication API: HTTP Server

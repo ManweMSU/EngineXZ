@@ -48,7 +48,7 @@ public:
 		}));
 		return true;
 	}
-	virtual bool Terminate(void) override { GetWindowSystem()->ExitMainLoop(); }
+	virtual bool Terminate(void) override { GetWindowSystem()->ExitMainLoop(); return true; }
 };
 
 int Main(void)
