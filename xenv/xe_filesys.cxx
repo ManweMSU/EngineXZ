@@ -300,8 +300,8 @@ namespace Engine
 				Streaming::FileAccess access_value;
 				Streaming::FileCreationMode creation_value;
 				if (access & ~0x06) throw InvalidArgumentException();
-				else if (!(access & 0x06)) throw InvalidArgumentException();
-				if (access == 0x02) access_value = Streaming::FileAccess::AccessWrite;
+				if (access == 0x00) access_value = Streaming::FileAccess::AccessNo;
+				else if (access == 0x02) access_value = Streaming::FileAccess::AccessWrite;
 				else if (access == 0x04) access_value = Streaming::FileAccess::AccessRead;
 				else if (access == 0x06) access_value = Streaming::FileAccess::AccessReadWrite;
 				else throw InvalidArgumentException();
