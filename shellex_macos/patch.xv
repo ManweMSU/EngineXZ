@@ -1,0 +1,42 @@
+﻿importa consolatorium;
+importa limae;
+
+var ~ consolatorium con = consolatorium.currens()^;
+
+functio nihil patch() introitus iacit
+{
+	proba {
+		var arg = para_argumenta();
+		si (arg^.longitudo < 2) iace errores.argumentum_falsum;
+		var app_renova = semita(arg^[1]);
+		var plist = semita(app_renova, "Contents/Info.plist");
+		var plist_data = scriptio.decodifica(plist.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens), linea.codex.utf8)^.lege_cunctos();
+		var ref1 = plist_data.reperi_primum("<key>CFBundleDocumentTypes</key>");
+		var ref2 = plist_data.reperi_ultimum("</array>");
+		var ref3 = ref2 + 8;
+		plist_data = plist_data.fragmentum(0, ref3) +
+			"\n\t<key>NSAppleEventsUsageDescription</key>\n\t<string>Application scripting.</string>" +
+			plist_data.fragmentum(ref3, -1);
+		si (arg^.longitudo >= 3) {
+			var bpatch_with = semita(arg^[2]);
+			var ffpatch = scriptio.decodifica(semita(semita.modulus_primus().parens, "patch.txt").crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens), linea.codex.utf8)^.lege_cunctos();
+			plist_data = plist_data.fragmentum(0, ref1) + ffpatch.fragmentum(1, -1) + plist_data.fragmentum(ref3, -1);
+			var plugins_path = semita(app_renova, "Contents/PlugIns");
+			plugins_path.crea_arborem_collectoriorum();
+			bpatch_with.exscribe(semita(plugins_path, bpatch_with.nomen), modus_exscribendi.rescribe_ultime);
+		}
+		scriptio.codifica(plist.crea_limam(modus_limae.scribere, modus_creatoris.trunca_praesens), linea.codex.utf8)^.scribe(plist_data);
+		con.color_primus = consolatorium.color.viridis;
+		con << "APPLICATIO RENOVATA BONE EST\n";
+		con.color_primus = consolatorium.color.defalta;
+	} cape (nintadl e, nintadl se) {
+		linea de, dse;
+		errores.descriptio(e, se, de, dse);
+		con.color_primus = consolatorium.color.ruber;
+		con << "ERROR CORRECTIONIS APPLICATIONIS: ";
+		si (dse.longitudo) con << de << " - " << dse << "\n";
+		alioqui con << de << "\n";
+		con.color_primus = consolatorium.color.defalta;
+		iace e;
+	}
+}

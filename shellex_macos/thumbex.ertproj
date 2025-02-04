@@ -1,0 +1,18 @@
+﻿OutputName = "xxqlex"
+Subsystem = "gui"
+UseVersionDefines = true
+CompileList {
+	AAAAAA = "thumbcls.mm"
+	AAAAAB = "thumbex.cxx"
+	AAAAAC = "xi_se/xi_module.cxx"
+	AAAAAD = "xi_se/xi_resources.cxx"
+}
+VersionInformation {
+	ApplicationIdentifier = "XX.QuickLook"
+	ApplicationName = "XX QuickLook Extensio"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2025"
+	InternalName = "xxqlex"
+	Version = "1.0.0.1"
+}

@@ -1,0 +1,73 @@
+﻿importa consolatorium;
+importa limae;
+importa imago;
+
+var ~ consolatorium con = consolatorium.currens()^;
+
+functio nihil renova_info(~semita radix) iacit {
+	var fl = semita(radix, "Info.plist").crea_limam(modus_limae.scribere_et_legere, modus_creatoris.aperi_praesens);
+	var fl_ex = crea_flumenem_in_memoria();
+	var dec = scriptio.decodifica(fl, linea.codex.utf8);
+	var cdx = scriptio.codifica(fl_ex, linea.codex.utf8);
+	dum (sic) {
+		var ln = dec^.lege_lineam();
+		si (!ln.longitudo) exi;
+		ln = ln.surroga("<string>APPL</string>", "<string>XPC!</string>");
+		si (ln.reperi_primum("<key>NSPrincipalClass</key>") >= 0) dura;
+		si (ln.reperi_primum("<string>NSApplication</string>") >= 0) dura;
+		si (ln == "</dict>") {
+			cdx^.scribe_lineam("\t<key>NSExtension</key>");
+			cdx^.scribe_lineam("\t<dict>");
+			cdx^.scribe_lineam("\t\t<key>NSExtensionAttributes</key>");
+			cdx^.scribe_lineam("\t\t<dict>");
+			cdx^.scribe_lineam("\t\t\t<key>QLSupportedContentTypes</key>");
+			cdx^.scribe_lineam("\t\t\t<array>");
+			cdx^.scribe_lineam("\t\t\t\t<string>com.EngineSoftware.XX</string>");
+			cdx^.scribe_lineam("\t\t\t</array>");
+			cdx^.scribe_lineam("\t\t\t<key>QLThumbnailMinimumDimension</key>");
+			cdx^.scribe_lineam("\t\t\t<integer>0</integer>");
+			cdx^.scribe_lineam("\t\t</dict>");
+			cdx^.scribe_lineam("\t\t<key>NSExtensionPointIdentifier</key>");
+			cdx^.scribe_lineam("\t\t<string>com.apple.quicklook.thumbnail</string>");
+			cdx^.scribe_lineam("\t\t<key>NSExtensionPrincipalClass</key>");
+			cdx^.scribe_lineam("\t\t<string>XIProvisor</string>");
+			cdx^.scribe_lineam("\t</dict>");
+		}
+		cdx^.scribe_lineam(ln);
+	}
+	fl^.longitudo = 0;
+	fl^.quaerita(0, flumen.initus);
+	fl_ex^.quaerita(0, flumen.initus);
+	fl_ex^.exscribe(fl);
+}
+functio nihil crea_aux(~semita radix, ~semita img) iacit {
+	var col = imago.decodifica_collectum(img.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens));
+	var dest = semita(radix, "Resources/Icon.icns");
+	var rem = semita(radix, "Resources/en.lproj");
+	rem.remove_collectoriorum();
+	var fl = dest.crea_limam(modus_limae.scribere_et_legere, modus_creatoris.crea_nova);
+	imago.codifica(fl, col, imago.codex.AppleIcon);
+}
+
+functio nihil thumbex() introitus iacit {
+	proba {
+		var arg = para_argumenta();
+		si (arg^.longitudo < 3) iace errores.argumentum_falsum;
+		var col = semita(arg^[1]);
+		var img = semita(arg^[2]);
+		renova_info(col);
+		crea_aux(col, img);
+		con.color_primus = consolatorium.color.viridis;
+		con << "EXTENSIO XPC RENOVATA BONE EST\n";
+		con.color_primus = consolatorium.color.defalta;
+	} cape (nintadl e, nintadl se) {
+		linea de, dse;
+		errores.descriptio(e, se, de, dse);
+		con.color_primus = consolatorium.color.ruber;
+		con << "ERROR STRUENDI EXTENSIONIS XPC: ";
+		si (dse.longitudo) con << de << " - " << dse << "\n";
+		alioqui con << de << "\n";
+		con.color_primus = consolatorium.color.defalta;
+		iace e;
+	}
+}

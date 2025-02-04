@@ -55,6 +55,7 @@ BETA-6:
  + Cryptography API
  + 'pro' -> 'per'
  + Atomic exchange
+ + QuickLook Extension reworked
 
 OTHER RELEASES:
  - GUI and CUI libraries

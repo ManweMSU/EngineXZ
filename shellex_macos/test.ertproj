@@ -1,0 +1,6 @@
+﻿NoHiDPI = true
+OutputLocation = "_build/test"
+Subsystem = "gui"
+CompileList {
+	AAAAAA = "test.cxx"
+}
