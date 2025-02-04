@@ -14,6 +14,7 @@ namespace Engine
 			CompilerFlagSystemGUI		= 0x020,
 			CompilerFlagSystemNull		= 0x040,
 			CompilerFlagSystemLibrary	= 0x080,
+			CompilerFlagVersionControl	= 0x100,
 		};
 		enum class CompilerStatus : uint {
 			Success					= 0x0000,

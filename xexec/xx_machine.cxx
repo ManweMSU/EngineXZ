@@ -46,6 +46,7 @@ namespace Engine
 			string xc_channel_name;
 			string xi_executable;
 			string logger_file;
+			string direct_mode_channel_name;
 			uint logger_type;
 		};
 		struct LaunchConfiguration
@@ -888,10 +889,20 @@ namespace Engine
 			} catch (...) {}
 		}
 		#endif
-		void LoadLaunchConfiguration(const string & module, LaunchConfiguration & conf)
+		Streaming::Stream * GetImageStream(EnvironmentConfiguration & conf)
+		{
+			if (conf.direct_mode_channel_name.Length()) {
+				SafePointer<XC::IChannel> channel = XC::ConnectChannel(conf.direct_mode_channel_name);
+				XC::Request req;
+				if (!channel->ReadRequest(req)) throw InvalidStateException();
+				if (req.verb != 0x10EE || !req.data) throw InvalidStateException();
+				return new Streaming::MemoryStream(req.data->GetBuffer(), req.data->Length());
+			} else return new Streaming::FileStream(conf.xi_executable, Streaming::AccessRead, Streaming::OpenExisting);
+		}
+		void LoadLaunchConfiguration(Streaming::Stream * stream, const string & module, LaunchConfiguration & conf)
 		{
 			try {
-				SafePointer<Streaming::Stream> stream = new Streaming::FileStream(module, Streaming::AccessRead, Streaming::OpenExisting);
+				stream->Seek(0, Streaming::Begin);
 				XI::Module mdl(stream, XI::Module::ModuleLoadFlags::LoadResources);
 				conf.subsystem = mdl.subsystem;
 				SafePointer< Volumes::Dictionary<string, string> > metadata = XI::LoadModuleMetadata(mdl.resources);
@@ -950,6 +961,9 @@ namespace Engine
 							if (i < args.Length()) conf.logger_file = IO::ExpandPath(args[i]);
 						}
 					}
+				} else if (args[i] == L"--xx-recte") {
+					i++;
+					if (i < args.Length()) conf.direct_mode_channel_name = args[i];
 				} else if (conf.xi_executable.Length()) {
 					direct_args << args[i];
 				} else {
@@ -959,6 +973,7 @@ namespace Engine
 			}
 			if (!conf.xi_executable.Length()) {
 				conf.xi_executable = conf.xx_hello;
+				conf.direct_mode_channel_name = L"";
 				direct_args << conf.xx_hello;
 			}
 			XE::ActivateFileIO(*loader, conf.xi_executable, direct_args.GetBuffer(), direct_args.Length());
@@ -1000,7 +1015,20 @@ namespace Engine
 				else if (environment_configuration.logger_type == EnvironmentLoggerFile) logger = new FileLogger(environment_configuration.logger_file);
 				else logger = new NullLogger;
 				XE::SetLoggerSink(*xctx, logger);
-				LoadLaunchConfiguration(environment_configuration.xi_executable, launch_configuration);
+				SafePointer<Streaming::Stream> module_stream;
+				try { module_stream = GetImageStream(environment_configuration); } catch (IO::FileAccessException & e) {
+					XE::ErrorContext ectx;
+					ectx.error_code = 6;
+					ectx.error_subcode = e.code;
+					string er, ser;
+					XE::GetErrorDescription(ectx, *xctx, er, ser);
+					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.", environment_configuration.xi_executable, er, ser));
+					return 6;
+				} catch (...) {
+					PlatformErrorReport(FormatString(L"Error onerandi ignotus: %0.", environment_configuration.xi_executable));
+					return 6;
+				}
+				LoadLaunchConfiguration(module_stream, environment_configuration.xi_executable, launch_configuration);
 				SafePointer<LauncherServices> launcher_services = new LauncherServices(environment_configuration, launch_configuration);
 				SafePointer<ConsoleAllocator> console_allocator = new ConsoleAllocator(environment_configuration, launch_configuration);
 				SafePointer<XE::IConsoleDevice> console;
@@ -1058,19 +1086,7 @@ namespace Engine
 				catch (...) { XE::LoadErrorLocalization(*xctx, L"errores." + environment_configuration.locale_default); }
 				loader->AddModuleSearchPath(IO::Path::GetDirectory(environment_configuration.xi_executable));
 				loader->AddDynamicLibrarySearchPath(IO::Path::GetDirectory(environment_configuration.xi_executable));
-				SafePointer<Streaming::Stream> module_stream;
-				try {
-					module_stream = new Streaming::FileStream(environment_configuration.xi_executable, Streaming::AccessRead, Streaming::OpenExisting);
-				} catch (IO::FileAccessException & e) {
-					XE::ErrorContext ectx;
-					ectx.error_code = 6;
-					ectx.error_subcode = e.code;
-					string er, ser;
-					XE::GetErrorDescription(ectx, *xctx, er, ser);
-					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.\n%3", environment_configuration.xi_executable,
-						er, ser, loader->GetLastErrorSubject()));
-					return 7;
-				}
+				module_stream->Seek(0, Streaming::Begin);
 				auto main_module = xctx->LoadModule(environment_configuration.xi_executable, module_stream);
 				module_stream.SetReference(0);
 				if (!loader->IsAlive()) {

@@ -2,7 +2,7 @@
 
 #include "../xexec/xx_com.h"
 #include "../xv/xv_compiler.h"
-#include "xv_mi.h"
+#include "../xcon/common/xc_channel.h"
 
 using namespace Engine;
 using namespace Engine::IO;
@@ -21,11 +21,13 @@ struct {
 	bool silent = false;
 	bool nologo = false;
 	bool launch = false;
-	bool interactive = false;
 	bool version_control = false;
+	bool direct_mode = false;
+	bool assembly_version_control;
 	string input;
 	string output;
 	string output_path;
+	string xx_path;
 	Array<string> launch_args = Array<string>(0x10);
 } state;
 
@@ -98,8 +100,6 @@ void ProcessCommandLine(void)
 						console << TextColor(12) << Localized(204) << TextColorDefault() << LineFeed();
 						throw Exception();
 					}
-				} else if (arg[j] == L'I') {
-					state.interactive = true;
 				} else if (arg[j] == L'N') {
 					state.nologo = true;
 				} else if (arg[j] == L'O') {
@@ -118,6 +118,28 @@ void ProcessCommandLine(void)
 					state.silent = true;
 				} else if (arg[j] == L'V') {
 					state.version_control = true;
+				} else if (arg[j] == L'X') {
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					state.xx_path = args->ElementAt(i);
+				} else if (arg[j] == L'a') {
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					if (args->ElementAt(i) == L"nulle") {
+						state.assembly_version_control = false;
+					} else if (args->ElementAt(i) == L"modera") {
+						state.assembly_version_control = true;
+					} else {
+						console << TextColor(12) << Localized(204) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+				} else if (arg[j] == L'd') {
+					state.direct_mode = true;
+					state.launch = true;
 				} else if (arg[j] == L'i') {
 					i++; if (i >= args->Length()) {
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
@@ -197,6 +219,8 @@ int Main(void)
 		Assembly::CurrentLocale = Assembly::GetCurrentUserLocale();
 		auto root = Path::GetDirectory(GetExecutablePath());
 		SafePointer<Registry> xv_conf = XX::LoadConfiguration(root + L"/xv.ini");
+		state.assembly_version_control = xv_conf->GetValueBoolean(L"ModeraVersiones");
+		state.xx_path = xv_conf->GetValueString(L"XX");
 		try {
 			auto core = xv_conf->GetValueString(L"XE");
 			if (core.Length()) XX::IncludeComponent(state.module_search_paths, root + L"/" + core);
@@ -231,36 +255,6 @@ int Main(void)
 	if (state.input.Length()) {
 		try {
 			SafePointer<XV::ICompilerCallback> callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths.GetBuffer(), state.module_search_paths.Length(), 0);
-			if (state.interactive) {
-				SafePointer<Stream> file;
-				try { file = new FileStream(state.input, AccessReadWrite, OpenAlways); }
-				catch (...) {
-					XV::CompilerStatusDesc desc;
-					desc.status = XV::CompilerStatus::FileAccessFailure;
-					desc.error_line = state.input;
-					desc.error_line_len = desc.error_line_no = desc.error_line_pos = -1;
-					if (!state.silent) PrintCompilerError(desc);
-					return int(desc.status);
-				}
-				Encoding enc = Encoding::UTF8;
-				string code_string;
-				if (file->Length()) {
-					SafePointer<TextReader> reader = new TextReader(file);
-					code_string = reader->ReadAll();
-					enc = reader->GetEncoding();
-				}
-				SafePointer< Array<uint32> > code = new Array<uint32>(0x1000);
-				code->SetLength(code_string.GetEncodedLength(Encoding::UTF32) + 1);
-				code_string.Encode(code->GetBuffer(), Encoding::UTF32, true);
-				string root = Path::GetDirectory(state.input);
-				SafePointer<XV::ICompilerCallback> callback2 = XV::CreateCompilerCallback(&root, 1, &root, 1, callback);
-				if (!LaunchInteractiveEditor(state.input, code, callback2, console)) return 0;
-				file->SetLength(0);
-				file->Seek(0, Begin);
-				SafePointer<TextWriter> writer = new TextWriter(file, enc);
-				writer->WriteEncodingSignature();
-				writer->Write(string(code->GetBuffer(), -1, Encoding::UTF32));
-			}
 			string output;
 			if (state.output.Length()) output = L"?" + state.output;
 			else if (state.output_path.Length()) output = state.output_path;
@@ -290,6 +284,7 @@ int Main(void)
 			}
 			desc.flags = XV::CompilerFlagSystemConsole | XV::CompilerFlagMakeModule;
 			if (state.documentation_list.Length()) desc.flags |= XV::CompilerFlagMakeManual;
+			if (state.assembly_version_control) desc.flags |= XV::CompilerFlagVersionControl;
 			desc.module_name = IO::Path::GetFileNameWithoutExtension(state.input);
 			desc.input = &input_module_string;
 			desc.meta = 0;
@@ -297,7 +292,7 @@ int Main(void)
 			desc.imports = state.import_list;
 			desc.defines = state.defines;
 			XV::Compile(desc);
-			if (desc.status.status == XV::CompilerStatus::Success) {
+			if (desc.status.status == XV::CompilerStatus::Success && !state.direct_mode) {
 				if (output[0] == L'?') output = output.Fragment(1, -1);
 				else output = IO::ExpandPath(output + L"/" + desc.output_module->GetOutputModuleName() + L"." + desc.output_module->GetOutputModuleExtension());
 				try {
@@ -345,14 +340,38 @@ int Main(void)
 				return int(desc.status.status);
 			} else if (state.launch) {
 				Array<string> args(0x10);
-				args << output;
+				SafePointer<XC::IChannelServer> srvr;
+				if (state.direct_mode) {
+					string srvr_path;
+					srvr = XC::CreateChannelServer();
+					srvr->GetChannelPath(srvr_path);
+					args << state.input;
+					args << L"--xx-recte";
+					args << srvr_path;
+					SafePointer<TaskQueue> queue = new TaskQueue;
+					if (!queue->ProcessAsSeparateThread()) throw Exception();
+					queue->SubmitTask(CreateFunctionalTask([srvr, mdl = desc.output_module]() {
+						SafePointer<Stream> stream = mdl->GetOutputModuleData();
+						SafePointer<DataBlock> data_send = stream->ReadAll();
+						while (true) {
+							SafePointer<XC::IChannel> cn = srvr->Accept();
+							if (!cn) { srvr->Close(); return; }
+							XC::Request req;
+							req.verb = 0x10EE;
+							req.data = data_send;
+							if (!cn->SendRequest(req)) { srvr->Close(); return; }
+						}
+					}));
+				} else args << output;
 				args << state.launch_args;
-				SafePointer<Process> process = CreateCommandProcess(L"xx", &args);
+				SafePointer<Process> process = CreateCommandProcess(state.xx_path, &args);
 				if (!process) {
+					if (srvr) srvr->Close();
 					if (!state.silent) console << TextColor(12) << Localized(205) << TextColorDefault() << LineFeed();
 					return 1;
 				}
 				process->Wait();
+				if (srvr) srvr->Close();
 				return process->GetExitCode();
 			} else return 0;
 		} catch (...) { return 0x3F; }
