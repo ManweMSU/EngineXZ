@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "../xasm/xa_trans_sel.h"
+#include "../ximg/xi_resources.h"
 #include "xe_rtss.h"
 
 namespace Engine
@@ -47,6 +48,7 @@ namespace Engine
 			const ExecutionContext & _xc;
 			Volumes::Dictionary<string, handle> _resident_dl;
 			Volumes::ObjectDictionary<uint64, DataBlock> _rsrc;
+			XI::AssemblyVersionInformation _vi;
 			string _name, _tool;
 			uint _v1, _v2, _v3, _v4;
 			ExecutionSubsystem _xss;
@@ -59,6 +61,8 @@ namespace Engine
 			void GetAssembler(string & name, uint & vmajor, uint & vminor, uint & subver, uint & build) const noexcept;
 			ExecutionSubsystem GetSubsystem(void) const noexcept;
 			const ExecutionContext & GetExecutionContext(void) const noexcept;
+			uint32 GetVersion(void) const noexcept;
+			bool IsCompatibleWithVersion(uint32 version) const noexcept;
 		};
 		class ExecutionContext : public Object // Thread-Safe!
 		{

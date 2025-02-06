@@ -169,6 +169,13 @@ namespace Engine
 		void Module::GetAssembler(string & name, uint & vmajor, uint & vminor, uint & subver, uint & build) const noexcept { try { name = _tool; vmajor = _v1; vminor = _v2; subver = _v3; build = _v4; } catch (...) {} }
 		ExecutionSubsystem Module::GetSubsystem(void) const noexcept { return _xss; }
 		const ExecutionContext & Module::GetExecutionContext(void) const noexcept { return _xc; }
+		uint32 Module::GetVersion(void) const noexcept { return _vi.ThisModuleVersion; }
+		bool Module::IsCompatibleWithVersion(uint32 version) const noexcept
+		{
+			if (version == _vi.ThisModuleVersion) return true;
+			for (auto & v : _vi.ReplacesVersions) if ((version & v.Mask) == v.MustBe) return true;
+			return false;
+		}
 		
 		ExecutionContext::ExecutionContext(void) : _callback(0), _nameless_counter(0), _allow_embedded_modules(false)
 		{
@@ -400,6 +407,7 @@ namespace Engine
 				result->_v4 = data->assembler_version.build;
 				result->_data = data->data;
 				result->_rsrc = data->resources;
+				if (!XI::LoadModuleVersionInformation(result->_rsrc, result->_vi)) result->_vi.ThisModuleVersion = 0xFFFFFFFF;
 			} catch (...) {
 				_sync->Wait();
 				callback->HandleModuleLoadError(name, L"", ModuleLoadError::InvalidImageFormat);
@@ -423,6 +431,22 @@ namespace Engine
 				}	
 			}
 			for (auto & md : data->modules_depends_on) if (!LoadModule(md)) return 0;
+			for (auto & vrq : result->_vi.ModuleVersionsNeeded) {
+				auto mdl = GetModule(vrq.key);
+				if (!mdl) {
+					_sync->Wait();
+					callback->HandleModuleLoadError(name, L"", ModuleLoadError::InvalidImageFormat);
+					_sync->Open();
+					return 0;
+				}
+				if (!mdl->IsCompatibleWithVersion(vrq.value)) {
+					_sync->Wait();
+					callback->HandleModuleLoadError(name, vrq.key, ModuleLoadError::ModuleVersionMismatch);
+					_sync->Open();
+					return 0;
+				}
+			}
+			result->_vi.ModuleVersionsNeeded.Clear();
 			SymbolSystem local;
 			FunctionLoader loader;
 			loader.ok = true;
@@ -644,6 +668,7 @@ namespace Engine
 				result->_v3 = data->assembler_version.subver;
 				result->_v4 = data->assembler_version.build;
 				result->_rsrc = data->resources;
+				result->_vi.ThisModuleVersion = 0xFFFFFFFF;
 			} catch (...) { return 0; }
 			result->Retain();
 			return result;
