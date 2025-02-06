@@ -52,6 +52,9 @@ constatus xe_librarium_nullum		= "Error loading dynamic library";
 constatus xe_lib_importus_falsus	= "No such import in dynamic library";
 constatus xe_allocatus_defectus		= "Object allocation failure";
 constatus xe_initium_defectum		= "Module initialization failure";
+constatus xe_versio_moduli_falsa	= "The module's versions required and loaded are incompatible";
+constatus xe_modulus_non_constitus	= "The module's data consistency is violated";
+constatus xe_modulus_non_fidelis	= "The module's trust is violated";
 
 constatus rete_error_nullus				= "Success";
 constatus rete_error_ignotus			= "Unknown";

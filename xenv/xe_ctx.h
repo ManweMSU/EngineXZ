@@ -20,6 +20,9 @@ namespace Engine
 			NoSuchFunctionInDynamicLibrary	= 0x0009,
 			AllocationFailure				= 0x000A,
 			InitializationFailure			= 0x000B,
+			ModuleVersionMismatch			= 0x000C,
+			ModuleConsistencyCompromised	= 0x000D,
+			ModuleTrustCompromised			= 0x000E,
 		};
 		enum class ExecutionSubsystem { NoUI, ConsoleUI, GUI, Library };
 

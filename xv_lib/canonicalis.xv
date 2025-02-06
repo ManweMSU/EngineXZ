@@ -2460,6 +2460,9 @@ spatium errores {
 	[sub_error xe_defectus] constatus xe_lib_importus_falsus	= 0x09;
 	[sub_error xe_defectus] constatus xe_allocatus_defectus		= 0x0A;
 	[sub_error xe_defectus] constatus xe_initium_defectum		= 0x0B;
+	[sub_error xe_defectus] constatus xe_versio_moduli_falsa	= 0x0C;
+	[sub_error xe_defectus] constatus xe_modulus_non_constitus	= 0x0D;
+	[sub_error xe_defectus] constatus xe_modulus_non_fidelis	= 0x0E;
 }
 
 [[importa] inc_sec] functio nint incrementum_securum(~nint valor);

@@ -52,6 +52,9 @@ constatus xe_librarium_nullum		= "Сбой загрузки динамическ
 constatus xe_lib_importus_falsus	= "Не найден объект импорта в динамической библиотеке";
 constatus xe_allocatus_defectus		= "Сбой выделения объекта";
 constatus xe_initium_defectum		= "Сбой инициализации модуля";
+constatus xe_versio_moduli_falsa	= "Несовместимость требуемой и загруженной версий модуля";
+constatus xe_modulus_non_constitus	= "Нарушена целостность данных модуля";
+constatus xe_modulus_non_fidelis	= "Нарушено доверие модулю";
 
 constatus rete_error_nullus				= "Успех";
 constatus rete_error_ignotus			= "Неизвестная ошибка";
