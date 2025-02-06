@@ -1,4 +1,4 @@
-cd /Users/manwe/Documents/GitHub/EngineJIT
+cd ~/Documents/GitHub/EngineXZ
 rm -rf xcon/_build
 rm -rf xv_mm/_build
 rm -rf xv_sl/_build

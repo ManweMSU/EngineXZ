@@ -60,10 +60,18 @@ BETA-6:
  + Direct launch mode
  + Module version control
 
-OTHER RELEASES:
+BETA-7:
+ - XW framework: XV extension for GPU
+ - XE: Digital signatures and trust control
+ - Communication API: HTTP Client Session Manager
+ - Debugger
+ - Spotlight Extension
+
+BETA-8:
  - GUI and CUI libraries
  - XU framework: XV extension for UI
- - XW framework: XV extension for GPU
+
+EXTRA RELEASES:
  - XB framework: XX to native bundle wrapper
- - Bitmap block transfer
  - Communication API: HTTP Server
+ - Excel/Numbers interop extension

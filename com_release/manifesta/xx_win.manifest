@@ -1,0 +1,12 @@
+{
+    "Executable": "xxsc.exe",
+    "ShellPath": "xx",
+    "StoreLinkFile": "store.ecs",
+    "PermanentFiles": [
+        ""
+    ],
+    "FileFormatsX": [
+    ],
+    "Plugins": [
+    ]
+}

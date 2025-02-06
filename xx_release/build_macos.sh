@@ -20,8 +20,8 @@ cp xx_xx/xx_mac.ini xx_release/_build/macosx_${ARCH}/XX.app/xx/xx.ini
 cp xx_xx/xe.ini xx_release/_build/macosx_${ARCH}/XX.app/xe.ini
 
 ./shellex_macos/thumbex.sh ${ARCH}
-xv shellex_macos/patch.xv -Nr xx_release/_build/macosx_${ARCH}/XX.app shellex_macos/_build/macosx_${ARCH}_release/xxqlex.appex
-xv shellex_macos/patch.xv -Nr xx_release/_build/macosx_${ARCH}/XX.app/XX.app
+xv shellex_macos/patch.xv -Ndr xx_release/_build/macosx_${ARCH}/XX.app shellex_macos/_build/macosx_${ARCH}_release/xxqlex.appex
+xv shellex_macos/patch.xv -Ndr xx_release/_build/macosx_${ARCH}/XX.app/XX.app
 
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/errores.ru.xv   -NVo xx_release/_build/com/errores.ru.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/errores.en.xv   -NVo xx_release/_build/com/errores.en.xo

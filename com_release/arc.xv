@@ -1,0 +1,114 @@
+﻿importa consolatorium;
+importa limae;
+importa formati;
+importa collectiones;
+
+var ~ consolatorium con = consolatorium.currens()^;
+
+structura index {
+	ordo (semita, linea) collectoria;
+	ordo (semita, linea) limae;
+}
+functio nihil crea_indicem(~index idx, ~semita col, ~linea praeverbium) iacit {
+	var objecta = col.limae();
+	collectiones.ordina_acclive(objecta^);
+	per (var i : objecta^) {
+		var obj = semita(objecta^[i]);
+		si (obj.nomen[0] == '.') dura;
+		idx.limae << (obj, praeverbium + obj.nomen);
+	}
+	objecta = col.collectoria();
+	collectiones.ordina_acclive(objecta^);
+	per (var i : objecta^) {
+		var obj = semita(objecta^[i]);
+		si (obj.nomen[0] == '.' || obj.nomen == "_obj") dura;
+		idx.collectoria << (obj, praeverbium + obj.nomen);
+		crea_indicem(idx, obj, praeverbium + obj.nomen + "/");
+	}
+}
+functio nihil crea_archivum(~semita col, ~semita manifestum, ~semita ex) iacit {
+	index idx;
+	crea_indicem(idx, col, "");
+	formati.archivum_novum.descriptio adesc;
+	adesc.numerus_limarum = idx.limae.longitudo + idx.collectoria.longitudo + 1;
+	adesc.formatus = formati.archivum_novum.formatus.ecsa_64 | formati.archivum_novum.formatus.ecsa_meta;
+	var arc = formati.archivum_novum.alloca(ex.crea_limam(modus_limae.scribere_et_legere, modus_creatoris.crea_semper), adesc);
+	nint k = 1;
+	formati.compressor.compressio com;
+	com.adde_methodum(formati.compressor.compressio.methodus.lzw);
+	com.adde_methodum(formati.compressor.compressio.methodus.huffman);
+	com.fila_compressoris = 0;
+	com.qualitas = formati.compressor.compressio.qualitas_maxima;
+	con.color_primus = consolatorium.color.flavus;
+	con << "CREO ARCHIVUM: 0%...";
+	per (var i : idx.collectoria) {
+		ordo [2] linea attributa;
+		attributa[0] = "Folder";
+		attributa[1] = "Yes";
+		formati.archivum_novum.lima lima;
+		lima.indumentum =
+			formati.archivum_novum.indumenta_limae.nomen |
+			formati.archivum_novum.indumenta_limae.attributa;
+		lima.nomen = idx.collectoria[i].secundus;
+		lima.numerus_attributorum = 1;
+		lima.attributa = attributa;
+		arc^.scribe_limam(k, lima);
+		k++;
+		con.depura_lineam();
+		con << "CREO ARCHIVUM: " << ((k - 1) * 100 / adesc.numerus_limarum) << "%...";
+	}
+	per (var i : idx.limae) {
+		var in = idx.limae[i].primus.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens);
+		formati.archivum_novum.lima lima;
+		lima.indumentum =
+			formati.archivum_novum.indumenta_limae.nomen |
+			formati.archivum_novum.indumenta_limae.flumen_datorum |
+			formati.archivum_novum.indumenta_limae.compressio;
+		lima.nomen = idx.limae[i].secundus;
+		lima.flumen_datorum = in;
+		lima.compressio = @com;
+		arc^.scribe_limam(k, lima);
+		k++;
+		con.depura_lineam();
+		con << "CREO ARCHIVUM: " << ((k - 1) * 100 / adesc.numerus_limarum) << "%...";
+	}
+	{
+		var in = manifestum.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens);
+		formati.archivum_novum.lima lima;
+		lima.indumentum =
+			formati.archivum_novum.indumenta_limae.genu_et_indentitas |
+			formati.archivum_novum.indumenta_limae.flumen_datorum |
+			formati.archivum_novum.indumenta_limae.compressio;
+		lima.genu = "REG";
+		lima.indentitas = 1;
+		lima.flumen_datorum = in;
+		lima.compressio = @com;
+		arc^.scribe_limam(k, lima);
+		k++;
+		con.depura_lineam();
+		con << "CREO ARCHIVUM: " << ((k - 1) * 100 / adesc.numerus_limarum) << "%...";
+	}
+	arc^.ende();
+	con.color_primus = consolatorium.color.defalta;
+	con.scribe_lineam();
+}
+
+functio nihil arc() introitus iacit {
+	proba {
+		var arg = para_argumenta();
+		si (arg^.longitudo < 4) iace errores.argumentum_falsum;
+		crea_archivum(arg^[1], arg^[2], arg^[3]);
+		con.color_primus = consolatorium.color.viridis;
+		con << "ARCHIVUM EXHIBITIONIS CREATUM BONE EST\n";
+		con.color_primus = consolatorium.color.defalta;
+	} cape (nintadl e, nintadl se) {
+		linea de, dse;
+		errores.descriptio(e, se, de, dse);
+		con.color_primus = consolatorium.color.ruber;
+		con << "ERROR EXHIBITIONIS: ";
+		si (dse.longitudo) con << de << " - " << dse << "\n";
+		alioqui con << de << "\n";
+		con.color_primus = consolatorium.color.defalta;
+		iace e;
+	}
+}

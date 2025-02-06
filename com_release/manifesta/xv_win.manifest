@@ -1,0 +1,42 @@
+{
+    "Executable": "xvm.exe",
+    "ShellPath": ".",
+    "StoreLinkFile": "store.ecs",
+    "PermanentFiles": [
+        ""
+    ],
+    "FileFormatsX": [
+        {
+            "Extension": "v",
+            "Description": "Lingua XV",
+            "IconIndex": 1,
+            "IsProtocol": false
+        },
+        {
+            "Extension": "vvv",
+            "Description": "Lingua XV",
+            "IconIndex": 1,
+            "IsProtocol": false
+        },
+        {
+            "Extension": "xv",
+            "Description": "Lingua XV",
+            "IconIndex": 1,
+            "IsProtocol": false
+        },
+        {
+            "Extension": "xvm",
+            "Description": "Manualis Linguae XV",
+            "IconIndex": 2,
+            "IsProtocol": false
+        },
+        {
+            "Extension": "xvmm",
+            "Description": "Manualis Linguae XV",
+            "IconIndex": 0,
+            "IsProtocol": true
+        }
+    ],
+    "Plugins": [
+    ]
+}

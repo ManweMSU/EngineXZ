@@ -1,0 +1,12 @@
+{
+    "Executable": "Contents/MacOS/xvm",
+    "ShellPath": "Contents/MacOS",
+    "StoreLinkFile": "Contents/MacOS/store.ecs",
+    "PermanentFiles": [
+        ""
+    ],
+    "FileFormatsX": [
+    ],
+    "Plugins": [
+    ]
+}
