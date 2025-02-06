@@ -111,10 +111,14 @@ namespace Engine
 			constexpr const widechar * IdentifierTVPP	= L"valor_publicus_";
 			constexpr const widechar * IdentifierDefs	= L"xvdefinitiones";
 
+			constexpr const widechar * WordImportEmbed	= L"interne";
+
 			constexpr const widechar * ResourceData	= L"data";
 			constexpr const widechar * ResourceIcon	= L"icon";
 			constexpr const widechar * ResourceMeta	= L"attributum";
 			constexpr const widechar * ResourceLang	= L"lingua";
+			constexpr const widechar * ResourceVers	= L"versio";
+			constexpr const widechar * ResourceSVer	= L"surrogo_versiones";
 		}
 	}
 }

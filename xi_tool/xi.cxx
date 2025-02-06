@@ -18,6 +18,7 @@ constexpr uint InspectModuleStamp	= 0x004;
 constexpr uint InspectMetadata		= 0x008;
 constexpr uint InspectIcon			= 0x010;
 constexpr uint InspectResources		= 0x020;
+constexpr uint InspectVersions		= 0x040;
 
 struct {
 	SafePointer<StringTable> localization;
@@ -59,7 +60,8 @@ void ProcessCommandLine(void)
 						else if (arg2[k] == L't') state.inspect_mask |= InspectModuleStamp;
 						else if (arg2[k] == L'm') state.inspect_mask |= InspectMetadata;
 						else if (arg2[k] == L'i') state.inspect_mask |= InspectIcon;
-						else if (arg2[k] == L'r') state.inspect_mask |= InspectResources; else {
+						else if (arg2[k] == L'r') state.inspect_mask |= InspectResources;
+						else if (arg2[k] == L'v') state.inspect_mask |= InspectVersions; else {
 							console << TextColor(12) << Localized(205) << TextColorDefault() << LineFeed();
 							throw Exception();
 						}
@@ -253,6 +255,35 @@ int Main(void)
 				const string * table[] = { types.GetBuffer(), ids.GetBuffer(), sizes.GetBuffer() };
 				TableView(table, 3, types.Length());
 			}
+			if (state.inspect_mask & InspectVersions) try {
+				XI::AssemblyVersionInformation vi;
+				if (XI::LoadModuleVersionInformation(module->resources, vi)) {
+					console << Localized(420) << LineFeed();
+					if (vi.ThisModuleVersion != 0xFFFFFFFF) {
+						console << Localized(422) << string(vi.ThisModuleVersion, HexadecimalBase, 8) << LineFeed();
+					}
+					if (vi.ReplacesVersions.Length()) {
+						Array<string> vol1(0x20), vol2(0x20);
+						vol1 << Localized(423); vol2 << Localized(424);
+						for (auto & v : vi.ReplacesVersions) {
+							vol1 << string(v.MustBe, HexadecimalBase, 8);
+							vol2 << string(v.Mask, HexadecimalBase, 8);
+						}
+						const string * table[] = { vol1.GetBuffer(), vol2.GetBuffer() };
+						TableView(table, 2, vol1.Length());
+					}
+					if (!vi.ModuleVersionsNeeded.IsEmpty()) {
+						Array<string> vol1(0x20), vol2(0x20);
+						vol1 << Localized(425); vol2 << Localized(426);
+						for (auto & v : vi.ModuleVersionsNeeded) {
+							vol1 << string(v.value, HexadecimalBase, 8);
+							vol2 << v.key;
+						}
+						const string * table[] = { vol1.GetBuffer(), vol2.GetBuffer() };
+						TableView(table, 2, vol1.Length());
+					}
+				} else console << Localized(421) << LineFeed();
+			} catch (...) {}
 			if (state.pret_list.Length()) {
 				try {
 					XI::PretranslateModule(*module, state.pret_list.GetBuffer(), state.pret_list.Length());

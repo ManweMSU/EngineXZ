@@ -112,6 +112,31 @@ namespace Engine
 			SafePointer<DataBlock> data = EncodeDictionary(localization);
 			rsrc.Append(name, data);
 		}
+		void AddModuleVersionInformation(Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, const AssemblyVersionInformation & info)
+		{
+			SafePointer<DataBlock> vi = new DataBlock(0x400);
+			int vsc = info.ReplacesVersions.Length();
+			int vrc = info.ModuleVersionsNeeded.Count();
+			vi->SetLength(4 * (3 + 2 * vsc + 3 * vrc));
+			reinterpret_cast<uint32 *>(vi->GetBuffer())[0] = info.ThisModuleVersion;
+			reinterpret_cast<uint32 *>(vi->GetBuffer())[1] = vsc;
+			reinterpret_cast<uint32 *>(vi->GetBuffer())[2] = vrc;
+			for (int i = 0; i < vsc; i++) {
+				reinterpret_cast<uint32 *>(vi->GetBuffer())[3 + 2 * i] = info.ReplacesVersions[i].MustBe;
+				reinterpret_cast<uint32 *>(vi->GetBuffer())[4 + 2 * i] = info.ReplacesVersions[i].Mask;
+			}
+			int i = 3 + 2 * vsc;
+			for (auto & vr : info.ModuleVersionsNeeded) {
+				SafePointer<DataBlock> mdn = vr.key.EncodeSequence(Encoding::UTF8, false);
+				reinterpret_cast<uint32 *>(vi->GetBuffer())[i + 0] = vi->Length();
+				reinterpret_cast<uint32 *>(vi->GetBuffer())[i + 1] = mdn->Length();
+				reinterpret_cast<uint32 *>(vi->GetBuffer())[i + 2] = vr.value;
+				vi->Append(*mdn);
+				i += 3;
+			}
+			rsrc.Append(MakeResourceID(L"VER", 1), vi);
+		}
+
 		Volumes::Dictionary<string, string> * LoadModuleMetadata(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc)
 		{
 			SafePointer< Volumes::Dictionary<string, string> > result = new Volumes::Dictionary<string, string>;
@@ -172,6 +197,36 @@ namespace Engine
 			auto data = rsrc.GetObjectByKey(name);
 			if (!data) return 0;
 			return DecodeDictionary(data);
+		}
+		bool LoadModuleVersionInformation(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, AssemblyVersionInformation & info)
+		{
+			auto vi = rsrc.GetObjectByKey(MakeResourceID(L"VER", 1));
+			if (vi) {
+				info.ReplacesVersions.Clear();
+				info.ModuleVersionsNeeded.Clear();
+				auto numwords = vi->Length() / 4;
+				auto words = reinterpret_cast<const uint32 *>(vi->GetBuffer());
+				if (numwords < 3) throw InvalidFormatException();
+				info.ThisModuleVersion = words[0];
+				int vsc = words[1];
+				int vrc = words[2];
+				if (numwords < 3 + 2 * vsc + 3 * vrc) throw InvalidFormatException();
+				for (int i = 0; i < vsc; i++) {
+					AssemblyVersionReplacement vs;
+					vs.MustBe = words[3 + 2 * i];
+					vs.Mask = words[4 + 2 * i];
+					info.ReplacesVersions << vs;
+				}
+				for (int i = 0; i < vrc; i++) {
+					auto mdno = words[3 + 2 * vsc + 3 * i];
+					auto mdns = words[4 + 2 * vsc + 3 * i];
+					auto mdvr = words[5 + 2 * vsc + 3 * i];
+					if (mdno > uint(vi->Length()) || mdns > uint(vi->Length()) || (mdno + mdns) > uint(vi->Length())) throw InvalidFormatException();
+					auto mdn = string(vi->GetBuffer() + mdno, mdns, Encoding::UTF8);
+					info.ModuleVersionsNeeded.Append(mdn, mdvr);
+				}
+				return true;
+			} else return false;
 		}
 	}
 }

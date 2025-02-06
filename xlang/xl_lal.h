@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "../xasm/xa_types.h"
+#include "../ximg/xi_resources.h"
 #include "xl_names.h"
 
 namespace Engine
@@ -136,12 +137,13 @@ namespace Engine
 		};
 		class LContext : public Object
 		{
-			bool _idle_mode;
+			bool _idle_mode, _perform_version_control, _write_version_info;
 			string _module_name;
 			uint _subsystem, _private_counter;
 			SafePointer<LObject> _root_ns, _private_ns;
 			SafePointer<LPrototypeHandler> _prot_hdlr;
 			Array<string> _import_list;
+			XI::AssemblyVersionInformation _verinfo;
 			SafePointer<DataBlock> _data;
 			Volumes::ObjectDictionary<uint64, DataBlock> _rsrc;
 		public:
@@ -150,12 +152,17 @@ namespace Engine
 
 			bool IsIdle(void);
 			void SetIdleMode(bool set);
+			bool IsVersionControlOn(void);
+			bool IsVersionInfoOn(void);
+			void SetVersionInfoMode(bool control, bool write);
+			void SetVersionInfoVersion(uint32 version);
+			void SetVersionInfoSubstitute(uint32 version, uint32 with_mask);
 			void MakeSubsystemConsole(void);
 			void MakeSubsystemGUI(void);
 			void MakeSubsystemNone(void);
 			void MakeSubsystemLibrary(void);
 
-			bool IncludeModule(const string & name, IModuleLoadCallback * callback);
+			bool IncludeModule(const string & name, IModuleLoadCallback * callback, bool embed);
 			void SetPrototypeHandler(LPrototypeHandler * hdlr);
 			LPrototypeHandler * GetPrototypeHandler(void);
 			LObject * GetRootNamespace(void);

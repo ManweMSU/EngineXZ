@@ -379,29 +379,54 @@ namespace Engine
 			return ns;
 		}
 
-		LContext::LContext(const string & module) : _idle_mode(false), _module_name(module), _import_list(0x10), _private_counter(0)
+		LContext::LContext(const string & module) : _idle_mode(false), _module_name(module), _import_list(0x10), _private_counter(0), _perform_version_control(false), _write_version_info(false)
 		{
 			_root_ns = XL::CreateNamespace(L"", L"", *this);
 			_subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI);
 			_data = new DataBlock(0x1000);
+			_verinfo.ThisModuleVersion = 0xFFFFFFFF;
 		}
 		LContext::~LContext(void) {}
 		bool LContext::IsIdle(void) { return _idle_mode; }
 		void LContext::SetIdleMode(bool set) { _idle_mode = set; }
+		bool LContext::IsVersionControlOn(void) { return _perform_version_control; }
+		bool LContext::IsVersionInfoOn(void) { return _write_version_info; }
+		void LContext::SetVersionInfoMode(bool control, bool write) { _perform_version_control = control; _write_version_info = write; }
+		void LContext::SetVersionInfoVersion(uint32 version) { _verinfo.ThisModuleVersion = version; }
+		void LContext::SetVersionInfoSubstitute(uint32 version, uint32 with_mask) { XI::AssemblyVersionReplacement vs; vs.MustBe = version; vs.Mask = with_mask; _verinfo.ReplacesVersions << vs; }
 		void LContext::MakeSubsystemConsole(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI); }
 		void LContext::MakeSubsystemGUI(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::GUI); }
 		void LContext::MakeSubsystemNone(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::NoUI); }
 		void LContext::MakeSubsystemLibrary(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::Library); }
-		bool LContext::IncludeModule(const string & module_name, IModuleLoadCallback * callback)
+		bool LContext::IncludeModule(const string & module_name, IModuleLoadCallback * callback, bool embed)
 		{
 			if (module_name == _module_name) return true;
 			for (auto & imp : _import_list) if (imp == module_name) return true;
 			_import_list << module_name;
 			SafePointer<Streaming::Stream> input = callback->GetModuleStream(module_name);
 			if (!input) return false;
+			if (_perform_version_control && !_idle_mode) {
+				XI::Module module(input, XI::Module::ModuleLoadFlags::LoadResources);
+				input->Seek(0, Streaming::Begin);
+				XI::AssemblyVersionInformation vi;
+				if (XI::LoadModuleVersionInformation(module.resources, vi)) {
+					if (vi.ThisModuleVersion != 0xFFFFFFFF) _verinfo.ModuleVersionsNeeded.Append(module_name, vi.ThisModuleVersion);
+				}
+			}
+			if (embed && !_idle_mode) {
+				SafePointer<DataBlock> data = input->ReadAll();
+				input->Seek(0, Streaming::Begin);
+				int index = 1;
+				while (true) {
+					auto rsrc = XI::MakeResourceID(L"XDL", index);
+					if (_rsrc.ElementExists(rsrc)) { index++; continue; }
+					_rsrc.Append(rsrc, data);
+					break;
+				}
+			}
 			XI::Module module(input, XI::Module::ModuleLoadFlags::LoadLink);
 			Volumes::Dictionary<XClass *, XI::Module::Class *> cpp;
-			for (auto & d : module.modules_depends_on) if (!IncludeModule(d, callback)) return false;
+			for (auto & d : module.modules_depends_on) if (!IncludeModule(d, callback, false)) return false;
 			for (auto & c : module.classes) try {
 				auto obj = ProvidePath(*this, c.key);
 				SafePointer<XClass> cls = XL::CreateClass(GetName(c.key), c.key, false, *this);
@@ -988,6 +1013,7 @@ namespace Engine
 			module.modules_depends_on = _import_list;
 			module.data = _data;
 			module.resources = _rsrc;
+			if (_write_version_info) XI::AddModuleVersionInformation(module.resources, _verinfo);
 			static_cast<XObject *>(_root_ns.Inner())->EncodeSymbols(module, Class::Internal);
 			module.Save(dest);
 		}

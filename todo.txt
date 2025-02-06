@@ -56,6 +56,8 @@ BETA-6:
  + 'pro' -> 'per'
  + Atomic exchange
  + QuickLook Extension reworked
+ + XC improvements
+ + Direct launch mode
 
 OTHER RELEASES:
  - GUI and CUI libraries

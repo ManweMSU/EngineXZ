@@ -1877,6 +1877,34 @@ namespace Engine
 					}
 				}
 			}
+			void ProcessVersionSubstitute(VObservationDesc & desc)
+			{
+				uint32 version;
+				uint32 mask = 0xFFFFFFFF;
+				if (IsPunct(L"(")) {
+					ReadNextToken();
+					auto expr = current_token;
+					SafePointer<XL::LObject> value = ProcessExpression(desc);
+					if (value->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
+					try { version = ctx.QueryLiteralValue(value); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+					AssertPunct(L","); ReadNextToken();
+					auto expr_mask = current_token;
+					SafePointer<XL::LObject> value_mask = ProcessExpression(desc);
+					if (value_mask->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr_mask);
+					try { mask = ctx.QueryLiteralValue(value_mask); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr_mask); }
+					AssertPunct(L")"); ReadNextToken();
+				} else {
+					auto expr = current_token;
+					SafePointer<XL::LObject> value = ProcessExpression(desc);
+					if (value->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
+					try { version = ctx.QueryLiteralValue(value); }
+					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+				}
+				ctx.SetVersionInfoMode(ctx.IsVersionControlOn(), true);
+				ctx.SetVersionInfoSubstitute(version, mask);
+			}
 			void ProcessNamespace(VObservationDesc & desc)
 			{
 				Volumes::Dictionary<string, string> attributes;
@@ -1947,9 +1975,20 @@ namespace Engine
 							for (auto & m : modules) AssignAutocomplete(m, CodeRangeTag::IdentifierUnknown);
 						}
 						AssertGenericIdent();
-						try { if (!ctx.IncludeModule(current_token.contents, this)) throw Exception(); }
-						catch (...) { Abort(CompilerStatus::ReferenceAccessFailure, current_token); }
-						ReadNextToken(); AssertPunct(L";"); ReadNextToken();
+						auto name_token = current_token;
+						auto name = current_token.contents;
+						auto embed = false;
+						ReadNextToken();
+						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+							AssignAutocomplete(Lexic::WordImportEmbed, CodeRangeTag::IdentifierUnknown);
+						}
+						if (IsIdent() && current_token.contents == Lexic::WordImportEmbed) {
+							ReadNextToken();
+							embed = true;
+						}
+						try { if (!ctx.IncludeModule(name, this, embed)) throw Exception(); }
+						catch (...) { Abort(CompilerStatus::ReferenceAccessFailure, name_token); }
+						AssertPunct(L";"); ReadNextToken();
 					} else if (IsKeyword(Lexic::KeywordResource)) {
 						ReadNextToken();
 						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
@@ -1957,6 +1996,8 @@ namespace Engine
 							AssignAutocomplete(Lexic::ResourceIcon, CodeRangeTag::IdentifierUnknown);
 							AssignAutocomplete(Lexic::ResourceMeta, CodeRangeTag::IdentifierUnknown);
 							AssignAutocomplete(Lexic::ResourceLang, CodeRangeTag::IdentifierUnknown);
+							AssignAutocomplete(Lexic::ResourceVers, CodeRangeTag::IdentifierUnknown);
+							AssignAutocomplete(Lexic::ResourceSVer, CodeRangeTag::IdentifierUnknown);
 						}
 						if (IsIdent()) {
 							if (current_token.contents == Lexic::ResourceData) {
@@ -2045,6 +2086,25 @@ namespace Engine
 								if (lang.Length() != 2) Abort(CompilerStatus::ObjectTypeMismatch, expr);
 								SafePointer< Volumes::Dictionary<string, string> > table = new Volumes::Dictionary<string, string>;
 								if (!localizations.Append(lang, table)) Abort(CompilerStatus::SymbolRedefinition, expr);
+							} else if (current_token.contents == Lexic::ResourceVers) {
+								ReadNextToken();
+								auto expr = current_token;
+								uint32 version;
+								SafePointer<XL::LObject> value = ProcessExpression(desc);
+								AssertPunct(L";"); ReadNextToken();
+								if (value->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
+								try { version = ctx.QueryLiteralValue(value); }
+								catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
+								ctx.SetVersionInfoMode(ctx.IsVersionControlOn(), true);
+								ctx.SetVersionInfoVersion(version);
+							} else if (current_token.contents == Lexic::ResourceSVer) {
+								ReadNextToken();
+								ProcessVersionSubstitute(desc);
+								while (IsPunct(L",")) {
+									ReadNextToken();
+									ProcessVersionSubstitute(desc);
+								}
+								AssertPunct(L";"); ReadNextToken();
 							} else Abort(CompilerStatus::AnotherTokenExpected);
 						} else Abort(CompilerStatus::AnotherTokenExpected);
 					} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
@@ -2630,7 +2690,7 @@ namespace Engine
 				try {
 					EnablePrototypes(this);
 					for (auto & i : autoimports) {
-						try { if (!ctx.IncludeModule(i, this)) throw Exception(); }
+						try { if (!ctx.IncludeModule(i, this, false)) throw Exception(); }
 						catch (...) { Abort(CompilerStatus::ReferenceAccessFailure, i); }
 					}
 					ReadNextToken();
@@ -2735,6 +2795,7 @@ namespace Engine
 				else if (desc.flags & CompilerFlagSystemLibrary) lctx.MakeSubsystemLibrary();
 				else lctx.MakeSubsystemConsole();
 				lctx.SetIdleMode((desc.flags & CompilerFlagMakeModule) == 0);
+				if (desc.flags & CompilerFlagVersionControl) lctx.SetVersionInfoMode(true, true);
 				SafePointer<XL::LObject> dns = CreateDefinitionNamespace(lctx, desc.defines);
 				lctx.GetRootNamespace()->AddMember(Lexic::IdentifierDefs, dns);
 				if (!(desc.flags & CompilerFlagMakeMetadata)) desc.meta = 0; else if (!desc.meta) throw Exception();
