@@ -16,6 +16,9 @@ namespace Engine
 		constexpr const widechar * FileExtensionLibrary			= L"xo";
 		constexpr const widechar * FileExtensionExecutable		= L"xx";
 		constexpr const widechar * FileExtensionExecutable2		= L"xex";
+		constexpr const widechar * FileExtensionGPLanguage		= L"w";
+		constexpr const widechar * FileExtensionGPLanguage2		= L"xw";
+		constexpr const widechar * FileExtensionGPLibrary		= L"xwo";
 		
 		class Module : public Object
 		{
@@ -26,7 +29,7 @@ namespace Engine
 				LoadLink		= 0x02,
 				LoadResources	= 0x03,
 			};
-			enum class ExecutionSubsystem { NoUI = 0, ConsoleUI = 1, GUI = 2, Library = 3 };
+			enum class ExecutionSubsystem { NoUI = 0, ConsoleUI = 1, GUI = 2, Library = 3, XW = 0x100 };
 			class TypeReference
 			{
 			public:
@@ -104,6 +107,10 @@ namespace Engine
 					FunctionClassImport	= 0x20,
 					FunctionImportNear	= 0x00,
 					FunctionImportFar	= 0x01,
+
+					FunctionClassXW		= 0x30,
+					FunctionXW_HintedXA	= 0x00,
+					FunctionXW_Rules	= 0x01,
 
 					FunctionTypeMask	= 0x0F,
 					FunctionClassMask	= 0xF0,

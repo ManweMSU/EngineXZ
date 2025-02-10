@@ -14,6 +14,8 @@ namespace Engine
 		// VER - data versionum, VER#1
 		// XC  - configuratio consolatorii, XC#1 - configuratio, XC#2 - imago
 		// XDL - liber dynamicus internus
+		// XM  - data meliorandi, XM#1 - locationes imperatorum variabiliumque, XM#2 - programma initialis
+		// XW  - functiones processoris graphici
 
 		constexpr const widechar * MetadataKeyModuleName = L"NomenModuli";
 		constexpr const widechar * MetadataKeyCompanyName = L"CreatorModuli";
