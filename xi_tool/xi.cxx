@@ -204,6 +204,7 @@ int Main(void)
 				else if (module->subsystem == XI::Module::ExecutionSubsystem::GUI) ss = Localized(411);
 				else if (module->subsystem == XI::Module::ExecutionSubsystem::NoUI) ss = Localized(412);
 				else if (module->subsystem == XI::Module::ExecutionSubsystem::Library) ss = Localized(413);
+				else if (module->subsystem == XI::Module::ExecutionSubsystem::XW) ss = Localized(427);
 				console << FormatString(Localized(409), module->module_import_name,
 					module->assembler_name, module->assembler_version.major, module->assembler_version.minor,
 					module->assembler_version.subver, module->assembler_version.build, ss) << LineFeed();

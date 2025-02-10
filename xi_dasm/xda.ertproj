@@ -12,7 +12,8 @@ CompileList {
 	AAAAAD = "../xasm/xa_types.cxx"
 	AAAAAE = "../ximg/xi_function.cxx"
 	AAAAAF = "../ximg/xi_module.cxx"
-	AAAAAG = "xda.cxx"
+	AAAAAG = "../xw/xw_types.cxx"
+	AAAAAH = "xda.cxx"
 }
 VersionInformation {
 	ApplicationIdentifier = "XDA"

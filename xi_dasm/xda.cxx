@@ -2,6 +2,7 @@
 
 #include "../xasm/xa_dasm.h"
 #include "../ximg/xi_function.h"
+#include "../xw/xw_types.h"
 
 using namespace Engine;
 using namespace Engine::IO;
@@ -119,6 +120,20 @@ public:
 	virtual void HandleFarImport(const string & symbol, const XI::Module::Function & fin, const string & func_name, const string & lib_name) noexcept override { try { this->symbol = func_name; this->library = lib_name; } catch (...) { invalid = true; } }
 	virtual void HandleLoadError(const string & symbol, const XI::Module::Function & fin, XI::LoadFunctionError error) noexcept override { invalid = true; }
 };
+class FunctionLoaderW : public XW::IFunctionLoader
+{
+	XW::ShaderLanguage _lang;
+public:
+	XA::Function xa;
+	XW::TranslationRules xw;
+	bool invalid, is_xa, is_xw;
+public:
+	FunctionLoaderW(XW::ShaderLanguage lang) : _lang(lang), invalid(false), is_xa(false), is_xw(false) {}
+	virtual XW::ShaderLanguage GetLanguage(void) noexcept override { return _lang; }
+	virtual void HandleFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override { try { xa.Load(fout); is_xa = true; } catch (...) { invalid = true; } }
+	virtual void HandleRule(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override { try { xw.Load(fout); is_xw = true; } catch (...) { invalid = true; } }
+	virtual void HandleLoadError(const string & symbol, const XI::Module::Function & fin, XI::LoadFunctionError error) noexcept override { invalid = true; }
+};
 
 int Main(void)
 {
@@ -169,9 +184,13 @@ int Main(void)
 			}
 			for (auto & f : funcs->Elements()) {
 				FunctionLoader fldr;
+				FunctionLoaderW fldrw(XW::ShaderLanguage::Unknown);
 				SafePointer< Array<uint32> > fabi;
+				SafePointer< Array<XW::ShaderLanguage> > flang;
 				XI::LoadFunction(f.key, *f.value, &fldr);
+				XW::LoadFunction(f.key, *f.value, &fldrw);
 				fabi = XI::LoadFunctionABI(*f.value);
+				flang = XW::LoadRuleVariants(*f.value);
 				console << TextColor(11) << FormatString(Localized(401), f.key) << TextColorDefault() << LineFeed();
 				if (state.extract_mask & ExtractCodeArchitecture) {
 					console << TextColor(14);
@@ -198,6 +217,14 @@ int Main(void)
 						else text_os = Localized(500);
 						console << L"  " << FormatString(Localized(403), text_os, text_arch) << LineFeed();
 					}
+					for (auto & lang : flang->Elements()) {
+						string text_lang;
+						if (lang == XW::ShaderLanguage::HLSL) text_lang = Localized(701);
+						else if (lang == XW::ShaderLanguage::MSL) text_lang = Localized(702);
+						else if (lang == XW::ShaderLanguage::GLSL) text_lang = Localized(703);
+						else text_lang = Localized(700);
+						console << L"  " << FormatString(Localized(418), text_lang) << LineFeed();
+					}
 					console << TextColorDefault();
 				}
 				if (state.extract_mask & ExtractFunctionTraits) {
@@ -221,6 +248,42 @@ int Main(void)
 						console << LineFeed() << TextColor(10);
 						XA::DisassemblyFunction(fldr.xa, &console);
 						console << TextColorDefault();
+					} else if (fldrw.is_xa && !fldrw.invalid) {
+						for (int i = fldrw.xa.instset.Length() - 1; i >= 0; i--) {
+							auto & inst = fldrw.xa.instset[i];
+							if (inst.opcode >= 0x1000) inst.opcode = XA::OpcodeNOP;
+						}
+						console << LineFeed() << TextColor(10);
+						XA::DisassemblyFunction(fldrw.xa, &console);
+						console << TextColorDefault();
+					} else if (flang->Length()) {
+						console << LineFeed();
+						for (auto & lang : flang->Elements()) {
+							FunctionLoaderW fldrw2(lang);
+							XW::LoadFunction(f.key, *f.value, &fldrw2);
+							if (fldrw2.is_xw && !fldrw2.invalid) {
+								string text_lang;
+								if (lang == XW::ShaderLanguage::HLSL) text_lang = Localized(701);
+								else if (lang == XW::ShaderLanguage::MSL) text_lang = Localized(702);
+								else if (lang == XW::ShaderLanguage::GLSL) text_lang = Localized(703);
+								else text_lang = Localized(700);
+								console << TextColor(11);
+								console << L"  " << FormatString(Localized(418), text_lang) << L":" << LineFeed();
+								for (auto & e : fldrw2.xw.extrefs) {
+									console << TextColor(10) << L"    EXTERNAL " << TextColorDefault() << L"\'" << TextColor(10) << e << TextColorDefault() << L"\'" << LineFeed();
+								}
+								for (auto & b : fldrw2.xw.blocks) {
+									if (b.rule == XW::Rule::InsertString) {
+										console << TextColor(10) << L"    --> " << TextColorDefault() << L"\'" << TextColor(10) << b.text << TextColorDefault() << L"\'" << LineFeed();
+									} else if (b.rule == XW::Rule::InsertArgument) {
+										console << TextColor(10) << L"    --> A[" << b.index << L"]" << LineFeed();
+									} else if (b.rule == XW::Rule::InsertReference) {
+										console << TextColor(10) << L"    --> E[" << b.index << L"]" << LineFeed();
+									}
+								}
+								console << TextColorDefault();
+							}
+						}
 					} else console << TextColor(12) << Localized(304) << TextColorDefault() << LineFeed();
 				}
 			}
