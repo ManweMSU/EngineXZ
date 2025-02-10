@@ -119,12 +119,16 @@ int Main(void)
 				ext_key->SetValue(L"", self_guid);
 				ext_key = root->CreateKey(L".xo");
 				ext_key->SetValue(L"", self_guid);
+				ext_key = root->CreateKey(L".xwo");
+				ext_key->SetValue(L"", self_guid);
 			}
 			CreateFileClass(L"Engine.XX", L"Applicatio XX", runs_natively ? L"" : exe_path + L",1", exe_path);
 			CreateFileClass(L"Engine.XO", L"Liber XX", exe_path + L",2", L"");
+			CreateFileClass(L"Engine.XWO", L"Liber XW", exe_path + L",3", L"");
 			AssignFileClass(L"Engine.XX", L"xx");
 			AssignFileClass(L"Engine.XX", L"xex");
 			AssignFileClass(L"Engine.XO", L"xo");
+			AssignFileClass(L"Engine.XWO", L"xwo");
 			SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0);
 		} else if (args->ElementAt(1) == L"-") {
 			Array<string> a2(1);
@@ -142,13 +146,16 @@ int Main(void)
 				RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xx");
 				RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xex");
 				RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xo");
+				RemoveRegistryKey(root, L"Software\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.xwo");
 			}
 			root = root->OpenKey(L"Software\\Classes", RegistryKeyAccess::Full);
 			RemoveRegistryValue(root, L".xx\\OpenWithProgids\\Engine.XX");
 			RemoveRegistryValue(root, L".xex\\OpenWithProgids\\Engine.XX");
 			RemoveRegistryValue(root, L".xo\\OpenWithProgids\\Engine.XO");
+			RemoveRegistryValue(root, L".xwo\\OpenWithProgids\\Engine.XWO");
 			RemoveRegistryKey(root, L"Engine.XX");
 			RemoveRegistryKey(root, L"Engine.XO");
+			RemoveRegistryKey(root, L"Engine.XWO");
 			if (runs_natively) RemoveRegistryKey(root, string(L"CLSID\\") + self_guid);
 			SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0);
 			DynamicString self_move_to, dll_move_to, temp_path;

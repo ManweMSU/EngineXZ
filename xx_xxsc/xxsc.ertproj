@@ -32,6 +32,12 @@ FileFormats {
 		Extension = "xo"
 		Icon = "../artworks/xx_xo_icon.eiwv"
 	}
+	AAAAAD {
+		CanCreate = false
+		Description = "Liber XW"
+		Extension = "xwo"
+		Icon = "../artworks/xwo_icon.eiwv"
+	}
 }
 VersionInformation {
 	ApplicationIdentifier = "XXSC"

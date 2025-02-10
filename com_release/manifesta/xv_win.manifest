@@ -25,9 +25,21 @@
             "IsProtocol": false
         },
         {
+            "Extension": "w",
+            "Description": "Lingua XW",
+            "IconIndex": 2,
+            "IsProtocol": false
+        },
+        {
+            "Extension": "xw",
+            "Description": "Lingua XW",
+            "IconIndex": 2,
+            "IsProtocol": false
+        },
+        {
             "Extension": "xvm",
             "Description": "Manualis Linguae XV",
-            "IconIndex": 2,
+            "IconIndex": 3,
             "IsProtocol": false
         },
         {

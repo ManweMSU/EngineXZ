@@ -72,12 +72,24 @@ FileFormats {
 		Icon = "../artworks/xv_icon_doc.eiwv"
 	}
 	AAAAAD {
+		CanCreate = false
+		Description = "Lingua XW"
+		Extension = "xw"
+		Icon = "../artworks/xw_icon_doc.eiwv"
+	}
+	AAAAAE {
+		CanCreate = false
+		Description = "Lingua XW"
+		Extension = "w"
+		Icon = "../artworks/xw_icon_doc.eiwv"
+	}
+	AAAAAF {
 		CanCreate = true
 		Description = "Manualis Linguae XV"
 		Extension = "xvm"
 		Icon = "../artworks/xv_icon_manual.eiwv"
 	}
-	AAAAAE {
+	AAAAAG {
 		Description = "Manualis Linguae XV"
 		Protocol = "xvmm"
 	}
