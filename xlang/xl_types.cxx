@@ -233,7 +233,14 @@ namespace Engine
 				XA::TH::AddTreeInput(node, _instance->Evaluate(func, error_ctx), static_cast<XType *>(intype.Inner())->GetArgumentSpecification());
 				if (_index) {
 					SafePointer<LObject> xtype = _index->GetType();
-					XA::TH::AddTreeInput(node, _index->Evaluate(func, error_ctx), static_cast<XType *>(xtype.Inner())->GetArgumentSpecification());
+					auto index_type_spec = static_cast<XType *>(xtype.Inner())->GetArgumentSpecification();
+					if (index_type_spec.size.num_bytes != 0 || index_type_spec.size.num_words != 1) {
+						auto wordspec = XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1);
+						auto resize = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformIntegerUResize, XA::ReferenceFlagInvoke));
+						XA::TH::AddTreeInput(resize, _index->Evaluate(func, error_ctx), index_type_spec);
+						XA::TH::AddTreeOutput(resize, wordspec);
+						XA::TH::AddTreeInput(node, resize, wordspec);
+					} else XA::TH::AddTreeInput(node, _index->Evaluate(func, error_ctx), index_type_spec);
 					XA::TH::AddTreeInput(node, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, _size));
 				} else {
 					XA::TH::AddTreeInput(node, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, _size));

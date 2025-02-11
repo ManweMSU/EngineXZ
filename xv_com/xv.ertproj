@@ -52,7 +52,8 @@ CompileList {
 	AAAAAX = "../xv/xv_manual.cxx"
 	AAAAAY = "../xv/xv_oapi.cxx"
 	AAAAAZ = "../xv/xv_proto.cxx"
-	AAAABA = "xv.cxx"
+	AAAABA = "../xw/xw_types.cxx"
+	AAAABB = "xv.cxx"
 }
 EngineStore {
 	ShellPath = "."

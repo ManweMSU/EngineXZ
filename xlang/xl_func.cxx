@@ -271,6 +271,7 @@ namespace Engine
 			{
 				_instance_type = instance_type;
 				_impl._pure = false;
+				_impl._is_xw = false;
 				_virt.vft_index = _virt.vf_index = -1;
 				_virt.vfp_offset = _virt.vftp_offset = XA::TH::MakeSize(-1, -1);
 				_virt.base_offset = XA::TH::MakeSize(0, 0);
@@ -361,7 +362,12 @@ namespace Engine
 					if (_impl._import_func.Length()) {
 						if (_impl._import_library.Length()) XI::MakeFunction(func, _impl._import_func, _impl._import_library);
 						else XI::MakeFunction(func, _impl._import_func);
-					} else XI::MakeFunction(func, _impl._xa);
+					} else {
+						if (_impl._is_xw) {
+							if (_impl._xw.IsEmpty()) XW::MakeFunction(func, _impl._xa);
+							else for (auto & xw : _impl._xw) XW::MakeFunction(func, xw.key, xw.value);
+						} else XI::MakeFunction(func, _impl._xa);
+					}
 				} else XI::MakeFunction(func);
 				if (_flags & XI::Module::Function::FunctionInstance) {
 					if (parent == Class::Type) {

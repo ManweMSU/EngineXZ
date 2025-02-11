@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "xl_types.h"
+#include "../xw/xw_types.h"
 
 namespace Engine
 {
@@ -8,8 +9,9 @@ namespace Engine
 	{
 		struct FunctionImplementationDesc
 		{
-			bool _pure;
+			bool _pure, _is_xw;
 			XA::Function _xa;
+			Volumes::Dictionary<XW::ShaderLanguage, XW::TranslationRules> _xw;
 			string _import_func, _import_library;
 		};
 

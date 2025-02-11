@@ -198,6 +198,7 @@ int Main(void)
 						if (fldr.is_xa) console << L"  " << Localized(402) << LineFeed();
 						else if (fldr.library.Length()) console << L"  " << FormatString(Localized(405), fldr.symbol, fldr.library) << LineFeed();
 						else if (fldr.symbol.Length()) console << L"  " << FormatString(Localized(404), fldr.symbol) << LineFeed();
+						else if (fldrw.is_xa) console << L"  " << Localized(419) << LineFeed();
 					}
 					for (auto & abi : fabi->Elements()) {
 						Platform arch;
