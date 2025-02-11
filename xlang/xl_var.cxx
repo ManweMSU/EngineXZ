@@ -82,11 +82,37 @@ namespace Engine
 				}
 				_data.data_uint64 = value;
 			}
+			Literal(LContext & ctx, uint64 value, int quant, bool sgn) : _ctx(ctx), _local(false)
+			{
+				if (sgn) {
+					_data.contents = XI::Module::Literal::Class::SignedInteger;
+					if (quant == 8 || quant == 4 || quant == 2 || quant == 1) {
+						_data.length = quant;
+					} else throw InvalidArgumentException();
+				} else {
+					_data.contents = XI::Module::Literal::Class::UnsignedInteger;
+					if (quant == 8 || quant == 4 || quant == 2 || quant == 1) {
+						_data.length = quant;
+					} else throw InvalidArgumentException();
+				}
+				_data.data_uint64 = value;
+			}
 			Literal(LContext & ctx, double value) : _ctx(ctx), _local(false)
 			{
 				_data.contents = XI::Module::Literal::Class::FloatingPoint;
 				_data.length = 8;
 				_data.data_double = value;
+			}
+			Literal(LContext & ctx, double value, int quant) : _ctx(ctx), _local(false)
+			{
+				_data.contents = XI::Module::Literal::Class::FloatingPoint;
+				if (quant == 8) {
+					_data.length = quant;
+					_data.data_double = value;
+				} else if (quant == 4) {
+					_data.length = quant;
+					_data.data_float = value;
+				} else throw InvalidArgumentException();
 			}
 			Literal(LContext & ctx, const string & value) : _ctx(ctx), _local(false)
 			{
@@ -341,7 +367,9 @@ namespace Engine
 
 		XLiteral * CreateLiteral(LContext & ctx, bool value) { return new Literal(ctx, value); }
 		XLiteral * CreateLiteral(LContext & ctx, uint64 value) { return new Literal(ctx, value); }
+		XLiteral * CreateLiteral(LContext & ctx, uint64 value, int quant, bool sgn) { return new Literal(ctx, value, quant, sgn); }
 		XLiteral * CreateLiteral(LContext & ctx, double value) { return new Literal(ctx, value); }
+		XLiteral * CreateLiteral(LContext & ctx, double value, int quant) { return new Literal(ctx, value, quant); }
 		XLiteral * CreateLiteral(LContext & ctx, const string & value) { return new Literal(ctx, value); }
 		XLiteral * CreateLiteral(LContext & ctx, const XI::Module::Literal & data) { return new Literal(ctx, data); }
 		XComputable * CreateNullLiteral(LContext & ctx)

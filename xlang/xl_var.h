@@ -38,7 +38,9 @@ namespace Engine
 
 		XLiteral * CreateLiteral(LContext & ctx, bool value);
 		XLiteral * CreateLiteral(LContext & ctx, uint64 value);
+		XLiteral * CreateLiteral(LContext & ctx, uint64 value, int quant, bool sgn);
 		XLiteral * CreateLiteral(LContext & ctx, double value);
+		XLiteral * CreateLiteral(LContext & ctx, double value, int quant);
 		XLiteral * CreateLiteral(LContext & ctx, const string & value);
 		XLiteral * CreateLiteral(LContext & ctx, const XI::Module::Literal & data);
 		XComputable * CreateNullLiteral(LContext & ctx);

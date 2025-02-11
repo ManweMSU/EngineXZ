@@ -398,6 +398,7 @@ namespace Engine
 		void LContext::MakeSubsystemGUI(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::GUI); }
 		void LContext::MakeSubsystemNone(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::NoUI); }
 		void LContext::MakeSubsystemLibrary(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::Library); }
+		void LContext::MakeSubsystemXW(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::XW); }
 		bool LContext::IncludeModule(const string & module_name, IModuleLoadCallback * callback, bool embed)
 		{
 			if (module_name == _module_name) return true;
@@ -957,7 +958,9 @@ namespace Engine
 		LObject * LContext::QueryLogicalOrOperator(void) { return new XLogicalOr(*this); }
 		LObject * LContext::QueryLiteral(bool value) { return CreateLiteral(*this, value); }
 		LObject * LContext::QueryLiteral(uint64 value) { return CreateLiteral(*this, value); }
+		LObject * LContext::QueryLiteral(uint64 value, int quant, bool sgn) { return CreateLiteral(*this, value, quant, sgn); }
 		LObject * LContext::QueryLiteral(double value) { return CreateLiteral(*this, value); }
+		LObject * LContext::QueryLiteral(double value, int quant) { return CreateLiteral(*this, value, quant); }
 		LObject * LContext::QueryLiteral(const string & value) { return CreateLiteral(*this, value); }
 		LObject * LContext::QueryDetachedLiteral(LObject * base)
 		{

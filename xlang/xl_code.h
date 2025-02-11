@@ -67,6 +67,7 @@ namespace Engine
 			LFunctionContext(LContext & ctx, LObject * dest, const SimpifiedFunctionContextDesc & desc);
 			virtual ~LFunctionContext(void) override;
 
+			XA::Function & GetDestination(void);
 			LObject * GetRootScope(void);
 			LObject * GetInstance(void);
 			bool IsZeroReturn(void);

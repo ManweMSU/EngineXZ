@@ -161,6 +161,7 @@ namespace Engine
 			void MakeSubsystemGUI(void);
 			void MakeSubsystemNone(void);
 			void MakeSubsystemLibrary(void);
+			void MakeSubsystemXW(void);
 
 			bool IncludeModule(const string & name, IModuleLoadCallback * callback, bool embed);
 			void SetPrototypeHandler(LPrototypeHandler * hdlr);
@@ -215,7 +216,9 @@ namespace Engine
 			LObject * QueryLogicalOrOperator(void);
 			LObject * QueryLiteral(bool value);
 			LObject * QueryLiteral(uint64 value);
+			LObject * QueryLiteral(uint64 value, int quant, bool sgn);
 			LObject * QueryLiteral(double value);
+			LObject * QueryLiteral(double value, int quant);
 			LObject * QueryLiteral(const string & value);
 			LObject * QueryDetachedLiteral(LObject * base);
 			LObject * QueryNullLiteral(void);

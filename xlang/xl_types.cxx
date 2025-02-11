@@ -812,8 +812,10 @@ namespace Engine
 					if (_method == OperatorSubscript) {
 						if (!argc) throw ObjectHasNoSuchOverloadException(this, argc, argv);
 						SafePointer<XType> element = _base->GetElementType();
-						SafePointer<XType> type_intptr = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), GetContext());
-						SafePointer<LObject> index = PerformTypeCast(type_intptr, argv[0], CastPriorityConverter);
+						SafePointer<XType> type_index;
+						try { type_index = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), GetContext()); }
+						catch (...) { type_index = CreateType(XI::Module::TypeReference::MakeClassReference(NameUInt32), GetContext()); }
+						SafePointer<LObject> index = PerformTypeCast(type_index, argv[0], CastPriorityConverter);
 						SafePointer<OffsetComputable> com = new OffsetComputable(element, _instance, element->GetArgumentSpecification().size, index.Inner());
 						SafePointer<XComputable> offs = CreateComputable(GetContext(), com);
 						if (argc > 1) {
@@ -833,7 +835,9 @@ namespace Engine
 				virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override
 				{
 					if (_method == OperatorSubscript) {
-						SafePointer<LObject> type = _base->GetContext().QueryObject(NameUIntPtr);
+						SafePointer<LObject> type;
+						try { type = _base->GetContext().QueryObject(NameUIntPtr); }
+						catch (...) { type = _base->GetContext().QueryObject(NameUInt32); }
 						SafePointer<LObject> element = _base->GetElementType();
 						InvokationDesc own;
 						Volumes::List<InvokationDesc> derived;

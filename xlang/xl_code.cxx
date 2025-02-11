@@ -487,6 +487,7 @@ namespace Engine
 			}
 		}
 		LFunctionContext::~LFunctionContext(void) {}
+		XA::Function & LFunctionContext::GetDestination(void) { return _subj; }
 		LObject * LFunctionContext::GetRootScope(void) { return _root; }
 		LObject * LFunctionContext::GetInstance(void) { return _self; }
 		bool LFunctionContext::IsZeroReturn(void) { return _void_retval; }
