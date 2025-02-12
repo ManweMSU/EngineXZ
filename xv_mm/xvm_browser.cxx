@@ -627,26 +627,30 @@ public:
 		} else if (resource.Fragment(0, 9) == L".monstra:") {
 			auto path = IO::ExpandPath(IO::Path::GetDirectory(IO::GetExecutablePath()) + L"/" + resource.Fragment(9, -1));
 			Shell::ShowInBrowser(path, false);
+		} else if (resource == L".xw") {
+			CreateBrowser(L".primus", true);
 		} else MoveToPage(resource);
 	}
 	virtual void CaretPositionChanged(Controls::RichEdit * sender) override {}
 	virtual Graphics::IBitmap * GetImageByName(const string & resource, Controls::RichEdit * sender) override { return 0; }
 };
 
-void CreateBrowser(const Engine::ImmutableString & path)
+void CreateBrowser(const Engine::ImmutableString & path, bool xw)
 {
 	Array<string> module_search_paths(0x10);
 	SafePointer<XV::ManualVolume> manual;
 	string default_language;
 	auto root = IO::Path::GetDirectory(IO::GetExecutablePath());
 	SafePointer<Storage::Registry> xv_conf = XX::LoadConfiguration(root + L"/xv.ini");
+	Array<string> * msp_v = xw ? 0 : &module_search_paths;
+	Array<string> * msp_w = xw ? &module_search_paths : 0;
 	try {
 		auto core = xv_conf->GetValueString(L"XE");
-		if (core) XX::IncludeComponent(module_search_paths, root + L"/" + core);
+		if (core) XX::IncludeComponent(msp_v, msp_w, root + L"/" + core);
 	} catch (...) {}
 	try {
 		auto store = xv_conf->GetValueString(L"Entheca");
-		if (store.Length()) XX::IncludeStoreIntegration(module_search_paths, root + L"/" + store);
+		if (store.Length()) XX::IncludeStoreIntegration(msp_v, msp_w, root + L"/" + store);
 	} catch (...) {}
 	for (auto & msp : module_search_paths) try {
 		SafePointer< Array<string> > files = IO::Search::GetFiles(msp + L"/*." + string(XI::FileExtensionManual));
@@ -683,5 +687,5 @@ void CreateBrowser(const Engine::ImmutableString & file, const Engine::Immutable
 	}
 	page->SetTitle(file_escaped);
 	sect->SetContents(L"", L"\\c{" + text + L"}");
-	CreateBrowser(file, volume);
+	CreateBrowser(file, volume.Inner());
 }

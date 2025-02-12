@@ -7,8 +7,10 @@ mkdir xv_release/_build
 rm -r xv_release/_build/macosx_${ARCH}
 mkdir xv_release/_build/macosx_${ARCH}
 mkdir xv_release/_build/com
+mkdir xv_release/_build/comw
 cp -R xv_mm/_build/macosx_${ARCH}_release/xvm.app xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
+mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xwcl
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/vscx
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc
@@ -62,8 +64,11 @@ cp xv_lib/potentia.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/media.xv            -NVol xv_release/_build/com/media.xo            xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/audio.xv            -NVol xv_release/_build/com/audio.xo            xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/video.xv            -NVol xv_release/_build/com/video.xo            xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xw_lib/canonicalis.xw      -NVolm xv_release/_build/comw/canonicalis.xwo	xv_release/_build/comw	xw_lib/canonicalis.xvm
 cp xv_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
+cp xw_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xwcl
 cp xv_release/_build/com/*.xo xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
+cp xv_release/_build/comw/*.xwo xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xwcl
 estrtab xv_com/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/ru.ecst
 estrtab xv_com/locale/en.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/en.ecst
 estrtab xi_tool/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/ru.ecst

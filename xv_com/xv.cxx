@@ -15,7 +15,8 @@ Console console;
 struct {
 	SafePointer<StringTable> localization;
 	Volumes::Dictionary<string, string> defines;
-	Array<string> module_search_paths = Array<string>(0x10);
+	Array<string> module_search_paths_v = Array<string>(0x10);
+	Array<string> module_search_paths_w = Array<string>(0x10);
 	Array<string> documentation_list = Array<string>(0x10);
 	Volumes::Set<string> import_list;
 	uint language_mode = 1;
@@ -173,7 +174,9 @@ void ProcessCommandLine(void)
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
 						throw Exception();
 					}
-					state.module_search_paths << ExpandPath(args->ElementAt(i));
+					auto path = ExpandPath(args->ElementAt(i));
+					state.module_search_paths_v << path;
+					state.module_search_paths_w << path;
 				} else if (arg[j] == L'm') {
 					i++; if (i >= args->Length()) {
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
@@ -250,11 +253,11 @@ int Main(void)
 		state.xx_path = xv_conf->GetValueString(L"XX");
 		try {
 			auto core = xv_conf->GetValueString(L"XE");
-			if (core.Length()) XX::IncludeComponent(state.module_search_paths, root + L"/" + core);
+			if (core.Length()) XX::IncludeComponent(&state.module_search_paths_v, &state.module_search_paths_w, root + L"/" + core);
 		} catch (...) {}
 		try {
 			auto store = xv_conf->GetValueString(L"Entheca");
-			if (store.Length()) XX::IncludeStoreIntegration(state.module_search_paths, root + L"/" + store);
+			if (store.Length()) XX::IncludeStoreIntegration(&state.module_search_paths_v, &state.module_search_paths_w, root + L"/" + store);
 		} catch (...) {}
 		auto language_override = xv_conf->GetValueString(L"Lingua");
 		if (language_override.Length()) Assembly::CurrentLocale = language_override;
@@ -281,14 +284,18 @@ int Main(void)
 	}
 	if (state.input.Length()) {
 		try {
-			SafePointer<XV::ICompilerCallback> callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths.GetBuffer(), state.module_search_paths.Length(), 0);
+			SafePointer<XV::ICompilerCallback> callback, local_callback;
+			if (state.language_mode == XV::CompilerFlagLanguageV) {
+				callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths_v.GetBuffer(), state.module_search_paths_v.Length(), 0);
+			} else if (state.language_mode == XV::CompilerFlagLanguageW) {
+				callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths_w.GetBuffer(), state.module_search_paths_w.Length(), 0);
+			}
 			string output;
 			if (state.output.Length()) output = L"?" + state.output;
 			else if (state.output_path.Length()) output = state.output_path;
 			else output = Path::GetDirectory(state.input);
 			XV::CompileDesc desc;
 			Array<uint32> input_module_string(0x1000);
-			SafePointer<XV::ICompilerCallback> local_callback;
 			try {
 				SafePointer<Streaming::FileStream> stream = new Streaming::FileStream(state.input, Streaming::AccessRead, Streaming::OpenExisting);
 				if (state.version_control && state.output.Length()) try {

@@ -55,6 +55,9 @@ public:
 		task->Value1.Formats << FileFormat();
 		task->Value1.Formats.LastElement().Description = L"Lingua XV";
 		task->Value1.Formats.LastElement().Extensions << L"xv" << L"v" << L"vvv";
+		task->Value1.Formats << FileFormat();
+		task->Value1.Formats.LastElement().Description = L"Lingua XW";
+		task->Value1.Formats.LastElement().Extensions << L"xw" << L"w";
 		task->Value1.MultiChoose = true;
 		GetWindowSystem()->OpenFileDialog(&task->Value1, 0, task);
 	}
@@ -62,8 +65,13 @@ public:
 	{
 		if (path.Fragment(0, 7) == L"xvmm://") {
 			CreateBrowser(path.Fragment(7, -1));
+			if (windows.IsEmpty()) GetWindowSystem()->ExitMainLoop();
 			return true;
-		} else return CreateEditor(path);
+		} else {
+			auto status = CreateEditor(path);
+			if (windows.IsEmpty()) GetWindowSystem()->ExitMainLoop();
+			return status;
+		}
 	}
 	virtual void ShowHelp(void) override { ShowHelp(L".primus"); }
 	virtual bool DataExchangeReceive(handle client, const string & verb, const DataBlock * data) override

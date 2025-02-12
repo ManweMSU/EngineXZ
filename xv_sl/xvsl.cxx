@@ -12,8 +12,8 @@ SafePointer<StringTable> localization;
 SafePointer<Streaming::ITextWriter> debug_console;
 SafePointer<ThreadPool> pool;
 SafePointer<Semaphore> access_sync;
-SafePointer<XV::ManualVolume> manual;
-Array<string> module_search_paths;
+SafePointer<XV::ManualVolume> manual_v, manual_w;
+Array<string> module_search_paths_v, module_search_paths_w;
 
 string Localized(int id)
 {
@@ -219,11 +219,11 @@ class CodeDocument : public Object
 					auto path = UncoverURI(uri);
 					auto src_dir = Path::GetDirectory(path);
 					name = Path::GetFileNameWithoutExtension(path);
-					SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, self->_language);
+					SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, self->GetModuleSearchPaths().GetBuffer(), self->GetModuleSearchPaths().Length(), 0, self->_language);
 					callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core, self->_language);
 				} else {
 					name = L"novus";
-					callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, self->_language);
+					callback = XV::CreateCompilerCallback(0, 0, self->GetModuleSearchPaths().GetBuffer(), self->GetModuleSearchPaths().Length(), 0, self->_language);
 				}
 				XV::CompilerStatusDesc desc;
 				XV::CodeMetaInfo meta;
@@ -368,6 +368,18 @@ public:
 		_sync->Open();
 	}
 	uint GetLanguageMode(void) const noexcept { return _language; }
+	const Array<string> & GetModuleSearchPaths(void) const noexcept
+	{
+		if (_language == XV::CompilerFlagLanguageV) return module_search_paths_v;
+		else if (_language == XV::CompilerFlagLanguageW) return module_search_paths_w;
+		else return module_search_paths_v;
+	}
+	const XV::ManualVolume * GetManualVolume(void) const noexcept
+	{
+		if (_language == XV::CompilerFlagLanguageV) return manual_v;
+		else if (_language == XV::CompilerFlagLanguageW) return manual_w;
+		else return manual_v;
+	}
 };
 class CodeRepositorium : public Object
 {
@@ -602,6 +614,8 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 		RestoreObject(info, data);
 		auto task = CreateStructuredTask<CodeAnalyzeDesc>([channel, info](CodeAnalyzeDesc & value) {
 			if (value.ok) {
+				auto document = code->FindDocument(info.params.textDocument.uri);
+				auto manual = document ? document->GetManualVolume() : 0;
 				RPC::ResponseMessage_Success_Hover result;
 				uint abs_pos;
 				LineColumnToAbsolute(*value.code, info.params.position.line, info.params.position.character, abs_pos);
@@ -784,11 +798,11 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				auto path = UncoverURI(uri);
 				auto src_dir = Path::GetDirectory(path);
 				name = Path::GetFileNameWithoutExtension(path);
-				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, language);
+				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, document->GetModuleSearchPaths().GetBuffer(), document->GetModuleSearchPaths().Length(), 0, language);
 				callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core, language);
 			} else {
 				name = L"novus";
-				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, language);
+				callback = XV::CreateCompilerCallback(0, 0, document->GetModuleSearchPaths().GetBuffer(), document->GetModuleSearchPaths().Length(), 0, language);
 			}
 			XV::CompilerStatusDesc desc;
 			XV::CodeMetaInfo meta;
@@ -835,11 +849,11 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				auto path = UncoverURI(uri);
 				auto src_dir = Path::GetDirectory(path);
 				name = Path::GetFileNameWithoutExtension(path);
-				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, language);
+				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, document->GetModuleSearchPaths().GetBuffer(), document->GetModuleSearchPaths().Length(), 0, language);
 				callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core, language);
 			} else {
 				name = L"novus";
-				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, language);
+				callback = XV::CreateCompilerCallback(0, 0, document->GetModuleSearchPaths().GetBuffer(), document->GetModuleSearchPaths().Length(), 0, language);
 			}
 			XV::CompilerStatusDesc desc;
 			XV::CodeMetaInfo meta;
@@ -857,7 +871,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				responce.result.activeParameter = meta.function_info_argument;
 				responce.result.activeSignature = min(info.params.context.activeSignatureHelp.activeSignature, count - 1);
 				for (auto & o : meta.overloads) {
-					auto page = FindManualPage(manual, o.path);
+					auto page = FindManualPage(document->GetManualVolume(), o.path);
 					RPC::SignatureInformation inf;
 					inf.label = FormatString(L"%1 %0(", o.identifier, ArgumentInfoToString(o.retval));
 					inf.documentation.kind = L"markdown";
@@ -944,18 +958,26 @@ int Main(void)
 						SafePointer<Registry> xv_conf = XX::LoadConfiguration(root + L"/xv.ini");
 						try {
 							auto core = xv_conf->GetValueString(L"XE");
-							if (core) XX::IncludeComponent(module_search_paths, root + L"/" + core);
+							if (core) XX::IncludeComponent(&module_search_paths_v, &module_search_paths_w, root + L"/" + core);
 						} catch (...) {}
 						try {
 							auto store = xv_conf->GetValueString(L"Entheca");
-							if (store.Length()) XX::IncludeStoreIntegration(module_search_paths, root + L"/" + store);
+							if (store.Length()) XX::IncludeStoreIntegration(&module_search_paths_v, &module_search_paths_w, root + L"/" + store);
 						} catch (...) {}
-						for (auto & msp : module_search_paths) try {
+						for (auto & msp : module_search_paths_v) try {
 							SafePointer< Array<string> > files = Search::GetFiles(msp + L"/*." + string(XI::FileExtensionManual));
 							for (auto & f : *files) try {
 								SafePointer<Streaming::Stream> stream = new Streaming::FileStream(msp + "/" + f, Streaming::AccessRead, Streaming::OpenExisting);
 								SafePointer<XV::ManualVolume> volume = new XV::ManualVolume(stream);
-								if (manual) manual->Unify(volume); else manual = volume;
+								if (manual_v) manual_v->Unify(volume); else manual_v = volume;
+							} catch (...) {}
+						} catch (...) {}
+						for (auto & msp : module_search_paths_w) try {
+							SafePointer< Array<string> > files = Search::GetFiles(msp + L"/*." + string(XI::FileExtensionManual));
+							for (auto & f : *files) try {
+								SafePointer<Streaming::Stream> stream = new Streaming::FileStream(msp + "/" + f, Streaming::AccessRead, Streaming::OpenExisting);
+								SafePointer<XV::ManualVolume> volume = new XV::ManualVolume(stream);
+								if (manual_w) manual_w->Unify(volume); else manual_w = volume;
 							} catch (...) {}
 						} catch (...) {}
 						auto language_override = xv_conf->GetValueString(L"Lingua");

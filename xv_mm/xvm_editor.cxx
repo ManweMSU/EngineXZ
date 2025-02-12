@@ -596,9 +596,9 @@ public:
 			}
 		} else if (ID == 501) {
 			if (!current_page) HandleControlEvent(window, 502, ControlEvent::AcceleratorCommand, 0);
-			else CreateBrowser(current_page->GetPath(), volume);
+			else CreateBrowser(current_page->GetPath(), volume.Inner());
 		} else if (ID == 502) {
-			CreateBrowser(L".categoriae", volume);
+			CreateBrowser(L".categoriae", volume.Inner());
 		} else if (ID == 901) {
 			GetWindowSystem()->GetCallback()->CreateNewFile();
 		} else if (ID == 1001 && event == ControlEvent::ValueChange) {
@@ -683,7 +683,7 @@ bool CreateEditor(const Engine::ImmutableString & path)
 					else contents << string(&chr, 1, Encoding::UTF32);
 				}
 			}
-			CreateBrowser(path, contents);
+			CreateBrowser(path, contents.ToString());
 			return true;
 		} catch (...) {
 			GetWindowSystem()->MessageBox(0, FormatString(*interface.Strings[L"OpenFileFailure"], path), ENGINE_VI_APPNAME,

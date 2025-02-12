@@ -8,8 +8,10 @@ mkdir xv_release\_build
 del /S /Q xv_release\_build\windows_%ARCH%\*
 mkdir xv_release\_build\windows_%ARCH%
 mkdir xv_release\_build\com
+mkdir xv_release\_build\comw
 copy /B xv_mm\_build\windows_%ARCH%_release\xvm.exe xv_release\_build\windows_%ARCH%\xvm.exe
 mkdir xv_release\_build\windows_%ARCH%\xvcl
+mkdir xv_release\_build\windows_%ARCH%\xwcl
 mkdir xv_release\_build\windows_%ARCH%\vscx
 mkdir xv_release\_build\windows_%ARCH%\xv.loc
 mkdir xv_release\_build\windows_%ARCH%\xi.loc
@@ -55,8 +57,11 @@ copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vs
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\media.xv           -NVoml  xv_release\_build\com\media.xo          xv_lib\media.xvm            xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\audio.xv           -NVoml  xv_release\_build\com\audio.xo          xv_lib\audio.xvm            xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\video.xv           -NVoml  xv_release\_build\com\video.xo          xv_lib\video.xvm            xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xw_lib\canonicalis.xw     -NPVom  xv_release\_build\comw\canonicalis.xwo  xw_lib\canonicalis.xvm
 xcopy /BY xv_release\_build\com\* xv_release\_build\windows_%ARCH%\xvcl\
+xcopy /BY xv_release\_build\comw\* xv_release\_build\windows_%ARCH%\xwcl\
 xcopy /BY xv_lib\*.xvm xv_release\_build\windows_%ARCH%\xvcl\
+xcopy /BY xw_lib\*.xvm xv_release\_build\windows_%ARCH%\xwcl\
 estrtab xv_com\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xv.loc\ru.ecst
 estrtab xv_com\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xv.loc\en.ecst
 estrtab xi_tool\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xi.loc\ru.ecst
