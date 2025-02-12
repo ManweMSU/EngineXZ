@@ -191,6 +191,7 @@ class CodeDocument : public Object
 	};
 
 	string _uri;
+	uint32 _language;
 	int64 _latest_version;
 	SafePointer<IOChannel> _channel;
 	SafePointer<Code> _current_version;
@@ -218,18 +219,18 @@ class CodeDocument : public Object
 					auto path = UncoverURI(uri);
 					auto src_dir = Path::GetDirectory(path);
 					name = Path::GetFileNameWithoutExtension(path);
-					SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
-					callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core);
+					SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, self->_language);
+					callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core, self->_language);
 				} else {
 					name = L"novus";
-					callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
+					callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, self->_language);
 				}
 				XV::CompilerStatusDesc desc;
 				XV::CodeMetaInfo meta;
 				meta.autocomplete_at = -1;
 				meta.function_info_at = -1;
 				meta.error_absolute_from = -1;
-				XV::CompileModule(name, *code, 0, callback, desc, &meta);
+				XV::CompileModule(name, *code, 0, callback, desc, self->_language, &meta);
 				if (self->CommitMeta(version, code, desc, meta)) break;
 			}
 		}));
@@ -269,6 +270,9 @@ class CodeDocument : public Object
 public:
 	CodeDocument(IOChannel * channel, const RPC::DidOpenTextDocumentParams & document)
 	{
+		if (document.textDocument.languageId == L"xv") _language = XV::CompilerFlagLanguageV;
+		else if (document.textDocument.languageId == L"xw") _language = XV::CompilerFlagLanguageW;
+		else _language = XV::CompilerFlagLanguageV;
 		_channel.SetRetain(channel);
 		_com_status.status = XV::CompilerStatus::Success;
 		_analyze_in_progress = false;
@@ -363,6 +367,7 @@ public:
 		try { _func_meta = info; } catch (...) {}
 		_sync->Open();
 	}
+	uint GetLanguageMode(void) const noexcept { return _language; }
 };
 class CodeRepositorium : public Object
 {
@@ -674,7 +679,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 					else if (range.tag == XV::CodeRangeTag::LiteralNumeric) tag = 8;
 					else if (range.tag == XV::CodeRangeTag::LiteralString) tag = 7;
 					else if (range.tag == XV::CodeRangeTag::LiteralNull) tag = 6;
-					else if (range.tag == XV::CodeRangeTag::IdentifierUnknown) tag = 1;
+					else if (range.tag == XV::CodeRangeTag::IdentifierUnknown) tag = 0;
 					else if (range.tag == XV::CodeRangeTag::IdentifierNamespace) tag = 0;
 					else if (range.tag == XV::CodeRangeTag::IdentifierType) tag = 2;
 					else if (range.tag == XV::CodeRangeTag::IdentifierPrototype) tag = 9;
@@ -769,6 +774,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 		document.SetRetain(code->FindDocument(info.params.textDocument.uri));
 		channel_ref.SetRetain(channel);
 		if (document) pool->SubmitTask(CreateFunctionalTask([document, channel_ref, info]() {
+			auto language = document->GetLanguageMode();
 			int64 version;
 			string uri, name;
 			SafePointer<Code> code;
@@ -778,11 +784,11 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				auto path = UncoverURI(uri);
 				auto src_dir = Path::GetDirectory(path);
 				name = Path::GetFileNameWithoutExtension(path);
-				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
-				callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core);
+				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, language);
+				callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core, language);
 			} else {
 				name = L"novus";
-				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
+				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, language);
 			}
 			XV::CompilerStatusDesc desc;
 			XV::CodeMetaInfo meta;
@@ -793,7 +799,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 			meta.autocomplete_at = ac;
 			meta.function_info_at = -1;
 			meta.error_absolute_from = -1;
-			XV::CompileModule(name, *code, 0, callback, desc, &meta);
+			XV::CompileModule(name, *code, 0, callback, desc, language, &meta);
 			RPC::ResponseMessage_Success_CompletionItem responce;
 			for (auto & a : meta.autocomplete) {
 				RPC::CompletionItem com;
@@ -819,6 +825,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 		document.SetRetain(code->FindDocument(info.params.textDocument.uri));
 		channel_ref.SetRetain(channel);
 		if (document) pool->SubmitTask(CreateFunctionalTask([document, channel_ref, info]() {
+			auto language = document->GetLanguageMode();
 			int64 version;
 			string uri, name;
 			SafePointer<Code> code;
@@ -828,11 +835,11 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 				auto path = UncoverURI(uri);
 				auto src_dir = Path::GetDirectory(path);
 				name = Path::GetFileNameWithoutExtension(path);
-				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
-				callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core);
+				SafePointer<XV::ICompilerCallback> core = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, language);
+				callback = XV::CreateCompilerCallback(&src_dir, 1, &src_dir, 1, core, language);
 			} else {
 				name = L"novus";
-				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0);
+				callback = XV::CreateCompilerCallback(0, 0, module_search_paths.GetBuffer(), module_search_paths.Length(), 0, language);
 			}
 			XV::CompilerStatusDesc desc;
 			XV::CodeMetaInfo meta;
@@ -843,7 +850,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 			meta.autocomplete_at = -1;
 			meta.function_info_at = ac;
 			meta.error_absolute_from = -1;
-			XV::CompileModule(name, *code, 0, callback, desc, &meta);
+			XV::CompileModule(name, *code, 0, callback, desc, language, &meta);
 			RPC::ResponseMessage_Success_SignatureHelp responce;
 			uint count = meta.overloads.Count();
 			if (count) {

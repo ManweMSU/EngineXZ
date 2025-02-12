@@ -7,14 +7,18 @@ namespace Engine
 	namespace XV
 	{
 		enum CompilerFlags : uint {
-			CompilerFlagMakeModule		= 0x001,
-			CompilerFlagMakeMetadata	= 0x002,
-			CompilerFlagMakeManual		= 0x004,
-			CompilerFlagSystemConsole	= 0x010,
-			CompilerFlagSystemGUI		= 0x020,
-			CompilerFlagSystemNull		= 0x040,
-			CompilerFlagSystemLibrary	= 0x080,
-			CompilerFlagVersionControl	= 0x100,
+			CompilerFlagMakeModule		= 0x00001,
+			CompilerFlagMakeMetadata	= 0x00002,
+			CompilerFlagMakeManual		= 0x00004,
+			CompilerFlagSystemConsole	= 0x00010,
+			CompilerFlagSystemGUI		= 0x00020,
+			CompilerFlagSystemNull		= 0x00040,
+			CompilerFlagSystemLibrary	= 0x00080,
+			CompilerFlagVersionControl	= 0x00100,
+			CompilerFlagDebugData		= 0x00200,
+			CompilerFlagLanguageV		= 0x00000,
+			CompilerFlagLanguageW		= 0x10000,
+			CompilerFlagLanguageMask	= 0xF0000,
 		};
 		enum class CompilerStatus : uint {
 			Success					= 0x0000,
@@ -108,13 +112,14 @@ namespace Engine
 			virtual string GetOutputModuleExtension(void) const = 0;
 			virtual Streaming::Stream * GetOutputModuleData(void) const = 0;
 		};
-		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback);
+		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback, uint lm = CompilerFlagLanguageV);
 
 		struct CompileDesc
 		{
 			// Input data
 			uint flags;
 			string module_name;
+			string source_full_path;
 			const Array<uint32> * input;
 			ICompilerCallback * callback;
 			Volumes::Set<string> imports;
@@ -128,9 +133,9 @@ namespace Engine
 
 		void Compile(CompileDesc & desc);
 
-		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports = 0);
+		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, uint lm = CompilerFlagLanguageV, const Volumes::Set<string> * imports = 0);
 		void MakeManual(const string & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports = 0);
-		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta = 0, const Volumes::Set<string> * imports = 0);
+		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, uint lm = CompilerFlagLanguageV, CodeMetaInfo * meta = 0, const Volumes::Set<string> * imports = 0);
 		void CompileModule(const string & input, string & output_path, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports = 0);
 	}
 }

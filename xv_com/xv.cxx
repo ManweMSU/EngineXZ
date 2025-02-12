@@ -18,11 +18,13 @@ struct {
 	Array<string> module_search_paths = Array<string>(0x10);
 	Array<string> documentation_list = Array<string>(0x10);
 	Volumes::Set<string> import_list;
+	uint language_mode = 1;
 	bool silent = false;
 	bool nologo = false;
 	bool launch = false;
 	bool version_control = false;
 	bool direct_mode = false;
+	bool debug_mode = false;
 	bool assembly_version_control;
 	string input;
 	string output;
@@ -100,6 +102,26 @@ void ProcessCommandLine(void)
 						console << TextColor(12) << Localized(204) << TextColorDefault() << LineFeed();
 						throw Exception();
 					}
+				} else if (arg[j] == L'L') {
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					if (state.language_mode != 1) {
+						console << TextColor(12) << Localized(206) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					auto & lang = args->ElementAt(i);
+					if (string::CompareIgnoreCase(lang, L"v") == 0) state.language_mode = XV::CompilerFlagLanguageV;
+					else if (string::CompareIgnoreCase(lang, L"xv") == 0) state.language_mode = XV::CompilerFlagLanguageV;
+					else if (string::CompareIgnoreCase(lang, L"w") == 0) state.language_mode = XV::CompilerFlagLanguageW;
+					else if (string::CompareIgnoreCase(lang, L"xw") == 0) state.language_mode = XV::CompilerFlagLanguageW;
+					else {
+						console << TextColor(12) << Localized(207) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+				} else if (arg[j] == L'M') {
+					state.debug_mode = true;
 				} else if (arg[j] == L'N') {
 					state.nologo = true;
 				} else if (arg[j] == L'O') {
@@ -187,6 +209,11 @@ void ProcessCommandLine(void)
 			}
 			state.input = ExpandPath(arg);
 		}
+	}
+	if (state.language_mode == 1 && state.input.Length()) {
+		auto ext = IO::Path::GetExtension(state.input).LowerCase();
+		if (ext == L"w" || ext == L"xw") state.language_mode = XV::CompilerFlagLanguageW;
+		else state.language_mode = XV::CompilerFlagLanguageV;
 	}
 }
 void PrintCompilerError(XV::CompilerStatusDesc & desc)
@@ -282,9 +309,13 @@ int Main(void)
 				if (!state.silent) PrintCompilerError(desc.status);
 				return int(desc.status.status);
 			}
-			desc.flags = XV::CompilerFlagSystemConsole | XV::CompilerFlagMakeModule;
+			desc.flags = XV::CompilerFlagSystemConsole | XV::CompilerFlagMakeModule | (state.language_mode & XV::CompilerFlagLanguageMask);
 			if (state.documentation_list.Length()) desc.flags |= XV::CompilerFlagMakeManual;
 			if (state.assembly_version_control) desc.flags |= XV::CompilerFlagVersionControl;
+			if (state.debug_mode) {
+				desc.flags |= XV::CompilerFlagDebugData;
+				desc.source_full_path = state.input;
+			}
 			desc.module_name = IO::Path::GetFileNameWithoutExtension(state.input);
 			desc.input = &input_module_string;
 			desc.meta = 0;

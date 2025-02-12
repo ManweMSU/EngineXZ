@@ -100,10 +100,10 @@ namespace Engine
 			Encoder::Encode(reg, L"SemitaInitialis", source_full_path);
 			reg->CreateNode(L"Praedicationes");
 			SafePointer<Storage::RegistryNode> node = reg->OpenNode(L"Praedicationes");
-			for (int i = 0; i < statements.Length(); i++) Encoder::Encode(node, string(uint(i), DecimalBase, 6), statements[i]);
+			for (int i = 0; i < statements.Length(); i++) if (statements[i].location.absolute > 0) Encoder::Encode(node, string(uint(i), DecimalBase, 6), statements[i]);
 			reg->CreateNode(L"Variabiles");
 			node = reg->OpenNode(L"Variabiles");
-			for (int i = 0; i < variables.Length(); i++) Encoder::Encode(node, string(uint(i), DecimalBase, 6), variables[i]);
+			for (int i = 0; i < variables.Length(); i++) if (variables[i].location.absolute > 0) Encoder::Encode(node, string(uint(i), DecimalBase, 6), variables[i]);
 			reg->Save(dest);
 		}
 		void DebugData::Load(Streaming::Stream * src)

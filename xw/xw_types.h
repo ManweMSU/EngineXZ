@@ -16,11 +16,12 @@ namespace Engine
 			HintEndIf		= 0x5000,
 			HintWhile		= 0x6000,
 			HintDo			= 0x7000,
-			HintFor			= 0x8000,
-			HintEndLoop		= 0x9000,
-			HintBreak		= 0xA000,
-			HintContinue	= 0xB000,
-			HintReturn		= 0xC000,
+			HintForInit		= 0x8000,
+			HintFor			= 0x9000,
+			HintEndLoop		= 0xA000,
+			HintBreak		= 0xB000,
+			HintContinue	= 0xC000,
+			HintReturn		= 0xD000,
 		};
 		enum class ShaderLanguage { Unknown = 0, HLSL = 1, MSL = 2, GLSL = 3 };
 		enum class Rule : uint

@@ -8,6 +8,8 @@
 #include "../xlang/xl_code.h"
 #include "../xasm/xa_compiler.h"
 #include "../ximg/xi_resources.h"
+#include "../xm/xm_types.h"
+#include "../xw/xw_lang_ext.h"
 
 namespace Engine
 {
@@ -57,6 +59,7 @@ namespace Engine
 			ObjectArray<XL::LObject> input_types = ObjectArray<XL::LObject>(0x10);
 			ObjectArray<XL::LObject> objects_retain = ObjectArray<XL::LObject>(0x10);
 			Array<string> input_names = Array<string>(0x10);
+			Array<Token> input_decls = Array<Token>(0x10);
 			uint flags;
 			SafePointer<ITokenStream> code_source;
 			bool constructor, destructor;
@@ -64,6 +67,8 @@ namespace Engine
 		struct VContext : public XL::IModuleLoadCallback, public ICompilationContext
 		{
 			bool module_is_library;
+			bool is_xv, is_xw;
+			XM::DebugData * dd;
 			string extension_redefinition;
 			XL::LContext & ctx;
 			SafePointer<TokenStream> input;
@@ -80,7 +85,7 @@ namespace Engine
 			Volumes::ObjectDictionary< string, Volumes::Dictionary<string, string> > localizations;
 
 			VContext(XL::LContext & _lal, ICompilerCallback * _callback, CompilerStatusDesc & _status, TokenStream * stream) :
-				module_is_library(false), ctx(_lal), callback(_callback), status(_status) { input.SetRetain(stream); }
+				module_is_library(false), dd(0), ctx(_lal), callback(_callback), status(_status) { input.SetRetain(stream); }
 			virtual Streaming::Stream * GetModuleStream(const string & name) override
 			{
 				if (callback) return callback->QueryModuleFileStream(name);
@@ -218,6 +223,27 @@ namespace Engine
 				else init_list.InsertLast(desc);
 			}
 			void AssertGenericIdent(void) { if (!IsGenericIdent()) Abort(CompilerStatus::AnotherTokenExpected, current_token); }
+			void SupplyCoords(XM::DefinitionLocation & loc)
+			{
+				string text;
+				int x, y, length;
+				input->ExtractRange(loc.absolute, loc.length, text, y, x, length);
+				loc.coord.x = x;
+				loc.coord.y = y - 1;
+			}
+			bool ExtractRegister(XL::LObject * object, XA::ObjectReference & ref)
+			{
+				try {
+					XA::Function fake;
+					auto tree = object->Evaluate(fake, 0);
+					if (!(tree.self.ref_flags & XA::ReferenceFlagInvoke)) {
+						if (tree.self.ref_class == XA::ReferenceArgument || tree.self.ref_class == XA::ReferenceExternal || tree.self.ref_class == XA::ReferenceLocal) {
+							ref = tree.self;
+							return true;
+						} else return false;
+					} else return false;
+				} catch (...) { return false; }
+			}
 			string ReadOperatorName(bool instance)
 			{
 				if (current_token.type != TokenType::Punctuation) Abort(CompilerStatus::AnotherTokenExpected, current_token);
@@ -362,15 +388,17 @@ namespace Engine
 			{
 				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
 					AssignAutocomplete(ssl, ssc);
-					AssignAutocomplete(Lexic::KeywordClass, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordSizeOf, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordSizeOfMX, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordModule, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordNull, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordNew, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordConstruct, CodeRangeTag::Keyword);
+					if (is_xv) {
+						AssignAutocomplete(Lexic::KeywordClass, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordSizeOf, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordSizeOfMX, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordModule, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordNull, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordNew, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordConstruct, CodeRangeTag::Keyword);
+					}
 				}
 			}
 			void ExpressionUnaryAutocomplete(XL::LObject ** ssl, int ssc)
@@ -401,7 +429,7 @@ namespace Engine
 					auto start = current_token;
 					ReadNextToken();
 					object = ProcessExpressionAssignation(ssl, ssc);
-					if (IsPunct(L",")) {
+					if (IsPunct(L",") && is_xv) {
 						ObjectArray<XL::LObject> list(0x10);
 						list.Append(object);
 						while (IsPunct(L",")) {
@@ -445,24 +473,26 @@ namespace Engine
 					} else if (current_token.ex_data == TokenLiteralLogicalN) {
 						object = ctx.QueryLiteral(false);
 					} else if (current_token.ex_data == TokenLiteralInteger) {
-						object = ctx.QueryLiteral(current_token.contents_i);
+						if (is_xw) object = ctx.QueryLiteral(current_token.contents_i, 4, current_token.contents_i < 0x80000000ULL);
+						else object = ctx.QueryLiteral(current_token.contents_i);
 					} else if (current_token.ex_data == TokenLiteralFloat) {
-						object = ctx.QueryLiteral(current_token.contents_f);
+						if (is_xw) object = ctx.QueryLiteral(current_token.contents_f, 4);
+						else object = ctx.QueryLiteral(current_token.contents_f);
 					} else if (current_token.ex_data == TokenLiteralString) {
 						object = ctx.QueryLiteral(current_token.contents);
 					} else Abort(CompilerStatus::InternalError, current_token);
 					AssignTokenInfo(current_token, object, false, false);
 					ReadNextToken();
-				} else if (IsKeyword(Lexic::KeywordClass)) {
+				} else if (IsKeyword(Lexic::KeywordClass) && is_xv) {
 					object = ctx.QueryTypeOfOperator();
 					ReadNextToken();
-				} else if (IsKeyword(Lexic::KeywordSizeOf)) {
+				} else if (IsKeyword(Lexic::KeywordSizeOf) && is_xv) {
 					object = ctx.QuerySizeOfOperator();
 					ReadNextToken();
-				} else if (IsKeyword(Lexic::KeywordSizeOfMX)) {
+				} else if (IsKeyword(Lexic::KeywordSizeOfMX) && is_xv) {
 					object = ctx.QuerySizeOfOperator(true);
 					ReadNextToken();
-				} else if (IsKeyword(Lexic::KeywordModule)) {
+				} else if (IsKeyword(Lexic::KeywordModule) && is_xv) {
 					auto def = current_token;
 					ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 					if (IsPunct(L")")) {
@@ -482,7 +512,7 @@ namespace Engine
 						object = ctx.QueryModuleOperator(name);
 						AssignTokenInfo(def, object, false, false);
 					}
-				} else if (IsKeyword(Lexic::KeywordInterface)) {
+				} else if (IsKeyword(Lexic::KeywordInterface) && is_xv) {
 					auto def = current_token;
 					ReadNextToken(); AssertPunct(L"("); ReadNextToken(); AssertGenericIdent();
 					auto name = current_token.contents;
@@ -495,7 +525,7 @@ namespace Engine
 					AssertPunct(L")"); ReadNextToken();
 					object = ctx.QueryInterfaceOperator(name);
 					AssignTokenInfo(def, object, false, false);
-				} else if (IsKeyword(Lexic::KeywordFunction)) {
+				} else if (IsKeyword(Lexic::KeywordFunction) && is_xv) {
 					auto definition = current_token;
 					ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 					SafePointer<XL::LObject> retval = ProcessTypeExpression(ssl, ssc);
@@ -517,13 +547,13 @@ namespace Engine
 					try { object = ctx.QueryFunctionPointer(retval, input.Length(), input.GetBuffer()); }
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					AssignTokenInfo(definition, object, false, false);
-				} else if (IsKeyword(Lexic::KeywordNull)) {
+				} else if (IsKeyword(Lexic::KeywordNull) && is_xv) {
 					object = ctx.QueryNullLiteral(); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
-				} else if (IsKeyword(Lexic::KeywordNew)) {
+				} else if (IsKeyword(Lexic::KeywordNew) && is_xv) {
 					object = CreateOperatorNew(ctx); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
-				} else if (IsKeyword(Lexic::KeywordConstruct)) {
+				} else if (IsKeyword(Lexic::KeywordConstruct) && is_xv) {
 					object = CreateOperatorConstruct(ctx); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
-				} else if (IsKeyword(Lexic::KeywordBLT)) {
+				} else if (IsKeyword(Lexic::KeywordBLT) && is_xv) {
 					object = CreateBlockTransfer(ctx); AssignTokenInfo(current_token, object, false, false); ReadNextToken();
 				} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				object->Retain();
@@ -533,7 +563,7 @@ namespace Engine
 			{
 				SafePointer<XL::LObject> object = ProcessExpressionSubject(ssl, ssc);
 				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
-					AssignAutocomplete(Lexic::KeywordAs, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordAs, CodeRangeTag::Keyword);
 				}
 				while (IsPunct(L"(") || IsPunct(L".") || IsPunct(L"[") || IsPunct(L"##") || IsPunct(L"{") || IsPunct(XL::OperatorFollow) ||
 					IsPunct(XL::OperatorIncrement) || IsPunct(XL::OperatorDecrement) || IsKeyword(Lexic::KeywordAs)) {
@@ -546,6 +576,7 @@ namespace Engine
 						object = InvokeBlockPrototype(object, stream, ssl, ssc);
 						AssignTokenInfo(op, object, true, true);
 					} else if (op.contents == L"##") {
+						if (!is_xv) Abort(CompilerStatus::AnotherTokenExpected);
 						ReadNextToken(); AssertPunct(L"{");
 						if (!ClassImplements(object, L"contextus.labos")) Abort(CompilerStatus::NoSuchOverload, ExposeInput()->GetCurrentPosition());
 						SafePointer<ITokenStream> stream;
@@ -590,8 +621,16 @@ namespace Engine
 						} else if (op.contents == L".") {
 							if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) AssignAutocomplete(object);
 							AssertIdent();
-							try { object = object->GetMember(current_token.contents); }
-							catch (...) { Abort(CompilerStatus::NoSuchSymbol, current_token); }
+							if (is_xw) {
+								try { object = object->GetMember(current_token.contents); }
+								catch (...) {
+									try { object = XW::ProcessVectorRecombination(ctx, object, current_token.contents); }
+									catch (...) { Abort(CompilerStatus::NoSuchSymbol, current_token); }
+								}
+							} else {
+								try { object = object->GetMember(current_token.contents); }
+								catch (...) { Abort(CompilerStatus::NoSuchSymbol, current_token); }
+							}
 							AssignTokenInfo(current_token, object, false, false);
 							ReadNextToken();
 						} else if (op.contents == L"[") {
@@ -623,6 +662,7 @@ namespace Engine
 							AssignTokenInfo(op, actual, false, false);
 							AssignTokenInfo(end, actual, false, false);
 						} else if (op.contents == Lexic::KeywordAs) {
+							if (!is_xv) Abort(CompilerStatus::AnotherTokenExpected);
 							AssertPunct(L"("); ReadNextToken();
 							SafePointer<XL::LObject> type_into = ProcessTypeExpression(ssl, ssc);
 							AssertPunct(L")"); ReadNextToken();
@@ -655,6 +695,7 @@ namespace Engine
 			{
 				ExpressionUnaryAutocomplete(ssl, ssc);
 				if (IsPunct(XL::OperatorTakeAddress)) {
+					if (is_xw) Abort(CompilerStatus::AnotherTokenExpected);
 					auto op = current_token;
 					ReadNextToken();
 					auto definition = current_token;
@@ -698,7 +739,7 @@ namespace Engine
 					ReadNextToken();
 					auto definition = current_token;
 					SafePointer<XL::LObject> object = ProcessExpressionUnary(ssl, ssc);
-					if (object->GetClass() == XL::Class::Type) {
+					if (object->GetClass() == XL::Class::Type && is_xv) {
 						try {
 							SafePointer<XL::LObject> autoptr = ctx.QueryObject(L"adl");
 							SafePointer<XL::LObject> operator_instantiate = autoptr->GetMember(XL::OperatorSubscript);
@@ -756,6 +797,7 @@ namespace Engine
 						type->Retain();
 						return type;
 					} else {
+						if (is_xw) Abort(CompilerStatus::AnotherTokenExpected);
 						auto definition = current_token;
 						SafePointer<XL::LObject> type = ProcessExpressionUnary(ssl, ssc);
 						try {
@@ -930,8 +972,74 @@ namespace Engine
 				if (result->GetClass() != XL::Class::Type) { result->Release(); Abort(CompilerStatus::ObjectTypeMismatch, expr); }
 				return result;
 			}
+			void ProcessTranslationRules(XW::TranslationRules & rules)
+			{
+				AssertPunct(L"{"); ReadNextToken();
+				while (!IsPunct(L"}")) {
+					if (IsGenericIdent()) {
+						if (IsLiteral() && current_token.ex_data == TokenLiteralString) {
+							XW::TranslationBlock block;
+							block.rule = XW::Rule::InsertString;
+							block.index = 0;
+							block.text = current_token.contents;
+							rules.blocks << block;
+							ReadNextToken();
+						} else if (current_token.contents == L"A") {
+							ReadNextToken();
+							if (IsLiteral() && current_token.ex_data == TokenLiteralInteger) {
+								XW::TranslationBlock block;
+								block.rule = XW::Rule::InsertArgument;
+								block.index = current_token.contents_i;
+								rules.blocks << block;
+								ReadNextToken();
+							} else Abort(CompilerStatus::AnotherTokenExpected);
+						} else if (current_token.contents == L"E") {
+							ReadNextToken();
+							if (IsLiteral() && current_token.ex_data == TokenLiteralInteger) {
+								XW::TranslationBlock block;
+								block.rule = XW::Rule::InsertReference;
+								block.index = current_token.contents_i;
+								rules.blocks << block;
+								ReadNextToken();
+							} else Abort(CompilerStatus::AnotherTokenExpected);
+						} else Abort(CompilerStatus::AnotherTokenExpected);
+					} else if (IsPunct(L"#")) {
+						ReadNextToken();
+						if (IsLiteral() && current_token.ex_data == TokenLiteralString) {
+							rules.extrefs << current_token.contents;
+							ReadNextToken();
+						} else Abort(CompilerStatus::AnotherTokenExpected);
+					} else Abort(CompilerStatus::AnotherTokenExpected);
+				}
+				ReadNextToken();
+			}
+			void ProcessTranslationRules(XL::LObject * func)
+			{
+				AssertPunct(L"{"); ReadNextToken();
+				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+					Array<string> langs(0x10);
+					XW::ListShaderLanguages(langs);
+					for (auto & l : langs) AssignAutocomplete(l, CodeRangeTag::Keyword);
+				}
+				while (IsGenericIdent()) {
+					XW::ShaderLanguage lang;
+					XW::TranslationRules rules;
+					try { lang = XW::ProcessShaderLanguage(current_token.contents); }
+					catch (...) { Abort(CompilerStatus::AnotherTokenExpected); }
+					ReadNextToken(); AssertPunct(L":"); ReadNextToken();
+					ProcessTranslationRules(rules);
+					XW::SetXWImplementation(func, lang, rules);
+					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+						Array<string> langs(0x10);
+						XW::ListShaderLanguages(langs);
+						for (auto & l : langs) AssignAutocomplete(l, CodeRangeTag::Keyword);
+					}
+				}
+				AssertPunct(L"}"); ReadNextToken();
+			}
 			void ProcessVariableDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
+				if (is_xw) Abort(CompilerStatus::AnotherTokenExpected);
 				ReadNextToken();
 				SafePointer<XL::LObject> type = ProcessTypeExpression(desc);
 				while (true) {
@@ -939,6 +1047,15 @@ namespace Engine
 					XL::LObject * var;
 					try { var = ctx.CreateVariable(desc.current_namespace, name, type); }
 					catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+					if (dd) {
+						XM::VariableLocation vloc;
+						vloc.name = var->GetFullName();
+						vloc.tcn = GetTypeCanonicalName(ctx, type);
+						vloc.location.absolute = definition.range_from;
+						vloc.location.length = definition.range_length;
+						vloc.global = true;
+						dd->variables << vloc;
+					}
 					for (auto & attr : attributes) {
 						if (attr.key[0] == L'[') Abort(CompilerStatus::InapproptiateAttribute, definition);
 						else var->AddAttribute(attr.key, attr.value);
@@ -969,6 +1086,9 @@ namespace Engine
 						try { init = ctx.InitInstance(var, 0, 0); }
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					}
+					sdwn = ctx.DestroyInstance(var);
+					if (init) RegisterInitHandler(InitPriorityVar, init, sdwn);
+					else if (sdwn) RegisterInitHandler(InitPriorityVar, 0, sdwn);
 					AssignTokenInfo(definition, var, true, false);
 					if (documentation && !NameIsPrivate(var->GetFullName())) {
 						auto page = documentation->AddPage(var->GetFullName(), ManualPageClass::Variable);
@@ -978,9 +1098,6 @@ namespace Engine
 						auto ts = page->AddSection(ManualSectionClass::ObjectType);
 						ts->SetContents(L"", GetTypeCanonicalName(ctx, type));
 					}
-					sdwn = ctx.DestroyInstance(var);
-					if (init) RegisterInitHandler(InitPriorityVar, init, sdwn);
-					else if (sdwn) RegisterInitHandler(InitPriorityVar, 0, sdwn);
 					if (IsPunct(L";")) { ReadNextToken(); break; }
 					AssertPunct(L","); ReadNextToken();
 				}
@@ -1061,6 +1178,7 @@ namespace Engine
 					is_static = true;
 					is_operator = is_ctor = is_dtor = is_conv = false;
 				}
+				if (is_xw && is_dtor) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				if (is_static && (is_ctor || is_dtor || is_conv)) Abort(CompilerStatus::FunctionMustBeInstance, current_token);
 				auto definition = current_token;
 				if (!is_ctor && !is_dtor && !is_conv) {
@@ -1074,17 +1192,28 @@ namespace Engine
 				ObjectArray<XL::LObject> argv_object(0x10);
 				Array<XL::LObject *> argv(0x10);
 				Array<string> argv_names(0x10);
+				Array<Token> argv_decls(0x10);
+				DynamicString argv_sem;
 				string name, import_name, import_lib;
 				uint flags = 0;
-				uint org = 0; // 0 - V, 1 - A, 2 - import, 3 - import from library, -1 - pure
+				uint org = 0; // 0 - V, 1 - A, 2 - import, 3 - import from library, 4 - W, -1 - pure
 				if (is_conv) { AssertPunct(L"("); ReadNextToken(); }
 				if (is_ctor || is_dtor) retval = ctx.QueryObject(XL::NameVoid);
 				else retval = ProcessTypeExpression(desc);
+				if (is_xw) {
+					if (retval->GetFullName() == XW::TypeRetvalVertex) {
+						attributes.Append(XW::AttributeVertex, L"");
+						retval = ctx.QueryObject(XL::NameVoid);
+					} else if (retval->GetFullName() == XW::TypeRetvalPixel) {
+						attributes.Append(XW::AttributePixel, L"");
+						retval = ctx.QueryObject(XL::NameVoid);
+					}
+				}
 				if (is_conv) { AssertPunct(L")"); ReadNextToken(); }
 				if (is_ctor) {
-					if (IsIdent() && current_token.contents == Lexic::ConstructorZero) {
+					if (IsIdent() && current_token.contents == Lexic::ConstructorZero && is_xv) {
 						ReadNextToken(); name = XL::NameConstructorZero;
-					} else if (IsIdent() && current_token.contents == Lexic::ConstructorMove) {
+					} else if (IsIdent() && current_token.contents == Lexic::ConstructorMove && is_xv) {
 						ReadNextToken(); name = XL::NameConstructorMove;
 					} else {
 						name = XL::NameConstructor;
@@ -1108,50 +1237,83 @@ namespace Engine
 					if (IsPunct(L")") && !argv.Length()) {
 						break;
 					} else {
+						auto type_token = current_token;
 						SafePointer<XL::LObject> type = ProcessTypeExpression(desc);
+						if (is_xw && !XW::ValidateVariableType(type, true)) Abort(CompilerStatus::ObjectTypeMismatch, type_token);
 						string name;
-						if (IsIdent()) { name = current_token.contents; ReadNextToken(); }
+						Token decl;
+						if (IsIdent()) { name = current_token.contents; decl = current_token; ReadNextToken(); }
+						else decl.type = TokenType::EOF;
 						argv.Append(type);
 						argv_names.Append(name);
 						argv_object.Append(type);
+						argv_decls.Append(decl);
+						if (is_xw) {
+							if (IsPunct(L":")) {
+								ReadNextToken();
+								if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+									Array<string> semantics(0x20);
+									XW::ListArgumentSemantics(semantics);
+									for (auto & s : semantics) AssignAutocomplete(s, CodeRangeTag::Keyword);
+								}
+								AssertGenericIdent();
+								auto sname = current_token.contents;
+								int index = -1;
+								if (!XW::ValidateArgumentSemantics(sname)) Abort(CompilerStatus::AnotherTokenExpected);
+								ReadNextToken();
+								if (IsPunct(L"[")) {
+									ReadNextToken();
+									auto def = current_token;
+									SafePointer<XL::LObject> expr = ProcessExpression(desc);
+									AssertPunct(L"]"); ReadNextToken();
+									if (expr->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, def);
+									try { index = ctx.QueryLiteralValue(expr); }
+									catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, def); }
+									if (!XW::ValidateArgumentSemantics(sname, index)) Abort(CompilerStatus::InapproptiateAttribute, def);
+								}
+								XW::AddArgumentSemantics(argv_sem, name, sname, index);
+							} else XW::AddArgumentSemantics(argv_sem);
+						}
 						if (IsPunct(L",")) ReadNextToken(); else break;
 					}
 				}
 				AssertPunct(L")"); ReadNextToken();
 				if (!is_static) flags |= XL::FunctionMethod | XL::FunctionThisCall;
-				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
-					AssignAutocomplete(Lexic::KeywordEntry, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
-				}
-				while (IsKeyword(Lexic::KeywordEntry) || IsKeyword(Lexic::KeywordThrows) || IsKeyword(Lexic::KeywordVirtual) ||
-					IsKeyword(Lexic::KeywordPure) || IsKeyword(Lexic::KeywordOverride)) {
-					if (IsKeyword(Lexic::KeywordEntry)) {
-						if (!is_static) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-						flags |= XL::FunctionMain;
-					} else if (IsKeyword(Lexic::KeywordThrows)) flags |= XL::FunctionThrows;
-					else if (IsKeyword(Lexic::KeywordVirtual)) {
-						if (is_static || is_ctor) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-						flags |= XL::FunctionVirtual;
-					} else if (IsKeyword(Lexic::KeywordPure)) {
-						if (!(flags & XL::FunctionVirtual)) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-						if (flags & XL::FunctionOverride) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-						if (is_static || is_ctor || is_dtor) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-						org = -1; flags |= XL::FunctionPureCall;
-					} else if (IsKeyword(Lexic::KeywordOverride)) {
-						if (flags & XL::FunctionPureCall) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-						if (is_static || is_ctor) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-						flags |= XL::FunctionOverride;
-					}
-					ReadNextToken();
+				if (is_xv) {
 					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
 						AssignAutocomplete(Lexic::KeywordEntry, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
+					}
+					while (IsKeyword(Lexic::KeywordEntry) || IsKeyword(Lexic::KeywordThrows) || IsKeyword(Lexic::KeywordVirtual) ||
+						IsKeyword(Lexic::KeywordPure) || IsKeyword(Lexic::KeywordOverride)) {
+						if (IsKeyword(Lexic::KeywordEntry)) {
+							if (!is_static) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+							flags |= XL::FunctionMain;
+						} else if (IsKeyword(Lexic::KeywordThrows)) flags |= XL::FunctionThrows;
+						else if (IsKeyword(Lexic::KeywordVirtual)) {
+							if (is_static || is_ctor) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+							flags |= XL::FunctionVirtual;
+						} else if (IsKeyword(Lexic::KeywordPure)) {
+							if (!(flags & XL::FunctionVirtual)) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+							if (flags & XL::FunctionOverride) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+							if (is_static || is_ctor || is_dtor) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+							org = -1; flags |= XL::FunctionPureCall;
+						} else if (IsKeyword(Lexic::KeywordOverride)) {
+							if (flags & XL::FunctionPureCall) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+							if (is_static || is_ctor) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+							flags |= XL::FunctionOverride;
+						}
+						ReadNextToken();
+						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+							AssignAutocomplete(Lexic::KeywordEntry, CodeRangeTag::Keyword);
+							AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
+							AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
+							AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
+							AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
+						}
 					}
 				}
 				for (auto & attr : attributes) {
@@ -1183,13 +1345,13 @@ namespace Engine
 				} catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
 				for (auto & attr : attributes) {
 					if (attr.key[0] == L'[') {
-						if (attr.key == Lexic::AttributeInit) {
+						if (attr.key == Lexic::AttributeInit && is_xv) {
 							if (!is_static || attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							try {
 								SafePointer<XL::LObject> inv = func->Invoke(0, 0);
 								RegisterInitHandler(InitPriorityUser, inv, 0);
 							} catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
-						} else if (attr.key == Lexic::AttributeFinal) {
+						} else if (attr.key == Lexic::AttributeFinal && is_xv) {
 							if (!is_static || attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							try {
 								SafePointer<XL::LObject> inv = func->Invoke(0, 0);
@@ -1198,21 +1360,31 @@ namespace Engine
 						} else if (attr.key == Lexic::AttributeAsm) {
 							if (org || attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							org = 1;
-						} else if (attr.key == Lexic::AttributeImport) {
+						} else if (attr.key == Lexic::AttributeImport && is_xv) {
 							if (!attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
-							if (org == -1 || org == 1 || org == 2) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							if (org == -1 || org == 1 || org == 2 || org == 4) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							if (org == 0) org = 2;
 							import_name = attr.value;
-						} else if (attr.key == Lexic::AttributeImpLib) {
+						} else if (attr.key == Lexic::AttributeImpLib && is_xv) {
 							if (!attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
-							if (org == -1 || org == 1 || org == 3) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							if (org == -1 || org == 1 || org == 3 || org == 4) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							org = 3;
 							import_lib = attr.value;
-						} else if (attr.key == Lexic::AttributeNoTC) {
+						} else if (attr.key == Lexic::AttributeNoTC && is_xv) {
 							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 						} else if (attr.key == Lexic::AttributeInline) {
 							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 						} else if (attr.key == Lexic::AttributeCnvrtr) {
+						} else if (attr.key == XW::AttributeRules && is_xw) {
+							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							if (org == -1 || org == 1 || org == 2 || org == 3) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							org = 4;
+						} else if (attr.key == XW::AttributeVertex && is_xw) {
+							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							func->AddAttribute(attr.key, argv_sem.ToString());
+						} else if (attr.key == XW::AttributePixel && is_xw) {
+							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							func->AddAttribute(attr.key, argv_sem.ToString());
 						} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 					} else func->AddAttribute(attr.key, attr.value);
 				}
@@ -1246,6 +1418,7 @@ namespace Engine
 				if (org == -1) {
 					AssertPunct(L";"); ReadNextToken();
 				} else if (org == 0) {
+					if (is_xw) XW::SetXWImplementation(func);
 					AssertPunct(L"{");
 					SafePointer<ITokenStream> stream;
 					if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
@@ -1257,6 +1430,7 @@ namespace Engine
 					pc.retval = retval;
 					pc.input_types = argv_object;
 					pc.input_names = argv_names;
+					pc.input_decls = argv_decls;
 					pc.flags = flags;
 					pc.code_source = stream;
 					pc.constructor = is_ctor;
@@ -1264,6 +1438,7 @@ namespace Engine
 					for (auto & v : desc.namespace_search_list) if (v->GetClass() != XL::Class::Namespace) pc.objects_retain.Append(v);
 					post_compile.InsertLast(pc);
 				} else if (org == 1) {
+					if (is_xw) XW::SetXWImplementation(func);
 					auto start = current_token;
 					AssertPunct(L"{");
 					SafePointer<ITokenStream> asm_stream;
@@ -1275,6 +1450,8 @@ namespace Engine
 					XA::CompileFunction(asm_code, asm_func, asm_desc);
 					if (asm_desc.status != XA::CompilerStatus::Success) Abort(CompilerStatus::AssemblyError, start);
 					ctx.SupplyFunctionImplementation(func, asm_func);
+				} else if (org == 4) {
+					ProcessTranslationRules(func);
 				} else {
 					AssertPunct(L";"); ReadNextToken();
 					ctx.SupplyFunctionImplementation(func, import_name, import_lib);
@@ -1284,12 +1461,14 @@ namespace Engine
 			{
 				bool is_interface = IsKeyword(Lexic::KeywordInterface);
 				bool is_structure = IsKeyword(Lexic::KeywordStructure);
+				if (is_interface && is_xw) Abort(CompilerStatus::AnotherTokenExpected);
 				ReadNextToken();
 				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
-					AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
 				}
 				bool is_abstract = IsKeyword(Lexic::KeywordVirtual) || is_interface;
 				bool enable_rpc = false;
+				if (is_abstract && is_xw) Abort(CompilerStatus::AnotherTokenExpected);
 				if (IsKeyword(Lexic::KeywordVirtual)) ReadNextToken();
 				AssertIdent();
 				auto definition = current_token;
@@ -1301,26 +1480,28 @@ namespace Engine
 				ReadNextToken();
 				ObjectArray<XL::LObject> parents(0x10);
 				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
-					AssignAutocomplete(Lexic::KeywordInherit, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordInherit, CodeRangeTag::Keyword);
 				}
-				if (IsKeyword(Lexic::KeywordInherit)) {
-					ReadNextToken();
-					auto def = current_token;
-					SafePointer<XL::LObject> parent = ProcessTypeExpression(desc);
-					try { ctx.AdoptParentClass(type, parent); }
-					catch (...) { Abort(CompilerStatus::InvalidParentClass, def); }
-					parents.Append(parent);
-				} else if (is_abstract) ctx.CreateClassVFT(type);
-				if (IsPunct(L":") && !is_interface) {
-					ReadNextToken();
-					while (true) {
-						auto def = current_token;
-						SafePointer<XL::LObject> interface = ProcessTypeExpression(desc);
-						try { ctx.AdoptInterface(type, interface); }
-						catch (...) { Abort(CompilerStatus::InvalidInterfaceClass, def); }
-						if (!IsPunct(L",")) break;
+				if (is_xv) {
+					if (IsKeyword(Lexic::KeywordInherit)) {
 						ReadNextToken();
-						parents.Append(interface);
+						auto def = current_token;
+						SafePointer<XL::LObject> parent = ProcessTypeExpression(desc);
+						try { ctx.AdoptParentClass(type, parent); }
+						catch (...) { Abort(CompilerStatus::InvalidParentClass, def); }
+						parents.Append(parent);
+					} else if (is_abstract) ctx.CreateClassVFT(type);
+					if (IsPunct(L":") && !is_interface) {
+						ReadNextToken();
+						while (true) {
+							auto def = current_token;
+							SafePointer<XL::LObject> interface = ProcessTypeExpression(desc);
+							try { ctx.AdoptInterface(type, interface); }
+							catch (...) { Abort(CompilerStatus::InvalidInterfaceClass, def); }
+							if (!IsPunct(L",")) break;
+							ReadNextToken();
+							parents.Append(interface);
+						}
 					}
 				}
 				for (auto & attr : attributes) {
@@ -1348,7 +1529,7 @@ namespace Engine
 							else if (attr.value == Lexic::AttributeSRTTI) ctx.SetClassSemantics(type, XA::ArgumentSemantics::RTTI);
 							else if (attr.value == Lexic::AttributeSError) ctx.SetClassSemantics(type, XA::ArgumentSemantics::ErrorData);
 							else Abort(CompilerStatus::InapproptiateAttribute, definition);
-						} else if (attr.key == Lexic::AttributeRPC) {
+						} else if (attr.key == Lexic::AttributeRPC && is_xv) {
 							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							enable_rpc = true;
 						} else Abort(CompilerStatus::InapproptiateAttribute, definition);
@@ -1365,8 +1546,10 @@ namespace Engine
 				ObjectArray<XL::LObject> vft_init_seq(0x40);
 				try { if (enable_rpc) CreateRPCServiceRoutines(type); }
 				catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
-				CreateTypeServiceRoutines(type);
-				ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor, vft_init_seq);
+				if (is_xv) {
+					CreateTypeServiceRoutines(type);
+					ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor, vft_init_seq);
+				}
 				if (is_structure) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit |
 					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
 					XL::CreateMethodAssign, vft_init_seq);
@@ -1394,7 +1577,7 @@ namespace Engine
 				}
 				try { if (enable_rpc) CreateRPCServiceObjects(type, vft_init_seq); }
 				catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
-				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
+				if (is_xv) for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 			}
 			void ProcessAliasDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
@@ -1448,6 +1631,16 @@ namespace Engine
 				attributes.Clear();
 				try { ctx.AttachLiteral(value, desc.current_namespace, definition.contents); }
 				catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+				if (dd) try {
+					SafePointer<XL::LObject> type = value->GetType();
+					XM::VariableLocation vloc;
+					vloc.name = value->GetFullName();
+					vloc.tcn = GetTypeCanonicalName(ctx, type);
+					vloc.location.absolute = definition.range_from;
+					vloc.location.length = definition.range_length;
+					vloc.global = true;
+					dd->variables << vloc;
+				} catch (...) {}
 				AssignTokenInfo(definition, value, true, false);
 				string path = desc.current_namespace->GetFullName().Length() ? desc.current_namespace->GetFullName() + L"." + definition.contents : definition.contents;
 				if (documentation && !NameIsPrivate(path)) {
@@ -1458,7 +1651,7 @@ namespace Engine
 					auto ts = page->AddSection(ManualSectionClass::ObjectType);
 					ts->SetContents(L"", GetTypeCanonicalName(ctx, value));
 				}
-				while (IsPunct(L"{")) {
+				if (is_xv) while (IsPunct(L"{")) {
 					ReadNextToken();
 					auto expr = current_token;
 					SafePointer<XL::LObject> lang_expr = ProcessExpression(desc);
@@ -1525,7 +1718,7 @@ namespace Engine
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, xtoken); }
 				}
 				AssertPunct(L"]"); ReadNextToken();
-				if (key == Lexic::AttributeSystem) {
+				if (key == Lexic::AttributeSystem && is_xv) {
 					if (value == Lexic::AttributeConsole) {
 						ctx.MakeSubsystemConsole();
 						module_is_library = false;
@@ -1577,32 +1770,34 @@ namespace Engine
 						ReadNextToken();
 						string import_name, import_lib;
 						uint flags = XL::FunctionMethod | XL::FunctionThisCall;
-						uint org = 0; // 0 - V, 1 - A, 2 - import, 3 - import from library, -1 - pure
-						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
-							AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
-							AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
-							AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
-							AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
-						}
-						while (IsKeyword(Lexic::KeywordThrows) || IsKeyword(Lexic::KeywordVirtual) ||
-							IsKeyword(Lexic::KeywordPure) || IsKeyword(Lexic::KeywordOverride)) {
-							if (IsKeyword(Lexic::KeywordThrows)) flags |= XL::FunctionThrows;
-							else if (IsKeyword(Lexic::KeywordVirtual)) {
-								flags |= XL::FunctionVirtual;
-							} else if (IsKeyword(Lexic::KeywordPure)) {
-								if (!(flags & XL::FunctionVirtual)) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-								if (flags & XL::FunctionOverride) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-								org = -1; flags |= XL::FunctionPureCall;
-							} else if (IsKeyword(Lexic::KeywordOverride)) {
-								if (flags & XL::FunctionPureCall) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
-								flags |= XL::FunctionOverride;
-							}
-							ReadNextToken();
+						uint org = 0; // 0 - V, 1 - A, 2 - import, 3 - import from library, 4 - W, -1 - pure
+						if (is_xv) {
 							if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
 								AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
 								AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
 								AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
 								AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
+							}
+							while (IsKeyword(Lexic::KeywordThrows) || IsKeyword(Lexic::KeywordVirtual) ||
+								IsKeyword(Lexic::KeywordPure) || IsKeyword(Lexic::KeywordOverride)) {
+								if (IsKeyword(Lexic::KeywordThrows)) flags |= XL::FunctionThrows;
+								else if (IsKeyword(Lexic::KeywordVirtual)) {
+									flags |= XL::FunctionVirtual;
+								} else if (IsKeyword(Lexic::KeywordPure)) {
+									if (!(flags & XL::FunctionVirtual)) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+									if (flags & XL::FunctionOverride) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+									org = -1; flags |= XL::FunctionPureCall;
+								} else if (IsKeyword(Lexic::KeywordOverride)) {
+									if (flags & XL::FunctionPureCall) Abort(CompilerStatus::InvalidFunctionTrats, current_token);
+									flags |= XL::FunctionOverride;
+								}
+								ReadNextToken();
+								if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
+									AssignAutocomplete(Lexic::KeywordThrows, CodeRangeTag::Keyword);
+									AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
+									AssignAutocomplete(Lexic::KeywordPure, CodeRangeTag::Keyword);
+									AssignAutocomplete(Lexic::KeywordOverride, CodeRangeTag::Keyword);
+								}
 							}
 						}
 						for (auto & attr : attributes) {
@@ -1619,20 +1814,24 @@ namespace Engine
 								if (attr.key == Lexic::AttributeAsm) {
 									if (org || attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 									org = 1;
-								} else if (attr.key == Lexic::AttributeImport) {
+								} else if (attr.key == Lexic::AttributeImport && is_xv) {
 									if (!attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
-									if (org == -1 || org == 1 || org == 2) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									if (org == -1 || org == 1 || org == 2 || org == 4) Abort(CompilerStatus::InapproptiateAttribute, definition);
 									if (org == 0) org = 2;
 									import_name = attr.value;
-								} else if (attr.key == Lexic::AttributeImpLib) {
+								} else if (attr.key == Lexic::AttributeImpLib && is_xv) {
 									if (!attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
-									if (org == -1 || org == 1 || org == 3) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									if (org == -1 || org == 1 || org == 3 || org == 4) Abort(CompilerStatus::InapproptiateAttribute, definition);
 									org = 3;
 									import_lib = attr.value;
-								} else if (attr.key == Lexic::AttributeNoTC) {
+								} else if (attr.key == Lexic::AttributeNoTC && is_xv) {
 									if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 								} else if (attr.key == Lexic::AttributeInline) {
 									if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+								} else if (attr.key == XW::AttributeRules && is_xw) {
+									if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									if (org == -1 || org == 1 || org == 2 || org == 3) Abort(CompilerStatus::InapproptiateAttribute, definition);
+									org = 4;
 								} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 							} else func->AddAttribute(attr.key, attr.value);
 						}
@@ -1646,6 +1845,7 @@ namespace Engine
 						if (org == -1) {
 							AssertPunct(L";"); ReadNextToken();
 						} else if (org == 0) {
+							if (is_xw) XW::SetXWImplementation(func);
 							AssertPunct(L"{");
 							SafePointer<ITokenStream> stream;
 							if (!ExposeInput()->ReadBlock(stream.InnerRef())) Abort(CompilerStatus::InvalidTokenInput, ExposeInput()->GetCurrentPosition());
@@ -1668,6 +1868,7 @@ namespace Engine
 							for (auto & v : desc.namespace_search_list) if (v->GetClass() != XL::Class::Namespace) pc.objects_retain.Append(v);
 							post_compile.InsertLast(pc);
 						} else if (org == 1) {
+							if (is_xw) XW::SetXWImplementation(func);
 							auto start = current_token;
 							AssertPunct(L"{");
 							SafePointer<ITokenStream> asm_stream;
@@ -1679,6 +1880,8 @@ namespace Engine
 							XA::CompileFunction(asm_code, asm_func, asm_desc);
 							if (asm_desc.status != XA::CompilerStatus::Success) Abort(CompilerStatus::AssemblyError, start);
 							ctx.SupplyFunctionImplementation(func, asm_func);
+						} else if (org == 4) {
+							ProcessTranslationRules(func);
 						} else {
 							AssertPunct(L";"); ReadNextToken();
 							ctx.SupplyFunctionImplementation(func, import_name, import_lib);
@@ -1688,6 +1891,7 @@ namespace Engine
 			}
 			void ProcessEnumeration(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
+				if (is_xw) Abort(CompilerStatus::AnotherTokenExpected);
 				ReadNextToken(); AssertIdent(); auto definition = current_token;
 				XL::LObject * type;
 				try { type = ctx.CreateClass(desc.current_namespace, current_token.contents); }
@@ -1765,19 +1969,19 @@ namespace Engine
 				while (!IsPunct(L"}")) {
 					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
 						AssignAutocomplete(Lexic::KeywordClass, CodeRangeTag::Keyword);
-						AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
+						if (is_xv) AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordStructure, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordContinue, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordAlias, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordClassFunc, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordCtor, CodeRangeTag::Keyword);
-						AssignAutocomplete(Lexic::KeywordDtor, CodeRangeTag::Keyword);
+						if (is_xv) AssignAutocomplete(Lexic::KeywordDtor, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordConvertor, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordConst, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordUse, CodeRangeTag::Keyword);
-						AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
-						AssignAutocomplete(Lexic::KeywordEnum, CodeRangeTag::Keyword);
+						if (is_xv) AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
+						if (is_xv) AssignAutocomplete(Lexic::KeywordEnum, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordPrototype, CodeRangeTag::Keyword);
 						ExpressionAutocomplete(desc);
 					}
@@ -1797,9 +2001,9 @@ namespace Engine
 						ProcessConstantDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordUse)) {
 						ProcessUsingDefinition(desc);
-					} else if (IsKeyword(Lexic::KeywordVariable)) {
+					} else if (IsKeyword(Lexic::KeywordVariable) && is_xv) {
 						ProcessVariableDefinition(attributes, desc);
-					} else if (IsKeyword(Lexic::KeywordEnum)) {
+					} else if (IsKeyword(Lexic::KeywordEnum) && is_xv) {
 						ProcessEnumeration(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordPrototype)) {
 						ProcessPrototypeDefinition(attributes, desc);
@@ -1811,7 +2015,7 @@ namespace Engine
 							ReadNextToken();
 							int align_mode = 0; // 0 - align, 1 - don't align, 2 - explicit offset
 							XA::ObjectSize offset;
-							for (auto & a : attributes) {
+							if (is_xv) for (auto & a : attributes) {
 								if (a.key == Lexic::AttributeOffset) {
 									if (align_mode) Abort(CompilerStatus::InapproptiateAttribute, def);
 									align_mode = 2;
@@ -1835,8 +2039,8 @@ namespace Engine
 							} catch (...) { Abort(CompilerStatus::SymbolRedefinition, def); }
 							for (auto & a : attributes) {
 								if (a.key[0] == L'[') {
-									if (a.key == Lexic::AttributeOffset) {
-									} else if (a.key == Lexic::AttributeUnalign) {
+									if (a.key == Lexic::AttributeOffset && is_xv) {
+									} else if (a.key == Lexic::AttributeUnalign && is_xv) {
 									} else Abort(CompilerStatus::InapproptiateAttribute, def);
 								} else field->AddAttribute(a.key, a.value);
 							}
@@ -1912,15 +2116,15 @@ namespace Engine
 					if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
 						AssignAutocomplete(Lexic::KeywordNamespace, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordClass, CodeRangeTag::Keyword);
-						AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
+						if (is_xv) AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordStructure, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordContinue, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordAlias, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordConst, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordUse, CodeRangeTag::Keyword);
-						AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
-						AssignAutocomplete(Lexic::KeywordEnum, CodeRangeTag::Keyword);
+						if (is_xv) AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
+						if (is_xv) AssignAutocomplete(Lexic::KeywordEnum, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordPrototype, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordImport, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordResource, CodeRangeTag::Keyword);
@@ -1961,9 +2165,9 @@ namespace Engine
 						ProcessConstantDefinition(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordUse)) {
 						ProcessUsingDefinition(desc);
-					} else if (IsKeyword(Lexic::KeywordVariable)) {
+					} else if (IsKeyword(Lexic::KeywordVariable) && is_xv) {
 						ProcessVariableDefinition(attributes, desc);
-					} else if (IsKeyword(Lexic::KeywordEnum)) {
+					} else if (IsKeyword(Lexic::KeywordEnum) && is_xv) {
 						ProcessEnumeration(attributes, desc);
 					} else if (IsKeyword(Lexic::KeywordPrototype)) {
 						ProcessPrototypeDefinition(attributes, desc);
@@ -1982,7 +2186,7 @@ namespace Engine
 						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
 							AssignAutocomplete(Lexic::WordImportEmbed, CodeRangeTag::IdentifierUnknown);
 						}
-						if (IsIdent() && current_token.contents == Lexic::WordImportEmbed) {
+						if (IsIdent() && current_token.contents == Lexic::WordImportEmbed && is_xv) {
 							ReadNextToken();
 							embed = true;
 						}
@@ -1992,15 +2196,15 @@ namespace Engine
 					} else if (IsKeyword(Lexic::KeywordResource)) {
 						ReadNextToken();
 						if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
-							AssignAutocomplete(Lexic::ResourceData, CodeRangeTag::IdentifierUnknown);
-							AssignAutocomplete(Lexic::ResourceIcon, CodeRangeTag::IdentifierUnknown);
+							if (is_xv) AssignAutocomplete(Lexic::ResourceData, CodeRangeTag::IdentifierUnknown);
+							if (is_xv) AssignAutocomplete(Lexic::ResourceIcon, CodeRangeTag::IdentifierUnknown);
 							AssignAutocomplete(Lexic::ResourceMeta, CodeRangeTag::IdentifierUnknown);
-							AssignAutocomplete(Lexic::ResourceLang, CodeRangeTag::IdentifierUnknown);
+							if (is_xv) AssignAutocomplete(Lexic::ResourceLang, CodeRangeTag::IdentifierUnknown);
 							AssignAutocomplete(Lexic::ResourceVers, CodeRangeTag::IdentifierUnknown);
 							AssignAutocomplete(Lexic::ResourceSVer, CodeRangeTag::IdentifierUnknown);
 						}
 						if (IsIdent()) {
-							if (current_token.contents == Lexic::ResourceData) {
+							if (current_token.contents == Lexic::ResourceData && is_xv) {
 								ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 								auto type_expr = current_token;
 								SafePointer<XL::LObject> rsrc_type = ProcessExpression(desc);
@@ -2031,7 +2235,7 @@ namespace Engine
 								if (type.Length() > 4) Abort(CompilerStatus::InvalidResourceType, type_expr);
 								for (int i = 0; i < type.Length(); i++) if (type[i] < 32 || type[i] > 127) Abort(CompilerStatus::InvalidResourceType, type_expr);
 								if (!ctx.QueryResources().Append(XI::MakeResourceID(type, id), data)) Abort(CompilerStatus::SymbolRedefinition, type_expr);
-							} else if (current_token.contents == Lexic::ResourceIcon) {
+							} else if (current_token.contents == Lexic::ResourceIcon && is_xv) {
 								ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 								auto id_expr = current_token;
 								SafePointer<XL::LObject> rsrc_id = ProcessExpression(desc);
@@ -2074,7 +2278,7 @@ namespace Engine
 								try { value = ctx.QueryLiteralString(meta_value); }
 								catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, value_expr); }
 								if (!metadata.Append(key, value)) Abort(CompilerStatus::SymbolRedefinition, key_expr);
-							} else if (current_token.contents == Lexic::ResourceLang) {
+							} else if (current_token.contents == Lexic::ResourceLang && is_xv) {
 								ReadNextToken();
 								auto expr = current_token;
 								SafePointer<XL::LObject> lang_expr = ProcessExpression(desc);
@@ -2116,7 +2320,10 @@ namespace Engine
 					auto definition = current_token;
 					AssertIdent(); auto name = current_token.contents; ReadNextToken();
 					SafePointer<XL::LObject> var;
+					SafePointer<XL::LObject> real_type;
+					int ii = fctx.GetDestination().instset.Length();
 					if (IsPunct(L"(") && type) {
+						real_type.SetRetain(type);
 						ObjectArray<XL::LObject> args(0x10);
 						Array<XL::LObject *> argv(0x10);
 						ReadNextToken();
@@ -2141,14 +2348,29 @@ namespace Engine
 								act_type = expr->GetType();
 								if (auto_ref) act_type = ctx.QueryTypeReference(act_type);
 							}
+							real_type.SetRetain(act_type);
+							if (is_xw && !XW::ValidateVariableType(act_type, false)) throw Exception();
 							var = fctx.EncodeCreateVariable(act_type, expr);
 						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					} else if (type) {
+						real_type.SetRetain(type);
 						try { var = fctx.EncodeCreateVariable(type); }
 						catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 					} else Abort(CompilerStatus::InvalidAutoVariable, definition);
 					try { desc.current_namespace->AddMember(name, var); }
 					catch (...) { Abort(CompilerStatus::SymbolRedefinition, definition); }
+					if (dd) {
+						XM::VariableLocation vloc;
+						vloc.name = name;
+						vloc.tcn = GetTypeCanonicalName(ctx, real_type);
+						vloc.location.absolute = definition.range_from;
+						vloc.location.length = definition.range_length;
+						vloc.global = false;
+						vloc.function_symbol = fctx.GetDestinationFunction()->GetFullName();
+						vloc.instruction_index = ii;
+						ExtractRegister(var, vloc.holder);
+						dd->variables << vloc;
+					}
 					AssignTokenInfo(definition, var, true, true);
 					if (IsPunct(L";")) { ReadNextToken(); break; }
 					AssertPunct(L","); ReadNextToken(); 
@@ -2169,6 +2391,7 @@ namespace Engine
 							edesc.iterator = edesc.init->GetType();
 							if (edesc.iterator_enforce_ref) edesc.iterator = ctx.QueryTypeReference(edesc.iterator);
 						}
+						if (is_xw && !XW::ValidateVariableType(edesc.iterator, false)) Abort(CompilerStatus::ObjectTypeMismatch);
 						edesc.iterator = fctx.EncodeCreateVariable(edesc.iterator, edesc.init);
 						AssignTokenInfo(at, edesc.iterator, true, true);
 						desc.current_namespace->AddMember(edesc.iterator_name, edesc.iterator);
@@ -2217,6 +2440,7 @@ namespace Engine
 							edesc.iterator = begin->GetType();
 							if (edesc.iterator_enforce_ref) edesc.iterator = ctx.QueryTypeReference(edesc.iterator);
 						}
+						if (is_xw && !XW::ValidateVariableType(edesc.iterator, false)) Abort(CompilerStatus::ObjectTypeMismatch);
 						edesc.init = edesc.iterator = fctx.EncodeCreateVariable(edesc.iterator, begin);
 						AssignTokenInfo(at, edesc.iterator, true, true);
 						desc.current_namespace->AddMember(edesc.iterator_name, edesc.iterator);
@@ -2240,26 +2464,36 @@ namespace Engine
 					AssignAutocomplete(Lexic::KeywordDo, CodeRangeTag::Keyword);
 					AssignAutocomplete(Lexic::KeywordBreak, CodeRangeTag::Keyword);
 					AssignAutocomplete(Lexic::KeywordContinue, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordTry, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordTry, CodeRangeTag::Keyword);
 					AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
 					AssignAutocomplete(Lexic::KeywordReturn, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordThrow, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordDelete, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordDestruct, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordThrow, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordDelete, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordDestruct, CodeRangeTag::Keyword);
 					AssignAutocomplete(Lexic::KeywordUse, CodeRangeTag::Keyword);
-					AssignAutocomplete(Lexic::KeywordTrap, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordTrap, CodeRangeTag::Keyword);
 					ExpressionAutocomplete(desc);
+				}
+				if (dd) {
+					XM::StatementLocation sloc;
+					sloc.location.absolute = current_token.range_from;
+					sloc.location.length = -1;
+					sloc.function_symbol = fctx.GetDestinationFunction()->GetFullName();
+					sloc.instruction_index = fctx.GetDestination().instset.Length();
+					dd->statements << sloc;
 				}
 				if (IsPunct(L"{")) {
 					ReadNextToken();
 					if (allow_new_regular_scope) {
 						XL::LObject * scope;
+						if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintScope);
 						fctx.OpenRegularBlock(&scope);
 						VObservationDesc subdesc;
 						subdesc.current_namespace = scope;
 						subdesc.namespace_search_list << scope;
 						subdesc.namespace_search_list << desc.namespace_search_list;
 						ProcessBlock(fctx, subdesc);
+						if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintEndScope);
 						fctx.CloseRegularBlock();
 					} else ProcessBlock(fctx, desc);
 					AssertPunct(L"}"); ReadNextToken();
@@ -2270,6 +2504,7 @@ namespace Engine
 					auto expr = current_token;
 					XL::LObject * scope;
 					SafePointer<XL::LObject> cond = ProcessExpression(desc);
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintFor);
 					try { fctx.OpenIfBlock(cond, &scope); }
 					catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, expr); }
 					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, expr); }
@@ -2285,14 +2520,16 @@ namespace Engine
 					}
 					if (IsKeyword(Lexic::KeywordElse)) {
 						ReadNextToken();
+						if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintElse);
 						fctx.OpenElseBlock(&scope);
 						subdesc.current_namespace = scope;
 						subdesc.namespace_search_list.Clear();
 						subdesc.namespace_search_list << scope;
 						subdesc.namespace_search_list << desc.namespace_search_list;
 						ProcessStatement(fctx, subdesc, false);
-						fctx.CloseIfElseBlock();
-					} else fctx.CloseIfElseBlock();
+					}
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintEndIf);
+					fctx.CloseIfElseBlock();
 				} else if (IsKeyword(Lexic::KeywordFor)) {
 					VObservationDesc inter;
 					inter.current_namespace = desc.current_namespace;
@@ -2318,7 +2555,22 @@ namespace Engine
 							VEnumerableDesc vdesc;
 							vdesc.iterator_name = create_local_name;
 							vdesc.iterator_enforce_ref = create_local_enf_ref;
+							int ii = fctx.GetDestination().instset.Length();
 							ProcessForRange(fctx, inter, vdesc, def);
+							if (dd) {
+								SafePointer<XL::LObject> real_type = vdesc.iterator->GetType();
+								XM::VariableLocation vloc;
+								vloc.name = vdesc.iterator_name;
+								vloc.tcn = GetTypeCanonicalName(ctx, real_type);
+								vloc.location.absolute = def.range_from;
+								vloc.location.length = def.range_length;
+								vloc.global = false;
+								vloc.function_symbol = fctx.GetDestinationFunction()->GetFullName();
+								vloc.instruction_index = ii;
+								ExtractRegister(vdesc.iterator, vloc.holder);
+								if (vdesc.iterator_enforce_ref) vloc.tcn = XI::Module::TypeReference::MakeReference(vloc.tcn);
+								dd->variables << vloc;
+							}
 							init_statement = vdesc.init;
 							step_statement = vdesc.step;
 							cond_statement = vdesc.cond;
@@ -2328,7 +2580,22 @@ namespace Engine
 							auto init_statement = ProcessExpression(inter);
 							create_local_type = init_statement->GetType();
 							if (create_local_enf_ref) create_local_type = ctx.QueryTypeReference(create_local_type);
+							if (is_xw && !XW::ValidateVariableType(create_local_type, false)) Abort(CompilerStatus::ObjectTypeMismatch);
+							if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintForInit);
+							int ii = fctx.GetDestination().instset.Length();
 							SafePointer<XL::LObject> var = fctx.EncodeCreateVariable(create_local_type, init_statement);
+							if (dd) {
+								XM::VariableLocation vloc;
+								vloc.name = create_local_name;
+								vloc.tcn = GetTypeCanonicalName(ctx, create_local_type);
+								vloc.location.absolute = def.range_from;
+								vloc.location.length = def.range_length;
+								vloc.global = false;
+								vloc.function_symbol = fctx.GetDestinationFunction()->GetFullName();
+								vloc.instruction_index = ii;
+								ExtractRegister(var, vloc.holder);
+								dd->variables << vloc;
+							}
 							AssignTokenInfo(def, var, true, true);
 							inter.current_namespace->AddMember(create_local_name, var);
 						}
@@ -2342,6 +2609,7 @@ namespace Engine
 								inter.namespace_search_list.Insert(inter_scope, 0);
 							}
 							create_local_type = expr;
+							if (is_xw && !XW::ValidateVariableType(create_local_type, false)) Abort(CompilerStatus::ObjectTypeMismatch);
 							AssertIdent(); create_local_name = current_token.contents; auto def = current_token; ReadNextToken();
 							if (IsPunct(L":")) {
 								ReadNextToken();
@@ -2349,18 +2617,61 @@ namespace Engine
 								vdesc.iterator_name = create_local_name;
 								vdesc.iterator_enforce_ref = false;
 								vdesc.iterator = create_local_type;
+								int ii = fctx.GetDestination().instset.Length();
 								ProcessForRange(fctx, inter, vdesc, def);
+								if (dd) {
+									SafePointer<XL::LObject> real_type = vdesc.iterator->GetType();
+									XM::VariableLocation vloc;
+									vloc.name = vdesc.iterator_name;
+									vloc.tcn = GetTypeCanonicalName(ctx, real_type);
+									vloc.location.absolute = def.range_from;
+									vloc.location.length = def.range_length;
+									vloc.global = false;
+									vloc.function_symbol = fctx.GetDestinationFunction()->GetFullName();
+									vloc.instruction_index = ii;
+									ExtractRegister(vdesc.iterator, vloc.holder);
+									if (vdesc.iterator_enforce_ref) vloc.tcn = XI::Module::TypeReference::MakeReference(vloc.tcn);
+									dd->variables << vloc;
+								}
 								init_statement = vdesc.init;
 								step_statement = vdesc.step;
 								cond_statement = vdesc.cond;
 							} else if (IsPunct(L"=")) {
 								ReadNextToken();
 								init_statement = ProcessExpression(inter);
+								if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintForInit);
+								int ii = fctx.GetDestination().instset.Length();
 								SafePointer<XL::LObject> var = fctx.EncodeCreateVariable(create_local_type, init_statement);
+								if (dd) {
+									XM::VariableLocation vloc;
+									vloc.name = create_local_name;
+									vloc.tcn = GetTypeCanonicalName(ctx, create_local_type);
+									vloc.location.absolute = def.range_from;
+									vloc.location.length = def.range_length;
+									vloc.global = false;
+									vloc.function_symbol = fctx.GetDestinationFunction()->GetFullName();
+									vloc.instruction_index = ii;
+									ExtractRegister(var, vloc.holder);
+									dd->variables << vloc;
+								}
 								AssignTokenInfo(def, var, true, true);
 								inter.current_namespace->AddMember(create_local_name, var);
 							} else {
+								if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintForInit);
+								int ii = fctx.GetDestination().instset.Length();
 								SafePointer<XL::LObject> var = fctx.EncodeCreateVariable(create_local_type);
+								if (dd) {
+									XM::VariableLocation vloc;
+									vloc.name = create_local_name;
+									vloc.tcn = GetTypeCanonicalName(ctx, create_local_type);
+									vloc.location.absolute = def.range_from;
+									vloc.location.length = def.range_length;
+									vloc.global = false;
+									vloc.function_symbol = fctx.GetDestinationFunction()->GetFullName();
+									vloc.instruction_index = ii;
+									ExtractRegister(var, vloc.holder);
+									dd->variables << vloc;
+								}
 								AssignTokenInfo(def, var, true, true);
 								inter.current_namespace->AddMember(create_local_name, var);
 							}
@@ -2387,7 +2698,11 @@ namespace Engine
 					AssertPunct(L")"); ReadNextToken();
 					XL::LObject * scope;
 					try {
-						if (!create_local_type) fctx.EncodeExpression(init_statement);
+						if (!create_local_type) {
+							if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintForInit);
+							fctx.EncodeExpression(init_statement);
+						}
+						if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintFor);
 						fctx.OpenForBlock(cond_statement, step_statement, &scope);
 					} catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, def); }
 					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, def); }
@@ -2397,6 +2712,7 @@ namespace Engine
 					subdesc.namespace_search_list << scope;
 					subdesc.namespace_search_list << inter.namespace_search_list;
 					ProcessStatement(fctx, subdesc, false);
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintEndLoop);
 					fctx.CloseForBlock();
 					if (create_local_type && allow_new_regular_scope) fctx.CloseRegularBlock();
 				} else if (IsKeyword(Lexic::KeywordWhile)) {
@@ -2404,6 +2720,7 @@ namespace Engine
 					auto expr = current_token;
 					XL::LObject * scope;
 					SafePointer<XL::LObject> cond = ProcessExpression(desc);
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintWhile);
 					try { fctx.OpenWhileBlock(cond, &scope); }
 					catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, expr); }
 					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, expr); }
@@ -2414,10 +2731,12 @@ namespace Engine
 					subdesc.namespace_search_list << scope;
 					subdesc.namespace_search_list << desc.namespace_search_list;
 					ProcessStatement(fctx, subdesc, false);
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintEndLoop);
 					fctx.CloseWhileBlock();
 				} else if (IsKeyword(Lexic::KeywordDo)) {
 					ReadNextToken();
 					XL::LObject * scope;
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintDo);
 					fctx.OpenDoWhileBlock(&scope);
 					VObservationDesc subdesc;
 					subdesc.current_namespace = scope;
@@ -2430,6 +2749,7 @@ namespace Engine
 					AssertKeyword(Lexic::KeywordWhile); ReadNextToken(); AssertPunct(L"("); ReadNextToken();
 					auto expr = current_token;
 					SafePointer<XL::LObject> cond = ProcessExpression(desc);
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintEndLoop);
 					try { fctx.CloseDoWhileBlock(cond); }
 					catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, expr); }
 					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, expr); }
@@ -2438,7 +2758,7 @@ namespace Engine
 				} else if (IsKeyword(Lexic::KeywordBreak)) {
 					auto definition = current_token; ReadNextToken();
 					SafePointer<XL::LObject> dist;
-					if (!IsPunct(L";")) {
+					if (!IsPunct(L";") && is_xv) {
 						auto expr = current_token;
 						dist = ProcessExpression(desc);
 						if (dist->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
@@ -2448,12 +2768,13 @@ namespace Engine
 						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
 					}
 					AssertPunct(L";"); ReadNextToken();
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintBreak);
 					try { if (dist) fctx.EncodeBreak(dist.Inner()); else fctx.EncodeBreak(); }
 					catch (...) { Abort(CompilerStatus::InvalidLoopCtrlPlace, definition); }
 				} else if (IsKeyword(Lexic::KeywordContinue)) {
 					auto definition = current_token; ReadNextToken();
 					SafePointer<XL::LObject> dist;
-					if (!IsPunct(L";")) {
+					if (!IsPunct(L";") && is_xv) {
 						auto expr = current_token;
 						dist = ProcessExpression(desc);
 						if (dist->GetClass() != XL::Class::Literal) Abort(CompilerStatus::ExpressionMustBeConst, expr);
@@ -2463,9 +2784,10 @@ namespace Engine
 						} catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, expr); }
 					}
 					AssertPunct(L";"); ReadNextToken();
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintContinue);
 					try { if (dist) fctx.EncodeContinue(dist.Inner()); else fctx.EncodeContinue(); }
 					catch (...) { Abort(CompilerStatus::InvalidLoopCtrlPlace, definition); }
-				} else if (IsKeyword(Lexic::KeywordTry)) {
+				} else if (IsKeyword(Lexic::KeywordTry) && is_xv) {
 					ReadNextToken();
 					XL::LObject * scope;
 					fctx.OpenTryBlock(&scope);
@@ -2519,10 +2841,12 @@ namespace Engine
 					ReadNextToken();
 					if (fctx.IsZeroReturn()) {
 						AssertPunct(L";"); ReadNextToken();
+						if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintReturn);
 						fctx.EncodeReturn(0);
 					} else {
 						auto definition = current_token;
 						SafePointer<XL::LObject> expr = ProcessExpression(desc);
+						if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintReturn);
 						try { fctx.EncodeReturn(expr); }
 						catch (XL::ObjectHasNoSuchOverloadException &) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 						catch (XL::ObjectHasNoSuchMemberException &) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
@@ -2533,7 +2857,7 @@ namespace Engine
 						catch (...) { Abort(CompilerStatus::InternalError, definition); }
 						AssertPunct(L";"); ReadNextToken();
 					}
-				} else if (IsKeyword(Lexic::KeywordThrow)) {
+				} else if (IsKeyword(Lexic::KeywordThrow) && is_xv) {
 					auto definition = current_token;
 					ReadNextToken();
 					SafePointer<XL::LObject> error_expr = ProcessExpression(desc);
@@ -2550,7 +2874,7 @@ namespace Engine
 					catch (InvalidArgumentException &) { Abort(CompilerStatus::NoSuchOverload, definition); }
 					catch (InvalidStateException &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
 					catch (...) { Abort(CompilerStatus::InternalError, definition); }
-				} else if (IsKeyword(Lexic::KeywordDelete)) {
+				} else if (IsKeyword(Lexic::KeywordDelete) && is_xv) {
 					ReadNextToken();
 					auto definition = current_token;
 					SafePointer<XL::LObject> subj = ProcessExpression(desc);
@@ -2563,7 +2887,7 @@ namespace Engine
 					} catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, definition); }
 					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, definition); }
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
-				} else if (IsKeyword(Lexic::KeywordDestruct)) {
+				} else if (IsKeyword(Lexic::KeywordDestruct) && is_xv) {
 					ReadNextToken();
 					auto definition = current_token;
 					SafePointer<XL::LObject> subj = ProcessExpression(desc);
@@ -2576,13 +2900,14 @@ namespace Engine
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 				} else if (IsKeyword(Lexic::KeywordUse)) {
 					ProcessUsingDefinition(desc);
-				} else if (IsKeyword(Lexic::KeywordTrap)) {
+				} else if (IsKeyword(Lexic::KeywordTrap) && is_xv) {
 					ReadNextToken(); AssertPunct(L";"); ReadNextToken();
 					fctx.EncodeTrap();
 				} else {
 					auto definition = current_token;
 					SafePointer<XL::LObject> expr = ProcessExpression(desc);
 					if (expr->GetClass() == XL::Class::Type) {
+						if (is_xw && !XW::ValidateVariableType(expr, false)) Abort(CompilerStatus::ObjectTypeMismatch, definition);
 						ProcessLocalVariable(fctx, desc, expr, false);
 					} else {
 						AssertPunct(L";"); ReadNextToken();
@@ -2605,6 +2930,7 @@ namespace Engine
 					FunctionInitCallback(VContext & vctx, VPostCompileDesc & pc) : retain_list(0x80), _vctx(vctx), _pc(pc) {}
 					virtual void GetNextInit(XL::LObject * arguments_scope, XL::FunctionInitDesc & desc) override
 					{
+						if (_vctx.is_xw) { desc.subject = 0; return; }
 						desc.init.Clear();
 						if (_vctx.meta_info && _vctx.meta_info->autocomplete_at >= 0 && _vctx.current_token.range_from == _vctx.meta_info->autocomplete_at) {
 							_vctx.AssignAutocomplete(Lexic::KeywordInit, CodeRangeTag::Keyword);
@@ -2676,6 +3002,28 @@ namespace Engine
 					fc_desc.init_callback = &init_callback;
 				}
 				SafePointer<XL::LFunctionContext> fctx = new XL::LFunctionContext(ctx, pc.function, fc_desc);
+				for (int i = 0; i < pc.input_types.Length(); i++) {
+					auto & name = pc.input_names[i];
+					auto & type = pc.input_types[i];
+					if (name.Length()) {
+						SafePointer<XL::LObject> argument = fctx->GetRootScope()->GetMember(name);
+						if (pc.input_decls.Length() > i) {
+							AssignTokenInfo(pc.input_decls[i], argument, true, true);
+							if (dd) {
+								XM::VariableLocation vloc;
+								vloc.name = name;
+								vloc.tcn = GetTypeCanonicalName(ctx, &type);
+								vloc.location.absolute = pc.input_decls[i].range_from;
+								vloc.location.length = pc.input_decls[i].range_length;
+								vloc.global = false;
+								vloc.function_symbol = fctx->GetDestinationFunction()->GetFullName();
+								vloc.instruction_index = 0;
+								ExtractRegister(argument, vloc.holder);
+								dd->variables << vloc;
+							}
+						}
+					}
+				}
 				VObservationDesc desc;
 				desc.current_namespace = fctx->GetRootScope();
 				desc.namespace_search_list << fctx->GetRootScope();
@@ -2707,28 +3055,37 @@ namespace Engine
 						if (d.init_expr) needs_init = true;
 						if (d.shwn_expr) needs_final = true;
 					}
-					if (needs_init) {
-						auto func = ctx.CreatePrivateFunction(XL::FunctionInitializer | XL::FunctionThrows);
-						Array<XL::LObject *> perform(0x100), revert(0x100);
-						for (auto & d : init_list) if (d.init_expr) {
-							perform << d.init_expr.Inner();
-							revert << d.shwn_expr.Inner();
+					if (is_xv) {
+						if (needs_init) {
+							auto func = ctx.CreatePrivateFunction(XL::FunctionInitializer | XL::FunctionThrows);
+							Array<XL::LObject *> perform(0x100), revert(0x100);
+							for (auto & d : init_list) if (d.init_expr) {
+								perform << d.init_expr.Inner();
+								revert << d.shwn_expr.Inner();
+							}
+							XL::LFunctionContext fctx(ctx, func, XL::FunctionInitializer | XL::FunctionThrows, perform, revert);
 						}
-						XL::LFunctionContext fctx(ctx, func, XL::FunctionInitializer | XL::FunctionThrows, perform, revert);
-					}
-					if (needs_final) {
-						auto func = ctx.CreatePrivateFunction(XL::FunctionFinalizer);
-						Array<XL::LObject *> perform(0x100), revert(0x100);
-						for (auto & d : init_list.InversedElements()) if (d.shwn_expr) {
-							perform << d.shwn_expr.Inner();
-							revert << 0;
+						if (needs_final) {
+							auto func = ctx.CreatePrivateFunction(XL::FunctionFinalizer);
+							Array<XL::LObject *> perform(0x100), revert(0x100);
+							for (auto & d : init_list.InversedElements()) if (d.shwn_expr) {
+								perform << d.shwn_expr.Inner();
+								revert << 0;
+							}
+							XL::LFunctionContext fctx(ctx, func, XL::FunctionFinalizer, perform, revert);
 						}
-						XL::LFunctionContext fctx(ctx, func, XL::FunctionFinalizer, perform, revert);
 					}
 					init_list.Clear();
 					if (!ctx.IsIdle()) {
 						if (!metadata.IsEmpty()) XI::AddModuleMetadata(ctx.QueryResources(), metadata);
 						for (auto & loc : localizations) if (!loc.value->IsEmpty()) XI::AddModuleLocalization(ctx.QueryResources(), loc.key, *loc.value);
+						if (dd) {
+							for (auto & l : dd->variables) SupplyCoords(l.location);
+							for (auto & l : dd->statements) SupplyCoords(l.location);
+							XM::AddModuleDebugData(ctx.QueryResources(), *dd);
+							SafePointer<DataBlock> src = input->ExtractContents().EncodeSequence(Encoding::UTF32, false);
+							ctx.QueryResources().Append(XI::MakeResourceID(L"XM", 2), src);
+						}
 					}
 				} catch (...) { if (status.status == CompilerStatus::Success) SetStatusError(status, CompilerStatus::InternalError); }
 			}
@@ -2738,19 +3095,24 @@ namespace Engine
 		{
 			Array<string> _res, _mdl;
 			SafePointer<ICompilerCallback> _dropback;
+			string _ext;
+			uint _lm;
 		public:
-			ListCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback) :
-				_res(res_pc), _mdl(mdl_pc)
+			ListCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback, uint lm) :
+				_res(res_pc), _mdl(mdl_pc), _lm(lm & CompilerFlagLanguageMask)
 			{
 				_dropback.SetRetain(dropback);
 				if (res_pc) _res.Append(res_pv, res_pc);
 				if (mdl_pc) _mdl.Append(mdl_pv, mdl_pc);
+				if (_lm == CompilerFlagLanguageV) _ext = XI::FileExtensionLibrary;
+				else if (_lm == CompilerFlagLanguageW) _ext = XI::FileExtensionGPLibrary;
+				else throw InvalidArgumentException();
 			}
 			virtual ~ListCompilerCallback(void) override {}
 			virtual Streaming::Stream * QueryModuleFileStream(const string & module_name) override
 			{
 				for (auto & path : _mdl) try {
-					return new Streaming::FileStream(path + L"/" + module_name + L"." + XI::FileExtensionLibrary, Streaming::AccessRead, Streaming::OpenExisting);
+					return new Streaming::FileStream(path + L"/" + module_name + L"." + _ext, Streaming::AccessRead, Streaming::OpenExisting);
 				} catch (...) {}
 				if (_dropback) return _dropback->QueryModuleFileStream(module_name);
 				throw IO::FileAccessException(IO::Error::FileNotFound);
@@ -2766,7 +3128,7 @@ namespace Engine
 			virtual void QueryAvailableModules(Volumes::Set<string> & set) override
 			{
 				for (auto & path : _mdl) try {
-					SafePointer< Array<string> > mdls = IO::Search::GetFiles(path + L"/*." + XI::FileExtensionLibrary);
+					SafePointer< Array<string> > mdls = IO::Search::GetFiles(path + L"/*." + _ext);
 					if (mdls) for (auto & mdl : mdls->Elements()) set.AddElement(IO::Path::GetFileNameWithoutExtension(mdl));
 				} catch (...) {}
 				if (_dropback) _dropback->QueryAvailableModules(set);
@@ -2785,15 +3147,22 @@ namespace Engine
 			virtual Streaming::Stream * GetOutputModuleData(void) const override { return _stream; }
 			virtual string ToString(void) const override { return L"OutputModule"; }
 		};
-		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback) { return new ListCompilerCallback(res_pv, res_pc, mdl_pv, mdl_pc, dropback); }
+		ICompilerCallback * CreateCompilerCallback(const string * res_pv, int res_pc, const string * mdl_pv, int mdl_pc, ICompilerCallback * dropback, uint lm) { return new ListCompilerCallback(res_pv, res_pc, mdl_pv, mdl_pc, dropback, lm); }
 		void Compile(CompileDesc & desc)
 		{
 			try {
 				XL::LContext lctx(desc.module_name);
-				if (desc.flags & CompilerFlagSystemGUI) lctx.MakeSubsystemGUI();
-				else if (desc.flags & CompilerFlagSystemNull) lctx.MakeSubsystemNone();
-				else if (desc.flags & CompilerFlagSystemLibrary) lctx.MakeSubsystemLibrary();
-				else lctx.MakeSubsystemConsole();
+				bool is_xv, is_xw;
+				if ((desc.flags & CompilerFlagLanguageMask) == CompilerFlagLanguageV) {
+					is_xv = true; is_xw = false;
+					if (desc.flags & CompilerFlagSystemGUI) lctx.MakeSubsystemGUI();
+					else if (desc.flags & CompilerFlagSystemNull) lctx.MakeSubsystemNone();
+					else if (desc.flags & CompilerFlagSystemLibrary) lctx.MakeSubsystemLibrary();
+					else lctx.MakeSubsystemConsole();
+				} else if ((desc.flags & CompilerFlagLanguageMask) == CompilerFlagLanguageW) {
+					is_xv = false; is_xw = true;
+					lctx.MakeSubsystemXW();
+				} else throw InvalidArgumentException();
 				lctx.SetIdleMode((desc.flags & CompilerFlagMakeModule) == 0);
 				if (desc.flags & CompilerFlagVersionControl) lctx.SetVersionInfoMode(true, true);
 				SafePointer<XL::LObject> dns = CreateDefinitionNamespace(lctx, desc.defines);
@@ -2822,8 +3191,11 @@ namespace Engine
 					}
 				}
 				SafePointer<TokenStream> input_stream = new TokenStream(desc.input->GetBuffer(), desc.input->Length(), 0);
+				XM::DebugData dd;
 				VContext vctx(lctx, desc.callback, desc.status, input_stream);
+				vctx.is_xv = is_xv; vctx.is_xw = is_xw;
 				if (desc.flags & CompilerFlagSystemLibrary) vctx.module_is_library = true;
+				if (desc.flags & CompilerFlagDebugData) { vctx.dd = &dd; dd.source_full_path = desc.source_full_path; }
 				vctx.meta_info = desc.meta;
 				vctx.autoimports = desc.imports;
 				if (desc.flags & CompilerFlagMakeManual) {
@@ -2840,6 +3212,7 @@ namespace Engine
 						data->Seek(0, Streaming::Begin);
 						string extension;
 						if (vctx.extension_redefinition.Length()) extension = vctx.extension_redefinition;
+						else if (vctx.is_xw) extension = XI::FileExtensionGPLibrary;
 						else if (vctx.module_is_library) extension = XI::FileExtensionLibrary;
 						else extension = XI::FileExtensionExecutable;
 						desc.output_module = new OutputModule(desc.module_name, extension, data);
@@ -2848,10 +3221,10 @@ namespace Engine
 				}
 			} catch (...) { SetStatusError(desc.status, CompilerStatus::InternalError); }
 		}
-		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, const Volumes::Set<string> * imports)
+		void MakeManual(const string & module_name, const Array<uint32> & input, ManualVolume ** output, ICompilerCallback * callback, CompilerStatusDesc & status, uint lm, const Volumes::Set<string> * imports)
 		{
 			CompileDesc desc;
-			desc.flags = CompilerFlagMakeManual | CompilerFlagSystemConsole;
+			desc.flags = CompilerFlagMakeManual | CompilerFlagSystemConsole | (lm & CompilerFlagLanguageMask);
 			desc.module_name = module_name;
 			desc.input = &input;
 			desc.callback = callback;
@@ -2870,6 +3243,9 @@ namespace Engine
 			string input_path = IO::ExpandPath(input);
 			Array<uint32> input_string(0x1000);
 			SafePointer<ICompilerCallback> internal_callback;
+			uint lm = CompilerFlagLanguageV;
+			if (string::CompareIgnoreCase(IO::Path::GetExtension(input_path), XI::FileExtensionGPLanguage) == 0) lm = CompilerFlagLanguageW;
+			else if (string::CompareIgnoreCase(IO::Path::GetExtension(input_path), XI::FileExtensionGPLanguage2) == 0) lm = CompilerFlagLanguageW;
 			try {
 				SafePointer<Streaming::Stream> stream = new Streaming::FileStream(input_path, Streaming::AccessRead, Streaming::OpenExisting);
 				SafePointer<Streaming::TextReader> reader = new Streaming::TextReader(stream);
@@ -2883,12 +3259,12 @@ namespace Engine
 				SetStatusError(status, CompilerStatus::FileAccessFailure, input_path);
 				return;
 			}
-			MakeManual(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output, internal_callback, status, imports);
+			MakeManual(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output, internal_callback, status, lm, imports);
 		}
-		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, CodeMetaInfo * meta, const Volumes::Set<string> * imports)
+		void CompileModule(const string & module_name, const Array<uint32> & input, IOutputModule ** output, ICompilerCallback * callback, CompilerStatusDesc & status, uint lm, CodeMetaInfo * meta, const Volumes::Set<string> * imports)
 		{
 			CompileDesc desc;
-			desc.flags = CompilerFlagSystemConsole;
+			desc.flags = CompilerFlagSystemConsole | (lm & CompilerFlagLanguageMask);
 			if (output) desc.flags |= CompilerFlagMakeModule;
 			if (meta) desc.flags |= CompilerFlagMakeMetadata;
 			desc.module_name = module_name;
@@ -2910,6 +3286,9 @@ namespace Engine
 			Array<uint32> input_string(0x1000);
 			SafePointer<IOutputModule> output;
 			SafePointer<ICompilerCallback> internal_callback;
+			uint lm = CompilerFlagLanguageV;
+			if (string::CompareIgnoreCase(IO::Path::GetExtension(input_path), XI::FileExtensionGPLanguage) == 0) lm = CompilerFlagLanguageW;
+			else if (string::CompareIgnoreCase(IO::Path::GetExtension(input_path), XI::FileExtensionGPLanguage2) == 0) lm = CompilerFlagLanguageW;
 			try {
 				SafePointer<Streaming::Stream> stream = new Streaming::FileStream(input_path, Streaming::AccessRead, Streaming::OpenExisting);
 				SafePointer<Streaming::TextReader> reader = new Streaming::TextReader(stream);
@@ -2923,7 +3302,7 @@ namespace Engine
 				SetStatusError(status, CompilerStatus::FileAccessFailure, input_path);
 				return;
 			}
-			CompileModule(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output.InnerRef(), internal_callback, status, 0, imports);
+			CompileModule(IO::Path::GetFileNameWithoutExtension(input_path), input_string, output.InnerRef(), internal_callback, status, lm, 0, imports);
 			if (status.status != CompilerStatus::Success) return;
 			if (output_path[0] == L'?') output_path = output_path.Fragment(1, -1);
 			else output_path = IO::ExpandPath(output_path + L"/" + output->GetOutputModuleName() + L"." + output->GetOutputModuleExtension());
