@@ -374,7 +374,7 @@ public:
 		else if (_language == XV::CompilerFlagLanguageW) return module_search_paths_w;
 		else return module_search_paths_v;
 	}
-	const XV::ManualVolume * GetManualVolume(void) const noexcept
+	XV::ManualVolume * GetManualVolume(void) const noexcept
 	{
 		if (_language == XV::CompilerFlagLanguageV) return manual_v;
 		else if (_language == XV::CompilerFlagLanguageW) return manual_w;
@@ -612,10 +612,11 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 	} else if (base.method == L"textDocument/hover") {
 		RPC::RequestMessage_HoverParams info;
 		RestoreObject(info, data);
-		auto task = CreateStructuredTask<CodeAnalyzeDesc>([channel, info](CodeAnalyzeDesc & value) {
+		auto document = code->FindDocument(info.params.textDocument.uri);
+		SafePointer<XV::ManualVolume> manual;
+		if (document) manual.SetRetain(document->GetManualVolume());
+		auto task = CreateStructuredTask<CodeAnalyzeDesc>([channel, info, manual](CodeAnalyzeDesc & value) {
 			if (value.ok) {
-				auto document = code->FindDocument(info.params.textDocument.uri);
-				auto manual = document ? document->GetManualVolume() : 0;
 				RPC::ResponseMessage_Success_Hover result;
 				uint abs_pos;
 				LineColumnToAbsolute(*value.code, info.params.position.line, info.params.position.character, abs_pos);
