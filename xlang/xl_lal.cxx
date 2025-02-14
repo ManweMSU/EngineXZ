@@ -324,7 +324,7 @@ namespace Engine
 				return create;
 			}
 		};
-		class FunctionLoader : XI::IFunctionLoader
+		class FunctionLoader : XI::IFunctionLoader, XW::IFunctionLoader
 		{
 			XFunctionOverload * _dest;
 			FunctionLoader(XFunctionOverload * dest) : _dest(dest) {}
@@ -341,8 +341,17 @@ namespace Engine
 			virtual void HandleNearImport(const string & symbol, const XI::Module::Function & fin, const string & func_name) noexcept override {}
 			virtual void HandleFarImport(const string & symbol, const XI::Module::Function & fin, const string & func_name, const string & lib_name) noexcept override {}
 			virtual void HandleLoadError(const string & symbol, const XI::Module::Function & fin, XI::LoadFunctionError error) noexcept override {}
+			virtual XW::ShaderLanguage GetLanguage(void) noexcept override { return XW::ShaderLanguage::Unknown; }
+			virtual void HandleFunction(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override
+			{
+				try {
+					auto & impl = _dest->GetImplementationDesc();
+					impl._xa.Load(fout);
+				} catch (...) {}
+			}
+			virtual void HandleRule(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override {}
 		public:
-			static void Load(XFunctionOverload * dest, XI::Module::Function & src) { FunctionLoader ldr(dest); XI::LoadFunction(L"", src, &ldr); }
+			static void Load(XFunctionOverload * dest, XI::Module::Function & src) { FunctionLoader ldr(dest); XI::LoadFunction(L"", src, &ldr); XW::LoadFunction(L"", src, &ldr); }
 		};
 
 		string GetPath(const string & symbol)

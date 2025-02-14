@@ -15,24 +15,15 @@ namespace Engine
 
 		// Per generibus
 		constexpr const widechar * AttributePrivate		= L"[privatus]";
+		constexpr const widechar * AttributeAlignment	= L"[polire]";
 		constexpr const widechar * AttributeMapXV		= L"[mappa_xv]";
 		constexpr const widechar * AttributeMapCXX		= L"[mappa_cxx]";
 		constexpr const widechar * AttributeMapHLSL		= L"[mappa_hlsl]";
 		constexpr const widechar * AttributeMapMSL		= L"[mappa_msl]";
 		constexpr const widechar * AttributeMapGLSL		= L"[mappa_glsl]";
 
-		// Per valoribus
-		constexpr const widechar * AttributeInterpolate	= L"[interpolire]";
-		constexpr const widechar * InterpolateNormally	= L"normative";
-		constexpr const widechar * DontInterpolate		= L"nulle";
-		constexpr const widechar * InterpolatePerspect	= L"perspective";
-
 		constexpr const widechar * TypeRetvalVertex		= L"vertex";
 		constexpr const widechar * TypeRetvalPixel		= L"punctum";
-
-		constexpr const widechar * WordDontInterp		= L"interpolire_nulle";
-		constexpr const widechar * WordInterpolate		= L"interpolire";
-		constexpr const widechar * WordInterpPersp		= L"interpolire_perspective";
 
 		XL::LObject * ProcessVectorRecombination(XL::LContext & ctx, XL::LObject * vector, const string & mask);
 		ShaderLanguage ProcessShaderLanguage(const string & name);

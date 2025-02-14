@@ -1544,6 +1544,8 @@ namespace Engine
 							type->AddAttribute(attr.key, attr.value);
 						} else if (attr.key == XW::AttributeMapGLSL && is_xw) {
 							type->AddAttribute(attr.key, attr.value);
+						} else if (attr.key == XW::AttributeAlignment && is_xw) {
+							type->AddAttribute(attr.key, attr.value);
 						} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 					} else type->AddAttribute(attr.key, attr.value);
 				}
@@ -1995,9 +1997,6 @@ namespace Engine
 						if (is_xv) AssignAutocomplete(Lexic::KeywordVariable, CodeRangeTag::Keyword);
 						if (is_xv) AssignAutocomplete(Lexic::KeywordEnum, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordPrototype, CodeRangeTag::Keyword);
-						if (is_xw) AssignAutocomplete(XW::WordDontInterp, CodeRangeTag::Keyword);
-						if (is_xw) AssignAutocomplete(XW::WordInterpolate, CodeRangeTag::Keyword);
-						if (is_xw) AssignAutocomplete(XW::WordInterpPersp, CodeRangeTag::Keyword);
 						ExpressionAutocomplete(desc);
 					}
 					if (IsPunct(L"[")) {
@@ -2023,25 +2022,6 @@ namespace Engine
 					} else if (IsKeyword(Lexic::KeywordPrototype)) {
 						ProcessPrototypeDefinition(attributes, desc);
 					} else {
-						if (is_xw) {
-							bool interpolation_set = false;
-							if (IsIdent() && current_token.contents == XW::WordDontInterp) {
-								attributes.Append(XW::AttributeInterpolate, XW::DontInterpolate);
-								interpolation_set = true;
-							} else if (IsIdent() && current_token.contents == XW::WordInterpolate) {
-								attributes.Append(XW::AttributeInterpolate, XW::InterpolateNormally);
-								interpolation_set = true;
-							} else if (IsIdent() && current_token.contents == XW::WordInterpPersp) {
-								attributes.Append(XW::AttributeInterpolate, XW::InterpolatePerspect);
-								interpolation_set = true;
-							}
-							if (interpolation_set) {
-								ReadNextToken();
-								if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
-									ExpressionAutocomplete(desc);
-								}
-							}
-						}
 						auto type_def = current_token;
 						SafePointer<XL::LObject> type = ProcessTypeExpression(desc);
 						if (is_xw && !XW::ValidateVariableType(type, false)) Abort(CompilerStatus::ObjectTypeMismatch, type_def);
@@ -2076,8 +2056,6 @@ namespace Engine
 								if (a.key[0] == L'[') {
 									if (a.key == Lexic::AttributeOffset && is_xv) {
 									} else if (a.key == Lexic::AttributeUnalign && is_xv) {
-									} else if (a.key == XW::AttributeInterpolate && is_xw) {
-										field->AddAttribute(a.key, a.value);
 									} else Abort(CompilerStatus::InapproptiateAttribute, def);
 								} else field->AddAttribute(a.key, a.value);
 							}

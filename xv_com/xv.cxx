@@ -286,9 +286,9 @@ int Main(void)
 		try {
 			SafePointer<XV::ICompilerCallback> callback, local_callback;
 			if (state.language_mode == XV::CompilerFlagLanguageV) {
-				callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths_v.GetBuffer(), state.module_search_paths_v.Length(), 0);
+				callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths_v.GetBuffer(), state.module_search_paths_v.Length(), 0, state.language_mode);
 			} else if (state.language_mode == XV::CompilerFlagLanguageW) {
-				callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths_w.GetBuffer(), state.module_search_paths_w.Length(), 0);
+				callback = XV::CreateCompilerCallback(0, 0, state.module_search_paths_w.GetBuffer(), state.module_search_paths_w.Length(), 0, state.language_mode);
 			}
 			string output;
 			if (state.output.Length()) output = L"?" + state.output;
@@ -308,7 +308,7 @@ int Main(void)
 					if (code != 0xFFFFFFFF) input_module_string << code;
 				}
 				string src_dir = IO::Path::GetDirectory(state.input);
-				local_callback = CreateCompilerCallback(&src_dir, 1, &src_dir, 1, callback);
+				local_callback = CreateCompilerCallback(&src_dir, 1, &src_dir, 1, callback, state.language_mode);
 			} catch (...) {
 				desc.status.status = XV::CompilerStatus::FileAccessFailure;
 				desc.status.error_line = state.input;
