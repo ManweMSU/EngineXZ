@@ -25,6 +25,22 @@ namespace Engine
 		constexpr const widechar * TypeRetvalVertex		= L"vertex";
 		constexpr const widechar * TypeRetvalPixel		= L"punctum";
 
+		constexpr const widechar * SemanticVertex		= L"vertex";
+		constexpr const widechar * SemanticInstance		= L"exemplum";
+		constexpr const widechar * SemanticPosition		= L"positus";
+		constexpr const widechar * SemanticInterstageNI	= L"interpolire_nulle";
+		constexpr const widechar * SemanticInterstageIL	= L"interpolire_lineariter";
+		constexpr const widechar * SemanticInterstageIP	= L"interpolire_perspective";
+		constexpr const widechar * SemanticFrontFacing	= L"princeps";
+		constexpr const widechar * SemanticColor		= L"color";
+		constexpr const widechar * SemanticSecondColor	= L"color_secundus";
+		constexpr const widechar * SemanticDepth		= L"altitudo";
+		constexpr const widechar * SemanticStencil		= L"praeformae";
+		constexpr const widechar * SemanticConstant		= L"constati";
+		constexpr const widechar * SemanticBuffer		= L"series";
+		constexpr const widechar * SemanticTexture		= L"textura";
+		constexpr const widechar * SemanticSampler		= L"exceptor";
+
 		XL::LObject * ProcessVectorRecombination(XL::LContext & ctx, XL::LObject * vector, const string & mask);
 		ShaderLanguage ProcessShaderLanguage(const string & name);
 		void SetXWImplementation(XL::LObject * func);
@@ -37,5 +53,41 @@ namespace Engine
 		void ListArgumentSemantics(Array<string> & names);
 		void ListShaderLanguages(Array<string> & names);
 		void MakeAssemblerHint(XL::LFunctionContext & fctx, uint hint);
+
+		constexpr uint SelectorLimitRenderTarget	= 8;
+		constexpr uint SelectorLimitConstantBuffer	= 14;
+		constexpr uint SelectorLimitSampler			= 16;
+		constexpr uint SelectorLimitTexture			= 128;
+		constexpr uint SelectorLimitBuffer			= 128;
+		constexpr uint SelectorLimitInterstage		= 16;
+
+		enum class FunctionDesignation { Service, Vertex, Pixel };
+		enum class ArgumentSemantics {
+			Undefined,
+			VertexIndex,	// vertex in, nint
+			InstanceIndex,	// vertex in, nint
+			Position,		// vertex ex, punctum in, frac4
+			InterstageNI,	// vertex ex, punctum in, fracN; index in [0, 15]
+			InterstageIL,	// vertex ex, punctum in, fracN; index in [0, 15]
+			InterstageIP,	// vertex ex, punctum in, fracN; index in [0, 15]
+			IsFrontFacing,	// punctum in, logicum
+			Color,			// punctum ex, frac2, frac3, frac4; index in [0, 7]
+			SecondColor,	// punctum ex, frac2, frac3, frac4
+			Depth,			// punctum ex, frac
+			Stencil,		// punctum ex, nint
+			Constant,		// auxilium in; index in [0, 13]
+			Buffer,			// auxilium in; index in [0, 127]
+			Texture,		// auxilium in; index in [0, 127]
+			Sampler,		// auxilium in; index in [0, 15]
+		};
+		struct ArgumentDesc {
+			string name;
+			string tcn;
+			bool inout;
+			ArgumentSemantics semantics;
+			int index;
+		};
+
+		void ReadFunctionInformation(const string & fcn, XI::Module::Function & func, string & fname, FunctionDesignation & fdes, ArgumentDesc & rv, Array<ArgumentDesc> & args);
 	}
 }

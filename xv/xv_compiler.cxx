@@ -576,7 +576,7 @@ namespace Engine
 						object = InvokeBlockPrototype(object, stream, ssl, ssc);
 						AssignTokenInfo(op, object, true, true);
 					} else if (op.contents == L"##") {
-						if (!is_xv) Abort(CompilerStatus::AnotherTokenExpected);
+						if (!is_xv) Abort(CompilerStatus::AnotherTokenExpected, op);
 						ReadNextToken(); AssertPunct(L"{");
 						if (!ClassImplements(object, L"contextus.labos")) Abort(CompilerStatus::NoSuchOverload, ExposeInput()->GetCurrentPosition());
 						SafePointer<ITokenStream> stream;
@@ -662,7 +662,7 @@ namespace Engine
 							AssignTokenInfo(op, actual, false, false);
 							AssignTokenInfo(end, actual, false, false);
 						} else if (op.contents == Lexic::KeywordAs) {
-							if (!is_xv) Abort(CompilerStatus::AnotherTokenExpected);
+							if (!is_xv) Abort(CompilerStatus::AnotherTokenExpected, op);
 							AssertPunct(L"("); ReadNextToken();
 							SafePointer<XL::LObject> type_into = ProcessTypeExpression(ssl, ssc);
 							AssertPunct(L")"); ReadNextToken();
@@ -695,7 +695,7 @@ namespace Engine
 			{
 				ExpressionUnaryAutocomplete(ssl, ssc);
 				if (IsPunct(XL::OperatorTakeAddress)) {
-					if (is_xw) Abort(CompilerStatus::AnotherTokenExpected);
+					if (is_xw) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 					auto op = current_token;
 					ReadNextToken();
 					auto definition = current_token;
@@ -797,7 +797,7 @@ namespace Engine
 						type->Retain();
 						return type;
 					} else {
-						if (is_xw) Abort(CompilerStatus::AnotherTokenExpected);
+						if (is_xw) Abort(CompilerStatus::AnotherTokenExpected, op);
 						auto definition = current_token;
 						SafePointer<XL::LObject> type = ProcessExpressionUnary(ssl, ssc);
 						try {
@@ -992,7 +992,7 @@ namespace Engine
 								block.index = current_token.contents_i;
 								rules.blocks << block;
 								ReadNextToken();
-							} else Abort(CompilerStatus::AnotherTokenExpected);
+							} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
 						} else if (current_token.contents == L"E") {
 							ReadNextToken();
 							if (IsLiteral() && current_token.ex_data == TokenLiteralInteger) {
@@ -1001,15 +1001,15 @@ namespace Engine
 								block.index = current_token.contents_i;
 								rules.blocks << block;
 								ReadNextToken();
-							} else Abort(CompilerStatus::AnotherTokenExpected);
-						} else Abort(CompilerStatus::AnotherTokenExpected);
+							} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
+						} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
 					} else if (IsPunct(L"#")) {
 						ReadNextToken();
 						if (IsLiteral() && current_token.ex_data == TokenLiteralString) {
 							rules.extrefs << current_token.contents;
 							ReadNextToken();
-						} else Abort(CompilerStatus::AnotherTokenExpected);
-					} else Abort(CompilerStatus::AnotherTokenExpected);
+						} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
+					} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				}
 				ReadNextToken();
 			}
@@ -1025,7 +1025,7 @@ namespace Engine
 					XW::ShaderLanguage lang;
 					XW::TranslationRules rules;
 					try { lang = XW::ProcessShaderLanguage(current_token.contents); }
-					catch (...) { Abort(CompilerStatus::AnotherTokenExpected); }
+					catch (...) { Abort(CompilerStatus::AnotherTokenExpected, current_token); }
 					ReadNextToken(); AssertPunct(L":"); ReadNextToken();
 					ProcessTranslationRules(rules);
 					XW::SetXWImplementation(func, lang, rules);
@@ -1039,7 +1039,7 @@ namespace Engine
 			}
 			void ProcessVariableDefinition(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
-				if (is_xw) Abort(CompilerStatus::AnotherTokenExpected);
+				if (is_xw) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				ReadNextToken();
 				SafePointer<XL::LObject> type = ProcessTypeExpression(desc);
 				while (true) {
@@ -1259,7 +1259,7 @@ namespace Engine
 								AssertGenericIdent();
 								auto sname = current_token.contents;
 								int index = -1;
-								if (!XW::ValidateArgumentSemantics(sname)) Abort(CompilerStatus::AnotherTokenExpected);
+								if (!XW::ValidateArgumentSemantics(sname)) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 								ReadNextToken();
 								if (IsPunct(L"[")) {
 									ReadNextToken();
@@ -1461,14 +1461,14 @@ namespace Engine
 			{
 				bool is_interface = IsKeyword(Lexic::KeywordInterface);
 				bool is_structure = IsKeyword(Lexic::KeywordStructure);
-				if (is_interface && is_xw) Abort(CompilerStatus::AnotherTokenExpected);
+				if (is_interface && is_xw) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				ReadNextToken();
 				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
 					if (is_xv) AssignAutocomplete(Lexic::KeywordVirtual, CodeRangeTag::Keyword);
 				}
 				bool is_abstract = IsKeyword(Lexic::KeywordVirtual) || is_interface;
 				bool enable_rpc = false;
-				if (is_abstract && is_xw) Abort(CompilerStatus::AnotherTokenExpected);
+				if (is_abstract && is_xw) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				if (IsKeyword(Lexic::KeywordVirtual)) ReadNextToken();
 				AssertIdent();
 				auto definition = current_token;
@@ -1905,7 +1905,7 @@ namespace Engine
 			}
 			void ProcessEnumeration(Volumes::Dictionary<string, string> & attributes, VObservationDesc & desc)
 			{
-				if (is_xw) Abort(CompilerStatus::AnotherTokenExpected);
+				if (is_xw) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				ReadNextToken(); AssertIdent(); auto definition = current_token;
 				XL::LObject * type;
 				try { type = ctx.CreateClass(desc.current_namespace, current_token.contents); }
@@ -2324,8 +2324,8 @@ namespace Engine
 									ProcessVersionSubstitute(desc);
 								}
 								AssertPunct(L";"); ReadNextToken();
-							} else Abort(CompilerStatus::AnotherTokenExpected);
-						} else Abort(CompilerStatus::AnotherTokenExpected);
+							} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
+						} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
 					} else Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				}
 			}
@@ -2406,7 +2406,7 @@ namespace Engine
 							edesc.iterator = edesc.init->GetType();
 							if (edesc.iterator_enforce_ref) edesc.iterator = ctx.QueryTypeReference(edesc.iterator);
 						}
-						if (is_xw && !XW::ValidateVariableType(edesc.iterator, false)) Abort(CompilerStatus::ObjectTypeMismatch);
+						if (is_xw && !XW::ValidateVariableType(edesc.iterator, false)) Abort(CompilerStatus::ObjectTypeMismatch, current_token);
 						edesc.iterator = fctx.EncodeCreateVariable(edesc.iterator, edesc.init);
 						AssignTokenInfo(at, edesc.iterator, true, true);
 						desc.current_namespace->AddMember(edesc.iterator_name, edesc.iterator);
@@ -2455,7 +2455,7 @@ namespace Engine
 							edesc.iterator = begin->GetType();
 							if (edesc.iterator_enforce_ref) edesc.iterator = ctx.QueryTypeReference(edesc.iterator);
 						}
-						if (is_xw && !XW::ValidateVariableType(edesc.iterator, false)) Abort(CompilerStatus::ObjectTypeMismatch);
+						if (is_xw && !XW::ValidateVariableType(edesc.iterator, false)) Abort(CompilerStatus::ObjectTypeMismatch, current_token);
 						edesc.init = edesc.iterator = fctx.EncodeCreateVariable(edesc.iterator, begin);
 						AssignTokenInfo(at, edesc.iterator, true, true);
 						desc.current_namespace->AddMember(edesc.iterator_name, edesc.iterator);
@@ -2595,7 +2595,7 @@ namespace Engine
 							auto init_statement = ProcessExpression(inter);
 							create_local_type = init_statement->GetType();
 							if (create_local_enf_ref) create_local_type = ctx.QueryTypeReference(create_local_type);
-							if (is_xw && !XW::ValidateVariableType(create_local_type, false)) Abort(CompilerStatus::ObjectTypeMismatch);
+							if (is_xw && !XW::ValidateVariableType(create_local_type, false)) Abort(CompilerStatus::ObjectTypeMismatch, def);
 							if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintForInit);
 							int ii = fctx.GetDestination().instset.Length();
 							SafePointer<XL::LObject> var = fctx.EncodeCreateVariable(create_local_type, init_statement);
@@ -2624,7 +2624,7 @@ namespace Engine
 								inter.namespace_search_list.Insert(inter_scope, 0);
 							}
 							create_local_type = expr;
-							if (is_xw && !XW::ValidateVariableType(create_local_type, false)) Abort(CompilerStatus::ObjectTypeMismatch);
+							if (is_xw && !XW::ValidateVariableType(create_local_type, false)) Abort(CompilerStatus::ObjectTypeMismatch, def);
 							AssertIdent(); create_local_name = current_token.contents; auto def = current_token; ReadNextToken();
 							if (IsPunct(L":")) {
 								ReadNextToken();
