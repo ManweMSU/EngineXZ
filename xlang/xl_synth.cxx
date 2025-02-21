@@ -11,7 +11,7 @@ namespace Engine
 		XClass * GetStaticArrayPseudoClass(XArray * on_array)
 		{
 			auto & ctx = on_array->GetContext();
-			auto name = L"_@" + on_array->GetCanonicalType();
+			auto name = L"_@" + on_array->GetCanonicalType() + L".ordo";
 			try {
 				SafePointer<LObject> cls = ctx.GetPrivateNamespace()->GetMember(name);
 				return static_cast<XClass *>(cls.Inner());

@@ -87,7 +87,15 @@ namespace Engine
 			ArgumentSemantics semantics;
 			int index;
 		};
-
-		void ReadFunctionInformation(const string & fcn, XI::Module::Function & func, string & fname, FunctionDesignation & fdes, ArgumentDesc & rv, Array<ArgumentDesc> & args);
+		struct FunctionDesc
+		{
+			string fname;
+			string instance_tcn;
+			bool constructor;
+			FunctionDesignation fdes;
+			ArgumentDesc rv;
+			Array<ArgumentDesc> args;
+		};
+		void ReadFunctionInformation(const string & fcn, XI::Module::Function & func, FunctionDesc & desc);
 	}
 }

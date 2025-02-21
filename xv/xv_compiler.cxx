@@ -405,7 +405,7 @@ namespace Engine
 			{
 				ExpressionSubjectAutocomplete(ssl, ssc);
 				if (meta_info && meta_info->autocomplete_at >= 0 && current_token.range_from == meta_info->autocomplete_at) {
-					AssignAutocomplete(Lexic::KeywordArray, CodeRangeTag::Keyword);
+					if (is_xv) AssignAutocomplete(Lexic::KeywordArray, CodeRangeTag::Keyword);
 				}
 			}
 			void ExpressionAutocomplete(XL::LObject ** ssl, int ssc) { ExpressionUnaryAutocomplete(ssl, ssc); }
@@ -770,6 +770,7 @@ namespace Engine
 					ReadNextToken();
 					return ProcessExpressionUnary(ssl, ssc);
 				} else if (IsKeyword(Lexic::KeywordArray)) {
+					if (is_xw) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 					auto op = current_token;
 					ReadNextToken();
 					ExpressionAutocomplete(ssl, ssc);
@@ -1209,6 +1210,7 @@ namespace Engine
 						retval = ctx.QueryObject(XL::NameVoid);
 					}
 				}
+				if (is_xw && !XW::ValidateVariableType(retval, false)) Abort(CompilerStatus::ObjectTypeMismatch, current_token);
 				if (is_conv) { AssertPunct(L")"); ReadNextToken(); }
 				if (is_ctor) {
 					if (IsIdent() && current_token.contents == Lexic::ConstructorZero && is_xv) {
@@ -3174,9 +3176,11 @@ namespace Engine
 					else if (desc.flags & CompilerFlagSystemNull) lctx.MakeSubsystemNone();
 					else if (desc.flags & CompilerFlagSystemLibrary) lctx.MakeSubsystemLibrary();
 					else lctx.MakeSubsystemConsole();
+					lctx.AllowBuiltInInlines(true);
 				} else if ((desc.flags & CompilerFlagLanguageMask) == CompilerFlagLanguageW) {
 					is_xv = false; is_xw = true;
 					lctx.MakeSubsystemXW();
+					lctx.AllowBuiltInInlines(false);
 				} else throw InvalidArgumentException();
 				lctx.SetIdleMode((desc.flags & CompilerFlagMakeModule) == 0);
 				if (desc.flags & CompilerFlagVersionControl) lctx.SetVersionInfoMode(true, true);

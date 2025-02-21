@@ -388,7 +388,7 @@ namespace Engine
 			return ns;
 		}
 
-		LContext::LContext(const string & module) : _idle_mode(false), _module_name(module), _import_list(0x10), _private_counter(0), _perform_version_control(false), _write_version_info(false)
+		LContext::LContext(const string & module) : _idle_mode(false), _module_name(module), _import_list(0x10), _private_counter(0), _perform_version_control(false), _write_version_info(false), _built_in_inlines(true)
 		{
 			_root_ns = XL::CreateNamespace(L"", L"", *this);
 			_subsystem = uint(XI::Module::ExecutionSubsystem::ConsoleUI);
@@ -408,6 +408,8 @@ namespace Engine
 		void LContext::MakeSubsystemNone(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::NoUI); }
 		void LContext::MakeSubsystemLibrary(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::Library); }
 		void LContext::MakeSubsystemXW(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::XW); }
+		bool LContext::BuiltInInlinesAllowed(void) { return _built_in_inlines; }
+		void LContext::AllowBuiltInInlines(bool allow) { _built_in_inlines = allow; }
 		bool LContext::IncludeModule(const string & module_name, IModuleLoadCallback * callback, bool embed)
 		{
 			if (module_name == _module_name) return true;

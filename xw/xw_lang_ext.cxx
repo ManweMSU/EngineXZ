@@ -2,15 +2,92 @@
 #include "../xasm/xa_type_helper.h"
 #include "../xlang/xl_types.h"
 #include "../xlang/xl_func.h"
+#include "../xlang/xl_var.h"
 
 namespace Engine
 {
 	namespace XW
 	{
+		class RecombinationProvider : public XL::IComputableProvider, public Object
+		{
+			XL::LContext & _ctx;
+			uint _mask;
+			uint _short_flag;
+			SafePointer<XL::LObject> _vector;
+			SafePointer<XL::XType> _src_type;
+			SafePointer<XL::XType> _dest_type;
+		public:
+			RecombinationProvider(XL::LContext & ctx, XL::LObject * vector, XL::XType * src, const string & mask) : _ctx(ctx)
+			{
+				_vector.SetRetain(vector);
+				_src_type.SetRetain(src);
+				auto cname = src->GetFullName();
+				int idim;
+				string rname;
+				if (cname == L"logicum2") {
+					rname = L"logicum"; idim = 2; _short_flag = XA::ReferenceFlagShort;
+				} else if (cname == L"logicum3") {
+					rname = L"logicum"; idim = 3; _short_flag = XA::ReferenceFlagShort;
+				} else if (cname == L"logicum4") {
+					rname = L"logicum"; idim = 4; _short_flag = XA::ReferenceFlagShort;
+				} else if (cname == L"int2") {
+					rname = L"int"; idim = 2; _short_flag = 0;
+				} else if (cname == L"int3") {
+					rname = L"int"; idim = 3; _short_flag = 0;
+				} else if (cname == L"int4") {
+					rname = L"int"; idim = 4; _short_flag = 0;
+				} else if (cname == L"nint2") {
+					rname = L"nint"; idim = 2; _short_flag = 0;
+				} else if (cname == L"nint3") {
+					rname = L"nint"; idim = 3; _short_flag = 0;
+				} else if (cname == L"nint4") {
+					rname = L"nint"; idim = 4; _short_flag = 0;
+				} else if (cname == L"frac2") {
+					rname = L"frac"; idim = 2; _short_flag = 0;
+				} else if (cname == L"frac3") {
+					rname = L"frac"; idim = 3; _short_flag = 0;
+				} else if (cname == L"frac4") {
+					rname = L"frac"; idim = 4; _short_flag = 0;
+				} else throw InvalidArgumentException();
+				int odim = mask.Length();
+				if (odim < 1 || odim > 4) throw InvalidArgumentException();
+				_mask = 0;
+				for (int i = 0; i < odim; i++) {
+					int selector;
+					auto w = mask[i];
+					if (w == L'x' || w == L'X' || w == L'r' || w == L'R' || w == L'u' || w == L'U') selector = 0;
+					else if (w == L'y' || w == L'Y' || w == L'g' || w == L'G' || w == L'v' || w == L'V') selector = 1;
+					else if (w == L'z' || w == L'Z' || w == L'b' || w == L'B') selector = 2;
+					else if (w == L'w' || w == L'W' || w == L'a' || w == L'A') selector = 3;
+					else throw InvalidArgumentException();
+					if (selector >= idim) throw InvalidArgumentException();
+					_mask |= selector << (4 * i);
+				}
+				if (odim > 1) _dest_type = XL::CreateType(XI::Module::TypeReference::MakeClassReference(rname + string(odim)), _ctx);
+				else _dest_type = XL::CreateType(XI::Module::TypeReference::MakeClassReference(rname), _ctx);
+			}
+			virtual Object * ComputableProviderQueryObject(void) override { return this; }
+			virtual XL::XType * ComputableGetType(void) override { _dest_type->Retain(); return _dest_type; }
+			virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+			{
+				XA::ExpressionTree node = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformFloatRecombine, XA::ReferenceFlagInvoke | _short_flag));
+				XA::TH::AddTreeInput(node, _vector->Evaluate(func, error_ctx), _src_type->GetArgumentSpecification());
+				XA::TH::AddTreeInput(node, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(_mask, 0));
+				XA::TH::AddTreeOutput(node, _dest_type->GetArgumentSpecification());
+				return node;
+			}
+		};
 		XL::LObject * ProcessVectorRecombination(XL::LContext & ctx, XL::LObject * vector, const string & mask)
 		{
-			// TODO: IMPLEMENT
-			throw Exception();
+			SafePointer<XL::LObject> type = vector->GetType();
+			if (type->GetClass() == XL::Class::Type) {
+				auto xtype = static_cast<XL::XType *>(type.Inner());
+				auto tcn = xtype->GetCanonicalType();
+				XI::Module::TypeReference tref(tcn);
+				if (tref.GetReferenceClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+				SafePointer<RecombinationProvider> prov = new RecombinationProvider(xtype->GetContext(), vector, xtype, mask);
+				return XL::CreateComputable(xtype->GetContext(), prov);
+			} else throw InvalidStateException();
 		}
 		ShaderLanguage ProcessShaderLanguage(const string & name)
 		{
@@ -33,7 +110,7 @@ namespace Engine
 			desc._is_xw = true;
 			desc._xw.Append(lang, rules);
 		}
-		void AddArgumentSemantics(DynamicString & sword, const string & aname, const string & sname, int index) { sword << aname << L":" << sname << L"#" << index << L";"; }
+		void AddArgumentSemantics(DynamicString & sword, const string & aname, const string & sname, int index) { sword << aname << L":" << sname << L"#" << string(index) << L";"; }
 		void AddArgumentSemantics(DynamicString & sword) { sword << L";"; }
 		bool ValidateArgumentSemantics(const string & name)
 		{
@@ -108,6 +185,7 @@ namespace Engine
 			if (type->GetClass() != XL::Class::Type) return false;
 			auto tcn = static_cast<XL::XType *>(type)->GetCanonicalType();
 			XI::Module::TypeReference tref(tcn);
+			if (tref.GetReferenceClass() == XI::Module::TypeReference::Class::Array) return false;
 			if (tref.GetReferenceClass() == XI::Module::TypeReference::Class::Pointer) return false;
 			if (tref.GetReferenceClass() == XI::Module::TypeReference::Class::Function) return false;
 			if (tref.GetReferenceClass() == XI::Module::TypeReference::Class::Reference && !allow_ref) return false;
@@ -127,10 +205,25 @@ namespace Engine
 			statement.opcode = hint;
 			fctx.GetDestination().instset << statement;
 		}
-		void ReadFunctionInformation(const string & fcn, XI::Module::Function & func, string & fname, FunctionDesignation & fdes, ArgumentDesc & rv, Array<ArgumentDesc> & args)
+		void ReadFunctionInformation(const string & fcn, XI::Module::Function & func, FunctionDesc & desc)
 		{
 			int del = fcn.FindFirst(L':');
-			fname = fcn.Fragment(0, del);
+			desc.fname = fcn.Fragment(0, del);
+			if (func.code_flags & XI::Module::Function::FunctionInstance) {
+				int ord_begin = desc.fname.FindFirst(L"._@");
+				int ord_end = desc.fname.FindLast(L".ordo.");
+				if (ord_begin >= 0 && ord_end >= 0) {
+					desc.instance_tcn = desc.fname.Fragment(ord_begin + 3, ord_end - ord_begin - 3);
+					desc.constructor = desc.fname.FindLast(L".@32") <= ord_end;
+				} else {
+					int ord = desc.fname.FindLast(L".");
+					desc.instance_tcn = XI::Module::TypeReference::MakeClassReference(desc.fname.Fragment(0, ord));
+					desc.constructor = desc.fname.FindFirst(L"@crea") >= 0;
+				}
+			} else {
+				desc.instance_tcn = L"";
+				desc.constructor = false;
+			}
 			auto ftcn = fcn.Fragment(del + 1, -1);
 			XI::Module::TypeReference ftype(ftcn);
 			SafePointer< Array<XI::Module::TypeReference> > sign = ftype.GetFunctionSignature();
@@ -138,21 +231,38 @@ namespace Engine
 			auto sdata_ptr = func.attributes[AttributeVertex];
 			if (sdata_ptr) {
 				sdata = *sdata_ptr;
-				fdes = FunctionDesignation::Vertex;
+				desc.fdes = FunctionDesignation::Vertex;
 			} else {
 				sdata_ptr = func.attributes[AttributePixel];
 				if (sdata_ptr) {
 					sdata = *sdata_ptr;
-					fdes = FunctionDesignation::Pixel;
-				} else fdes = FunctionDesignation::Service;
+					desc.fdes = FunctionDesignation::Pixel;
+				} else desc.fdes = FunctionDesignation::Service;
 			}
-			rv.name = L"";
-			rv.tcn = sign->ElementAt(0).QueryCanonicalName();
-			rv.inout = true;
-			rv.semantics = ArgumentSemantics::Undefined;
-			rv.index = 0;
-			args.Clear();
+			if (desc.instance_tcn.Length() && desc.constructor) {
+				desc.rv.name = L"";
+				desc.rv.tcn = desc.instance_tcn;
+				desc.rv.inout = true;
+				desc.rv.semantics = ArgumentSemantics::Undefined;
+				desc.rv.index = 0;
+			} else {
+				desc.rv.name = L"";
+				desc.rv.tcn = sign->ElementAt(0).QueryCanonicalName();
+				desc.rv.inout = true;
+				desc.rv.semantics = ArgumentSemantics::Undefined;
+				desc.rv.index = 0;
+			}
+			desc.args = Array<ArgumentDesc>(0x30);
 			auto sdata_parts = sdata.Split(L';');
+			if (desc.instance_tcn.Length() && !desc.constructor) {
+				ArgumentDesc arg;
+				arg.name = L"ego";
+				arg.tcn = desc.instance_tcn;
+				arg.inout = true;
+				arg.semantics = ArgumentSemantics::Undefined;
+				arg.index = 0;
+				desc.args << arg;
+			}
 			for (int i = 0; i < sign->Length() - 1; i++) {
 				ArgumentDesc arg;
 				auto & type = sign->ElementAt(1 + i);
@@ -163,7 +273,7 @@ namespace Engine
 					arg.inout = false;
 					arg.tcn = type.QueryCanonicalName();
 				}
-				if (i < sdata_parts.Length() && fdes != FunctionDesignation::Service) {
+				if (i < sdata_parts.Length() && desc.fdes != FunctionDesignation::Service) {
 					int cindex = sdata_parts[i].FindFirst(L':');
 					int sindex = sdata_parts[i].FindFirst(L'#');
 					if (cindex >= 0 && sindex >= 0) {
@@ -197,16 +307,16 @@ namespace Engine
 					arg.semantics = ArgumentSemantics::Undefined;
 					arg.index = 0;
 				}
-				args << arg;
+				desc.args << arg;
 			}
-			if (fdes != FunctionDesignation::Service) {
+			if (desc.fdes != FunctionDesignation::Service) {
 				int counter = -1;
-				for (auto & a : args) {
+				for (auto & a : desc.args) {
 					if (a.semantics == ArgumentSemantics::InterstageNI || a.semantics == ArgumentSemantics::InterstageIL || a.semantics == ArgumentSemantics::InterstageIP) {
 						counter = max(counter, a.index);
 					}
 				}
-				for (auto & a : args) {
+				for (auto & a : desc.args) {
 					if (a.semantics == ArgumentSemantics::InterstageNI || a.semantics == ArgumentSemantics::InterstageIL || a.semantics == ArgumentSemantics::InterstageIP) {
 						if (a.index < 0) {
 							counter++;
@@ -215,38 +325,38 @@ namespace Engine
 					}
 				}
 				counter = -1;
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Color) counter = max(counter, a.index);
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Color && a.index < 0) {
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Color) counter = max(counter, a.index);
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Color && a.index < 0) {
 					counter++;
 					a.index = counter;
 				}
 				counter = -1;
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Sampler) counter = max(counter, a.index);
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Sampler && a.index < 0) {
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Sampler) counter = max(counter, a.index);
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Sampler && a.index < 0) {
 					counter++;
 					a.index = counter;
 				}
 				counter = -1;
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Constant) counter = max(counter, a.index);
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Constant && a.index < 0) {
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Constant) counter = max(counter, a.index);
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Constant && a.index < 0) {
 					counter++;
 					a.index = counter;
 				}
 				// Counter is the last index assigned to a constant buffer now
 				int tcounter = -1;
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Texture) tcounter = max(tcounter, a.index);
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Texture && a.index < 0) {
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Texture) tcounter = max(tcounter, a.index);
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Texture && a.index < 0) {
 					tcounter++;
 					a.index = tcounter;
 				}
 				// TCounter is the last index assigned to a texture now
 				counter = max(counter, tcounter);
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Buffer) counter = max(counter, a.index);
-				for (auto & a : args) if (a.semantics == ArgumentSemantics::Buffer && a.index < 0) {
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Buffer) counter = max(counter, a.index);
+				for (auto & a : desc.args) if (a.semantics == ArgumentSemantics::Buffer && a.index < 0) {
 					counter++;
 					a.index = counter;
 				}
-				for (auto & a : args) if (a.index < 0) a.index = 0;
+				for (auto & a : desc.args) if (a.index < 0) a.index = 0;
 			}
 		}
 	}

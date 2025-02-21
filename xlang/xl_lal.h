@@ -137,7 +137,7 @@ namespace Engine
 		};
 		class LContext : public Object
 		{
-			bool _idle_mode, _perform_version_control, _write_version_info;
+			bool _idle_mode, _perform_version_control, _write_version_info, _built_in_inlines;
 			string _module_name;
 			uint _subsystem, _private_counter;
 			SafePointer<LObject> _root_ns, _private_ns;
@@ -162,6 +162,8 @@ namespace Engine
 			void MakeSubsystemNone(void);
 			void MakeSubsystemLibrary(void);
 			void MakeSubsystemXW(void);
+			bool BuiltInInlinesAllowed(void);
+			void AllowBuiltInInlines(bool allow);
 
 			bool IncludeModule(const string & name, IModuleLoadCallback * callback, bool embed);
 			void SetPrototypeHandler(LPrototypeHandler * hdlr);
