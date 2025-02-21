@@ -3,6 +3,7 @@
 #include "../xlang/xl_types.h"
 #include "../xlang/xl_func.h"
 #include "../xlang/xl_var.h"
+#include "../xlang/xl_synth.h"
 
 namespace Engine
 {
@@ -88,6 +89,111 @@ namespace Engine
 				SafePointer<RecombinationProvider> prov = new RecombinationProvider(xtype->GetContext(), vector, xtype, mask);
 				return XL::CreateComputable(xtype->GetContext(), prov);
 			} else throw InvalidStateException();
+		}
+		void CreateDefaultImplementation(XL::LObject * on_class, uint flags)
+		{
+			if (on_class->GetClass() != XL::Class::Type) throw InvalidArgumentException();
+			if (static_cast<XL::XType *>(on_class)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			auto cls = static_cast<XL::XClass *>(on_class);
+			auto & ctx = cls->GetContext();
+			SafePointer<XL::LObject> class_ref = ctx.QueryTypeReference(on_class);
+			SafePointer<XL::LObject> void_type = CreateType(XI::Module::TypeReference::MakeClassReference(XL::NameVoid), ctx);
+			ObjectArray<XL::LObject> fields(0x80);
+			ObjectArray<XL::XType> subj_types(0x80);
+			cls->ListFields(fields);
+			for (auto & f : fields) { SafePointer<XL::LObject> type = f.GetType(); subj_types.Append(static_cast<XL::XType *>(type.Inner())); }
+			bool discard = false;
+			bool standard = false;
+			if (flags & XL::CreateMethodConstructorInit) {
+				try {
+					for (auto & s : subj_types) {
+						SafePointer<XL::LObject> ctor = s.GetConstructorInit();
+						auto & xfunc = *static_cast<XL::XFunctionOverload *>(ctor.Inner());
+						if (!xfunc.GetImplementationDesc()._xw.IsEmpty()) standard = true;
+					}
+				} catch (...) { discard = true; }
+			} else if (flags & XL::CreateMethodConstructorCopy) {
+				try {
+					for (auto & s : subj_types) {
+						SafePointer<XL::LObject> ctor = s.GetConstructorCopy();
+						auto & xfunc = *static_cast<XL::XFunctionOverload *>(ctor.Inner());
+						if (!xfunc.GetImplementationDesc()._xw.IsEmpty()) standard = true;
+					}
+				} catch (...) { discard = true; }
+			} else if (flags & XL::CreateMethodAssign) {
+				try {
+					for (auto & s : subj_types) {
+						XL::XFunctionOverload * asgn;
+						SafePointer<XL::LObject> asgn_fd = s.GetMember(XL::OperatorAssign);
+						if (asgn_fd->GetClass() == XL::Class::Function) {
+							auto et = s.GetCanonicalType();
+							auto et_ref = XI::Module::TypeReference::MakeReference(et);
+							try { asgn = static_cast<XL::XFunction *>(asgn_fd.Inner())->GetOverloadT(1, &et_ref, true); } catch (...) { asgn = 0; }
+							if (!asgn) asgn = static_cast<XL::XFunction *>(asgn_fd.Inner())->GetOverloadT(1, &et, true);
+						} else if (asgn_fd->GetClass() == XL::Class::FunctionOverload) {
+							asgn = static_cast<XL::XFunctionOverload *>(asgn_fd.Inner());
+						} else throw Exception();
+						if (!asgn->GetImplementationDesc()._xw.IsEmpty()) standard = true;
+					}
+				} catch (...) { discard = true; }
+			}
+			if (discard) return;
+			if (!standard) {
+				ObjectArray<XL::LObject> fake_vft(1);
+				XL::CreateDefaultImplementation(cls, flags, fake_vft);
+				return;
+			}
+			int argc = 0;
+			uint ff = XL::FunctionMethod | XL::FunctionThisCall;
+			XL::LObject * func;
+			if (flags & XL::CreateMethodAssign) {
+				try {
+					auto fd = ctx.CreateFunction(on_class, XL::OperatorAssign);
+					func = ctx.CreateFunctionOverload(fd, class_ref, 1, class_ref.InnerRef(), ff);
+				} catch (...) { return; }
+				TranslationRules rules;
+				rules.blocks.SetLength(3);
+				rules.blocks[0].rule = Rule::InsertArgument;
+				rules.blocks[1].rule = Rule::InsertString;
+				rules.blocks[2].rule = Rule::InsertArgument;
+				rules.blocks[0].index = 0;
+				rules.blocks[1].index = 0;
+				rules.blocks[2].index = 1;
+				rules.blocks[1].text = L"=";
+				auto & desc = static_cast<XL::XFunctionOverload *>(func)->GetImplementationDesc();
+				desc._is_xw = true;
+				desc._xw.Append(ShaderLanguage::HLSL, rules);
+				desc._xw.Append(ShaderLanguage::MSL, rules);
+				desc._xw.Append(ShaderLanguage::GLSL, rules);
+			} else {
+				try {
+					if (flags & XL::CreateMethodConstructorInit) {
+						auto fd = ctx.CreateFunction(on_class, XL::NameConstructor);
+						func = ctx.CreateFunctionOverload(fd, void_type, 0, 0, ff);
+					} else if (flags & XL::CreateMethodConstructorCopy) {
+						argc = 1;
+						auto fd = ctx.CreateFunction(on_class, XL::NameConstructor);
+						func = ctx.CreateFunctionOverload(fd, void_type, 1, class_ref.InnerRef(), ff);
+					}
+				} catch (...) { return; }
+				TranslationRules rules;
+				if (flags & XL::CreateMethodConstructorCopy) {
+					rules.blocks.SetLength(1);
+					rules.blocks[0].rule = Rule::InsertArgument;
+					rules.blocks[0].index = 0;
+				}
+				auto & desc = static_cast<XL::XFunctionOverload *>(func)->GetImplementationDesc();
+				desc._is_xw = true;
+				desc._xw.Append(ShaderLanguage::HLSL, rules);
+				desc._xw.Append(ShaderLanguage::MSL, rules);
+				desc._xw.Append(ShaderLanguage::GLSL, rules);
+			}
+		}
+		void CreateDefaultImplementations(XL::LObject * on_class, uint flags)
+		{
+			if (flags & XL::CreateMethodConstructorInit) CreateDefaultImplementation(on_class, XL::CreateMethodConstructorInit);
+			if (flags & XL::CreateMethodConstructorCopy) CreateDefaultImplementation(on_class, XL::CreateMethodConstructorCopy);
+			if (flags & XL::CreateMethodAssign) CreateDefaultImplementation(on_class, XL::CreateMethodAssign);
 		}
 		ShaderLanguage ProcessShaderLanguage(const string & name)
 		{

@@ -1565,11 +1565,16 @@ namespace Engine
 				if (is_xv) {
 					CreateTypeServiceRoutines(type);
 					ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor, vft_init_seq);
+					if (is_structure) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit |
+						XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
+						XL::CreateMethodAssign, vft_init_seq);
+					else if (enable_rpc) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit, vft_init_seq);
 				}
-				if (is_structure) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit |
-					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
-					XL::CreateMethodAssign, vft_init_seq);
-				else if (enable_rpc) ctx.CreateClassDefaultMethods(type, XL::CreateMethodConstructorInit, vft_init_seq);
+				if (is_xw) {
+					if (is_structure) XW::CreateDefaultImplementations(type, XL::CreateMethodConstructorInit |
+						XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
+						XL::CreateMethodAssign);
+				}
 				ctx.LockClass(type, false);
 				AssignTokenInfo(definition, type, true, false);
 				if (documentation && !NameIsPrivate(type->GetFullName())) {

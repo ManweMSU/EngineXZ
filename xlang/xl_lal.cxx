@@ -351,7 +351,21 @@ namespace Engine
 			}
 			virtual void HandleRule(const string & symbol, const XI::Module::Function & fin, Streaming::Stream * fout) noexcept override {}
 		public:
-			static void Load(XFunctionOverload * dest, XI::Module::Function & src) { FunctionLoader ldr(dest); XI::LoadFunction(L"", src, &ldr); XW::LoadFunction(L"", src, &ldr); }
+			static void Load(XFunctionOverload * dest, XI::Module::Function & src)
+			{
+				FunctionLoader ldr(dest);
+				XI::LoadFunction(L"", src, &ldr);
+				XW::LoadFunction(L"", src, &ldr);
+				if ((src.code_flags & XI::Module::Function::FunctionClassMask) == XI::Module::Function::FunctionClassXW) {
+					if ((src.code_flags & XI::Module::Function::FunctionTypeMask) == XI::Module::Function::FunctionXW_Rules) {
+						try {
+							auto & impl = dest->GetImplementationDesc();
+							impl._is_xw = true;
+							impl._xw.Append(XW::ShaderLanguage::Unknown, XW::TranslationRules());
+						} catch (...) {}
+					}
+				}
+			}
 		};
 
 		string GetPath(const string & symbol)

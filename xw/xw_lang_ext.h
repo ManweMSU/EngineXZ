@@ -42,6 +42,8 @@ namespace Engine
 		constexpr const widechar * SemanticSampler		= L"exceptor";
 
 		XL::LObject * ProcessVectorRecombination(XL::LContext & ctx, XL::LObject * vector, const string & mask);
+		void CreateDefaultImplementation(XL::LObject * on_class, uint flags);
+		void CreateDefaultImplementations(XL::LObject * on_class, uint flags);
 		ShaderLanguage ProcessShaderLanguage(const string & name);
 		void SetXWImplementation(XL::LObject * func);
 		void SetXWImplementation(XL::LObject * func, ShaderLanguage lang, const TranslationRules & rules);
