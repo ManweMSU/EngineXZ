@@ -96,7 +96,6 @@ namespace Engine
 			if (static_cast<XL::XType *>(on_class)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
 			auto cls = static_cast<XL::XClass *>(on_class);
 			auto & ctx = cls->GetContext();
-			SafePointer<XL::LObject> class_ref = ctx.QueryTypeReference(on_class);
 			SafePointer<XL::LObject> void_type = CreateType(XI::Module::TypeReference::MakeClassReference(XL::NameVoid), ctx);
 			ObjectArray<XL::LObject> fields(0x80);
 			ObjectArray<XL::XType> subj_types(0x80);
@@ -149,9 +148,10 @@ namespace Engine
 			if (flags & XL::CreateMethodAssign) {
 				try {
 					auto fd = ctx.CreateFunction(on_class, XL::OperatorAssign);
-					func = ctx.CreateFunctionOverload(fd, class_ref, 1, class_ref.InnerRef(), ff);
+					func = ctx.CreateFunctionOverload(fd, on_class, 1, &on_class, ff);
 				} catch (...) { return; }
 				TranslationRules rules;
+				rules.extrefs << L"A";
 				rules.blocks.SetLength(3);
 				rules.blocks[0].rule = Rule::InsertArgument;
 				rules.blocks[1].rule = Rule::InsertString;
@@ -173,7 +173,7 @@ namespace Engine
 					} else if (flags & XL::CreateMethodConstructorCopy) {
 						argc = 1;
 						auto fd = ctx.CreateFunction(on_class, XL::NameConstructor);
-						func = ctx.CreateFunctionOverload(fd, void_type, 1, class_ref.InnerRef(), ff);
+						func = ctx.CreateFunctionOverload(fd, void_type, 1, &on_class, ff);
 					}
 				} catch (...) { return; }
 				TranslationRules rules;
@@ -315,6 +315,7 @@ namespace Engine
 		{
 			int del = fcn.FindFirst(L':');
 			desc.fname = fcn.Fragment(0, del);
+			bool is_setter = desc.fname.FindFirst(L"@loca") >= 0;
 			if (func.code_flags & XI::Module::Function::FunctionInstance) {
 				int ord_begin = desc.fname.FindFirst(L"._@");
 				int ord_end = desc.fname.FindLast(L".ordo.");
@@ -373,7 +374,7 @@ namespace Engine
 				ArgumentDesc arg;
 				auto & type = sign->ElementAt(1 + i);
 				if (type.GetReferenceClass() == XI::Module::TypeReference::Class::Reference) {
-					arg.inout = true;
+					arg.inout = !is_setter;
 					arg.tcn = type.GetReferenceDestination().QueryCanonicalName();
 				} else {
 					arg.inout = false;

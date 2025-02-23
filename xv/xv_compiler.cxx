@@ -2414,6 +2414,7 @@ namespace Engine
 							if (edesc.iterator_enforce_ref) edesc.iterator = ctx.QueryTypeReference(edesc.iterator);
 						}
 						if (is_xw && !XW::ValidateVariableType(edesc.iterator, false)) Abort(CompilerStatus::ObjectTypeMismatch, current_token);
+						if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintForInit);
 						edesc.iterator = fctx.EncodeCreateVariable(edesc.iterator, edesc.init);
 						AssignTokenInfo(at, edesc.iterator, true, true);
 						desc.current_namespace->AddMember(edesc.iterator_name, edesc.iterator);
@@ -2463,6 +2464,7 @@ namespace Engine
 							if (edesc.iterator_enforce_ref) edesc.iterator = ctx.QueryTypeReference(edesc.iterator);
 						}
 						if (is_xw && !XW::ValidateVariableType(edesc.iterator, false)) Abort(CompilerStatus::ObjectTypeMismatch, current_token);
+						if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintForInit);
 						edesc.init = edesc.iterator = fctx.EncodeCreateVariable(edesc.iterator, begin);
 						AssignTokenInfo(at, edesc.iterator, true, true);
 						desc.current_namespace->AddMember(edesc.iterator_name, edesc.iterator);
@@ -2526,7 +2528,7 @@ namespace Engine
 					auto expr = current_token;
 					XL::LObject * scope;
 					SafePointer<XL::LObject> cond = ProcessExpression(desc);
-					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintFor);
+					if (is_xw) XW::MakeAssemblerHint(fctx, XW::HintIf);
 					try { fctx.OpenIfBlock(cond, &scope); }
 					catch (XL::ObjectIsNotEvaluatableException &) { Abort(CompilerStatus::ExpressionMustBeValue, expr); }
 					catch (XL::ObjectMayThrow &) { Abort(CompilerStatus::InvalidThrowPlace, expr); }
