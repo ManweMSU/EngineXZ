@@ -5,6 +5,7 @@ rmdir /S /Q xv_sl\_build
 rmdir /S /Q xx_xx\_build
 rmdir /S /Q xx_xxf\_build
 rmdir /S /Q xv_com\_build
+rmdir /S /Q xw_dec\_build
 rmdir /S /Q xi_tool\_build
 rmdir /S /Q xi_dasm\_build
 rmdir /S /Q xx_xxsc\_build

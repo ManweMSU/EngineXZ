@@ -258,9 +258,11 @@ namespace Engine
 								} else if (lit->contents == XI::Module::Literal::Class::SignedInteger) {
 									art->rules.blocks[0].text = lit->data_sint32;
 								} else if (lit->contents == XI::Module::Literal::Class::FloatingPoint) {
-									art->rules.blocks[0].text = string(lit->data_float);
-									if (art->rules.blocks[0].text.FindFirst(L'.') < 0) art->rules.blocks[0].text += L".0";
-									art->rules.blocks[0].text += string(L"f");
+									if (isfinite(lit->data_float)) {
+										art->rules.blocks[0].text = string(lit->data_float);
+										if (art->rules.blocks[0].text.FindFirst(L'.') < 0) art->rules.blocks[0].text += L".0";
+										art->rules.blocks[0].text += string(L"f");
+									} else art->rules.blocks[0].text = L"0.0f";
 								} else {
 									SetError(status, DecompilerStatus::NotSupported, hdlr.GetLanguage(), funcname, eref);
 									return false;
@@ -1125,11 +1127,18 @@ namespace Engine
 								out.clsname = expect_rvc;
 							} else if (expect_rvc == L"frac") {
 								if (node.self.index + 4 > xasm.data.Length()) throw InvalidFormatException();
-								auto text = string(*reinterpret_cast<float *>(xasm.data.GetBuffer() + node.self.index));
-								if (text.FindFirst(L'.') < 0) text += L".0";
-								out.hint = 1;
-								out.code = L"(" + text + L"f)";
-								out.clsname = expect_rvc;
+								auto data = *reinterpret_cast<float *>(xasm.data.GetBuffer() + node.self.index);
+								if (isfinite(data)) {
+									auto text = string(data);
+									if (text.FindFirst(L'.') < 0) text += L".0";
+									out.hint = 1;
+									out.code = L"(" + text + L"f)";
+									out.clsname = expect_rvc;
+								} else {
+									out.hint = 1;
+									out.code = L"(0.0f)";
+									out.clsname = expect_rvc;
+								}
 							} else throw InvalidFormatException();
 						} else if (node.self.ref_class == XA::ReferenceArgument) {
 							auto nd = _register_mapping[RegisterID(node.self.ref_class, node.self.index)];

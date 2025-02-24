@@ -31,6 +31,7 @@ struct {
 	string output;
 	string output_path;
 	string xx_path;
+	string xw_path;
 	Array<string> launch_args = Array<string>(0x10);
 } state;
 
@@ -251,6 +252,7 @@ int Main(void)
 		SafePointer<Registry> xv_conf = XX::LoadConfiguration(root + L"/xv.ini");
 		state.assembly_version_control = xv_conf->GetValueBoolean(L"ModeraVersiones");
 		state.xx_path = xv_conf->GetValueString(L"XX");
+		state.xw_path = xv_conf->GetValueString(L"XW");
 		try {
 			auto core = xv_conf->GetValueString(L"XE");
 			if (core.Length()) XX::IncludeComponent(&state.module_search_paths_v, &state.module_search_paths_w, root + L"/" + core);
@@ -379,7 +381,7 @@ int Main(void)
 			} else if (state.launch) {
 				Array<string> args(0x10);
 				SafePointer<XC::IChannelServer> srvr;
-				if (state.direct_mode) {
+				if (state.direct_mode && (state.language_mode == XV::CompilerFlagLanguageV)) {
 					string srvr_path;
 					srvr = XC::CreateChannelServer();
 					srvr->GetChannelPath(srvr_path);
@@ -401,8 +403,13 @@ int Main(void)
 						}
 					}));
 				} else args << output;
+				if (state.language_mode == XV::CompilerFlagLanguageW) {
+					if (state.silent) args << L"-S";
+					else if (state.nologo) args << L"-N";
+				}
 				args << state.launch_args;
-				SafePointer<Process> process = CreateCommandProcess(state.xx_path, &args);
+				auto machine = (state.language_mode == XV::CompilerFlagLanguageV) ? state.xx_path : state.xw_path;
+				SafePointer<Process> process = CreateCommandProcess(machine, &args);
 				if (!process) {
 					if (srvr) srvr->Close();
 					if (!state.silent) console << TextColor(12) << Localized(205) << TextColorDefault() << LineFeed();

@@ -1,0 +1,437 @@
+﻿auxilium attributum ("NomenModuli") = "Liber Canonicalis";
+auxilium attributum ("CreatorModuli") = "Engine Software";
+auxilium attributum ("IuraExempli") = "© Engine Software. 2025";
+auxilium attributum ("Versio") = "1.0.0.1";
+
+auxilium versio 0;
+
+[[mappa_xv] "nihil"] [[mappa_cxx] "void"] [[mappa_hlsl] "void"] [[mappa_msl] "void"]
+[[innatum]] [[magnitudo] "0"] [[significatio] nihil]
+genus nihil {}
+[[privatus]] [[mappa_hlsl] "void"] [[mappa_msl] "void"]
+[[innatum]] [[magnitudo] "0"] [[significatio] nihil]
+genus vertex {}
+[[privatus]] [[mappa_hlsl] "void"] [[mappa_msl] "void"]
+[[innatum]] [[magnitudo] "0"] [[significatio] nihil]
+genus punctum {}
+
+[[mappa_xv] "nint32"] [[mappa_cxx] "Engine::uint32"] [[mappa_hlsl] "bool"] [[mappa_msl] "bool|uint"] [[polire] "4"]
+[[innatum]] [[magnitudo] "1"] [[significatio] integer]
+genus logicum {
+	[[xw]] structor () { hlsl : {} msl : {} }
+	[[xw]] structor (logicum src) { hlsl : { "bool(" A 0 ")" } msl : { "bool(" A 0 ")" } }
+	[[xw]] functio logicum operator - () { hlsl : { # "L" "!(" A 0 ")" } msl : { # "L" "!(" A 0 ")" } }
+	[[xw]] functio logicum operator ~ () { hlsl : { # "L" "!(" A 0 ")" } msl : { # "L" "!(" A 0 ")" } }
+	[[xw]] functio logicum operator ! () { hlsl : { # "L" "!(" A 0 ")" } msl : { # "L" "!(" A 0 ")" } }
+	[[xw]] functio logicum operator = (logicum src) { hlsl : { # "A" A 0 "=" A 1 } msl : { # "A" A 0 "=" A 1 } }
+	[[xw]] functio logicum operator |= (logicum src) { hlsl : { # "A" A 0 "|=" A 1 } msl : { # "A" A 0 "|=" A 1 } }
+	[[xw]] functio logicum operator &= (logicum src) { hlsl : { # "A" A 0 "&=" A 1 } msl : { # "A" A 0 "&=" A 1 } }
+	[[xw]] functio logicum operator #= (logicum src) { hlsl : { # "A" A 0 "^=" A 1 } msl : { # "A" A 0 "^=" A 1 } }
+	[[xw]] classis functio logicum operator | (logicum a, logicum b) { hlsl : { "(" A 0 ")|(" A 1 ")" } msl : { "(" A 0 ")|(" A 1 ")" } }
+	[[xw]] classis functio logicum operator & (logicum a, logicum b) { hlsl : { "(" A 0 ")&(" A 1 ")" } msl : { "(" A 0 ")&(" A 1 ")" } }
+	[[xw]] classis functio logicum operator # (logicum a, logicum b) { hlsl : { "(" A 0 ")^(" A 1 ")" } msl : { "(" A 0 ")^(" A 1 ")" } }
+	[[xw]] classis functio logicum operator == (logicum a, logicum b) { hlsl : { "(" A 0 ")==(" A 1 ")" } msl : { "(" A 0 ")==(" A 1 ")" } }
+	[[xw]] classis functio logicum operator != (logicum a, logicum b) { hlsl : { "(" A 0 ")!=(" A 1 ")" } msl : { "(" A 0 ")!=(" A 1 ")" } }
+	[[xw]] classis functio logicum operator < (logicum a, logicum b) { hlsl : { "(" A 0 ")<(" A 1 ")" } msl : { "(" A 0 ")<(" A 1 ")" } }
+	[[xw]] classis functio logicum operator > (logicum a, logicum b) { hlsl : { "(" A 0 ")>(" A 1 ")" } msl : { "(" A 0 ")>(" A 1 ")" } }
+	[[xw]] classis functio logicum operator <= (logicum a, logicum b) { hlsl : { "(" A 0 ")<=(" A 1 ")" } msl : { "(" A 0 ")<=(" A 1 ")" } }
+	[[xw]] classis functio logicum operator >= (logicum a, logicum b) { hlsl : { "(" A 0 ")>=(" A 1 ")" } msl : { "(" A 0 ")>=(" A 1 ")" } }
+}
+[[mappa_xv] "int32"] [[mappa_cxx] "Engine::int32"] [[mappa_hlsl] "int"] [[mappa_msl] "int"] [[polire] "4"]
+[[innatum]] [[magnitudo] "4"] [[significatio] integer_signus]
+genus int32 {
+	[[xw]] structor () { hlsl : {} msl : {} }
+	[[xw]] structor (int32 src) { hlsl : { "int(" A 0 ")" } msl : { "int(" A 0 ")" } }
+	[[xw]] functio int32 operator - () { hlsl : { # "L" "-(" A 0 ")" } msl : { # "L" "-(" A 0 ")" } }
+	[[xw]] functio int32 operator ~ () { hlsl : { # "L" "~(" A 0 ")" } msl : { # "L" "~(" A 0 ")" } }
+	[[xw]] functio logicum operator ! () { hlsl : { # "L" "!(" A 0 ")" } msl : { # "L" "!(" A 0 ")" } }
+	[[xw]] functio int32 operator = (int32 src) { hlsl : { # "A" A 0 "=" A 1 } msl : { # "A" A 0 "=" A 1 } }
+	[[xw]] functio int32 operator += (int32 src) { hlsl : { # "A" A 0 "+=" A 1 } msl : { # "A" A 0 "+=" A 1 } }
+	[[xw]] functio int32 operator -= (int32 src) { hlsl : { # "A" A 0 "-=" A 1 } msl : { # "A" A 0 "-=" A 1 } }
+	[[xw]] functio int32 operator *= (int32 src) { hlsl : { # "A" A 0 "*=" A 1 } msl : { # "A" A 0 "*=" A 1 } }
+	[[xw]] functio int32 operator /= (int32 src) { hlsl : { # "A" A 0 "/=" A 1 } msl : { # "A" A 0 "/=" A 1 } }
+	[[xw]] functio int32 operator %= (int32 src) { hlsl : { # "A" A 0 "%=" A 1 } msl : { # "A" A 0 "%=" A 1 } }
+	[[xw]] functio int32 operator |= (int32 src) { hlsl : { # "A" A 0 "|=" A 1 } msl : { # "A" A 0 "|=" A 1 } }
+	[[xw]] functio int32 operator &= (int32 src) { hlsl : { # "A" A 0 "&=" A 1 } msl : { # "A" A 0 "&=" A 1 } }
+	[[xw]] functio int32 operator #= (int32 src) { hlsl : { # "A" A 0 "^=" A 1 } msl : { # "A" A 0 "^=" A 1 } }
+	[[xw]] functio int32 operator <<= (int32 src) { hlsl : { # "A" A 0 "<<=" A 1 } msl : { # "A" A 0 "<<=" A 1 } }
+	[[xw]] functio int32 operator >>= (int32 src) { hlsl : { # "A" A 0 ">>=" A 1 } msl : { # "A" A 0 ">>=" A 1 } }
+	[[xw]] functio int32 operator ++ () { hlsl : { # "A" "++(" A 0 ")" } msl : { # "A" "++(" A 0 ")" } }
+	[[xw]] functio int32 operator -- () { hlsl : { # "A" "--(" A 0 ")" } msl : { # "A" "--(" A 0 ")" } }
+	[[xw]] classis functio int32 operator + (int32 a, int32 b) { hlsl : { "(" A 0 ")+(" A 1 ")" } msl : { "(" A 0 ")+(" A 1 ")" } }
+	[[xw]] classis functio int32 operator - (int32 a, int32 b) { hlsl : { "(" A 0 ")-(" A 1 ")" } msl : { "(" A 0 ")-(" A 1 ")" } }
+	[[xw]] classis functio int32 operator * (int32 a, int32 b) { hlsl : { "(" A 0 ")*(" A 1 ")" } msl : { "(" A 0 ")*(" A 1 ")" } }
+	[[xw]] classis functio int32 operator / (int32 a, int32 b) { hlsl : { "(" A 0 ")/(" A 1 ")" } msl : { "(" A 0 ")/(" A 1 ")" } }
+	[[xw]] classis functio int32 operator % (int32 a, int32 b) { hlsl : { "(" A 0 ")%(" A 1 ")" } msl : { "(" A 0 ")%(" A 1 ")" } }
+	[[xw]] classis functio int32 operator | (int32 a, int32 b) { hlsl : { "(" A 0 ")|(" A 1 ")" } msl : { "(" A 0 ")|(" A 1 ")" } }
+	[[xw]] classis functio int32 operator & (int32 a, int32 b) { hlsl : { "(" A 0 ")&(" A 1 ")" } msl : { "(" A 0 ")&(" A 1 ")" } }
+	[[xw]] classis functio int32 operator # (int32 a, int32 b) { hlsl : { "(" A 0 ")^(" A 1 ")" } msl : { "(" A 0 ")^(" A 1 ")" } }
+	[[xw]] classis functio int32 operator << (int32 a, int32 b) { hlsl : { "(" A 0 ")<<(" A 1 ")" } msl : { "(" A 0 ")<<(" A 1 ")" } }
+	[[xw]] classis functio int32 operator >> (int32 a, int32 b) { hlsl : { "(" A 0 ")>>(" A 1 ")" } msl : { "(" A 0 ")>>(" A 1 ")" } }
+	[[xw]] classis functio logicum operator == (int32 a, int32 b) { hlsl : { "(" A 0 ")==(" A 1 ")" } msl : { "(" A 0 ")==(" A 1 ")" } }
+	[[xw]] classis functio logicum operator != (int32 a, int32 b) { hlsl : { "(" A 0 ")!=(" A 1 ")" } msl : { "(" A 0 ")!=(" A 1 ")" } }
+	[[xw]] classis functio logicum operator < (int32 a, int32 b) { hlsl : { "(" A 0 ")<(" A 1 ")" } msl : { "(" A 0 ")<(" A 1 ")" } }
+	[[xw]] classis functio logicum operator > (int32 a, int32 b) { hlsl : { "(" A 0 ")>(" A 1 ")" } msl : { "(" A 0 ")>(" A 1 ")" } }
+	[[xw]] classis functio logicum operator <= (int32 a, int32 b) { hlsl : { "(" A 0 ")<=(" A 1 ")" } msl : { "(" A 0 ")<=(" A 1 ")" } }
+	[[xw]] classis functio logicum operator >= (int32 a, int32 b) { hlsl : { "(" A 0 ")>=(" A 1 ")" } msl : { "(" A 0 ")>=(" A 1 ")" } }
+}
+[[mappa_xv] "nint32"] [[mappa_cxx] "Engine::uint32"] [[mappa_hlsl] "uint"] [[mappa_msl] "uint"] [[polire] "4"]
+[[innatum]] [[magnitudo] "4"] [[significatio] integer]
+genus nint32 {
+	[[xw]] structor () { hlsl : {} msl : {} }
+	[[xw]] structor (nint32 src) { hlsl : { "uint(" A 0 ")" } msl : { "uint(" A 0 ")" } }
+	[[xw]] functio nint32 operator - () { hlsl : { # "L" "-(" A 0 ")" } msl : { # "L" "-(" A 0 ")" } }
+	[[xw]] functio nint32 operator ~ () { hlsl : { # "L" "~(" A 0 ")" } msl : { # "L" "~(" A 0 ")" } }
+	[[xw]] functio logicum operator ! () { hlsl : { # "L" "!(" A 0 ")" } msl : { # "L" "!(" A 0 ")" } }
+	[[xw]] functio nint32 operator = (nint32 src) { hlsl : { # "A" A 0 "=" A 1 } msl : { # "A" A 0 "=" A 1 } }
+	[[xw]] functio nint32 operator += (nint32 src) { hlsl : { # "A" A 0 "+=" A 1 } msl : { # "A" A 0 "+=" A 1 } }
+	[[xw]] functio nint32 operator -= (nint32 src) { hlsl : { # "A" A 0 "-=" A 1 } msl : { # "A" A 0 "-=" A 1 } }
+	[[xw]] functio nint32 operator *= (nint32 src) { hlsl : { # "A" A 0 "*=" A 1 } msl : { # "A" A 0 "*=" A 1 } }
+	[[xw]] functio nint32 operator /= (nint32 src) { hlsl : { # "A" A 0 "/=" A 1 } msl : { # "A" A 0 "/=" A 1 } }
+	[[xw]] functio nint32 operator %= (nint32 src) { hlsl : { # "A" A 0 "%=" A 1 } msl : { # "A" A 0 "%=" A 1 } }
+	[[xw]] functio nint32 operator |= (nint32 src) { hlsl : { # "A" A 0 "|=" A 1 } msl : { # "A" A 0 "|=" A 1 } }
+	[[xw]] functio nint32 operator &= (nint32 src) { hlsl : { # "A" A 0 "&=" A 1 } msl : { # "A" A 0 "&=" A 1 } }
+	[[xw]] functio nint32 operator #= (nint32 src) { hlsl : { # "A" A 0 "^=" A 1 } msl : { # "A" A 0 "^=" A 1 } }
+	[[xw]] functio nint32 operator <<= (nint32 src) { hlsl : { # "A" A 0 "<<=" A 1 } msl : { # "A" A 0 "<<=" A 1 } }
+	[[xw]] functio nint32 operator >>= (nint32 src) { hlsl : { # "A" A 0 ">>=" A 1 } msl : { # "A" A 0 ">>=" A 1 } }
+	[[xw]] functio nint32 operator ++ () { hlsl : { # "A" "++(" A 0 ")" } msl : { # "A" "++(" A 0 ")" } }
+	[[xw]] functio nint32 operator -- () { hlsl : { # "A" "--(" A 0 ")" } msl : { # "A" "--(" A 0 ")" } }
+	[[xw]] classis functio nint32 operator + (nint32 a, nint32 b) { hlsl : { "(" A 0 ")+(" A 1 ")" } msl : { "(" A 0 ")+(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator - (nint32 a, nint32 b) { hlsl : { "(" A 0 ")-(" A 1 ")" } msl : { "(" A 0 ")-(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator * (nint32 a, nint32 b) { hlsl : { "(" A 0 ")*(" A 1 ")" } msl : { "(" A 0 ")*(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator / (nint32 a, nint32 b) { hlsl : { "(" A 0 ")/(" A 1 ")" } msl : { "(" A 0 ")/(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator % (nint32 a, nint32 b) { hlsl : { "(" A 0 ")%(" A 1 ")" } msl : { "(" A 0 ")%(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator | (nint32 a, nint32 b) { hlsl : { "(" A 0 ")|(" A 1 ")" } msl : { "(" A 0 ")|(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator & (nint32 a, nint32 b) { hlsl : { "(" A 0 ")&(" A 1 ")" } msl : { "(" A 0 ")&(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator # (nint32 a, nint32 b) { hlsl : { "(" A 0 ")^(" A 1 ")" } msl : { "(" A 0 ")^(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator << (nint32 a, nint32 b) { hlsl : { "(" A 0 ")<<(" A 1 ")" } msl : { "(" A 0 ")<<(" A 1 ")" } }
+	[[xw]] classis functio nint32 operator >> (nint32 a, nint32 b) { hlsl : { "(" A 0 ")>>(" A 1 ")" } msl : { "(" A 0 ")>>(" A 1 ")" } }
+	[[xw]] classis functio logicum operator == (nint32 a, nint32 b) { hlsl : { "(" A 0 ")==(" A 1 ")" } msl : { "(" A 0 ")==(" A 1 ")" } }
+	[[xw]] classis functio logicum operator != (nint32 a, nint32 b) { hlsl : { "(" A 0 ")!=(" A 1 ")" } msl : { "(" A 0 ")!=(" A 1 ")" } }
+	[[xw]] classis functio logicum operator < (nint32 a, nint32 b) { hlsl : { "(" A 0 ")<(" A 1 ")" } msl : { "(" A 0 ")<(" A 1 ")" } }
+	[[xw]] classis functio logicum operator > (nint32 a, nint32 b) { hlsl : { "(" A 0 ")>(" A 1 ")" } msl : { "(" A 0 ")>(" A 1 ")" } }
+	[[xw]] classis functio logicum operator <= (nint32 a, nint32 b) { hlsl : { "(" A 0 ")<=(" A 1 ")" } msl : { "(" A 0 ")<=(" A 1 ")" } }
+	[[xw]] classis functio logicum operator >= (nint32 a, nint32 b) { hlsl : { "(" A 0 ")>=(" A 1 ")" } msl : { "(" A 0 ")>=(" A 1 ")" } }
+}
+[[mappa_xv] "frac"] [[mappa_cxx] "float"] [[mappa_hlsl] "float"] [[mappa_msl] "float"] [[polire] "4"]
+[[innatum]] [[magnitudo] "4"] [[significatio] fractus]
+genus frac {
+	[[xw]] structor () { hlsl : {} msl : {} }
+	[[xw]] structor (frac src) { hlsl : { "float(" A 0 ")" } msl : { "float(" A 0 ")" } }
+	[[xw]] functio frac operator - () { hlsl : { # "L" "-(" A 0 ")" } msl : { # "L" "-(" A 0 ")" } }
+	[[xw]] functio logicum operator ! () { hlsl : { # "L" "!(" A 0 ")" } msl : { # "L" "!(" A 0 ")" } }
+	[[xw]] functio frac operator = (frac src) { hlsl : { # "A" A 0 "=" A 1 } msl : { # "A" A 0 "=" A 1 } }
+	[[xw]] functio frac operator += (frac src) { hlsl : { # "A" A 0 "+=" A 1 } msl : { # "A" A 0 "+=" A 1 } }
+	[[xw]] functio frac operator -= (frac src) { hlsl : { # "A" A 0 "-=" A 1 } msl : { # "A" A 0 "-=" A 1 } }
+	[[xw]] functio frac operator *= (frac src) { hlsl : { # "A" A 0 "*=" A 1 } msl : { # "A" A 0 "*=" A 1 } }
+	[[xw]] functio frac operator /= (frac src) { hlsl : { # "A" A 0 "/=" A 1 } msl : { # "A" A 0 "/=" A 1 } }
+	[[xw]] functio frac operator ++ () { hlsl : { # "A" "++(" A 0 ")" } msl : { # "A" "++(" A 0 ")" } }
+	[[xw]] functio frac operator -- () { hlsl : { # "A" "--(" A 0 ")" } msl : { # "A" "--(" A 0 ")" } }
+	[[xw]] classis functio frac operator + (frac a, frac b) { hlsl : { "(" A 0 ")+(" A 1 ")" } msl : { "(" A 0 ")+(" A 1 ")" } }
+	[[xw]] classis functio frac operator - (frac a, frac b) { hlsl : { "(" A 0 ")-(" A 1 ")" } msl : { "(" A 0 ")-(" A 1 ")" } }
+	[[xw]] classis functio frac operator * (frac a, frac b) { hlsl : { "(" A 0 ")*(" A 1 ")" } msl : { "(" A 0 ")*(" A 1 ")" } }
+	[[xw]] classis functio frac operator / (frac a, frac b) { hlsl : { "(" A 0 ")/(" A 1 ")" } msl : { "(" A 0 ")/(" A 1 ")" } }
+	[[xw]] classis functio logicum operator == (frac a, frac b) { hlsl : { "(" A 0 ")==(" A 1 ")" } msl : { "(" A 0 ")==(" A 1 ")" } }
+	[[xw]] classis functio logicum operator != (frac a, frac b) { hlsl : { "(" A 0 ")!=(" A 1 ")" } msl : { "(" A 0 ")!=(" A 1 ")" } }
+	[[xw]] classis functio logicum operator < (frac a, frac b) { hlsl : { "(" A 0 ")<(" A 1 ")" } msl : { "(" A 0 ")<(" A 1 ")" } }
+	[[xw]] classis functio logicum operator > (frac a, frac b) { hlsl : { "(" A 0 ")>(" A 1 ")" } msl : { "(" A 0 ")>(" A 1 ")" } }
+	[[xw]] classis functio logicum operator <= (frac a, frac b) { hlsl : { "(" A 0 ")<=(" A 1 ")" } msl : { "(" A 0 ")<=(" A 1 ")" } }
+	[[xw]] classis functio logicum operator >= (frac a, frac b) { hlsl : { "(" A 0 ")>=(" A 1 ")" } msl : { "(" A 0 ")>=(" A 1 ")" } }
+}
+
+[[mappa_xv] "frac2"] [[mappa_cxx] "Engine::Math::Vector2f"] [[mappa_hlsl] "float2"] [[mappa_msl] "float2|simd::packed_float2"] [[polire] "4"]
+[[innatum]] [[magnitudo] "8"] [[significatio] fractus]
+genus frac2 {
+	frac longitudo { [[xw]] adipisce { hlsl : { # "L" "length(" A 0 ")" } msl : { # "L" "length(" A 0 ")" } } }
+	frac2 normativus { [[xw]] adipisce { hlsl : { # "L" "normalize(" A 0 ")" } msl : { # "L" "normalize(" A 0 ")" } } }
+
+	[[xw]] structor () { hlsl : {} msl : {} }
+	[[xw]] structor (frac2 s) { hlsl : { "float2(" A 0 ")" } msl : { "float2(" A 0 ")" } }
+	[[xw]] [[convertor] "extendens"] structor (frac s) { hlsl : { "float2(" A 0 ")" } msl : { "float2(" A 0 ")" } }
+	[[xw]] structor (frac ix, frac iy) { hlsl : { "float2(" A 0 "," A 1 ")" } msl : { "float2(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac2 operator - () { hlsl : { # "L" "-(" A 0 ")" } msl : { # "L" "-(" A 0 ")" } }
+	[[xw]] functio frac2 operator = (frac2 src) { hlsl : { # "A" A 0 "=" A 1 } msl : { # "A" A 0 "=" A 1 } }
+	[[xw]] functio frac2 operator += (frac2 src) { hlsl : { # "A" A 0 "+=" A 1 } msl : { # "A" A 0 "+=" A 1 } }
+	[[xw]] functio frac2 operator -= (frac2 src) { hlsl : { # "A" A 0 "-=" A 1 } msl : { # "A" A 0 "-=" A 1 } }
+	[[xw]] functio frac2 operator *= (frac2 src) { hlsl : { # "A" A 0 "*=" A 1 } msl : { # "A" A 0 "*=" A 1 } }
+	[[xw]] functio frac2 operator /= (frac2 src) { hlsl : { # "A" A 0 "/=" A 1 } msl : { # "A" A 0 "/=" A 1 } }
+	[[xw]] classis functio frac2 operator + (frac2 a, frac2 b) { hlsl : { "(" A 0 ")+(" A 1 ")" } msl : { "(" A 0 ")+(" A 1 ")" } }
+	[[xw]] classis functio frac2 operator - (frac2 a, frac2 b) { hlsl : { "(" A 0 ")-(" A 1 ")" } msl : { "(" A 0 ")-(" A 1 ")" } }
+	[[xw]] classis functio frac2 operator * (frac2 a, frac2 b) { hlsl : { "(" A 0 ")*(" A 1 ")" } msl : { "(" A 0 ")*(" A 1 ")" } }
+	[[xw]] classis functio frac2 operator / (frac2 a, frac2 b) { hlsl : { "(" A 0 ")/(" A 1 ")" } msl : { "(" A 0 ")/(" A 1 ")" } }
+	// [[xw]] classis functio logicum operator == (~frac2 a, ~frac2 b) {
+	// 	INTERFACE W 1 W 1 => 1
+	// 	CODE { RET { @BLT:1 1=>1(R, @FP_EQ_32:8 8=>1(@PTR_FOLLOW:W 1=>8(A[0]), @PTR_FOLLOW:W 1=>8(A[1]))) } }
+	// }
+	// [[xw]] classis functio logicum operator != (~frac2 a, ~frac2 b) {
+	// 	INTERFACE W 1 W 1 => 1
+	// 	CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_32:8 8=>1(@PTR_FOLLOW:W 1=>8(A[0]), @PTR_FOLLOW:W 1=>8(A[1])))) } }
+	// }
+	[[xw]] functio frac operator [] (int32 i) { hlsl : { # "A" "(" A 0 "[" A 1 "])" } msl : { # "A" "(" A 0 "[" A 1 "])" } }
+}
+[[mappa_xv] "frac3"] [[mappa_cxx] "Engine::Math::Vector3f"] [[mappa_hlsl] "float3"] [[mappa_msl] "float3|simd::packed_float3"] [[polire] "4"]
+[[innatum]] [[magnitudo] "12"] [[significatio] fractus]
+genus frac3 {
+	frac longitudo { [[xw]] adipisce { hlsl : { # "L" "length(" A 0 ")" } msl : { # "L" "length(" A 0 ")" } } }
+	frac3 normativus { [[xw]] adipisce { hlsl : { # "L" "normalize(" A 0 ")" } msl : { # "L" "normalize(" A 0 ")" } } }
+
+	[[xw]] structor () { hlsl : {} msl : {} }
+	[[xw]] structor (frac3 s) { hlsl : { "float3(" A 0 ")" } msl : { "float3(" A 0 ")" } }
+	[[xw]] [[convertor] "extendens"] structor (frac s) { hlsl : { "float3(" A 0 ")" } msl : { "float3(" A 0 ")" } }
+	[[xw]] structor (frac ix, frac iy, frac iz) { hlsl : { "float3(" A 0 "," A 1 "," A 2 ")" } msl : { "float3(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac3 operator - () { hlsl : { # "L" "-(" A 0 ")" } msl : { # "L" "-(" A 0 ")" } }
+	[[xw]] functio frac3 operator = (frac3 src) { hlsl : { # "A" A 0 "=" A 1 } msl : { # "A" A 0 "=" A 1 } }
+	[[xw]] functio frac3 operator += (frac3 src) { hlsl : { # "A" A 0 "+=" A 1 } msl : { # "A" A 0 "+=" A 1 } }
+	[[xw]] functio frac3 operator -= (frac3 src) { hlsl : { # "A" A 0 "-=" A 1 } msl : { # "A" A 0 "-=" A 1 } }
+	[[xw]] functio frac3 operator *= (frac3 src) { hlsl : { # "A" A 0 "*=" A 1 } msl : { # "A" A 0 "*=" A 1 } }
+	[[xw]] functio frac3 operator /= (frac3 src) { hlsl : { # "A" A 0 "/=" A 1 } msl : { # "A" A 0 "/=" A 1 } }
+	[[xw]] classis functio frac3 operator + (frac3 a, frac3 b) { hlsl : { "(" A 0 ")+(" A 1 ")" } msl : { "(" A 0 ")+(" A 1 ")" } }
+	[[xw]] classis functio frac3 operator - (frac3 a, frac3 b) { hlsl : { "(" A 0 ")-(" A 1 ")" } msl : { "(" A 0 ")-(" A 1 ")" } }
+	[[xw]] classis functio frac3 operator * (frac3 a, frac3 b) { hlsl : { "(" A 0 ")*(" A 1 ")" } msl : { "(" A 0 ")*(" A 1 ")" } }
+	[[xw]] classis functio frac3 operator / (frac3 a, frac3 b) { hlsl : { "(" A 0 ")/(" A 1 ")" } msl : { "(" A 0 ")/(" A 1 ")" } }
+	// [[xw]] classis functio logicum operator == (~frac3 a, ~frac3 b) {
+	// 	INTERFACE W 1 W 1 => 1
+	// 	CODE { RET { @BLT:1 1=>1(R, @FP_EQ_32:12 12=>1(@PTR_FOLLOW:W 1=>12(A[0]), @PTR_FOLLOW:W 1=>12(A[1]))) } }
+	// }
+	// [[xw]] classis functio logicum operator != (~frac3 a, ~frac3 b) {
+	// 	INTERFACE W 1 W 1 => 1
+	// 	CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_32:12 12=>1(@PTR_FOLLOW:W 1=>12(A[0]), @PTR_FOLLOW:W 1=>12(A[1])))) } }
+	// }
+	[[xw]] functio frac operator [] (int32 i) { hlsl : { # "A" "(" A 0 "[" A 1 "])" } msl : { # "A" "(" A 0 "[" A 1 "])" } }
+}
+[[mappa_xv] "frac4"] [[mappa_cxx] "Engine::Math::Vector4f"] [[mappa_hlsl] "float4"] [[mappa_msl] "float4|simd::packed_float4"] [[polire] "4"]
+[[innatum]] [[magnitudo] "16"] [[significatio] fractus]
+genus frac4 {
+	frac longitudo { [[xw]] adipisce { hlsl : { # "L" "length(" A 0 ")" } msl : { # "L" "length(" A 0 ")" } } }
+	frac4 normativus { [[xw]] adipisce { hlsl : { # "L" "normalize(" A 0 ")" } msl : { # "L" "normalize(" A 0 ")" } } }
+
+	[[xw]] structor () { hlsl : {} msl : {} }
+	[[xw]] structor (frac4 s) { hlsl : { "float4(" A 0 ")" } msl : { "float4(" A 0 ")" } }
+	[[xw]] [[convertor] "extendens"] structor (frac s) { hlsl : { "float4(" A 0 ")" } msl : { "float4(" A 0 ")" } }
+	[[xw]] structor (frac ix, frac iy, frac iz, frac iw) { hlsl : { "float4(" A 0 "," A 1 "," A 2 "," A 3 ")" } msl : { "float4(" A 0 "," A 1 "," A 2 "," A 3 ")" } }
+	[[xw]] functio frac4 operator - () { hlsl : { # "L" "-(" A 0 ")" } msl : { # "L" "-(" A 0 ")" } }
+	[[xw]] functio frac4 operator = (frac4 src) { hlsl : { # "A" A 0 "=" A 1 } msl : { # "A" A 0 "=" A 1 } }
+	[[xw]] functio frac4 operator += (frac4 src) { hlsl : { # "A" A 0 "+=" A 1 } msl : { # "A" A 0 "+=" A 1 } }
+	[[xw]] functio frac4 operator -= (frac4 src) { hlsl : { # "A" A 0 "-=" A 1 } msl : { # "A" A 0 "-=" A 1 } }
+	[[xw]] functio frac4 operator *= (frac4 src) { hlsl : { # "A" A 0 "*=" A 1 } msl : { # "A" A 0 "*=" A 1 } }
+	[[xw]] functio frac4 operator /= (frac4 src) { hlsl : { # "A" A 0 "/=" A 1 } msl : { # "A" A 0 "/=" A 1 } }
+	[[xw]] classis functio frac4 operator + (frac4 a, frac4 b) { hlsl : { "(" A 0 ")+(" A 1 ")" } msl : { "(" A 0 ")+(" A 1 ")" } }
+	[[xw]] classis functio frac4 operator - (frac4 a, frac4 b) { hlsl : { "(" A 0 ")-(" A 1 ")" } msl : { "(" A 0 ")-(" A 1 ")" } }
+	[[xw]] classis functio frac4 operator * (frac4 a, frac4 b) { hlsl : { "(" A 0 ")*(" A 1 ")" } msl : { "(" A 0 ")*(" A 1 ")" } }
+	[[xw]] classis functio frac4 operator / (frac4 a, frac4 b) { hlsl : { "(" A 0 ")/(" A 1 ")" } msl : { "(" A 0 ")/(" A 1 ")" } }
+	// [[xw]] classis functio logicum operator == (~frac4 a, ~frac4 b) {
+	// 	INTERFACE W 1 W 1 => 1
+	// 	CODE { RET { @BLT:1 1=>1(R, @FP_EQ_32:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1]))) } }
+	// }
+	// [[xw]] classis functio logicum operator != (~frac4 a, ~frac4 b) {
+	// 	INTERFACE W 1 W 1 => 1
+	// 	CODE { RET { @BLT:1 1=>1(R, @ZERO:1=>1(@FP_EQ_32:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])))) } }
+	// }
+	[[xw]] functio frac operator [] (int32 i) { hlsl : { # "A" "(" A 0 "[" A 1 "])" } msl : { # "A" "(" A 0 "[" A 1 "])" } }
+}
+
+nomen_alternum int = int32;
+nomen_alternum nint = nint32;
+nomen_alternum frac32 = frac;
+nomen_alternum char = nint32;
+
+dura logicum {
+	[[xw]] [[convertor] "extendens"] convertor (int32) () { hlsl : { # "L" "int(" A 0 ")" } msl : { # "L" "int(" A 0 ")" } }
+	[[xw]] [[convertor] "extendens"] convertor (nint32) () { hlsl : { # "L" "uint(" A 0 ")" } msl : { # "L" "uint(" A 0 ")" } }
+	[[xw]] [[convertor] "extendens:pretiosus"] convertor (frac) () { hlsl : { # "L" "float(" A 0 ")" } msl : { # "L" "float(" A 0 ")" } }
+}
+dura int32 {
+	[[xw]] [[convertor] "angustans"] convertor (logicum) () { hlsl : { # "L" "bool(" A 0 ")" } msl : { # "L" "bool(" A 0 ")" } }
+	[[xw]] [[convertor] "conformis"] convertor (nint32) () { hlsl : { # "L" "uint(" A 0 ")" } msl : { # "L" "uint(" A 0 ")" } }
+	[[xw]] [[convertor] "pretiosus"] convertor (frac) () { hlsl : { # "L" "float(" A 0 ")" } msl : { # "L" "float(" A 0 ")" } }
+}
+dura nint32 {
+	[[xw]] [[convertor] "angustans"] convertor (logicum) () { hlsl : { # "L" "bool(" A 0 ")" } msl : { # "L" "bool(" A 0 ")" } }
+	[[xw]] [[convertor] "conformis"] convertor (int32) () { hlsl : { # "L" "int(" A 0 ")" } msl : { # "L" "int(" A 0 ")" } }
+	[[xw]] [[convertor] "pretiosus"] convertor (frac) () { hlsl : { # "L" "float(" A 0 ")" } msl : { # "L" "float(" A 0 ")" } }
+}
+dura frac {
+	[[xw]] [[convertor] "angustans:pretiosus"] convertor (logicum) () { hlsl : { # "L" "bool(" A 0 ")" } msl : { # "L" "bool(" A 0 ")" } }
+	[[xw]] [[convertor] "pretiosus"] convertor (int32) () { hlsl : { # "L" "int(" A 0 ")" } msl : { # "L" "int(" A 0 ")" } }
+	[[xw]] [[convertor] "pretiosus"] convertor (nint32) () { hlsl : { # "L" "uint(" A 0 ")" } msl : { # "L" "uint(" A 0 ")" } }
+}
+
+// dura frac2 {
+// 	[[xw]] [[convertor] "extendens"] convertor (dfrac2) () {
+// 		INTERFACE W 1 : THIS => 16 : OBJECT
+// 		CODE { RET { @BLT:16 16=>16(R, @FP_RESIZE_32:8=>16(@PTR_FOLLOW:W 1=>8(A[0]))) } }
+// 	}
+// }
+// dura frac3 {
+// 	[[xw]] [[convertor] "extendens"] convertor (dfrac3) () {
+// 		INTERFACE W 1 : THIS => 24 : OBJECT
+// 		CODE { RET { @BLT:24 24=>24(R, @FP_RESIZE_32:12=>24(@PTR_FOLLOW:W 1=>12(A[0]))) } }
+// 	}
+// }
+// dura frac4 {
+// 	[[xw]] [[convertor] "extendens"] convertor (dfrac4) () {
+// 		INTERFACE W 1 : THIS => 32 : OBJECT
+// 		CODE { RET { @BLT:32 32=>32(R, @FP_RESIZE_32:16=>32(@PTR_FOLLOW:W 1=>16(A[0]))) } }
+// 	}
+// }
+
+// TODO: ADD BOOL, INT, UINT VECTORS, FLOAT MATRICES
+
+spatium math {
+	dura .frac {
+		constatus pi = 3.14159265358979323846;
+		constatus e = 2.71828182845904523536;
+	}
+
+	// [[importa] fpu_ei_32]	functio logicum inf_est(frac valor);
+	// [[importa] fpu_enn_32]	functio logicum nn_est(frac valor);
+
+	// [[xw]] [[inline]]		functio int32	abs(int32 valor)	{ INTERFACE 4:SINT=>4:SINT CODE { RET { @BLT:4 4=>4(R, @ABS:4=>4(A[0])) } } }
+	// [[xw]] [[inline]]		functio frac	abs(frac valor)		{ INTERFACE 4:FLOAT=>4:FLOAT CODE { RET { @BLT:4 4=>4(R, @FP_ABS_32:4=>4(A[0])) } } }
+
+	// [[importa] fpu_sgn_i32]	functio int32	sgn(int32 valor);
+	// [[importa] fpu_sgn_f32]	functio frac	sgn(frac valor);
+
+	// [[importa] fpu_c1]		functio frac	concava(frac valor);
+	// [[importa] fpu_c2]		functio frac	trunca(frac valor);
+	// [[importa] fpu_c3]		functio frac	solum(frac valor);
+	// [[importa] fpu_c4]		functio frac	tectum(frac valor);
+
+	// [[xw]] [[inline]]		functio frac	radix(frac valor)	{ INTERFACE 4:FLOAT=>4:FLOAT CODE { RET { @BLT:4 4=>4(R, @FP_SQRT_32:4=>4(A[0])) } } }
+	// [[importa] fpu_pot]		functio frac	pot(frac valor, frac pot);
+
+	// [[importa] fpu_exp]		functio frac	exp(frac valor);
+	// [[importa] fpu_ln]		functio frac	ln(frac valor);
+	// [[importa] fpu_lb]		functio frac	lb(frac valor);
+	// [[importa] fpu_lg]		functio frac	lg(frac valor);
+
+	// [[importa] fpu_sin]		functio frac	sin(frac valor);
+	// [[importa] fpu_cos]		functio frac	cos(frac valor);
+	// [[importa] fpu_tg]		functio frac	tg(frac valor);
+	// [[importa] fpu_ctg]		functio frac	ctg(frac valor);
+
+	// [[importa] fpu_asin]	functio frac	arcsin(frac valor);
+	// [[importa] fpu_acos]	functio frac	arccos(frac valor);
+	// [[importa] fpu_atg]		functio frac	arctg(frac valor);
+	// [[importa] fpu_actg]	functio frac	arcctg(frac valor);
+
+	// [[xw]] functio frac prs(~frac2 a, ~frac2 b) {
+	// 	INTERFACE W 1 W 1 => 4 : FLOAT
+	// 	CODE { RET { @BLT:4 4=>4(R, @FP_REDUCE_32:8=>4(@FP_MUL_32:8 8=>8(@PTR_FOLLOW:W 1=>8(A[0]), @PTR_FOLLOW:W 1=>8(A[1])))) } }
+	// }
+	// [[xw]] functio frac prs(~frac3 a, ~frac3 b) {
+	// 	INTERFACE W 1 W 1 => 4 : FLOAT
+	// 	CODE { RET { @BLT:4 4=>4(R, @FP_REDUCE_32:12=>4(@FP_MUL_32:12 12=>12(@PTR_FOLLOW:W 1=>12(A[0]), @PTR_FOLLOW:W 1=>12(A[1])))) } }
+	// }
+	// [[xw]] functio frac prs(~frac4 a, ~frac4 b) {
+	// 	INTERFACE W 1 W 1 => 4 : FLOAT
+	// 	CODE { RET { @BLT:4 4=>4(R, @FP_REDUCE_32:16=>4(@FP_MUL_32:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])))) } }
+	// }
+	// [[xw]] functio dfrac prs(~dfrac2 a, ~dfrac2 b) {
+	// 	INTERFACE W 1 W 1 => 8 : FLOAT
+	// 	CODE { RET { @BLT:8 8=>8(R, @FP_REDUCE_64:16=>8(@FP_MUL_64:16 16=>16(@PTR_FOLLOW:W 1=>16(A[0]), @PTR_FOLLOW:W 1=>16(A[1])))) } }
+	// }
+	// [[xw]] functio dfrac prs(~dfrac3 a, ~dfrac3 b) {
+	// 	INTERFACE W 1 W 1 => 8 : FLOAT
+	// 	CODE { RET { @BLT:8 8=>8(R, @FP_REDUCE_64:24=>8(@FP_MUL_64:24 24=>24(@PTR_FOLLOW:W 1=>24(A[0]), @PTR_FOLLOW:W 1=>24(A[1])))) } }
+	// }
+	// [[xw]] functio dfrac prs(~dfrac4 a, ~dfrac4 b) {
+	// 	INTERFACE W 1 W 1 => 8 : FLOAT
+	// 	CODE { RET { @BLT:8 8=>8(R, @FP_REDUCE_64:32=>8(@FP_MUL_64:32 32=>32(@PTR_FOLLOW:W 1=>32(A[0]), @PTR_FOLLOW:W 1=>32(A[1])))) } }
+	// }
+	// functio frac3 prv(~frac3 a, ~frac3 b) { responde frac3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+	// functio dfrac3 prv(~dfrac3 a, ~dfrac3 b) { responde dfrac3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+}
+
+praeforma functio permuta(T) { \cense T genus(_0)\ functio nihil $_(~$T t1, ~$T t2) { $T acc = t1; t1 = t2; t2 = acc; } }
+
+[[privatus]] [[magnitudo] "4"]
+[[mappa_hlsl] "SamplerState"] [[mappa_msl] "sampler"]
+genus exceptor {}
+praeforma genus series(V) {
+	[[privatus]] [[magnitudo] "4"]
+	[[mappa_hlsl] "$!StructuredBuffer<$E>"] [[mappa_msl] "$!$E *"]
+	genus $_ {
+
+		// TODO: IMPLEMENT
+
+	}
+}
+praeforma genus textura_1d(V) {
+	\si !tractus.idem($V, .frac) & !tractus.idem($V, .int32) & !tractus.idem($V, .nint32)\ \falle\ \fini\
+	[[privatus]] [[magnitudo] "4"]
+	[[mappa_hlsl] "Texture1D<$I4>"] [[mappa_msl] "texture1d<$I>"]
+	genus $_ {
+
+		// TODO: IMPLEMENT
+
+	}
+}
+praeforma genus ordo_texturarum_1d(V) {
+	\si !tractus.idem($V, .frac) & !tractus.idem($V, .int32) & !tractus.idem($V, .nint32)\ \falle\ \fini\
+	[[privatus]] [[magnitudo] "4"]
+	[[mappa_hlsl] "Texture1DArray<$I4>"] [[mappa_msl] "texture1d_array<$I>"]
+	genus $_ {
+
+		// TODO: IMPLEMENT
+
+	}
+}
+praeforma genus textura_2d(V) {
+	\si !tractus.idem($V, .frac) & !tractus.idem($V, .int32) & !tractus.idem($V, .nint32)\ \falle\ \fini\
+	[[privatus]] [[magnitudo] "4"]
+	[[mappa_hlsl] "Texture2D<$I4>"] [[mappa_msl] "texture2d<$I>"]
+	genus $_ {
+
+		// TODO: IMPLEMENT
+
+	}
+}
+praeforma genus ordo_texturarum_2d(V) {
+	\si !tractus.idem($V, .frac) & !tractus.idem($V, .int32) & !tractus.idem($V, .nint32)\ \falle\ \fini\
+	[[privatus]] [[magnitudo] "4"]
+	[[mappa_hlsl] "Texture2DArray<$I4>"] [[mappa_msl] "texture2d_array<$I>"]
+	genus $_ {
+
+		// TODO: IMPLEMENT
+
+	}
+}
+praeforma genus textura_cubica(V) {
+	\si !tractus.idem($V, .frac) & !tractus.idem($V, .int32) & !tractus.idem($V, .nint32)\ \falle\ \fini\
+	[[privatus]] [[magnitudo] "4"]
+	[[mappa_hlsl] "TextureCube<$I4>"] [[mappa_msl] "texturecube<$I>"]
+	genus $_ {
+
+		// TODO: IMPLEMENT
+
+	}
+}
+praeforma genus ordo_texturarum_cubicarum(V) {
+	\si !tractus.idem($V, .frac) & !tractus.idem($V, .int32) & !tractus.idem($V, .nint32)\ \falle\ \fini\
+	[[privatus]] [[magnitudo] "4"]
+	[[mappa_hlsl] "TextureCubeArray<$I4>"] [[mappa_msl] "texturecube_array<$I>"]
+	genus $_ {
+
+		// TODO: IMPLEMENT
+
+	}
+}
+praeforma genus textura_3d(V) {
+	\si !tractus.idem($V, .frac) & !tractus.idem($V, .int32) & !tractus.idem($V, .nint32)\ \falle\ \fini\
+	[[privatus]] [[magnitudo] "4"]
+	[[mappa_hlsl] "Texture3D<$I4>"] [[mappa_msl] "texture3d<$I>"]
+	genus $_ {
+
+		// TODO: IMPLEMENT
+
+	}
+}
+nomen_alternum textura = textura_2d;
+
+spatium meta {
+	constatus attributum_nomen_moduli	= "NomenModuli";
+	constatus attributum_creator_moduli	= "CreatorModuli";
+	constatus attributum_iura_exempli	= "IuraExempli";
+	constatus attributum_versio			= "Versio";
+}

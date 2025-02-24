@@ -32,7 +32,7 @@ namespace Engine
 			NotSupported			= 0x0007,
 			InvalidSemantics		= 0x0008,
 			NoMandatorySemantics	= 0x0009,
-			BadShaderName			= 0x0010,
+			BadShaderName			= 0x000A,
 			InternalError			= 0xFFFF,
 		};
 		struct DecompilerStatusDesc

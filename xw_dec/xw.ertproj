@@ -1,0 +1,40 @@
+﻿UseVersionDefines = true
+Attachments {
+	AAAAAA {
+		From = "xw.ini"
+		To = "xw.ini"
+	}
+}
+CompileList {
+	AAAAAA = "../xasm/xa_trans.cxx"
+	AAAAAB = "../xasm/xa_type_helper.cxx"
+	AAAAAC = "../xasm/xa_types.cxx"
+	AAAAAD = "../xexec/xx_com.cxx"
+	AAAAAE = "../ximg/xi_function.cxx"
+	AAAAAF = "../ximg/xi_module.cxx"
+	AAAAAG = "../ximg/xi_resources.cxx"
+	AAAAAH = "../xlang/xl_base.cxx"
+	AAAAAI = "../xlang/xl_code.cxx"
+	AAAAAJ = "../xlang/xl_com.cxx"
+	AAAAAK = "../xlang/xl_func.cxx"
+	AAAAAL = "../xlang/xl_inline.cxx"
+	AAAAAM = "../xlang/xl_lal.cxx"
+	AAAAAN = "../xlang/xl_lit.cxx"
+	AAAAAO = "../xlang/xl_prop.cxx"
+	AAAAAP = "../xlang/xl_synth.cxx"
+	AAAAAQ = "../xlang/xl_types.cxx"
+	AAAAAR = "../xlang/xl_var.cxx"
+	AAAAAS = "../xw/xw_decompiler.cxx"
+	AAAAAT = "../xw/xw_lang_ext.cxx"
+	AAAAAU = "../xw/xw_types.cxx"
+	AAAAAV = "xw.cxx"
+}
+VersionInformation {
+	ApplicationIdentifier = "XWD"
+	ApplicationName = "Engine XW Decompilator"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2025"
+	InternalName = "xw"
+	Version = "1.0.0.1"
+}

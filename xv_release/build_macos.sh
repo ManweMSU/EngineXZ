@@ -1,4 +1,5 @@
 ertbuild xv_com/xv.ertproj -Nar ${ARCH}
+ertbuild xw_dec/xw.ertproj -Nar ${ARCH}
 ertbuild xv_sl/xvsl.ertproj -Nar ${ARCH}
 ertbuild xv_mm/xvm.ertproj -Nar ${ARCH}
 ertbuild xi_tool/xi.ertproj -Nar ${ARCH}
@@ -13,13 +14,16 @@ mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacO
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xwcl
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/vscx
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc
+mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xw.loc
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc
 mkdir xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc
 cp xv_com/xv.ini xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.ini
 cp xv_com/xe.ini xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xe.ini
+cp xw_dec/xw.ini xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xw.ini
 cp xi_tool/xi.ini xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.ini
 cp xi_dasm/xda.ini xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.ini
 cp xv_com/_build/macosx_${ARCH}_release/xv xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv
+cp xw_dec/_build/macosx_${ARCH}_release/xw xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xw
 cp xv_sl/_build/macosx_${ARCH}_release/xvsl xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvsl
 cp xi_tool/_build/macosx_${ARCH}_release/xi xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi
 cp xi_dasm/_build/macosx_${ARCH}_release/xda xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda
@@ -71,6 +75,8 @@ cp xv_release/_build/com/*.xo xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Ma
 cp xv_release/_build/comw/*.xwo xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xwcl
 estrtab xv_com/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/ru.ecst
 estrtab xv_com/locale/en.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv.loc/en.ecst
+estrtab xw_dec/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xw.loc/ru.ecst
+estrtab xw_dec/locale/en.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xw.loc/en.ecst
 estrtab xi_tool/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/ru.ecst
 estrtab xi_tool/locale/en.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi.loc/en.ecst
 estrtab xi_dasm/locale/ru.txt -Nfo bin xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.loc/ru.ecst

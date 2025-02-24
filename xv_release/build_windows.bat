@@ -1,5 +1,6 @@
 @echo off
 ertbuild xv_com\xv.ertproj -Nar %ARCH%
+ertbuild xw_dec\xw.ertproj -Nar %ARCH%
 ertbuild xv_sl\xvsl.ertproj -Nar %ARCH%
 ertbuild xv_mm\xvm.ertproj -Nar %ARCH%
 ertbuild xi_tool\xi.ertproj -Nar %ARCH%
@@ -14,13 +15,16 @@ mkdir xv_release\_build\windows_%ARCH%\xvcl
 mkdir xv_release\_build\windows_%ARCH%\xwcl
 mkdir xv_release\_build\windows_%ARCH%\vscx
 mkdir xv_release\_build\windows_%ARCH%\xv.loc
+mkdir xv_release\_build\windows_%ARCH%\xw.loc
 mkdir xv_release\_build\windows_%ARCH%\xi.loc
 mkdir xv_release\_build\windows_%ARCH%\xda.loc
 copy /B xv_com\xv.ini xv_release\_build\windows_%ARCH%\xv.ini
 copy /B xv_com\xe.ini xv_release\_build\windows_%ARCH%\xe.ini
+copy /B xw_dec\xv.ini xv_release\_build\windows_%ARCH%\xw.ini
 copy /B xi_tool\xi.ini xv_release\_build\windows_%ARCH%\xi.ini
 copy /B xi_dasm\xda.ini xv_release\_build\windows_%ARCH%\xda.ini
 copy /B xv_com\_build\windows_%ARCH%_release\xv.exe xv_release\_build\windows_%ARCH%\xv.exe
+copy /B xw_dec\_build\windows_%ARCH%_release\xw.exe xv_release\_build\windows_%ARCH%\xw.exe
 copy /B xv_sl\_build\windows_%ARCH%_release\xvsl.exe xv_release\_build\windows_%ARCH%\xvsl.exe
 copy /B xi_tool\_build\windows_%ARCH%_release\xi.exe xv_release\_build\windows_%ARCH%\xi.exe
 copy /B xi_dasm\_build\windows_%ARCH%_release\xda.exe xv_release\_build\windows_%ARCH%\xda.exe
@@ -64,6 +68,8 @@ xcopy /BY xv_lib\*.xvm xv_release\_build\windows_%ARCH%\xvcl\
 xcopy /BY xw_lib\*.xvm xv_release\_build\windows_%ARCH%\xwcl\
 estrtab xv_com\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xv.loc\ru.ecst
 estrtab xv_com\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xv.loc\en.ecst
+estrtab xw_dec\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xw.loc\ru.ecst
+estrtab xw_dec\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xw.loc\en.ecst
 estrtab xi_tool\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xi.loc\ru.ecst
 estrtab xi_tool\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xi.loc\en.ecst
 estrtab xi_dasm\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xda.loc\ru.ecst
