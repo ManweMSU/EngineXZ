@@ -142,6 +142,9 @@ genus frac {
 [[privatus]] [[mappa_hlsl] "bool2"] [[mappa_msl] "bool2|simd::packed_uint2"] [[polire] "4"]
 [[innatum]] [[magnitudo] "8"] [[significatio] integer]
 genus logicum2 {
+	logicum omnis { [[xw]] adipisce { hlsl : { # "L" "all(" A 0 ")" } msl : { # "L" "all(" A 0 ")" } } }
+	logicum ullus { [[xw]] adipisce { hlsl : { # "L" "any(" A 0 ")" } msl : { # "L" "any(" A 0 ")" } } }
+
 	[[xw]] structor () { hlsl : {} msl : {} }
 	[[xw]] structor (logicum2 s) { hlsl : { "bool2(" A 0 ")" } msl : { "bool2(" A 0 ")" } }
 	[[xw]] [[convertor] "extendens"] structor (logicum s) { hlsl : { "bool2(" A 0 ")" } msl : { "bool2(" A 0 ")" } }
@@ -167,6 +170,9 @@ genus logicum2 {
 [[privatus]] [[mappa_hlsl] "bool3"] [[mappa_msl] "bool3|simd::packed_uint3"] [[polire] "4"]
 [[innatum]] [[magnitudo] "12"] [[significatio] integer]
 genus logicum3 {
+	logicum omnis { [[xw]] adipisce { hlsl : { # "L" "all(" A 0 ")" } msl : { # "L" "all(" A 0 ")" } } }
+	logicum ullus { [[xw]] adipisce { hlsl : { # "L" "any(" A 0 ")" } msl : { # "L" "any(" A 0 ")" } } }
+
 	[[xw]] structor () { hlsl : {} msl : {} }
 	[[xw]] structor (logicum3 s) { hlsl : { "bool3(" A 0 ")" } msl : { "bool3(" A 0 ")" } }
 	[[xw]] [[convertor] "extendens"] structor (logicum s) { hlsl : { "bool3(" A 0 ")" } msl : { "bool3(" A 0 ")" } }
@@ -192,6 +198,9 @@ genus logicum3 {
 [[privatus]] [[mappa_hlsl] "bool4"] [[mappa_msl] "bool4|simd::packed_uint4"] [[polire] "4"]
 [[innatum]] [[magnitudo] "16"] [[significatio] integer]
 genus logicum4 {
+	logicum omnis { [[xw]] adipisce { hlsl : { # "L" "all(" A 0 ")" } msl : { # "L" "all(" A 0 ")" } } }
+	logicum ullus { [[xw]] adipisce { hlsl : { # "L" "any(" A 0 ")" } msl : { # "L" "any(" A 0 ")" } } }
+
 	[[xw]] structor () { hlsl : {} msl : {} }
 	[[xw]] structor (logicum4 s) { hlsl : { "bool4(" A 0 ")" } msl : { "bool4(" A 0 ")" } }
 	[[xw]] [[convertor] "extendens"] structor (logicum s) { hlsl : { "bool4(" A 0 ")" } msl : { "bool4(" A 0 ")" } }
@@ -539,8 +548,8 @@ genus frac4 {
 [[privatus]] [[mappa_hlsl] "float2x2"] [[mappa_msl] "float2x2"] [[polire] "16"]
 [[innatum]] [[magnitudo] "32"] [[significatio] fractus]
 structura frac2x2 {
-	frac2x2 transposita { [[xw]] adipisce { hlsl : { "transpose(" A 0 ")" } msl : { "transpose(" A 0 ")" } } }
-	frac det { [[xw]] adipisce { hlsl : { "determinant(" A 0 ")" } msl : { "determinant(" A 0 ")" } } }
+	frac2x2 transposita { [[xw]] adipisce { hlsl : { # "L" "transpose(" A 0 ")" } msl : { # "L" "transpose(" A 0 ")" } } }
+	frac det { [[xw]] adipisce { hlsl : { # "L" "determinant(" A 0 ")" } msl : { # "L" "determinant(" A 0 ")" } } }
 
 	[[xw]] structor () { hlsl : {} msl : {} }
 	[[xw]] structor (frac2x2 s) { hlsl : { "float2x2(" A 0 ")" } msl : { "float2x2(" A 0 ")" } }
@@ -563,8 +572,8 @@ structura frac2x2 {
 [[privatus]] [[mappa_hlsl] "float3x3"] [[mappa_msl] "float3x3"] [[polire] "16"]
 [[innatum]] [[magnitudo] "48"] [[significatio] fractus]
 structura frac3x3 {
-	frac3x3 transposita { [[xw]] adipisce { hlsl : { "transpose(" A 0 ")" } msl : { "transpose(" A 0 ")" } } }
-	frac det { [[xw]] adipisce { hlsl : { "determinant(" A 0 ")" } msl : { "determinant(" A 0 ")" } } }
+	frac3x3 transposita { [[xw]] adipisce { hlsl : { # "L" "transpose(" A 0 ")" } msl : { # "L" "transpose(" A 0 ")" } } }
+	frac det { [[xw]] adipisce { hlsl : { # "L" "determinant(" A 0 ")" } msl : { # "L" "determinant(" A 0 ")" } } }
 
 	[[xw]] structor () { hlsl : {} msl : {} }
 	[[xw]] structor (frac3x3 s) { hlsl : { "float3x3(" A 0 ")" } msl : { "float3x3(" A 0 ")" } }
@@ -587,8 +596,8 @@ structura frac3x3 {
 [[mappa_xv] "frac4x4"] [[mappa_cxx] "Engine::Math::Matrix4x4f"] [[mappa_hlsl] "float4x4"] [[mappa_msl] "float4x4"] [[polire] "16"]
 [[innatum]] [[magnitudo] "64"] [[significatio] fractus]
 structura frac4x4 {
-	frac4x4 transposita { [[xw]] adipisce { hlsl : { "transpose(" A 0 ")" } msl : { "transpose(" A 0 ")" } } }
-	frac det { [[xw]] adipisce { hlsl : { "determinant(" A 0 ")" } msl : { "determinant(" A 0 ")" } } }
+	frac4x4 transposita { [[xw]] adipisce { hlsl : { # "L" "transpose(" A 0 ")" } msl : { # "L" "transpose(" A 0 ")" } } }
+	frac det { [[xw]] adipisce { hlsl : { # "L" "determinant(" A 0 ")" } msl : { # "L" "determinant(" A 0 ")" } } }
 
 	[[xw]] structor () { hlsl : {} msl : {} }
 	[[xw]] structor (frac4x4 s) { hlsl : { "float4x4(" A 0 ")" } msl : { "float4x4(" A 0 ")" } }
@@ -767,6 +776,11 @@ spatium math {
 	[[xw]] functio frac3 tectum(frac3 valor) { hlsl : { "ceil(" A 0 ")" } msl : { "ceil(" A 0 ")" } }
 	[[xw]] functio frac4 tectum(frac4 valor) { hlsl : { "ceil(" A 0 ")" } msl : { "ceil(" A 0 ")" } }
 
+	[[xw]] functio frac fmodulus(frac x, frac y) { hlsl : { "fmod(" A 0 "," A 1 ")" } msl : { "fmod(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac2 fmodulus(frac2 x, frac2 y) { hlsl : { "fmod(" A 0 "," A 1 ")" } msl : { "fmod(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac3 fmodulus(frac3 x, frac3 y) { hlsl : { "fmod(" A 0 "," A 1 ")" } msl : { "fmod(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac4 fmodulus(frac4 x, frac4 y) { hlsl : { "fmod(" A 0 "," A 1 ")" } msl : { "fmod(" A 0 "," A 1 ")" } }
+
 	[[xw]] functio frac radix(frac valor) { hlsl : { "sqrt(" A 0 ")" } msl : { "sqrt(" A 0 ")" } }
 	[[xw]] functio frac2 radix(frac2 valor) { hlsl : { "sqrt(" A 0 ")" } msl : { "sqrt(" A 0 ")" } }
 	[[xw]] functio frac3 radix(frac3 valor) { hlsl : { "sqrt(" A 0 ")" } msl : { "sqrt(" A 0 ")" } }
@@ -784,6 +798,11 @@ spatium math {
 	[[xw]] functio frac2 onera(frac2 mantissa, int2 pot) { hlsl : { "ldexp(" A 0 "," A 1 ")" } msl : { "ldexp(" A 0 "," A 1 ")" } }
 	[[xw]] functio frac3 onera(frac3 mantissa, int3 pot) { hlsl : { "ldexp(" A 0 "," A 1 ")" } msl : { "ldexp(" A 0 "," A 1 ")" } }
 	[[xw]] functio frac4 onera(frac4 mantissa, int4 pot) { hlsl : { "ldexp(" A 0 "," A 1 ")" } msl : { "ldexp(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac decompone(frac valor, ~frac pot) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac2 decompone(frac2 valor, ~frac2 pot) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac3 decompone(frac3 valor, ~frac3 pot) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac4 decompone(frac4 valor, ~frac4 pot) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
+
 	[[xw]] functio frac exp(frac valor) { hlsl : { "exp(" A 0 ")" } msl : { "exp(" A 0 ")" } }
 	[[xw]] functio frac2 exp(frac2 valor) { hlsl : { "exp(" A 0 ")" } msl : { "exp(" A 0 ")" } }
 	[[xw]] functio frac3 exp(frac3 valor) { hlsl : { "exp(" A 0 ")" } msl : { "exp(" A 0 ")" } }
@@ -879,8 +898,64 @@ spatium math {
 	[[xw]] functio frac distantia(frac3 a, frac3 b) { hlsl : { "distance(" A 0 "," A 1 ")" } msl : { "distance(" A 0 "," A 1 ")" } }
 	[[xw]] functio frac distantia(frac4 a, frac4 b) { hlsl : { "distance(" A 0 "," A 1 ")" } msl : { "distance(" A 0 "," A 1 ")" } }
 
+	[[xw]] functio frac2 refulge(frac2 x, frac2 y) { hlsl : { "reflect(" A 0 "," A 1 ")" } msl : { "reflect(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac3 refulge(frac3 x, frac3 y) { hlsl : { "reflect(" A 0 "," A 1 ")" } msl : { "reflect(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac4 refulge(frac4 x, frac4 y) { hlsl : { "reflect(" A 0 "," A 1 ")" } msl : { "reflect(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac2 refrange(frac2 x, frac2 y, frac eta) { hlsl : { "refract(" A 0 "," A 1 "," A 2 ")" } msl : { "refract(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac3 refrange(frac3 x, frac3 y, frac eta) { hlsl : { "refract(" A 0 "," A 1 "," A 2 ")" } msl : { "refract(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac4 refrange(frac4 x, frac4 y, frac eta) { hlsl : { "refract(" A 0 "," A 1 "," A 2 ")" } msl : { "refract(" A 0 "," A 1 "," A 2 ")" } }
+
+	[[xw]] functio frac interpoli(frac x, frac y, frac alpha) { hlsl : { "lerp(" A 0 "," A 1 "," A 2 ")" } msl : { "mix(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac2 interpoli(frac2 x, frac2 y, frac2 alpha) { hlsl : { "lerp(" A 0 "," A 1 "," A 2 ")" } msl : { "mix(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac3 interpoli(frac3 x, frac3 y, frac3 alpha) { hlsl : { "lerp(" A 0 "," A 1 "," A 2 ")" } msl : { "mix(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac4 interpoli(frac4 x, frac4 y, frac4 alpha) { hlsl : { "lerp(" A 0 "," A 1 "," A 2 ")" } msl : { "mix(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac gradus(frac x, frac pos) { hlsl : { "step(" A 1 "," A 0 ")" } msl : { "step(" A 1 "," A 0 ")" } }
+	[[xw]] functio frac2 gradus(frac2 x, frac2 pos) { hlsl : { "step(" A 1 "," A 0 ")" } msl : { "step(" A 1 "," A 0 ")" } }
+	[[xw]] functio frac3 gradus(frac3 x, frac3 pos) { hlsl : { "step(" A 1 "," A 0 ")" } msl : { "step(" A 1 "," A 0 ")" } }
+	[[xw]] functio frac4 gradus(frac4 x, frac4 pos) { hlsl : { "step(" A 1 "," A 0 ")" } msl : { "step(" A 1 "," A 0 ")" } }
+	[[xw]] functio frac gradus_hermite(frac x, frac pos_sin, frac pos_dex) { hlsl : { "smoothstep(" A 1 "," A 2 "," A 0 ")" } msl : { "smoothstep(" A 1 "," A 2 "," A 0 ")" } }
+	[[xw]] functio frac2 gradus_hermite(frac2 x, frac2 pos_sin, frac2 pos_dex) { hlsl : { "smoothstep(" A 1 "," A 2 "," A 0 ")" } msl : { "smoothstep(" A 1 "," A 2 "," A 0 ")" } }
+	[[xw]] functio frac3 gradus_hermite(frac3 x, frac3 pos_sin, frac3 pos_dex) { hlsl : { "smoothstep(" A 1 "," A 2 "," A 0 ")" } msl : { "smoothstep(" A 1 "," A 2 "," A 0 ")" } }
+	[[xw]] functio frac4 gradus_hermite(frac4 x, frac4 pos_sin, frac4 pos_dex) { hlsl : { "smoothstep(" A 1 "," A 2 "," A 0 ")" } msl : { "smoothstep(" A 1 "," A 2 "," A 0 ")" } }
+	[[xw]] functio frac limita(frac x, frac pos_sin, frac pos_dex) { hlsl : { "clamp(" A 0 "," A 1 "," A 2 ")" } msl : { "clamp(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac2 limita(frac2 x, frac2 pos_sin, frac2 pos_dex) { hlsl : { "clamp(" A 0 "," A 1 "," A 2 ")" } msl : { "clamp(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac3 limita(frac3 x, frac3 pos_sin, frac3 pos_dex) { hlsl : { "clamp(" A 0 "," A 1 "," A 2 ")" } msl : { "clamp(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac4 limita(frac4 x, frac4 pos_sin, frac4 pos_dex) { hlsl : { "clamp(" A 0 "," A 1 "," A 2 ")" } msl : { "clamp(" A 0 "," A 1 "," A 2 ")" } }
+	[[xw]] functio frac satura(frac x) { hlsl : { "saturate(" A 0 ")" } msl : { "saturate(" A 0 ")" } }
+	[[xw]] functio frac2 satura(frac2 x) { hlsl : { "saturate(" A 0 ")" } msl : { "saturate(" A 0 ")" } }
+	[[xw]] functio frac3 satura(frac3 x) { hlsl : { "saturate(" A 0 ")" } msl : { "saturate(" A 0 ")" } }
+	[[xw]] functio frac4 satura(frac4 x) { hlsl : { "saturate(" A 0 ")" } msl : { "saturate(" A 0 ")" } }
+}
+spatium converte {
+	[[xw]] functio frac ad_frac(int x) { hlsl : { "asfloat(" A 0 ")" } msl : { "as_type<float>(" A 0 ")" } }
+	[[xw]] functio frac ad_frac(nint x) { hlsl : { "asfloat(" A 0 ")" } msl : { "as_type<float>(" A 0 ")" } }
+	[[xw]] functio frac2 ad_frac(int2 x) { hlsl : { "asfloat(" A 0 ")" } msl : { "as_type<float2>(" A 0 ")" } }
+	[[xw]] functio frac2 ad_frac(nint2 x) { hlsl : { "asfloat(" A 0 ")" } msl : { "as_type<float2>(" A 0 ")" } }
+	[[xw]] functio frac3 ad_frac(int3 x) { hlsl : { "asfloat(" A 0 ")" } msl : { "as_type<float3>(" A 0 ")" } }
+	[[xw]] functio frac3 ad_frac(nint3 x) { hlsl : { "asfloat(" A 0 ")" } msl : { "as_type<float3>(" A 0 ")" } }
+	[[xw]] functio frac4 ad_frac(int4 x) { hlsl : { "asfloat(" A 0 ")" } msl : { "as_type<float4>(" A 0 ")" } }
+	[[xw]] functio frac4 ad_frac(nint4 x) { hlsl : { "asfloat(" A 0 ")" } msl : { "as_type<float4>(" A 0 ")" } }
+
+	[[xw]] functio int ad_int(frac x) { hlsl : { "asint(" A 0 ")" } msl : { "as_type<int>(" A 0 ")" } }
+	[[xw]] functio int ad_int(nint x) { hlsl : { "asint(" A 0 ")" } msl : { "as_type<int>(" A 0 ")" } }
+	[[xw]] functio int2 ad_int(frac2 x) { hlsl : { "asint(" A 0 ")" } msl : { "as_type<int2>(" A 0 ")" } }
+	[[xw]] functio int2 ad_int(nint2 x) { hlsl : { "asint(" A 0 ")" } msl : { "as_type<int2>(" A 0 ")" } }
+	[[xw]] functio int3 ad_int(frac3 x) { hlsl : { "asint(" A 0 ")" } msl : { "as_type<int3>(" A 0 ")" } }
+	[[xw]] functio int3 ad_int(nint3 x) { hlsl : { "asint(" A 0 ")" } msl : { "as_type<int3>(" A 0 ")" } }
+	[[xw]] functio int4 ad_int(frac4 x) { hlsl : { "asint(" A 0 ")" } msl : { "as_type<int4>(" A 0 ")" } }
+	[[xw]] functio int4 ad_int(nint4 x) { hlsl : { "asint(" A 0 ")" } msl : { "as_type<int4>(" A 0 ")" } }
+
+	[[xw]] functio nint ad_nint(int x) { hlsl : { "asuint(" A 0 ")" } msl : { "as_type<uint>(" A 0 ")" } }
+	[[xw]] functio nint ad_nint(frac x) { hlsl : { "asuint(" A 0 ")" } msl : { "as_type<uint>(" A 0 ")" } }
+	[[xw]] functio nint2 ad_nint(int2 x) { hlsl : { "asuint(" A 0 ")" } msl : { "as_type<uint2>(" A 0 ")" } }
+	[[xw]] functio nint2 ad_nint(frac2 x) { hlsl : { "asuint(" A 0 ")" } msl : { "as_type<uint2>(" A 0 ")" } }
+	[[xw]] functio nint3 ad_nint(int3 x) { hlsl : { "asuint(" A 0 ")" } msl : { "as_type<uint3>(" A 0 ")" } }
+	[[xw]] functio nint3 ad_nint(frac3 x) { hlsl : { "asuint(" A 0 ")" } msl : { "as_type<uint3>(" A 0 ")" } }
+	[[xw]] functio nint4 ad_nint(int4 x) { hlsl : { "asuint(" A 0 ")" } msl : { "as_type<uint4>(" A 0 ")" } }
+	[[xw]] functio nint4 ad_nint(frac4 x) { hlsl : { "asuint(" A 0 ")" } msl : { "as_type<uint4>(" A 0 ")" } }
 }
 
+[[xw]] functio nihil dimitte() { hlsl : { "discard" } msl : { "discard_fragment()" } }
 praeforma functio permuta(T) { \cense T genus(_0)\ functio nihil $_(~$T t1, ~$T t2) { $T acc = t1; t1 = t2; t2 = acc; } }
 
 [[privatus]] [[magnitudo] "4"]
@@ -888,11 +963,11 @@ praeforma functio permuta(T) { \cense T genus(_0)\ functio nihil $_(~$T t1, ~$T 
 genus exceptor {}
 praeforma genus series(V) {
 	[[privatus]] [[magnitudo] "4"]
-	[[mappa_hlsl] "$!StructuredBuffer<$E>"] [[mappa_msl] "$!$E *"]
+	[[mappa_hlsl] "$!StructuredBuffer<$E>"] [[mappa_msl] "$!constant $E *"]
 	genus $_ {
-
-		// TODO: IMPLEMENT
-
+		nomen_alternum elementum = $V;
+		[[xw]] structor (series[$V] valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+		[[xw]] functio $V operator [] (int index) { hlsl : { # "L" "(" A 0 ")[" A 1 "]" } msl : { # "L" "(" A 0 ")[" A 1 "]" } }
 	}
 }
 praeforma genus textura_1d(V) {
@@ -900,9 +975,40 @@ praeforma genus textura_1d(V) {
 	[[privatus]] [[magnitudo] "4"]
 	[[mappa_hlsl] "Texture1D<$I4>"] [[mappa_msl] "texture1d<$I>"]
 	genus $_ {
-
-		// TODO: IMPLEMENT
-
+		\si tractus.idem($V, .frac)\
+			nomen_alternum elementum = frac4;
+		\fini\
+		\si tractus.idem($V, .int32)\
+			nomen_alternum elementum = int4;
+		\fini\
+		\si tractus.idem($V, .nint32)\
+			nomen_alternum elementum = nint4;
+		\fini\
+		[[xw]] structor (textura_1d[$V] valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+		[[xw]] functio nihil dimensiones(nint subt, ~nint lat, ~nint num_subt) {
+			hlsl : {
+				# "L" "(" A 0 ").GetDimensions(0," A 2 "," A 3 ")"
+			} msl : {
+				# "L" "("
+				A 2 "=(" A 0 ").get_width(0),"
+				A 3 "=(" A 0 ").get_num_mip_levels()"
+				")"
+			}
+		}
+		[[xw]] functio elementum operator [] (nint pos, nint subt) {
+			hlsl : {
+				# "L" "(" A 0 ").Load(int2(" A 1 ",0))"
+			} msl : {
+				# "L" "(" A 0 ").read(uint(" A 1 "),uint(0))"
+			}
+		}
+		[[xw]] functio elementum operator () (exceptor ex, frac pos) {
+			hlsl : {
+				# "L" "(" A 0 ").Sample(" A 1 "," A 2 ")"
+			} msl : {
+				# "L" "(" A 0 ").sample(" A 1 "," A 2 ")"
+			}
+		}
 	}
 }
 praeforma genus ordo_texturarum_1d(V) {
@@ -910,9 +1016,41 @@ praeforma genus ordo_texturarum_1d(V) {
 	[[privatus]] [[magnitudo] "4"]
 	[[mappa_hlsl] "Texture1DArray<$I4>"] [[mappa_msl] "texture1d_array<$I>"]
 	genus $_ {
-
-		// TODO: IMPLEMENT
-
+		\si tractus.idem($V, .frac)\
+			nomen_alternum elementum = frac4;
+		\fini\
+		\si tractus.idem($V, .int32)\
+			nomen_alternum elementum = int4;
+		\fini\
+		\si tractus.idem($V, .nint32)\
+			nomen_alternum elementum = nint4;
+		\fini\
+		[[xw]] structor (ordo_texturarum_1d[$V] valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+		[[xw]] functio nihil dimensiones(nint subt, ~nint lat, ~nint elementa, ~nint num_subt) {
+			hlsl : {
+				# "L" "(" A 0 ").GetDimensions(0," A 2 "," A 3 "," A 4 ")"
+			} msl : {
+				# "L" "("
+				A 2 "=(" A 0 ").get_width(0),"
+				A 3 "=(" A 0 ").get_array_size(),"
+				A 4 "=(" A 0 ").get_num_mip_levels()"
+				")"
+			}
+		}
+		[[xw]] functio elementum operator [] (nint pos, nint index, nint subt) {
+			hlsl : {
+				# "L" "(" A 0 ").Load(int3(" A 1 "," A 2 ",0))"
+			} msl : {
+				# "L" "(" A 0 ").read(uint(" A 1 "),uint(" A 2 "),uint(0))"
+			}
+		}
+		[[xw]] functio elementum operator () (exceptor ex, frac pos, nint index) {
+			hlsl : {
+				# "L" "(" A 0 ").Sample(" A 1 ",float2(" A 2 "," A 3 "))"
+			} msl : {
+				# "L" "(" A 0 ").sample(" A 1 "," A 2 "," A 3 ")"
+			}
+		}
 	}
 }
 praeforma genus textura_2d(V) {
@@ -920,9 +1058,41 @@ praeforma genus textura_2d(V) {
 	[[privatus]] [[magnitudo] "4"]
 	[[mappa_hlsl] "Texture2D<$I4>"] [[mappa_msl] "texture2d<$I>"]
 	genus $_ {
-
-		// TODO: IMPLEMENT
-
+		\si tractus.idem($V, .frac)\
+			nomen_alternum elementum = frac4;
+		\fini\
+		\si tractus.idem($V, .int32)\
+			nomen_alternum elementum = int4;
+		\fini\
+		\si tractus.idem($V, .nint32)\
+			nomen_alternum elementum = nint4;
+		\fini\
+		[[xw]] structor (textura_2d[$V] valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+		[[xw]] functio nihil dimensiones(nint subt, ~nint lat, ~nint alt, ~nint num_subt) {
+			hlsl : {
+				# "L" "(" A 0 ").GetDimensions(" A 1 "," A 2 "," A 3 "," A 4 ")"
+			} msl : {
+				# "L" "("
+				A 2 "=(" A 0 ").get_width(" A 1 "),"
+				A 3 "=(" A 0 ").get_height(" A 1 "),"
+				A 4 "=(" A 0 ").get_num_mip_levels()"
+				")"
+			}
+		}
+		[[xw]] functio elementum operator [] (nint2 pos, nint subt) {
+			hlsl : {
+				# "L" "(" A 0 ").Load(int3(" A 1 "," A 2 "))"
+			} msl : {
+				# "L" "(" A 0 ").read(uint2(" A 1 "),uint(" A 2 "))"
+			}
+		}
+		[[xw]] functio elementum operator () (exceptor ex, frac2 pos) {
+			hlsl : {
+				# "L" "(" A 0 ").Sample(" A 1 "," A 2 ")"
+			} msl : {
+				# "L" "(" A 0 ").sample(" A 1 "," A 2 ")"
+			}
+		}
 	}
 }
 praeforma genus ordo_texturarum_2d(V) {
@@ -930,9 +1100,42 @@ praeforma genus ordo_texturarum_2d(V) {
 	[[privatus]] [[magnitudo] "4"]
 	[[mappa_hlsl] "Texture2DArray<$I4>"] [[mappa_msl] "texture2d_array<$I>"]
 	genus $_ {
-
-		// TODO: IMPLEMENT
-
+		\si tractus.idem($V, .frac)\
+			nomen_alternum elementum = frac4;
+		\fini\
+		\si tractus.idem($V, .int32)\
+			nomen_alternum elementum = int4;
+		\fini\
+		\si tractus.idem($V, .nint32)\
+			nomen_alternum elementum = nint4;
+		\fini\
+		[[xw]] structor (ordo_texturarum_2d[$V] valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+		[[xw]] functio nihil dimensiones(nint subt, ~nint lat, ~nint alt, ~nint elementa, ~nint num_subt) {
+			hlsl : {
+				# "L" "(" A 0 ").GetDimensions(" A 1 "," A 2 "," A 3 "," A 4 "," A 5 ")"
+			} msl : {
+				# "L" "("
+				A 2 "=(" A 0 ").get_width(" A 1 "),"
+				A 3 "=(" A 0 ").get_height(" A 1 "),"
+				A 4 "=(" A 0 ").get_array_size(),"
+				A 5 "=(" A 0 ").get_num_mip_levels()"
+				")"
+			}
+		}
+		[[xw]] functio elementum operator [] (nint2 pos, nint index, nint subt) {
+			hlsl : {
+				# "L" "(" A 0 ").Load(int4(" A 1 "," A 2 "," A 3 "))"
+			} msl : {
+				# "L" "(" A 0 ").read(uint2(" A 1 "),uint(" A 2 "),uint(" A 3 "))"
+			}
+		}
+		[[xw]] functio elementum operator () (exceptor ex, frac2 pos, nint index) {
+			hlsl : {
+				# "L" "(" A 0 ").Sample(" A 1 ",float3(" A 2 "," A 3 "))"
+			} msl : {
+				# "L" "(" A 0 ").sample(" A 1 "," A 2 "," A 3 ")"
+			}
+		}
 	}
 }
 praeforma genus textura_cubica(V) {
@@ -940,9 +1143,34 @@ praeforma genus textura_cubica(V) {
 	[[privatus]] [[magnitudo] "4"]
 	[[mappa_hlsl] "TextureCube<$I4>"] [[mappa_msl] "texturecube<$I>"]
 	genus $_ {
-
-		// TODO: IMPLEMENT
-
+		\si tractus.idem($V, .frac)\
+			nomen_alternum elementum = frac4;
+		\fini\
+		\si tractus.idem($V, .int32)\
+			nomen_alternum elementum = int4;
+		\fini\
+		\si tractus.idem($V, .nint32)\
+			nomen_alternum elementum = nint4;
+		\fini\
+		[[xw]] structor (textura_cubica[$V] valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+		[[xw]] functio nihil dimensiones(nint subt, ~nint lat, ~nint alt, ~nint num_subt) {
+			hlsl : {
+				# "L" "(" A 0 ").GetDimensions(" A 1 "," A 2 "," A 3 "," A 4 ")"
+			} msl : {
+				# "L" "("
+				A 2 "=(" A 0 ").get_width(" A 1 "),"
+				A 3 "=(" A 0 ").get_height(" A 1 "),"
+				A 4 "=(" A 0 ").get_num_mip_levels()"
+				")"
+			}
+		}
+		[[xw]] functio elementum operator () (exceptor ex, frac3 pos) {
+			hlsl : {
+				# "L" "(" A 0 ").Sample(" A 1 "," A 2 ")"
+			} msl : {
+				# "L" "(" A 0 ").sample(" A 1 "," A 2 ")"
+			}
+		}
 	}
 }
 praeforma genus ordo_texturarum_cubicarum(V) {
@@ -950,9 +1178,35 @@ praeforma genus ordo_texturarum_cubicarum(V) {
 	[[privatus]] [[magnitudo] "4"]
 	[[mappa_hlsl] "TextureCubeArray<$I4>"] [[mappa_msl] "texturecube_array<$I>"]
 	genus $_ {
-
-		// TODO: IMPLEMENT
-
+		\si tractus.idem($V, .frac)\
+			nomen_alternum elementum = frac4;
+		\fini\
+		\si tractus.idem($V, .int32)\
+			nomen_alternum elementum = int4;
+		\fini\
+		\si tractus.idem($V, .nint32)\
+			nomen_alternum elementum = nint4;
+		\fini\
+		[[xw]] structor (ordo_texturarum_cubicarum[$V] valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+		[[xw]] functio nihil dimensiones(nint subt, ~nint lat, ~nint alt, ~nint elementa, ~nint num_subt) {
+			hlsl : {
+				# "L" "(" A 0 ").GetDimensions(" A 1 "," A 2 "," A 3 "," A 4 "," A 5 ")"
+			} msl : {
+				# "L" "("
+				A 2 "=(" A 0 ").get_width(" A 1 "),"
+				A 3 "=(" A 0 ").get_height(" A 1 "),"
+				A 4 "=(" A 0 ").get_array_size(),"
+				A 5 "=(" A 0 ").get_num_mip_levels()"
+				")"
+			}
+		}
+		[[xw]] functio elementum operator () (exceptor ex, frac3 pos, nint index) {
+			hlsl : {
+				# "L" "(" A 0 ").Sample(" A 1 ",float4(" A 2 "," A 3 "))"
+			} msl : {
+				# "L" "(" A 0 ").sample(" A 1 "," A 2 "," A 3 ")"
+			}
+		}
 	}
 }
 praeforma genus textura_3d(V) {
@@ -960,9 +1214,42 @@ praeforma genus textura_3d(V) {
 	[[privatus]] [[magnitudo] "4"]
 	[[mappa_hlsl] "Texture3D<$I4>"] [[mappa_msl] "texture3d<$I>"]
 	genus $_ {
-
-		// TODO: IMPLEMENT
-
+		\si tractus.idem($V, .frac)\
+			nomen_alternum elementum = frac4;
+		\fini\
+		\si tractus.idem($V, .int32)\
+			nomen_alternum elementum = int4;
+		\fini\
+		\si tractus.idem($V, .nint32)\
+			nomen_alternum elementum = nint4;
+		\fini\
+		[[xw]] structor (textura_3d[$V] valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+		[[xw]] functio nihil dimensiones(nint subt, ~nint lat, ~nint alt, ~nint amp, ~nint num_subt) {
+			hlsl : {
+				# "L" "(" A 0 ").GetDimensions(" A 1 "," A 2 "," A 3 "," A 4 "," A 5 ")"
+			} msl : {
+				# "L" "("
+				A 2 "=(" A 0 ").get_width(" A 1 "),"
+				A 3 "=(" A 0 ").get_height(" A 1 "),"
+				A 4 "=(" A 0 ").get_depth(" A 1 "),"
+				A 5 "=(" A 0 ").get_num_mip_levels()"
+				")"
+			}
+		}
+		[[xw]] functio elementum operator [] (nint3 pos, nint subt) {
+			hlsl : {
+				# "L" "(" A 0 ").Load(int4(" A 1 "," A 2 "))"
+			} msl : {
+				# "L" "(" A 0 ").read(uint3(" A 1 "),uint(" A 2 "))"
+			}
+		}
+		[[xw]] functio elementum operator () (exceptor ex, frac3 pos) {
+			hlsl : {
+				# "L" "(" A 0 ").Sample(" A 1 "," A 2 ")"
+			} msl : {
+				# "L" "(" A 0 ").sample(" A 1 "," A 2 ")"
+			}
+		}
 	}
 }
 nomen_alternum textura = textura_2d;

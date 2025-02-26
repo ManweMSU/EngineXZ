@@ -166,6 +166,7 @@ namespace Engine
 			ObjectArray<Artifact> & dest;
 			ObjectArray<SymbolArtifact> symbol_cache;
 			Volumes::Dictionary<string, int> symbol_map;
+			Volumes::Set<string> bad_symbol_names;
 
 			DecompilerContext(DecompilerStatusDesc & st, AssemblyDesc & asmdata, ObjectArray<Artifact> & dst) : status(st), adata(asmdata), dest(dst), symbol_cache(0x400) {}
 			bool ProcessStructure(const string & clsname, IStructureGenerator & hdlr)
@@ -176,6 +177,11 @@ namespace Engine
 					SetError(status, DecompilerStatus::SymbolNotFound, hdlr.GetLanguage(), clsname);
 					return false;
 				}
+				if (bad_symbol_names[clsname]) {
+					SetError(status, DecompilerStatus::SymbolNotFound, hdlr.GetLanguage(), clsname);
+					return false;
+				}
+				bad_symbol_names.AddElement(clsname);
 				if (!hdlr.OpenClass(*this, *cls, clsname)) return false;
 				typedef Volumes::KeyValuePair<string, XI::Module::Variable> fdata;
 				Array<fdata> orded(0x40);
@@ -187,6 +193,7 @@ namespace Engine
 				});
 				for (auto & f : orded) if (!hdlr.CreateField(*this, f.value, f.key)) return false;
 				if (!hdlr.EndClass(*this)) return false;
+				bad_symbol_names.RemoveElement(clsname);
 				return true;
 			}
 			bool ProcessStructures(IStructureGenerator & hdlr)
@@ -237,6 +244,11 @@ namespace Engine
 					AddArtifact(art);
 				}
 				if (fldr.IsXA()) {
+					if (bad_symbol_names[funcname]) {
+						SetError(status, DecompilerStatus::SymbolNotFound, hdlr.GetLanguage(), funcname);
+						return false;
+					}
+					bad_symbol_names.AddElement(funcname);
 					auto & xa = fldr.GetXA();
 					for (auto & eref : xa.extrefs) {
 						if (eref[0] == L'S' && eref[1] == L':') {
@@ -277,6 +289,7 @@ namespace Engine
 					string fxn;
 					if (!hdlr.ProcessFunction(*this, *func, funcname, fdesc, xa, fxn)) return false;
 					if (fsi) fsi->effective_name = fxn;
+					bad_symbol_names.RemoveElement(funcname);
 				}
 				return true;
 			}
@@ -286,9 +299,11 @@ namespace Engine
 					if (func.value.attributes.ElementExists(AttributeVertex) || func.value.attributes.ElementExists(AttributePixel)) {
 						ObjectArray<SymbolArtifact> revert_symbol_cache;
 						Volumes::Dictionary<string, int> revert_symbol_map;
+						Volumes::Set<string> bad_names;
 						if (separately_per_shader) {
 							revert_symbol_cache = symbol_cache;
 							revert_symbol_map = symbol_map;
+							bad_names = bad_symbol_names;
 						}
 						FunctionSynthesisInformation fsi;
 						if (!ProcessFunction(func.key, hdlr, &fsi)) return false;
@@ -308,6 +323,7 @@ namespace Engine
 							artifacts.Append(art);
 							symbol_cache = revert_symbol_cache;
 							symbol_map = revert_symbol_map;
+							bad_symbol_names = bad_names;
 						}
 					}
 				}
@@ -451,9 +467,11 @@ namespace Engine
 			}
 			void AddArtifact(SymbolArtifact * art)
 			{
-				auto index = symbol_cache.Length();
-				symbol_cache.Append(art);
-				symbol_map.Append(art->symbol_xw, index);
+				if (!symbol_map.ElementExists(art->symbol_xw)) {
+					auto index = symbol_cache.Length();
+					symbol_cache.Append(art);
+					symbol_map.Append(art->symbol_xw, index);
+				}
 			}
 		};
 		int AddressAlign(int address, int align) { return (address + align - 1) / align * align; }
@@ -823,7 +841,6 @@ namespace Engine
 							prefix = L"constant ";
 							postfix = L" [[buffer(" + string(desc.index) + L")]]";
 						} else if (desc.semantics == ArgumentSemantics::Buffer) {
-							prefix = L"constant ";
 							postfix = L" [[buffer(" + string(desc.index) + L")]]";
 						} else if (desc.semantics == ArgumentSemantics::Texture) {
 							postfix = L" [[texture(" + string(desc.index) + L")]]";
