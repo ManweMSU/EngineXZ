@@ -4,6 +4,7 @@ importa lxx;
 importa graphicum;
 importa repulsus;
 importa mathgraphici;
+importa test_gp;
 
 auxilium attributum (meta.attributum_nomen_moduli) = "Test XX Application";
 auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
@@ -11,7 +12,6 @@ auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2025";
 auxilium attributum (meta.attributum_versio) = "0.0.0.0";
 
 auxilium icon (1) = "icon.eiwv";
-auxilium data ("XW", 2) = "test.egsu";
 
 [[systema] graphica]
 
@@ -52,13 +52,6 @@ structura indutrix hereditat objectum {
 		si (!data_vertices || !data_indices) iace errores.memoria_nulla;
 	}
 }
-structura configuratio {
-	frac4x4 proj;
-	frac4x4 trans;
-	frac3 lt;
-	frac amb;
-	frac diff;
-}
 
 structura callback : responsor_fenestrae, responsor_applicationis {
 	!graphicum.machinatio mach;
@@ -66,7 +59,7 @@ structura callback : responsor_fenestrae, responsor_applicationis {
 	!graphicum.fundus_fenestrae fund;
 	!graphicum.textura altitudo;
 	!indutrix cubus;
-	configuratio conf;
+	test_gp.configuratio conf;
 
 	functio nihil crea_texturam_altitudinis(int x, int y) iacit
 	{
@@ -82,10 +75,10 @@ structura callback : responsor_fenestrae, responsor_applicationis {
 	}
 	functio nihil crea_statum() iacit
 	{
-		var liber = mach^.compila_functiones(para_auxilium(modulus(), "XW", 2));
+		var liber = xw.test_gp.compila_functiones(mach);
 		graphicum.descriptio_oleiductus desc;
-		desc.functio_verticum = liber^.crea_functionem("VertexShader");
-		desc.functio_punctorum = liber^.crea_functionem("PixelShader");
+		desc.functio_verticum = liber^.crea_functionem(Vertex.nomen);
+		desc.functio_punctorum = liber^.crea_functionem(Punctum.nomen);
 		desc.numerus_destinatorum = 1;
 		desc.destinata[0].formatus = graphicum.formatus_puncti.B8G8R8A8_norm;
 		desc.destinata[0].modus_reddendi = 0;
@@ -201,9 +194,9 @@ structura callback : responsor_fenestrae, responsor_applicationis {
 			conf.diff = 0.4;
 			ctx^.loca_adspectabilem(0.0, 0.0, dest^.latitudo, dest^.altitudo, 0.0, 1.0);
 			ctx^.loca_statum_oleiductus(oles);
-			ctx^.loca_auxilium_verticis(1, cubus^.data_vertices);
-			ctx^.loca_constatum_verticis(0, @conf, magnitudo(conf));
-			ctx^.loca_constatum_puncti(0, @conf, magnitudo(conf));
+			ctx^.loca_auxilium_verticis(Vertex.selector_vdata, cubus^.data_vertices);
+			ctx^.loca_constatum_verticis(Vertex.selector_wdata, @conf, magnitudo(conf));
+			ctx^.loca_constatum_puncti(Punctum.selector_wdata, @conf, magnitudo(conf));
 			ctx^.loca_indicis(cubus^.data_indices, graphicum.formatus_indecis.I16_int);
 			ctx^.redde(cubus^.indices.longitudo, 0, 0, 9, 0);
 			ctx^.ende();

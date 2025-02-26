@@ -1,0 +1,42 @@
+﻿spatium test_gp {
+	structura configuratio {
+		frac4x4 proj;
+		frac4x4 trans;
+		frac3 lt;
+		frac amb;
+		frac diff;
+	}
+	structura vertex {
+		frac3 pos;
+		frac3 color;
+		frac3 norm;
+	}
+}
+
+functio vertex Vertex(
+	nint vid						: vertex,
+	nint iid						: exemplum,
+	test_gp.configuratio wdata		: constati,
+	series[test_gp.vertex] vdata	: series,
+	~frac3 color,
+	~frac3 norm,
+	~frac4 pos						: positus)
+{
+	var v = vdata[vid];
+	color = v.color;
+	norm = (wdata.trans * frac4(v.norm.x, v.norm.y, v.norm.z, 0.0)).xyz;
+	pos = wdata.trans * frac4(v.pos.x, v.pos.y, v.pos.z, 1.0);
+	pos.x += 2.0 * (int(iid) % 3 - 1);
+	pos.y += 2.0 * (int(iid) / 3 - 1);
+	pos = wdata.proj * pos;
+}
+functio punctum Punctum(
+	test_gp.configuratio wdata		: constati,
+	frac3 color,
+	frac3 norm,
+	~frac4 color_r					: color)
+{
+	var dp = math.satura(math.prs(-wdata.lt.normativus, norm.normativus));
+	color_r.rgb = color * (wdata.amb + wdata.diff * dp);
+	color_r.a = 1.0;
+}
