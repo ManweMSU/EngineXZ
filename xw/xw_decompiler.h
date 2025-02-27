@@ -33,6 +33,8 @@ namespace Engine
 			InvalidSemantics		= 0x0008,
 			NoMandatorySemantics	= 0x0009,
 			BadShaderName			= 0x000A,
+			DuplicateShaderName		= 0x000B,
+			RecursiveDependencies	= 0x000C,
 			InternalError			= 0xFFFF,
 		};
 		struct DecompilerStatusDesc

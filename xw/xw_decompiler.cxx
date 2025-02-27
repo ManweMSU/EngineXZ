@@ -167,6 +167,7 @@ namespace Engine
 			ObjectArray<SymbolArtifact> symbol_cache;
 			Volumes::Dictionary<string, int> symbol_map;
 			Volumes::Set<string> bad_symbol_names;
+			Volumes::Set<string> shader_symbol_names;
 
 			DecompilerContext(DecompilerStatusDesc & st, AssemblyDesc & asmdata, ObjectArray<Artifact> & dst) : status(st), adata(asmdata), dest(dst), symbol_cache(0x400) {}
 			bool ProcessStructure(const string & clsname, IStructureGenerator & hdlr)
@@ -178,7 +179,7 @@ namespace Engine
 					return false;
 				}
 				if (bad_symbol_names[clsname]) {
-					SetError(status, DecompilerStatus::SymbolNotFound, hdlr.GetLanguage(), clsname);
+					SetError(status, DecompilerStatus::RecursiveDependencies, hdlr.GetLanguage(), clsname);
 					return false;
 				}
 				bad_symbol_names.AddElement(clsname);
@@ -245,7 +246,7 @@ namespace Engine
 				}
 				if (fldr.IsXA()) {
 					if (bad_symbol_names[funcname]) {
-						SetError(status, DecompilerStatus::SymbolNotFound, hdlr.GetLanguage(), funcname);
+						SetError(status, DecompilerStatus::RecursiveDependencies, hdlr.GetLanguage(), funcname);
 						return false;
 					}
 					bad_symbol_names.AddElement(funcname);
@@ -307,6 +308,11 @@ namespace Engine
 						}
 						FunctionSynthesisInformation fsi;
 						if (!ProcessFunction(func.key, hdlr, &fsi)) return false;
+						if (shader_symbol_names[fsi.nominal_name]) {
+							SetError(status, DecompilerStatus::DuplicateShaderName, hdlr.GetLanguage(), fsi.nominal_name);
+							return false;
+						}
+						shader_symbol_names.AddElement(fsi.nominal_name);
 						if (separately_per_shader) {
 							DynamicString output;
 							if (hdlr.IsHumanReadable()) MakeMachineGeneratedDisclamer(output);
@@ -852,6 +858,7 @@ namespace Engine
 				static uint _reg(const XA::ObjectReference & ref) noexcept { return uint(ref.ref_class) | (ref.index << 8); }
 				bool _invoke(DecompilerContext & ctx, FunctionDesc & fdesc, XA::Function & xasm, const SymbolArtifact & func, int argc, const XA::ExpressionTree * argv, expression_node & out, int & indent)
 				{
+					if (func.fdesc.fdes != FunctionDesignation::Service) throw Exception();
 					Array<expression_node> inputs(0x20);
 					for (int i = 0; i < argc; i++) {
 						expression_node in;
