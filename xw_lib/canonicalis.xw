@@ -992,7 +992,9 @@ praeforma functio permuta(T) { \cense T genus(_0)\ functio nihil $_(~$T t1, ~$T 
 
 [[privatus]] [[magnitudo] "4"]
 [[mappa_hlsl] "SamplerState"] [[mappa_msl] "sampler"]
-genus exceptor {}
+genus exceptor {
+	[[xw]] structor (exceptor valor) { hlsl : { "(" A 0 ")" } msl : { "(" A 0 ")" } }
+}
 praeforma genus series(V) {
 	[[privatus]] [[magnitudo] "4"]
 	[[mappa_hlsl] "$!StructuredBuffer<$E>"] [[mappa_msl] "$!constant $E *"]

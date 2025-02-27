@@ -557,8 +557,13 @@ namespace Engine
 		}
 		bool LoadAssembly(AssemblyDesc & init, DecompileDesc & desc)
 		{
-			SafePointer<Streaming::MemoryStream> main = new Streaming::MemoryStream(desc.root_module->GetBuffer(), desc.root_module->Length());
-			return LoadModuleW(init, desc, L"", main, true);
+			bool first = true;
+			for (auto & mdl : desc.root_modules) {
+				SafePointer<Streaming::MemoryStream> main = new Streaming::MemoryStream(mdl.GetBuffer(), mdl.Length());
+				if (!LoadModuleW(init, desc, L"", main, first)) return false;
+				first = false;
+			}
+			return true;
 		}
 		class TextLanguageStructureGenerator : public DecompilerContext::IStructureGenerator
 		{

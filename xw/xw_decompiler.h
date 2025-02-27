@@ -60,7 +60,7 @@ namespace Engine
 		{
 			// Input data
 			uint flags;
-			SafePointer<DataBlock> root_module;
+			ObjectArray<DataBlock> root_modules;
 			IDecompilerCallback * callback;
 			// Output data
 			DecompilerStatusDesc status;

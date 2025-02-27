@@ -23,7 +23,7 @@ struct {
 	bool interface_for_c = false;
 	uint bundle_flags = 0;
 	uint system_flags = 0;
-	string input;
+	Array<string> inputs = Array<string>(0x10);
 	string output;
 	string output_path;
 } state;
@@ -173,13 +173,7 @@ void ProcessCommandLine(void)
 					throw Exception();
 				}
 			}
-		} else {
-			if (state.input.Length()) {
-				console << TextColor(12) << Localized(201) << TextColorDefault() << LineFeed();
-				throw Exception();
-			}
-			state.input = ExpandPath(arg);
-		}
+		} else state.inputs << ExpandPath(arg);
 	}
 	if (state.bundle_flags & XW::DecompilerFlagBundleToCXX) state.interface_for_c = true;
 }
@@ -241,26 +235,30 @@ int Main(void)
 		console << Localized(2) << LineFeedSequence;
 		console << FormatString(Localized(3), ENGINE_VI_APPVERSION) << LineFeedSequence << LineFeedSequence;
 	}
-	if (state.input.Length()) {
+	if (state.inputs.Length()) {
 		try {
 			SafePointer<XW::IDecompilerCallback> library_callback = XW::CreateDecompilerCallback(
 				state.module_search_paths_v.GetBuffer(), state.module_search_paths_v.Length(),
 				state.module_search_paths_w.GetBuffer(), state.module_search_paths_w.Length(), 0);
 			SafePointer<XW::IDecompilerCallback> main_callback;
+			Array<string> user_paths(0x10);
 			XW::DecompileDesc desc;
-			try {
-				SafePointer<Streaming::FileStream> stream = new Streaming::FileStream(state.input, Streaming::AccessRead, Streaming::OpenExisting);
-				desc.root_module = stream->ReadAll();
-				string src_dir = IO::Path::GetDirectory(state.input);
-				main_callback = XW::CreateDecompilerCallback(0, 0, &src_dir, 1, library_callback);
-			} catch (...) {
-				if (!state.silent) {
-					console.SetTextColor(12);
-					console.WriteLine(FormatString(Localized(501), state.input));
-					console.SetTextColor(-1);
+			for (auto & in : state.inputs) {
+				try {
+					SafePointer<Streaming::FileStream> stream = new Streaming::FileStream(in, Streaming::AccessRead, Streaming::OpenExisting);
+					SafePointer<DataBlock> data = stream->ReadAll();
+					desc.root_modules.Append(data);
+					user_paths << IO::Path::GetDirectory(in);
+				} catch (...) {
+					if (!state.silent) {
+						console.SetTextColor(12);
+						console.WriteLine(FormatString(Localized(501), in));
+						console.SetTextColor(-1);
+					}
+					return 0x3E;
 				}
-				return 0x3E;
 			}
+			main_callback = XW::CreateDecompilerCallback(0, 0, user_paths.GetBuffer(), user_paths.Length(), library_callback);
 			desc.callback = main_callback;
 			desc.flags = 0;
 			if (state.assembly_version_control) desc.flags |= XW::DecompilerFlagVersionControl;
@@ -304,11 +302,11 @@ int Main(void)
 					}
 				} else {
 					if (!state.output_path.Length()) {
-						state.output_path = ExpandPath(Path::GetDirectory(state.input) + L"/" + Path::GetFileNameWithoutExtension(state.input));
+						state.output_path = ExpandPath(Path::GetDirectory(state.inputs[0]) + L"/" + Path::GetFileNameWithoutExtension(state.inputs[0]));
 					}
 					auto last = state.output_path[state.output_path.Length() - 1];
 					if (last == L'/' || last == L'\\') {
-						state.output_path = ExpandPath(state.output_path + L"/" + Path::GetFileNameWithoutExtension(state.input));
+						state.output_path = ExpandPath(state.output_path + L"/" + Path::GetFileNameWithoutExtension(state.inputs[0]));
 					}
 					for (auto & o : desc.output_objects) {
 						auto name = state.output_path;
