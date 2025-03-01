@@ -90,6 +90,48 @@ namespace Engine
 				return XL::CreateComputable(xtype->GetContext(), prov);
 			} else throw InvalidStateException();
 		}
+		XL::LObject * ProcessVectorCompose(XL::LContext & ctx, ObjectArray<XL::LObject> & args)
+		{
+			if (!args.Length()) throw InvalidArgumentException();
+			SafePointer<XL::LObject> base_type = args[0].GetType();
+			if (static_cast<XL::XType *>(base_type.Inner())->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			auto base_class = base_type->GetFullName();
+			uint base_class_index; // 0 - logicum, 1 - int, 2 - nint, 3 - frac
+			if (base_class == L"logicum" || base_class == L"logicum2" || base_class == L"logicum3" || base_class == L"logicum4") {
+				base_class_index = 0;
+			} else if (base_class == L"int32" || base_class == L"int2" || base_class == L"int3" || base_class == L"int4") {
+				base_class_index = 1;
+			} else if (base_class == L"nint32" || base_class == L"nint2" || base_class == L"nint3" || base_class == L"nint4") {
+				base_class_index = 2;
+			} else if (base_class == L"frac" || base_class == L"frac2" || base_class == L"frac3" || base_class == L"frac4") {
+				base_class_index = 3;
+			} else throw InvalidArgumentException();
+			uint class_dimension = 0;
+			for (auto & arg : args) {
+				base_type = arg.GetType();
+				if (static_cast<XL::XType *>(base_type.Inner())->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+				base_class = base_type->GetFullName();
+				if (base_class == L"logicum" || base_class == L"int32" || base_class == L"nint32" || base_class == L"frac") {
+					class_dimension++;
+				} else if (base_class == L"logicum2" || base_class == L"int2" || base_class == L"nint2" || base_class == L"frac2") {
+					class_dimension += 2;
+				} else if (base_class == L"logicum3" || base_class == L"int3" || base_class == L"nint3" || base_class == L"frac3") {
+					class_dimension += 3;
+				} else if (base_class == L"logicum4" || base_class == L"int4" || base_class == L"nint4" || base_class == L"frac4") {
+					class_dimension += 4;
+				} else throw InvalidArgumentException();
+			}
+			if (class_dimension < 1 || class_dimension > 4) throw InvalidArgumentException();
+			if (base_class_index == 0) base_class = L"logicum";
+			else if (base_class_index == 1) base_class = L"int";
+			else if (base_class_index == 2) base_class = L"nint";
+			else if (base_class_index == 3) base_class = L"frac";
+			if (class_dimension > 1) base_class += string(class_dimension);
+			base_type = ctx.QueryObject(base_class);
+			Array<XL::LObject *> alist(args.Length());
+			for (auto & arg : args) alist << &arg;
+			return base_type->Invoke(alist.Length(), alist.GetBuffer());
+		}
 		void CreateDefaultImplementation(XL::LObject * on_class, uint flags)
 		{
 			if (on_class->GetClass() != XL::Class::Type) throw InvalidArgumentException();

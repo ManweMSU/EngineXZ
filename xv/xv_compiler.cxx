@@ -429,7 +429,7 @@ namespace Engine
 					auto start = current_token;
 					ReadNextToken();
 					object = ProcessExpressionAssignation(ssl, ssc);
-					if (IsPunct(L",") && is_xv) {
+					if (IsPunct(L",")) {
 						ObjectArray<XL::LObject> list(0x10);
 						list.Append(object);
 						while (IsPunct(L",")) {
@@ -437,7 +437,7 @@ namespace Engine
 							object = ProcessExpressionAssignation(ssl, ssc);
 							list.Append(object);
 						}
-						try {
+						if (is_xv) try {
 							if (list.Length() == 4) object = ctx.QueryObject(L"quadriplex");
 							else if (list.Length() == 3) object = ctx.QueryObject(L"triplex");
 							else if (list.Length() == 2) object = ctx.QueryObject(L"duplex");
@@ -462,6 +462,8 @@ namespace Engine
 								for (auto & obj : list) argv << &obj;
 								object = object->Invoke(argv.Length(), argv);
 							}
+						} catch (...) { Abort(CompilerStatus::NoSuchOverload, start); } else if (is_xw) try {
+							object = XW::ProcessVectorCompose(ctx, list);
 						} catch (...) { Abort(CompilerStatus::NoSuchOverload, start); }
 					}
 					AssignTokenInfo(start, object, false, false);

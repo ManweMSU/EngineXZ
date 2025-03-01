@@ -83,16 +83,23 @@ namespace Engine
 		class OutputPortion : public IOutputPortion
 		{
 			string _pref, _ext;
+			PortionClass _cls;
 			SafePointer<Streaming::Stream> _stream;
 		public:
-			OutputPortion(const string & pref, const string & ext, Streaming::Stream * data) : _pref(pref), _ext(ext) { _stream.SetRetain(data); }
+			OutputPortion(const string & pref, const string & ext, PortionClass cls, Streaming::Stream * data) : _pref(pref), _ext(ext), _cls(cls) { _stream.SetRetain(data); }
 			virtual ~OutputPortion(void) override {}
 			virtual string GetPortionPostfix(void) const override { return _pref; }
 			virtual string GetPortionExtension(void) const override { return _ext; }
+			virtual PortionClass GetPortionClass(void) const override { return _cls; }
 			virtual Streaming::Stream * GetPortionData(void) const override { return _stream; }
 			virtual string ToString(void) const override { return L"OutputPortion"; }
 		};
-		
+		IOutputPortion * CreatePortion(const string & postfix, const string & extension, PortionClass cls, DataBlock * data)
+		{
+			SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(data->GetBuffer(), data->Length());
+			return new OutputPortion(postfix, extension, cls, stream);
+		}
+
 		struct AssemblyDesc
 		{
 			string rootname;
@@ -1975,20 +1982,24 @@ namespace Engine
 				if (desc.flags & DecompilerFlagRawOutput) {
 					for (auto & a : artifacts) {
 						string postfix, extension;
+						PortionClass pclass;
 						SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(a.data->GetBuffer(), a.data->Length());
 						if (a.designation == DecompilerFlagProduceHLSL) {
+							pclass = PortionClass::HLSL;
 							postfix = a.entry_point_nominal;
 							extension = L"hlsl";
 						} else if (a.designation == DecompilerFlagProduceMSL) {
+							pclass = PortionClass::MSL;
 							postfix = L"";
 							extension = L"metal";
 						} else if (a.designation == DecompilerFlagProduceGLSL) {
+							pclass = PortionClass::GLSL;
 							postfix = a.entry_point_nominal;
 							if (a.type == FunctionDesignation::Vertex) extension = L"vert";
 							else if (a.type == FunctionDesignation::Pixel) extension = L"frag";
 							else continue;
 						} else continue;
-						SafePointer<OutputPortion> portion = new OutputPortion(postfix, extension, stream);
+						SafePointer<OutputPortion> portion = new OutputPortion(postfix, extension, pclass, stream);
 						desc.output_objects.Append(portion);
 					}
 				}
@@ -2024,7 +2035,7 @@ namespace Engine
 				}
 				if (desc.flags & DecompilerFlagBundleToEGSU) {
 					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(egsu->GetBuffer(), egsu->Length());
-					SafePointer<OutputPortion> portion = new OutputPortion(L"", L"egsu", stream);
+					SafePointer<OutputPortion> portion = new OutputPortion(L"", L"egsu", PortionClass::EGSU, stream);
 					desc.output_objects.Append(portion);
 				}
 				if (desc.flags & DecompilerFlagBundleToXO) {
@@ -2093,7 +2104,7 @@ namespace Engine
 					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(0x4000);
 					lctx.ProduceModule(L"XW", ENGINE_VI_VERSIONMAJOR, ENGINE_VI_VERSIONMINOR, ENGINE_VI_SUBVERSION, ENGINE_VI_BUILD, stream);
 					stream->Seek(0, Streaming::Begin);
-					SafePointer<OutputPortion> portion = new OutputPortion(L"", L"xo", stream);
+					SafePointer<OutputPortion> portion = new OutputPortion(L"", L"xo", PortionClass::XO, stream);
 					desc.output_objects.Append(portion);
 				}
 				if (desc.flags & DecompilerFlagProduceCXX) {
@@ -2137,7 +2148,7 @@ namespace Engine
 					wri->Write(output.ToString());
 					wri.SetReference(0);
 					stream->Seek(0, Streaming::Begin);
-					SafePointer<OutputPortion> portion = new OutputPortion(L"", L"h", stream);
+					SafePointer<OutputPortion> portion = new OutputPortion(L"", L"h", PortionClass::H, stream);
 					desc.output_objects.Append(portion);
 				}
 				if (desc.flags & DecompilerFlagBundleToCXX) {
@@ -2191,7 +2202,7 @@ namespace Engine
 					wri->Write(output.ToString());
 					wri.SetReference(0);
 					stream->Seek(0, Streaming::Begin);
-					SafePointer<OutputPortion> portion = new OutputPortion(L"", L"cxx", stream);
+					SafePointer<OutputPortion> portion = new OutputPortion(L"", L"cxx", PortionClass::CXX, stream);
 					desc.output_objects.Append(portion);
 				}
 				SetError(desc.status, DecompilerStatus::Success);

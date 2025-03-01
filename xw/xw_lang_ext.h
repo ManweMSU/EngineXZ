@@ -45,6 +45,7 @@ namespace Engine
 		constexpr const widechar * SemanticResponce		= L"responsum";
 
 		XL::LObject * ProcessVectorRecombination(XL::LContext & ctx, XL::LObject * vector, const string & mask);
+		XL::LObject * ProcessVectorCompose(XL::LContext & ctx, ObjectArray<XL::LObject> & args);
 		void CreateDefaultImplementation(XL::LObject * on_class, uint flags);
 		void CreateDefaultImplementations(XL::LObject * on_class, uint flags);
 		ShaderLanguage ProcessShaderLanguage(const string & name);

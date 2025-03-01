@@ -38,6 +38,7 @@ namespace Engine
 			BadResourceTypeUsage	= 0x000D,
 			InternalError			= 0xFFFF,
 		};
+		enum class PortionClass : uint { Unknown = 0, HLSL = 1, MSL = 2, GLSL = 3, H = 4, CXX = 5, EGSU = 6, EGSO = 7, XO = 8 };
 		struct DecompilerStatusDesc
 		{
 			DecompilerStatus status;
@@ -55,6 +56,7 @@ namespace Engine
 		public:
 			virtual string GetPortionPostfix(void) const = 0;
 			virtual string GetPortionExtension(void) const = 0;
+			virtual PortionClass GetPortionClass(void) const = 0;
 			virtual Streaming::Stream * GetPortionData(void) const = 0;
 		};
 		struct DecompileDesc
@@ -69,6 +71,7 @@ namespace Engine
 		};
 
 		IDecompilerCallback * CreateDecompilerCallback(const string * xmdl_pv, int xmdl_pc, const string * wmdl_pv, int wmdl_pc, IDecompilerCallback * dropback);
+		IOutputPortion * CreatePortion(const string & postfix, const string & extension, PortionClass cls, DataBlock * data);
 		void Decompile(DecompileDesc & desc);
 	}
 }
