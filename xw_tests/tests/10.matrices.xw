@@ -1,0 +1,31 @@
+﻿functio vertex V(~frac4 p : positus)
+{
+	p = frac4(0.0);
+	frac2x2 A2(frac2(1.1, 2.2), frac2(3.1, 8.8)), B2(frac2(-1.1, 2.2), frac2(3.1, -8.8));
+	frac3x3 A3(A2[0].xyx, B2[1].yxy, B2[0].xyx), B3(A2[0].xxx, B2[1].yyy, B2[0].xxx);
+	frac4x4 A4(A3[0].xyzz, A3[1].xyzy, B3[0].xyzz, B3[1].xyzy), B4(A3[0].zyzy, A3[1].yzyz, B3[0].xxxx, B3[1].yyxx);
+
+	-A2; -A3; -A4;
+	A2 + B2; A3 + B3; A4 + B4;
+	A2 - B2; A3 - B3; A4 - B4;
+	A2 * B2; A3 * B3; A4 * B4;
+	A2 += B2; A3 += B3; A4 += B4;
+	A2 -= B2; A3 -= B3; A4 -= B4;
+	A2 *= B2; A3 *= B3; A4 *= B4;
+	
+	A2 * B2[0]; A3 * B3[0]; A4 * B4[0];
+	A2[0] * B2; A3[0] * B3; A4[0] * B4;
+	A2 * 2.0; A3 * 2.0; A4 * 2.0;
+	3.0 * B2; 3.0 * B3; 3.0 * B4;
+	
+	A2.transposita; A2.det;
+	A3.transposita; A3.det;
+	A4.transposita; A4.det;
+	A2[0]; A3[1]; A4[2];
+	A2[0, 1]; A3[1, 2]; A4[2, 3];
+	A4[2, 2] = -666.0;
+}
+functio punctum P(~frac4 p : color)
+{
+	p = frac4(0.0);
+}

@@ -10,11 +10,13 @@ namespace Engine
 	{
 		// Per functionibus
 		constexpr const widechar * AttributeRules		= L"[xw]";
+		constexpr const widechar * AttributeService		= L"[servus]";
 		constexpr const widechar * AttributeVertex		= L"[vertex]";
 		constexpr const widechar * AttributePixel		= L"[punctum]";
 
 		// Per generibus
 		constexpr const widechar * AttributePrivate		= L"[privatus]";
+		constexpr const widechar * AttributeResource	= L"[auxilium]";
 		constexpr const widechar * AttributeAlignment	= L"[polire]";
 		constexpr const widechar * AttributeMapXV		= L"[mappa_xv]";
 		constexpr const widechar * AttributeMapCXX		= L"[mappa_cxx]";
@@ -40,6 +42,7 @@ namespace Engine
 		constexpr const widechar * SemanticBuffer		= L"series";
 		constexpr const widechar * SemanticTexture		= L"textura";
 		constexpr const widechar * SemanticSampler		= L"exceptor";
+		constexpr const widechar * SemanticResponce		= L"responsum";
 
 		XL::LObject * ProcessVectorRecombination(XL::LContext & ctx, XL::LObject * vector, const string & mask);
 		void CreateDefaultImplementation(XL::LObject * on_class, uint flags);
@@ -85,7 +88,7 @@ namespace Engine
 		struct ArgumentDesc {
 			string name;
 			string tcn;
-			bool inout;
+			bool inout, out;
 			ArgumentSemantics semantics;
 			int index;
 		};

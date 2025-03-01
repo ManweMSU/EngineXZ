@@ -1,0 +1,75 @@
+﻿structura T1 {
+	frac A;
+	int B;
+}
+structura NT1 {
+	frac A;
+	int B;
+	structor (NT1 org) { A = org.B; B = org.A; }
+}
+structura NT2 {
+	NT1 nt;
+	int C;
+}
+
+functio vertex V(~frac4 p : positus, series[int] data : series)
+{
+	p = frac4(0.0);
+	logicum A;
+	int B;
+	nint C;
+	frac D;
+	logicum2 E;
+	int2 F;
+	nint2 G;
+	frac2 H;
+
+	var cpA = A;
+	var cpB = B;
+	var cpC = C;
+	var cpD = D;
+	var cpE = E;
+	var cpF = F;
+	var cpG = G;
+	var cpH = H;
+
+	var s = data;
+}
+functio punctum P(~frac4 p : color, textura[frac] tx : textura, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	logicum3 E;
+	int3 F;
+	nint3 G;
+	frac3 H;
+	logicum4 A;
+	int4 B;
+	nint4 C;
+	frac4 D;
+	frac2x2 M2;
+	frac3x3 M3;
+	frac4x4 M4;
+	T1 t1;
+	NT1 nt1;
+	NT2 nt2;
+
+	var cpA = A;
+	var cpB = B;
+	var cpC = C;
+	var cpD = D;
+	var cpE = E;
+	var cpF = F;
+	var cpG = G;
+	var cpH = H;
+
+	var cpM2 = M2;
+	var cpM3 = M3;
+	var cpM4 = M4;
+
+	var cpT1 = t1;
+	var cpT2 = nt1;
+	var cpT3 = nt2;
+
+	var tex = tx;
+	var exc = ex;
+}

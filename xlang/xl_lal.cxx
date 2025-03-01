@@ -422,6 +422,7 @@ namespace Engine
 		void LContext::MakeSubsystemNone(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::NoUI); }
 		void LContext::MakeSubsystemLibrary(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::Library); }
 		void LContext::MakeSubsystemXW(void) { _subsystem = uint(XI::Module::ExecutionSubsystem::XW); }
+		uint LContext::GetSubsystem(void) { return _subsystem; }
 		bool LContext::BuiltInInlinesAllowed(void) { return _built_in_inlines; }
 		void LContext::AllowBuiltInInlines(bool allow) { _built_in_inlines = allow; }
 		bool LContext::IncludeModule(const string & module_name, IModuleLoadCallback * callback, bool embed)

@@ -1,0 +1,44 @@
+﻿functio vertex V(~frac4 p : positus)
+{
+	p = frac4(0.0);
+	nint A1 = 4, B1 = 3;
+	nint2 A2 = nint2(A1, B1), B2 = nint2(B1, A1);
+	nint3 A3 = nint3(A2, A1), B3 = nint3(A1, B1, A1);
+	nint4 A4 = nint4(A2, A2), B4 = nint4(B1, B2, A1);
+
+	-A1; -A2; -A3; -A4;
+	~A1; ~A2; ~A3; ~A4;
+	!A1; !A2; !A3; !A4;
+	A1 + B1; A2 + B2; A3 + B3; A4 + B4;
+	A1 - B1; A2 - B2; A3 - B3; A4 - B4;
+	A1 * B1; A2 * B2; A3 * B3; A4 * B4;
+	A1 / B1; A2 / B2; A3 / B3; A4 / B4;
+	A1 % B1; A2 % B2; A3 % B3; A4 % B4;
+	A1 | B1; A2 | B2; A3 | B3; A4 | B4;
+	A1 & B1; A2 & B2; A3 & B3; A4 & B4;
+	A1 # B1; A2 # B2; A3 # B3; A4 # B4;
+	A1 << B1; A2 << B2; A3 << B3; A4 << B4;
+	A1 >> B1; A2 >> B2; A3 >> B3; A4 >> B4;
+	A1 += B1; A2 += B2; A3 += B3; A4 += B4;
+	A1 -= B1; A2 -= B2; A3 -= B3; A4 -= B4;
+	A1 *= B1; A2 *= B2; A3 *= B3; A4 *= B4;
+	A1 /= B1; A2 /= B2; A3 /= B3; A4 /= B4;
+	A1 %= B1; A2 %= B2; A3 %= B3; A4 %= B4;
+	A1 |= B1; A2 |= B2; A3 |= B3; A4 |= B4;
+	A1 &= B1; A2 &= B2; A3 &= B3; A4 &= B4;
+	A1 #= B1; A2 #= B2; A3 #= B3; A4 #= B4;
+	A1 <<= B1; A2 <<= B2; A3 <<= B3; A4 <<= B4;
+	A1 >>= B1; A2 >>= B2; A3 >>= B3; A4 >>= B4;
+	A1 == B1; A2 == B2; A3 == B3; A4 == B4;
+	A1 != B1; A2 != B2; A3 != B3; A4 != B4;
+	A1 < B1; A2 < B2; A3 < B3; A4 < B4;
+	A1 > B1; A2 > B2; A3 > B3; A4 > B4;
+	A1 <= B1; A2 <= B2; A3 <= B3; A4 <= B4;
+	A1 >= B1; A2 >= B2; A3 >= B3; A4 >= B4;
+	A1++; B1--;
+	A2[0]; A3[1]; A4[2];
+}
+functio punctum P(~frac4 p : color)
+{
+	p = frac4(0.0);
+}

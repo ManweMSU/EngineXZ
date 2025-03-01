@@ -1,0 +1,32 @@
+﻿ute math;
+
+functio frac lege(textura[frac] tex, frac pos) {
+	responde tex[nint2(pos, pos), 0].x;
+}
+functio frac lege(textura[frac] tex, frac pos, exceptor ex) {
+	responde tex(ex, frac2(pos, pos)).y;
+}
+functio frac lege(series[frac] sr, frac pos) {
+	responde sr[pos];
+}
+functio textura[frac] selege(textura[frac] A, textura[frac] B, logicum C) {
+	responde C ? A : B;
+}
+functio series[frac] selege(series[frac] A, series[frac] B, logicum C) {
+	responde C ? A : B;
+}
+
+functio vertex V(~frac4 p : positus)
+{
+	p = frac4(0.0);
+}
+functio punctum P(~frac4 p : color, textura[frac] tex : textura, series[frac] sr : series, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	lege(tex, 0.5);
+	lege(tex, 0.5, ex);
+	lege(sr, 0.5);
+	var T = selege(tex, tex, sic);
+	var S = selege(sr, sr, non);
+	dimitte();
+}

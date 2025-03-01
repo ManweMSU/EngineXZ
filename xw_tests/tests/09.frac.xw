@@ -1,0 +1,33 @@
+﻿functio vertex V(~frac4 p : positus)
+{
+	p = frac4(0.0);
+	frac A1 = 4.2, B1 = -3.3;
+	frac2 A2 = frac2(A1, B1), B2 = frac2(B1, A1);
+	frac3 A3 = frac3(A2, A1), B3 = frac3(A1, B1, A1);
+	frac4 A4 = frac4(A2, A2), B4 = frac4(B1, B2, A1);
+
+	-A1; -A2; -A3; -A4;
+	A1 + B1; A2 + B2; A3 + B3; A4 + B4;
+	A1 - B1; A2 - B2; A3 - B3; A4 - B4;
+	A1 * B1; A2 * B2; A3 * B3; A4 * B4;
+	A1 / B1; A2 / B2; A3 / B3; A4 / B4;
+	A1 += B1; A2 += B2; A3 += B3; A4 += B4;
+	A1 -= B1; A2 -= B2; A3 -= B3; A4 -= B4;
+	A1 *= B1; A2 *= B2; A3 *= B3; A4 *= B4;
+	A1 /= B1; A2 /= B2; A3 /= B3; A4 /= B4;
+	A1 == B1; A2 == B2; A3 == B3; A4 == B4;
+	A1 != B1; A2 != B2; A3 != B3; A4 != B4;
+	A1 < B1; A2 < B2; A3 < B3; A4 < B4;
+	A1 > B1; A2 > B2; A3 > B3; A4 > B4;
+	A1 <= B1; A2 <= B2; A3 <= B3; A4 <= B4;
+	A1 >= B1; A2 >= B2; A3 >= B3; A4 >= B4;
+	A1++; B1--; !A1;
+	A2.normativus; A2.longitudo;
+	A3.normativus; A3.longitudo;
+	A4.normativus; A4.longitudo;
+	A2[0]; A3[1]; A4[2];
+}
+functio punctum P(~frac4 p : color)
+{
+	p = frac4(0.0);
+}

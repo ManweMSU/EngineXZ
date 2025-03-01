@@ -1,0 +1,52 @@
+﻿importa lxx;
+importa graphicum;
+
+var ~consolatorium con = consolatorium.currens()^;
+
+functio nihil prot() introitus iacit {
+	var fab = graphicum.crea_fabricationem_machinationis();
+	var mach = fab^.crea_machinationem();
+	linea xw, xv;
+	systema.informatio inf;
+	systema.para_informationem(inf);
+	si (inf.systema_machinae == systema.operans.windows) {
+		xv = "../xv_release/_build/windows_x86/xv.exe";
+		xw = "../xv_release/_build/windows_x86/xw.exe";
+	} alioqui si (inf.systema_machinae == systema.operans.macos) {
+		xv = "../xv_release/_build/macosx_arm64/XV Monstrans Manualis.app/Contents/MacOS/xv";
+		xw = "../xv_release/_build/macosx_arm64/XV Monstrans Manualis.app/Contents/MacOS/xw";
+	}
+	proba {
+		semita.modulus_primus().parens.loca_currentem();
+		var tt = semita("tests").limae("*.xw");
+		per (var i : tt^) {
+			var t = semita(tt^[i]);
+			con << "ТЕСТ " << t.nomen_purus << "...";
+			ordo linea arg;
+			arg << t << "-No" << "TEST.XWO";
+			var desc = xx.descriptio_processi(xv, arg);
+			si (!desc.exequi()) iace 60;
+			desc.processus^.opperire();
+			si (desc.processus^.numerus_exitus) iace 61;
+			arg.depura();
+			arg << "TEST.XWO" << "-Nloh" << "egsu" << "TEST.EGSU" << "g:humane";
+			desc = xx.descriptio_processi(xw, arg);
+			si (!desc.exequi()) iace 62;
+			desc.processus^.opperire();
+			si (desc.processus^.numerus_exitus) iace 63;
+			var lib = mach^.compila_functiones(semita("TEST.EGSU").crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens));
+			var func = lib^.functiones;
+			per (var j : func^) {
+				var f = lib^.crea_functionem(func^[j]);
+				si (!f) iace 64;
+			}
+			semita("TEST.XWO").remove();
+			semita("TEST.EGSU").remove();
+			con << "УСПЕШНО\n";
+		}
+	} cape (nintadl e, nintadl se) {
+		con << "ERROR: " << e << "\n";
+		con << "SUBER: " << se << "\n";
+		iace 1;
+	}
+}

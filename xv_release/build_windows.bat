@@ -20,7 +20,7 @@ mkdir xv_release\_build\windows_%ARCH%\xi.loc
 mkdir xv_release\_build\windows_%ARCH%\xda.loc
 copy /B xv_com\xv.ini xv_release\_build\windows_%ARCH%\xv.ini
 copy /B xv_com\xe.ini xv_release\_build\windows_%ARCH%\xe.ini
-copy /B xw_dec\xv.ini xv_release\_build\windows_%ARCH%\xw.ini
+copy /B xw_dec\xw.ini xv_release\_build\windows_%ARCH%\xw.ini
 copy /B xi_tool\xi.ini xv_release\_build\windows_%ARCH%\xi.ini
 copy /B xi_dasm\xda.ini xv_release\_build\windows_%ARCH%\xda.ini
 copy /B xv_com\_build\windows_%ARCH%_release\xv.exe xv_release\_build\windows_%ARCH%\xv.exe

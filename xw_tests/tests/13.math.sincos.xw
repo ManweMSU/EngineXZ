@@ -1,0 +1,73 @@
+﻿ute math;
+
+functio vertex V(~frac4 p : positus)
+{
+	p = frac4(0.0);
+
+	frac A1, B1;
+	frac2 A2, B2;
+	frac3 A3, B3;
+	frac4 A4, B4;
+
+	sincos(-1.1, A1, B1);
+	sincos(frac2(-1.1, -2.2), A2, B2);
+	sincos(frac3(-1.1, -2.2, -3.3), A3, B3);
+	sincos(frac4(-1.1, -2.2, -3.3, -4.4), A4, B4);
+
+	arctg(-1.1, 1.1);
+	arctg(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	arctg(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	arctg(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+
+	arcctg(-1.1, 1.1);
+	arcctg(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	arcctg(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	arcctg(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+	
+	prs(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	prs(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	prs(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+	prv(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+
+	distantia(-1.1, 1.1);
+	distantia(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	distantia(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	distantia(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+
+	refulge(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	refulge(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	refulge(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+
+	refrange(frac2(-1.1, -2.2), frac2(1.1, 2.2), 0.5);
+	refrange(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3), 0.5);
+	refrange(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4), 0.5);
+}
+functio punctum P(~frac4 p : color)
+{
+	p = frac4(0.0);
+
+	interpoli(-1.1, 1.1, 10.9);
+	interpoli(frac2(-1.1, -2.2), frac2(1.1, 2.2), frac2(10.9, 11.8));
+	interpoli(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3), frac3(10.9, 11.8, 12.7));
+	interpoli(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4), frac4(10.9, 11.8, 12.7, 12.6));
+
+	gradus(-1.1, 1.1);
+	gradus(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	gradus(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	gradus(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+
+	gradus_hermite(-1.1, 1.1, 10.9);
+	gradus_hermite(frac2(-1.1, -2.2), frac2(1.1, 2.2), frac2(10.9, 11.8));
+	gradus_hermite(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3), frac3(10.9, 11.8, 12.7));
+	gradus_hermite(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4), frac4(10.9, 11.8, 12.7, 12.6));
+
+	limita(-1.1, 1.1, 10.9);
+	limita(frac2(-1.1, -2.2), frac2(1.1, 2.2), frac2(10.9, 11.8));
+	limita(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3), frac3(10.9, 11.8, 12.7));
+	limita(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4), frac4(10.9, 11.8, 12.7, 12.6));
+
+	satura(-1.1);
+	satura(frac2(-1.1, -2.2));
+	satura(frac3(-1.1, -2.2, -3.3));
+	satura(frac4(-1.1, -2.2, -3.3, -4.4));
+}

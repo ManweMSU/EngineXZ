@@ -1,0 +1,37 @@
+﻿structura T {
+	int i;
+	nint u;
+}
+structura T2 {
+	T t;
+	frac f;
+}
+
+functio T2 TF(~T t, int a) {
+	T2 r;
+	r.f = 0.0;
+	r.t.i = 0;
+	r.t.u = 0;
+	t = r.t;
+	responde r;
+}
+
+functio vertex V(
+	nint v : vertex, nint e : exemplum, series[T2] data : series, T const : constati,
+	~frac4 p : positus, ~frac2 u : interpolire_nulle, ~frac3 u2 : interpolire_lineariter, ~frac4 u3 : interpolire_perspective)
+{
+	TF(const, 0);
+	p = frac4(1, 2, 3, 4);
+	u = frac2(5, 6);
+	u2 = frac3(7, 8, 9);
+	u3 = frac4(-1, -2, -3, -4);
+}
+functio punctum P(
+	frac4 p : positus, frac2 u : interpolire_nulle, frac3 u2 : interpolire_lineariter, frac4 u3 : interpolire_perspective,
+	logicum fr : princeps, textura[frac] tx : textura, exceptor ex : exceptor,
+	~frac4 clr : color, ~frac amp : altitudo, ~nint praef : praeformae)
+{
+	clr = frac4(1, 2, 3, 4);
+	amp = 5;
+	praef = 6;
+}

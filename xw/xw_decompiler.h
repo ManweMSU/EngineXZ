@@ -35,6 +35,7 @@ namespace Engine
 			BadShaderName			= 0x000A,
 			DuplicateShaderName		= 0x000B,
 			RecursiveDependencies	= 0x000C,
+			BadResourceTypeUsage	= 0x000D,
 			InternalError			= 0xFFFF,
 		};
 		struct DecompilerStatusDesc

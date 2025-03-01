@@ -114,7 +114,7 @@ namespace Engine
 		{
 			uint symbol_class; // 0 - type, 1 - function, 2 - constructor, 3 - insertion
 			uint class_alignment, class_size;
-			bool private_class;
+			bool private_class, resource_class;
 			string symbol_xw, symbol_refer, symbol_refer_publically, code_inject;
 			XW::TranslationRules rules;
 			FunctionDesc fdesc;
@@ -337,124 +337,143 @@ namespace Engine
 			}
 			bool ValidateSemantics(const FunctionDesc & fdesc)
 			{
-				if (fdesc.fdes != FunctionDesignation::Vertex && fdesc.fdes != FunctionDesignation::Pixel) return true;
-				bool position_out = false;
-				bool color_out = false;
-				for (int i = 0; i < fdesc.args.Length(); i++) {
-					auto & a1 = fdesc.args[i];
-					auto a1s = a1.semantics;
-					if (a1s == ArgumentSemantics::InterstageIL || a1s == ArgumentSemantics::InterstageIP) a1s = ArgumentSemantics::InterstageNI;
-					if (a1.semantics == ArgumentSemantics::Undefined) {
-						SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name);
+				if (fdesc.fdes != FunctionDesignation::Vertex && fdesc.fdes != FunctionDesignation::Pixel) {
+					for (int i = 0; i < fdesc.args.Length(); i++) {
+						auto & a1 = fdesc.args[i];
+						if (a1.inout) {
+							auto clsname = XI::Module::TypeReference(a1.tcn).GetClassName();
+							auto index = symbol_map[clsname];
+							if (!index) {
+								SetError(status, DecompilerStatus::SymbolNotFound, clsname);
+								return false;
+							}
+							auto & tdata = symbol_cache[*index];
+							if (tdata.symbol_class == 0 && tdata.resource_class) {
+								SetError(status, DecompilerStatus::BadResourceTypeUsage, fdesc.fname, a1.name);
+								return false;
+							}
+						}
+					}
+					return true;
+				} else {
+					bool position_out = false;
+					bool color_out = false;
+					for (int i = 0; i < fdesc.args.Length(); i++) {
+						auto & a1 = fdesc.args[i];
+						auto a1s = a1.semantics;
+						if (a1s == ArgumentSemantics::InterstageIL || a1s == ArgumentSemantics::InterstageIP) a1s = ArgumentSemantics::InterstageNI;
+						if (a1.semantics == ArgumentSemantics::Undefined) {
+							SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name);
+							return false;
+						}
+						for (int j = 0; j < i; j++) {
+							auto & a2 = fdesc.args[j];
+							auto a2s = a2.semantics;
+							if (a2s == ArgumentSemantics::InterstageIL || a2s == ArgumentSemantics::InterstageIP) a2s = ArgumentSemantics::InterstageNI;
+							if (a2s == a1s && a2.index == a1.index) {
+								SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name + L", " + a2.name);
+								return false;
+							}
+							if (a1s == ArgumentSemantics::SecondColor && a2s == ArgumentSemantics::Color && a2.index) {
+								SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name + L", " + a2.name);
+								return false;
+							}
+							if (a2s == ArgumentSemantics::SecondColor && a1s == ArgumentSemantics::Color && a1.index) {
+								SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name + L", " + a2.name);
+								return false;
+							}
+						}
+						bool bad = false;
+						if (a1s == ArgumentSemantics::VertexIndex || a1s == ArgumentSemantics::InstanceIndex) {
+							if (a1.tcn != L"Cnint32" || a1.inout || a1.index || fdesc.fdes != FunctionDesignation::Vertex) bad = true;
+						} else if (a1s == ArgumentSemantics::Position) {
+							if (a1.tcn != L"Cfrac4" || a1.index) bad = true;
+							if (fdesc.fdes == FunctionDesignation::Vertex && !a1.inout) bad = true;
+							if (fdesc.fdes == FunctionDesignation::Pixel && a1.inout) bad = true;
+							if (fdesc.fdes == FunctionDesignation::Vertex) position_out = true;
+						} else if (a1s == ArgumentSemantics::InterstageNI) {
+							if (a1.tcn != L"Cfrac" && a1.tcn != L"Cfrac2" && a1.tcn != L"Cfrac3" && a1.tcn != L"Cfrac4") bad = true;
+							if (a1.index >= SelectorLimitInterstage) bad = true;
+							if (fdesc.fdes == FunctionDesignation::Vertex && !a1.inout) bad = true;
+							if (fdesc.fdes == FunctionDesignation::Pixel && a1.inout) bad = true;
+						} else if (a1s == ArgumentSemantics::IsFrontFacing) {
+							if (a1.tcn != L"Clogicum" || a1.inout || a1.index || fdesc.fdes != FunctionDesignation::Pixel) bad = true;
+						} else if (a1s == ArgumentSemantics::Color) {
+							if (a1.tcn != L"Cfrac2" && a1.tcn != L"Cfrac3" && a1.tcn != L"Cfrac4") bad = true;
+							if (a1.index >= SelectorLimitRenderTarget) bad = true;
+							if (fdesc.fdes != FunctionDesignation::Pixel || !a1.inout) bad = true;
+							if (a1.index == 0) color_out = true;
+						} else if (a1s == ArgumentSemantics::SecondColor) {
+							if (a1.tcn != L"Cfrac2" && a1.tcn != L"Cfrac3" && a1.tcn != L"Cfrac4") bad = true;
+							if (fdesc.fdes != FunctionDesignation::Pixel || !a1.inout || a1.index) bad = true;
+						} else if (a1s == ArgumentSemantics::Depth) {
+							if (a1.tcn != L"Cfrac") bad = true;
+							if (fdesc.fdes != FunctionDesignation::Pixel || !a1.inout || a1.index) bad = true;
+						} else if (a1s == ArgumentSemantics::Stencil) {
+							if (a1.tcn != L"Cnint32") bad = true;
+							if (fdesc.fdes != FunctionDesignation::Pixel || !a1.inout || a1.index) bad = true;
+						} else if (a1s == ArgumentSemantics::Constant) {
+							try {
+								auto index = symbol_map[XI::Module::TypeReference(a1.tcn).GetClassName()];
+								if (!index) throw InvalidStateException();
+								auto & cls = symbol_cache[*index];
+								if (cls.private_class) bad = true;
+							} catch (...) { bad = true; }
+							if (a1.index >= SelectorLimitConstantBuffer || a1.inout) bad = true;
+						} else if (a1s == ArgumentSemantics::Buffer) {
+							try {
+								auto cname = XI::Module::TypeReference(a1.tcn).GetClassName();
+								if (cname.Fragment(0, 12) != L"@praeformae.") throw InvalidArgumentException();
+								int i = 12, l = 0;
+								while (i < cname.Length()) {
+									if (cname[i] == L'(') l++;
+									else if (cname[i] == L')') l--;
+									else if (cname[i] == L'.' && l == 0) break;
+									i++;
+								}
+								auto pcn = cname.Fragment(12, i - 12);
+								auto ref = XI::Module::TypeReference(pcn);
+								auto base = ref.GetAbstractInstanceBase().GetClassName();
+								if (base != L"series") bad = true;
+							} catch (...) { bad = true; }
+							if (a1.index >= SelectorLimitBuffer || a1.inout) bad = true;
+						} else if (a1s == ArgumentSemantics::Texture) {
+							try {
+								auto cname = XI::Module::TypeReference(a1.tcn).GetClassName();
+								if (cname.Fragment(0, 12) != L"@praeformae.") throw InvalidArgumentException();
+								int i = 12, l = 0;
+								while (i < cname.Length()) {
+									if (cname[i] == L'(') l++;
+									else if (cname[i] == L')') l--;
+									else if (cname[i] == L'.' && l == 0) break;
+									i++;
+								}
+								auto pcn = cname.Fragment(12, i - 12);
+								auto ref = XI::Module::TypeReference(pcn);
+								auto base = ref.GetAbstractInstanceBase().GetClassName();
+								if (base != L"textura_1d" && base != L"textura_2d" && base != L"textura_cubica" && base != L"textura_3d" &&
+									base != L"ordo_texturarum_1d" && base != L"ordo_texturarum_2d" && base != L"ordo_texturarum_cubicarum") bad = true;
+							} catch (...) { bad = true; }
+							if (a1.index >= SelectorLimitTexture || a1.inout) bad = true;
+						} else if (a1s == ArgumentSemantics::Sampler) {
+							if (a1.tcn != L"Cexceptor") bad = true;
+							if (a1.index >= SelectorLimitSampler || a1.inout) bad = true;
+						} else bad = true;
+						if (bad) {
+							SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name);
+							return false;
+						}
+					}
+					if (fdesc.fdes == FunctionDesignation::Vertex && !position_out) {
+						SetError(status, DecompilerStatus::NoMandatorySemantics, fdesc.fname, SemanticPosition);
 						return false;
 					}
-					for (int j = 0; j < i; j++) {
-						auto & a2 = fdesc.args[j];
-						auto a2s = a2.semantics;
-						if (a2s == ArgumentSemantics::InterstageIL || a2s == ArgumentSemantics::InterstageIP) a2s = ArgumentSemantics::InterstageNI;
-						if (a2s == a1s && a2.index == a1.index) {
-							SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name + L", " + a2.name);
-							return false;
-						}
-						if (a1s == ArgumentSemantics::SecondColor && a2s == ArgumentSemantics::Color && a2.index) {
-							SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name + L", " + a2.name);
-							return false;
-						}
-						if (a2s == ArgumentSemantics::SecondColor && a1s == ArgumentSemantics::Color && a1.index) {
-							SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name + L", " + a2.name);
-							return false;
-						}
-					}
-					bool bad = false;
-					if (a1s == ArgumentSemantics::VertexIndex || a1s == ArgumentSemantics::InstanceIndex) {
-						if (a1.tcn != L"Cnint32" || a1.inout || a1.index || fdesc.fdes != FunctionDesignation::Vertex) bad = true;
-					} else if (a1s == ArgumentSemantics::Position) {
-						if (a1.tcn != L"Cfrac4" || a1.index) bad = true;
-						if (fdesc.fdes == FunctionDesignation::Vertex && !a1.inout) bad = true;
-						if (fdesc.fdes == FunctionDesignation::Pixel && a1.inout) bad = true;
-						if (fdesc.fdes == FunctionDesignation::Vertex) position_out = true;
-					} else if (a1s == ArgumentSemantics::InterstageNI) {
-						if (a1.tcn != L"Cfrac" && a1.tcn != L"Cfrac2" && a1.tcn != L"Cfrac3" && a1.tcn != L"Cfrac4") bad = true;
-						if (a1.index >= SelectorLimitInterstage) bad = true;
-						if (fdesc.fdes == FunctionDesignation::Vertex && !a1.inout) bad = true;
-						if (fdesc.fdes == FunctionDesignation::Pixel && a1.inout) bad = true;
-					} else if (a1s == ArgumentSemantics::IsFrontFacing) {
-						if (a1.tcn != L"Clogicum" || a1.inout || a1.index || fdesc.fdes != FunctionDesignation::Pixel) bad = true;
-					} else if (a1s == ArgumentSemantics::Color) {
-						if (a1.tcn != L"Cfrac2" && a1.tcn != L"Cfrac3" && a1.tcn != L"Cfrac4") bad = true;
-						if (a1.index >= SelectorLimitRenderTarget) bad = true;
-						if (fdesc.fdes != FunctionDesignation::Pixel || !a1.inout) bad = true;
-						if (a1.index == 0) color_out = true;
-					} else if (a1s == ArgumentSemantics::SecondColor) {
-						if (a1.tcn != L"Cfrac2" && a1.tcn != L"Cfrac3" && a1.tcn != L"Cfrac4") bad = true;
-						if (fdesc.fdes != FunctionDesignation::Pixel || !a1.inout || a1.index) bad = true;
-					} else if (a1s == ArgumentSemantics::Depth) {
-						if (a1.tcn != L"Cfrac") bad = true;
-						if (fdesc.fdes != FunctionDesignation::Pixel || !a1.inout || a1.index) bad = true;
-					} else if (a1s == ArgumentSemantics::Stencil) {
-						if (a1.tcn != L"Cnint32") bad = true;
-						if (fdesc.fdes != FunctionDesignation::Pixel || !a1.inout || a1.index) bad = true;
-					} else if (a1s == ArgumentSemantics::Constant) {
-						try {
-							auto index = symbol_map[XI::Module::TypeReference(a1.tcn).GetClassName()];
-							if (!index) throw InvalidStateException();
-							auto & cls = symbol_cache[*index];
-							if (cls.private_class) bad = true;
-						} catch (...) { bad = true; }
-						if (a1.index >= SelectorLimitConstantBuffer || a1.inout) bad = true;
-					} else if (a1s == ArgumentSemantics::Buffer) {
-						try {
-							auto cname = XI::Module::TypeReference(a1.tcn).GetClassName();
-							if (cname.Fragment(0, 12) != L"@praeformae.") throw InvalidArgumentException();
-							int i = 12, l = 0;
-							while (i < cname.Length()) {
-								if (cname[i] == L'(') l++;
-								else if (cname[i] == L')') l--;
-								else if (cname[i] == L'.' && l == 0) break;
-								i++;
-							}
-							auto pcn = cname.Fragment(12, i - 12);
-							auto ref = XI::Module::TypeReference(pcn);
-							auto base = ref.GetAbstractInstanceBase().GetClassName();
-							if (base != L"series") bad = true;
-						} catch (...) { bad = true; }
-						if (a1.index >= SelectorLimitBuffer || a1.inout) bad = true;
-					} else if (a1s == ArgumentSemantics::Texture) {
-						try {
-							auto cname = XI::Module::TypeReference(a1.tcn).GetClassName();
-							if (cname.Fragment(0, 12) != L"@praeformae.") throw InvalidArgumentException();
-							int i = 12, l = 0;
-							while (i < cname.Length()) {
-								if (cname[i] == L'(') l++;
-								else if (cname[i] == L')') l--;
-								else if (cname[i] == L'.' && l == 0) break;
-								i++;
-							}
-							auto pcn = cname.Fragment(12, i - 12);
-							auto ref = XI::Module::TypeReference(pcn);
-							auto base = ref.GetAbstractInstanceBase().GetClassName();
-							if (base != L"textura_1d" && base != L"textura_2d" && base != L"textura_cubica" && base != L"textura_3d" &&
-								base != L"ordo_texturarum_1d" && base != L"ordo_texturarum_2d" && base != L"ordo_texturarum_cubicarum") bad = true;
-						} catch (...) { bad = true; }
-						if (a1.index >= SelectorLimitTexture || a1.inout) bad = true;
-					} else if (a1s == ArgumentSemantics::Sampler) {
-						if (a1.tcn != L"Cexceptor") bad = true;
-						if (a1.index >= SelectorLimitSampler || a1.inout) bad = true;
-					} else bad = true;
-					if (bad) {
-						SetError(status, DecompilerStatus::InvalidSemantics, fdesc.fname, a1.name);
+					if (fdesc.fdes == FunctionDesignation::Pixel && !color_out) {
+						SetError(status, DecompilerStatus::NoMandatorySemantics, fdesc.fname, SemanticColor);
 						return false;
 					}
+					return true;
 				}
-				if (fdesc.fdes == FunctionDesignation::Vertex && !position_out) {
-					SetError(status, DecompilerStatus::NoMandatorySemantics, fdesc.fname, SemanticPosition);
-					return false;
-				}
-				if (fdesc.fdes == FunctionDesignation::Pixel && !color_out) {
-					SetError(status, DecompilerStatus::NoMandatorySemantics, fdesc.fname, SemanticColor);
-					return false;
-				}
-				return true;
 			}
 			void MakeMachineGeneratedDisclamer(DynamicString & output)
 			{
@@ -513,6 +532,7 @@ namespace Engine
 			try {
 				mdl = new XI::Module(data, XI::Module::ModuleLoadFlags::LoadAll);
 				if ((name.Length() && mdl->module_import_name != name) || mdl->subsystem != XI::Module::ExecutionSubsystem::XW) throw InvalidFormatException();
+				if (init.modules.ElementExists(mdl->module_import_name)) return true;
 				if (!XI::LoadModuleVersionInformation(mdl->resources, vinfo)) vinfo.ThisModuleVersion = 0xFFFFFFFF;
 			} catch (...) {
 				SetError(desc.status, DecompilerStatus::InvalidImage, name);
@@ -617,6 +637,7 @@ namespace Engine
 				bool prvt = cls.attributes.ElementExists(AttributePrivate);
 				_state->_public = !prvt;
 				_state->_current->private_class = prvt;
+				_state->_current->resource_class = cls.attributes.ElementExists(AttributeResource);
 				string alias_attr;
 				if (_proc_mask == DecompilerFlagProduceHLSL) alias_attr = AttributeMapHLSL;
 				else if (_proc_mask == DecompilerFlagProduceMSL) alias_attr = AttributeMapMSL;
@@ -713,6 +734,10 @@ namespace Engine
 					if (!index) { _state->_body.Clear(); _state->_current.SetReference(0); return true; }
 					auto & tdata = ctx.symbol_cache[*index];
 					if (tdata.symbol_class != 0) throw InvalidStateException();
+					if (tdata.resource_class) {
+						SetError(ctx.status, DecompilerStatus::BadResourceTypeUsage, GetLanguage(), _state->_current->symbol_xw, vname);
+						return false;
+					}
 					_align_to_boundary(tdata.class_alignment);
 					if (tdata.class_alignment > _state->_current->class_alignment) _state->_current->class_alignment = tdata.class_alignment;
 					int volume = 1;
@@ -845,7 +870,7 @@ namespace Engine
 						} else if (desc.semantics == ArgumentSemantics::SecondColor) {
 							postfix = L" [[color(0), index(1)]]";
 						} else if (desc.semantics == ArgumentSemantics::Depth) {
-							postfix = L" [[depth_argument(any)]]";
+							postfix = L" [[depth(any)]]";
 						} else if (desc.semantics == ArgumentSemantics::Stencil) {
 							postfix = L" [[stencil]]";
 						} else if (desc.semantics == ArgumentSemantics::Constant) {
@@ -1482,8 +1507,10 @@ namespace Engine
 								if (_hr()) _output << L" ";
 							}
 							if (_gen.GetLanguage() == ShaderLanguage::HLSL) {
-								if (fdesc.args[i].inout) _output << L"inout ";
-								else _output << L"in ";
+								if (fdesc.args[i].inout) {
+									if (fdesc.args[i].out) _output << L"out ";
+									else _output << L"inout ";
+								} else _output << L"in ";
 							} else if (_gen.GetLanguage() == ShaderLanguage::MSL && fdesc.args[i].inout) {
 								_output << L"thread ";
 							}
@@ -1753,6 +1780,7 @@ namespace Engine
 					return true;
 				}
 				_state->_current->private_class = false;
+				_state->_current->resource_class = cls.attributes.ElementExists(AttributeResource);
 				auto alias = cls.attributes[AttributeMapXV];
 				auto align = cls.attributes[AttributeAlignment];
 				if (align) _state->_current->class_alignment = align->ToInt32();
@@ -1817,6 +1845,10 @@ namespace Engine
 					if (!index) { _state.SetReference(0); return true; }
 					auto & tdata = ctx.symbol_cache[*index];
 					if (tdata.symbol_class != 0) throw InvalidStateException();
+					if (tdata.resource_class) {
+						SetError(ctx.status, DecompilerStatus::BadResourceTypeUsage, GetLanguage(), _state->_current->symbol_xw, vname);
+						return false;
+					}
 					_state->_current->class_size = AddressAlign(_state->_current->class_size, tdata.class_alignment);
 					if (tdata.class_alignment > _state->_current->class_alignment) _state->_current->class_alignment = tdata.class_alignment;
 					SafePointer<XL::XType> type = XL::CreateType(L"C" + tdata.symbol_refer_publically, _ctx);

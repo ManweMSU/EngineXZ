@@ -1208,7 +1208,7 @@ namespace Engine
 					} else if (retval->GetFullName() == XW::TypeRetvalPixel) {
 						attributes.Append(XW::AttributePixel, L"");
 						retval = ctx.QueryObject(XL::NameVoid);
-					}
+					} else attributes.Append(XW::AttributeService, L"");
 				}
 				if (is_xw && !XW::ValidateVariableType(retval, false)) Abort(CompilerStatus::ObjectTypeMismatch, current_token);
 				if (is_conv) { AssertPunct(L")"); ReadNextToken(); }
@@ -1387,6 +1387,9 @@ namespace Engine
 						} else if (attr.key == XW::AttributePixel && is_xw) {
 							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							func->AddAttribute(attr.key, argv_sem.ToString());
+						} else if (attr.key == XW::AttributeService && is_xw) {
+							if (attr.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							func->AddAttribute(attr.key, argv_sem.ToString());
 						} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 					} else func->AddAttribute(attr.key, attr.value);
 				}
@@ -1547,6 +1550,8 @@ namespace Engine
 						} else if (attr.key == XW::AttributeMapGLSL && is_xw) {
 							type->AddAttribute(attr.key, attr.value);
 						} else if (attr.key == XW::AttributeAlignment && is_xw) {
+							type->AddAttribute(attr.key, attr.value);
+						} else if (attr.key == XW::AttributeResource && is_xw) {
 							type->AddAttribute(attr.key, attr.value);
 						} else Abort(CompilerStatus::InapproptiateAttribute, definition);
 					} else type->AddAttribute(attr.key, attr.value);

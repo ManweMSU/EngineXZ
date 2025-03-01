@@ -257,16 +257,19 @@ namespace Engine
 			if (throws) ff |= FunctionThrows;
 			LObject * func;
 			if (flags & CreateMethodAssign) {
+				XL::LObject * opt_class_ref;
+				if (ctx.GetSubsystem() == uint(XI::Module::ExecutionSubsystem::XW)) opt_class_ref = on_class;
+				else opt_class_ref = class_ref;
 				try {
 					auto fd = ctx.CreateFunction(on_class, OperatorAssign);
-					func = ctx.CreateFunctionOverload(fd, class_ref, 1, class_ref.InnerRef(), ff);
+					func = ctx.CreateFunctionOverload(fd, opt_class_ref, 1, &opt_class_ref, ff);
 				} catch (...) { return; }
 				string src_name = L"valor";
 				FunctionContextDesc desc;
-				desc.retval = class_ref;
+				desc.retval = opt_class_ref;
 				desc.instance = on_class;
 				desc.argc = 1;
-				desc.argvt = class_ref.InnerRef();
+				desc.argvt = &opt_class_ref;
 				desc.argvn = &src_name;
 				desc.this_name = L"";
 				desc.flags = ff;
@@ -293,7 +296,13 @@ namespace Engine
 				}
 				fctx->EncodeReturn(self);
 				fctx->EndEncoding();
+				if (ctx.GetSubsystem() == uint(XI::Module::ExecutionSubsystem::XW)) {
+					static_cast<XFunctionOverload *>(func)->GetImplementationDesc()._is_xw = true;
+				}
 			} else {
+				XL::LObject * opt_class_ref;
+				if (ctx.GetSubsystem() == uint(XI::Module::ExecutionSubsystem::XW)) opt_class_ref = on_class;
+				else opt_class_ref = class_ref;
 				try {
 					if (flags & CreateMethodConstructorInit) {
 						auto fd = ctx.CreateFunction(on_class, NameConstructor);
@@ -301,12 +310,12 @@ namespace Engine
 					} else if (flags & CreateMethodConstructorCopy) {
 						argc = 1;
 						auto fd = ctx.CreateFunction(on_class, NameConstructor);
-						func = ctx.CreateFunctionOverload(fd, void_type, 1, class_ref.InnerRef(), ff);
+						func = ctx.CreateFunctionOverload(fd, void_type, 1, &opt_class_ref, ff);
 					} else if (flags & CreateMethodConstructorMove) {
 						if (throws) return;
 						argc = 1;
 						auto fd = ctx.CreateFunction(on_class, NameConstructorMove);
-						func = ctx.CreateFunctionOverload(fd, void_type, 1, class_ref.InnerRef(), ff);
+						func = ctx.CreateFunctionOverload(fd, void_type, 1, &opt_class_ref, ff);
 					} else if (flags & CreateMethodConstructorZero) {
 						if (throws) return;
 						auto fd = ctx.CreateFunction(on_class, NameConstructorZero);
@@ -323,7 +332,7 @@ namespace Engine
 				desc.retval = void_type;
 				desc.instance = on_class;
 				desc.argc = argc;
-				desc.argvt = argc ? class_ref.InnerRef() : 0;
+				desc.argvt = argc ? &opt_class_ref : 0;
 				desc.argvn = argc ? &src_name : 0;
 				desc.this_name = L"";
 				desc.flags = ff;
@@ -377,6 +386,9 @@ namespace Engine
 					}
 				}
 				fctx->EndEncoding();
+				if (ctx.GetSubsystem() == uint(XI::Module::ExecutionSubsystem::XW)) {
+					static_cast<XFunctionOverload *>(func)->GetImplementationDesc()._is_xw = true;
+				}
 			}
 		}
 		void CreateDefaultImplementations(XClass * on_class, uint flags, ObjectArray<LObject> & vft_init)

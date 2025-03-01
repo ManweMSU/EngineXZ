@@ -162,6 +162,7 @@ namespace Engine
 			void MakeSubsystemNone(void);
 			void MakeSubsystemLibrary(void);
 			void MakeSubsystemXW(void);
+			uint GetSubsystem(void);
 			bool BuiltInInlinesAllowed(void);
 			void AllowBuiltInInlines(bool allow);
 

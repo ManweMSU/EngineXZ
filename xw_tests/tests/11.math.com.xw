@@ -1,0 +1,83 @@
+﻿ute math;
+
+functio vertex V(~frac4 p : positus)
+{
+	p = frac4(0.0);
+	inf_est(1.1);
+	inf_est(frac2(2.2, 3.3));
+	inf_est(frac3(4.4, 5.5, 6.6));
+	inf_est(frac4(7.7, 8.8, 9.9, 0.0));
+	nn_est(1.1);
+	nn_est(frac2(2.2, 3.3));
+	nn_est(frac3(4.4, 5.5, 6.6));
+	nn_est(frac4(7.7, 8.8, 9.9, 0.0));
+	finitus_est(1.1);
+	finitus_est(frac2(2.2, 3.3));
+	finitus_est(frac3(4.4, 5.5, 6.6));
+	finitus_est(frac4(7.7, 8.8, 9.9, 0.0));
+
+	abs(-1);
+	abs(-1.1);
+	abs(int2(-1, -2));
+	abs(frac2(-1.1, -2.2));
+	abs(int3(-1, -2, -3));
+	abs(frac3(-1.1, -2.2, -3.3));
+	abs(int4(-1, -2, -3, -4));
+	abs(frac4(-1.1, -2.2, -3.3, -4.4));
+
+	sgn(-1);
+	sgn(-1.1);
+	sgn(int2(-1, -2));
+	sgn(frac2(-1.1, -2.2));
+	sgn(int3(-1, -2, -3));
+	sgn(frac3(-1.1, -2.2, -3.3));
+	sgn(int4(-1, -2, -3, -4));
+	sgn(frac4(-1.1, -2.2, -3.3, -4.4));
+
+	max(-1, 1);
+	max(-1.1, 1.1);
+	max(int2(-1, -2), int2(1, 2));
+	max(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	max(int3(-1, -2, -3), int3(1, 2, 3));
+	max(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	max(int4(-1, -2, -3, -4), int4(1, 2, 3, 4));
+	max(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+
+	min(-1, 1);
+	min(-1.1, 1.1);
+	min(int2(-1, -2), int2(1, 2));
+	min(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	min(int3(-1, -2, -3), int3(1, 2, 3));
+	min(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	min(int4(-1, -2, -3, -4), int4(1, 2, 3, 4));
+	min(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+}
+functio punctum P(~frac4 p : color)
+{
+	p = frac4(0.0);
+
+	concava(-1.1);
+	concava(frac2(-1.1, -2.2));
+	concava(frac3(-1.1, -2.2, -3.3));
+	concava(frac4(-1.1, -2.2, -3.3, -4.4));
+
+	trunca(-1.1);
+	trunca(frac2(-1.1, -2.2));
+	trunca(frac3(-1.1, -2.2, -3.3));
+	trunca(frac4(-1.1, -2.2, -3.3, -4.4));
+
+	solum(-1.1);
+	solum(frac2(-1.1, -2.2));
+	solum(frac3(-1.1, -2.2, -3.3));
+	solum(frac4(-1.1, -2.2, -3.3, -4.4));
+
+	tectum(-1.1);
+	tectum(frac2(-1.1, -2.2));
+	tectum(frac3(-1.1, -2.2, -3.3));
+	tectum(frac4(-1.1, -2.2, -3.3, -4.4));
+
+	fmodulus(-1.1, 1.1);
+	fmodulus(frac2(-1.1, -2.2), frac2(1.1, 2.2));
+	fmodulus(frac3(-1.1, -2.2, -3.3), frac3(1.1, 2.2, 3.3));
+	fmodulus(frac4(-1.1, -2.2, -3.3, -4.4), frac4(1.1, 2.2, 3.3, 4.4));
+}

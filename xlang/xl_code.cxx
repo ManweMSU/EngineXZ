@@ -903,7 +903,7 @@ namespace Engine
 				if (_void_retval) _subj.instset << XA::TH::MakeStatementReturn();
 			}
 			if (!_ctx.IsIdle()) {
-				OptimizeCode(_subj, _acorr);
+				if (_ctx.GetSubsystem() != uint(XI::Module::ExecutionSubsystem::XW)) OptimizeCode(_subj, _acorr);
 				for (int index = 0; index < _subj.instset.Length(); index++) {
 					auto & i = _subj.instset[index];
 					if (i.opcode == XA::OpcodeUnconditionalJump || i.opcode == XA::OpcodeConditionalJump) {

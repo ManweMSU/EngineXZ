@@ -102,13 +102,13 @@ namespace Engine
 			cls->ListFields(fields);
 			for (auto & f : fields) { SafePointer<XL::LObject> type = f.GetType(); subj_types.Append(static_cast<XL::XType *>(type.Inner())); }
 			bool discard = false;
-			bool standard = false;
+			bool standard = true;
 			if (flags & XL::CreateMethodConstructorInit) {
 				try {
 					for (auto & s : subj_types) {
 						SafePointer<XL::LObject> ctor = s.GetConstructorInit();
 						auto & xfunc = *static_cast<XL::XFunctionOverload *>(ctor.Inner());
-						if (!xfunc.GetImplementationDesc()._xw.IsEmpty()) standard = true;
+						if (xfunc.GetImplementationDesc()._xw.IsEmpty()) standard = false;
 					}
 				} catch (...) { discard = true; }
 			} else if (flags & XL::CreateMethodConstructorCopy) {
@@ -116,7 +116,7 @@ namespace Engine
 					for (auto & s : subj_types) {
 						SafePointer<XL::LObject> ctor = s.GetConstructorCopy();
 						auto & xfunc = *static_cast<XL::XFunctionOverload *>(ctor.Inner());
-						if (!xfunc.GetImplementationDesc()._xw.IsEmpty()) standard = true;
+						if (xfunc.GetImplementationDesc()._xw.IsEmpty()) standard = false;
 					}
 				} catch (...) { discard = true; }
 			} else if (flags & XL::CreateMethodAssign) {
@@ -132,7 +132,7 @@ namespace Engine
 						} else if (asgn_fd->GetClass() == XL::Class::FunctionOverload) {
 							asgn = static_cast<XL::XFunctionOverload *>(asgn_fd.Inner());
 						} else throw Exception();
-						if (!asgn->GetImplementationDesc()._xw.IsEmpty()) standard = true;
+						if (asgn->GetImplementationDesc()._xw.IsEmpty()) standard = false;
 					}
 				} catch (...) { discard = true; }
 			}
@@ -235,6 +235,7 @@ namespace Engine
 			if (name == SemanticBuffer) return true;
 			if (name == SemanticTexture) return true;
 			if (name == SemanticSampler) return true;
+			if (name == SemanticResponce) return true;
 			return false;
 		}
 		bool ValidateArgumentSemantics(const string & name, int index)
@@ -284,6 +285,9 @@ namespace Engine
 			if (name == SemanticSampler) {
 				return index >= -1 && index < SelectorLimitSampler;
 			}
+			if (name == SemanticResponce) {
+				return index >= -1 && index < 1;
+			}
 			return false;
 		}
 		bool ValidateVariableType(XL::LObject * type, bool allow_ref)
@@ -302,7 +306,7 @@ namespace Engine
 			names << SemanticVertex << SemanticInstance << SemanticPosition << SemanticInterstageNI
 				<< SemanticInterstageIL << SemanticInterstageIP << SemanticFrontFacing << SemanticColor
 				<< SemanticSecondColor << SemanticDepth << SemanticStencil << SemanticConstant
-				<< SemanticBuffer << SemanticTexture << SemanticSampler;
+				<< SemanticBuffer << SemanticTexture << SemanticSampler << SemanticResponce;
 		}
 		void ListShaderLanguages(Array<string> & names) { names << L"hlsl" << L"msl" << L"glsl"; }
 		void MakeAssemblerHint(XL::LFunctionContext & fctx, uint hint)
@@ -344,18 +348,22 @@ namespace Engine
 				if (sdata_ptr) {
 					sdata = *sdata_ptr;
 					desc.fdes = FunctionDesignation::Pixel;
-				} else desc.fdes = FunctionDesignation::Service;
+				} else {
+					sdata_ptr = func.attributes[AttributeService];
+					if (sdata_ptr) sdata = *sdata_ptr;
+					desc.fdes = FunctionDesignation::Service;
+				}
 			}
 			if (desc.instance_tcn.Length() && desc.constructor) {
 				desc.rv.name = L"";
 				desc.rv.tcn = desc.instance_tcn;
-				desc.rv.inout = true;
+				desc.rv.inout = desc.rv.out = true;
 				desc.rv.semantics = ArgumentSemantics::Undefined;
 				desc.rv.index = 0;
 			} else {
 				desc.rv.name = L"";
 				desc.rv.tcn = sign->ElementAt(0).QueryCanonicalName();
-				desc.rv.inout = true;
+				desc.rv.inout = desc.rv.out = true;
 				desc.rv.semantics = ArgumentSemantics::Undefined;
 				desc.rv.index = 0;
 			}
@@ -366,6 +374,7 @@ namespace Engine
 				arg.name = L"ego";
 				arg.tcn = desc.instance_tcn;
 				arg.inout = true;
+				arg.out = false;
 				arg.semantics = ArgumentSemantics::Undefined;
 				arg.index = 0;
 				desc.args << arg;
@@ -375,9 +384,10 @@ namespace Engine
 				auto & type = sign->ElementAt(1 + i);
 				if (type.GetReferenceClass() == XI::Module::TypeReference::Class::Reference) {
 					arg.inout = !is_setter;
+					arg.out = false;
 					arg.tcn = type.GetReferenceDestination().QueryCanonicalName();
 				} else {
-					arg.inout = false;
+					arg.inout = arg.out = false;
 					arg.tcn = type.QueryCanonicalName();
 				}
 				if (i < sdata_parts.Length() && desc.fdes != FunctionDesignation::Service) {
@@ -403,6 +413,7 @@ namespace Engine
 						else if (sname == SemanticBuffer) arg.semantics = ArgumentSemantics::Buffer;
 						else if (sname == SemanticTexture) arg.semantics = ArgumentSemantics::Texture;
 						else if (sname == SemanticSampler) arg.semantics = ArgumentSemantics::Sampler;
+						else if (sname == SemanticResponce) { arg.semantics = ArgumentSemantics::Undefined; arg.inout = arg.out = true; }
 						else arg.semantics = ArgumentSemantics::Undefined;
 					} else {
 						arg.name = L"";

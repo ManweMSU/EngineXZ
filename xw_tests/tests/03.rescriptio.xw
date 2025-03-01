@@ -1,0 +1,70 @@
+﻿structura T1 {
+	frac A;
+	int B;
+}
+structura NT1 {
+	frac A;
+	int B;
+	functio nihil operator = (NT1 org) { A = org.B; B = org.A; }
+}
+structura NT2 {
+	NT1 nt;
+	int C;
+}
+
+functio vertex V(~frac4 p : positus)
+{
+	p = frac4(0.0);
+	logicum A;
+	int B;
+	nint C;
+	frac D;
+	logicum2 E;
+	int2 F;
+	nint2 G;
+	frac2 H;
+
+	A = A;
+	B = B;
+	C = C;
+	D = D;
+	E = E;
+	F = F;
+	G = G;
+	H = H;
+}
+functio punctum P(~frac4 p : color)
+{
+	p = frac4(0.0);
+	logicum3 E;
+	int3 F;
+	nint3 G;
+	frac3 H;
+	logicum4 A;
+	int4 B;
+	nint4 C;
+	frac4 D;
+	frac2x2 M2;
+	frac3x3 M3;
+	frac4x4 M4;
+	T1 t1;
+	NT1 nt1;
+	NT2 nt2;
+
+	A = A;
+	B = B;
+	C = C;
+	D = D;
+	E = E;
+	F = F;
+	G = G;
+	H = H;
+
+	M2 = M2;
+	M3 = M3;
+	M4 = M4;
+
+	t1 = t1;
+	nt1 = nt1;
+	nt2 = nt2;
+}

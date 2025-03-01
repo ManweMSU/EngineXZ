@@ -1,0 +1,106 @@
+﻿ute math;
+
+structura T {
+	frac3 a;
+	frac4 b;
+}
+
+functio vertex V(~frac4 p : positus, series[T] t : series)
+{
+	p = frac4(0.0);
+	var e = t[5];
+	var A = e.a;
+	var B = e.b;
+}
+functio punctum P1(~frac4 p : color, textura_1d[int] it : textura, textura_1d[nint] ut : textura, textura_1d[frac] ft : textura, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	nint lat, mip;
+	it.dimensiones(3, lat, mip);
+	ut.dimensiones(3, lat, mip);
+	ft.dimensiones(3, lat, mip);
+	var L1 = it[0, 1];
+	var E1 = it(ex, 0.5);
+	var L2 = ut[0, 1];
+	var E2 = ut(ex, 0.5);
+	var L3 = ft[0, 1];
+	var E3 = ft(ex, 0.5);
+}
+functio punctum P2(~frac4 p : color, ordo_texturarum_1d[int] it : textura, ordo_texturarum_1d[nint] ut : textura, ordo_texturarum_1d[frac] ft : textura, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	nint lat, mip, ord;
+	it.dimensiones(3, lat, ord, mip);
+	ut.dimensiones(3, lat, ord, mip);
+	ft.dimensiones(3, lat, ord, mip);
+	var L1 = it[0, 1, 2];
+	var E1 = it(ex, 0.5, 2);
+	var L2 = ut[0, 1, 2];
+	var E2 = ut(ex, 0.5, 2);
+	var L3 = ft[0, 1, 2];
+	var E3 = ft(ex, 0.5, 2);
+}
+functio punctum P3(~frac4 p : color, textura_2d[int] it : textura, textura_2d[nint] ut : textura, textura_2d[frac] ft : textura, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	nint lat, alt, mip;
+	it.dimensiones(3, lat, alt, mip);
+	ut.dimensiones(3, lat, alt, mip);
+	ft.dimensiones(3, lat, alt, mip);
+	var L1 = it[int2(10, 11), 1];
+	var E1 = it(ex, frac2(0.1, 0.2));
+	var L2 = ut[int2(10, 11), 1];
+	var E2 = ut(ex, frac2(0.1, 0.2));
+	var L3 = ft[int2(10, 11), 1];
+	var E3 = ft(ex, frac2(0.1, 0.2));
+}
+functio punctum P4(~frac4 p : color, ordo_texturarum_2d[int] it : textura, ordo_texturarum_2d[nint] ut : textura, ordo_texturarum_2d[frac] ft : textura, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	nint lat, alt, mip, ord;
+	it.dimensiones(3, lat, alt, ord, mip);
+	ut.dimensiones(3, lat, alt, ord, mip);
+	ft.dimensiones(3, lat, alt, ord, mip);
+	var L1 = it[int2(10, 11), 1, 2];
+	var E1 = it(ex, frac2(0.1, 0.2), 2);
+	var L2 = ut[int2(10, 11), 1, 2];
+	var E2 = ut(ex, frac2(0.1, 0.2), 2);
+	var L3 = ft[int2(10, 11), 1, 2];
+	var E3 = ft(ex, frac2(0.1, 0.2), 2);
+}
+functio punctum P5(~frac4 p : color, textura_cubica[int] it : textura, textura_cubica[nint] ut : textura, textura_cubica[frac] ft : textura, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	nint lat, alt, mip;
+	it.dimensiones(3, lat, alt, mip);
+	ut.dimensiones(3, lat, alt, mip);
+	ft.dimensiones(3, lat, alt, mip);
+	var E1 = it(ex, frac3(0.1, 0.2, 0.3));
+	var E2 = ut(ex, frac3(0.1, 0.2, 0.3));
+	var E3 = ft(ex, frac3(0.1, 0.2, 0.3));
+}
+functio punctum P6(~frac4 p : color, ordo_texturarum_cubicarum[int] it : textura, ordo_texturarum_cubicarum[nint] ut : textura, ordo_texturarum_cubicarum[frac] ft : textura, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	nint lat, alt, mip, ord;
+	it.dimensiones(3, lat, alt, ord, mip);
+	ut.dimensiones(3, lat, alt, ord, mip);
+	ft.dimensiones(3, lat, alt, ord, mip);
+	var E1 = it(ex, frac3(0.1, 0.2, 0.3), 2);
+	var E2 = ut(ex, frac3(0.1, 0.2, 0.3), 2);
+	var E3 = ft(ex, frac3(0.1, 0.2, 0.3), 2);
+}
+functio punctum P7(~frac4 p : color, textura_3d[int] it : textura, textura_3d[nint] ut : textura, textura_3d[frac] ft : textura, exceptor ex : exceptor)
+{
+	p = frac4(0.0);
+	nint lat, alt, amp, mip;
+	it.dimensiones(3, lat, alt, amp, mip);
+	ut.dimensiones(3, lat, alt, amp, mip);
+	ft.dimensiones(3, lat, alt, amp, mip);
+	var L1 = it[int3(10, 11, 12), 1];
+	var E1 = it(ex, frac3(0.1, 0.2, 0.3));
+	var L2 = ut[int3(10, 11, 12), 1];
+	var E2 = ut(ex, frac3(0.1, 0.2, 0.3));
+	var L3 = ft[int3(10, 11, 12), 1];
+	var E3 = ft(ex, frac3(0.1, 0.2, 0.3));
+}

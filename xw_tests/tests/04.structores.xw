@@ -1,0 +1,71 @@
+﻿functio vertex V(~frac4 p : positus)
+{
+	p = frac4(0.0);
+
+	logicum2 A(sic);
+	logicum2 B(non, sic);
+	int2 C(-1);
+	int2 D(-2, 3);
+	nint2 E(2);
+	nint2 F(5, 9);
+	frac2 G(2.0, 6.0);
+	frac2 H(4.0);
+
+	logicum3 AA(non);
+	logicum3 AB(sic, non, sic);
+	logicum3 AC(non, A);
+	logicum3 AD(B, sic);
+	int3 BA(-2);
+	int3 BB(3, -4, 5);
+	int3 BC(-76, C);
+	int3 BD(D, 88);
+	nint3 CA(12);
+	nint3 CB(15, 16, 18);
+	nint3 CC(99, E);
+	nint3 CD(F, 88);
+	frac3 DA(1.1);
+	frac3 DB(1.2, 1.3, 1.4);
+	frac3 DC(1.5, G);
+	frac3 DD(H, 1.6);
+
+	logicum4 AAA(sic);
+	logicum4 AAB(sic, sic, non, sic);
+	logicum4 AAC(non, sic, A);
+	logicum4 AAD(sic, A, non);
+	logicum4 AAE(A, non, sic);
+	logicum4 AAF(sic, AA);
+	logicum4 AAG(AB, non);
+	logicum4 AAH(A, B);
+	int4 BBA(-2);
+	int4 BBB(3, -4, 5, -6);
+	int4 BBC(2, -4, C);
+	int4 BBD(-4, D, 2);
+	int4 BBE(D, 3, -3);
+	int4 BBF(-7, BA);
+	int4 BBG(BB, -8);
+	int4 BBH(C, D);
+	nint4 CCA(2);
+	nint4 CCB(3, 4, 5, 6);
+	nint4 CCC(2, 4, E);
+	nint4 CCD(4, F, 2);
+	nint4 CCE(D, 3, 3);
+	nint4 CCF(7, CA);
+	nint4 CCG(CB, 8);
+	nint4 CCH(F, E);
+	frac4 DDA(-2.1);
+	frac4 DDB(3.1, -4.1, 5.1, -6.1);
+	frac4 DDC(2.1, -4.1, H);
+	frac4 DDD(-4.1, G, 2.1);
+	frac4 DDE(H, 3.1, -3.1);
+	frac4 DDF(-7.1, DB);
+	frac4 DDG(DA, -8.1);
+	frac4 DDH(G, H);
+
+	frac2x2 M2(G, H);
+	frac3x3 M3(DA, DB, DC);
+	frac4x4 M4(DDA, DDB, DDC, DDD);
+}
+functio punctum P(~frac4 p : color)
+{
+	p = frac4(0.0);
+}
