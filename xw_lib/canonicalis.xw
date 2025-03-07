@@ -830,10 +830,10 @@ spatium math {
 	[[xw]] functio frac2 onera(frac2 mantissa, int2 pot) { hlsl : { "ldexp(" A 0 "," A 1 ")" } msl : { "ldexp(" A 0 "," A 1 ")" } }
 	[[xw]] functio frac3 onera(frac3 mantissa, int3 pot) { hlsl : { "ldexp(" A 0 "," A 1 ")" } msl : { "ldexp(" A 0 "," A 1 ")" } }
 	[[xw]] functio frac4 onera(frac4 mantissa, int4 pot) { hlsl : { "ldexp(" A 0 "," A 1 ")" } msl : { "ldexp(" A 0 "," A 1 ")" } }
-	[[xw]] functio frac decompone(frac valor, ~frac pot : responsum) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
-	[[xw]] functio frac2 decompone(frac2 valor, ~frac2 pot : responsum) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
-	[[xw]] functio frac3 decompone(frac3 valor, ~frac3 pot : responsum) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
-	[[xw]] functio frac4 decompone(frac4 valor, ~frac4 pot : responsum) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac decompone(frac valor, ~frac int : responsum) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac2 decompone(frac2 valor, ~frac2 int : responsum) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac3 decompone(frac3 valor, ~frac3 int : responsum) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
+	[[xw]] functio frac4 decompone(frac4 valor, ~frac4 int : responsum) { hlsl : { "modf(" A 0 "," A 1 ")" } msl : { "modf(" A 0 "," A 1 ")" } }
 
 	[[xw]] functio frac exp(frac valor) { hlsl : { "exp(" A 0 ")" } msl : { "exp(" A 0 ")" } }
 	[[xw]] functio frac2 exp(frac2 valor) { hlsl : { "exp(" A 0 ")" } msl : { "exp(" A 0 ")" } }
