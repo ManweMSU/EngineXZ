@@ -6,6 +6,7 @@ rm -rf xx_xx/_build
 rm -rf xx_xxf/_build
 rm -rf xv_com/_build
 rm -rf xw_dec/_build
+rm -rf xw_pc/_build
 rm -rf xi_tool/_build
 rm -rf xi_dasm/_build
 rm -rf xx_xxsc/_build

@@ -1,0 +1,22 @@
+﻿UseVersionDefines = true
+Attachments {
+	AAAAAA {
+		From = "../xw_dec/xw.ini"
+		To = "xw.ini"
+	}
+}
+CompileList {
+	AAAAAA = "../xexec/xx_com.cxx"
+	AAAAAB = "xw_dx_com.cxx"
+	AAAAAC = "xw_metal_com.cxx"
+	AAAAAD = "xw_pc.cxx"
+}
+VersionInformation {
+	ApplicationIdentifier = "XWPC"
+	ApplicationName = "Engine XW Praecompilator"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2025"
+	InternalName = "xwpc"
+	Version = "1.0.0.1"
+}

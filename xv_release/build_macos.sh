@@ -1,5 +1,6 @@
 ertbuild xv_com/xv.ertproj -Nar ${ARCH}
 ertbuild xw_dec/xw.ertproj -Nar ${ARCH}
+ertbuild xw_pc/xwpc.ertproj -Nar ${ARCH}
 ertbuild xv_sl/xvsl.ertproj -Nar ${ARCH}
 ertbuild xv_mm/xvm.ertproj -Nar ${ARCH}
 ertbuild xi_tool/xi.ertproj -Nar ${ARCH}
@@ -24,6 +25,7 @@ cp xi_tool/xi.ini xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/C
 cp xi_dasm/xda.ini xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda.ini
 cp xv_com/_build/macosx_${ARCH}_release/xv xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv
 cp xw_dec/_build/macosx_${ARCH}_release/xw xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xw
+cp xw_pc/_build/macosx_${ARCH}_release/xwpc xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xwpc
 cp xv_sl/_build/macosx_${ARCH}_release/xvsl xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvsl
 cp xi_tool/_build/macosx_${ARCH}_release/xi xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi
 cp xi_dasm/_build/macosx_${ARCH}_release/xda xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda

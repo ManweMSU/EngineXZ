@@ -1,6 +1,7 @@
 @echo off
 ertbuild xv_com\xv.ertproj -Nar %ARCH%
 ertbuild xw_dec\xw.ertproj -Nar %ARCH%
+ertbuild xw_pc\xwpc.ertproj -Nar %ARCH%
 ertbuild xv_sl\xvsl.ertproj -Nar %ARCH%
 ertbuild xv_mm\xvm.ertproj -Nar %ARCH%
 ertbuild xi_tool\xi.ertproj -Nar %ARCH%
@@ -25,6 +26,7 @@ copy /B xi_tool\xi.ini xv_release\_build\windows_%ARCH%\xi.ini
 copy /B xi_dasm\xda.ini xv_release\_build\windows_%ARCH%\xda.ini
 copy /B xv_com\_build\windows_%ARCH%_release\xv.exe xv_release\_build\windows_%ARCH%\xv.exe
 copy /B xw_dec\_build\windows_%ARCH%_release\xw.exe xv_release\_build\windows_%ARCH%\xw.exe
+copy /B xw_pc\_build\windows_%ARCH%_release\xwpc.exe xv_release\_build\windows_%ARCH%\xwpc.exe
 copy /B xv_sl\_build\windows_%ARCH%_release\xvsl.exe xv_release\_build\windows_%ARCH%\xvsl.exe
 copy /B xi_tool\_build\windows_%ARCH%_release\xi.exe xv_release\_build\windows_%ARCH%\xi.exe
 copy /B xi_dasm\_build\windows_%ARCH%_release\xda.exe xv_release\_build\windows_%ARCH%\xda.exe
