@@ -404,8 +404,8 @@ int Main(void)
 					}));
 				} else args << output;
 				if (state.language_mode == XV::CompilerFlagLanguageW) {
+					args << L"-N";
 					if (state.silent) args << L"-S";
-					else if (state.nologo) args << L"-N";
 				}
 				args << state.launch_args;
 				auto machine = (state.language_mode == XV::CompilerFlagLanguageV) ? state.xx_path : state.xw_path;

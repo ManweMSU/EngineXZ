@@ -21,11 +21,13 @@ struct {
 	bool human_readable = false;
 	bool human_readable_c = false;
 	bool interface_for_c = false;
+	bool post_compile = false;
 	uint bundle_flags = 0;
 	uint system_flags = 0;
 	Array<string> inputs = Array<string>(0x10);
 	string output;
 	string output_path;
+	string post_compiler;
 } state;
 
 string Localized(int id)
@@ -143,6 +145,8 @@ void ProcessCommandLine(void)
 						throw Exception();
 					}
 					state.output = ExpandPath(args->ElementAt(i));
+				} else if (arg[j] == L'p') {
+					state.post_compile = true;
 				} else if (arg[j] == L's') {
 					i++; if (i >= args->Length()) {
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
@@ -176,6 +180,7 @@ void ProcessCommandLine(void)
 		} else state.inputs << ExpandPath(arg);
 	}
 	if (state.bundle_flags & XW::DecompilerFlagBundleToCXX) state.interface_for_c = true;
+	if (state.post_compile) state.bundle_flags |= XW::DecompilerFlagBundleToEGSU;
 }
 void PrintDecompilerError(XW::DecompilerStatusDesc & desc)
 {
@@ -191,6 +196,23 @@ void PrintDecompilerError(XW::DecompilerStatusDesc & desc)
 	if (desc.addendum.Length()) console.WriteLine(FormatString(Localized(305), desc.addendum));
 	console.SetTextColor(-1);
 }
+bool PostCompile(const string & egsu)
+{
+	Array<string> args(0x10);
+	args << egsu << L"-N";
+	if (state.silent) args << L"-S";
+	SafePointer<Process> pc = CreateCommandProcess(state.post_compiler, &args);
+	if (!pc) {
+		if (!state.silent) {
+			console.SetTextColor(12);
+			console.WriteLine(Localized(507));
+			console.SetTextColor(-1);
+		}
+		return false;
+	}
+	pc->Wait();
+	return pc->GetExitCode() ? false : true;
+}
 
 int Main(void)
 {
@@ -204,6 +226,7 @@ int Main(void)
 		state.interface_for_c = xw_conf->GetValueBoolean(L"TituliC");
 		state.bundle_flags = ProcessBundleWords(xw_conf->GetValueString(L"Liber"));
 		state.system_flags = ProcessSystemWords(xw_conf->GetValueString(L"Systemae"));
+		state.post_compiler = xw_conf->GetValueString(L"XWPC");
 		try {
 			auto core = xw_conf->GetValueString(L"XE");
 			if (core.Length()) XX::IncludeComponent(&state.module_search_paths_v, &state.module_search_paths_w, root + L"/" + core);
@@ -300,6 +323,7 @@ int Main(void)
 						}
 						return 0x3B;
 					}
+					if (state.post_compile && desc.output_objects[0].GetPortionClass() == XW::PortionClass::EGSU && !PostCompile(name)) return 0x3B;
 				} else {
 					if (!state.output_path.Length()) {
 						state.output_path = ExpandPath(Path::GetDirectory(state.inputs[0]) + L"/" + Path::GetFileNameWithoutExtension(state.inputs[0]));
@@ -324,6 +348,7 @@ int Main(void)
 							}
 							return 0x3B;
 						}
+						if (state.post_compile && o.GetPortionClass() == XW::PortionClass::EGSU && !PostCompile(name)) return 0x3B;
 					}
 				}
 				return rv;
