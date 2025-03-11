@@ -5,3 +5,4 @@
 #include "ImageCodec/CodecBase.h"
 #include "Miscellaneous/Volumes.h"
 #include "Storage/ImageVolume.h"
+#include "Storage/Registry.h"

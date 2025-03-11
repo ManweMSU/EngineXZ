@@ -9,6 +9,14 @@ namespace Engine
 		class Module : public Object
 		{
 		public:
+			class Version
+			{
+			public:
+				uint major, minor, subver, build;
+			};
+		public:
+			string module_import_name, assembler_name;
+			Version assembler_version;
 			Volumes::ObjectDictionary<uint64, DataBlock> resources;	// TYPE:ID
 		public:
 			Module(void);

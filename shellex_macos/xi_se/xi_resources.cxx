@@ -30,6 +30,18 @@ namespace Engine
 			return Codec::DecodeFrame(&stream);
 		}
 
+		Volumes::Dictionary<string, string> * LoadModuleMetadata(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc)
+		{
+			SafePointer< Volumes::Dictionary<string, string> > result = new Volumes::Dictionary<string, string>;
+			auto data = rsrc.GetElementByKey(MakeResourceID(L"REG", 1));
+			if (data && *data) {
+				Streaming::MemoryStream stream((*data)->GetBuffer(), (*data)->Length());
+				SafePointer<Storage::Registry> reg = Storage::LoadRegistry(&stream);
+				if (reg) for (auto & key : reg->GetValues()) result->Append(key, reg->GetValueString(key));
+			}
+			result->Retain();
+			return result;
+		}
 		Codec::Image * LoadModuleIcon(const Volumes::ObjectDictionary<uint64, DataBlock> & rsrc, int id)
 		{
 			SafePointer<Codec::Image> result = new Codec::Image;

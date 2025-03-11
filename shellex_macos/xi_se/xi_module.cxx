@@ -60,16 +60,37 @@ namespace Engine
 				src->Seek(0, Streaming::Begin);
 				src->Read(&hdr, sizeof(hdr));
 				if (MemoryCompare(&hdr.signature, "xximago", 8) || hdr.format_version) throw InvalidFormatException();
-				SafePointer<DataBlock> rsrc;
+				SafePointer<DataBlock> info, rsrc;
+				if (hdr.info_segment_size) {
+					src->Seek(hdr.info_segment_offset, Streaming::Begin);
+					info = src->ReadBlock(hdr.info_segment_size);
+				}
 				if (hdr.rsrc_segment_size) {
 					src->Seek(hdr.rsrc_segment_offset, Streaming::Begin);
 					rsrc = src->ReadBlock(hdr.rsrc_segment_size);
+				}
+				if (info) {
+					dest.module_import_name = ReadString(*info, hdr.module_name_offset);
+					dest.assembler_name = ReadString(*info, hdr.module_assembler_offset);
+					dest.assembler_version.major = hdr.module_assembler_version_major;
+					dest.assembler_version.minor = hdr.module_assembler_version_minor;
+					dest.assembler_version.subver = hdr.module_assembler_version_subversion;
+					dest.assembler_version.build = hdr.module_assembler_version_build;
+				} else {
+					dest.assembler_version.major = dest.assembler_version.minor = 0;
+					dest.assembler_version.subver = dest.assembler_version.build = 0;
 				}
 				if (rsrc) DecodeResources(dest, hdr, *rsrc);
 			}
 		}
 
-		Module::Module(void) {}
+		Module::Module(void)
+		{
+			module_import_name = L"module";
+			assembler_name = L"XI";
+			assembler_version.major = assembler_version.minor = 0;
+			assembler_version.subver = assembler_version.build = 0;
+		}
 		Module::Module(Streaming::Stream * source) { Format::RestoreModule(*this, source); }
 		Module::~Module(void) {}
 		uint64 MakeResourceID(const string & type, int id)
