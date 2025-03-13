@@ -6,4 +6,4 @@ fi
 xv thumbex.xv -Ndr _build/macosx_${ARCH}_release/xxqlex.app/Contents ../artworks/xx_xx_icon.eiwv
 rm -r _build/macosx_${ARCH}_release/xxqlex.appex
 mv _build/macosx_${ARCH}_release/xxqlex.app _build/macosx_${ARCH}_release/xxqlex.appex
-codesign --sign - --entitlements thumbex.entitlements _build/macosx_${ARCH}_release/xxqlex.appex
+codesign --sign - --entitlements common.entitlements _build/macosx_${ARCH}_release/xxqlex.appex

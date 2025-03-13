@@ -1,0 +1,18 @@
+﻿OutputName = "xxspex"
+Subsystem = "gui"
+UseVersionDefines = true
+CompileList {
+	AAAAAA = "spotlight.mm"
+	AAAAAB = "xi_se/xi_module.cxx"
+	AAAAAC = "xi_se/xi_resources.cxx"
+	AAAAAD = "xxspex.cxx"
+}
+VersionInformation {
+	ApplicationIdentifier = "XX.Spotlight"
+	ApplicationName = "XX Spotlight Extensio"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2025"
+	InternalName = "xxspex"
+	Version = "1.0.0.1"
+}
