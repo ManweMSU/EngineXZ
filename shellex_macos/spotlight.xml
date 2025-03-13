@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema version="1.0" xmlns="http://www.apple.com/metadata"
+					  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+					  xsi:schemaLocation="http://www.apple.com/metadata file:///System/Library/Frameworks/CoreServices.framework/Frameworks/Metadata.framework/Resources/MetadataSchema.xsd">
+	<attributes>
+        <attribute name="com_EngineSoftware_XI_InternalName" multivalued="false" type="CFString"/>
+    </attributes>
+	<types>
+		<type name="com.enginesoftware.xx">
+			<allattrs>
+				kMDItemTitle
+				kMDItemOrganizations
+				kMDItemCopyright
+				kMDItemVersion
+				com_EngineSoftware_XI_InternalName
+				kMDItemCreator
+			</allattrs>
+			<displayattrs>
+				kMDItemTitle
+				kMDItemOrganizations
+				kMDItemCopyright
+				kMDItemVersion
+				com_EngineSoftware_XI_InternalName
+				kMDItemCreator
+			</displayattrs>
+		</type>
+		<type name="com.enginesoftware.xo">
+			<allattrs>
+				kMDItemTitle
+				kMDItemOrganizations
+				kMDItemCopyright
+				kMDItemVersion
+				com_EngineSoftware_XI_InternalName
+				kMDItemCreator
+			</allattrs>
+			<displayattrs>
+				kMDItemTitle
+				kMDItemOrganizations
+				kMDItemCopyright
+				kMDItemVersion
+				com_EngineSoftware_XI_InternalName
+				kMDItemCreator
+			</displayattrs>
+		</type>
+		<type name="com.enginesoftware.xwo">
+			<allattrs>
+				kMDItemTitle
+				kMDItemOrganizations
+				kMDItemCopyright
+				kMDItemVersion
+				com_EngineSoftware_XI_InternalName
+				kMDItemCreator
+			</allattrs>
+			<displayattrs>
+				kMDItemTitle
+				kMDItemOrganizations
+				kMDItemCopyright
+				kMDItemVersion
+				com_EngineSoftware_XI_InternalName
+				kMDItemCreator
+			</displayattrs>
+		</type>
+	</types>
+</schema>

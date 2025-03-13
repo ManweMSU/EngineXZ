@@ -1,0 +1,7 @@
+﻿OutputName = "xxspex"
+Subsystem = "library"
+CompileList {
+	AAAAAA = "xi_se/xi_module.cxx"
+	AAAAAB = "xi_se/xi_resources.cxx"
+	AAAAAC = "xxspex.cxx"
+}

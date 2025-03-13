@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>XX Spotlight Extensio</string>
+	<key>CFBundleDisplayName</key>
+	<string>XX Spotlight Extensio</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.EngineSoftware.XX.Spotlight</string>
+	<key>CFBundleVersion</key>
+	<string>1.0.0.1</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleExecutable</key>
+	<string>xxspex.dylib</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>© Engine Software. 2025</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.10</string>
+	<key>NSHighResolutionMagnifyAllowed</key>
+	<false/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>MacOSX</string>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>MDImporter</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.enginesoftware.xx</string>
+				<string>com.enginesoftware.xo</string>
+				<string>com.enginesoftware.xwo</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFPlugInDynamicRegisterFunction</key>
+	<string></string>
+	<key>CFPlugInDynamicRegistration</key>
+	<string>NO</string>
+	<key>CFPlugInFactories</key>
+	<dict>
+		<key>A1948BFB-804D-7ACA-E342-7592E1467C0D</key>
+		<string>XXClassFactory</string>
+	</dict>
+	<key>CFPlugInTypes</key>
+	<dict>
+		<key>8B08C4BF-415B-11D8-B3F9-0003936726FC</key>
+		<array>
+			<string>A1948BFB-804D-7ACA-E342-7592E1467C0D</string>
+		</array>
+	</dict>
+	<key>CFPlugInUnloadFunction</key>
+	<string></string>
+</dict>
+</plist>

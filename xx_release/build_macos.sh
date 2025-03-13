@@ -14,14 +14,18 @@ cp -R xcon/_build/macosx_${ARCH}_${MODE}/xc.app xx_release/_build/macosx_${ARCH}
 mkdir xx_release/_build/macosx_${ARCH}/XX.app/xxcl
 mkdir xx_release/_build/macosx_${ARCH}/XX.app/xxi
 mkdir xx_release/_build/macosx_${ARCH}/XX.app/xx
+mkdir xx_release/_build/macosx_${ARCH}/XX.app/Contents/Library
+mkdir xx_release/_build/macosx_${ARCH}/XX.app/Contents/Library/Spotlight
 cp xx_xx/xx_mac_f.ini xx_release/_build/macosx_${ARCH}/XX.app/XX.app/Contents/MacOS/xx.ini
 cp xx_xx/_build/macosx_${ARCH}_${MODE}/xx xx_release/_build/macosx_${ARCH}/XX.app/xx/xx
 cp xx_xx/xx_mac.ini xx_release/_build/macosx_${ARCH}/XX.app/xx/xx.ini
 cp xx_xx/xe.ini xx_release/_build/macosx_${ARCH}/XX.app/xe.ini
 
 ./shellex_macos/thumbex.sh ${ARCH}
+./shellex_macos/xxspex.sh ${ARCH}
 xv shellex_macos/patch.xv -Ndr xx_release/_build/macosx_${ARCH}/XX.app shellex_macos/_build/macosx_${ARCH}_release/xxqlex.appex
 xv shellex_macos/patch.xv -Ndr xx_release/_build/macosx_${ARCH}/XX.app/XX.app
+cp -r shellex_macos/_build/macosx_${ARCH}_release/xxspex.mdimporter xx_release/_build/macosx_${ARCH}/XX.app/Contents/Library/Spotlight/xxspex.mdimporter
 
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/errores.ru.xv   -NVo xx_release/_build/com/errores.ru.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/errores.en.xv   -NVo xx_release/_build/com/errores.en.xo

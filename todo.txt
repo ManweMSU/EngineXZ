@@ -65,7 +65,7 @@ BETA-7:
  - XE: Digital signatures and trust control
  - Communication API: HTTP Client Session Manager
  - Debugger
- - Spotlight Extension
+ + Spotlight Extension
 
 BETA-8:
  - GUI and CUI libraries
