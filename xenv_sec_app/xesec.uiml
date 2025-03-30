@@ -1,0 +1,217 @@
+﻿## resource "UI"
+
+# Waffle
+
+resource texture MainIcon	{ & "images/intro.eiwv" }
+
+resource string FileFormatCert		[ _ ru ] { "Certificate" "Сертификат" }
+resource string FileFormatUCert		[ _ ru ] { "Unsigned certificate" "Неподписанный сертификат" }
+resource string FileFormatKey		[ _ ru ] { "Private key" "Закрытый ключ" }
+resource string FileFormatIdent		[ _ ru ] { "Identity" "Личность" }
+
+resource string ApplicationName		[ _ ru ] { "XE Security Administraction" "Администрирование безопасности XE" }
+resource string IntroOpenFiles		[ _ ru ] { "Open files" "Открыть файлы" }
+resource string IntroCreateCert		[ _ ru ] { "Create a certificate" "Создать сертификат" }
+resource string IntroConfigure		[ _ ru ] { "Configure XX" "Настроить XX" }
+resource string IntroExit			[ _ ru ] { "Exit" "Выйти" }
+resource string CreateTitle			[ _ ru ] { "Creation of a certificate" "Создание сертификата" }
+resource string CreateTabCert		[ _ ru ] { "Requisites" "Реквизиты" }
+resource string CreateTabDS			[ _ ru ] { "Type of DS" "Тип ЭП" }
+resource string CreateTabEA			[ _ ru ] { "Attributes" "Атрибуты" }
+resource string CreateButtonCancel	[ _ ru ] { "Cancel" "Отмена" }
+resource string CreateButtonCreate	[ _ ru ] { "Create" "Создать" }
+resource string CreatePerson		[ _ ru ] { "Person:" "Личность:" }
+resource string CreateOrganization	[ _ ru ] { "Organization:" "Организация:" }
+resource string CreateValidSince	[ _ ru ] { "Valid since:" "Действует с:" }
+resource string CreateValidUntil	[ _ ru ] { "Valid up to:" "Действует до:" }
+resource string CreateUsage			[ _ ru ] { "May be used to:" "Может использоваться для:" }
+resource string CreateUsageDeriv	[ _ ru ] { "May sign certificates to:" "Может подписывать сертификаты для:" }
+resource string CreateUSignCerts	[ _ ru ] { "Sign other certificates" "Подписывания других сертификатов" }
+resource string CreateUSignModules	[ _ ru ] { "Sign modules" "Подписывания модулей" }
+resource string CreateRootCert		[ _ ru ] { "A root (self-signed) certificate" "Корневой (самоподписанный) сертификат" }
+resource string CreateEAKey			[ _ ru ] { "Key" "Ключ" }
+resource string CreateEAValue		[ _ ru ] { "Value" "Значение" }
+resource string CreateDSA			[ _ ru ] { "DS algorithm:" "Алгоритм ЭП:" }
+resource string CreateDSA_RSA		[ _ ru ] { "Rivest-Shamir-Adleman algorithm (RSA)" "Алгоритм Ривеста-Шамира-Адлемана (RSA)" }
+resource string CreateModulusLength	[ _ ru ] { "Modulus length (bits):" "Длина модуля (в битах):" }
+resource string CreatePublicExp		[ _ ru ] { "Public exponent:" "Открытая экспонента:" }
+resource string CreatePassword		[ _ ru ] { "Key password:" "Пароль ключа:" }
+resource string CreateStateKGen		[ _ ru ] { "Generating the digital signature's key..." "Генерируем ключ электронной подписи..." }
+resource string CreateStateKCreate	[ _ ru ] { "Creating the digital signature's key..." "Создаём ключ электронной подписи..." }
+resource string CreateStateCCreate	[ _ ru ] { "Creating the certificate..." "Создаём сертификат..." }
+resource string CreateStateCSign	[ _ ru ] { "Signing the certificate..." "Подписываем сертификат..." }
+resource string CreateStateKGenFail	[ _ ru ] { "Failed to generate a key." "Не удалось сгенерировать ключ." }
+resource string CreateStateKCrFail	[ _ ru ] { "Failed to create a key." "Не удалось создать ключ." }
+resource string CreateStateCSuccess	[ _ ru ] { "Successfully created a certificate." "Сертификат создан успешно." }
+resource string CreateStateCError	[ _ ru ] { "Failed to save a data." "Не удалось сохранить данные." }
+resource string ViewTitle			[ _ ru ] { "Security data preview" "Просмотр данных безопасности" }
+resource string ViewObjCertShort	[ _ ru ] { "Certificate of %0" "Сертификат %0" }
+resource string ViewObjCertFull		[ _ ru ] { "Certificate of %0 from %1" "Сертификат %0 из %1" }
+resource string ViewObjKey			[ _ ru ] { "Digital signature private key" "Закрытый ключ электронной подписи" }
+resource string ViewPropPerson		[ _ ru ] { "Holder      : " "Держатель           : " }
+resource string ViewPropOrg			[ _ ru ] { "Organization: " "Организация         : " }
+resource string ViewPropUsage		[ _ ru ] { "Valid usage : " "Использование       : " }
+resource string ViewPropUsageDeriv	[ _ ru ] { "Yeilds usage: " "Влечёт использование: " }
+resource string ViewPropValidSince	[ _ ru ] { "Valid since : " "Действителен с      : " }
+resource string ViewPropValidUntil	[ _ ru ] { "Valid up to : " "Действителен до     : " }
+resource string ViewPropRSA			[ _ ru ] { "Key type: Rivest-Shamir-Adleman (RSA), %0-bit" "Тип ключа: Ривест-Шамир-Адлеман (RSA), %0 бит" }
+resource string ViewPropSignature	[ _ ru ] { "The certificate is signed: " "Сертификат подписан: " }
+resource string ViewPropNoSign		[ _ ru ] { "The certificate is not signed. \elsubs\eSign it.\ee" "Сертификат не подписан. \elsubs\eПодписать его.\ee" }
+resource string ViewPropUAuth		[ _ ru ] { "sign certificates" "подписывание сертификатов" }
+resource string ViewPropUSign		[ _ ru ] { "sign modules" "подписывание модулей" }
+resource string ViewPropIsRoot		[ _ ru ] { "The root certificate." "Корневой сертификат." }
+resource string ViewPropAttributes	[ _ ru ] { "Additional attributes:" "Дополнительные атрибуты:" }
+resource string ViewPropGetPublic	[ _ ru ] { "\elexpub\eExtract the public certificate.\ee" "\elexpub\eИзвлечь публичный сертификат.\ee" }
+resource string ViewPropMakeIdent	[ _ ru ] { "\elcrind\eMerge with a certificate to make an identity.\ee" "\elcrind\eОбъединить с сертификатом для формирования личности.\ee" }
+resource string ViewPropPreviewKey	[ _ ru ] { "\elexpri\ePreview private key data...\ee" "\elexpri\eПросмотр данных закрытого ключа...\ee" }
+resource string PasswordTitle		[ _ ru ] { "Key protection password:" "Пароль защиты ключа:" }
+resource string PasswordEnter		[ _ ru ] { "Enter" "Ввод" }
+resource string PasswordCancel		[ _ ru ] { "Cancel" "Отмена" }
+
+resource string SettingsTitle		[ _ ru ] { "XX security settings" "Настройки безопасности XX" }
+resource string SettingsTrusted		[ _ ru ] { "Trusted certificate folder:" "Каталог доверенных сертификатов:" }
+resource string SettingsUntrusted	[ _ ru ] { "Untrusted certificate folder:" "Каталог недоверенных сертификатов:" }
+resource string SettingsValidate	[ _ ru ] { "Validate trust to modules being loaded" "Проверять доверие загружаемым модулям" }
+resource string SettingsApply		[ _ ru ] { "Apply" "Применить" }
+resource string SettingsCancel		[ _ ru ] { "Cancel" "Отмена" }
+resource string SettingsView		[ _ ru ] { "View" "Показать" }
+
+resource string ErrorInvalidCertReq	[ _ ru ] { "Either the certificate's or the digital signature's parameters are invalid." "Параметры сертификата или электронной подписи указаны некорректно." }
+resource string ErrorInvalidCertKey	[ _ ru ] { "Failed to create an identity. It's likely a wrong password was supplied or the certificate contains a different public key." "Не удалось создать личность. Возможно, указан неверный пароль ключа или сертификат содержит иной публичный ключ." }
+resource string ErrorInvalidIdent	[ _ ru ] { "Failed to open an identity. It's likely a wrong password was supplied." "Не удалось открыть личность. Возможно, указан неверный пароль ключа." }
+resource string ErrorInvalidFile	[ _ ru ] { "Failed to open a file \"%0\"." "Не удалось открыть файл \"%0\"." }
+resource string ErrorSaveFailure	[ _ ru ] { "Failed to save a file \"%0\"." "Не удалось записать файл \"%0\"." }
+resource string ErrorXXNotFound		[ _ ru ] { "Failed to locate the XX's configuration." "Не удалось обнаружить настройки XX." }
+resource string ErrorSecUpdate		[ _ ru ] { "Failed to update the XX's configuration." "Не удалось обновить настройки XX." }
+
+resource string MsgCertSigned		[ _ ru ] { "The certificate was successfully signed. Do you want to delete the unsigned certificate's file?" "Сертификат был успешно подписан. Желаете ли вы удалить неподписанный файл сертификата?" }
+resource string MsgIdentityCreated	[ _ ru ] { "The identity was successfully created. Do you want to delete the certificate and the key files?" "Личность была создана успешно. Желаете ли вы удалить файлы сертификата и ключа?" }
+resource string MsgCreateTrustPaths	[ _ ru ] { "The trust configuration seems to be missing. Do you want to create new folders for it?" "Вероятно, настройки безопасности отсутствуют. Желаете ли вы создать новые каталоги для них?" }
+
+dialog Intro { DialogFrame {
+	Captioned Title ApplicationName CloseButton MinimizeButton
+	position { 0, 0, z 280 z 128, z 148 }
+	ToolButton { position { z 10, z 14, z 260, z 44 } ToolButtonPart { position parent Text IntroOpenFiles ID 101 } }
+	ToolButton { position { z 10, z 44, z 260, z 74 } ToolButtonPart { position parent Text IntroCreateCert ID 102 } }
+	ToolButton { position { z 10, z 74, z 260, z 104 } ToolButtonPart { position parent Text IntroConfigure ID 103 } }
+	ToolButton { position { z 10, z 104, z 260, z 134 } ToolButtonPart { position parent Text IntroExit ID 2 } }
+	Static { position { z 270, z 10, z 270 z 128, z 138} Image MainIcon }
+} }
+dialog CreateCert { DialogFrame {
+	Captioned Title CreateTitle Sizeble CloseButton MinimizeButton
+	MinimalWidth z 400 MinimalHeight z 300 MaximalWidth z 600 MaximalHeight z 600
+	position { 0, 0, z 600, z 440 }
+	BookmarkView { position { z 5, z 5, w 1 z -5, w 1 z -38 } ID 100
+		Bookmark {
+			position { 0, 0, z 100, 0 } Text CreateTabCert
+			ScrollBox { position parent VerticalLine z 33
+				Static { position { z 5, z 5, z 110, z 33 } Text CreatePerson }
+				Edit { position { z 110, z 5, w 1 z -5, z 33 } ID 101 }
+				Static { position { z 5, z 38, z 110, z 66 } Text CreateOrganization }
+				Edit { position { z 110, z 38, w 1 z -5, z 66 } ID 102 }
+				CheckBox { position { z 5, z 71, w 1 z -5, z 99 } Text CreateRootCert ID 103 }
+				Static { position { z 5, z 104, z 110, z 132 } Text CreateValidSince }
+				Edit { position { z 110, z 104, w 1 z -5, z 132 } ID 104 }
+				Static { position { z 5, z 137, z 110, z 165 } Text CreateValidUntil }
+				Edit { position { z 110, z 137, w 1 z -5, z 165 } ID 105 }
+				Static { position { z 5, z 170, w 1 z -5, z 198 } Text CreateUsage }
+				CheckBox { position { z 5, z 203, w 1 z -5, z 231 } Text CreateUSignCerts ID 111 }
+				CheckBox { position { z 5, z 236, w 1 z -5, z 264 } Text CreateUSignModules ID 112 }
+				Static { position { z 5, z 269, w 1 z -5, z 297 } Text CreateUsageDeriv }
+				CheckBox { position { z 5, z 302, w 1 z -5, z 330 } Text CreateUSignCerts ID 121 }
+				CheckBox { position { z 5, z 335, w 1 z -5, z 363 } Text CreateUSignModules ID 122 }
+			}
+		}
+		Bookmark {
+			position { 0, 0, z 100, 0 } Text CreateTabEA
+			ControlGroup { position parent
+				ListView {
+					position { z 5, z 5, w 1 z -5, w 1 z -38 } ID 201
+					ListViewColumn { position { 0, 0, z 200, 0 } MinimalWidth z 100 Text CreateEAKey ViewElementNormal {
+						text { position { z 5, 0, w 1, w 1 } text @Text1 font @Font color { 0, 0, 0 } vcenter ellipsis }
+					} }
+					ListViewColumn { position { 0, 0, w 1 z -225, 0 } MinimalWidth z 100 Text CreateEAValue ViewElementNormal {
+						text { position { z 5, 0, w 1, w 1 } text @Text2 font @Font color { 0, 0, 0 } vcenter ellipsis }
+					} }
+				}
+				Edit { position { z 5, w 1 z -33, z 205, w 1 z -5 } ID 202 Placeholder CreateEAKey }
+				Edit { position { z 210, w 1 z -33, w 1 z -71, w 1 z -5 } ID 203 Placeholder CreateEAValue }
+				Button { position { w 1 z -66, w 1 z -33, w 1 z -38, w 1 z -5 } Text "+" ID 204 }
+				Button { position { w 1 z -33, w 1 z -33, w 1 z -5, w 1 z -5 } Text "-" ID 205 }
+			}
+		}
+		Bookmark {
+			position { 0, 0, z 100, 0 } Text CreateTabDS
+			ControlGroup { position parent
+				Static { position { z 5, z 5, z 205, z 33 } Text CreateDSA }
+				ComboBox { position { z 205, z 5, w 1 z -5, z 33 } ID 301 }
+				Static { position { z 5, z 38, z 205, z 66 } Text CreateModulusLength }
+				TextComboBox { position { z 205, z 38, w 1 z -5, z 66 } ID 302 }
+				Static { position { z 5, z 71, z 205, z 99 } Text CreatePublicExp }
+				ComboBox { position { z 205, z 71, w 1 z -5, z 99 } ID 303 }
+				Static { position { z 5, z 104, z 205, z 132 } Text CreatePassword }
+				Edit { position { z 205, z 104, w 1 z -5, z 132 } ID 304 Password }
+				Edit { position { z 205, z 137, w 1 z -5, z 165 } ID 305 Password }
+			}
+		}
+	}
+	ControlGroup { position { z 5, z 5, w 1 z -5, w 1 z -38 } style WaffleFrame ID 1000 Invisible
+		RichEdit { position { z 5, z 5, w 1 z -5, w 1 z -5 } ID 1001 ReadOnly DontCopyAttributes }
+	}
+	Button {
+		position { z 5, w 1 z -33, z 105, w 1 z -5 }
+		Text CreateButtonCancel ID 2
+	}
+	Button {
+		position { w 1 z -105, w 1 z -33, w 1 z -5, w 1 z -5 }
+		Text CreateButtonCreate ID 1
+	}
+} }
+dialog ViewStore { DialogFrame {
+	Captioned Title ViewTitle Sizeble CloseButton MinimizeButton MaximizeButton
+	MinimalWidth z 400 MinimalHeight z 300
+	position { 0, 0, w 0.6, w 0.6 }
+	HorizontalSplitBox { position { z 5, z 5, w 1 z -5, w 1 z -5 }
+		SplitBoxPart { position { 0, 0, z 200, 0 } MinimalSize z 150 TreeView { position parent ID 101 } }
+		SplitBoxPart { position { 0, 0, z 200, 0 } MinimalSize z 150 Stretch ControlGroup { position parent style WaffleFrame
+			RichEdit { position { z 5, z 5, w 1 z -5, w 1 z -5 } ID 102 ReadOnly DontCopyAttributes DefaultFontFace "@serif mono" }
+		} }
+	}
+} }
+dialog PasswordInput { DialogFrame {
+	Captioned CloseButton position { 0, 0, z 350, z 114 }
+	ControlGroup { position { z 5, z 5, w 1 z -5, z 76 } style WaffleFrame
+		Static { position { z 5, z 5, w 1 z -5, z 33 } Text PasswordTitle }
+		Edit { position { z 5, z 38, w 1 z -5, z 66 } ID 101 Password }
+	}
+	Button {
+		position { z 5, w 1 z -33, z 105, w 1 z -5 }
+		Text PasswordCancel ID 2
+	}
+	Button {
+		position { w 1 z -105, w 1 z -33, w 1 z -5, w 1 z -5 }
+		Text PasswordEnter ID 1
+	}
+} }
+dialog Settings { DialogFrame {
+	Captioned Title SettingsTitle Sizeble CloseButton MinimizeButton
+	MinimalWidth z 500 MinimalHeight z 147 MaximalWidth z 1200 MaximalHeight z 147
+	position { 0, 0, z 600, z 147 }
+	ControlGroup { position { z 5, z 5, w 1 z -5, z 109 } style WaffleFrame
+		CheckBox { position { z 5, z 5, w 1 z -5, z 33 } Text SettingsValidate ID 101 }
+		Static { position { z 5, z 38, z 305, z 66 } Text SettingsTrusted }
+		Edit { position { z 305, z 38, w 1 z -110, z 66 } ID 102 }
+		Button { position { w 1 z -105, z 38, w 1 z -5, z 66 } ID 202 Text SettingsView }
+		Static { position { z 5, z 71, z 305, z 99 } Text SettingsUntrusted }
+		Edit { position { z 305, z 71, w 1 z -110, z 99 } ID 103 }
+		Button { position { w 1 z -105, z 71, w 1 z -5, z 99 } ID 203 Text SettingsView }
+	}
+	Button {
+		position { z 5, z 114, z 105, z 142 }
+		Text SettingsCancel ID 2
+	}
+	Button {
+		position { w 1 z -105, z 114, w 1 z -5, z 142 }
+		Text SettingsApply ID 1
+	}
+} }

@@ -1,0 +1,64 @@
+﻿ApplicationIcon = "../artworks/xe_sec_icon.eiwv"
+Languages = "en,ru"
+Subsystem = "gui"
+UseVersionDefines = true
+"-macosx-debug" {
+	Attachments {
+		AAAAAA {
+			From = "store.ecs"
+			To = "../../store.ecs"
+		}
+	}
+}
+CompileList {
+	AAAAAA = "../xenv_sec/xe_sec_arithm.cxx"
+	AAAAAB = "../xenv_sec/xe_sec_core.cxx"
+	AAAAAC = "../xenv_sec/xe_sec_rsa.cxx"
+	AAAAAD = "../xexec/xx_com.cxx"
+	AAAAAE = "xesec.cxx"
+	AAAAAF = "xesec.uiml"
+}
+EngineStore {
+	StoreLinkFile = "store.ecs"
+}
+FileFormats {
+	AAAAAA {
+		CanCreate = false
+		Description = "Certificatus XE (non-subscriptus)"
+		Extension = "xepraecert"
+		Icon = "../artworks/xe_sec_icon_cert_raw.eiwv"
+	}
+	AAAAAB {
+		CanCreate = false
+		Description = "Certificatus XE"
+		Extension = "xecert"
+		Icon = "../artworks/xe_sec_icon_cert.eiwv"
+	}
+	AAAAAC {
+		CanCreate = false
+		Description = "Clavis XE"
+		Extension = "xeclavis"
+		Icon = "../artworks/xe_sec_icon_key.eiwv"
+	}
+	AAAAAD {
+		CanCreate = false
+		Description = "Indentitas XE"
+		Extension = "xeindentitas"
+		Icon = "../artworks/xe_sec_icon_key.eiwv"
+	}
+}
+Resources {
+	COM = "@com_en.ecst"
+	ru {
+		COM = "@com_ru.ecst"
+	}
+}
+VersionInformation {
+	ApplicationIdentifier = "XE.SEC"
+	ApplicationName = "XE Administrator Securitatis"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2025"
+	InternalName = "xesec"
+	Version = "1.0.0.1"
+}
