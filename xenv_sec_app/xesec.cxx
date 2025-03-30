@@ -9,11 +9,7 @@ using namespace Engine::Windows;
 using namespace Engine::Storage;
 using namespace Engine::Streaming;
 
-#ifdef ENGINE_MACOSX
-#define STORE_FILE_PATH	L"/../../store.ecs"
-#else
 #define STORE_FILE_PATH	L"/store.ecs"
-#endif
 
 Engine::UI::InterfaceTemplate interface;
 Volumes::Dictionary<IWindow *, IWindowCallback *> windows;

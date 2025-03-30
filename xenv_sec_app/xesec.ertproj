@@ -6,7 +6,7 @@ UseVersionDefines = true
 	Attachments {
 		AAAAAA {
 			From = "store.ecs"
-			To = "../../store.ecs"
+			To = "store.ecs"
 		}
 	}
 }
