@@ -200,5 +200,6 @@ namespace Engine
 		};
 		uint64 MakeResourceID(const string & type, int id);
 		void ReadResourceID(uint64 rid, string & type, int & id);
+		DataBlock * ReadConsistencyData(Streaming::Stream * source);
 	}
 }

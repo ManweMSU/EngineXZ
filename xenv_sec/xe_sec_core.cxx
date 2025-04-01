@@ -549,8 +549,8 @@ namespace Engine
 							if ((cdesc0.CertificateDerivation & cdesc1.CertificateDerivation) != cdesc0.CertificateDerivation) { if (desc) desc->chain[i] = IntegrityStatus::InvalidDerivation; return TrustStatus::Untrusted; }
 						}
 						if (!trusted_chain) { if (desc) desc->object = IntegrityStatus::NoTrustInChain; return TrustStatus::Untrusted; }
-						TrustStatus::Trusted;
-					} else TrustStatus::Undefined;
+						return TrustStatus::Trusted;
+					} else return TrustStatus::Undefined;
 				} catch (...) { return TrustStatus::Untrusted; }
 			}
 		}

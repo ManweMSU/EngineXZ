@@ -3,6 +3,7 @@
 #include "../ximg/xi_resources.h"
 #include "../ximg/xi_pret.h"
 #include "../xexec/xx_com.h"
+#include "../xenv_sec/xe_sec_core.h"
 
 using namespace Engine;
 using namespace Engine::IO;
@@ -22,11 +23,17 @@ constexpr uint InspectVersions		= 0x040;
 
 struct {
 	SafePointer<StringTable> localization;
+	string store_integration;
+	XX::SecuritySettings security;
 	bool silent = false;
 	bool nologo = false;
+	bool print_security_state = false;
+	bool validate_security = false;
 	uint inspect_mask = 0;
 	string input;
 	string output;
+	string identity_file;
+	string identity_password;
 	Array<XI::PretranslateDesc> pret_list = Array<XI::PretranslateDesc>(0x10);
 } state;
 
@@ -48,6 +55,29 @@ void ProcessCommandLine(void)
 					state.nologo = true;
 				} else if (arg[j] == L'S') {
 					state.silent = true;
+				} else if (arg[j] == L'f') {
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					auto & arg2 = args->ElementAt(i);
+					for (int k = 0; k < arg2.Length(); k++) {
+						if (arg2[k] == L'i') {
+							state.print_security_state = true;
+						} else if (arg2[k] == L's') {
+							i++; if (i >= args->Length()) {
+								console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+								throw Exception();
+							}
+							if (args->ElementAt(i) == L"-") state.identity_file = L"-";
+							else state.identity_file = ExpandPath(args->ElementAt(i));
+						} else if (arg2[k] == L'v') {
+							state.validate_security = true;
+						} else {
+							console << TextColor(12) << Localized(205) << TextColorDefault() << LineFeed();
+							throw Exception();
+						}
+					}
 				} else if (arg[j] == L'i') {
 					i++; if (i >= args->Length()) {
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
@@ -76,6 +106,12 @@ void ProcessCommandLine(void)
 						throw Exception();
 					}
 					state.output = ExpandPath(args->ElementAt(i));
+				} else if (arg[j] == L'p') {
+					i++; if (i >= args->Length()) {
+						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
+						throw Exception();
+					}
+					state.identity_password = args->ElementAt(i);
 				} else if (arg[j] == L't') {
 					i++; if (i >= args->Length()) {
 						console << TextColor(12) << Localized(203) << TextColorDefault() << LineFeed();
@@ -119,7 +155,7 @@ void ProcessCommandLine(void)
 		}
 	}
 }
-void TableView(const string ** columns, int num_cols, int num_items)
+void TableView(const string ** columns, int num_cols, int num_items, const int * colors = 0)
 {
 	Array<int> widths(1);
 	widths.SetLength(num_cols);
@@ -131,6 +167,7 @@ void TableView(const string ** columns, int num_cols, int num_items)
 		}
 	}
 	for (int i = 0; i < num_items; i++) {
+		if (colors) console.SetTextColor(colors[i]);
 		for (int c = 0; c < num_cols; c++) {
 			int len = columns[c][i].Length();
 			console << columns[c][i];
@@ -138,6 +175,64 @@ void TableView(const string ** columns, int num_cols, int num_items)
 			else console << string(L' ', widths[c] + 1 - len);
 		}
 	}
+}
+void ListCertificates(const string & at)
+{
+	SafePointer< Array<string> > files = Search::GetFiles(at + L"/*." + XE::Security::FileExtensions::Certificate);
+	Array<string> names(0x100);
+	Array<string> holders(0x100);
+	for (auto & f : files->Elements()) try {
+		SafePointer<Stream> data = new FileStream(at + L"/" + f, AccessRead, OpenExisting);
+		SafePointer<XE::Security::IContainer> store = XE::Security::LoadContainer(data);
+		if (!store || store->GetContainerClass() != XE::Security::ContainerClass::Certificate) continue;
+		SafePointer<XE::Security::ICertificate> cert = store->LoadCertificate(0);
+		if (!cert) continue;
+		auto & desc = cert->GetDescription();
+		names << f;
+		if (desc.PersonName.Length() && desc.Organization.Length()) {
+			holders << (L": " + desc.PersonName + L" / " + desc.Organization);
+		} else if (desc.PersonName.Length()) {
+			holders << (L": " + desc.PersonName);
+		} else {
+			holders << (L": " + desc.Organization);
+		}
+	} catch (...) {}
+	const string * table[] = { names.GetBuffer(), holders.GetBuffer() };
+	TableView(table, 2, names.Length());
+}
+bool CreateSecurityData(Stream * dest, XE::Security::IIdentity * identity) noexcept
+{
+	try {
+		dest->Seek(0, Begin);
+		SafePointer<DataBlock> data = dest->ReadAll();
+		SafePointer<DataBlock> hash = Cryptography::CreateHash(Cryptography::HashAlgorithm::SHA512, data);
+		if (!hash) return false;
+		SafePointer<XE::Security::IContainer> addendum = identity ? XE::Security::CreateSignatureData(hash, identity) : XE::Security::CreateIntegrityData(hash);
+		if (!addendum) return false;
+		SafePointer<DataBlock> signature = addendum->LoadContainerRepresentation();
+		if (!signature) return false;
+		dest->WriteArray(signature);
+		return true;
+	} catch (...) { return false; }
+}
+string IntegrityStatusToString(XE::Security::IntegrityStatus status)
+{
+	if (status == XE::Security::IntegrityStatus::OK) return Localized(521);
+	else if (status == XE::Security::IntegrityStatus::DataCorruption) return Localized(522);
+	else if (status == XE::Security::IntegrityStatus::DataSurrogation) return Localized(523);
+	else if (status == XE::Security::IntegrityStatus::Expired) return Localized(524);
+	else if (status == XE::Security::IntegrityStatus::NotIntroduced) return Localized(525);
+	else if (status == XE::Security::IntegrityStatus::InvalidUsage) return Localized(526);
+	else if (status == XE::Security::IntegrityStatus::InvalidDerivation) return Localized(527);
+	else if (status == XE::Security::IntegrityStatus::Compromised) return Localized(528);
+	else if (status == XE::Security::IntegrityStatus::NoTrustInChain) return Localized(529);
+	else return Localized(530);
+}
+int IntegrityStatusToColor(XE::Security::IntegrityStatus status)
+{
+	if (status == XE::Security::IntegrityStatus::OK) return 10;
+	else if (status == XE::Security::IntegrityStatus::NoTrustInChain) return 14;
+	else return 12;
 }
 
 int Main(void)
@@ -147,6 +242,7 @@ int Main(void)
 		Assembly::CurrentLocale = Assembly::GetCurrentUserLocale();
 		auto root = Path::GetDirectory(GetExecutablePath());
 		SafePointer<Registry> xi_conf = XX::LoadConfiguration(root + L"/xi.ini");
+		state.store_integration = xi_conf->GetValueString(L"Entheca");
 		auto language_override = xi_conf->GetValueString(L"Lingua");
 		if (language_override.Length()) Assembly::CurrentLocale = language_override;
 		auto localizations = xi_conf->GetValueString(L"Locale");
@@ -170,17 +266,81 @@ int Main(void)
 		console << Localized(2) << LineFeedSequence;
 		console << FormatString(Localized(3), ENGINE_VI_APPVERSION) << LineFeedSequence << LineFeedSequence;
 	}
+	if (state.validate_security || state.print_security_state) {
+		try {
+			auto xe = XX::LocateEnvironmentConfiguration(Path::GetDirectory(GetExecutablePath()) + L"/" + state.store_integration);
+			XX::LoadSecuritySettings(state.security, xe);
+			state.security.TrustedCertificates = ExpandPath(Path::GetDirectory(xe) + L"/" + state.security.TrustedCertificates);
+			state.security.UntrustedCertificates = ExpandPath(Path::GetDirectory(xe) + L"/" + state.security.UntrustedCertificates);
+		} catch (...) {
+			state.security.ValidateTrust = false;
+			state.security.TrustedCertificates = state.security.UntrustedCertificates = L"";
+		}
+	}
+	if (state.print_security_state && !state.silent) {
+		if (state.security.ValidateTrust) {
+			console.SetTextColor(10);
+			console.WriteLine(Localized(501));
+			console.SetTextColor(-1);
+		} else {
+			console.SetTextColor(14);
+			console.WriteLine(Localized(502));
+			console.SetTextColor(-1);
+		}
+		console.SetTextColor(10);
+		console.WriteLine(Localized(503));
+		ListCertificates(state.security.TrustedCertificates);
+		console.SetTextColor(-1);
+		console.SetTextColor(12);
+		console.WriteLine(Localized(504));
+		ListCertificates(state.security.UntrustedCertificates);
+		console.SetTextColor(-1);
+	}
 	if (state.input.Length()) {
+		SafePointer<XE::Security::IIdentity> identity;
+		if (state.identity_file.Length() && state.identity_file != L"-") {
+			if (!state.identity_password.Length() && !state.silent) {
+				DynamicString psw;
+				console.Write(Localized(505));
+				console.SetInputMode(ConsoleInputMode::Raw);
+				while (true) {
+					auto chr = console.ReadChar();
+					if (chr == 0xFFFFFFFF || chr == L'\n' || chr == L'\r') break;
+					psw << chr;
+				}
+				console.SetInputMode(ConsoleInputMode::Echo);
+				console.LineFeed();
+				state.identity_password = psw.ToString();
+			}
+			try {
+				SafePointer<Stream> data = new FileStream(state.identity_file, AccessRead, OpenExisting);
+				SafePointer<XE::Security::IContainer> store = XE::Security::LoadContainer(data);
+				if (!store || store->GetContainerClass() != XE::Security::ContainerClass::Identity) throw InvalidFormatException();
+				identity = XE::Security::LoadIdentity(store, 0, state.identity_password);
+				if (!identity) throw InvalidFormatException();
+			} catch (...) {
+				if (!state.silent) console << TextColor(12) << Localized(506) << TextColorDefault() << LineFeed();
+				return 1;
+			}
+		}
 		try {
 			SafePointer<XI::Module> module;
+			SafePointer<DataBlock> module_data;
+			SafePointer<XE::Security::IContainer> module_signature;
 			try {
 				SafePointer<Stream> stream = new FileStream(state.input, AccessRead, OpenExisting);
-				try { module = new XI::Module(stream); } catch (...) {
-					console << TextColor(12) << Localized(302) << TextColorDefault() << LineFeed();
+				try {
+					module = new XI::Module(stream);
+					if (state.validate_security) {
+						module_data = XI::ReadConsistencyData(stream);
+						module_signature = XE::Security::LoadContainer(stream);
+					}
+				} catch (...) {
+					if (!state.silent) console << TextColor(12) << Localized(302) << TextColorDefault() << LineFeed();
 					return 2;
 				}
 			} catch (...) {
-				console << TextColor(12) << Localized(301) << TextColorDefault() << LineFeed();
+				if (!state.silent) console << TextColor(12) << Localized(301) << TextColorDefault() << LineFeed();
 				return 1;
 			}
 			if (state.inspect_mask & InspectSymbols) {
@@ -285,11 +445,80 @@ int Main(void)
 					}
 				} else console << Localized(421) << LineFeed();
 			} catch (...) {}
+			if (state.validate_security) {
+				SafePointer<XE::Security::ITrustProvider> trust;
+				try {
+					trust = XE::Security::CreateTrustProvider();
+					if (!trust) throw OutOfMemoryException();
+					if (!trust->AddTrustDirectory(state.security.TrustedCertificates, true)) throw InvalidStateException();
+					if (!trust->AddTrustDirectory(state.security.UntrustedCertificates, false)) throw InvalidStateException();
+				} catch (...) {
+					if (!state.silent) console << TextColor(12) << Localized(508) << TextColorDefault() << LineFeed();
+					return 1;
+				}
+				if (!state.silent) {
+					if (state.security.ValidateTrust) {
+						console.SetTextColor(10);
+						console.WriteLine(Localized(501));
+						console.SetTextColor(-1);
+					} else {
+						console.SetTextColor(14);
+						console.WriteLine(Localized(502));
+						console.SetTextColor(-1);
+					}
+				}
+				if (module_signature) {
+					SafePointer<DataBlock> hash = Cryptography::CreateHash(Cryptography::HashAlgorithm::SHA512, module_data);
+					if (!hash) throw Exception();
+					XE::Security::IntegrityValidationDesc validation;
+					auto status = XE::Security::EvaluateIntegrity(hash, module_signature, Time::GetCurrentTime(), trust, &validation);
+					if (!state.silent) {
+						if (status == XE::Security::TrustStatus::Untrusted) {
+							console.SetTextColor(12);
+							console.WriteLine(Localized(512));
+							console.SetTextColor(-1);
+						} else if (status == XE::Security::TrustStatus::Undefined) {
+							console.SetTextColor(14);
+							console.WriteLine(Localized(513));
+							console.SetTextColor(-1);
+						} else if (status == XE::Security::TrustStatus::Trusted) {
+							console.SetTextColor(10);
+							console.WriteLine(Localized(514));
+							console.SetTextColor(-1);
+						}
+					}
+					Array<string> objects(0x20), states(0x20);
+					Array<int> colors(0x20);
+					objects << Localized(509); states << IntegrityStatusToString(validation.object); colors << IntegrityStatusToColor(validation.object);
+					for (int i = 0; i < validation.chain.Length(); i++) {
+						SafePointer<XE::Security::ICertificate> cert = module_signature->LoadCertificate(i);
+						if (cert) {
+							auto & desc = cert->GetDescription();
+							if (desc.PersonName.Length() && desc.Organization.Length()) {
+								objects << (desc.PersonName + L" / " + desc.Organization);
+							} else if (desc.PersonName.Length()) {
+								objects << desc.PersonName;
+							} else {
+								objects << desc.Organization;
+							}
+						} else objects << L"?";
+						states << IntegrityStatusToString(validation.chain[i]); colors << IntegrityStatusToColor(validation.chain[i]);
+					}
+					const string * table[] = { objects.GetBuffer(), states.GetBuffer() };
+					TableView(table, 2, objects.Length(), colors);
+				} else {
+					if (!state.silent) {
+						console.SetTextColor(14);
+						console.WriteLine(Localized(511));
+						console.SetTextColor(-1);
+					}
+				}
+			}
 			if (state.pret_list.Length()) {
 				try {
 					XI::PretranslateModule(*module, state.pret_list.GetBuffer(), state.pret_list.Length());
 				} catch (InvalidArgumentException &) {
-					console << TextColor(12) << Localized(303) << TextColorDefault() << LineFeed();
+					if (!state.silent) console << TextColor(12) << Localized(303) << TextColorDefault() << LineFeed();
 					return 3;
 				}
 				if (!state.output.Length()) {
@@ -301,18 +530,43 @@ int Main(void)
 				try {
 					SafePointer<Stream> stream = new FileStream(state.output, AccessReadWrite, CreateAlways);
 					module->Save(stream);
+					if (state.identity_file.Length()) {
+						if (!CreateSecurityData(stream, identity)) {
+							if (!state.silent) console << TextColor(12) << Localized(507) << TextColorDefault() << LineFeed();
+							return 4;
+						}
+					}
 				} catch (...) {
-					console << TextColor(12) << Localized(304) << TextColorDefault() << LineFeed();
+					if (!state.silent) console << TextColor(12) << Localized(304) << TextColorDefault() << LineFeed();
+					return 4;
+				}
+			} else if (state.identity_file.Length()) {
+				if (!state.output.Length()) {
+					auto dir = Path::GetDirectory(state.input);
+					auto name = Path::GetFileNameWithoutExtension(state.input);
+					auto ext = Path::GetExtension(state.input);
+					state.output = ExpandPath(dir + L"/" + name + L".subs." + ext);
+				}
+				try {
+					SafePointer<Stream> stream = new FileStream(state.output, AccessReadWrite, CreateAlways);
+					module->Save(stream);
+					if (state.identity_file.Length()) {
+						if (!CreateSecurityData(stream, identity)) {
+							if (!state.silent) console << TextColor(12) << Localized(507) << TextColorDefault() << LineFeed();
+							return 4;
+						}
+					}
+				} catch (...) {
+					if (!state.silent) console << TextColor(12) << Localized(304) << TextColorDefault() << LineFeed();
 					return 4;
 				}
 			}
 		} catch (...) { return 0x3F; }
-		return 0;
-	} else {
+	} else if (!state.print_security_state) {
 		if (!state.silent) try {
 			auto length = Localized(100).ToInt32();
 			for (int i = 0; i < length; i++) console << Localized(101 + i) << LineFeedSequence;
 		} catch (...) {}
-		return 0;
 	}
+	return 0;
 }

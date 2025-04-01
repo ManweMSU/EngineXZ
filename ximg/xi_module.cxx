@@ -483,12 +483,13 @@ namespace Engine
 				}
 			}
 
+			void ValidateHeader(const DS::XI_Header & hdr) { if (MemoryCompare(&hdr.signature, "xximago", 8) || hdr.format_version) throw InvalidFormatException(); }
 			void RestoreModule(Module & dest, Streaming::Stream * src, Module::ModuleLoadFlags flags)
 			{
 				DS::XI_Header hdr;
 				src->Seek(0, Streaming::Begin);
 				src->Read(&hdr, sizeof(hdr));
-				if (MemoryCompare(&hdr.signature, "xximago", 8) || hdr.format_version) throw InvalidFormatException();
+				ValidateHeader(hdr);
 				dest.subsystem = static_cast<Module::ExecutionSubsystem>(hdr.target_subsystem);
 				SafePointer<DataBlock> info, rsrc;
 				if (hdr.info_segment_size) {
@@ -737,6 +738,22 @@ namespace Engine
 		{
 			type = string(&rid, 4, Encoding::ANSI);
 			id = rid >> 32;
+		}
+		DataBlock * ReadConsistencyData(Streaming::Stream * source)
+		{
+			Format::DS::XI_Header hdr;
+			source->Seek(0, Streaming::Begin);
+			source->Read(&hdr, sizeof(hdr));
+			Format::ValidateHeader(hdr);
+			uint barier = 0, seg_end;
+			seg_end = hdr.info_segment_offset + hdr.info_segment_size;
+			if (seg_end > barier) barier = seg_end;
+			seg_end = hdr.data_segment_offset + hdr.data_segment_size;
+			if (seg_end > barier) barier = seg_end;
+			seg_end = hdr.rsrc_segment_offset + hdr.rsrc_segment_size;
+			if (seg_end > barier) barier = seg_end;
+			source->Seek(0, Streaming::Begin);
+			return source->ReadBlock(barier);
 		}
 	}
 }
