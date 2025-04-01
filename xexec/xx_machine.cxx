@@ -16,6 +16,7 @@
 #include "../xenv/xe_crypto.h"
 #include "../xenv/xe_commem.h"
 #include "../xenv/xe_mm.h"
+#include "../xenv_sec/xe_sec_ext.h"
 
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
@@ -827,6 +828,7 @@ namespace Engine
 						SafePointer<Streaming::Stream> stream = new Streaming::FileStream(path, Streaming::AccessRead, Streaming::OpenExisting);
 						if (flags & 1) {
 							SafePointer<XE::ExecutionContext> subctx = new XE::ExecutionContext(self._lc.primary_context->GetLoaderCallback());
+							subctx->AllowEmbeddedModules(self._lc.primary_context->EmbeddedModulesAllowed());
 							auto mdl = subctx->LoadModule(path, stream);
 							return new _xx_xe_dynamic_library(subctx, 1, mdl);
 						} else if (flags & 2) {
@@ -1002,7 +1004,19 @@ namespace Engine
 				SafePointer< Array<string> > args = GetCommandLine();
 				SafePointer<XE::StandardLoader> loader = XE::CreateStandardLoader(XE::UseStandard);
 				LoadEnvironmentConfiguration(desc, environment_configuration);
-				try { if (environment_configuration.xe_config.Length()) IncludeComponent(*loader, environment_configuration.xe_config); } catch (...) {}
+				try { if (environment_configuration.xe_config.Length()) {
+					XX::SecuritySettings sec;
+					IncludeComponent(*loader, environment_configuration.xe_config, &sec);
+					if (sec.ValidateTrust) {
+						SafePointer<XE::Security::ITrustProvider> trust = XE::Security::CreateTrustProvider();
+						if (!trust) throw Exception();
+						if (!trust->AddTrustDirectory(IO::ExpandPath(IO::Path::GetDirectory(environment_configuration.xe_config) + L"/" + sec.TrustedCertificates), true)) throw Exception();
+						if (!trust->AddTrustDirectory(IO::ExpandPath(IO::Path::GetDirectory(environment_configuration.xe_config) + L"/" + sec.UntrustedCertificates), false)) throw Exception();
+						SafePointer<XE::ISecurityExtension> sec_ext = XE::Security::CreateStandardSecurityExtension(trust, true);
+						if (!sec_ext) throw Exception();
+						if (!loader->RegisterSecurityExtension(sec_ext)) throw Exception();
+					}
+				} } catch (...) {}
 				try { if (environment_configuration.store_file.Length()) IncludeStoreIntegration(*loader, environment_configuration.store_file); } catch (...) {}
 				SafePointer<XLoggerSink> logger;
 				SafePointer<XE::ExecutionContext> xctx = new XE::ExecutionContext(loader);

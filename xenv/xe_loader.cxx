@@ -27,10 +27,11 @@ namespace Engine
 			Array<string> _xi_paths, _dl_paths;
 			ObjectArray<IAPIExtension> _apis;
 			ObjectArray<IModuleExtension> _mdl;
+			ObjectArray<ISecurityExtension> _sec;
 			ModuleLoadError _error;
 			string _module, _subject;
 		public:
-			EStandardLoader(void) : _xi_paths(0x10), _dl_paths(0x10), _apis(0x10), _mdl(0x10), _error(ModuleLoadError::Success) {}
+			EStandardLoader(void) : _xi_paths(0x10), _dl_paths(0x10), _apis(0x10), _mdl(0x10), _sec(0x10), _error(ModuleLoadError::Success) {}
 			virtual ~EStandardLoader(void) override {}
 			virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
 			{
@@ -80,6 +81,14 @@ namespace Engine
 				}
 				return 0;
 			}
+			virtual ModuleLoadError EvaluateTrust(Streaming::Stream * module_stream) noexcept override
+			{
+				if (!_sec.Length()) return ModuleLoadError::Success;
+				try {
+					SafePointer<DataBlock> mdata = XI::ReadConsistencyData(module_stream);
+					return _sec[0].EvaluateTrust(mdata->GetBuffer(), mdata->Length(), module_stream);
+				} catch (...) { return ModuleLoadError::AllocationFailure; }
+			}
 			virtual bool AddModuleSearchPath(const string & path) noexcept override
 			{
 				for (auto & p : _xi_paths) if (p == path) return true;
@@ -118,6 +127,18 @@ namespace Engine
 				return false;
 			}
 			virtual ObjectArray<IAPIExtension> & GetAPIExtensions(void) noexcept override { return _apis; }
+			virtual bool RegisterSecurityExtension(ISecurityExtension * ext) noexcept override
+			{
+				for (auto & e : _sec) if (&e == ext) return true;
+				try { _sec.Append(ext); } catch (...) { return false; }
+				return true;
+			}
+			virtual bool UnregisterSecurityExtension(ISecurityExtension * ext) noexcept override
+			{
+				for (int i = 0; i < _sec.Length(); i++) if (_sec.ElementAt(i) == ext) { _sec.Remove(i); return true; }
+				return false;
+			}
+			virtual ObjectArray<ISecurityExtension> & GetSecurityExtensions(void) noexcept override { return _sec; }
 			virtual bool IsAlive(void) noexcept override { return _error == ModuleLoadError::Success; }
 			virtual ModuleLoadError GetLastError(void) noexcept override { return _error; }
 			virtual const string & GetLastErrorModule(void) noexcept override { return _module; }

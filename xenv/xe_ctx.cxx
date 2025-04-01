@@ -391,6 +391,13 @@ namespace Engine
 			_sync->Open();
 			SafePointer<XI::Module> data;
 			SafePointer<Module> result;
+			auto trust = callback->EvaluateTrust(input);
+			if (trust != ModuleLoadError::Success) {
+				_sync->Wait();
+				callback->HandleModuleLoadError(name, L"", trust);
+				_sync->Open();
+				return 0;
+			}
 			try {
 				data = new XI::Module(input, XI::Module::ModuleLoadFlags::LoadExecute);
 				result = new Module(*this);

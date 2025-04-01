@@ -39,6 +39,7 @@ namespace Engine
 			virtual void HandleModuleLoadError(const string & module_name, const string & subject, ModuleLoadError error) noexcept = 0;
 			virtual Object * ExposeObject(void) noexcept = 0;
 			virtual void * ExposeInterface(const string & interface) noexcept = 0;
+			virtual ModuleLoadError EvaluateTrust(Streaming::Stream * module_stream) noexcept = 0;
 		};
 
 		class Module : public Object

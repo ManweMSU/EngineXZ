@@ -505,7 +505,10 @@ int Main(void)
 						states << IntegrityStatusToString(validation.chain[i]); colors << IntegrityStatusToColor(validation.chain[i]);
 					}
 					const string * table[] = { objects.GetBuffer(), states.GetBuffer() };
-					TableView(table, 2, objects.Length(), colors);
+					if (!state.silent) {
+						TableView(table, 2, objects.Length(), colors);
+						console.SetTextColor(-1);
+					}
 				} else {
 					if (!state.silent) {
 						console.SetTextColor(14);

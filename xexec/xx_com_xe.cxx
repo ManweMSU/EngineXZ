@@ -5,7 +5,7 @@ namespace Engine
 {
 	namespace XX
 	{
-		void IncludeComponent(XE::StandardLoader & loader, const string & manifest)
+		void IncludeComponent(XE::StandardLoader & loader, const string & manifest, SecuritySettings * ss)
 		{
 			auto root = IO::Path::GetDirectory(IO::ExpandPath(manifest));
 			SafePointer<Storage::Registry> com = LoadConfiguration(manifest);
@@ -17,6 +17,7 @@ namespace Engine
 			if (dll_path.Length()) {
 				if (!loader.AddDynamicLibrarySearchPath(IO::ExpandPath(root + L"/" + dll_path))) throw Exception();
 			}
+			if (ss) LoadSecuritySettings(*ss, com);
 		}
 		void IncludeStoreIntegration(XE::StandardLoader & loader, const string & intfile)
 		{

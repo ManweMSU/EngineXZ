@@ -7,7 +7,7 @@ namespace Engine
 {
 	namespace XX
 	{
-		void IncludeComponent(XE::StandardLoader & loader, const string & manifest);
+		void IncludeComponent(XE::StandardLoader & loader, const string & manifest, SecuritySettings * ss = 0);
 		void IncludeStoreIntegration(XE::StandardLoader & loader, const string & intfile);
 	}
 }

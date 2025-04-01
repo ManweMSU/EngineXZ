@@ -31,6 +31,11 @@ namespace Engine
 		public:
 			virtual Streaming::Stream * OpenModule(const string & module_name) noexcept = 0;
 		};
+		class ISecurityExtension : public IExtension
+		{
+		public:
+			virtual ModuleLoadError EvaluateTrust(const void * module_data, int module_length, Streaming::Stream * residual) noexcept = 0;
+		};
 
 		class StandardLoader : public Object, public ILoaderCallback
 		{
@@ -49,6 +54,10 @@ namespace Engine
 			virtual bool RegisterAPIExtension(IAPIExtension * ext) noexcept = 0;
 			virtual bool UnregisterAPIExtension(IAPIExtension * ext) noexcept = 0;
 			virtual ObjectArray<IAPIExtension> & GetAPIExtensions(void) noexcept = 0;
+			// Security extensions
+			virtual bool RegisterSecurityExtension(ISecurityExtension * ext) noexcept = 0;
+			virtual bool UnregisterSecurityExtension(ISecurityExtension * ext) noexcept = 0;
+			virtual ObjectArray<ISecurityExtension> & GetSecurityExtensions(void) noexcept = 0;
 			// Error reporting
 			virtual bool IsAlive(void) noexcept = 0;
 			virtual ModuleLoadError GetLastError(void) noexcept = 0;
