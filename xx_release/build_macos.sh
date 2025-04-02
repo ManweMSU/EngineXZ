@@ -14,12 +14,15 @@ cp -R xcon/_build/macosx_${ARCH}_${MODE}/xc.app xx_release/_build/macosx_${ARCH}
 mkdir xx_release/_build/macosx_${ARCH}/XX.app/xxcl
 mkdir xx_release/_build/macosx_${ARCH}/XX.app/xxi
 mkdir xx_release/_build/macosx_${ARCH}/XX.app/xx
+mkdir xx_release/_build/macosx_${ARCH}/XX.app/fidelitas
+mkdir xx_release/_build/macosx_${ARCH}/XX.app/infidelitas
 mkdir xx_release/_build/macosx_${ARCH}/XX.app/Contents/Library
 mkdir xx_release/_build/macosx_${ARCH}/XX.app/Contents/Library/Spotlight
 cp xx_xx/xx_mac_f.ini xx_release/_build/macosx_${ARCH}/XX.app/XX.app/Contents/MacOS/xx.ini
 cp xx_xx/_build/macosx_${ARCH}_${MODE}/xx xx_release/_build/macosx_${ARCH}/XX.app/xx/xx
 cp xx_xx/xx_mac.ini xx_release/_build/macosx_${ARCH}/XX.app/xx/xx.ini
 cp xx_xx/xe.ini xx_release/_build/macosx_${ARCH}/XX.app/xe.ini
+cp xx_release/radix.xecert xx_release/_build/macosx_${ARCH}/XX.app/fidelitas/radix.xecert
 
 ./shellex_macos/thumbex.sh ${ARCH}
 ./shellex_macos/xxspex.sh ${ARCH}

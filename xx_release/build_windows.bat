@@ -13,6 +13,8 @@ mkdir xx_release\_build\windows_%ARCH%\xc
 mkdir xx_release\_build\windows_%ARCH%\xx
 mkdir xx_release\_build\windows_%ARCH%\xxcl
 mkdir xx_release\_build\windows_%ARCH%\xxi
+mkdir xx_release\_build\windows_%ARCH%\fidelitas
+mkdir xx_release\_build\windows_%ARCH%\infidelitas
 
 copy /B xcon\_build\windows_%ARCH%_%MODE%\xc.exe xx_release\_build\windows_%ARCH%\xc\xc.exe
 copy /B xcon\_build\windows_%ARCH%_%MODE%\ertwndfx.dll xx_release\_build\windows_%ARCH%\xc\ertwndfx.dll
@@ -20,6 +22,7 @@ copy /B xcon\xc.ini xx_release\_build\windows_%ARCH%\xc\xc.ini
 copy /B xx_xx\_build\windows_%ARCH%_%MODE%\xx.exe xx_release\_build\windows_%ARCH%\xx\xx.exe
 copy /B xx_xx\xx_win.ini xx_release\_build\windows_%ARCH%\xx\xx.ini
 copy /B xx_xx\xe.ini xx_release\_build\windows_%ARCH%\xe.ini
+copy /B xx_release\radix.xecert xx_release\_build\windows_%ARCH%\fidelitas\radix.xecert
 copy /B xx_xxf\_build\windows_%ARCH%_%MODE%\xxf.exe xx_release\_build\windows_%ARCH%\xx\xxf.exe
 copy /B xx_xxf\_build\windows_%ARCH%_%MODE%\ertwndfx.dll xx_release\_build\windows_%ARCH%\xx\ertwndfx.dll
 copy /B xx_xxsc\_build\windows_%ARCH%_%MODE%\xxsc.exe xx_release\_build\windows_%ARCH%\xxsc.exe
