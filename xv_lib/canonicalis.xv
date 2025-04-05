@@ -3189,6 +3189,11 @@ spatium contextus {
 
 	functio nihil exeque_in_contextu(@cauda ctx, @labos lab) { ctx^.adde(lab); }
 	functio adl[signale] exeque_in_contextu_et_opperire(@cauda ctx, @labos_opperitus lab) { ctx^.adde(lab); responde lab^.valor_publicus_signale_opperirendi; }
+
+	[[importa] alloca_in_filo]	functio logicum crea_data_fili(~nintadl nomen);
+	[[importa] dimitte_in_filo]	functio nihil perde_data_fili(nintadl nomen);
+	[[importa] scribe_in_filo]	functio	nihil scribe_data_fili(nintadl nomen, nintadl valor);
+	[[importa] lege_in_filo]	functio nintadl lege_data_fili(nintadl nomen);
 }
 
 praeforma operator muta_contextum(C) { .contextus.exeque_in_contextu($C, .contextus.labos ## { $_ }) }

@@ -359,6 +359,17 @@ spatium contextus {
 
 	functio nihil exeque_in_contextu(@cauda ctx, @labos lab) { ctx^.adde(lab); }
 	functio adl[signale] exeque_in_contextu_et_opperire(@cauda ctx, @labos_opperitus lab) { ctx^.adde(lab); responde lab^.valor_publicus_signale_opperirendi; }
+
+	functio logicum crea_data_fili(~nintadl nomen) {
+		var resp = winapi.TlsAlloc();
+		si (resp != 0xFFFFFFFF) {
+			nomen = resp;
+			responde sic;
+		} alioqui responde non;
+	}
+	functio nihil perde_data_fili(nintadl nomen) { winapi.TlsFree(nomen); }
+	functio	nihil scribe_data_fili(nintadl nomen, nintadl valor) { winapi.TlsSetValue(nomen, valor); }
+	functio nintadl lege_data_fili(nintadl nomen) { responde winapi.TlsGetValue(nomen); }
 }
 
 praeforma operator muta_contextum(C) { .contextus.exeque_in_contextu($C, .contextus.labos ## { $_ }) }

@@ -331,43 +331,59 @@ namespace Engine
 		public:
 			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
-				if (string::Compare(routine_name, L"realloca_memoriam") < 0) {
-					if (string::Compare(routine_name, L"dimitte_memoriam") < 0) {
-						if (string::Compare(routine_name, L"dec_sec") < 0) {
-							if (string::Compare(routine_name, L"alloca_memoriam") == 0) return reinterpret_cast<const void *>(_mem_alloc);
+				if (string::Compare(routine_name, L"lege_in_filo") < 0) {
+					if (string::Compare(routine_name, L"dimitte_in_filo") < 0) {
+						if (string::Compare(routine_name, L"alloca_memoriam") < 0) {
+							if (string::Compare(routine_name, L"alloca_in_filo") == 0) return reinterpret_cast<const void *>(&Engine::CreateThreadLocal);
 						} else {
-							if (string::Compare(routine_name, L"dec_sec") == 0) return reinterpret_cast<const void *>(Engine::InterlockedDecrement);
+							if (string::Compare(routine_name, L"dec_sec") < 0) {
+								if (string::Compare(routine_name, L"alloca_memoriam") == 0) return reinterpret_cast<const void *>(&_mem_alloc);
+							} else {
+								if (string::Compare(routine_name, L"dec_sec") == 0) return reinterpret_cast<const void *>(&Engine::InterlockedDecrement);
+							}
 						}
 					} else {
 						if (string::Compare(routine_name, L"exscribe_memoriam") < 0) {
-							if (string::Compare(routine_name, L"dimitte_memoriam") == 0) return reinterpret_cast<const void *>(_mem_release);
+							if (string::Compare(routine_name, L"dimitte_memoriam") < 0) {
+								if (string::Compare(routine_name, L"dimitte_in_filo") == 0) return reinterpret_cast<const void *>(&Engine::ReleaseThreadLocal);
+							} else {
+								if (string::Compare(routine_name, L"dimitte_memoriam") == 0) return reinterpret_cast<const void *>(&_mem_release);
+							}
 						} else {
 							if (string::Compare(routine_name, L"inc_sec") < 0) {
-								if (string::Compare(routine_name, L"exscribe_memoriam") == 0) return reinterpret_cast<const void *>(Engine::MemoryCopy);
+								if (string::Compare(routine_name, L"exscribe_memoriam") == 0) return reinterpret_cast<const void *>(&Engine::MemoryCopy);
 							} else {
-								if (string::Compare(routine_name, L"inc_sec") == 0) return reinterpret_cast<const void *>(Engine::InterlockedIncrement);
+								if (string::Compare(routine_name, L"inc_sec") == 0) return reinterpret_cast<const void *>(&Engine::InterlockedIncrement);
 							}
 						}
 					}
 				} else {
-					if (string::Compare(routine_name, L"sys_arch") < 0) {
-						if (string::Compare(routine_name, L"relabe_memoriam") < 0) {
-							if (string::Compare(routine_name, L"realloca_memoriam") == 0) return reinterpret_cast<const void *>(_mem_realloc);
+					if (string::Compare(routine_name, L"scribe_in_filo") < 0) {
+						if (string::Compare(routine_name, L"realloca_memoriam") < 0) {
+							if (string::Compare(routine_name, L"lege_in_filo") == 0) return reinterpret_cast<const void *>(&Engine::GetThreadLocal);
 						} else {
-							if (string::Compare(routine_name, L"relabe_memoriam") == 0) return reinterpret_cast<const void *>(Engine::ZeroMemory);
+							if (string::Compare(routine_name, L"relabe_memoriam") < 0) {
+								if (string::Compare(routine_name, L"realloca_memoriam") == 0) return reinterpret_cast<const void *>(&_mem_realloc);
+							} else {
+								if (string::Compare(routine_name, L"relabe_memoriam") == 0) return reinterpret_cast<const void *>(&Engine::ZeroMemory);
+							}
 						}
 					} else {
 						if (string::Compare(routine_name, L"sys_info") < 0) {
-							if (string::Compare(routine_name, L"sys_arch") == 0) return reinterpret_cast<const void *>(_check_arch);
+							if (string::Compare(routine_name, L"sys_arch") < 0) {
+								if (string::Compare(routine_name, L"scribe_in_filo") == 0) return reinterpret_cast<const void *>(&Engine::SetThreadLocal);
+							} else {
+								if (string::Compare(routine_name, L"sys_arch") == 0) return reinterpret_cast<const void *>(&_check_arch);
+							}
 						} else {
 							if (string::Compare(routine_name, L"sys_temp") < 0) {
-								if (string::Compare(routine_name, L"sys_info") == 0) return reinterpret_cast<const void *>(_get_system_info);
+								if (string::Compare(routine_name, L"sys_info") == 0) return reinterpret_cast<const void *>(&_get_system_info);
 							} else {
-								if (string::Compare(routine_name, L"sys_temp") == 0) return reinterpret_cast<const void *>(Engine::GetTimerValue);
+								if (string::Compare(routine_name, L"sys_temp") == 0) return reinterpret_cast<const void *>(&Engine::GetTimerValue);
 							}
 						}
 					}
-				}
+				}				
 				return 0;
 			}
 			virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }

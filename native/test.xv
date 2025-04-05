@@ -21,4 +21,11 @@ functio nihil ini() introitus iacit {
 	}
 	con.scribe_lineam(linea.ex(para_argumenta()));
 
+	nintadl mnbr;
+	var status = contextus.crea_data_fili(mnbr);
+	con.scribe_lineam(linea.forma("DATA FILI: %0, %1", status, mnbr));
+	contextus.scribe_data_fili(mnbr, 666);
+	con.scribe_lineam(linea.forma("LEGO DATA FILI: %0", contextus.lege_data_fili(mnbr)));
+	contextus.perde_data_fili(mnbr);
+	con.scribe_lineam(linea.forma("LEGO DATA FILI: %0", contextus.lege_data_fili(mnbr)));
 }

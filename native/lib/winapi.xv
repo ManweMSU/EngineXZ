@@ -274,6 +274,15 @@ spatium winapi {
 	[[importa] "GetVersion"] [[importa_de] "kernel32"] [stdcall "0"]
 	functio nint32 GetVersion();
 
+	[[importa] "TlsAlloc"] [[importa_de] "kernel32"] [stdcall "0"]
+	functio nint32 TlsAlloc();
+	[[importa] "TlsFree"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio logicum TlsFree(nint32 mnbr);
+	[[importa] "TlsGetValue"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nintadl TlsGetValue(nint32 mnbr);
+	[[importa] "TlsSetValue"] [[importa_de] "kernel32"] [stdcall "2"]
+	functio logicum TlsSetValue(nint32 mnbr, nintadl valor);
+
 	[[importa] "BCryptOpenAlgorithmProvider"] [[importa_de] "bcrypt"] [stdcall "4"]
 	functio nint32 BCryptOpenAlgorithmProvider(~nintadl mnbr, @nint16 alg, @nint16 impl, nint32 modus);
 	[[importa] "BCryptCloseAlgorithmProvider"] [[importa_de] "bcrypt"] [stdcall "2"]
