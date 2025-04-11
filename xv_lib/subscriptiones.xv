@@ -1,0 +1,94 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Subscriptionum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2025";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium versio 0;
+
+[[systema] libera]
+
+spatium subscriptio {
+	enumeratio genus_clavis { ignota = 0x000, rsa_publica = 0x001, rsa_privata = 0x101 }
+	enumeratio genus_datorum {
+		ignotus = 0x000,
+		certificatus_purus = 0x001, certificatus = 0x002, clavis_privata = 0x003, indentitas = 0x004,
+		integritas = 0x101, subscriptio = 0x102
+	}
+	enumeratio status_integritatis {
+		bonus = 0x00, infractus = 0x01, surrogatus = 0x02,
+		inveteratus = 0x03, juvenalis = 0x04,
+		authoritas_falsa = 0x05, authoritas_hereditata_falsa = 0x06,
+		certificatus_infidelis = 0x07, fidelitas_nulla = 0x08,
+		error_internus = 0xFF
+	}
+	enumeratio status_fidelitatis { infidelis = 0, ignotus = 1, fidelis = 2 }
+	spatium authoritates {
+		constatus subscribe_certificatos	= nint(0x0001);
+		constatus subscribe_modulos			= nint(0x0002);
+	}
+	structura descriptio_certificati {
+		linea organizatio;
+		linea persona;
+		nint authoritates;
+		nint authoritates_hereditatae;
+		tempus validus_ab;
+		tempus validus_ad;
+		logicum radix;
+	}
+
+	genus clavis hereditat objectum {
+		genus_clavis genu { adipisce virtualis pura; }
+		!clavis clavis_publica { adipisce virtualis pura; }
+
+		[[importa] xesec_rsao] classis functio !clavis onera_rsa(@dordo_datorum dta);
+		[[importa] xesec_rsac] classis functio !clavis crea_rsa(int longitudo_moduli, int pexp);
+	}
+	genus certificatus hereditat objectum {
+		linea organizatio { adipisce virtualis pura; }
+		linea persona { adipisce virtualis pura; }
+		nint authoritates { adipisce virtualis pura; }
+		nint authoritates_hereditatae { adipisce virtualis pura; }
+		logicum radix { adipisce virtualis pura; }
+		tempus validus_ab { adipisce virtualis pura; }
+		tempus validus_ad { adipisce virtualis pura; }
+		!meta attributa { adipisce virtualis pura; }
+		!clavis clavis { adipisce virtualis pura; }
+	}
+	genus indentitas hereditat objectum {
+		int numerus_certificatorum { adipisce virtualis pura; }
+		functio !certificatus certificatus(int index) virtualis pura;
+		!clavis clavis_privata { adipisce virtualis pura; }
+	}
+	genus data hereditat objectum {
+		genus_datorum genu { adipisce virtualis pura; }
+		int numerus_certificatorum { adipisce virtualis pura; }
+		functio !certificatus certificatus(int index) virtualis pura;
+		functio !clavis clavis_privata(~linea clavis_externa) virtualis pura;
+		!dordo_datorum digestum { adipisce virtualis pura; }
+		!dordo_datorum subscriptio { adipisce virtualis pura; }
+		functio !dordo_datorum codifica() virtualis pura;
+
+		[[importa] xesec_done] classis functio !data onera(@flumen fl);
+		[[importa] xesec_dccn] classis functio !data crea_certificatum(~descriptio_certificati desc, ~ordo (linea, linea) attributa, @clavis publica);
+		[[importa] xesec_dccd] classis functio !data crea_certificatum(@data dta);
+		[[importa] xesec_dscc] classis functio !data subscribe_certificatum(@.subscriptio.certificatus cert, @clavis privata);
+		[[importa] xesec_dsci] classis functio !data subscribe_certificatum(@.subscriptio.certificatus cert, @indentitas ind);
+		[[importa] xesec_dclp] classis functio !data crea_clavem_privatam(@clavis privata, ~linea clavis_externa);
+		[[importa] xesec_dcin] classis functio !data crea_indentitatem(@indentitas ind, ~linea clavis_externa);
+		[[importa] xesec_ddig] classis functio !data crea_digestum(@dordo_datorum digestum);
+		[[importa] xesec_dsub] classis functio !data crea_subscriptionem(@dordo_datorum digestum, @indentitas ind);
+	}
+	dura indentitas {
+		[[importa] xesec_inda] classis functio !indentitas alloca(@data d0, @data d1, ~linea clavis_externa);
+	}
+	genus functio_fidelitatis hereditat objectum {
+		functio logicum fide(@certificatus cert, logicum fidelis) virtualis pura;
+		functio logicum fide(@flumen fl, logicum fidelis) virtualis pura;
+		functio status_fidelitatis operator () (@dordo_datorum digestum) virtualis pura;
+
+		[[importa] xesec_ffal] classis functio !functio_fidelitatis alloca();
+	}
+	[[importa] xesec_conv] functio status_fidelitatis convalida(@dordo_datorum digestum, @data sdata, ~tempus tmp, @functio_fidelitatis ff, @ordo status_integritatis sint);
+}

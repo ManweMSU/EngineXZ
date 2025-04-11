@@ -1093,6 +1093,7 @@ namespace Engine
 				XE::ActivateCryptography(*loader);
 				XE::ActivateSharedMemory(*loader);
 				XE::ActivateMultimedia(*loader);
+				XE::Security::ActivateSecurityAPI(*loader);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;
 				if (environment_configuration.locale_override.Length()) Assembly::CurrentLocale = environment_configuration.locale_override;

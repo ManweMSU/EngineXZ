@@ -10,6 +10,7 @@ namespace Engine
 		namespace Security
 		{
 			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, bool needs_trusted_chain) noexcept;
+			void ActivateSecurityAPI(StandardLoader & ldr);
 		}
 	}
 }

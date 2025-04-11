@@ -107,7 +107,7 @@ namespace Engine
 			IContainer * CreateIntegrityData(DataBlock * hash) noexcept; // IntegrityData
 			IContainer * CreateSignatureData(DataBlock * hash, IIdentity * identity) noexcept; // Signature
 
-			enum class TrustStatus { Untrusted, Undefined, Trusted };
+			enum class TrustStatus { Untrusted = 0, Undefined = 1, Trusted = 2 };
 			enum class IntegrityStatus {
 				OK					= 0x00,
 				DataCorruption		= 0x01,

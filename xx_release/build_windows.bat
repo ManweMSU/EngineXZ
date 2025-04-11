@@ -60,8 +60,10 @@ xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\json.xo           
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\ecso.xo           -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\ecso.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\ifr.xo            -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\ifr.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\http.xo           -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\http.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\http_sessio.xo    -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\http_sessio.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\commem.xo         -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\commem.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\cryptographia.xo  -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\cryptographia.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\subscriptiones.xo -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\subscriptiones.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\media.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\media.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\audio.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\audio.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\video.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\video.xo
