@@ -213,6 +213,7 @@ spatium http {
 				si (status / 100 == 3 && loc != nullus) {
 					_redirectum = sic;
 					proba {
+						on._nprob = 0;
 						on._aux = semita_auxilii(loc^, on._aux).semita;
 						on._mitte();
 					} cape (nintadl e, nintadl se) {
@@ -241,11 +242,23 @@ spatium http {
 			functio nihil requisitum_falsum_est(@objectum req, ~communicatio.status_erroris error) iacit redefini {
 				var ~ rq = req acsi (requisitum);
 				var ~ on = rq.addendum acsi (oneratio);
-				on._dest.depura();
-				on._ses.depura();
-				on._error = error;
-				on._status = 0;
-				on._sync^.erige();
+				si (on._nprob < 3) {
+					proba {
+						on._mitte();
+					} cape (nintadl e, nintadl se) {
+						on._dest.depura();
+						on._ses.depura();
+						on._error = error;
+						on._status = 0;
+						on._sync^.erige();
+					}
+				} alioqui {
+					on._dest.depura();
+					on._ses.depura();
+					on._error = error;
+					on._status = 0;
+					on._sync^.erige();
+				}
 			}
 		}
 
@@ -256,9 +269,10 @@ spatium http {
 		!_responsor _resp;
 		communicatio.status_erroris _error;
 		int _status;
+		int _nprob;
 
 		structor (~linea aux, @flumen dest, @sessiones ses) iacit {
-			funda _aux(semita_auxilii(aux).semita); funda _status(0);
+			funda _aux(semita_auxilii(aux).semita); funda _status(0); funda _nprob(0);
 			_dest.contine(dest);
 			_ses.contine(ses);
 			_sync = contextus.crea_signale();
@@ -270,10 +284,23 @@ spatium http {
 		functio nihil opperire() { _sync^.opperire(); }
 		functio logicum opperire(nint ms) { _sync^.opperire(ms); }
 		functio nihil _mitte() iacit {
+			si (_nprob) {
+				_dest^.longitudo = 0;
+				_dest^.quaerita(0, flumen.initus);
+			}
 			var req = crea(requisitum, _aux);
 			req^.responsor.contine(_resp);
 			req^.addendum.contine(ego);
-			_ses^.require(req);
+			dum (sic) {
+				_nprob++;
+				si (_nprob >= 3) {
+					_ses^.require(req);
+					exi;
+				} alioqui proba {
+					_ses^.require(req);
+					exi;
+				}
+			}
 		}
 		int status { adipisce iacit { _sync^.opperire(); _error.modera(); responde _status; } }
 		linea destinatio { adipisce iacit { _sync^.opperire(); _error.modera(); responde _aux; } }

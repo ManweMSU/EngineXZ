@@ -62,8 +62,8 @@ BETA-6:
 
 BETA-7:
  + XW framework: XV extension for GPU
- - XE: Digital signatures and trust control
- - Communication API: HTTP Client Session Manager
+ + XE: Digital signatures and trust control
+ + Communication API: HTTP Client Session Manager
  + Thread-local storage support
  - Debugger
  + Spotlight Extension
