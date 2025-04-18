@@ -5,7 +5,7 @@ auxilium attributum ("Versio") = "1.0.0.1";
 
 auxilium versio 0;
 
-[[systema] libera]
+[[systema] librosa]
 
 importa matrices;
 importa mathvcom;

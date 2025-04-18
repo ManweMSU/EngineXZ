@@ -6,7 +6,7 @@ auxilium attributum ("Versio") = "1.0.0.1";
 importa winapi;
 importa lineae;
 
-[[systema] libera]
+[[systema] librosa]
 
 genus flumen hereditat objectum {
 	constatus initus	= 0;

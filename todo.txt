@@ -67,6 +67,7 @@ BETA-7:
  + Thread-local storage support
  - Debugger
  + Spotlight Extension
+ + New subsystem names
 
 BETA-8:
  - GUI and CUI libraries

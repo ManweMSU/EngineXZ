@@ -5,7 +5,7 @@ auxilium attributum ("Versio") = "1.0.0.1";
 
 importa cor;
 
-[[systema] libera]
+[[systema] librosa]
 
 spatium winapi {
 	[[importa] "GetProcessHeap"] [[importa_de] "kernel32"] [stdcall "0"]

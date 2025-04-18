@@ -7,7 +7,7 @@ auxilium attributum (meta.attributum_versio) = "1.0.0.1";
 
 auxilium versio 0;
 
-[[systema] libera]
+[[systema] librosa]
 
 spatium subscriptio {
 	enumeratio genus_clavis { ignota = 0x000, rsa_publica = 0x001, rsa_privata = 0x101 }

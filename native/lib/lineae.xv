@@ -5,7 +5,7 @@ auxilium attributum ("Versio") = "1.0.0.1";
 
 importa memoria;
 
-[[systema] libera]
+[[systema] librosa]
 
 spatium winapi {
 	[[importa] "CharUpperW"] [[importa_de] "user32"] [stdcall "1"]

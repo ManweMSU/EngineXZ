@@ -8,7 +8,7 @@ auxilium attributum (meta.attributum_versio) = "1.0.0.1";
 
 auxilium versio 0;
 
-[[systema] libera]
+[[systema] librosa]
 
 spatium http {
 	constatus portus_http			= 80;

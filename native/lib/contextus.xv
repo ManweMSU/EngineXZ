@@ -7,7 +7,7 @@ importa cor;
 importa lineae;
 importa winapi;
 
-[[systema] libera]
+[[systema] librosa]
 
 spatium systema {
 	functio nint32 para_tempum_systemae() { responde winapi.timeGetTime(); }

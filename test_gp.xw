@@ -24,8 +24,8 @@ functio vertex Vertex(
 {
 	var v = vdata[vid];
 	color = v.color;
-	norm = (wdata.trans * frac4(v.norm.x, v.norm.y, v.norm.z, 0.0)).xyz;
-	pos = wdata.trans * frac4(v.pos.x, v.pos.y, v.pos.z, 1.0);
+	norm = (wdata.trans * frac4(v.norm, 0.0)).xyz;
+	pos = wdata.trans * frac4(v.pos, 1.0);
 	pos.x += 2.0 * (int(iid) % 3 - 1);
 	pos.y += 2.0 * (int(iid) / 3 - 1);
 	pos = wdata.proj * pos;

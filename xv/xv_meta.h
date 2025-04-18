@@ -83,10 +83,10 @@ namespace Engine
 			constexpr const widechar * AttributeOffset	= L"[positus]";
 			constexpr const widechar * AttributeUnalign	= L"[non_polire]";
 			constexpr const widechar * AttributeRPC		= L"[ifr]";
-			constexpr const widechar * AttributeConsole	= L"scripta";
-			constexpr const widechar * AttributeGUI		= L"graphica";
+			constexpr const widechar * AttributeConsole	= L"scriptosa";
+			constexpr const widechar * AttributeGUI		= L"fenestrosa";
 			constexpr const widechar * AttributeNoUI	= L"nulla";
-			constexpr const widechar * AttributeLibrary	= L"libera";
+			constexpr const widechar * AttributeLibrary	= L"librosa";
 			constexpr const widechar * AttributeSUnk	= L"ignotus";
 			constexpr const widechar * AttributeSNone	= L"nihil";
 			constexpr const widechar * AttributeSUInt	= L"integer";
