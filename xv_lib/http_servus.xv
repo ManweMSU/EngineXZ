@@ -1,0 +1,465 @@
+﻿importa http;
+importa formati;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Servorum HTTP";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2025";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium versio 0;
+
+[[systema] librosa]
+
+spatium http {
+	auxilium data ("DATA", 1) = "http_servus.ecs";
+	var !formati.paginae_linearum _nomina = formati.paginae_linearum.onera(para_auxilium(modulus(), "DATA", 1));
+
+	enumeratio protocollum_servi { http_ipv4, http_ipv6, https_ipv4, https_ipv6 }
+	structura descriptio_requisiti {
+		!communicatio.adloquium usor;
+		int portus;
+		@nihil extensio_erroris;
+		linea semita_auxilii;
+		methodus methodus;
+		ordo_titulorum tituli_in;
+		ordo_titulorum tituli_ex;
+		!flumen data_in;
+		!flumen data_ex;
+		int status;
+
+		!objectum addendum;
+		nintadl valor;
+	}
+	protocollum extensio_servi {
+		functio nihil requisitum_servi_initum_est(~descriptio_requisiti desc) iacit virtualis pura;
+		functio nihil requisitum_servi_acceptum_est(~descriptio_requisiti desc) iacit virtualis pura;
+	}
+	genus servus hereditat objectum {
+		nomen_alternum _genus_responsorum	= collectiones.dictionarium[linea, @extensio_servi];
+		nomen_alternum _genus_canalium		= collectiones.dictionarium[nintadl, !communicatio.canale];
+		genus _processor hereditat contextus.labos : extensio_servi {
+			!contextus.cauda_filorum cauda;
+			!contextus.semaphorum sync;
+			!communicatio.canale canale;
+			!_genus_responsorum responsores;
+			!_genus_canalium canalia;
+			@extensio_servi error_ext;
+
+			communicatio.status_erroris error;
+			descriptio_requisiti cr;
+
+			// 00 - titulum lego
+			// 01 - data lego
+			// 02 - longitudinem lego
+			// 03 - data particularia lego
+			// 10 - procedo
+			// 20 - titulum scribo
+			// 21 - data scribo
+			// 30 - excepto
+			int modus;
+			@extensio_servi responsor;
+			!dordo_datorum accumulator;
+			!dordo_datorum receptor;
+			int64 longitudo;
+
+			structor () { funda modus(0); funda responsor(nullus); }
+			functio nihil exeque(@objectum ctx) virtualis redefini {
+				proba {
+					si (modus == 00) {
+						error.modera();
+						si (!accumulator) accumulator = crea(dordo_datorum);
+						si (accumulator^.longitudo > 0x4000) { responde_fatale(400, sic); responde; }
+						si (receptor^.longitudo && receptor^[0] != nint8('\r')) accumulator^.adde(receptor^[0]);
+						int la = accumulator^.longitudo;
+						si (!receptor^.longitudo || (la >= 2 && accumulator^[la - 2] == nint8('\n') && accumulator^[la - 1] == nint8('\n'))) {
+							muta_contextum(cauda) { proba {
+								si (receptor^.longitudo) la -= 2;
+								var p = linea(accumulator^.data, la, linea.codex.ascii).scinde('\n');
+								si (!p^.longitudo) {
+									responde_fatale(400, sic);
+									responde;
+								}
+								var r = p^[0].scinde(' ');
+								si (r^[2] != "HTTP/1.1") { responde_fatale(505, sic); responde; }
+								si (r^.longitudo != 3 || !r^[1].longitudo) { responde_fatale(400, sic); responde; }
+								cr.semita_auxilii = r^[1];
+								var ~ m = r^[0];
+								si (m == "CONNECT") cr.methodus = methodus.adnecte;
+								alioqui si (m == "DELETE") cr.methodus = methodus.dele;
+								alioqui si (m == "GET") cr.methodus = methodus.para;
+								alioqui si (m == "HEAD") cr.methodus = methodus.caput;
+								alioqui si (m == "OPTIONS") cr.methodus = methodus.optiones;
+								alioqui si (m == "PATCH") cr.methodus = methodus.rescribe;
+								alioqui si (m == "POST") cr.methodus = methodus.mitte;
+								alioqui si (m == "PUT") cr.methodus = methodus.pone;
+								alioqui si (m == "TRACE") cr.methodus = methodus.retrahe;
+								alioqui { responde_fatale(400, sic); responde; }
+								per (int i = 1; i < p^.longitudo; i++) {
+									var ~ t = p^[i];
+									var j = t.reperi_primum(": ");
+									si (j <= 0) { responde_fatale(400, sic); responde; }
+									cr.tituli_in.adde(t.fragmentum(0, j).inferna, t.fragmentum(j + 2, -1));
+								}
+								var res = responsores^.radix;
+								genus(res) optimus = nullus;
+								dum (res != nullus) {
+									si ((optimus == nullus || optimus^.valor.primus <= res^.valor.primus) && res^.valor.primus <= cr.semita_auxilii) optimus = res;
+									res = res^.valor.primus <= cr.semita_auxilii ? res^.dextrus : res^.sinister;
+								}
+								res = optimus;
+								si (res == nullus || cr.semita_auxilii.fragmentum(0, res^.valor.primus.longitudo) != res^.valor.primus) {
+									responde_fatale(404, non);
+									responde;
+								}
+								responsor = res^.valor.secundus;
+								proba responsor^.requisitum_servi_initum_est(cr); cape { responde_fatale(500, non); responde; }
+								var ex_t = cr.tituli_in["expect"];
+								si (ex_t != nullus && ex_t^ # "100-continue" == 0) {
+									modus = 30;
+									procede();
+								} alioqui procede_data_in();
+							} cape clode(); };
+						} alioqui procede();
+					} alioqui si (modus == 01) {
+						error.modera();
+						si (cr.data_in) cr.data_in^.scribe_ordinem(receptor);
+						var long = receptor^.longitudo;
+						receptor.depura();
+						longitudo -= long;
+						si (longitudo == 0 || long == 0) { longitudo = 0; modus = 10; }
+						procede();
+					} alioqui si (modus == 02) {
+						error.modera();
+						si (!accumulator) accumulator = crea(dordo_datorum);
+						si (accumulator^.longitudo > 0x40) { responde_fatale(400, sic); responde; }
+						si (!receptor^.longitudo || receptor^[0] == nint8('\n')) {
+							longitudo = linea(accumulator^.data, accumulator^.longitudo, linea.codex.ascii).ad_int64(linea.radix_sextadecima);
+							accumulator.depura();
+							receptor.depura();
+							modus = 03;
+						} alioqui si (receptor^[0] != nint8('\r')) accumulator^.adde(receptor^[0]);
+						procede();
+					} alioqui si (modus == 03) {
+						error.modera();
+						si (longitudo) {
+							si (cr.data_in) cr.data_in^.scribe(receptor^.data, longitudo);
+							receptor.depura();
+							modus = 02;
+						} alioqui {
+							receptor.depura();
+							longitudo = 0; modus = 10;
+						}
+						procede();
+					} alioqui si (modus == 10) {
+						proba responsor^.requisitum_servi_acceptum_est(cr); cape {
+							cr.tituli_ex.depura();
+							cr.data_ex.depura();
+							cr.status = 500;
+							responsor = error_ext != nullus ? error_ext : ego;
+							proba responsor^.requisitum_servi_acceptum_est(cr);
+						}
+						modus = 20;
+						procede();
+					} alioqui si (modus == 20) {
+						error.modera();
+						si (longitudo) modus = 21; alioqui {
+							var tclode = cr.tituli_ex["connection"];
+							si (tclode != nullus && tclode^ # "close" == 0) {
+								clode();
+								responde;
+							} alioqui {
+								accumulator.depura();
+								receptor.depura();
+								depura_descriptionem();
+								modus = 00;
+							}
+						}
+						procede();
+					} alioqui si (modus == 21) {
+						error.modera();
+						si (longitudo == 0) {
+							var tclode = cr.tituli_ex["connection"];
+							si (tclode != nullus && tclode^ # "close" == 0) {
+								clode();
+								responde;
+							} alioqui {
+								accumulator.depura();
+								receptor.depura();
+								depura_descriptionem();
+								modus = 00;
+							}
+						}
+						procede();
+					} alioqui si (modus == 30) {
+						error.modera();
+						procede_data_in();
+					}
+				} cape (nintadl e, nintadl se) {
+					clode();
+					si (e == errores.rete_defectum && se == errores.rete_connectio_demissa) responde;
+					proba {
+						linea de, dse;
+						errores.descriptio(e, se, de, dse);
+						si (se) actuarius.scribe("ERROR PROCEDENDI: " + de + " (" + dse + ")");
+						alioqui actuarius.scribe("ERROR PROCEDENDI: " + de);
+					}
+				}
+			}
+			functio nihil procede_data_in() iacit {
+				si (cr.methodus == methodus.dele || cr.methodus == methodus.rescribe || cr.methodus == methodus.mitte || cr.methodus == methodus.pone) {
+					var titulus_longitudo = cr.tituli_in["content-length"];
+					var titulus_codex = cr.tituli_in["transfer-encoding"];
+					si (titulus_codex != nullus && titulus_codex^ # "chunked" == 0) {
+						longitudo = -1;
+						accumulator.depura();
+						modus = 02;
+					} alioqui {
+						longitudo = titulus_longitudo^.ad_int64();
+						si (longitudo < 0) iace errores.efformatio_falsa;
+						modus = longitudo > 0 ? 01 : 10;
+					}
+				} alioqui {
+					longitudo = 0;
+					modus = 10;
+				}
+				procede();
+			}
+			functio nihil responde_fatale(int e, logicum clode) iacit {
+				responsor = error_ext != nullus ? error_ext : ego;
+				cr.status = e;
+				cr.data_in.depura();
+				cr.data_ex.depura();
+				si (clode) cr.tituli_in.rescribe("connection", "close");
+				proba responsor^.requisitum_servi_initum_est(cr);
+				procede_data_in();
+			}
+			functio nihil depura_descriptionem() iacit {
+				cr.semita_auxilii = "";
+				cr.methodus = methodus.adnecte;
+				cr.tituli_in.depura();
+				cr.tituli_ex.depura();
+				cr.data_in.depura();
+				cr.data_ex.depura();
+				cr.status = 0;
+				cr.addendum.depura();
+				cr.valor = 0;
+			}
+			functio nihil procede() iacit {
+				si (modus == 00) {
+					canale^.admitte(1, @error, @receptor, ego);
+				} alioqui si (modus == 01) {
+					int64 long = longitudo;
+					si (long > 0x10000) long = longitudo;
+					canale^.admitte(long, @error, @receptor, ego);
+				} alioqui si (modus == 02) {
+					canale^.admitte(1, @error, @receptor, ego);
+				} alioqui si (modus == 03) {
+					canale^.admitte(longitudo + 2, @error, @receptor, ego);
+				} alioqui si (modus == 10) {
+					cauda^.adde(ego);
+				} alioqui si (modus == 20) {
+					si (cr.data_ex) {
+						proba longitudo = cr.data_ex^.longitudo;
+						cape longitudo = -1;
+					} alioqui longitudo = 0;
+					cr.tituli_ex.adde("Server", "Liber Servorum HTTP");
+					si (longitudo >= 0) cr.tituli_ex.adde("Content-Length", linea(longitudo));
+					alioqui cr.tituli_ex.adde("Transfer-Encoding", "chunked");
+					var clode = cr.tituli_in["connection"];
+					si (clode != nullus && clode^ # "close" == 0) cr.tituli_ex.adde("Connection", "close");
+					si (cr.methodus == methodus.adnecte || cr.methodus == methodus.caput) longitudo = 0;
+					linea nomen_stati;
+					proba nomen_stati = _nomina^[cr.status]; cape nomen_stati = _nomina^[0];
+					accumulator = (linea("HTTP/1.1 ") + linea(cr.status) + " " + nomen_stati + "\r\n").codifica(linea.codex.ascii, non);
+					per (var t : cr.tituli_ex) {
+						var data = (t^.valor.primus + ": " + t^.valor.secundus + "\r\n").codifica(linea.codex.ascii, non);
+						accumulator^.adde(data^);
+					}
+					accumulator^.adde(nint8('\r'));
+					accumulator^.adde(nint8('\n'));
+					canale^.mitte(accumulator, @error, nullus, ego);
+				} alioqui si (modus == 21) {
+					si (longitudo > 0) {
+						var long = 0x10000;
+						si (longitudo < long) long = longitudo;
+						longitudo -= long;
+						accumulator = cr.data_ex^.lege_ordinem(long);
+						si (accumulator^.longitudo != long) iace errores.habitus_falsus;
+						canale^.mitte(accumulator, @error, nullus, ego);
+					} alioqui {
+						var data = cr.data_ex^.lege_ordinem(0x10000);
+						int long = data^.longitudo;
+						si (!long) longitudo = 0;
+						accumulator = (linea(nint(long), linea.radix_sextadecima, 1) + "\r\n").codifica(linea.codex.ascii, non);
+						int long_b = accumulator^.longitudo;
+						accumulator^.longitudo = long_b + long + 2;
+						memoria.exscribe(@accumulator^[long_b], data^.data, long);
+						accumulator^[long_b + long] = '\r';
+						accumulator^[long_b + long + 1] = '\n';
+						canale^.mitte(accumulator, @error, nullus, ego);
+					}
+				} alioqui si (modus == 30) {
+					si (cr.status >= 300) {
+						cr.data_in.depura();
+						cr.data_ex.depura();
+						cr.status = 417;
+						longitudo = 0;
+						modus = 20;
+						cr.tituli_ex.adde("Server", "Liber Servorum HTTP");
+						cr.tituli_ex.adde("Content-Length", linea(longitudo));
+						var clode = cr.tituli_in["connection"];
+						si (clode != nullus && clode^ # "close" == 0) cr.tituli_ex.adde("Connection", "close");
+						linea nomen_stati;
+						proba nomen_stati = _nomina^[cr.status]; cape nomen_stati = _nomina^[0];
+						accumulator = (linea("HTTP/1.1 ") + linea(cr.status) + " " + nomen_stati + "\r\n").codifica(linea.codex.ascii, non);
+						per (var t : cr.tituli_ex) {
+							var data = (t^.valor.primus + ": " + t^.valor.secundus + "\r\n").codifica(linea.codex.ascii, non);
+							accumulator^.adde(data^);
+						}
+						accumulator^.adde(nint8('\r'));
+						accumulator^.adde(nint8('\n'));
+						canale^.mitte(accumulator, @error, nullus, ego);
+					} alioqui {
+						linea nomen_stati;
+						proba nomen_stati = _nomina^[100]; cape nomen_stati = _nomina^[0];
+						accumulator = ("HTTP/1.1 100 " + nomen_stati + "\r\n\r\n").codifica(linea.codex.ascii, non);
+						canale^.mitte(accumulator, @error, nullus, ego);
+					}
+				}
+			}
+			functio nihil clode() {
+				proba canale^.clode(sic);
+				sync^.opperire();
+				canalia^.remove(nintadl(canale.valor()));
+				sync^.aperi();
+			}
+			functio nihil exordi() iacit {
+				si (error_ext == nullus) error_ext = ego;
+				sync^.opperire();
+				proba { canalia^.adde(nintadl(canale.valor()), canale); } cape (nintadl e, nintadl se) { sync^.aperi(); iace e, se; }
+				sync^.aperi();
+				proba procede(); cape clode();
+			}
+			functio nihil requisitum_servi_initum_est(~descriptio_requisiti desc) iacit virtualis redefini {}
+			functio nihil requisitum_servi_acceptum_est(~descriptio_requisiti desc) iacit virtualis redefini {
+				si (desc.methodus == methodus.para || desc.methodus == methodus.caput) {
+					linea nomen_stati;
+					proba nomen_stati = _nomina^[desc.status]; cape nomen_stati = _nomina^[0];
+					var data = ("<html><body align=\"center\"><h1>Error Requisiti " + linea(desc.status) + ": " + nomen_stati + "</h1>Liber Servorum HTTP</body></html>").codifica(linea.codex.ascii, non);
+					desc.data_ex = crea_flumenem_in_memoria(data^.data, data^.longitudo);
+				} alioqui si (desc.methodus == methodus.optiones) {
+					desc.tituli_ex.adde("Allow", "GET, HEAD, OPTIONS");
+				}
+			}
+		}
+		genus _acceptor hereditat contextus.labos {
+			!contextus.cauda_filorum cauda;
+			!contextus.semaphorum sync;
+			!_genus_responsorum responsores;
+			!_genus_canalium canalia;
+			@extensio_servi error_ext;
+
+			!communicatio.canale canale;
+			!communicatio.adloquium adloq;
+			communicatio.status_erroris error;
+
+			int portus;
+
+			structor (int p, @contextus.cauda_filorum c, @contextus.semaphorum s, @_genus_responsorum rr, @_genus_canalium cc, @extensio_servi ee) {
+				funda portus(p);
+				funda error_ext(ee);
+				cauda.contine(c);
+				sync.contine(s);
+				responsores.contine(rr);
+				canalia.contine(cc);
+			}
+			functio nihil exeque(@objectum ctx) virtualis redefini {
+				si (error.error) {
+					si (error.error == errores.rete_defectum && error.suberror == errores.rete_connectio_demissa) responde;
+					proba {
+						linea de, dse;
+						errores.descriptio(error.error, error.suberror, de, dse);
+						si (error.suberror) actuarius.scribe("ERROR ACCIPIENDI (" + linea(portus) + "): " + de + " (" + dse + ")");
+						alioqui actuarius.scribe("ERROR ACCIPIENDI (" + linea(portus) + "): " + de);
+					} responde;
+				}
+				si (canale) proba {
+					var proc = crea(_processor);
+					var ee = error_ext != nullus ? error_ext : proc;
+					proc^.cauda = cauda;
+					proc^.sync = sync;
+					proc^.canale = canale;
+					proc^.canalia = canalia;
+					proc^.error_ext = error_ext;
+					proc^.responsores = responsores;
+					proc^.cr.usor = adloq;
+					proc^.cr.portus = portus;
+					proc^.cr.extensio_erroris = ee;
+					proc^.depura_descriptionem();
+					proc^.exordi();
+				} cape { proba canale^.clode(sic); }
+				canale.depura();
+				adloq.depura();
+			}
+		}
+
+		!contextus.cauda_filorum _cdf;
+		!contextus.semaphorum _sync;
+		!_genus_responsorum _resp;
+		!_genus_canalium _canalia;
+		ordo !communicatio.attentor _att;
+		@extensio_servi _error_ext;
+
+		structor (~ordo (linea, @extensio_servi) extensiones, ~ordo (int, protocollum_servi, communicatio.indentitas) servi, @extensio_servi ee, int fili) iacit {
+			funda _error_ext(ee);
+			_cdf = contextus.crea_caudam_filorum(fili);
+			_sync = contextus.crea_semaphorum(1);
+			si (!_cdf || !_sync) iace errores.memoria_nulla;
+			_resp = crea(genus(_resp).genus_objectum);
+			_canalia = crea(genus(_canalia).genus_objectum);
+			per (var i : extensiones) _resp^.adde(extensiones[i].primus, extensiones[i].secundus);
+			proba per (var i : servi) {
+				var att = communicatio.crea_attentorem();
+				var ~ s = servi[i];
+				_att.adde(att);
+				si (s.secundus == protocollum_servi.http_ipv4) {
+					att^.adnecte(communicatio.adloquium_ipv4.servus(s.primus));
+				} alioqui si (s.secundus == protocollum_servi.http_ipv6) {
+					att^.adnecte(communicatio.adloquium_ipv6.servus(s.primus));
+				} alioqui si (s.secundus == protocollum_servi.https_ipv4) {
+					att^.adnecte(communicatio.adloquium_ipv4.servus(s.primus), s.tertius);
+				} alioqui si (s.secundus == protocollum_servi.https_ipv6) {
+					att^.adnecte(communicatio.adloquium_ipv6.servus(s.primus), s.tertius);
+				} alioqui iace errores.argumentum_falsum;
+				var acp = crea(_acceptor, s.primus, _cdf, _sync, _resp, _canalia, _error_ext);
+				att^.accipe(-1, @acp^.error, @acp^.canale, @acp^.adloq, acp);
+			} cape (nintadl e, nintadl se) { clode(); iace e, se; }
+		}
+		destructor () { clode(); }
+		functio nihil clode() {
+			per (var i : _att) proba _att[i]^.clode();
+			_att.depura();
+			si (_sync) {
+				_sync^.opperire();
+				per (var i : _canalia^) proba i^.valor.secundus^.clode(sic);
+				_canalia.depura();
+				_sync^.aperi();
+				_sync.depura();
+				_canalia.depura();
+			}
+			si (_cdf) {
+				_cdf^.opperire();
+				_cdf.depura();
+			}
+			_resp.depura();
+		}
+		classis functio nihil redirege(~descriptio_requisiti desc, ~linea ad) iacit {
+			desc.status = 308;
+			desc.tituli_ex.adde("Location", ad);
+		}
+		classis functio nihil respue(~descriptio_requisiti desc, int status) iacit {
+			desc.status = status;
+			(@extensio_servi)(desc.extensio_erroris)^.requisitum_servi_acceptum_est(desc);
+		}
+	}
+}

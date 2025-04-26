@@ -1,0 +1,387 @@
+﻿importa http_servus;
+importa http_sessio;
+importa limae;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Servorum Limarum HTTP";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2025";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium versio 0;
+
+[[systema] librosa]
+
+spatium http {
+	spatium limae {
+		protocollum generator_collectoriorum {
+			functio nihil genera_data_collectorii(~descriptio_requisiti desc, ~semita semita, int longitudo_praeverbii, ~dordo_linearum collectoria, ~dordo_linearum limae, logicum radix) iacit virtualis pura;
+		}
+		protocollum censor {
+			functio logicum cense_requsitum(~descriptio_requisiti desc, ~linea semita) iacit virtualis pura;
+		}
+		structura descriptio_formati {
+			linea mime;
+			linea codex;
+			logicum onerare;
+		}
+		structura descriptio_extensionis {
+			semita collectorium;
+			linea praeverbium_auxilii;
+			linea postverbium_collectoriorum;
+			logicum redirege_collectoria;
+			logicum permitte_collectoria;
+			logicum permitte_scriptiones;
+			@generator_collectoriorum generator_collectoriorum;
+			@censor censor_legendi;
+			@censor censor_scribendi;
+			descriptio_formati descriptio_formati_defalta;
+			!collectiones.dictionarium[linea, descriptio_formati] formati;
+			structor () {
+				funda redirege_collectoria(non);
+				funda permitte_collectoria(non);
+				funda permitte_scriptiones(non);
+				funda generator_collectoriorum(nullus);
+				funda censor_legendi(nullus);
+				funda censor_scribendi(nullus);
+			}
+		}
+
+		genus _censor_defaltus : censor {
+			structor () {}
+			functio logicum cense_requsitum(~descriptio_requisiti desc, ~linea semita) iacit virtualis redefini { responde sic; }
+		}
+		genus _generator_collectoriorum_defaltus : generator_collectoriorum {
+			structor () {}
+			functio nihil genera_data_collectorii(~descriptio_requisiti desc, ~semita semita, int longitudo_praeverbii, ~dordo_linearum collectoria, ~dordo_linearum limae, logicum radix) iacit virtualis redefini {
+				ordo nint8 data;
+				var n = radix ? linea("/") : semita.fragmentum(longitudo_praeverbii, -1).surroga("\\", "/");
+				var b = desc.semita_auxilii;
+				var l = b.longitudo;
+				si (l && b[l - 1] == '/') b = b.fragmentum(0, l - 1);
+				data.adde(linea.forma("<html><head><meta charset=\"UTF-8\"><title>%0</title></head><body><h1>Collectorium \"%0\"</h1>", n).codifica(linea.codex.utf8, non)^);
+				si (!radix) data.adde(linea.forma("<a href=\"%0/..\">..</a><br>", b).codifica(linea.codex.utf8, non)^);
+				per (var i : collectoria) {
+					var nomen = .semita(collectoria[i]).nomen;
+					si (nomen[0] == '.') dura;
+					data.adde(linea.forma("<a href=\"%1\">%0/</a><br>", nomen, b + "/" + codifica_semitam_auxilii(nomen)).codifica(linea.codex.utf8, non)^);
+				}
+				per (var i : limae) {
+					var nomen = .semita(limae[i]).nomen;
+					si (nomen[0] == '.') dura;
+					data.adde(linea.forma("<a href=\"%1\">%0</a><br>", nomen, b + "/" + codifica_semitam_auxilii(nomen)).codifica(linea.codex.utf8, non)^);
+				}
+				data.adde(linea("<br><i>HTTP XE Servus Limae</i></body></html>").codifica(linea.codex.utf8, non)^);
+				desc.tituli_ex.adde("Content-Type", "text/html; charset=utf-8");
+				desc.data_ex = crea_flumenem_in_memoria(data.data, data.longitudo);
+				desc.status = 200;
+			}
+		}
+
+		functio linea tempus_ad_lineam(tempus t) iacit {
+			linea ds, m;
+			var im = t.mensis;
+			var ids = t.dies_septimanae;
+			si (im <= 6) {
+				si (im <= 3) {
+					si (im == 1) m = "Jan";
+					alioqui si (im == 2) m = "Feb";
+					alioqui m = "Mar";
+				} alioqui {
+					si (im == 4) m = "Apr";
+					alioqui si (im == 5) m = "May";
+					alioqui m = "Jun";
+				}
+			} alioqui {
+				si (im <= 9) {
+					si (im == 7) m = "Jul";
+					alioqui si (im == 8) m = "Aug";
+					alioqui m = "Sep";
+				} alioqui {
+					si (im == 10) m = "Oct";
+					alioqui si (im == 11) m = "Nov";
+					alioqui m = "Dec";
+				}
+			}
+			si (ids <= 3) {
+				si (ids <= 1) {
+					si (ids == 0) ds = "Mon";
+					alioqui ds = "Tue";
+				} alioqui {
+					si (ids == 2) ds = "Wed";
+					alioqui ds = "Thu";
+				}
+			} alioqui {
+				si (ids == 4) ds = "Fri";
+				alioqui si (ids == 5) ds = "Sat";
+				alioqui ds = "Sun";
+			}
+			responde linea.forma("%0, %1 %2 %3 %4:%5:%6 GMT", ds, linea(nint(t.dies), linea.radix_decima, 2), m, linea(nint(t.annus), linea.radix_decima, 4),
+				linea(nint(t.hora), linea.radix_decima, 2), linea(nint(t.minuta), linea.radix_decima, 2), linea(nint(t.secunda), linea.radix_decima, 2));
+		}
+		functio tempus linea_ad_tempum(~linea t) iacit {
+			int a = 1, me = 1, d = 1, h = 0, mi = 0, s = 0;
+			var c = t.codifica(linea.codex.ascii, sic);
+			int i = 0, p = 0, l = c^.longitudo;
+			dum (p < l) {
+				i++;
+				dum (c^[p] == nint8(',') || c^[p] == nint8(' ') || c^[p] == nint8(':')) p++;
+				int o = p;
+				dum ((c^[p] >= nint8('0') && c^[p] <= nint8('9')) || (c^[p] >= nint8('A') && c^[p] <= nint8('Z')) || (c^[p] >= nint8('a') && c^[p] <= nint8('z'))) p++;
+				si (p == o) exi;
+				si (i == 2) d = t.fragmentum(o, p - o).ad_nint32();
+				alioqui si (i == 3) {
+					var nm = t.fragmentum(o, p - o);
+					si (nm == "Jan") me = 1;
+					alioqui si (nm == "Feb") me = 2;
+					alioqui si (nm == "Mar") me = 3;
+					alioqui si (nm == "Apr") me = 4;
+					alioqui si (nm == "May") me = 5;
+					alioqui si (nm == "Jun") me = 6;
+					alioqui si (nm == "Jul") me = 7;
+					alioqui si (nm == "Aug") me = 8;
+					alioqui si (nm == "Sep") me = 9;
+					alioqui si (nm == "Oct") me = 10;
+					alioqui si (nm == "Nov") me = 11;
+					alioqui si (nm == "Dec") me = 12;
+				} alioqui si (i == 4) a = t.fragmentum(o, p - o).ad_nint32();
+				alioqui si (i == 5) h = t.fragmentum(o, p - o).ad_nint32();
+				alioqui si (i == 6) mi = t.fragmentum(o, p - o).ad_nint32();
+				alioqui si (i == 7) s = t.fragmentum(o, p - o).ad_nint32();
+			}
+			responde tempus(a, me, d, h, mi, s, 0);
+		}
+		functio (int64, int64) dorsum_decompone(~linea req, int64 long) iacit {
+			si (req.fragmentum(0, 6) # "bytes=" != 0) iace errores.efformatio_falsa;
+			var dec = req.fragmentum(6, -1).scinde('-');
+			si (dec^.longitudo != 2) iace errores.efformatio_falsa;
+			si (dec^[0].longitudo) {
+				int64 o = dec^[0].ad_int64();
+				int64 f = dec^[1].longitudo ? dec^[1].ad_int64() : long - 1;
+				si (o < 0 || f < 0 || f < o || o >= long || f >= long) iace errores.argumentum_falsum;
+				responde (o, f);
+			} alioqui {
+				int64 l = dec^[1].ad_int64();
+				si (l <= 0 || l > long) iace errores.argumentum_falsum;
+				responde (long - l, long - 1);
+			}
+		}
+		genus subflumen hereditat flumen {
+			!flumen _fl;
+			int64 _l;
+		
+			structor (@flumen fl, int64 min, int64 max) iacit { funda _l(max - min); _fl.contine(fl); _fl^.quaerita(min, flumen.initus); }
+			functio int lege(@nihil data, int long) iacit virtualis redefini { int q = long; si (q > _l) q = _l; _l -= q; responde _fl^.lege(data, q); }
+			functio nihil scribe(@nihil data, int long) iacit virtualis redefini { iace errores.implantatio_nulla; }
+			functio int64 quaerita(int64 pos, int origo) iacit virtualis redefini { iace errores.implantatio_nulla; }
+			int64 longitudo {
+				adipisce iacit virtualis redefini { responde _l; }
+				loca iacit virtualis redefini { iace errores.implantatio_nulla; }
+			}
+			functio nihil annoda() virtualis redefini {}
+		}
+
+		var _censor_defaltus censor_defaltus;
+		var _generator_collectoriorum_defaltus generator_collectoriorum_defaltus;
+
+		genus extensio hereditat objectum : extensio_servi {
+			descriptio_extensionis _desc;
+			int _longitudo_praeverbii;
+
+			structor (~descriptio_extensionis desc) iacit {
+				funda _desc(desc);
+				_longitudo_praeverbii = _desc.praeverbium_auxilii.longitudo;
+				si (_desc.censor_legendi == nullus) _desc.censor_legendi = @censor_defaltus;
+				si (_desc.censor_scribendi == nullus) _desc.censor_scribendi = @censor_defaltus;
+				si (_desc.generator_collectoriorum == nullus) _desc.generator_collectoriorum = @generator_collectoriorum_defaltus;
+				si (!_desc.formati) _desc.formati = crea(genus(_desc.formati).genus_objectum);
+				_desc.descriptio_formati_defalta.onerare = non;
+			}
+			functio nihil requisitum_servi_initum_est(~descriptio_requisiti desc) iacit virtualis redefini {
+				si (desc.methodus == methodus.para || desc.methodus == methodus.caput || desc.methodus == methodus.optiones) responde;
+				si (desc.methodus == methodus.dele || desc.methodus == methodus.rescribe || desc.methodus == methodus.mitte || desc.methodus == methodus.pone) {
+					si (!_desc.permitte_scriptiones) { servus.respue(desc, 405); responde; }
+					var nomen_limae = decodifica_semitam_auxilii(desc.semita_auxilii.fragmentum(_longitudo_praeverbii, -1));
+					si (!_desc.censor_scribendi^.cense_requsitum(desc, nomen_limae)) responde;
+					var p = nomen_limae.scinde('/');
+					var sem = _desc.collectorium;
+					var radix = sic;
+					per (var i : p^) {
+						var ~ n = p^[i];
+						si (n == "..") { servus.respue(desc, 400); responde; }
+						si (n != "." && n != "") { sem = semita(sem, n); radix = non; }
+					}
+					desc.tituli_ex.adde("Date", tempus_ad_lineam(tempus.currens()));
+					var acsi_collectorium = nomen_limae.longitudo && nomen_limae[nomen_limae.longitudo - 1] == char('/');
+					var si_novior = desc.tituli_in["if-modified-since"];
+					var si_senior = desc.tituli_in["if-unmodified-since"];
+					si (si_novior != nullus || si_senior != nullus) {
+						tempus t_alt;
+						proba t_alt = sem.crea_limam(modus_limae.modus_nullus, modus_creatoris.aperi_praesens)^.tempus_alternationis; cape t_alt.momentum = 0;
+						si (t_alt.momentum != 0) desc.tituli_ex.adde("Last-Modified", tempus_ad_lineam(t_alt));
+						si (si_novior != nullus && linea_ad_tempum(si_novior^) >= t_alt) { desc.status = 304; responde; }
+						si (si_senior != nullus && linea_ad_tempum(si_senior^) < t_alt) { desc.status = 412; responde; }
+					}
+					si (desc.methodus == methodus.dele) {
+						proba {
+							si (sem.lima_est) {
+								sem.remove();
+								desc.status = 204;
+							} alioqui si (sem.collectorium_est) {
+								sem.remove_collectoriorum_cunctum();
+								desc.status = 204;
+							} alioqui servus.respue(desc, 404);
+						} cape servus.respue(desc, 403);
+					} alioqui si (desc.methodus == methodus.rescribe) {
+						si (sem.lima_est) {
+							!flumen_limae fl;
+							proba fl = sem.crea_limam(modus_limae.scribere, modus_creatoris.trunca_praesens); cape {
+								servus.respue(desc, 403);
+								responde;
+							}
+							desc.data_in.contine(fl);
+							desc.status = 200;
+						} alioqui servus.respue(desc, 404);
+					} alioqui {
+						si (acsi_collectorium) {
+							proba sem.crea_collectorium(); cape {
+								servus.respue(desc, 403);
+								responde;
+							}
+							desc.status = 200;
+						} alioqui {
+							!flumen_limae fl;
+							proba fl = sem.crea_limam(modus_limae.scribere, modus_creatoris.crea_semper); cape {
+								servus.respue(desc, 403);
+								responde;
+							}
+							desc.data_in.contine(fl);
+							desc.status = 200;
+						}
+					}
+				} alioqui servus.respue(desc, 405);
+			}
+			functio nihil requisitum_servi_acceptum_est(~descriptio_requisiti desc) iacit virtualis redefini {
+				si (desc.methodus == methodus.optiones) {
+					si (_desc.permitte_scriptiones) desc.tituli_ex.adde("Allow", "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT");
+					alioqui desc.tituli_ex.adde("Allow", "GET, HEAD, OPTIONS");
+				} alioqui si (desc.methodus == methodus.para || desc.methodus == methodus.caput) {
+					var nomen_limae = decodifica_semitam_auxilii(desc.semita_auxilii.fragmentum(_longitudo_praeverbii, -1));
+					si (!_desc.censor_legendi^.cense_requsitum(desc, nomen_limae)) responde;
+					var p = nomen_limae.scinde('/');
+					var sem = _desc.collectorium;
+					var radix = sic;
+					per (var i : p^) {
+						var ~ n = p^[i];
+						si (n == "..") { servus.respue(desc, 400); responde; }
+						si (n != "." && n != "") { sem = semita(sem, n); radix = non; }
+					}
+					desc.tituli_ex.adde("Date", tempus_ad_lineam(tempus.currens()));
+					si (sem.lima_est) {
+						!flumen_limae fl;
+						proba fl = sem.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens); cape {
+							servus.respue(desc, 404);
+							responde;
+						}
+						var t_alt = fl^.tempus_alternationis;
+						var t_alt_l = tempus_ad_lineam(t_alt);
+						desc.tituli_ex.adde("Last-Modified", t_alt_l);
+						desc.tituli_ex.adde("Accept-Ranges", "bytes");
+						var dorsum = desc.tituli_in["range"];
+						var si_dorsum = desc.tituli_in["if-range"];
+						var si_novior = desc.tituli_in["if-modified-since"];
+						var si_senior = desc.tituli_in["if-unmodified-since"];
+						si (si_dorsum != nullus && si_dorsum^ != t_alt_l) dorsum = nullus;
+						si (si_novior != nullus && linea_ad_tempum(si_novior^) >= t_alt) { desc.status = 304; responde; }
+						si (si_senior != nullus && linea_ad_tempum(si_senior^) < t_alt) { desc.status = 412; responde; }
+						si (dorsum != nullus) {
+							(int64, int64) drs;
+							var fll = fl^.longitudo;
+							proba drs = dorsum_decompone(dorsum^, fll); cape { desc.status = 416; responde; }
+							var subfl = crea(subflumen, fl, drs.primus, drs.secundus + 1);
+							desc.tituli_ex.adde("Content-Range", linea.forma("bytes %0-%1/%2", drs.primus, drs.secundus, fll));
+							desc.data_ex.contine(subfl);
+							desc.status = 206;
+						} alioqui {
+							desc.data_ex.contine(fl);
+							desc.status = 200;
+						}
+						var fdesc = _desc.formati^[sem.extensio.inferna];
+						si (fdesc == nullus) fdesc = @_desc.descriptio_formati_defalta;
+						si (fdesc^.mime.longitudo) {
+							si (fdesc^.codex.longitudo) desc.tituli_ex.adde("Content-Type", linea.forma("%0; charset=%1", fdesc^.mime, fdesc^.codex));
+							alioqui desc.tituli_ex.adde("Content-Type", fdesc^.mime);
+						}
+						si (fdesc^.onerare) desc.tituli_ex.adde("Content-Disposition", "attachment");
+					} alioqui si (sem.collectorium_est) {
+						si (_desc.permitte_collectoria) {
+							var l = sem.limae();
+							var c = sem.collectoria();
+							collectiones.ordina_acclive(c^);
+							collectiones.ordina_acclive(l^);
+							var acp = desc.tituli_in["accept"];
+							logicum mitte_html = acp != nullus && acp^.reperi_primum("text/html") >= 0;
+							logicum mitte_json = acp != nullus && acp^.reperi_primum("application/json") >= 0;
+							si (mitte_html) {
+								_desc.generator_collectoriorum^.genera_data_collectorii(desc, sem, _desc.collectorium.longitudo, c^, l^, radix);
+							} alioqui si (mitte_json) {
+								ordo nint8 data;
+								data.adde(linea("{\n").codifica(linea.codex.utf8, non)^);
+								si (radix) {
+									si (c^.longitudo || l^.longitudo) data.adde(linea("\t\"radix\" : true,\n").codifica(linea.codex.utf8, non)^);
+									alioqui data.adde(linea("\t\"radix\" : true\n").codifica(linea.codex.utf8, non)^);
+								}
+								si (c^.longitudo) {
+									data.adde(linea("\t\"collectoria\" : [").codifica(linea.codex.utf8, non)^);
+									logicum primus = sic;
+									per (var i : c^) {
+										var nomen = .semita(c^[i]).nomen;
+										si (nomen[0] == '.') dura;
+										si (!primus) { data.adde(nint8(',')); data.adde(nint8(' ')); } alioqui primus = non;
+										data.adde(linea.forma("\"%0\"", nomen).codifica(linea.codex.utf8, non)^);
+									}
+									si (l^.longitudo) data.adde(linea("],\n").codifica(linea.codex.utf8, non)^);
+									alioqui data.adde(linea("]\n").codifica(linea.codex.utf8, non)^);
+								}
+								si (l^.longitudo) {
+									data.adde(linea("\t\"limae\" : [").codifica(linea.codex.utf8, non)^);
+									logicum primus = sic;
+									per (var i : l^) {
+										var nomen = .semita(l^[i]).nomen;
+										si (nomen[0] == '.') dura;
+										si (!primus) { data.adde(nint8(',')); data.adde(nint8(' ')); } alioqui primus = non;
+										data.adde(linea.forma("\"%0\"", nomen).codifica(linea.codex.utf8, non)^);
+									}
+									data.adde(linea("]\n").codifica(linea.codex.utf8, non)^);
+								}
+								data.adde(linea("}").codifica(linea.codex.utf8, non)^);
+								desc.tituli_ex.adde("Content-Type", "application/json; charset=utf-8");
+								desc.data_ex = crea_flumenem_in_memoria(data.data, data.longitudo);
+								desc.status = 200;
+							} alioqui {
+								ordo nint8 data;
+								si (!radix) data.adde(linea("..\r\n").codifica(linea.codex.utf8, non)^);
+								per (var i : c^) {
+									var nomen = .semita(c^[i]).nomen;
+									si (nomen[0] == '.') dura;
+									data.adde(linea.forma("%0\r\n", nomen).codifica(linea.codex.utf8, non)^);
+								}
+								per (var i : l^) {
+									var nomen = .semita(l^[i]).nomen;
+									si (nomen[0] == '.') dura;
+									data.adde(linea.forma("%0\r\n", nomen).codifica(linea.codex.utf8, non)^);
+								}
+								desc.tituli_ex.adde("Content-Type", "text/plain; charset=utf-8");
+								desc.data_ex = crea_flumenem_in_memoria(data.data, data.longitudo);
+								desc.status = 200;
+							}
+							desc.tituli_ex.adde("Vary", "Accept");
+						} alioqui si (_desc.redirege_collectoria) {
+							var ad = (desc.semita_auxilii + _desc.postverbium_collectoriorum).surroga("//", "/");
+							servus.redirege(desc, ad);
+						} alioqui servus.respue(desc, 404);
+					} alioqui servus.respue(desc, 404);
+				}
+			}
+		}
+	}
+}
