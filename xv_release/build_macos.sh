@@ -38,41 +38,43 @@ cp xv_lib/consolatorium.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manu
 cp xv_lib/formati.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
 cp xv_lib/lxx.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
 cp xv_lib/potentia.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/canonicalis.xv      -NPVo xv_release/_build/com/canonicalis.xo
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/limae.xv            -NVol xv_release/_build/com/limae.xo            xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/imago.xv            -NVol xv_release/_build/com/imago.xo            xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/consolatorium.xv    -NVol xv_release/_build/com/consolatorium.xo    xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/formati.xv          -NVol xv_release/_build/com/formati.xo          xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/lxx.xv              -NVol xv_release/_build/com/lxx.xo              xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/potentia.xv         -NVol xv_release/_build/com/potentia.xo         xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/fenestrae.xv        -NVol xv_release/_build/com/fenestrae.xo        xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/graphicum.xv        -NVol xv_release/_build/com/graphicum.xo        xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/repulsus.xv         -NVol xv_release/_build/com/repulsus.xo         xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathvec.xv          -NVol xv_release/_build/com/mathvec.xo          xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathcom.xv          -NVol xv_release/_build/com/mathcom.xo          xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathvcom.xv         -NVol xv_release/_build/com/mathvcom.xo         xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/matrices.xv         -NVol xv_release/_build/com/matrices.xo         xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/comatrices.xv       -NVol xv_release/_build/com/comatrices.xo       xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathquat.xv         -NVol xv_release/_build/com/mathquat.xo         xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathcolorum.xv      -NVol xv_release/_build/com/mathcolorum.xo      xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathgraphici.xv     -NVol xv_release/_build/com/mathgraphici.xo     xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/typographica.xv     -NVol xv_release/_build/com/typographica.xo     xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/communicatio.xv     -NVol xv_release/_build/com/communicatio.xo     xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/collectiones.xv     -NVol xv_release/_build/com/collectiones.xo     xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/serializatio.xv     -NVol xv_release/_build/com/serializatio.xo     xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/xesl.xv             -NVol xv_release/_build/com/xesl.xo             xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/json.xv             -NVol xv_release/_build/com/json.xo             xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/ecso.xv             -NVol xv_release/_build/com/ecso.xo             xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/ifr.xv              -NVol xv_release/_build/com/ifr.xo              xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/http.xv             -NVol xv_release/_build/com/http.xo             xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/http_sessio.xv      -NVol xv_release/_build/com/http_sessio.xo      xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/commem.xv           -NVol xv_release/_build/com/commem.xo           xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/cryptographia.xv    -NVol xv_release/_build/com/cryptographia.xo    xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/subscriptiones.xv   -NVol xv_release/_build/com/subscriptiones.xo   xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/media.xv            -NVol xv_release/_build/com/media.xo            xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/audio.xv            -NVol xv_release/_build/com/audio.xo            xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/video.xv            -NVol xv_release/_build/com/video.xo            xv_release/_build/com
-./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xw_lib/canonicalis.xw      -NVolm xv_release/_build/comw/canonicalis.xwo	xv_release/_build/comw	xw_lib/canonicalis.xvm
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/canonicalis.xv         -NPVo xv_release/_build/com/canonicalis.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/limae.xv               -NVol xv_release/_build/com/limae.xo               xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/imago.xv               -NVol xv_release/_build/com/imago.xo               xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/consolatorium.xv       -NVol xv_release/_build/com/consolatorium.xo       xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/formati.xv             -NVol xv_release/_build/com/formati.xo             xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/lxx.xv                 -NVol xv_release/_build/com/lxx.xo                 xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/potentia.xv            -NVol xv_release/_build/com/potentia.xo            xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/fenestrae.xv           -NVol xv_release/_build/com/fenestrae.xo           xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/graphicum.xv           -NVol xv_release/_build/com/graphicum.xo           xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/repulsus.xv            -NVol xv_release/_build/com/repulsus.xo            xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathvec.xv             -NVol xv_release/_build/com/mathvec.xo             xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathcom.xv             -NVol xv_release/_build/com/mathcom.xo             xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathvcom.xv            -NVol xv_release/_build/com/mathvcom.xo            xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/matrices.xv            -NVol xv_release/_build/com/matrices.xo            xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/comatrices.xv          -NVol xv_release/_build/com/comatrices.xo          xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathquat.xv            -NVol xv_release/_build/com/mathquat.xo            xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathcolorum.xv         -NVol xv_release/_build/com/mathcolorum.xo         xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/mathgraphici.xv        -NVol xv_release/_build/com/mathgraphici.xo        xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/typographica.xv        -NVol xv_release/_build/com/typographica.xo        xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/communicatio.xv        -NVol xv_release/_build/com/communicatio.xo        xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/collectiones.xv        -NVol xv_release/_build/com/collectiones.xo        xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/serializatio.xv        -NVol xv_release/_build/com/serializatio.xo        xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/xesl.xv                -NVol xv_release/_build/com/xesl.xo                xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/json.xv                -NVol xv_release/_build/com/json.xo                xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/ecso.xv                -NVol xv_release/_build/com/ecso.xo                xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/ifr.xv                 -NVol xv_release/_build/com/ifr.xo                 xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/http.xv                -NVol xv_release/_build/com/http.xo                xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/http_sessio.xv         -NVol xv_release/_build/com/http_sessio.xo         xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/http_servus.xv         -NVol xv_release/_build/com/http_servus.xo         xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/http_servus_limarum.xv -NVol xv_release/_build/com/http_servus_limarum.xo xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/commem.xv              -NVol xv_release/_build/com/commem.xo              xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/cryptographia.xv       -NVol xv_release/_build/com/cryptographia.xo       xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/subscriptiones.xv      -NVol xv_release/_build/com/subscriptiones.xo      xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/media.xv               -NVol xv_release/_build/com/media.xo               xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/audio.xv               -NVol xv_release/_build/com/audio.xo               xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/video.xv               -NVol xv_release/_build/com/video.xo               xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xw_lib/canonicalis.xw         -NVolm xv_release/_build/comw/canonicalis.xwo      xv_release/_build/comw	xw_lib/canonicalis.xvm
 cp xv_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
 cp xw_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xwcl
 cp xv_release/_build/com/*.xo xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl

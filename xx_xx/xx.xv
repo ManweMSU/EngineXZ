@@ -8,9 +8,9 @@ auxilium attributum (meta.attributum_versio) = "1.0.0.1";
 auxilium lingua "ru";
 auxilium lingua "en";
 
-constatus linea_1 =	"XX Execution Environment"
-{ "ru",				"Среда исполнения XX" }
-{ "en",				"XX Execution Environment" };
+constatus linea_1 =	"XX Execution Environment, version %0.%1.%2.%3 on Engine Runtime %4.%5"
+{ "ru",				"Среда исполнения XX, версия %0.%1.%2.%3 на Engine Runtime %4.%5" }
+{ "en",				"XX Execution Environment, version %0.%1.%2.%3 on Engine Runtime %4.%5" };
 constatus linea_2 =	"In order to launch an XX/XE application,"
 { "ru",				"Для запуска приложения XX/XE," }
 { "en",				"In order to launch an XX/XE application," };
@@ -23,10 +23,54 @@ constatus linea_4 =	"  use the 'xx' command-line with the following syntax:"
 constatus linea_5 =	"xx <image file.xx> { <command-line arguments> }"
 { "ru",				"xx <файл образа.xx> { <аргументы командной строки> }" }
 { "en",				"xx <image file.xx> { <command-line arguments> }" };
+constatus linea_6 =	"Getting the system's information..."
+{ "ru",				"Получение сведений о системе..." }
+{ "en",				"Getting the system's information..." };
+constatus osver =	"Operating system: %0, version %1.%2"
+{ "ru",				"Операционная система: %0, версия %1.%2" }
+{ "en",				"Operating system: %0, version %1.%2" };
+constatus arch =	"Environment's architecture: %0, system's native: %1"
+{ "ru",				"Архитектура среды: %0, родная для системы: %1" }
+{ "en",				"Environment's architecture: %0, system's native: %1" };
+
+constatus sWin =	"Windows" { "ru", "Windows" } { "en", "Windows" };
+constatus sMac =	"Mac OS" { "ru", "Mac OS" } { "en", "Mac OS" };
+constatus sLnx =	"Linux" { "ru", "Linux" } { "en", "Linux" };
+constatus sIgn =	"Unknown" { "ru", "Неизвестная" } { "en", "Unknown" };
+
+constatus aX86 =	"Intel x86 (i386)" { "ru", "Intel x86 (i386)" } { "en", "Intel x86 (i386)" };
+constatus aX64 =	"Intel x86-64 (AMD64)" { "ru", "Intel x86-64 (AMD64)" } { "en", "Intel x86-64 (AMD64)" };
+constatus aARM =	"ARMv7 (T32)" { "ru", "ARMv7 (T32)" } { "en", "ARMv7 (T32)" };
+constatus aA64 =	"ARMv8 (A64)" { "ru", "ARMv8 (A64)" } { "en", "ARMv8 (A64)" };
+constatus aIgn =	"Unknown" { "ru", "Неизвестная" } { "en", "Unknown" };
+
+functio @char descriptio(systema.operans valor) {
+	si (valor == systema.operans.windows) responde sWin;
+	alioqui si (valor == systema.operans.macos) responde sMac;
+	alioqui si (valor == systema.operans.linux) responde sLnx;
+	alioqui responde sWin;
+}
+functio @char descriptio(systema.architectura valor) {
+	si (valor == systema.architectura.i386) responde aX86;
+	alioqui si (valor == systema.architectura.x64) responde aX64;
+	alioqui si (valor == systema.architectura.arm_m32) responde aARM;
+	alioqui si (valor == systema.architectura.arm_a64) responde aA64;
+	alioqui responde aIgn;
+}
 
 functio nihil primus() introitus iacit {
 	var ~ cns = consolatorium.currens()^;
-	cns.scribe_lineam(linea_1);
+	(int, int, int, int) xx_ver;
+	(int, int) ert_ver;
+	xx.para_versionem(@xx_ver, @ert_ver);
+	cns.scribe_lineam(linea.forma(linea_1, xx_ver.primus, xx_ver.secundus, xx_ver.tertius, xx_ver.quartus, ert_ver.primus, ert_ver.secundus));
+	cns.scribe(linea_6);
+	systema.informatio sys_inf;
+	systema.para_informationem(sys_inf);
+	cns.depura_lineam();
+	cns.scribe_lineam(linea.forma(arch, descriptio(sys_inf.architectura_processi), descriptio(sys_inf.architectura_machinae)));
+	cns.scribe_lineam(linea.forma(osver, descriptio(sys_inf.systema_machinae), sys_inf.versio_systemae_supera, sys_inf.versio_systemae_inferna));
+	cns.scribe_lineam();
 	cns.scribe_lineam(linea_2);
 	cns.scribe_lineam(linea_3);
 	cns.scribe_lineam(linea_4);
