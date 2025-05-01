@@ -295,6 +295,7 @@ namespace Engine
 			static void * _mem_realloc(void * mem, uintptr size) { return realloc(mem, size); }
 			static void _mem_release(void * mem) { free(mem); }
 			static void _get_system_info(_sys_info & info)
+			#ifndef ENGINE_WINDOWS
 			{
 				try {
 					SystemDesc desc;
@@ -320,6 +321,9 @@ namespace Engine
 					#endif
 				} catch (...) {}
 			}
+			#else
+			;
+			#endif
 			static bool _check_arch(int arch)
 			{
 				if (arch == 0x01) return IsPlatformAvailable(Platform::X86);
@@ -1515,3 +1519,92 @@ namespace Engine
 		IAPIExtension * CreateMiscUnit(void) { return new MiscUnit; }
 	}
 }
+
+#ifdef ENGINE_WINDOWS
+#include <Windows.h>
+
+#undef interface
+#undef InterlockedDecrement
+#undef InterlockedIncrement
+#undef ZeroMemory
+#undef GetCurrentTime
+#undef CreateSemaphore
+
+namespace Engine
+{
+	namespace XE
+	{
+		typedef BOOL (WINAPI * func_GetPhysicallyInstalledSystemMemory) (uint64 * mem);
+		typedef BOOL (WINAPI * func_GetLogicalProcessorInformation) (SYSTEM_LOGICAL_PROCESSOR_INFORMATION * inf, DWORD * length);
+
+		void MMU::_get_system_info(_sys_info & info)
+		{
+			info.arch_machine = info.arch_process = info.freq = info.mem = info.sys_machine = info.ver_minor = info.ver_major = 0;
+			info.cores_phys = info.cores_virt = 1;
+			HMODULE kernel = LoadLibraryW(L"kernel32.dll");
+			if (!kernel) return;
+			auto GetPhysicallyInstalledSystemMemory = reinterpret_cast<func_GetPhysicallyInstalledSystemMemory>(GetProcAddress(kernel, "GetPhysicallyInstalledSystemMemory"));
+			auto GetLogicalProcessorInformation = reinterpret_cast<func_GetLogicalProcessorInformation>(GetProcAddress(kernel, "GetLogicalProcessorInformation"));
+			if (GetPhysicallyInstalledSystemMemory) {
+				uint64 mem;
+				GetPhysicallyInstalledSystemMemory(&mem);
+				info.mem = mem * 0x400;
+			} else {
+				MEMORYSTATUS stat;
+				GlobalMemoryStatus(&stat);
+				info.mem = stat.dwTotalPhys;
+			}
+			info.arch_machine = _get_arch(Engine::GetSystemPlatform());
+			info.arch_process = _get_arch(ApplicationPlatform);
+			info.sys_machine = 0x01;
+			SYSTEM_INFO sysinf;
+			GetSystemInfo(&sysinf);
+			info.cores_phys = info.cores_virt = sysinf.dwNumberOfProcessors;
+			if (GetLogicalProcessorInformation) try {
+				Array<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> pi(0x40);
+				DWORD length = 0;
+				auto status = GetLogicalProcessorInformation(0, &length);
+				if (!status && GetLastError() == 122) {
+					pi.SetLength(length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
+					if (GetLogicalProcessorInformation(pi.GetBuffer(), &length)) {
+						info.cores_phys = 0;
+						for (auto & i : pi) if (i.Relationship == 0) info.cores_phys++;
+					}
+				}
+			} catch (...) {}
+			FreeLibrary(kernel);
+			auto sysver = GetVersion();
+			info.ver_major = sysver & uint(0xFF);
+			info.ver_minor = (sysver & uint(0xFF00)) >> uint(8);
+			HKEY hhw, hdesc, hsys, hcp, h0;
+			if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"HARDWARE", 0, 0x20019, &hhw) == 0) {
+				if (RegOpenKeyExW(hhw, L"DESCRIPTION", 0, 0x20019, &hdesc) == 0) {
+					if (RegOpenKeyExW(hdesc, L"System", 0, 0x20019, &hsys) == 0) {
+						if (RegOpenKeyExW(hsys, L"CentralProcessor", 0, 0x20019, &hcp) == 0) {
+							if (RegOpenKeyExW(hcp, L"0", 0, 0x20019, &h0) == 0) {
+								DWORD length = 4, freq_MHz;
+								if (RegQueryValueExW(h0, L"~MHz", 0, 0, reinterpret_cast<LPBYTE>(&freq_MHz), &length) == 0) {
+									info.freq = uint64(freq_MHz) * uint64(1000000);
+								}
+								try {
+									DynamicString name;
+									name.ReserveLength(0x100);
+									length = name.ReservedLength() * 2;
+									if (RegQueryValueExW(h0, L"ProcessorNameString", 0, 0, reinterpret_cast<LPBYTE>(name.GetBuffer()), &length) == 0) {
+										info.proc_name = string(name.GetBuffer(), length / 2, Encoding::UTF16);
+									}
+								} catch (...) {}
+								RegCloseKey(h0);
+							}
+							RegCloseKey(hcp);
+						}
+						RegCloseKey(hsys);
+					}
+					RegCloseKey(hdesc);
+				}
+				RegCloseKey(hhw);
+			}
+		}
+	}
+}
+#endif
