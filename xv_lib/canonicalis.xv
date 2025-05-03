@@ -2594,7 +2594,7 @@ spatium systema {
 		ignota	= 0x00,
 		i386	= 0x01,
 		x64		= 0x11,
-		arm_m32	= 0x02,
+		arm_t32	= 0x02,
 		arm_a64	= 0x12
 	}
 	enumeratio operans {

@@ -53,7 +53,7 @@ functio @char descriptio(systema.operans valor) {
 functio @char descriptio(systema.architectura valor) {
 	si (valor == systema.architectura.i386) responde aX86;
 	alioqui si (valor == systema.architectura.x64) responde aX64;
-	alioqui si (valor == systema.architectura.arm_m32) responde aARM;
+	alioqui si (valor == systema.architectura.arm_t32) responde aARM;
 	alioqui si (valor == systema.architectura.arm_a64) responde aA64;
 	alioqui responde aIgn;
 }

@@ -18,7 +18,7 @@ spatium systema {
 		ignota	= 0x00,
 		i386	= 0x01,
 		x64		= 0x11,
-		arm_m32	= 0x02,
+		arm_t32	= 0x02,
 		arm_a64	= 0x12
 	}
 	enumeratio operans {
@@ -79,14 +79,14 @@ spatium systema {
 			si (winapi.dynamice.invocator.IsWow64Process2(func_para_mach_v10, winapi.GetCurrentProcess(), @arch_proc, @arch_mach)) {
 				si (arch_mach == nint16(0xAA64)) inf.architectura_machinae = architectura.arm_a64;
 				alioqui si (arch_mach == nint16(0x8664)) inf.architectura_machinae = architectura.x64;
-				alioqui si (arch_mach == nint16(0x01C2)) inf.architectura_machinae = architectura.arm_m32;
+				alioqui si (arch_mach == nint16(0x01C2)) inf.architectura_machinae = architectura.arm_t32;
 				alioqui si (arch_mach == nint16(0x014C)) inf.architectura_machinae = architectura.i386;
 				alioqui inf.architectura_machinae = architectura.ignota;
 			} alioqui {
 				winapi.dynamice.invocator.GetNativeSystemInfo(func_para_mach_v6, sysinf);
 				si (sysinf.arch == nint16(12)) inf.architectura_machinae = architectura.arm_a64;
 				alioqui si (sysinf.arch == nint16(9)) inf.architectura_machinae = architectura.x64;
-				alioqui si (sysinf.arch == nint16(5)) inf.architectura_machinae = architectura.arm_m32;
+				alioqui si (sysinf.arch == nint16(5)) inf.architectura_machinae = architectura.arm_t32;
 				alioqui si (sysinf.arch == nint16(0)) inf.architectura_machinae = architectura.i386;
 				alioqui inf.architectura_machinae = architectura.ignota;
 			}
@@ -94,7 +94,7 @@ spatium systema {
 			si (func_para_mach_v6 != nullus) winapi.dynamice.invocator.GetNativeSystemInfo(func_para_mach_v6, sysinf);
 			si (sysinf.arch == nint16(12)) inf.architectura_machinae = architectura.arm_a64;
 			alioqui si (sysinf.arch == nint16(9)) inf.architectura_machinae = architectura.x64;
-			alioqui si (sysinf.arch == nint16(5)) inf.architectura_machinae = architectura.arm_m32;
+			alioqui si (sysinf.arch == nint16(5)) inf.architectura_machinae = architectura.arm_t32;
 			alioqui si (sysinf.arch == nint16(0)) inf.architectura_machinae = architectura.i386;
 			alioqui inf.architectura_machinae = architectura.ignota;
 		} 
@@ -139,7 +139,7 @@ spatium systema {
 		si (func_prob_v11 != nullus) {
 			nint16 va;
 			si (arch == architectura.arm_a64) va = 0xAA64;
-			alioqui si (arch == architectura.arm_m32) va = 0x01C2;
+			alioqui si (arch == architectura.arm_t32) va = 0x01C2;
 			alioqui si (arch == architectura.x64) va = 0x8664;
 			alioqui si (arch == architectura.i386) va = 0x014C;
 			alioqui responde non;
@@ -149,7 +149,7 @@ spatium systema {
 		} alioqui si (func_prob_v10 != nullus && func_prob_v10A != nullus) {
 			nint16 va;
 			si (arch == architectura.arm_a64) va = 0xAA64;
-			alioqui si (arch == architectura.arm_m32) va = 0x01C2;
+			alioqui si (arch == architectura.arm_t32) va = 0x01C2;
 			alioqui si (arch == architectura.x64) va = 0x8664;
 			alioqui si (arch == architectura.i386) va = 0x014C;
 			alioqui responde non;
