@@ -1628,6 +1628,25 @@ namespace Engine
 							_output << L" ex_" << art->symbol_refer;
 						}
 						_output << L" " << art->symbol_refer << L"(";
+						if (_gen.GetLanguage() == ShaderLanguage::HLSL) for (int i = 0; i < SelectorLimitInterstage; i++) {
+							for (int j = 0; j < fdesc.args.Length(); j++) {
+								auto sem = fdesc.args[j].semantics;
+								if (sem != ArgumentSemantics::InterstageNI && sem != ArgumentSemantics::InterstageIL && sem != ArgumentSemantics::InterstageIP) continue;
+								if (fdesc.args[j].index != i) continue;
+								if (_output[_output.Length() - 1] != L'(') {
+									_output << L",";
+									if (_hr()) _output << L" ";
+								}
+								string pr, pf;
+								_traits_for_semantic(fdesc.args[j], pr, pf);
+								_output << pr << _get_type_name(ctx, fdesc.args[j].tcn);
+								auto aname = L"arg" + string(uint(j), HexadecimalBase, 3);
+								_output << L" " << aname;
+								_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, j)),
+									expression_node(aname, XI::Module::TypeReference(fdesc.args[j].tcn), fdesc.args[j].inout ? 9 : 1));
+								_output << pf;
+							}
+						}
 						for (int i = 0; i < fdesc.args.Length(); i++) {
 							if (_gen.GetLanguage() == ShaderLanguage::MSL) {
 								if (fdesc.args[i].inout) continue;
@@ -1639,6 +1658,9 @@ namespace Engine
 								else if (fdesc.args[i].semantics == ArgumentSemantics::Buffer) continue;
 								else if (fdesc.args[i].semantics == ArgumentSemantics::Texture) continue;
 								else if (fdesc.args[i].semantics == ArgumentSemantics::Sampler) continue;
+								else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageNI) continue;
+								else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIL) continue;
+								else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIP) continue;
 							}
 							if (_output[_output.Length() - 1] != L'(') {
 								_output << L",";
