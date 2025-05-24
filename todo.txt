@@ -66,7 +66,6 @@ BETA-7:
  + Communication API: HTTP Client Session Manager
  + Communication API: HTTP Server
  + Thread-local storage support
- - Debugger
  + Spotlight Extension
  + New subsystem names
  + XX's introduction message improved
@@ -78,3 +77,4 @@ BETA-8:
 EXTRA RELEASES:
  - XB framework: XX to native bundle wrapper
  - Excel/Numbers interop extension
+ - Debugger

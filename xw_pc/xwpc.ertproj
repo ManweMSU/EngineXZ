@@ -10,6 +10,7 @@ CompileList {
 	AAAAAB = "xw_dx_com.cxx"
 	AAAAAC = "xw_metal_com.cxx"
 	AAAAAD = "xw_pc.cxx"
+	AAAAAE = "xw_vk_com.cxx"
 }
 VersionInformation {
 	ApplicationIdentifier = "XWPC"

@@ -129,7 +129,7 @@ namespace Engine
 
 #endif
 
-#ifdef ENGINE_MACOSX
+#ifdef ENGINE_UNIX
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -220,7 +220,9 @@ namespace Engine
 				ZeroMemory(&addr, sizeof(addr));
 				if (_path.GetEncodedLength(Encoding::UTF8) + 1 >= sizeof(addr.sun_path)) throw InvalidArgumentException();
 				_path.Encode(addr.sun_path, Encoding::UTF8, true);
+				#ifdef ENGINE_MACOSX
 				addr.sun_len = sizeof(addr);
+				#endif
 				addr.sun_family = PF_LOCAL;
 				_socket = socket(PF_LOCAL, SOCK_STREAM, 0);
 				if (_socket < 0) throw Exception();
@@ -276,7 +278,9 @@ namespace Engine
 			ZeroMemory(&addr, sizeof(addr));
 			if (at_path.GetEncodedLength(Encoding::UTF8) + 1 >= sizeof(addr.sun_path)) throw InvalidArgumentException();
 			at_path.Encode(addr.sun_path, Encoding::UTF8, true);
+			#ifdef ENGINE_MACOSX
 			addr.sun_len = sizeof(addr);
+			#endif
 			addr.sun_family = PF_LOCAL;
 			auto io = socket(PF_LOCAL, SOCK_STREAM, 0);
 			if (io < 0) throw Exception();

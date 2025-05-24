@@ -59,6 +59,42 @@ namespace Engine
 	}
 }
 #endif
+#ifdef ENGINE_LINUX
+#include <sys/mman.h>
+
+namespace Engine
+{
+	namespace XA
+	{
+		class SystemAllocator : public IMemoryAllocator
+		{
+			Volumes::Dictionary<void *, uintptr> _allocs;
+		public:
+			SystemAllocator(void) {}
+			virtual ~SystemAllocator(void) override {}
+			virtual void * ExecutableAllocate(uintptr length) noexcept override
+			{
+				auto reg = mmap(0, length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE, -1, 0);
+				if (reg) try { _allocs.Append(reg, length); } catch (...) { munmap(reg, length); return 0; }
+				return reg;
+			}
+			virtual void ExecutableFree(void * block) noexcept override
+			{
+				auto rec = _allocs.FindElementEquivalent(block);
+				if (rec) {
+					munmap(rec->GetValue().key, rec->GetValue().value);
+					_allocs.Remove(block);
+				}
+			}
+			virtual void FlushExecutionCache(const void * block, uintptr length) noexcept override
+			{
+				auto base = const_cast<char *>(reinterpret_cast<const char *>(block));
+				__builtin___clear_cache(base, base + length);
+			}
+		};
+	}
+}
+#endif
 
 namespace Engine
 {

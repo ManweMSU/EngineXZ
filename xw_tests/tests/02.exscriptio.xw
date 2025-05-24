@@ -32,8 +32,6 @@ functio vertex V(~frac4 p : positus, series[int] data : series)
 	var cpF = F;
 	var cpG = G;
 	var cpH = H;
-
-	var s = data;
 }
 functio punctum P(~frac4 p : color, textura[frac] tx : textura, exceptor ex : exceptor)
 {
@@ -69,7 +67,4 @@ functio punctum P(~frac4 p : color, textura[frac] tx : textura, exceptor ex : ex
 	var cpT1 = t1;
 	var cpT2 = nt1;
 	var cpT3 = nt2;
-
-	var tex = tx;
-	var exc = ex;
 }

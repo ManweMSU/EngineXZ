@@ -171,7 +171,7 @@ namespace Engine
 			DecompilerStatusDesc & status;
 			AssemblyDesc & adata;
 			ObjectArray<Artifact> & dest;
-			ObjectArray<SymbolArtifact> symbol_cache;
+			ObjectArray<SymbolArtifact> symbol_cache, praeambulum_cache;
 			Volumes::Dictionary<string, int> symbol_map;
 			Volumes::Set<string> bad_symbol_names;
 			Volumes::Set<string> shader_symbol_names;
@@ -305,12 +305,13 @@ namespace Engine
 			{
 				for (auto & func : adata.functions) {
 					if (func.value.attributes.ElementExists(AttributeVertex) || func.value.attributes.ElementExists(AttributePixel)) {
-						ObjectArray<SymbolArtifact> revert_symbol_cache;
+						ObjectArray<SymbolArtifact> revert_symbol_cache, revert_praeambulum_cache;
 						Volumes::Dictionary<string, int> revert_symbol_map;
 						Volumes::Set<string> bad_names;
 						if (separately_per_shader) {
 							revert_symbol_cache = symbol_cache;
 							revert_symbol_map = symbol_map;
+							revert_praeambulum_cache = praeambulum_cache;
 							bad_names = bad_symbol_names;
 						}
 						FunctionSynthesisInformation fsi;
@@ -323,6 +324,7 @@ namespace Engine
 						if (separately_per_shader) {
 							DynamicString output;
 							if (hdlr.IsHumanReadable()) MakeMachineGeneratedDisclamer(output);
+							for (auto & a : praeambulum_cache) output << a.code_inject;
 							for (auto & a : symbol_cache) output << a.code_inject;
 							SafePointer<Artifact> art = new Artifact;
 							if (hdlr.GetLanguage() == ShaderLanguage::HLSL) art->designation = DecompilerFlagProduceHLSL;
@@ -334,6 +336,7 @@ namespace Engine
 							art->entry_point_nominal = fsi.nominal_name;
 							art->entry_point_effective = fsi.effective_name;
 							artifacts.Append(art);
+							praeambulum_cache = revert_praeambulum_cache;
 							symbol_cache = revert_symbol_cache;
 							symbol_map = revert_symbol_map;
 							bad_symbol_names = bad_names;
@@ -505,6 +508,7 @@ namespace Engine
 					symbol_map.Append(art->symbol_xw, index);
 				}
 			}
+			void AddArtifactFirst(SymbolArtifact * art) { praeambulum_cache.Append(art); }
 		};
 		int AddressAlign(int address, int align) { return (address + align - 1) / align * align; }
 		int AddressAlign(const XA::ObjectSize & address, int align) { return AddressAlign(address.num_words * 4 + address.num_bytes, align); }
@@ -913,9 +917,9 @@ namespace Engine
 								auto tname = L"temp" + string(_temp_counter, HexadecimalBase, 6);
 								_temp_counter++;
 								if (_hr()) _output << string(L'\t', indent);
-								_output << _get_type_name(ctx, L"C" + inputs[i].clsname) << L" " << tname << L";";
+								_output << _get_type_name(ctx, L"C" + inputs[i].clsname) << L" " << tname << L" = " << inputs[i].code << L";";
 								if (_hr()) _output << L'\n';
-								call << L"(" << tname << L" = " << inputs[i].code << L")";
+								call << tname;
 							} else call << inputs[i].code;
 						}
 						call << L")";
@@ -932,9 +936,9 @@ namespace Engine
 									auto tname = L"temp" + string(_temp_counter, HexadecimalBase, 6);
 									_temp_counter++;
 									if (_hr()) _output << string(L'\t', indent);
-									_output << _get_type_name(ctx, L"C" + inputs[r.index].clsname) << L" " << tname << L";";
+									_output << _get_type_name(ctx, L"C" + inputs[r.index].clsname) << L" " << tname << L" = " << inputs[r.index].code << L";";
 									if (_hr()) _output << L'\n';
-									call << L"(" << tname << L" = " << inputs[r.index].code << L")";
+									call << tname;
 								} else call << inputs[r.index].code;
 							} else if (r.rule == Rule::InsertString) {
 								call << r.text;
@@ -1504,6 +1508,7 @@ namespace Engine
 							SetError(ctx.status, DecompilerStatus::BadShaderName, _gen.GetLanguage(), vname, fdesc.fname);
 							return false;
 						}
+						if (_gen.GetLanguage() == ShaderLanguage::GLSL) effective_name = art->symbol_refer = art->symbol_refer_publically = L"main";
 					}
 					if (fdesc.fdes == FunctionDesignation::Service) {
 						int da = fdesc.constructor ? 1 : 0;
@@ -1513,7 +1518,7 @@ namespace Engine
 								_output << L",";
 								if (_hr()) _output << L" ";
 							}
-							if (_gen.GetLanguage() == ShaderLanguage::HLSL) {
+							if (_gen.GetLanguage() == ShaderLanguage::HLSL || _gen.GetLanguage() == ShaderLanguage::GLSL) {
 								if (fdesc.args[i].inout) {
 									if (fdesc.args[i].out) _output << L"out ";
 									else _output << L"inout ";
@@ -1521,12 +1526,20 @@ namespace Engine
 							} else if (_gen.GetLanguage() == ShaderLanguage::MSL && fdesc.args[i].inout) {
 								_output << L"thread ";
 							}
-							_output << _get_type_name(ctx, fdesc.args[i].tcn);
-							if (_gen.GetLanguage() == ShaderLanguage::MSL && fdesc.args[i].inout) {
-								_output << L" &";
-							}
+							auto tname = _get_type_name(ctx, fdesc.args[i].tcn);
 							auto aname = L"arg" + string(uint(i), HexadecimalBase, 3);
-							_output << L" " << aname;
+							if (tname.Length() > 0 && tname[tname.Length() - 1] == L'*' && _gen.GetLanguage() == ShaderLanguage::GLSL) {
+								SetError(ctx.status, DecompilerStatus::NotSupported, _gen.GetLanguage(), vname);
+								return false;
+								// _output << tname.Fragment(0, tname.Length() - 1);
+								// _output << L" " << aname << L"[]";
+							} else {
+								_output << tname;
+								if (_gen.GetLanguage() == ShaderLanguage::MSL && fdesc.args[i].inout) {
+									_output << L" &";
+								}
+								_output << L" " << aname;
+							}
 							_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i + da)), expression_node(aname, XI::Module::TypeReference(fdesc.args[i].tcn), fdesc.args[i].inout ? 9 : 1));
 						}
 						_output << L")";
@@ -1618,6 +1631,118 @@ namespace Engine
 								if (_hr()) _output << L"\n";
 							}
 							_return_statement = L"return xw_ex;";
+						} else if (_gen.GetLanguage() == ShaderLanguage::GLSL) {
+							DynamicString output, output2;
+							bool has_sampler_input = false;
+							bool has_texture_input = false;
+							bool has_stencil_output = false;
+							for (int i = 0; i < fdesc.args.Length(); i++) {
+								bool predefined = false;
+								auto & arg = fdesc.args[i];
+								auto aname = L"arg" + string(uint(i), HexadecimalBase, 3);
+								auto tname = _get_type_name(ctx, arg.tcn);
+								if (arg.semantics == ArgumentSemantics::VertexIndex) {
+									predefined = true;
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(L"uint(gl_VertexIndex)", XI::Module::TypeReference(arg.tcn), 1));
+								} else if (arg.semantics == ArgumentSemantics::InstanceIndex) {
+									predefined = true;
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(L"uint(gl_InstanceIndex)", XI::Module::TypeReference(arg.tcn), 1));
+								} else if (arg.semantics == ArgumentSemantics::Position) {
+									predefined = true;
+									if (arg.inout) _register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(L"gl_Position", XI::Module::TypeReference(arg.tcn), 9));
+									else _register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(L"gl_FragCoord", XI::Module::TypeReference(arg.tcn), 1));
+								} else if (arg.semantics == ArgumentSemantics::InterstageNI) {
+									if (arg.inout) {
+										_output << L"flat layout(location=" << string(arg.index) << L") out " << tname << L" " << aname << L";";
+										_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 9));
+									} else {
+										_output << L"flat layout(location=" << string(arg.index) << L") in " << tname << L" " << aname << L";";
+										_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
+									}
+								} else if (arg.semantics == ArgumentSemantics::InterstageIL) {
+									if (arg.inout) {
+										_output << L"noperspective layout(location=" << string(arg.index) << L") out " << tname << L" " << aname << L";";
+										_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 9));
+									} else {
+										_output << L"noperspective layout(location=" << string(arg.index) << L") in " << tname << L" " << aname << L";";
+										_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
+									}
+								} else if (arg.semantics == ArgumentSemantics::InterstageIP) {
+									if (arg.inout) {
+										_output << L"smooth layout(location=" << string(arg.index) << L") out " << tname << L" " << aname << L";";
+										_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 9));
+									} else {
+										_output << L"smooth layout(location=" << string(arg.index) << L") in " << tname << L" " << aname << L";";
+										_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
+									}
+								} else if (arg.semantics == ArgumentSemantics::IsFrontFacing) {
+									predefined = true;
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(L"gl_FrontFacing", XI::Module::TypeReference(arg.tcn), 1));
+								} else if (arg.semantics == ArgumentSemantics::Color) {
+									_output << L"layout(location=" << string(arg.index) << L",index=0) out vec4 " << aname << L";";
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 9));
+								} else if (arg.semantics == ArgumentSemantics::SecondColor) {
+									_output << L"layout(location=0,index=1) out vec4 " << aname << L";";
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 9));
+								} else if (arg.semantics == ArgumentSemantics::Depth) {
+									predefined = true;
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(L"gl_FragDepth", XI::Module::TypeReference(arg.tcn), 9));
+								} else if (arg.semantics == ArgumentSemantics::Stencil) {
+									has_stencil_output = true;
+									predefined = true;
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(L"gl_FragStencilRefARB", XI::Module::TypeReference(arg.tcn), 9));
+								} else if (arg.semantics == ArgumentSemantics::Constant) {
+									uint absolute_selector = 0;
+									if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = arg.index + 0;
+									else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = arg.index + 288;
+									_output << L"layout(scalar,column_major,binding=" << string(absolute_selector) << L") uniform XW_UB" << string(arg.index) << L" { " << tname << L" " << aname << L"; };";
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
+								} else if (arg.semantics == ArgumentSemantics::Buffer) {
+									uint absolute_selector = 0;
+									if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = arg.index + 32;
+									else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = arg.index + 320;
+									_output << L"layout(scalar,column_major,binding=" << string(absolute_selector) << L") buffer XW_SB" << string(arg.index) << L" { ";
+									if (tname.Length() && tname[tname.Length() - 1] == L'*') _output << tname.Fragment(0, tname.Length() - 1) << L" " << aname << L"[]";
+									else _output << tname << L" " << aname;
+									_output << L"; };";
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
+								} else if (arg.semantics == ArgumentSemantics::Texture) {
+									uint absolute_selector = 0;
+									if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = arg.index + 160;
+									else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = arg.index + 448;
+									has_texture_input = true;
+									_output << L"layout(binding=" << string(absolute_selector) << L") uniform " << tname << L" " << aname << L";";
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
+								} else if (arg.semantics == ArgumentSemantics::Sampler) {
+									predefined = true;
+									uint absolute_selector = 0;
+									if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = arg.index + 16;
+									else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = arg.index + 304;
+									if (!has_sampler_input) {
+										has_sampler_input = true;
+										aname = L"xw_exceptor_primus";
+									}
+									output << L"layout(binding=" << string(absolute_selector) << L") uniform " << tname << L" " << aname << L";";
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
+									if (_hr()) output << L'\n';
+								}
+								if (!predefined && _hr()) _output << L'\n';
+							}
+							output2 << L"#extension GL_EXT_scalar_block_layout : enable\n";
+							if (has_stencil_output) output2 << L"#extension GL_ARB_shader_stencil_export : enable\n";
+							if (!has_sampler_input && has_texture_input) {
+								uint absolute_selector = 0;
+								if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = 16;
+								else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = 304;
+								output << L"layout(binding=" << string(absolute_selector) << L") uniform sampler xw_exceptor_primus;";
+								if (_hr()) output << L'\n';
+							}
+							SafePointer<SymbolArtifact> praeambulum = new SymbolArtifact;
+							praeambulum->symbol_class = 3;
+							praeambulum->class_alignment = praeambulum->class_size = 0;
+							praeambulum->private_class = praeambulum->resource_class = false;
+							praeambulum->code_inject = output2.ToString() + output.ToString();
+							ctx.AddArtifactFirst(praeambulum);
 						}
 						if (_gen.GetLanguage() == ShaderLanguage::HLSL) {
 							_output << L"void";
@@ -1626,68 +1751,72 @@ namespace Engine
 							if (fdesc.fdes == FunctionDesignation::Vertex) _output << L"vertex";
 							else if (fdesc.fdes == FunctionDesignation::Pixel) _output << L"fragment";
 							_output << L" ex_" << art->symbol_refer;
+						} else if (_gen.GetLanguage() == ShaderLanguage::GLSL) {
+							_output << L"void";
 						}
 						_output << L" " << art->symbol_refer << L"(";
-						if (_gen.GetLanguage() == ShaderLanguage::HLSL) for (int i = 0; i < SelectorLimitInterstage; i++) {
-							for (int j = 0; j < fdesc.args.Length(); j++) {
-								auto sem = fdesc.args[j].semantics;
-								if (sem != ArgumentSemantics::InterstageNI && sem != ArgumentSemantics::InterstageIL && sem != ArgumentSemantics::InterstageIP) continue;
-								if (fdesc.args[j].index != i) continue;
+						if (_gen.GetLanguage() != ShaderLanguage::GLSL) {
+							if (_gen.GetLanguage() == ShaderLanguage::HLSL) for (int i = 0; i < SelectorLimitInterstage; i++) {
+								for (int j = 0; j < fdesc.args.Length(); j++) {
+									auto sem = fdesc.args[j].semantics;
+									if (sem != ArgumentSemantics::InterstageNI && sem != ArgumentSemantics::InterstageIL && sem != ArgumentSemantics::InterstageIP) continue;
+									if (fdesc.args[j].index != i) continue;
+									if (_output[_output.Length() - 1] != L'(') {
+										_output << L",";
+										if (_hr()) _output << L" ";
+									}
+									string pr, pf;
+									_traits_for_semantic(fdesc.args[j], pr, pf);
+									_output << pr << _get_type_name(ctx, fdesc.args[j].tcn);
+									auto aname = L"arg" + string(uint(j), HexadecimalBase, 3);
+									_output << L" " << aname;
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, j)),
+										expression_node(aname, XI::Module::TypeReference(fdesc.args[j].tcn), fdesc.args[j].inout ? 9 : 1));
+									_output << pf;
+								}
+							}
+							for (int i = 0; i < fdesc.args.Length(); i++) {
+								if (_gen.GetLanguage() == ShaderLanguage::MSL) {
+									if (fdesc.args[i].inout) continue;
+									if (fdesc.args[i].semantics == ArgumentSemantics::InterstageNI) continue;
+									else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIL) continue;
+									else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIP) continue;
+								} else if (_gen.GetLanguage() == ShaderLanguage::HLSL) {
+									if (fdesc.args[i].semantics == ArgumentSemantics::Constant) continue;
+									else if (fdesc.args[i].semantics == ArgumentSemantics::Buffer) continue;
+									else if (fdesc.args[i].semantics == ArgumentSemantics::Texture) continue;
+									else if (fdesc.args[i].semantics == ArgumentSemantics::Sampler) continue;
+									else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageNI) continue;
+									else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIL) continue;
+									else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIP) continue;
+								}
 								if (_output[_output.Length() - 1] != L'(') {
 									_output << L",";
 									if (_hr()) _output << L" ";
 								}
 								string pr, pf;
-								_traits_for_semantic(fdesc.args[j], pr, pf);
-								_output << pr << _get_type_name(ctx, fdesc.args[j].tcn);
-								auto aname = L"arg" + string(uint(j), HexadecimalBase, 3);
-								_output << L" " << aname;
-								_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, j)),
-									expression_node(aname, XI::Module::TypeReference(fdesc.args[j].tcn), fdesc.args[j].inout ? 9 : 1));
+								_traits_for_semantic(fdesc.args[i], pr, pf);
+								_output << pr << _get_type_name(ctx, fdesc.args[i].tcn);
+								auto aname = L"arg" + string(uint(i), HexadecimalBase, 3);
+								if (_gen.GetLanguage() == ShaderLanguage::MSL && fdesc.args[i].semantics == ArgumentSemantics::Constant) {
+									_output << L" * " << aname;
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)),
+										expression_node(L"(*" + aname + L")", XI::Module::TypeReference(fdesc.args[i].tcn), fdesc.args[i].inout ? 9 : 1));
+								} else {
+									_output << L" " << aname;
+									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)),
+										expression_node(aname, XI::Module::TypeReference(fdesc.args[i].tcn), fdesc.args[i].inout ? 9 : 1));
+								}
 								_output << pf;
 							}
-						}
-						for (int i = 0; i < fdesc.args.Length(); i++) {
-							if (_gen.GetLanguage() == ShaderLanguage::MSL) {
-								if (fdesc.args[i].inout) continue;
-								if (fdesc.args[i].semantics == ArgumentSemantics::InterstageNI) continue;
-								else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIL) continue;
-								else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIP) continue;
-							} else if (_gen.GetLanguage() == ShaderLanguage::HLSL) {
-								if (fdesc.args[i].semantics == ArgumentSemantics::Constant) continue;
-								else if (fdesc.args[i].semantics == ArgumentSemantics::Buffer) continue;
-								else if (fdesc.args[i].semantics == ArgumentSemantics::Texture) continue;
-								else if (fdesc.args[i].semantics == ArgumentSemantics::Sampler) continue;
-								else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageNI) continue;
-								else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIL) continue;
-								else if (fdesc.args[i].semantics == ArgumentSemantics::InterstageIP) continue;
+							if (msl_interstage_in) {
+								if (_output[_output.Length() - 1] != L'(') {
+									_output << L",";
+									if (_hr()) _output << L" ";
+								}
+								_output << L"in_" << art->symbol_refer << L" xw_in [[stage_in]]";
 							}
-							if (_output[_output.Length() - 1] != L'(') {
-								_output << L",";
-								if (_hr()) _output << L" ";
-							}
-							string pr, pf;
-							_traits_for_semantic(fdesc.args[i], pr, pf);
-							_output << pr << _get_type_name(ctx, fdesc.args[i].tcn);
-							auto aname = L"arg" + string(uint(i), HexadecimalBase, 3);
-							if (_gen.GetLanguage() == ShaderLanguage::MSL && fdesc.args[i].semantics == ArgumentSemantics::Constant) {
-								_output << L" * " << aname;
-								_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)),
-									expression_node(L"(*" + aname + L")", XI::Module::TypeReference(fdesc.args[i].tcn), fdesc.args[i].inout ? 9 : 1));
-							} else {
-								_output << L" " << aname;
-								_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)),
-									expression_node(aname, XI::Module::TypeReference(fdesc.args[i].tcn), fdesc.args[i].inout ? 9 : 1));
-							}
-							_output << pf;
-						}
-						if (msl_interstage_in) {
-							if (_output[_output.Length() - 1] != L'(') {
-								_output << L",";
-								if (_hr()) _output << L" ";
-							}
-							_output << L"in_" << art->symbol_refer << L" xw_in [[stage_in]]";
-						}
+						} else _output << L"void";
 						_output << L")";
 						if (_hr()) _output << L" ";
 						_output << L"{";
@@ -1959,9 +2088,9 @@ namespace Engine
 					desc.flags |= DecompilerFlagProduceHLSL;
 				#endif
 				#ifdef ENGINE_UNIX
-					#ifdef ENGINE_MACOSX
+					#if defined(ENGINE_MACOSX)
 						desc.flags |= DecompilerFlagProduceMSL;
-					#elif
+					#elif defined(ENGINE_LINUX)
 						desc.flags |= DecompilerFlagProduceGLSL;
 					#endif
 				#endif
@@ -1998,8 +2127,11 @@ namespace Engine
 					artifacts.Append(art);
 				}
 				if (desc.flags & DecompilerFlagProduceGLSL) {
-					SetError(desc.status, DecompilerStatus::NotSupported, ShaderLanguage::GLSL);
-					return;
+					DecompilerContext dctx(desc.status, asmdata, artifacts);
+					TextLanguageStructureGenerator sgen(DecompilerFlagProduceGLSL, (desc.flags & DecompilerFlagHumanReadable) != 0);
+					ShaderLanguageFunctionGenerator fgen(DecompilerFlagProduceGLSL, (desc.flags & DecompilerFlagHumanReadable) != 0);
+					if (!dctx.ProcessStructures(sgen)) return;
+					if (!dctx.ProcessFunctions(fgen, true, artifacts)) return;
 				}
 				if (desc.flags & DecompilerFlagRawOutput) {
 					for (auto & a : artifacts) {

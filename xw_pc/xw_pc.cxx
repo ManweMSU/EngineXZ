@@ -3,6 +3,7 @@
 #include "../xexec/xx_com.h"
 #include "xw_dx_com.h"
 #include "xw_metal_com.h"
+#include "xw_vk_com.h"
 
 using namespace Engine;
 using namespace Engine::IO;
@@ -101,6 +102,12 @@ void ProcessCommandLine(Console & console)
 		}
 	}
 }
+void ReadDuplexVersion(RegistryNode * node, const string & value, uint & major, uint & minor)
+{
+	auto parts = node->GetValueString(value).Split(L'.');
+	if (parts.Length() > 0) major = parts[0].ToUInt32(); else major = 0;
+	if (parts.Length() > 1) minor = parts[1].ToUInt32(); else minor = 0;
+}
 
 int Main(void)
 {
@@ -142,10 +149,14 @@ int Main(void)
 		try {
 			XW::DXProfileDesc dx_profile;
 			XW::MetalProfileDesc metal_profile;
+			XW::VulkanProfileDesc vulkan_profile;
 			dx_profile.vertex_shader_profile = state.profile->GetValueString(L"HLSL/ModusVerticis");
 			dx_profile.pixel_shader_profile = state.profile->GetValueString(L"HLSL/ModusPuncti");
 			metal_profile.metal_language_version = state.profile->GetValueString(L"MSL/VersioLinguae");
 			metal_profile.target_system = state.profile->GetValueString(L"MSL/Destinatio");
+			ReadDuplexVersion(state.profile, L"GLSL/VersioVulkani", vulkan_profile.vulkan_version_major, vulkan_profile.vulkan_version_minor);
+			ReadDuplexVersion(state.profile, L"GLSL/VersioSPIRV", vulkan_profile.spirv_version_major, vulkan_profile.spirv_version_minor);
+			ReadDuplexVersion(state.profile, L"GLSL/VersioLinguae", vulkan_profile.glsl_version_major, vulkan_profile.glsl_version_minor);
 			if (state.output_path.Length()) {
 				state.output = ExpandPath(state.output_path + L"/" + Path::GetFileNameWithoutExtension(state.input) + L".egso");
 			} else if (!state.output.Length()) {
@@ -156,6 +167,8 @@ int Main(void)
 			status = XW::DXCompile(state.input, state.output, state.logfile, dx_profile);
 			#elif defined(ENGINE_MACOSX)
 			status = XW::MetalCompile(state.input, state.output, state.logfile, metal_profile);
+			#elif defined(ENGINE_LINUX)
+			status = XW::VulkanCompile(state.input, state.output, state.logfile, vulkan_profile);
 			#endif
 			if (status != XW::PrecompilationStatus::Success) {
 				if (!state.silent) {

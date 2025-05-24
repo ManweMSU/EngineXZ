@@ -813,6 +813,7 @@ namespace Engine
 						return type;
 					}
 				} else return ProcessExpressionPostfix(ssl, ssc);
+				throw InvalidStateException();
 			}
 			XL::LObject * ProcessExpressionMultiplicative(XL::LObject ** ssl, int ssc)
 			{
@@ -924,6 +925,7 @@ namespace Engine
 					try { return ctx.QueryTernaryResult(primary, if_true, if_false); }
 					catch (...) { Abort(CompilerStatus::ObjectTypeMismatch, definition); }
 				} else { primary->Retain(); return primary; }
+				throw InvalidStateException();
 			}
 			XL::LObject * ProcessExpressionAssignation(XL::LObject ** ssl, int ssc)
 			{

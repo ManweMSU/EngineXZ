@@ -148,6 +148,11 @@ namespace Engine
 				}
 				EnplaceObject(info, offset, atable.GetBuffer(), atable.Length());
 			}
+			#ifdef ENGINE_LINUX
+			#define ENCODE_ATTRIBUTES(I, O, S, A) uint32 IA0, IA1; EncodeAttributes(I, IA0, IA1, A); O = IA0, S = IA1
+			#else
+			#define ENCODE_ATTRIBUTES(I, O, S, A) EncodeAttributes(I, O, S, A)
+			#endif
 			void EncodeLiteral(DataBlock & info, uint32 & offset, uint32 & size, const Module::Literal & src)
 			{
 				DS::XI_Literal hdr;
@@ -157,7 +162,7 @@ namespace Engine
 				hdr.literal_size = src.length;
 				if (src.contents == Module::Literal::Class::String) hdr.literal_data = EnplaceString(info, src.data_string);
 				else hdr.literal_data = src.data_uint64;
-				EncodeAttributes(info, hdr.literal_attribute_list_offset, hdr.literal_attribute_list_size, src.attributes);
+				ENCODE_ATTRIBUTES(info, hdr.literal_attribute_list_offset, hdr.literal_attribute_list_size, src.attributes);
 				EnplaceObject(info, offset, &hdr);
 			}
 			void EncodeVariable(DataBlock & info, uint32 & offset, uint32 & size, const Module::Variable & src)
@@ -170,7 +175,7 @@ namespace Engine
 				hdr.variable_offset_word_size = src.offset.num_words;
 				hdr.variable_size_byte_size = src.size.num_bytes;
 				hdr.variable_size_word_size = src.size.num_words;
-				EncodeAttributes(info, hdr.variable_attribute_list_offset, hdr.variable_attribute_list_size, src.attributes);
+				ENCODE_ATTRIBUTES(info, hdr.variable_attribute_list_offset, hdr.variable_attribute_list_size, src.attributes);
 				EnplaceObject(info, offset, &hdr);
 			}
 			void EncodeFunction(DataBlock & info, uint32 & offset, uint32 & size, const Module::Function & src)
@@ -189,7 +194,7 @@ namespace Engine
 					hdr.function_code_offset = 0;
 					hdr.function_code_size = 0;
 				}
-				EncodeAttributes(info, hdr.function_attribute_list_offset, hdr.function_attribute_list_size, src.attributes);
+				ENCODE_ATTRIBUTES(info, hdr.function_attribute_list_offset, hdr.function_attribute_list_size, src.attributes);
 				EnplaceObject(info, offset, &hdr);
 			}
 			void EncodeProperty(DataBlock & info, uint32 & offset, uint32 & size, const Module::Property & src)
@@ -201,7 +206,7 @@ namespace Engine
 				hdr.property_type_cn_offset = EnplaceString(info, src.type_canonical_name);
 				hdr.property_getter_name_offset = EnplaceString(info, src.getter_name);
 				hdr.property_setter_name_offset = EnplaceString(info, src.setter_name);
-				EncodeAttributes(info, hdr.property_attribute_list_offset, hdr.property_attribute_list_size, src.attributes);
+				ENCODE_ATTRIBUTES(info, hdr.property_attribute_list_offset, hdr.property_attribute_list_size, src.attributes);
 				EnplaceObject(info, offset, &hdr);
 			}
 			void EncodeInterface(DataBlock & info, DS::XI_Interface & dest, const Module::Interface & src)
@@ -239,23 +244,32 @@ namespace Engine
 				for (auto & f : src.fields) {
 					stable[wp].symbol_type = 3;
 					stable[wp].symbol_name_offset = EnplaceString(info, f.key);
-					EncodeVariable(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, f.value);
+					uint32 LO, LS;
+					EncodeVariable(info, LO, LS, f.value);
+					stable[wp].symbol_data_offset = LO;
+					stable[wp].symbol_data_size = LS;
 					wp++;
 				}
 				for (auto & p : src.properties) {
 					stable[wp].symbol_type = 6;
 					stable[wp].symbol_name_offset = EnplaceString(info, p.key);
-					EncodeProperty(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, p.value);
+					uint32 LO, LS;
+					EncodeProperty(info, LO, LS, p.value);
+					stable[wp].symbol_data_offset = LO;
+					stable[wp].symbol_data_size = LS;
 					wp++;
 				}
 				for (auto & m : src.methods) {
 					stable[wp].symbol_type = 4;
 					stable[wp].symbol_name_offset = EnplaceString(info, m.key);
-					EncodeFunction(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, m.value);
+					uint32 LO, LS;
+					EncodeFunction(info, LO, LS, m.value);
+					stable[wp].symbol_data_offset = LO;
+					stable[wp].symbol_data_size = LS;
 					wp++;
 				}
 				EnplaceObject(info, hdr.class_symbol_list_offset, stable.GetBuffer(), stable.Length());
-				EncodeAttributes(info, hdr.class_attribute_list_offset, hdr.class_attribute_list_size, src.attributes);
+				ENCODE_ATTRIBUTES(info, hdr.class_attribute_list_offset, hdr.class_attribute_list_size, src.attributes);
 				EnplaceObject(info, offset, &hdr);
 			}
 			void EncodePrototype(DataBlock & info, uint32 & offset, uint32 & size, const Module::Prototype & src)
@@ -272,7 +286,7 @@ namespace Engine
 					hdr.prototype_data_offset = 0;
 					hdr.prototype_data_size = 0;
 				}
-				EncodeAttributes(info, hdr.prototype_attribute_list_offset, hdr.prototype_attribute_list_size, src.attributes);
+				ENCODE_ATTRIBUTES(info, hdr.prototype_attribute_list_offset, hdr.prototype_attribute_list_size, src.attributes);
 				EnplaceObject(info, offset, &hdr);
 			}
 			void EncodeSymbols(DataBlock & info, DS::XI_Header & hdr, const Module & src)
@@ -285,25 +299,37 @@ namespace Engine
 				for (auto & l : src.literals) {
 					stable[wp].symbol_type = 1;
 					stable[wp].symbol_name_offset = EnplaceString(info, l.key);
-					EncodeLiteral(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, l.value);
+					uint32 LO, LS;
+					EncodeLiteral(info, LO, LS, l.value);
+					stable[wp].symbol_data_offset = LO;
+					stable[wp].symbol_data_size = LS;
 					wp++;
 				}
 				for (auto & c : src.classes) {
 					stable[wp].symbol_type = 2;
 					stable[wp].symbol_name_offset = EnplaceString(info, c.key);
-					EncodeClass(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, c.value);
+					uint32 LO, LS;
+					EncodeClass(info, LO, LS, c.value);
+					stable[wp].symbol_data_offset = LO;
+					stable[wp].symbol_data_size = LS;
 					wp++;
 				}
 				for (auto & v : src.variables) {
 					stable[wp].symbol_type = 3;
 					stable[wp].symbol_name_offset = EnplaceString(info, v.key);
-					EncodeVariable(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, v.value);
+					uint32 LO, LS;
+					EncodeVariable(info, LO, LS, v.value);
+					stable[wp].symbol_data_offset = LO;
+					stable[wp].symbol_data_size = LS;
 					wp++;
 				}
 				for (auto & f : src.functions) {
 					stable[wp].symbol_type = 4;
 					stable[wp].symbol_name_offset = EnplaceString(info, f.key);
-					EncodeFunction(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, f.value);
+					uint32 LO, LS;
+					EncodeFunction(info, LO, LS, f.value);
+					stable[wp].symbol_data_offset = LO;
+					stable[wp].symbol_data_size = LS;
 					wp++;
 				}
 				for (auto & a : src.aliases) {
@@ -316,7 +342,10 @@ namespace Engine
 				for (auto & p : src.prototypes) {
 					stable[wp].symbol_type = 7;
 					stable[wp].symbol_name_offset = EnplaceString(info, p.key);
-					EncodePrototype(info, stable[wp].symbol_data_offset, stable[wp].symbol_data_size, p.value);
+					uint32 LO, LS;
+					EncodePrototype(info, LO, LS, p.value);
+					stable[wp].symbol_data_offset = LO;
+					stable[wp].symbol_data_size = LS;
 					wp++;
 				}
 				EnplaceObject(info, hdr.symbol_list_offset, stable.GetBuffer(), stable.Length());

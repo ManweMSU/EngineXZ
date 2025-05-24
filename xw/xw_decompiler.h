@@ -19,7 +19,7 @@ namespace Engine
 			DecompilerFlagProduceMSL		= 0x200,
 			DecompilerFlagProduceGLSL		= 0x400,
 			DecompilerFlagProduceCXX		= 0x800,
-			DecompilerFlagProduceMaximas	= DecompilerFlagProduceHLSL | DecompilerFlagProduceMSL,
+			DecompilerFlagProduceMaximas	= DecompilerFlagProduceHLSL | DecompilerFlagProduceMSL | DecompilerFlagProduceGLSL,
 		};
 		enum class DecompilerStatus : uint {
 			Success					= 0x0000,

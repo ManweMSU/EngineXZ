@@ -911,6 +911,7 @@ namespace Engine
 					if (argv[0]->GetClass() != XL::Class::FunctionOverload) throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
 					return _create_literal(_ctx, static_cast<XL::XFunctionOverload *>(argv[0])->Throws());
 				} else throw XL::ObjectHasNoSuchOverloadException(this, argc, argv);
+				throw InvalidStateException();
 			}
 			virtual void ListInvokations(XL::LObject * first, Volumes::List<XL::InvokationDesc> & list) override {}
 			virtual void AddMember(const string & name, LObject * child) override { throw XL::LException(this); }
