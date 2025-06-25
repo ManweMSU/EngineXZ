@@ -251,9 +251,7 @@ namespace Engine
 							else return 0;
 						} else break;
 					}
-					SafePointer<IChannel> result = new Channel(io);
-					result->Retain();
-					return result;
+					try { return new Channel(io); } catch (...) { close(io); return 0; }
 				} catch (...) { return 0; }
 			}
 			virtual void Close(void) noexcept override { try { IO::RemoveFile(_path); } catch (...) {} shutdown(_socket, SHUT_RDWR); }
@@ -287,9 +285,9 @@ namespace Engine
 			while (true) {
 				auto result = connect(io, reinterpret_cast<sockaddr *>(&addr), sizeof(addr));
 				if (result == 0) break;
-				else if (errno != EINTR) throw IO::FileAccessException();
+				else if (errno != EINTR) { close(io); throw IO::FileAccessException(); }
 			}
-			return new Channel(io);
+			try { return new Channel(io); } catch (...) { close(io); throw; }
 		}
 	}
 }
