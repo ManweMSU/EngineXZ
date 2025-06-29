@@ -295,10 +295,10 @@ namespace Engine
 				else type = argv[0]->GetType();
 				if (_mx) {
 					auto alignment = _ctx.GetClassInstanceAlignment(type);
-					if (alignment.num_bytes >= 8 || alignment.num_words) _ctx.QueryLiteral(uint64(8));
-					else if (alignment.num_bytes >= 4) _ctx.QueryLiteral(uint64(4));
-					else if (alignment.num_bytes >= 2) _ctx.QueryLiteral(uint64(2));
-					else _ctx.QueryLiteral(uint64(1));
+					if (alignment.num_bytes >= 8 || alignment.num_words) return _ctx.QueryLiteral(uint64(8));
+					else if (alignment.num_bytes >= 4) return _ctx.QueryLiteral(uint64(4));
+					else if (alignment.num_bytes >= 2) return _ctx.QueryLiteral(uint64(2));
+					else return _ctx.QueryLiteral(uint64(1));
 				} else {
 					SafePointer<_computable> com = new _computable;
 					com->_alignment = _ctx.GetClassInstanceAlignment(type);
