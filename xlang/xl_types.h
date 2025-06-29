@@ -18,6 +18,7 @@ namespace Engine
 			virtual XI::Module::TypeReference::Class GetCanonicalTypeClass(void) = 0;
 			virtual const XI::Module::TypeReference & GetTypeReference(void) = 0;
 			virtual XA::ArgumentSpecification GetArgumentSpecification(void) = 0;
+			virtual XA::ObjectSize GetInstanceAlignment(void) = 0;
 			virtual LObject * GetConstructorInit(void) = 0;
 			virtual LObject * GetConstructorCopy(void) = 0;
 			virtual LObject * GetConstructorZero(void) = 0;
@@ -34,7 +35,11 @@ namespace Engine
 		public:
 			virtual XI::Module::Class::Nature GetLanguageSemantics(void) = 0;
 			virtual void OverrideArgumentSpecification(XA::ArgumentSpecification spec) = 0;
+			virtual void OverrideAlignment(XA::ObjectSize size) = 0;
 			virtual void OverrideLanguageSemantics(XI::Module::Class::Nature spec) = 0;
+			virtual void AlignInstanceSize(XA::ObjectSize alignment) = 0;
+			virtual void AlignInstanceSize(void) = 0;
+			virtual void RequireInstanceAlignment(XA::ObjectSize alignment) = 0;
 			virtual void UpdateInternals(void) = 0;
 			virtual void AdoptParentClass(XClass * parent, bool alternate = true) = 0;
 			virtual void AdoptInterface(XClass * interface) = 0;

@@ -455,8 +455,8 @@ namespace Engine
 			SafePointer<XL::LObject> regestor_autoptr = ctx.QueryObject(L"adl");
 			regestor_autoptr = regestor_autoptr->GetMember(XL::OperatorSubscript);
 			regestor_autoptr = regestor_autoptr->Invoke(1, regestor.InnerRef());
-			ctx.CreateField(cls, L"_num", nint64, true);
-			ctx.CreateField(cls, L"_reg", regestor_autoptr, true);
+			ctx.CreateFieldRegular(cls, L"_num", nint64, true);
+			ctx.CreateFieldRegular(cls, L"_reg", regestor_autoptr, true);
 			XL::LObject * argv[2];
 			string names[2];
 			argv[0] = nint64;
@@ -678,6 +678,7 @@ namespace Engine
 				DefineRPCRemoteSelectors(type, map);
 				CreateTypeServiceRoutines(type);
 				ctx.LockClass(type, false);
+				ctx.AlignInstanceSize(type);
 				FinishRPCRemoteBase(type, init_list, map, ctor, dtor);
 				type->Retain();
 				*cls_ref = type;

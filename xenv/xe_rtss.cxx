@@ -45,8 +45,8 @@ namespace Engine
 		const Volumes::Dictionary<string, string> * LiteralSymbol::GetAttributes(void) const noexcept { return &_attributes; }
 		Reflection::PropertyType LiteralSymbol::GetValueType(void) const noexcept { return _type; }
 
-		ClassSymbol::ClassSymbol(const string & name, XA::ArgumentSemantics semantics, uint size, const Volumes::Dictionary<string, string> & attrs) :
-			_class_name(name), _semantics(semantics), _instance_size(size), _interface_list(0x10), _field_list(0x10), _prop_list(0x10), _method_list(0x10), _attributes(attrs)
+		ClassSymbol::ClassSymbol(const string & name, XA::ArgumentSemantics semantics, uint size, uint align, const Volumes::Dictionary<string, string> & attrs) :
+			_class_name(name), _semantics(semantics), _instance_size(size), _instance_align(align), _interface_list(0x10), _field_list(0x10), _prop_list(0x10), _method_list(0x10), _attributes(attrs)
 		{
 			_parent_class.name = L"";
 			_parent_class.vft_offset = -1;
@@ -103,6 +103,7 @@ namespace Engine
 		const string & ClassSymbol::GetClassName(void) const noexcept { return _class_name; }
 		XA::ArgumentSemantics ClassSymbol::GetClassSemantics(void) const noexcept { return _semantics; }
 		uint ClassSymbol::GetInstanceSize(void) const noexcept { return _instance_size; }
+		uint ClassSymbol::GetInstanceAlign(void) const noexcept { return _instance_align; }
 		uint ClassSymbol::GetVFTOffset(void) const noexcept { return _parent_class.vft_offset; }
 		const string & ClassSymbol::GetParentClassName(void) const noexcept { return _parent_class.name; }
 		Array<string> * ClassSymbol::ListInterfaces(void) const noexcept

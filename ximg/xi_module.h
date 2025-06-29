@@ -157,6 +157,7 @@ namespace Engine
 			public:
 				Nature class_nature;
 				XA::ArgumentSpecification instance_spec;
+				XA::ObjectSize instance_align;
 				Interface parent_class;
 				Array<Interface> interfaces_implements;
 				Volumes::Dictionary<string, Variable> fields;		// NAME

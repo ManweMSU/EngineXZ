@@ -74,6 +74,7 @@ spatium repulsus {
 		linea nomen { adipisce iacit virtualis pura; }
 		nint destinatio { adipisce virtualis pura; }
 		nintadl longitudo { adipisce virtualis pura; }
+		nintadl politio { adipisce virtualis pura; }
 		
 		!symbolum_generis parens { adipisce iacit virtualis pura; }
 		!ordo !symbolum_generis parentes { adipisce iacit virtualis pura; }

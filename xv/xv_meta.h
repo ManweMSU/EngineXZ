@@ -30,6 +30,8 @@ namespace Engine
 			constexpr const widechar * KeywordThrow		= L"iace";
 			constexpr const widechar * KeywordSizeOf	= L"magnitudo";
 			constexpr const widechar * KeywordSizeOfMX	= L"magnitudo_maxima";
+			constexpr const widechar * KeywordAlignOf	= L"politio_generis";
+			constexpr const widechar * KeywordAlignOfMX	= L"politio_generis_maxima";
 			constexpr const widechar * KeywordModule	= L"modulus";
 			constexpr const widechar * KeywordArray		= L"ordo";
 			constexpr const widechar * KeywordConst		= L"constatus";
@@ -82,6 +84,7 @@ namespace Engine
 			constexpr const widechar * AttributeImpLib	= L"[importa_de]";
 			constexpr const widechar * AttributeOffset	= L"[positus]";
 			constexpr const widechar * AttributeUnalign	= L"[non_polire]";
+			constexpr const widechar * AttributeAlign	= L"[polire]";
 			constexpr const widechar * AttributeRPC		= L"[ifr]";
 			constexpr const widechar * AttributeConsole	= L"scriptosa";
 			constexpr const widechar * AttributeGUI		= L"fenestrosa";

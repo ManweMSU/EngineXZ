@@ -20,6 +20,7 @@ namespace Engine
 			ctx.GetPrivateNamespace()->AddMember(name, cls);
 			cls->OverrideLanguageSemantics(XI::Module::Class::Nature::Core);
 			cls->OverrideArgumentSpecification(on_array->GetArgumentSpecification());
+			cls->OverrideAlignment(on_array->GetInstanceAlignment());
 			return cls;
 		}
 		class StaticArrayCreateInit : public ISimpifiedFunctionInitCallback

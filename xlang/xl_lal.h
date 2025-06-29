@@ -177,9 +177,10 @@ namespace Engine
 			LObject * CreateFunction(LObject * create_under, const string & name);
 			LObject * CreateFunctionOverload(LObject * create_under, LObject * retval, int argc, LObject ** argv, uint flags);
 			LObject * CreateVariable(LObject * create_under, const string & name, LObject * type);
-			LObject * CreateVariable(LObject * create_under, const string & name, LObject * type, XA::ObjectSize size);
-			LObject * CreateField(LObject * create_under, const string & name, LObject * type, XA::ObjectSize offs_override);
-			LObject * CreateField(LObject * create_under, const string & name, LObject * type, bool align_mode);
+			LObject * CreateVariable(LObject * create_under, const string & name, LObject * type, XA::ObjectSize size, XA::ObjectSize alignment);
+			LObject * CreateFieldWithOffset(LObject * create_under, const string & name, LObject * type, XA::ObjectSize offs_override);
+			LObject * CreateFieldWithAlignment(LObject * create_under, const string & name, LObject * type, XA::ObjectSize alignment);
+			LObject * CreateFieldRegular(LObject * create_under, const string & name, LObject * type, bool natural_alignment);
 			LObject * CreateProperty(LObject * create_under, const string & name, LObject * type);
 			LObject * CreatePropertySetter(LObject * prop, uint flags);
 			LObject * CreatePropertyGetter(LObject * prop, uint flags);
@@ -189,8 +190,10 @@ namespace Engine
 			bool IsInterface(LObject * cls);
 			XA::ArgumentSemantics GetClassSemantics(LObject * cls);
 			XA::ObjectSize GetClassInstanceSize(LObject * cls);
+			XA::ObjectSize GetClassInstanceAlignment(LObject * cls);
 			void SetClassSemantics(LObject * cls, XA::ArgumentSemantics value);
 			void SetClassInstanceSize(LObject * cls, XA::ObjectSize value);
+			void SetClassInstanceAlignment(LObject * cls, XA::ObjectSize value);
 			void MarkClassAsCore(LObject * cls);
 			void MarkClassAsStandard(LObject * cls);
 			void MarkClassAsInterface(LObject * cls);
@@ -202,6 +205,7 @@ namespace Engine
 			void AdoptParentClass(LObject * cls, LObject * parent);
 			void AdoptInterface(LObject * cls, LObject * interface);
 			void LockClass(LObject * cls, bool lock);
+			void AlignInstanceSize(LObject * cls);
 			LObject * QueryObject(const string & path);
 			LObject * QueryScope(void);
 			LObject * QueryStaticArray(LObject * type, int volume);
@@ -211,6 +215,7 @@ namespace Engine
 			LObject * QueryTernaryResult(LObject * cond, LObject * if_true, LObject * if_false);
 			LObject * QueryTypeOfOperator(void);
 			LObject * QuerySizeOfOperator(bool max_size = false);
+			LObject * QueryAlignmentOfOperator(bool max_align = false);
 			LObject * QueryModuleOperator(void);
 			LObject * QueryModuleOperator(const string & name);
 			LObject * QueryInterfaceOperator(const string & name);

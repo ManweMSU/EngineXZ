@@ -89,6 +89,8 @@ namespace Engine
 					uint32 class_argument_semantics;
 					uint32 class_byte_size;
 					uint32 class_word_size;
+					uint32 class_byte_align;
+					uint32 class_word_align;
 					XI_Interface class_parent;
 					uint32 class_interface_list_offset;
 					uint32 class_interface_list_size;
@@ -224,6 +226,8 @@ namespace Engine
 				hdr.class_argument_semantics = uint32(src.instance_spec.semantics);
 				hdr.class_byte_size = src.instance_spec.size.num_bytes;
 				hdr.class_word_size = src.instance_spec.size.num_words;
+				hdr.class_byte_align = src.instance_align.num_bytes;
+				hdr.class_word_align = src.instance_align.num_words;
 				EncodeInterface(info, hdr.class_parent, src.parent_class);
 				if (src.interfaces_implements.Length()) {
 					Array<DS::XI_Interface> ilist(1);
@@ -432,6 +436,8 @@ namespace Engine
 				dest.instance_spec.semantics = static_cast<XA::ArgumentSemantics>(hdr->class_argument_semantics);
 				dest.instance_spec.size.num_bytes = hdr->class_byte_size;
 				dest.instance_spec.size.num_words = hdr->class_word_size;
+				dest.instance_align.num_bytes = hdr->class_byte_align;
+				dest.instance_align.num_words = hdr->class_word_align;
 				DecodeInterface(dest.parent_class, info, hdr->class_parent);
 				auto ihdr = ReadObjects<DS::XI_Interface>(info, hdr->class_interface_list_offset);
 				for (uint i = 0; i < hdr->class_interface_list_size; i++) {

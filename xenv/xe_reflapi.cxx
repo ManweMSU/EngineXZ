@@ -430,6 +430,7 @@ namespace Engine
 			virtual string GetClassName(ErrorContext & ectx) noexcept { XE_TRY_INTRO return _cls->GetClassName(); XE_TRY_OUTRO(L""); }
 			virtual uint GetSemantics(void) noexcept { return uint(_cls->GetClassSemantics()); }
 			virtual uintptr GetSize(void) noexcept { return _cls->GetInstanceSize(); }
+			virtual uintptr GetAlignment(void) noexcept { return _cls->GetInstanceAlign(); }
 			virtual SafePointer<RClassSymbol> GetParentClass(ErrorContext & ectx) noexcept
 			{
 				XE_TRY_INTRO

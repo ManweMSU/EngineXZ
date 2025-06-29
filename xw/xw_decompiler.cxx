@@ -2010,7 +2010,7 @@ namespace Engine
 					_state->_current->class_size = AddressAlign(_state->_current->class_size, tdata.class_alignment);
 					if (tdata.class_alignment > _state->_current->class_alignment) _state->_current->class_alignment = tdata.class_alignment;
 					SafePointer<XL::XType> type = XL::CreateType(L"C" + tdata.symbol_refer_publically, _ctx);
-					_ctx.CreateField(_state->_class, vname, type, XA::TH::MakeSize(_state->_current->class_size, 0));
+					_ctx.CreateFieldWithOffset(_state->_class, vname, type, XA::TH::MakeSize(_state->_current->class_size, 0));
 					auto fsize = type->GetArgumentSpecification();
 					_state->_current->class_size += fsize.size.num_bytes + 4 * fsize.size.num_words;
 					_state->_current->fields.Append(fld.offset.num_words * 4 + fld.offset.num_bytes, Volumes::KeyValuePair<string, string>(vname, fld.type_canonical_name));

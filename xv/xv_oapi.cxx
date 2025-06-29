@@ -1042,7 +1042,7 @@ namespace Engine
 							cptinfo.field_name = L"_@" + name;
 							_capture.Append(name, cptinfo);
 							SafePointer<XL::LObject> type = intinfo.object->GetType();
-							_ctx.CreateField(_cls, cptinfo.field_name, type, true);
+							_ctx.CreateFieldRegular(_cls, cptinfo.field_name, type, true);
 							info.object = _fctx->GetInstance()->GetMember(cptinfo.field_name);
 							info.holder.SetRetain(_fctx->GetInstance());
 							info.object_origin_class = 1;
@@ -1062,7 +1062,7 @@ namespace Engine
 									type = _ctx.QueryTypePointer(base_type);
 									_self_capture_object = false;
 								}
-								_ctx.CreateField(_cls, _self_capture.field_name, type, true);
+								_ctx.CreateFieldRegular(_cls, _self_capture.field_name, type, true);
 							}
 							SafePointer<XL::LObject> self_ptr = _fctx->GetInstance()->GetMember(_self_capture.field_name);
 							SafePointer<XL::LObject> self_ptr_follow = self_ptr->GetMember(XL::OperatorFollow);

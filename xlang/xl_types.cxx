@@ -284,6 +284,7 @@ namespace Engine
 			bool _local, _locked;
 			XI::Module::TypeReference _ref;
 			XA::ArgumentSpecification _type_spec;
+			XA::ObjectSize _alignment;
 			XI::Module::Class::Nature _nature;
 			Volumes::ObjectDictionary<string, LObject> _members;
 			Volumes::Dictionary<string, string> _attributes;
@@ -297,6 +298,7 @@ namespace Engine
 			{
 				_locked = false;
 				_type_spec = XA::TH::MakeSpec(XA::ArgumentSemantics::Object, 0, 0);
+				_alignment = XA::TH::MakeSize(1, 0);
 				_nature = XI::Module::Class::Nature::Standard;
 				_vft_index = -1;
 				_last_vft_index = 0;
@@ -330,6 +332,7 @@ namespace Engine
 				XI::Module::Class self;
 				self.class_nature = _nature;
 				self.instance_spec = _type_spec;
+				self.instance_align = _alignment;
 				self.parent_class.interface_name = _parent._class ? _parent._class->GetFullName() : L"";
 				self.parent_class.vft_pointer_offset = _parent._class && _vft_index < 0 ? _parent._vft_offset : _vft_offset;
 				for (auto & i : _interfaces) {
@@ -347,6 +350,7 @@ namespace Engine
 			virtual XI::Module::TypeReference::Class GetCanonicalTypeClass(void) override { return _ref.GetReferenceClass(); }
 			virtual const XI::Module::TypeReference & GetTypeReference(void) override { return _ref; }
 			virtual XA::ArgumentSpecification GetArgumentSpecification(void) override { return _type_spec; }
+			virtual XA::ObjectSize GetInstanceAlignment(void) override { return _alignment; }
 			virtual LObject * GetConstructorInit(void) override
 			{
 				auto ctor = _members[NameConstructor];
@@ -528,7 +532,36 @@ namespace Engine
 			virtual bool IsLocked(void) override { return _locked; }
 			virtual XI::Module::Class::Nature GetLanguageSemantics(void) override { return _nature; }
 			virtual void OverrideArgumentSpecification(XA::ArgumentSpecification spec) override { _type_spec = spec; }
+			virtual void OverrideAlignment(XA::ObjectSize size) override { _alignment = size; }
 			virtual void OverrideLanguageSemantics(XI::Module::Class::Nature spec) override { _nature = spec; }
+			virtual void AlignInstanceSize(XA::ObjectSize alignment) override
+			{
+				if (alignment.num_bytes >= 8) {
+					while (_type_spec.size.num_bytes & 0x07) _type_spec.size.num_bytes++;
+					while (_type_spec.size.num_words & 0x01) _type_spec.size.num_words++;
+				} else if (alignment.num_words >= 1) {
+					while (_type_spec.size.num_bytes & 0x07) _type_spec.size.num_bytes++;
+				} else if (alignment.num_bytes >= 4) {
+					while (_type_spec.size.num_bytes & 0x03) _type_spec.size.num_bytes++;
+				} else if (alignment.num_bytes >= 2) {
+					while (_type_spec.size.num_bytes & 0x01) _type_spec.size.num_bytes++;
+				}
+			}
+			virtual void AlignInstanceSize(void) override { AlignInstanceSize(_alignment); }
+			virtual void RequireInstanceAlignment(XA::ObjectSize alignment) override
+			{
+				if (alignment.num_bytes >= 8) {
+					_alignment = XA::TH::MakeSize(8, 0);
+				} else if (alignment.num_words >= 1) {
+					if (_alignment.num_bytes < 8) _alignment = XA::TH::MakeSize(0, 1);
+				} else if (alignment.num_bytes >= 4) {
+					if (_alignment.num_bytes < 4 && _alignment.num_words < 1) _alignment = XA::TH::MakeSize(4, 0);
+				} else if (alignment.num_bytes >= 2) {
+					if (_alignment.num_bytes < 2 && _alignment.num_words < 1) _alignment = XA::TH::MakeSize(2, 0);
+				} else {
+					if (_alignment.num_bytes < 1 && _alignment.num_words < 1) _alignment = XA::TH::MakeSize(1, 0);
+				}
+			}
 			virtual void UpdateInternals(void) override
 			{
 				_last_vft_index = 0;
@@ -582,6 +615,7 @@ namespace Engine
 				if (_nature != XI::Module::Class::Nature::Interface && source->_nature == XI::Module::Class::Nature::Interface) throw InvalidArgumentException();
 				if (alternate) {
 					_type_spec = source->_type_spec;
+					_alignment = source->_alignment;
 					_nature = source->_nature;
 					_last_vft_index = source->_last_vft_index;
 					_vft_index = source->_vft_index;
@@ -600,7 +634,8 @@ namespace Engine
 				ObjectArray<XType> conf(0x20);
 				GetTypesConformsTo(conf);
 				for (auto & c : conf) if (c.GetCanonicalType() == interface->GetCanonicalType()) return;
-				while (_type_spec.size.num_bytes & 0x07) _type_spec.size.num_bytes++;
+				AlignInstanceSize(XA::TH::MakeSize(0, 1));
+				RequireInstanceAlignment(XA::TH::MakeSize(0, 1));
 				_last_vft_index++;
 				_interface_info info;
 				info._class = source;
@@ -765,7 +800,7 @@ namespace Engine
 				SafePointer<XType> type_void = CreateType(XI::Module::TypeReference::MakeClassReference(NameVoid), _ctx);
 				int vf_min, vf_max;
 				GetRangeVF(vft, vf_min, vf_max);
-				auto vft_var = _ctx.CreateVariable(this, name, type_void, XA::TH::MakeSize(0, vf_max + 1));
+				auto vft_var = _ctx.CreateVariable(this, name, type_void, XA::TH::MakeSize(0, vf_max + 1), XA::TH::MakeSize(0, 1));
 				for (int i = vf_min; i <= vf_max; i++) {
 					auto impl = GetCurrentImplementationForVF(vft, i);
 					if (impl) {
@@ -928,6 +963,11 @@ namespace Engine
 				auto volume = _ref.GetArrayVolume();
 				auto element_spec = element->GetArgumentSpecification();
 				return XA::TH::MakeSpec(XA::ArgumentSemantics::Object, element_spec.size.num_bytes * volume, element_spec.size.num_words * volume);
+			}
+			virtual XA::ObjectSize GetInstanceAlignment(void) override
+			{
+				SafePointer<XType> element = CreateType(_ref.GetArrayElement().QueryCanonicalName(), _ctx);
+				return element->GetInstanceAlignment();
 			}
 			virtual LObject * GetConstructorInit(void) override { return CreateStaticArrayRoutine(this, CreateMethodConstructorInit); }
 			virtual LObject * GetConstructorCopy(void) override { return CreateStaticArrayRoutine(this, CreateMethodConstructorCopy); }
@@ -1156,6 +1196,7 @@ namespace Engine
 			virtual XI::Module::TypeReference::Class GetCanonicalTypeClass(void) override { return _ref.GetReferenceClass(); }
 			virtual const XI::Module::TypeReference & GetTypeReference(void) override { return _ref; }
 			virtual XA::ArgumentSpecification GetArgumentSpecification(void) override { return XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1); }
+			virtual XA::ObjectSize GetInstanceAlignment(void) override { return XA::TH::MakeSize(0, 1); }
 			virtual LObject * GetConstructorInit(void) override { return new PointerConstructor(_ctx, PointerConstructorClass::Init); }
 			virtual LObject * GetConstructorCopy(void) override { return new PointerConstructor(_ctx, PointerConstructorClass::Copy); }
 			virtual LObject * GetConstructorZero(void) override { return new PointerConstructor(_ctx, PointerConstructorClass::Init); }
@@ -1310,6 +1351,7 @@ namespace Engine
 			virtual XI::Module::TypeReference::Class GetCanonicalTypeClass(void) override { return _ref.GetReferenceClass(); }
 			virtual const XI::Module::TypeReference & GetTypeReference(void) override { return _ref; }
 			virtual XA::ArgumentSpecification GetArgumentSpecification(void) override { return XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, 0, 1); }
+			virtual XA::ObjectSize GetInstanceAlignment(void) override { return XA::TH::MakeSize(0, 1); }
 			virtual LObject * GetConstructorInit(void) override { throw ObjectHasNoSuchMemberException(this, NameConstructor); }
 			virtual LObject * GetConstructorCopy(void) override { return new PointerConstructor(_ctx, PointerConstructorClass::Copy); }
 			virtual LObject * GetConstructorZero(void) override { return new PointerConstructor(_ctx, PointerConstructorClass::Init); }
@@ -1349,6 +1391,7 @@ namespace Engine
 			virtual XI::Module::TypeReference::Class GetCanonicalTypeClass(void) override { return _ref.GetReferenceClass(); }
 			virtual const XI::Module::TypeReference & GetTypeReference(void) override { return _ref; }
 			virtual XA::ArgumentSpecification GetArgumentSpecification(void) override { return XA::TH::MakeSpec(XA::ArgumentSemantics::Unknown, 0, 0); }
+			virtual XA::ObjectSize GetInstanceAlignment(void) override { return XA::TH::MakeSize(0, 0); }
 			virtual LObject * GetConstructorInit(void) override { throw ObjectHasNoSuchMemberException(this, NameConstructor); }
 			virtual LObject * GetConstructorCopy(void) override { throw ObjectHasNoSuchMemberException(this, NameConstructor); }
 			virtual LObject * GetConstructorZero(void) override { throw ObjectHasNoSuchMemberException(this, NameConstructorZero); }

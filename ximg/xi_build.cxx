@@ -169,6 +169,8 @@ namespace Engine
 				auto it = cn->GetValueString(L"Instance.Semantics");
 				cls.instance_spec.size.num_bytes = cn->GetValueInteger(L"Instance.Size.B");
 				cls.instance_spec.size.num_words = cn->GetValueInteger(L"Instance.Size.W");
+				cls.instance_align.num_bytes = cn->GetValueInteger(L"Instance.Align.B");
+				cls.instance_align.num_words = cn->GetValueInteger(L"Instance.Align.W");
 				if (string::CompareIgnoreCase(it, L"error") == 0) cls.instance_spec.semantics = XA::ArgumentSemantics::ErrorData;
 				else if (string::CompareIgnoreCase(it, L"rtti") == 0) cls.instance_spec.semantics = XA::ArgumentSemantics::RTTI;
 				else if (string::CompareIgnoreCase(it, L"this") == 0) cls.instance_spec.semantics = XA::ArgumentSemantics::This;

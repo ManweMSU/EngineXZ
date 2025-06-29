@@ -544,10 +544,10 @@ namespace Engine
 					desc.VertexShader = vertex->Expose();
 					desc.PixelShader = pixel->Expose();
 					desc.RenderTargetCount = *reinterpret_cast<const uint *>(src + 2 * sizeof(handle));
-					MemoryCopy(&desc.RenderTarget, src + 2 * sizeof(handle) + 8, sizeof(desc.RenderTarget));
-					MemoryCopy(&desc.DepthStencil, src + 2 * sizeof(handle) + 8 + sizeof(desc.RenderTarget), sizeof(desc.DepthStencil));
-					MemoryCopy(&desc.Rasterization, src + 2 * sizeof(handle) + 8 + sizeof(desc.RenderTarget) + sizeof(desc.DepthStencil), sizeof(desc.Rasterization));
-					MemoryCopy(&desc.Topology, src + 2 * sizeof(handle) + 8 + sizeof(desc.RenderTarget) + sizeof(desc.DepthStencil) + sizeof(desc.Rasterization), sizeof(desc.Topology));
+					MemoryCopy(&desc.RenderTarget, src + 2 * sizeof(handle) + 4, sizeof(desc.RenderTarget));
+					MemoryCopy(&desc.DepthStencil, src + 2 * sizeof(handle) + 4 + sizeof(desc.RenderTarget), sizeof(desc.DepthStencil));
+					MemoryCopy(&desc.Rasterization, src + 2 * sizeof(handle) + 4 + sizeof(desc.RenderTarget) + sizeof(desc.DepthStencil), sizeof(desc.Rasterization));
+					MemoryCopy(&desc.Topology, src + 2 * sizeof(handle) + 4 + sizeof(desc.RenderTarget) + sizeof(desc.DepthStencil) + sizeof(desc.Rasterization), sizeof(desc.Topology));
 					SafePointer<Graphics::IPipelineState> state = _device->CreateRenderingPipelineState(desc);
 					if (!state) return 0;
 					return new XPipelineState(state, this);

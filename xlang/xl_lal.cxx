@@ -258,6 +258,73 @@ namespace Engine
 			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
 			virtual string ToString(void) const override { return L"sizeof"; }
 		};
+		class XAlignmentOf : public XInternal
+		{
+			LContext & _ctx;
+			bool _mx;
+			class _computable : public Object, public IComputableProvider
+			{
+			public:
+				SafePointer<XType> _retval;
+				XA::ObjectSize _alignment;
+			public:
+				_computable(void) {}
+				virtual ~_computable(void) override {}
+				virtual Object * ComputableProviderQueryObject(void) override { return this; }
+				virtual XType * ComputableGetType(void) override { _retval->Retain(); return _retval; }
+				virtual XA::ExpressionTree ComputableEvaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override
+				{
+					auto intptr = XA::TH::MakeSpec(XA::TH::MakeSize(0, 1));
+					auto offset = XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceTransform, XA::TransformAddressOffset, XA::ReferenceFlagInvoke));
+					XA::TH::AddTreeInput(offset, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceNull)), intptr);
+					XA::TH::AddTreeInput(offset, XA::TH::MakeTree(XA::TH::MakeRef(XA::ReferenceLiteral)), XA::TH::MakeSpec(XA::ArgumentSemantics::Unclassified, _alignment));
+					XA::TH::AddTreeOutput(offset, intptr);
+					return MakeAddressOf(offset, intptr.size);
+				}
+			};
+		public:
+			XAlignmentOf(LContext & ctx, bool max_size) : _ctx(ctx), _mx(max_size) {}
+			virtual ~XAlignmentOf(void) override {}
+			virtual LObject * GetType(void) override { throw ObjectHasNoTypeException(this); }
+			virtual LObject * Invoke(int argc, LObject ** argv, LObject ** actual) override
+			{
+				if (argc != 1) throw ObjectHasNoSuchOverloadException(this, argc, argv);
+				if (actual) { *actual = this; Retain(); }
+				SafePointer<LObject> type;
+				if (argv[0]->GetClass() == Class::Type) type.SetRetain(argv[0]);
+				else type = argv[0]->GetType();
+				if (_mx) {
+					auto alignment = _ctx.GetClassInstanceAlignment(type);
+					if (alignment.num_bytes >= 8 || alignment.num_words) _ctx.QueryLiteral(uint64(8));
+					else if (alignment.num_bytes >= 4) _ctx.QueryLiteral(uint64(4));
+					else if (alignment.num_bytes >= 2) _ctx.QueryLiteral(uint64(2));
+					else _ctx.QueryLiteral(uint64(1));
+				} else {
+					SafePointer<_computable> com = new _computable;
+					com->_alignment = _ctx.GetClassInstanceAlignment(type);
+					com->_retval = CreateType(XI::Module::TypeReference::MakeClassReference(NameUIntPtr), _ctx);
+					return CreateComputable(_ctx, com);
+				}
+			}
+			virtual void ListInvokations(LObject * first, Volumes::List<InvokationDesc> & list) override
+			{
+				InvokationDesc result;
+				if (_mx) {
+					SafePointer<LObject> type = _ctx.QueryObject(NameInt32);
+					Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(type, Class::Null);
+					result.arglist.InsertLast(rv);
+				} else {
+					SafePointer<LObject> type = _ctx.QueryObject(NameUIntPtr);
+					Volumes::KeyValuePair< SafePointer<LObject>, Class > rv(type, Class::Null);
+					result.arglist.InsertLast(rv);
+				}
+				Volumes::KeyValuePair< SafePointer<LObject>, Class > in(0, Class::Null);
+				result.arglist.InsertLast(in);
+				list.InsertLast(result);
+			}
+			virtual XA::ExpressionTree Evaluate(XA::Function & func, XA::ExpressionTree * error_ctx) override { throw ObjectIsNotEvaluatableException(this); }
+			virtual string ToString(void) const override { return L"alignment"; }
+		};
 		class ModuleProvider : public Object, public IComputableProvider
 		{
 			LContext & _ctx;
@@ -460,6 +527,7 @@ namespace Engine
 				obj->AddMember(GetName(c.key), cls);
 				cls->OverrideLanguageSemantics(c.value.class_nature);
 				cls->OverrideArgumentSpecification(c.value.instance_spec);
+				cls->OverrideAlignment(c.value.instance_align);
 				cpp.Append(cls, &c.value);
 			} catch (...) {}
 			for (auto & c : module.aliases) try {
@@ -658,13 +726,14 @@ namespace Engine
 			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
 			auto xtype = static_cast<XType *>(type);
 			if (xtype->IsLocked()) throw InvalidStateException();
+			auto alignment = xtype->GetInstanceAlignment();
 			auto size = xtype->GetArgumentSpecification().size;
 			int align = 1;
 			int max_size = size.num_bytes + 8 * size.num_words;
-			if (size.num_bytes > 1) align = 2;
-			if (size.num_bytes > 3) align = 4;
-			if (size.num_bytes > 7) align = 8;
-			if (size.num_words) align = 8;
+			if (alignment.num_bytes > 1) align = 2;
+			if (alignment.num_bytes > 3) align = 4;
+			if (alignment.num_bytes > 7) align = 8;
+			if (alignment.num_words) align = 8;
 			while (_data->Length() % align) _data->Append(0);
 			auto offset = _data->Length();
 			for (int i = 0; i < max_size; i++) _data->Append(0);
@@ -674,7 +743,7 @@ namespace Engine
 			create_under->AddMember(name, var);
 			return var;
 		}
-		LObject * LContext::CreateVariable(LObject * create_under, const string & name, LObject * type, XA::ObjectSize size)
+		LObject * LContext::CreateVariable(LObject * create_under, const string & name, LObject * type, XA::ObjectSize size, XA::ObjectSize alignment)
 		{
 			if (!create_under) throw InvalidArgumentException();
 			if (create_under->GetClass() != Class::Namespace && create_under->GetClass() != Class::Type) throw InvalidArgumentException();
@@ -682,10 +751,10 @@ namespace Engine
 			auto xtype = static_cast<XType *>(type);
 			int align = 1;
 			int max_size = size.num_bytes + 8 * size.num_words;
-			if (size.num_bytes > 1) align = 2;
-			if (size.num_bytes > 3) align = 4;
-			if (size.num_bytes > 7) align = 8;
-			if (size.num_words) align = 8;
+			if (alignment.num_bytes > 1) align = 2;
+			if (alignment.num_bytes > 3) align = 4;
+			if (alignment.num_bytes > 7) align = 8;
+			if (alignment.num_words) align = 8;
 			while (_data->Length() % align) _data->Append(0);
 			auto offset = _data->Length();
 			for (int i = 0; i < max_size; i++) _data->Append(0);
@@ -695,7 +764,7 @@ namespace Engine
 			create_under->AddMember(name, var);
 			return var;
 		}
-		LObject * LContext::CreateField(LObject * create_under, const string & name, LObject * type, XA::ObjectSize offs_override)
+		LObject * LContext::CreateFieldWithOffset(LObject * create_under, const string & name, LObject * type, XA::ObjectSize offs_override)
 		{
 			if (!create_under || create_under->GetClass() != Class::Type) throw InvalidArgumentException();
 			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
@@ -706,7 +775,7 @@ namespace Engine
 			auto class_create_under = static_cast<XClass *>(create_under);
 			return XL::CreateField(class_create_under, type_type, name, offs_override);
 		}
-		LObject * LContext::CreateField(LObject * create_under, const string & name, LObject * type, bool align_mode)
+		LObject * LContext::CreateFieldWithAlignment(LObject * create_under, const string & name, LObject * type, XA::ObjectSize alignment)
 		{
 			if (!create_under || create_under->GetClass() != Class::Type) throw InvalidArgumentException();
 			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
@@ -715,30 +784,25 @@ namespace Engine
 			if (type_type->IsLocked()) throw InvalidStateException();
 			if (type_create_under->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
 			auto class_create_under = static_cast<XClass *>(create_under);
-			XA::ObjectSize offset;
-			if (align_mode) {
-				auto spec_type = type_type->GetArgumentSpecification();
-				auto spec_class = class_create_under->GetArgumentSpecification();
-				offset = spec_class.size;
-				if (spec_type.size.num_words) while (offset.num_bytes & 0x07) offset.num_bytes++;
-				if ((spec_type.size.num_bytes & 0x07) == 0 && spec_type.size.num_bytes) {
-					while (offset.num_bytes & 0x07) offset.num_bytes++;
-					while (offset.num_words & 0x01) offset.num_words++;
-				}
-				if ((spec_type.size.num_bytes & 0x03) == 0) while (offset.num_bytes & 0x03) offset.num_bytes++;
-				if ((spec_type.size.num_bytes & 0x01) == 0) while (offset.num_bytes & 0x01) offset.num_bytes++;
-				XA::ObjectSize resize;
-				resize.num_bytes = offset.num_bytes + spec_type.size.num_bytes;
-				resize.num_words = offset.num_words + spec_type.size.num_words;
-				class_create_under->OverrideArgumentSpecification(XA::TH::MakeSpec(spec_class.semantics, resize));
-			} else {
-				offset = class_create_under->GetArgumentSpecification().size;
-				XA::ObjectSize resize;
-				resize.num_bytes = offset.num_bytes + type_type->GetArgumentSpecification().size.num_bytes;
-				resize.num_words = offset.num_words + type_type->GetArgumentSpecification().size.num_words;
-				class_create_under->OverrideArgumentSpecification(XA::TH::MakeSpec(class_create_under->GetArgumentSpecification().semantics, resize));
-			}
+			class_create_under->RequireInstanceAlignment(alignment);
+			class_create_under->AlignInstanceSize(alignment);
+			auto spec_type = type_type->GetArgumentSpecification();
+			auto spec_class = class_create_under->GetArgumentSpecification();
+			XA::ObjectSize offset = spec_class.size, resize;
+			resize.num_bytes = offset.num_bytes + spec_type.size.num_bytes;
+			resize.num_words = offset.num_words + spec_type.size.num_words;
+			class_create_under->OverrideArgumentSpecification(XA::TH::MakeSpec(spec_class.semantics, resize));
 			return XL::CreateField(class_create_under, type_type, name, offset);
+		}
+		LObject * LContext::CreateFieldRegular(LObject * create_under, const string & name, LObject * type, bool natural_alignment)
+		{
+			if (!create_under || create_under->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (!type || type->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (natural_alignment) {
+				return CreateFieldWithAlignment(create_under, name, type, static_cast<XType *>(type)->GetInstanceAlignment());
+			} else {
+				return CreateFieldWithAlignment(create_under, name, type, XA::TH::MakeSize(1, 0));
+			}
 		}
 		LObject * LContext::CreateProperty(LObject * create_under, const string & name, LObject * type)
 		{
@@ -808,6 +872,11 @@ namespace Engine
 			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
 			return static_cast<XType *>(cls)->GetArgumentSpecification().size;
 		}
+		XA::ObjectSize LContext::GetClassInstanceAlignment(LObject * cls)
+		{
+			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
+			return static_cast<XType *>(cls)->GetInstanceAlignment();
+		}
 		void LContext::SetClassSemantics(LObject * cls, XA::ArgumentSemantics value)
 		{
 			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
@@ -823,6 +892,13 @@ namespace Engine
 			auto xtype = static_cast<XClass *>(cls);
 			auto spec = xtype->GetArgumentSpecification();
 			xtype->OverrideArgumentSpecification(XA::TH::MakeSpec(spec.semantics, value));
+		}
+		void LContext::SetClassInstanceAlignment(LObject * cls, XA::ObjectSize value)
+		{
+			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			auto xtype = static_cast<XClass *>(cls);
+			xtype->OverrideAlignment(value);
 		}
 		void LContext::MarkClassAsCore(LObject * cls)
 		{
@@ -880,6 +956,7 @@ namespace Engine
 			if (size.num_bytes || size.num_words) throw InvalidStateException();
 			xcls->SetPrimaryVFT(XA::TH::MakeSize(0, 0));
 			xcls->OverrideArgumentSpecification(XA::TH::MakeSpec(spec.semantics, 0, 1));
+			xcls->OverrideAlignment(XA::TH::MakeSize(0, 1));
 		}
 		void LContext::AdoptParentClass(LObject * cls, LObject * parent)
 		{
@@ -904,6 +981,16 @@ namespace Engine
 			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
 			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
 			static_cast<XClass *>(cls)->Lock(lock);
+		}
+		void LContext::AlignInstanceSize(LObject * cls)
+		{
+			if (!cls || cls->GetClass() != Class::Type) throw InvalidArgumentException();
+			if (static_cast<XType *>(cls)->GetCanonicalTypeClass() != XI::Module::TypeReference::Class::Class) throw InvalidArgumentException();
+			if (static_cast<XClass *>(cls)->GetLanguageSemantics() == XI::Module::Class::Nature::Core) {
+				static_cast<XClass *>(cls)->OverrideAlignment(static_cast<XClass *>(cls)->GetArgumentSpecification().size);
+			} else {
+				static_cast<XClass *>(cls)->AlignInstanceSize();
+			}
 		}
 		LObject * LContext::QueryObject(const string & path)
 		{
@@ -964,6 +1051,7 @@ namespace Engine
 		}
 		LObject * LContext::QueryTypeOfOperator(void) { return new XTypeOf; }
 		LObject * LContext::QuerySizeOfOperator(bool max_size) { return new XSizeOf(*this, max_size); }
+		LObject * LContext::QueryAlignmentOfOperator(bool max_align) { return new XAlignmentOf(*this, max_align); }
 		LObject * LContext::QueryModuleOperator(void)
 		{
 			SafePointer<ModuleProvider> provider = new ModuleProvider(*this, L"");

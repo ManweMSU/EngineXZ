@@ -392,6 +392,8 @@ namespace Engine
 					if (is_xv) {
 						AssignAutocomplete(Lexic::KeywordSizeOf, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordSizeOfMX, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordAlignOf, CodeRangeTag::Keyword);
+						AssignAutocomplete(Lexic::KeywordAlignOfMX, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordModule, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordInterface, CodeRangeTag::Keyword);
 						AssignAutocomplete(Lexic::KeywordFunction, CodeRangeTag::Keyword);
@@ -493,6 +495,12 @@ namespace Engine
 					ReadNextToken();
 				} else if (IsKeyword(Lexic::KeywordSizeOfMX) && is_xv) {
 					object = ctx.QuerySizeOfOperator(true);
+					ReadNextToken();
+				} else if (IsKeyword(Lexic::KeywordAlignOf) && is_xv) {
+					object = ctx.QueryAlignmentOfOperator();
+					ReadNextToken();
+				} else if (IsKeyword(Lexic::KeywordAlignOfMX) && is_xv) {
+					object = ctx.QueryAlignmentOfOperator(true);
 					ReadNextToken();
 				} else if (IsKeyword(Lexic::KeywordModule) && is_xv) {
 					auto def = current_token;
@@ -1477,6 +1485,8 @@ namespace Engine
 				}
 				bool is_abstract = IsKeyword(Lexic::KeywordVirtual) || is_interface;
 				bool enable_rpc = false;
+				XA::ObjectSize override_alignment;
+				override_alignment.num_bytes = override_alignment.num_words = 0;
 				if (is_abstract && is_xw) Abort(CompilerStatus::AnotherTokenExpected, current_token);
 				if (IsKeyword(Lexic::KeywordVirtual)) ReadNextToken();
 				AssertIdent();
@@ -1524,6 +1534,13 @@ namespace Engine
 								if (sep.Length() == 2) size.num_words = sep[1].ToUInt32(); else size.num_words = 0;
 							} catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
 							ctx.SetClassInstanceSize(type, size);
+						} else if (attr.key == Lexic::AttributeAlign) {
+							auto sep = attr.value.Split(L':');
+							if (sep.Length() > 2) Abort(CompilerStatus::InapproptiateAttribute, definition);
+							try {
+								override_alignment.num_bytes = sep[0].ToUInt32();
+								if (sep.Length() == 2) override_alignment.num_words = sep[1].ToUInt32(); else override_alignment.num_words = 0;
+							} catch (...) { Abort(CompilerStatus::InapproptiateAttribute, definition); }
 						} else if (attr.key == Lexic::AttributeCore) {
 							if (attr.value.Length() || is_interface) Abort(CompilerStatus::InapproptiateAttribute, definition);
 							ctx.MarkClassAsCore(type);
@@ -1585,6 +1602,8 @@ namespace Engine
 						XL::CreateMethodAssign);
 				}
 				ctx.LockClass(type, false);
+				if (override_alignment.num_bytes || override_alignment.num_words) ctx.SetClassInstanceAlignment(type, override_alignment);
+				ctx.AlignInstanceSize(type);
 				AssignTokenInfo(definition, type, true, false);
 				if (documentation && !NameIsPrivate(type->GetFullName())) {
 					auto page = documentation->AddPage(type->GetFullName(), ManualPageClass::Class);
@@ -1976,6 +1995,7 @@ namespace Engine
 				ctx.CreateClassDefaultMethods(type, XL::CreateMethodDestructor | XL::CreateMethodConstructorInit |
 					XL::CreateMethodConstructorCopy | XL::CreateMethodConstructorMove | XL::CreateMethodConstructorZero |
 					XL::CreateMethodAssign, vft_init_seq);
+				ctx.AlignInstanceSize(type);
 				for (auto & s : vft_init_seq) RegisterInitHandler(InitPriorityVFT, &s, 0);
 				CreateEnumerationRoutines(db, type);
 				AssignTokenInfo(definition, type, true, false);
@@ -2044,8 +2064,8 @@ namespace Engine
 						AssertIdent(); auto name = current_token.contents; auto def = current_token; ReadNextToken();
 						if (IsPunct(L";") && !is_interface && !is_continue) {
 							ReadNextToken();
-							int align_mode = 0; // 0 - align, 1 - don't align, 2 - explicit offset
-							XA::ObjectSize offset;
+							int align_mode = 0; // 0 - align, 1 - don't align, 2 - explicit offset, 3 - explicit alignment
+							XA::ObjectSize offset, alignment;
 							if (is_xv) for (auto & a : attributes) {
 								if (a.key == Lexic::AttributeOffset) {
 									if (align_mode) Abort(CompilerStatus::InapproptiateAttribute, def);
@@ -2057,6 +2077,16 @@ namespace Engine
 										offset.num_bytes = sep[0].ToUInt32();
 										if (sep.Length() == 2) offset.num_words = sep[1].ToUInt32();
 									} catch (...) { Abort(CompilerStatus::InapproptiateAttribute, def); }
+								} else if (a.key == Lexic::AttributeAlign) {
+									if (align_mode) Abort(CompilerStatus::InapproptiateAttribute, def);
+									align_mode = 3;
+									alignment.num_bytes = alignment.num_words = 0;
+									auto sep = a.value.Split(L':');
+									if (sep.Length() > 2) Abort(CompilerStatus::InapproptiateAttribute, def);
+									try {
+										alignment.num_bytes = sep[0].ToUInt32();
+										if (sep.Length() == 2) alignment.num_words = sep[1].ToUInt32();
+									} catch (...) { Abort(CompilerStatus::InapproptiateAttribute, def); }
 								} else if (a.key == Lexic::AttributeUnalign) {
 									if (align_mode || a.value.Length()) Abort(CompilerStatus::InapproptiateAttribute, def);
 									align_mode = 1;
@@ -2064,14 +2094,16 @@ namespace Engine
 							}
 							XL::LObject * field;
 							try {
-								if (align_mode == 2) field = ctx.CreateField(cls, name, type, offset);
-								else if (align_mode == 1) field = ctx.CreateField(cls, name, type, false);
-								else field = ctx.CreateField(cls, name, type, true);
+								if (align_mode == 3) field = ctx.CreateFieldWithAlignment(cls, name, type, alignment);
+								else if (align_mode == 2) field = ctx.CreateFieldWithOffset(cls, name, type, offset);
+								else if (align_mode == 1) field = ctx.CreateFieldRegular(cls, name, type, false);
+								else field = ctx.CreateFieldRegular(cls, name, type, true);
 							} catch (...) { Abort(CompilerStatus::SymbolRedefinition, def); }
 							for (auto & a : attributes) {
 								if (a.key[0] == L'[') {
 									if (a.key == Lexic::AttributeOffset && is_xv) {
 									} else if (a.key == Lexic::AttributeUnalign && is_xv) {
+									} else if (a.key == Lexic::AttributeAlign && is_xv) {
 									} else Abort(CompilerStatus::InapproptiateAttribute, def);
 								} else field->AddAttribute(a.key, a.value);
 							}

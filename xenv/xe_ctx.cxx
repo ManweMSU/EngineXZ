@@ -535,7 +535,8 @@ namespace Engine
 					}
 					bool class_discard = false;
 					SafePointer<ClassSymbol> cls = new ClassSymbol(c.key, c.value.instance_spec.semantics,
-						c.value.instance_spec.size.num_bytes + c.value.instance_spec.size.num_words * word_size, c.value.attributes);
+						c.value.instance_spec.size.num_bytes + c.value.instance_spec.size.num_words * word_size,
+						c.value.instance_align.num_bytes + c.value.instance_align.num_words * word_size, c.value.attributes);
 					if (c.value.parent_class.vft_pointer_offset.num_bytes != 0xFFFFFFFF && c.value.parent_class.vft_pointer_offset.num_words != 0xFFFFFFFF) {
 						int offset = c.value.parent_class.vft_pointer_offset.num_bytes + c.value.parent_class.vft_pointer_offset.num_words * word_size;
 						if (c.value.parent_class.interface_name.Length()) cls->AddParentClass(c.value.parent_class.interface_name, offset, 0);

@@ -39,6 +39,8 @@ namespace Engine
 			if (str == Lexic::KeywordThrow) return true;
 			if (str == Lexic::KeywordSizeOf) return true;
 			if (str == Lexic::KeywordSizeOfMX) return true;
+			if (str == Lexic::KeywordAlignOf) return true;
+			if (str == Lexic::KeywordAlignOfMX) return true;
 			if (str == Lexic::KeywordModule) return true;
 			if (str == Lexic::KeywordArray) return true;
 			if (str == Lexic::KeywordConst) return true;
