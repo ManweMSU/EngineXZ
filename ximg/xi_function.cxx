@@ -56,7 +56,7 @@ namespace Engine
 		}
 		void MakeFunction(Module::Function & dest, const string & import_name)
 		{
-			dest.code = import_name.EncodeSequence(Encoding::UTF16, true);
+			dest.code = import_name.EncodeSequence(Encoding::UTF8, true);
 			dest.code_flags &= Module::Function::FunctionMiscMask;
 			dest.code_flags |= Module::Function::FunctionClassImport | Module::Function::FunctionImportNear;
 		}
@@ -65,8 +65,8 @@ namespace Engine
 			dest.code = new DataBlock(1);
 			dest.code_flags &= Module::Function::FunctionMiscMask;
 			dest.code_flags |= Module::Function::FunctionClassImport | Module::Function::FunctionImportFar;
-			SafePointer<DataBlock> s1 = import_name.EncodeSequence(Encoding::UTF16, true);
-			SafePointer<DataBlock> s2 = dl_name.EncodeSequence(Encoding::UTF16, true);
+			SafePointer<DataBlock> s1 = import_name.EncodeSequence(Encoding::UTF8, true);
+			SafePointer<DataBlock> s2 = dl_name.EncodeSequence(Encoding::UTF8, true);
 			dest.code->Append(*s1);
 			dest.code->Append(*s2);
 		}
@@ -84,12 +84,13 @@ namespace Engine
 					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(func.code->GetBuffer(), func.code->Length());
 					loader->HandleAbstractFunction(symbol, func, stream);
 				} else if (ftyp == Module::Function::FunctionXA_Platform) {
-					try {
+					if (func.code->Length() >= 8) try {
 						uint32 abi = EncodeABI(loader->GetArchitecture(), loader->GetEnvironment());
 						int pos = 0;
-						while (pos + 8 <= func.code->Length()) {
+						while (pos <= func.code->Length() - 8) {
 							uint32 abi_cmp = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos);
 							uint32 length = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos + 4);
+							if (length > uint32(func.code->Length() - 8 - pos)) break;
 							if (abi_cmp == abi) {
 								SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(func.code->GetBuffer() + pos + 8, length);
 								loader->HandlePlatformFunction(symbol, func, stream);
@@ -100,17 +101,23 @@ namespace Engine
 					loader->HandleLoadError(symbol, func, LoadFunctionError::NoTargetPlatform);
 				} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
 			} else if (fcls == Module::Function::FunctionClassImport) {
+				auto ustr = reinterpret_cast<const uint8 *>(func.code->GetBuffer());
+				auto ulen = func.code->Length();
 				if (ftyp == Module::Function::FunctionImportNear) {
-					auto name = string(func.code->GetBuffer(), -1, Encoding::UTF16);
-					loader->HandleNearImport(symbol, func, name);
-				} else if (ftyp == Module::Function::FunctionImportFar) {
-					auto ustr = reinterpret_cast<const uint16 *>(func.code->GetBuffer());
-					auto ulen = func.code->Length() / 2;
 					int sep = 0;
 					while (sep < ulen && ustr[sep]) sep++;
 					if (sep >= ulen) loader->HandleLoadError(symbol, func, LoadFunctionError::InvalidFunctionFormat);
-					auto name = string(func.code->GetBuffer(), sep * 2, Encoding::UTF16);
-					auto lib = string(func.code->GetBuffer() + sep * 2 + 2, -1, Encoding::UTF16);
+					auto name = string(func.code->GetBuffer(), sep, Encoding::UTF8);
+					loader->HandleNearImport(symbol, func, name);
+				} else if (ftyp == Module::Function::FunctionImportFar) {
+					int sep = 0;
+					while (sep < ulen && ustr[sep]) sep++;
+					if (sep >= ulen) loader->HandleLoadError(symbol, func, LoadFunctionError::InvalidFunctionFormat);
+					int sep2 = sep + 1;
+					while (sep2 < ulen && ustr[sep2]) sep2++;
+					if (sep2 >= ulen) loader->HandleLoadError(symbol, func, LoadFunctionError::InvalidFunctionFormat);
+					auto name = string(func.code->GetBuffer(), sep, Encoding::UTF8);
+					auto lib = string(func.code->GetBuffer() + sep + 1, sep2, Encoding::UTF8);
 					loader->HandleFarImport(symbol, func, name, lib);
 				} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
 			} else loader->HandleLoadError(symbol, func, LoadFunctionError::UnknownImageFlags);
@@ -120,9 +127,9 @@ namespace Engine
 			SafePointer< Array<uint32> > result = new Array<uint32>(0x10);
 			auto fcls = func.code_flags & Module::Function::FunctionClassMask;
 			auto ftyp = func.code_flags & Module::Function::FunctionTypeMask;
-			if (func.code && fcls == Module::Function::FunctionClassXA && ftyp == Module::Function::FunctionXA_Platform) {
+			if (func.code && fcls == Module::Function::FunctionClassXA && ftyp == Module::Function::FunctionXA_Platform && func.code->Length() >= 8) {
 				int pos = 0;
-				while (pos + 8 <= func.code->Length()) {
+				while (pos <= func.code->Length() - 8) {
 					uint32 abi = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos);
 					uint32 length = *reinterpret_cast<const uint32 *>(func.code->GetBuffer() + pos + 4);
 					result->Append(abi);

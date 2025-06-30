@@ -69,6 +69,8 @@ BETA-7:
  + Spotlight Extension
  + New subsystem names
  + XX's introduction message improved
+ + Added instance memory alignment support into XI/XL/XV/XE
+ + XI file format renewval, XI loader security improvements
 
 BETA-8:
  - GUI and CUI libraries

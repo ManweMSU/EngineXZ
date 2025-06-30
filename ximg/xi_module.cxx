@@ -8,9 +8,14 @@ namespace Engine
 		{
 			namespace DS
 			{
+				enum ImageFlags : uint32 {
+					ImageFlagZeroData	= 0x0001,
+				};
 				ENGINE_PACKED_STRUCTURE(XI_Header)
 					uint64 signature;		// "xximago"
 					uint32 format_version;	// 0
+					uint32 image_size;
+					uint32 image_flags;
 					uint32 target_subsystem;
 					uint32 info_segment_offset;
 					uint32 info_segment_size;
@@ -125,8 +130,18 @@ namespace Engine
 				MemoryCopy(data.GetBuffer() + offset, enc->GetBuffer(), enc->Length());
 				return offset;
 			}
-			template<class T> const T * ReadObjects(const DataBlock & data, uint32 at) { return reinterpret_cast<const T *>(data.GetBuffer() + at); }
-			string ReadString(const DataBlock & data, uint32 offset) { return string(data.GetBuffer() + offset, -1, Encoding::UTF8); }
+			template<class T> const T * ReadObjects(const DataBlock & data, uint32 at, uint32 number)
+			{
+				if (at >= uint32(data.Length()) || uint32(data.Length()) - at < uint64(sizeof(T)) * number) throw InvalidFormatException();
+				return reinterpret_cast<const T *>(data.GetBuffer() + at);
+			}
+			string ReadString(const DataBlock & data, uint32 offset)
+			{
+				if (offset >= uint32(data.Length())) throw InvalidFormatException();
+				int length = 0;
+				while (offset + length < data.Length() && data[offset + length]) length++;
+				return string(data.GetBuffer() + offset, length, Encoding::UTF8);
+			}
 			void EncodeImports(DataBlock & info, DS::XI_Header & hdr, const Array<string> & list)
 			{
 				Array<uint32> names(0x10);
@@ -375,17 +390,17 @@ namespace Engine
 			}
 			void DecodeImports(Module & dest, const DS::XI_Header & hdr, const DataBlock & info)
 			{
-				auto itable = ReadObjects<uint32>(info, hdr.import_list_offset);
+				auto itable = ReadObjects<uint32>(info, hdr.import_list_offset, hdr.import_list_size);
 				for (uint i = 0; i < hdr.import_list_size; i++) dest.modules_depends_on << ReadString(info, itable[i]);
 			}
 			void DecodeAttributes(Volumes::Dictionary<string, string> & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				auto atable = ReadObjects<DS::XI_Attribute>(info, offset);
+				auto atable = ReadObjects<DS::XI_Attribute>(info, offset, size);
 				for (uint i = 0; i < size; i++) dest.Append(ReadString(info, atable[i].attribute_name_offset), ReadString(info, atable[i].attribute_value_offset));
 			}
 			void DecodeLiteral(Module::Literal & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				auto hdr = ReadObjects<DS::XI_Literal>(info, offset);
+				auto hdr = ReadObjects<DS::XI_Literal>(info, offset, 1);
 				dest.contents = static_cast<Module::Literal::Class>(hdr->literal_class);
 				dest.length = hdr->literal_size;
 				if (dest.contents == Module::Literal::Class::String) {
@@ -396,7 +411,7 @@ namespace Engine
 			}
 			void DecodeVariable(Module::Variable & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				auto hdr = ReadObjects<DS::XI_Variable>(info, offset);
+				auto hdr = ReadObjects<DS::XI_Variable>(info, offset, 1);
 				dest.type_canonical_name = ReadString(info, hdr->variable_type_cn_offset);
 				dest.offset.num_bytes = hdr->variable_offset_byte_size;
 				dest.offset.num_words = hdr->variable_offset_word_size;
@@ -406,10 +421,12 @@ namespace Engine
 			}
 			void DecodeFunction(Module::Function & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				auto hdr = ReadObjects<DS::XI_Function>(info, offset);
+				auto hdr = ReadObjects<DS::XI_Function>(info, offset, 1);
 				dest.code_flags = hdr->function_flags;
 				dest.vft_index.x = hdr->function_vft_table_index;
 				dest.vft_index.y = hdr->function_vft_function_index;
+				if (hdr->function_code_offset > uint32(info.Length()) || hdr->function_code_size > uint32(info.Length())) throw InvalidArgumentException();
+				if (hdr->function_code_offset + hdr->function_code_size > uint32(info.Length())) throw InvalidArgumentException();
 				dest.code = new DataBlock(1);
 				dest.code->SetLength(hdr->function_code_size);
 				MemoryCopy(dest.code->GetBuffer(), info.GetBuffer() + hdr->function_code_offset, hdr->function_code_size);
@@ -417,7 +434,7 @@ namespace Engine
 			}
 			void DecodeProperty(Module::Property & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				auto hdr = ReadObjects<DS::XI_Property>(info, offset);
+				auto hdr = ReadObjects<DS::XI_Property>(info, offset, 1);
 				dest.type_canonical_name = ReadString(info, hdr->property_type_cn_offset);
 				dest.getter_name = ReadString(info, hdr->property_getter_name_offset);
 				dest.setter_name = ReadString(info, hdr->property_setter_name_offset);
@@ -431,7 +448,7 @@ namespace Engine
 			}
 			void DecodeClass(Module::Class & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				auto hdr = ReadObjects<DS::XI_Class>(info, offset);
+				auto hdr = ReadObjects<DS::XI_Class>(info, offset, 1);
 				dest.class_nature = static_cast<Module::Class::Nature>(hdr->class_language_semantics);
 				dest.instance_spec.semantics = static_cast<XA::ArgumentSemantics>(hdr->class_argument_semantics);
 				dest.instance_spec.size.num_bytes = hdr->class_byte_size;
@@ -439,13 +456,13 @@ namespace Engine
 				dest.instance_align.num_bytes = hdr->class_byte_align;
 				dest.instance_align.num_words = hdr->class_word_align;
 				DecodeInterface(dest.parent_class, info, hdr->class_parent);
-				auto ihdr = ReadObjects<DS::XI_Interface>(info, hdr->class_interface_list_offset);
+				auto ihdr = ReadObjects<DS::XI_Interface>(info, hdr->class_interface_list_offset, hdr->class_interface_list_size);
 				for (uint i = 0; i < hdr->class_interface_list_size; i++) {
 					Module::Interface mint;
 					DecodeInterface(mint, info, ihdr[i]);
 					dest.interfaces_implements.Append(mint);
 				}
-				auto stable = ReadObjects<DS::XI_Symbol>(info, hdr->class_symbol_list_offset);
+				auto stable = ReadObjects<DS::XI_Symbol>(info, hdr->class_symbol_list_offset, hdr->class_symbol_list_size);
 				for (uint i = 0; i < hdr->class_symbol_list_size; i++) {
 					auto & si = stable[i];
 					auto name = ReadString(info, si.symbol_name_offset);
@@ -467,8 +484,10 @@ namespace Engine
 			}
 			void DecodePrototype(Module::Prototype & dest, const DataBlock & info, uint32 offset, uint32 size)
 			{
-				auto hdr = ReadObjects<DS::XI_Prototype>(info, offset);
+				auto hdr = ReadObjects<DS::XI_Prototype>(info, offset, 1);
 				dest.target_language = ReadString(info, hdr->prototype_target_language_name_offset);
+				if (hdr->prototype_data_offset > uint32(info.Length()) || hdr->prototype_data_size > uint32(info.Length())) throw InvalidArgumentException();
+				if (hdr->prototype_data_offset + hdr->prototype_data_size > uint32(info.Length())) throw InvalidArgumentException();
 				dest.data = new DataBlock(1);
 				dest.data->SetLength(hdr->prototype_data_size);
 				MemoryCopy(dest.data->GetBuffer(), info.GetBuffer() + hdr->prototype_data_offset, hdr->prototype_data_size);
@@ -476,7 +495,7 @@ namespace Engine
 			}
 			void DecodeSymbols(Module & dest, const DS::XI_Header & hdr, const DataBlock & info, Module::ModuleLoadFlags flags)
 			{
-				auto stable = ReadObjects<DS::XI_Symbol>(info, hdr.symbol_list_offset);
+				auto stable = ReadObjects<DS::XI_Symbol>(info, hdr.symbol_list_offset, hdr.symbol_list_size);
 				for (uint i = 0; i < hdr.symbol_list_size; i++) {
 					auto & si = stable[i];
 					auto name = ReadString(info, si.symbol_name_offset);
@@ -507,10 +526,12 @@ namespace Engine
 			}
 			void DecodeResources(Module & dest, const DS::XI_Header & hdr, const DataBlock & rsrc)
 			{
-				auto rtable = ReadObjects<DS::XI_Resource>(rsrc, hdr.resource_list_offset);
+				auto rtable = ReadObjects<DS::XI_Resource>(rsrc, hdr.resource_list_offset, hdr.resource_list_size);
 				for (uint i = 0; i < hdr.resource_list_size; i++) {
 					auto & ri = rtable[i];
 					uint64 key = (uint64(ri.resource_id) << 32) | uint64(ri.resource_type);
+					if (ri.resource_data_offset > uint32(rsrc.Length()) || ri.resource_data_size > uint32(rsrc.Length())) throw InvalidArgumentException();
+					if (ri.resource_data_offset + ri.resource_data_size > uint32(rsrc.Length())) throw InvalidArgumentException();
 					SafePointer<DataBlock> rd = new DataBlock(1);
 					rd->SetLength(ri.resource_data_size);
 					MemoryCopy(rd->GetBuffer(), rsrc.GetBuffer() + ri.resource_data_offset, ri.resource_data_size);
@@ -518,7 +539,7 @@ namespace Engine
 				}
 			}
 
-			void ValidateHeader(const DS::XI_Header & hdr) { if (MemoryCompare(&hdr.signature, "xximago", 8) || hdr.format_version) throw InvalidFormatException(); }
+			void ValidateHeader(const DS::XI_Header & hdr) { if (MemoryCompare(&hdr.signature, "xximago", 8) || hdr.format_version || hdr.image_size < sizeof(hdr)) throw InvalidFormatException(); }
 			void RestoreModule(Module & dest, Streaming::Stream * src, Module::ModuleLoadFlags flags)
 			{
 				DS::XI_Header hdr;
@@ -527,14 +548,21 @@ namespace Engine
 				ValidateHeader(hdr);
 				dest.subsystem = static_cast<Module::ExecutionSubsystem>(hdr.target_subsystem);
 				SafePointer<DataBlock> info, rsrc;
+				if (hdr.info_segment_size > 0x7FFFFFFF || hdr.data_segment_size > 0x7FFFFFFF || hdr.rsrc_segment_size > 0x7FFFFFFF) throw InvalidFormatException();
 				if (hdr.info_segment_size) {
 					src->Seek(hdr.info_segment_offset, Streaming::Begin);
 					info = src->ReadBlock(hdr.info_segment_size);
 				}
 				if (flags == Module::ModuleLoadFlags::LoadAll || flags == Module::ModuleLoadFlags::LoadExecute) {
 					if (hdr.data_segment_size) {
-						src->Seek(hdr.data_segment_offset, Streaming::Begin);
-						dest.data = src->ReadBlock(hdr.data_segment_size);
+						if (hdr.image_flags & DS::ImageFlagZeroData) {
+							dest.data = new DataBlock(1);
+							dest.data->SetLength(hdr.data_segment_size);
+							ZeroMemory(dest.data->GetBuffer(), dest.data->Length());
+						} else {
+							src->Seek(hdr.data_segment_offset, Streaming::Begin);
+							dest.data = src->ReadBlock(hdr.data_segment_size);
+						}
 					}
 				}
 				if (flags == Module::ModuleLoadFlags::LoadAll || flags == Module::ModuleLoadFlags::LoadExecute || flags == Module::ModuleLoadFlags::LoadResources) {
@@ -566,6 +594,8 @@ namespace Engine
 				DS::XI_Header hdr;
 				MemoryCopy(&hdr.signature, "xximago", 8);
 				hdr.format_version = 0;
+				hdr.image_size = 0;
+				hdr.image_flags = 0;
 				hdr.target_subsystem = uint(src.subsystem);
 				hdr.module_name_offset = EnplaceString(info, src.module_import_name);
 				hdr.module_assembler_offset = EnplaceString(info, src.assembler_name);
@@ -577,15 +607,31 @@ namespace Engine
 				EncodeSymbols(info, hdr, src);
 				EncodeResources(rsrc, hdr, src);
 				hdr.info_segment_size = info.Length();
-				hdr.info_segment_offset = hdr.info_segment_size ? sizeof(hdr) : 0;
 				hdr.data_segment_size = src.data ? src.data->Length() : 0;
-				hdr.data_segment_offset = hdr.data_segment_size ? sizeof(hdr) + hdr.info_segment_size : 0;
 				hdr.rsrc_segment_size = rsrc.Length();
-				hdr.rsrc_segment_offset = hdr.rsrc_segment_size ? sizeof(hdr) + hdr.info_segment_size + hdr.data_segment_size : 0;
-				dest->Write(&hdr, sizeof(hdr));
-				if (hdr.info_segment_size) dest->Write(info.GetBuffer(), info.Length());
-				if (hdr.data_segment_size) dest->Write(src.data->GetBuffer(), src.data->Length());
-				if (hdr.rsrc_segment_size) dest->Write(rsrc.GetBuffer(), rsrc.Length());
+				if (hdr.data_segment_size) {
+					bool data_is_zero = true;
+					for (auto & byte : src.data->Elements()) if (byte) { data_is_zero = false; break; }
+					if (data_is_zero) hdr.image_flags |= DS::ImageFlagZeroData;
+				}
+				if (hdr.image_flags & DS::ImageFlagZeroData) {
+					hdr.image_size = sizeof(hdr) + hdr.info_segment_size + hdr.rsrc_segment_size;
+					hdr.info_segment_offset = hdr.info_segment_size ? sizeof(hdr) : 0;
+					hdr.data_segment_offset = 0;
+					hdr.rsrc_segment_offset = hdr.rsrc_segment_size ? sizeof(hdr) + hdr.info_segment_size : 0;
+					dest->Write(&hdr, sizeof(hdr));
+					if (hdr.info_segment_size) dest->Write(info.GetBuffer(), info.Length());
+					if (hdr.rsrc_segment_size) dest->Write(rsrc.GetBuffer(), rsrc.Length());
+				} else {
+					hdr.image_size = sizeof(hdr) + hdr.info_segment_size + hdr.data_segment_size + hdr.rsrc_segment_size;
+					hdr.info_segment_offset = hdr.info_segment_size ? sizeof(hdr) : 0;
+					hdr.data_segment_offset = hdr.data_segment_size ? sizeof(hdr) + hdr.info_segment_size : 0;
+					hdr.rsrc_segment_offset = hdr.rsrc_segment_size ? sizeof(hdr) + hdr.info_segment_size + hdr.data_segment_size : 0;
+					dest->Write(&hdr, sizeof(hdr));
+					if (hdr.info_segment_size) dest->Write(info.GetBuffer(), info.Length());
+					if (hdr.data_segment_size) dest->Write(src.data->GetBuffer(), src.data->Length());
+					if (hdr.rsrc_segment_size) dest->Write(rsrc.GetBuffer(), rsrc.Length());
+				}
 			}
 		}
 
@@ -780,15 +826,8 @@ namespace Engine
 			source->Seek(0, Streaming::Begin);
 			source->Read(&hdr, sizeof(hdr));
 			Format::ValidateHeader(hdr);
-			uint barier = 0, seg_end;
-			seg_end = hdr.info_segment_offset + hdr.info_segment_size;
-			if (seg_end > barier) barier = seg_end;
-			seg_end = hdr.data_segment_offset + hdr.data_segment_size;
-			if (seg_end > barier) barier = seg_end;
-			seg_end = hdr.rsrc_segment_offset + hdr.rsrc_segment_size;
-			if (seg_end > barier) barier = seg_end;
 			source->Seek(0, Streaming::Begin);
-			return source->ReadBlock(barier);
+			return source->ReadBlock(hdr.image_size);
 		}
 	}
 }
