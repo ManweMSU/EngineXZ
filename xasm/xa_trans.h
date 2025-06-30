@@ -43,5 +43,6 @@ namespace Engine
 
 		Environment GetApplicationEnvironment(void);
 		IExecutableLinker * CreateLinker(void);
+		IMemoryAllocator * CreateMemoryAllocator(void);
 	}
 }

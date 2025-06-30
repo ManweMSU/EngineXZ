@@ -2,11 +2,21 @@
 
 #ifdef ENGINE_WINDOWS
 #include <Windows.h>
+#endif
+#ifdef ENGINE_MACOSX
+#include <libkern/OSCacheControl.h>
+#include <sys/mman.h>
+#include <pthread.h>
+#endif
+#ifdef ENGINE_LINUX
+#include <sys/mman.h>
+#endif
 
 namespace Engine
 {
 	namespace XA
 	{
+		#ifdef ENGINE_WINDOWS
 		class SystemAllocator : public IMemoryAllocator
 		{
 			HANDLE _heap;
@@ -17,24 +27,14 @@ namespace Engine
 			virtual void ExecutableFree(void * block) noexcept override { if (!block) return; HeapFree(_heap, 0, block); }
 			virtual void FlushExecutionCache(const void * block, uintptr length) noexcept override { FlushInstructionCache(GetCurrentProcess(), block, length); }
 		};
-	}
-}
-#endif
-#ifdef ENGINE_MACOSX
-#include <libkern/OSCacheControl.h>
-#include <sys/mman.h>
-#include <pthread.h>
-
-namespace Engine
-{
-	namespace XA
-	{
+		#endif
+		#ifdef ENGINE_MACOSX
 		class SystemAllocator : public IMemoryAllocator
 		{
 			Volumes::Dictionary<void *, uintptr> _allocs;
 		public:
 			SystemAllocator(void) {}
-			virtual ~SystemAllocator(void) override {}
+			virtual ~SystemAllocator(void) override { for (auto & a : _allocs) munmap(a.key, a.value); }
 			virtual void * ExecutableAllocate(uintptr length) noexcept override
 			{
 				auto reg = mmap(0, length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE | MAP_JIT, -1, 0);
@@ -56,22 +56,14 @@ namespace Engine
 				sys_icache_invalidate(const_cast<void *>(block), length);
 			}
 		};
-	}
-}
-#endif
-#ifdef ENGINE_LINUX
-#include <sys/mman.h>
-
-namespace Engine
-{
-	namespace XA
-	{
+		#endif
+		#ifdef ENGINE_LINUX
 		class SystemAllocator : public IMemoryAllocator
 		{
 			Volumes::Dictionary<void *, uintptr> _allocs;
 		public:
 			SystemAllocator(void) {}
-			virtual ~SystemAllocator(void) override {}
+			virtual ~SystemAllocator(void) override { for (auto & a : _allocs) munmap(a.key, a.value); }
 			virtual void * ExecutableAllocate(uintptr length) noexcept override
 			{
 				auto reg = mmap(0, length, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANON | MAP_PRIVATE, -1, 0);
@@ -92,14 +84,8 @@ namespace Engine
 				__builtin___clear_cache(base, base + length);
 			}
 		};
-	}
-}
-#endif
+		#endif
 
-namespace Engine
-{
-	namespace XA
-	{
 		class Executable : public IExecutable
 		{
 			friend class ExecutableLinker;
@@ -178,11 +164,15 @@ namespace Engine
 			#ifdef ENGINE_WINDOWS
 				return Environment::Windows;
 			#endif
-			#ifdef ENGINE_UNIX
+			#ifdef ENGINE_MACOSX
 				return Environment::MacOSX;
+			#endif
+			#ifdef ENGINE_LINUX
+				return Environment::Linux;
 			#endif
 			return Environment::Unknown;
 		}
 		IExecutableLinker * CreateLinker(void) { return new ExecutableLinker; }
+		IMemoryAllocator * CreateMemoryAllocator(void) { return new SystemAllocator; }
 	}
 }

@@ -1868,7 +1868,7 @@ namespace Engine
 					encode_close_scope(uint(retval_copy));
 				}
 			public:
-				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(osenv, dest, src, false) {}
+				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(osenv, dest, src, false) { if (osenv != Environment::Windows && osenv != Environment::Linux) throw InvalidArgumentException(); }
 				virtual void encode_function_prologue(void) override
 				{
 					_stack_clear_size = 0;
@@ -2080,7 +2080,6 @@ namespace Engine
 				TranslatorX86i386(Environment osenv) : _osenv(osenv) {}
 				virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept override
 				{
-					if (_osenv != Environment::Windows) return false;
 					try {
 						dest.Clear();
 						dest.data = src.data;

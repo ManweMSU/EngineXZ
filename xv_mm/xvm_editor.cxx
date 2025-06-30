@@ -310,7 +310,7 @@ class EditorCallback : public IEventCallback
 	{
 		string file = path.Length() ? IO::Path::GetFileName(path) : *interface.Strings[L"NewVolumeTitle"];
 		file += L" \x2013 " + string(ENGINE_VI_APPNAME);
-		#ifdef ENGINE_WINDOWS
+		#ifndef ENGINE_MACOSX
 		if (alternated) file = L"\x25CF " + file;
 		#endif
 		window->SetText(file);

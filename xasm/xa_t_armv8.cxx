@@ -104,7 +104,7 @@ namespace Engine
 					uint xasm_offset_jump_to;
 				};
 
-				Environment _osenv;
+				bool _is_windows, _is_unix, _is_macosx, _is_linux;
 				TranslatedFunction & _dest;
 				const Function & _src;
 				Array<uint> _org_inst_offsets;
@@ -167,7 +167,7 @@ namespace Engine
 				{
 					SafePointer< Array<_argument_passage_info> > result = new Array<_argument_passage_info>(0x20);
 					int gri = 0, sri = 0, spo = 0;
-					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This && _osenv == Environment::Windows) {
+					for (int i = 0; i < in_cnt; i++) if (inputs[i].semantics == ArgumentSemantics::This && _is_windows) {
 						_argument_passage_info info;
 						info.index = i;
 						info.indirect = _is_pass_by_ref(inputs[i]);
@@ -179,9 +179,7 @@ namespace Engine
 					}
 					if (_is_pass_by_ref(output)) {
 						Reg reg;
-						if (_osenv == Environment::Windows) { reg = _make_reg(gri); gri++; }
-						else if (_osenv == Environment::MacOSX) { reg = Reg::X8; }
-						else throw InvalidArgumentException();
+						if (_is_windows) { reg = _make_reg(gri); gri++; } else { reg = Reg::X8; }
 						_argument_passage_info info;
 						info.index = -1;
 						info.reg_min = info.reg_max = reg;
@@ -191,7 +189,7 @@ namespace Engine
 						result->Append(info);
 					}
 					for (int i = 0; i < in_cnt; i++) {
-						if (inputs[i].semantics == ArgumentSemantics::This && _osenv == Environment::Windows) continue;
+						if (inputs[i].semantics == ArgumentSemantics::This && _is_windows) continue;
 						auto & spec = inputs[i];
 						_argument_passage_info info;
 						info.index = i;
@@ -224,16 +222,8 @@ namespace Engine
 							} else {
 								int size = _size_eval(spec.size);
 								gri = 8;
-								if (_osenv == Environment::Windows) {
-									if (size < 16) while (spo & 0x7) spo++;
-									else while (spo & 0xF) spo++;
-								} else if (_osenv == Environment::MacOSX) {
-									if (size == 1);
-									else if (size < 4) while (spo & 0x1) spo++;
-									else if (size < 8) while (spo & 0x3) spo++;
-									else if (size < 16) while (spo & 0x7) spo++;
-									else while (spo & 0xF) spo++;
-								}
+								if (size < 16) while (spo & 0x7) spo++;
+								else while (spo & 0xF) spo++;
 								info.reg_min = info.reg_max = Reg::NO;
 								info.vreg = VReg::NO;
 								info.stack_offset = spo;
@@ -1800,8 +1790,13 @@ namespace Engine
 					_encode_close_scope(uint(retval_copy));
 				}
 			public:
-				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : _osenv(osenv), _dest(dest), _src(src), _org_inst_offsets(0x200), _global_refs(0x100)
+				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : _dest(dest), _src(src), _org_inst_offsets(0x200), _global_refs(0x100)
 				{
+					_is_windows = osenv == Environment::Windows;
+					_is_macosx = osenv == Environment::MacOSX;
+					_is_linux = osenv == Environment::Linux;
+					_is_unix = _is_macosx || _is_linux;
+					if (!_is_windows && !_is_macosx && !_is_linux) throw InvalidArgumentException();
 					_org_inst_offsets.SetLength(_src.instset.Length());
 					_inputs.SetLength(_src.inputs.Length());
 					_current_instruction = 0;
@@ -2438,7 +2433,7 @@ namespace Engine
 				void encode_function_epilogue(void)
 				{
 					if (_is_pass_by_ref(_src.retval)) {
-						encode_load(8, false, _osenv == Environment::MacOSX ? Reg::X8 : Reg::X0, Reg::FP, _retval.fp_offset);
+						encode_load(8, false, _is_windows ? Reg::X0 : Reg::X8, Reg::FP, _retval.fp_offset);
 					} else if (_retval.vreg != VReg::NO) {
 						encode_emulate_lea(Reg::X8, Reg::FP, _retval.fp_offset);
 						encode_load_element(8, VReg::V0, Reg::X8);
@@ -2605,7 +2600,6 @@ namespace Engine
 				virtual ~TranslatorARMv8(void) override {}
 				virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept override
 				{
-					if (_osenv != Environment::Windows && _osenv != Environment::MacOSX) return false;
 					try {
 						dest.Clear();
 						dest.data = src.data;

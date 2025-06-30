@@ -2089,7 +2089,12 @@ namespace Engine
 					encode_close_scope(uint(retval_copy));
 				}
 			public:
-				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(osenv, dest, src, true) { _abi = (osenv == Environment::Windows || osenv == Environment::EFI) ? ABI::WindowsX64 : ABI::UnixX64; }
+				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(osenv, dest, src, true)
+				{
+					if (osenv == Environment::Windows || osenv == Environment::EFI) _abi = ABI::WindowsX64;
+					else if (osenv == Environment::MacOSX || osenv == Environment::Linux) _abi = ABI::UnixX64;
+					else throw InvalidArgumentException();
+				}
 				virtual void encode_function_prologue(void) override
 				{
 					SafePointer< Array<ArgumentPassageInfo> > api = _make_interface_layout(_src.retval, _src.inputs.GetBuffer(), _src.inputs.Length());
@@ -2360,7 +2365,6 @@ namespace Engine
 				virtual ~TranslatorX64(void) override {}
 				virtual bool Translate(TranslatedFunction & dest, const Function & src) noexcept override
 				{
-					if (_osenv != Environment::Windows && _osenv != Environment::MacOSX && _osenv != Environment::EFI) return false;
 					try {
 						dest.Clear();
 						dest.data = src.data;
