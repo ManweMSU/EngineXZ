@@ -262,7 +262,7 @@ spatium graphicum {
 	}
 
 	genus contextus_machinae hereditat objectum_dynamicum {
-		functio nihil para_implantationem(@linea tech, @nint versio, @nint func) virtualis pura;
+		functio nihil para_implantationem(@linea tech, @(nint, nint) versio, @nint func) virtualis pura;
 
 		functio adl[saeta_coloris] crea_saetam_coloris_soldam(~imago.color clr) virtualis pura;
 		functio adl[saeta_coloris] crea_saetam_coloris_gressam(int ab_x, int ab_y, int ad_x, int ad_y, @imago.color clr, @dfrac pos, int num) virtualis pura;

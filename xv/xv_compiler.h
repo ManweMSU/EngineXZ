@@ -16,6 +16,7 @@ namespace Engine
 			CompilerFlagSystemLibrary	= 0x00080,
 			CompilerFlagVersionControl	= 0x00100,
 			CompilerFlagDebugData		= 0x00200,
+			CompilerFlagUseModuleCache	= 0x00400,
 			CompilerFlagLanguageV		= 0x00000,
 			CompilerFlagLanguageW		= 0x10000,
 			CompilerFlagLanguageMask	= 0xF0000,
@@ -124,6 +125,7 @@ namespace Engine
 			ICompilerCallback * callback;
 			Volumes::Set<string> imports;
 			Volumes::Dictionary<string, string> defines;
+			SafePointer<Object> module_cache;
 			CodeMetaInfo * meta;
 			// Output data
 			CompilerStatusDesc status;

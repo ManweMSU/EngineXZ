@@ -109,7 +109,8 @@ namespace Engine
 		class IModuleLoadCallback
 		{
 		public:
-			virtual Streaming::Stream * GetModuleStream(const string & name) = 0;
+			virtual XI::Module * GetModule(const string & name, XI::Module::ModuleLoadFlags flags) noexcept = 0;
+			virtual DataBlock * GetModuleData(const string & name) noexcept = 0;
 		};
 
 		class LObject : public Object

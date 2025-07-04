@@ -160,6 +160,7 @@ spatium xx {
 	[[importa] xx_crpr] functio logicum _crea_processum(@nihil xx, ~descriptio_processi desc);
 	[[importa] xx_onmd] functio adl[modulus_dynamicus] _onera_modulum_dynamicum(@nihil xx, ~semita imago, nint modus);
 	[[importa] xx_pxxv] functio nihil para_versionem(@(int, int, int, int) xxv, @(int, int) iv);
+	[[importa] xx_adms] functio logicum administrans_sum();
 
 	functio logicum crea_processum(~descriptio_processi desc) { responde _crea_processum(protocollum(xx), desc); }
 	functio adl[modulus_dynamicus] onera_modulum_dynamicum(~semita imago, nint modus) { responde _onera_modulum_dynamicum(protocollum(xx), imago, modus); }

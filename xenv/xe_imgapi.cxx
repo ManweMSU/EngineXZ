@@ -123,6 +123,17 @@ namespace Engine
 			}
 		};
 
+		class XResourceHandle : public Object
+		{
+			SafePointer<Graphics::IDeviceResourceHandle> _handle;
+		public:
+			XResourceHandle(Graphics::IDeviceResourceHandle * src) { _handle.SetRetain(src); }
+			virtual ~XResourceHandle(void) override {}
+			virtual uint64 GetDeviceIdentifier(void) noexcept { return _handle->GetDeviceIdentifier(); }
+			virtual SafePointer<DataBlock> GetData(void) noexcept { return _handle->Serialize(); }
+			virtual string ToString(void) const override { try { return _handle->ToString(); } catch (...) { return L""; } }
+			Graphics::IDeviceResourceHandle * Expose(void) noexcept { return _handle; }
+		};
 		class XBitmap : public Object
 		{
 			SafePointer<Graphics::IBitmap> _bitmap;
@@ -145,6 +156,7 @@ namespace Engine
 				SafePointer<Codec::Frame> frame = value->ExposeFrame();
 				return _bitmap->Reload(frame);
 			}
+			virtual string ToString(void) const override { try { return _bitmap->ToString(); } catch (...) { return L""; } }
 			Graphics::IBitmap * ExposeBitmap(void) noexcept { return _bitmap; }
 		};
 		class XPipelineState : public DynamicObject
@@ -168,6 +180,7 @@ namespace Engine
 				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
 			}
 			virtual void * GetType(void) noexcept override { return 0; }
+			virtual string ToString(void) const override { try { return _state->ToString(); } catch (...) { return L""; } }
 			Graphics::IPipelineState * Expose(void) noexcept { return _state; }
 		};
 		class XSamplerState : public DynamicObject
@@ -191,6 +204,7 @@ namespace Engine
 				} else { ectx.error_code = 1; ectx.error_subcode = 0; return 0; }
 			}
 			virtual void * GetType(void) noexcept override { return 0; }
+			virtual string ToString(void) const override { try { return _state->ToString(); } catch (...) { return L""; } }
 			Graphics::ISamplerState * Expose(void) noexcept { return _state; }
 		};
 		class XResource : public VisualObject
@@ -234,6 +248,7 @@ namespace Engine
 			virtual uint GetResourceClass(void) noexcept { return uint(_resource->GetResourceType()); }
 			virtual uint GetResourceMemory(void) noexcept { return uint(_resource->GetMemoryPool()); }
 			virtual uint GetResourceFlags(void) noexcept { return uint(_resource->GetResourceUsage()); }
+			virtual string ToString(void) const override { try { return _resource->ToString(); } catch (...) { return L""; } }
 			Graphics::IDeviceResource * Expose(void) noexcept { return _resource; }
 		};
 		class XBuffer : public XResource
@@ -314,6 +329,8 @@ namespace Engine
 				if (set) { if (!_surface->SwitchToFullscreen()) ectx.error_code = 5; }
 				else { if (!_surface->SwitchToWindow()) ectx.error_code = 5; }
 			}
+			virtual uint GetAttributes(void) noexcept { return uint(_surface->GetLayerAttributes()); }
+			virtual string ToString(void) const override { try { return _surface->ToString(); } catch (...) { return L""; } }
 		};
 		class XDeviceContext : public DynamicObject
 		{
@@ -349,7 +366,7 @@ namespace Engine
 				Graphics::DepthStencilViewDesc dsvd;
 				if (!color_desc) return false;
 				uint word_size = sizeof(handle);
-				uint desc_size = word_size + 20;
+				uint desc_size = word_size + 24;
 				for (int i = 0; i < num_dest; i++) {
 					auto desc = reinterpret_cast<const Graphics::RenderTargetViewDesc *>(color_desc + desc_size * i);
 					auto texture = reinterpret_cast<XTexture *>(desc->Texture);
@@ -369,10 +386,15 @@ namespace Engine
 				} else dsvd.Texture = 0;
 				return _context->BeginRenderingPass(num_dest, rtvd, dsvd.Texture ? &dsvd : 0);
 			}
-			virtual bool BeginPlanarPass(XTexture * dest) noexcept
+			virtual bool BeginPlanarPass(const Graphics::RenderTargetViewDesc & desc) noexcept
 			{
-				if (!dest) return false;
-				bool result = _context->Begin2DRenderingPass(dest->Expose());
+				Graphics::RenderTargetViewDesc rtvd;
+				auto texture = reinterpret_cast<XTexture *>(desc.Texture);
+				if (!texture) return false;
+				rtvd.Texture = texture->Expose();
+				rtvd.LoadAction = desc.LoadAction;
+				MemoryCopy(&rtvd.ClearValue, &desc.ClearValue, sizeof(rtvd.ClearValue));
+				bool result = _context->Begin2DRenderingPass(rtvd);
 				if (result && !_context_2d) try { _context_2d = WrapContext(_context->Get2DContext(), this); } catch (...) { _context->EndCurrentPass(); return false; }
 				return result;
 			}
@@ -417,6 +439,10 @@ namespace Engine
 					src->Expose(), Graphics::SubresourceIndex(src_sr[0], src_sr[1]), Graphics::VolumeIndex(src_org[0], src_org[1], src_org[2]),
 					Graphics::VolumeIndex(size[0], size[1], size[2]));
 			}
+			virtual bool LockSharedResource(XResource * rsrc) noexcept { if (!rsrc) return false; return _context->AcquireSharedResource(rsrc->Expose()); }
+			virtual bool LockSharedResourceWithinTimeout(XResource * rsrc, uint32 time) noexcept { if (!rsrc) return false; return _context->AcquireSharedResource(rsrc->Expose(), time); }
+			virtual bool UnlockSharedResource(XResource * rsrc) noexcept { if (!rsrc) return false; return _context->ReleaseSharedResource(rsrc->Expose()); }
+			virtual string ToString(void) const override { try { return _context->ToString(); } catch (...) { return L""; } }
 		};
 		class XFunction : public DynamicObject
 		{
@@ -441,6 +467,7 @@ namespace Engine
 			virtual void * GetType(void) noexcept override { return 0; }
 			virtual string GetName(ErrorContext & ectx) noexcept { XE_TRY_INTRO return _function->GetName(); XE_TRY_OUTRO(L"") }
 			virtual uint GetClass(void) noexcept { return uint(_function->GetType()); }
+			virtual string ToString(void) const override { try { return _function->ToString(); } catch (...) { return L""; } }
 			Graphics::IShader * Expose(void) noexcept { return _function; }
 		};
 		class XFunctionLibrary : public DynamicObject
@@ -480,6 +507,7 @@ namespace Engine
 				return new XFunction(_parent, func);
 				XE_TRY_OUTRO(0)
 			}
+			virtual string ToString(void) const override { try { return _library->ToString(); } catch (...) { return L""; } }
 		};
 		class XDevice : public Object
 		{
@@ -491,16 +519,19 @@ namespace Engine
 			virtual string GetName(ErrorContext & ectx) noexcept { XE_TRY_INTRO return _device->GetDeviceName(); XE_TRY_OUTRO(0) }
 			virtual uint64 GetID(void) noexcept { return _device->GetDeviceIdentifier(); }
 			virtual bool IsValid(void) noexcept { return _device->DeviceIsValid(); }
+			virtual uint32 GetDeviceClass(void) noexcept { return uint(_device->GetDeviceClass()); }
+			virtual uint64 GetDeviceMemory(void) noexcept { return _device->GetDeviceMemory(); }
 			virtual XDeviceContext * GetContext(void) noexcept { return _context; }
 			virtual void GetImplementation(string * tech, uint * version) noexcept
 			{
 				try {
-					string t; uint v;
-					_device->GetImplementationInfo(t, v);
-					if (version) *version = v;
+					string t; uint v[2];
+					_device->GetImplementationInfo(t, v[0], v[1]);
+					if (version) { version[0] = v[0]; version[1] = v[1]; }
 					if (tech) *tech = t;
 				} catch (...) {}
 			}
+			virtual bool GetPixelFormatSupport(uint32 format, uint32 mode) noexcept { return _device->GetDevicePixelFormatSupport(static_cast<Graphics::PixelFormat>(format), static_cast<Graphics::PixelFormatUsage>(mode)); }
 			virtual SafePointer<XFunctionLibrary> LoadFunctions(XStream * xstream) noexcept
 			{
 				try {
@@ -608,6 +639,17 @@ namespace Engine
 					return new XTexture(rsrc, this);
 				} catch (...) { return 0; }
 			}
+			virtual SafePointer<XResource> ImportResource(XResourceHandle * handle) noexcept
+			{
+				try {
+					if (!handle) return 0;
+					SafePointer<Graphics::IDeviceResource> rsrc = _device->OpenResource(handle->Expose());
+					if (!rsrc) return 0;
+					if (rsrc->GetResourceType() == Graphics::ResourceType::Buffer) return new XBuffer(static_cast<Graphics::IBuffer *>(rsrc.Inner()), this);
+					else if (rsrc->GetResourceType() == Graphics::ResourceType::Texture) return new XTexture(static_cast<Graphics::ITexture *>(rsrc.Inner()), this);
+					else return 0;
+				} catch (...) { return 0; }
+			}
 			virtual SafePointer<XWindowSurface> CreateSurface(VisualObject * xwindow, const Graphics::WindowLayerDesc & desc) noexcept
 			{
 				try {
@@ -621,6 +663,7 @@ namespace Engine
 					return new XWindowSurface(layer, this);
 				} catch (...) { return 0; }
 			}
+			virtual string ToString(void) const override { try { return _device->ToString(); } catch (...) { return L""; } }
 			Graphics::IDevice * GetDevice(void) noexcept { return _device; }
 		};
 		class X2DContext : public DynamicObject
@@ -656,10 +699,10 @@ namespace Engine
 			virtual void GetImplementation(string * tech, uint * version, uint * feature) noexcept
 			{
 				string t;
-				uint v;
-				_context->GetImplementationInfo(t, v);
+				uint v[2];
+				_context->GetImplementationInfo(t, v[0], v[1]);
 				if (tech) *tech = t;
-				if (version) *version = v;
+				if (version) { version[0] = v[0]; version[1] = v[1]; }
 				if (feature) *feature = _context->GetFeatureList();
 			}
 			virtual SafePointer<Graphics::IColorBrush> CreateSolidColorBrush(const XColor & color) noexcept { return _context->CreateSolidColorBrush(color.value); }
@@ -707,6 +750,7 @@ namespace Engine
 			virtual uint GetCaretBlinkPeriod(void) noexcept { return _context->GetCaretBlinkPeriod(); }
 			virtual void SetCaretBlinkPeriod(const uint & value) noexcept { _context->SetCaretBlinkPeriod(value); }
 			virtual bool IsCaretVisible(void) noexcept { return _context->IsCaretVisible(); }
+			virtual string ToString(void) const override { try { return _context->ToString(); } catch (...) { return L""; } }
 		};
 		class XBitmapContext : public X2DContext
 		{
@@ -770,7 +814,10 @@ namespace Engine
 				_backbuffer = _device->CreateTexture(desc, &init);
 				if (!_backbuffer) throw OutOfMemoryException();
 				auto context = _device->GetDeviceContext();
-				if (context->Begin2DRenderingPass(_backbuffer)) {
+				Graphics::RenderTargetViewDesc rtvd;
+				rtvd.Texture = _backbuffer;
+				rtvd.LoadAction = Graphics::TextureLoadAction::DontCare;
+				if (context->Begin2DRenderingPass(rtvd)) {
 					auto ctx_2d = context->Get2DContext();
 					SetContext(ctx_2d);
 					if (!context->EndCurrentPass()) throw InvalidStateException();
@@ -798,7 +845,10 @@ namespace Engine
 			virtual bool BeginRendering(void) noexcept
 			{
 				auto context = _device->GetDeviceContext();
-				return context->Begin2DRenderingPass(_backbuffer);
+				Graphics::RenderTargetViewDesc rtvd;
+				rtvd.Texture = _backbuffer;
+				rtvd.LoadAction = Graphics::TextureLoadAction::Load;
+				return context->Begin2DRenderingPass(rtvd);
 			}
 			virtual bool BeginRenderingAndClear(const XColor & color) noexcept
 			{
@@ -807,13 +857,11 @@ namespace Engine
 				Graphics::RenderTargetViewDesc rtvd;
 				rtvd.Texture = _backbuffer;
 				rtvd.LoadAction = Graphics::TextureLoadAction::Clear;
+				rtvd.ClearValue[0] = float(clr.r) / 255.0f;
+				rtvd.ClearValue[1] = float(clr.g) / 255.0f;
+				rtvd.ClearValue[2] = float(clr.b) / 255.0f;
 				rtvd.ClearValue[3] = float(clr.a) / 255.0f;
-				rtvd.ClearValue[0] = float(clr.r) / 255.0f * rtvd.ClearValue[3];
-				rtvd.ClearValue[1] = float(clr.g) / 255.0f * rtvd.ClearValue[3];
-				rtvd.ClearValue[2] = float(clr.b) / 255.0f * rtvd.ClearValue[3];
-				if (!context->BeginRenderingPass(1, &rtvd, 0)) return false;
-				if (!context->EndCurrentPass()) return false;
-				return BeginRendering();
+				return context->Begin2DRenderingPass(rtvd);
 			}
 			virtual bool EndRendering(void) noexcept
 			{
@@ -917,14 +965,12 @@ namespace Engine
 					return new XBitmapContext(context);
 				} catch (...) { return 0; }
 			}
+			virtual string ToString(void) const override { try { return _factory->ToString(); } catch (...) { return L""; } }
 		};
 		class XDeviceFactory : public Object
 		{
 		public:
-			ENGINE_PACKED_STRUCTURE(desc)
-				uint64 id;
-				string name;
-			ENGINE_END_PACKED_STRUCTURE
+			struct desc { uint64 id; string name; intptr padding; };
 		private:
 			SafePointer<Graphics::IDeviceFactory> _factory;
 		public:
@@ -940,6 +986,7 @@ namespace Engine
 					desc dev;
 					dev.id = d.key;
 					dev.name = d.value;
+					dev.padding = 0;
 					result->Append(dev);
 				}
 				return result;
@@ -961,6 +1008,25 @@ namespace Engine
 				return new XDevice(device);
 				XE_TRY_OUTRO(0)
 			}
+			virtual SafePointer<XResourceHandle> ExtractHandle(XResource * rsrc, ErrorContext & ectx) noexcept
+			{
+				XE_TRY_INTRO
+				if (!rsrc) throw InvalidArgumentException();
+				SafePointer<Graphics::IDeviceResourceHandle> inner = _factory->QueryResourceHandle(rsrc->Expose());
+				if (!inner) throw Exception();
+				return new XResourceHandle(inner);
+				XE_TRY_OUTRO(0)
+			}
+			virtual SafePointer<XResourceHandle> LoadHandle(const DataBlock * data, ErrorContext & ectx) noexcept
+			{
+				XE_TRY_INTRO
+				if (!data) throw InvalidArgumentException();
+				SafePointer<Graphics::IDeviceResourceHandle> inner = _factory->OpenResourceHandle(data);
+				if (!inner) throw InvalidFormatException();
+				return new XResourceHandle(inner);
+				XE_TRY_OUTRO(0)
+			}
+			virtual string ToString(void) const override { try { return _factory->ToString(); } catch (...) { return L""; } }
 		};
 
 		class ImageExtension : public IAPIExtension

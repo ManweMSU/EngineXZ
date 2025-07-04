@@ -195,7 +195,9 @@ class CodeDocument : public Object
 	int64 _latest_version;
 	SafePointer<IOChannel> _channel;
 	SafePointer<Code> _current_version;
-	SafePointer<Semaphore> _sync;
+	SafePointer<Semaphore> _sync, _cache_access;
+	SafePointer<Object> _module_cache;
+	Time _module_cache_date;
 	Volumes::List<_code_task> _tasks;
 	XV::CompilerStatusDesc _com_status;
 	XV::CodeMetaInfo _com_meta;
@@ -230,7 +232,7 @@ class CodeDocument : public Object
 				meta.autocomplete_at = -1;
 				meta.function_info_at = -1;
 				meta.error_absolute_from = -1;
-				XV::CompileModule(name, *code, 0, callback, desc, self->_language, &meta);
+				self->InvokeCompiler(name, code, desc, meta, callback);
 				if (self->CommitMeta(version, code, desc, meta)) break;
 			}
 		}));
@@ -277,16 +279,45 @@ public:
 		_com_status.status = XV::CompilerStatus::Success;
 		_analyze_in_progress = false;
 		_sync = CreateSemaphore(0);
+		_cache_access = CreateSemaphore(1);
 		_uri = document.textDocument.uri;
 		_latest_version = document.textDocument.version;
 		_current_version = new Code(0x100);
-		if (!_sync) throw Exception();
+		if (!_sync || !_cache_access) throw Exception();
 		_current_version->SetLength(document.textDocument.text.GetEncodedLength(Encoding::UTF32));
 		document.textDocument.text.Encode(_current_version->GetBuffer(), Encoding::UTF32, false);
 		_launch_analyzer();
 		_sync->Open();
 	}
 	virtual ~CodeDocument(void) override { _update_diagnostics(true); }
+	void InvokeCompiler(const string & name, Code * code, XV::CompilerStatusDesc & status, XV::CodeMetaInfo & meta, XV::ICompilerCallback * callback)
+	{
+		XV::CompileDesc desc;
+		desc.flags = XV::CompilerFlagSystemConsole | XV::CompilerFlagMakeMetadata | (_language & XV::CompilerFlagLanguageMask);
+		desc.module_name = name;
+		desc.input = code;
+		desc.callback = callback;
+		desc.meta = &meta;
+		desc.imports.AddElement(L"canonicalis");
+		bool cache_allowed = _cache_access->TryWait();
+		try {
+			if (cache_allowed) {
+				if (_module_cache && Time::GetCurrentTime() - _module_cache_date > Time(0, 5, 0, 0)) _module_cache.SetReference(0);
+				desc.flags |= XV::CompilerFlagUseModuleCache;
+				desc.module_cache = _module_cache;
+			}
+			XV::Compile(desc);
+			if (cache_allowed) {
+				_module_cache = desc.module_cache;
+				_module_cache_date = Time::GetCurrentTime();
+			}
+		} catch (...) {
+			if (cache_allowed) _cache_access->Open();
+			throw;
+		}
+		if (cache_allowed) _cache_access->Open();
+		status = desc.status;
+	}
 	void Update(const RPC::DidChangeTextDocumentParams & document)
 	{
 		_sync->Wait();
@@ -814,7 +845,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 			meta.autocomplete_at = ac;
 			meta.function_info_at = -1;
 			meta.error_absolute_from = -1;
-			XV::CompileModule(name, *code, 0, callback, desc, language, &meta);
+			document->InvokeCompiler(name, code, desc, meta, callback);
 			RPC::ResponseMessage_Success_CompletionItem responce;
 			for (auto & a : meta.autocomplete) {
 				RPC::CompletionItem com;
@@ -865,7 +896,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 			meta.autocomplete_at = -1;
 			meta.function_info_at = ac;
 			meta.error_absolute_from = -1;
-			XV::CompileModule(name, *code, 0, callback, desc, language, &meta);
+			document->InvokeCompiler(name, code, desc, meta, callback);
 			RPC::ResponseMessage_Success_SignatureHelp responce;
 			uint count = meta.overloads.Count();
 			if (count) {

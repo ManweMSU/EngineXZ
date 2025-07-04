@@ -15,6 +15,7 @@ namespace Engine
 {
 	namespace XV
 	{
+		typedef Volumes::ObjectDictionary<string, XI::Module> CompilerModuleCache;
 		constexpr int InitPriorityVFT	= 1;
 		constexpr int InitPriorityVar	= 2;
 		constexpr int InitPriorityUser	= 3;
@@ -79,6 +80,7 @@ namespace Engine
 			CompilerStatusDesc & status;
 			Token current_token;
 			Volumes::Set<string> autoimports;
+			SafePointer<CompilerModuleCache> module_cache;
 			Volumes::List<VInitServiceDesc> init_list;
 			Volumes::List<VPostCompileDesc> post_compile;
 			Volumes::Dictionary<string, string> metadata;
@@ -86,10 +88,32 @@ namespace Engine
 
 			VContext(XL::LContext & _lal, ICompilerCallback * _callback, CompilerStatusDesc & _status, TokenStream * stream) :
 				module_is_library(false), dd(0), ctx(_lal), callback(_callback), status(_status) { input.SetRetain(stream); }
-			virtual Streaming::Stream * GetModuleStream(const string & name) override
+			virtual XI::Module * GetModule(const string & name, XI::Module::ModuleLoadFlags flags) noexcept override
 			{
-				if (callback) return callback->QueryModuleFileStream(name);
-				else throw IO::FileAccessException(IO::Error::FileNotFound);
+				try {
+					XI::Module * cached;
+					if (module_cache && (cached = module_cache->GetObjectByKey(name))) {
+						cached->Retain();
+						return cached;
+					} else {
+						if (!callback) return 0;
+						SafePointer<Streaming::Stream> stream = callback->QueryModuleFileStream(name);
+						if (!stream) return 0;
+						SafePointer<XI::Module> result = new XI::Module(stream, flags);
+						if (module_cache) module_cache->Append(name, result);
+						result->Retain();
+						return result;
+					}
+				} catch (...) { return 0; }
+			}
+			virtual DataBlock * GetModuleData(const string & name) noexcept override
+			{
+				try {
+					if (!callback) return 0;
+					SafePointer<Streaming::Stream> stream = callback->QueryModuleFileStream(name);
+					if (!stream) return 0;
+					return stream->ReadAll();
+				} catch (...) { return 0; }
 			}
 			virtual XL::LContext * GetLanguageContext(void) override { return &ctx; }
 			virtual XL::LObject * ProcessLanguageExpression(ITokenStream * input, Token & input_current_token, XL::LObject ** vns, int num_vns) override
@@ -3265,6 +3289,8 @@ namespace Engine
 				if (desc.flags & CompilerFlagDebugData) { vctx.dd = &dd; dd.source_full_path = desc.source_full_path; }
 				vctx.meta_info = desc.meta;
 				vctx.autoimports = desc.imports;
+				if ((desc.flags & CompilerFlagUseModuleCache) && !desc.module_cache) desc.module_cache = new CompilerModuleCache;
+				vctx.module_cache.SetRetain(static_cast<CompilerModuleCache *>(desc.module_cache.Inner()));
 				if (desc.flags & CompilerFlagMakeManual) {
 					vctx.documentation = new ManualVolume;
 					vctx.documentation->SetModule(desc.module_name);

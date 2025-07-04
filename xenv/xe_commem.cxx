@@ -25,9 +25,9 @@ namespace Engine
 				_mem = IPC::CreateSharedMemory(name, length, create_new ? IPC::SharedMemoryCreateNew : IPC::SharedMemoryOpenExisting, &error);
 				if (!_mem) {
 					if (error == IPC::ErrorAlreadyExists) throw IO::FileAccessException(IO::Error::FileExists);
-					else if (error == IPC::ErrorNotExists) throw IO::FileAccessException(IO::Error::FileNotFound);
-					else if (error == IPC::ErrorWrongMode || error == IPC::ErrorInvalidArgument) throw InvalidArgumentException();
-					else if (error == IPC::ErrorBusyNow) throw InvalidStateException();
+					else if (error == IPC::ErrorDoesNotExist) throw IO::FileAccessException(IO::Error::FileNotFound);
+					else if (error == IPC::ErrorInvalidArgument) throw InvalidArgumentException();
+					else if (error == IPC::ErrorBadFileName) throw IO::FileAccessException(IO::Error::BadPathName);
 					else if (error == IPC::ErrorAllocation) throw OutOfMemoryException();
 					else throw IO::FileAccessException(IO::Error::Unknown);
 				}

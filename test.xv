@@ -143,7 +143,7 @@ structura callback : responsor_fenestrae, responsor_applicationis {
 	functio nihil fenestra_creata_est(@fenestra fen) iacit redefini
 	{
 		var ~ con = consolatorium.currens()^;
-		con.scribe_lineam("CREATED");
+		con.scribe_lineam("CREATUS SUM");
 		fen^.erige_chronometrum(1, 30);
 		var fab = graphicum.crea_fabricationem_machinationis();
 		var dim = fen^.dimensiones_internae;

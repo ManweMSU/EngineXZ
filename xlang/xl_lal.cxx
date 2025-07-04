@@ -497,19 +497,22 @@ namespace Engine
 			if (module_name == _module_name) return true;
 			for (auto & imp : _import_list) if (imp == module_name) return true;
 			_import_list << module_name;
-			SafePointer<Streaming::Stream> input = callback->GetModuleStream(module_name);
-			if (!input) return false;
+			XI::Module::ModuleLoadFlags load_mode;
+			if (_perform_version_control && !_idle_mode) load_mode = XI::Module::ModuleLoadFlags::LoadAll;
+			else load_mode = XI::Module::ModuleLoadFlags::LoadLink;
+			SafePointer<XI::Module> module_ptr = callback->GetModule(module_name, load_mode);
+			if (!module_ptr) return false;
+			auto & module = *module_ptr;
 			if (_perform_version_control && !_idle_mode) {
-				XI::Module module(input, XI::Module::ModuleLoadFlags::LoadResources);
-				input->Seek(0, Streaming::Begin);
 				XI::AssemblyVersionInformation vi;
 				if (XI::LoadModuleVersionInformation(module.resources, vi)) {
 					if (vi.ThisModuleVersion != 0xFFFFFFFF) _verinfo.ModuleVersionsNeeded.Append(module_name, vi.ThisModuleVersion);
 				}
+				module.resources.Clear();
 			}
 			if (embed && !_idle_mode) {
-				SafePointer<DataBlock> data = input->ReadAll();
-				input->Seek(0, Streaming::Begin);
+				SafePointer<DataBlock> data = callback->GetModuleData(module_name);
+				if (!data) return false;
 				int index = 1;
 				while (true) {
 					auto rsrc = XI::MakeResourceID(L"XDL", index);
@@ -518,7 +521,6 @@ namespace Engine
 					break;
 				}
 			}
-			XI::Module module(input, XI::Module::ModuleLoadFlags::LoadLink);
 			Volumes::Dictionary<XClass *, XI::Module::Class *> cpp;
 			for (auto & d : module.modules_depends_on) if (!IncludeModule(d, callback, false)) return false;
 			for (auto & c : module.classes) try {

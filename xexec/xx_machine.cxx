@@ -868,6 +868,7 @@ namespace Engine
 				if (routine_name == L"xx_crpr") return reinterpret_cast<const void *>(_create_process);
 				else if (routine_name == L"xx_onmd") return reinterpret_cast<const void *>(_load_library);
 				else if (routine_name == L"xx_pxxv") return reinterpret_cast<const void *>(_get_xversion);
+				else if (routine_name == L"xx_adms") return reinterpret_cast<const void *>(IsProcessElevated);
 				else return 0;
 			}
 			virtual const void * ExposeInterface(const string & interface) noexcept override { if (interface == L"xx") return this; else return 0; }

@@ -72,6 +72,8 @@ BETA-7:
  + Added instance memory alignment support into XI/XL/XV/XE
  + XI file format renewval, XI loader security improvements
  + XA support for Linux
+ + Engine Runtime 1.10 and new GPU functions
+ + Minor optimization for the language server
 
 BETA-8:
  - GUI and CUI libraries

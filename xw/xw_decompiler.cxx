@@ -2070,7 +2070,22 @@ namespace Engine
 			IDecompilerCallback & _callback;
 		public:
 			LModuleLoader(IDecompilerCallback & callback) : _callback(callback) {}
-			virtual Streaming::Stream * GetModuleStream(const string & name) override { try { return _callback.QueryXModuleFileStream(name); } catch (...) { return 0; } }
+			virtual XI::Module * GetModule(const string & name, XI::Module::ModuleLoadFlags flags) noexcept override
+			{
+				try {
+					SafePointer<Streaming::Stream> stream = _callback.QueryXModuleFileStream(name);
+					if (!stream) return 0;
+					return new XI::Module(stream, flags);
+				} catch (...) { return 0; }
+			}
+			virtual DataBlock * GetModuleData(const string & name) noexcept override
+			{
+				try {
+					SafePointer<Streaming::Stream> stream = _callback.QueryXModuleFileStream(name);
+					if (!stream) return 0;
+					return stream->ReadAll();
+				} catch (...) { return 0; }
+			}
 			bool LoadModule(const string & name, XL::LContext & into_context, DecompilerStatusDesc & with_error)
 			{
 				if (!into_context.IncludeModule(name, this, false)) {

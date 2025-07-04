@@ -10,25 +10,31 @@ auxilium versio 0;
 [[systema] librosa]
 
 spatium graphicum {
+	enumeratio classis_machinationis hereditat nint32 { ignota = 0, integrata = 1, discreta = 2, programmata = 3 }
+	enumeratio modus_formati_puncti hereditat nint32 {
+		legere = 0, exceptare = 1, reddere = 2, reddere_et_miscere = 3, altitudo_et_praeforma = 4,
+		fundus_fenestrae = 5, reddere_2d = 6, legere_2d = 7, video = 8
+	}
 	enumeratio formatus_puncti hereditat nint32 {
 		ignotus = 0x00000000,
 		A8_norm = 0x81100001,
 		R8_norm = 0x81100002, R8_snorm = 0x81100003, R8_int = 0x81100004, R8_sint = 0x81100005,
 		R16_norm = 0x82100001, R16_snorm = 0x82100002, R16_int = 0x82100003, R16_sint = 0x82100004, R16_frac = 0x82100005,
 		R8G8_norm = 0x82200001, R8G8_snorm = 0x82200002, R8G8_int = 0x82200003, R8G8_sint = 0x82200004,
-		B5G6R5_norm = 0x82300001,
-		B5G5R5A1_norm = 0x82400001,
+		B5G6R5_norm = 0x82300001, R5G6B5_norm = 0x82300002,
+		B5G5R5A1_norm = 0x82400001, R5G5B5A1_norm = 0x82400002, A1B5G5R5_norm = 0x82400003, A1R5G5B5_norm = 0x82400004,
+		B4G4R4A4_norm = 0x82400005, R4G4B4A4_norm = 0x82400006, A4B4G4R4_norm = 0x82400007, A4R4G4B4_norm = 0x82400008,
 		R32_int = 0x83100001, R32_sint = 0x83100002, R32_frac = 0x83100003,
 		R16G16_norm = 0x83200001, R16G16_snorm = 0x83200002, R16G16_int = 0x83200003, R16G16_sint = 0x83200004, R16G16_frac = 0x83200005,
 		B8G8R8A8_norm = 0x83400001,
 		R8G8B8A8_norm = 0x83400002, R8G8B8A8_snorm = 0x83400003, R8G8B8A8_int = 0x83400004, R8G8B8A8_sint = 0x83400005,
-		R10G10B10A2_norm = 0x83400006, R10G10B10A2_int = 0x83400007,
-		R11G11B10_frac = 0x83300001,
-		R9G9B9E5_frac = 0x83300002,
+		R10G10B10A2_norm = 0x83400006, R10G10B10A2_int = 0x83400007, A2R10G10B10_norm = 0x83400008, A2R10G10B10_int = 0x83400009,
+		R11G11B10_frac = 0x83300001, B10G11R11_frac = 0x83300003,
+		R9G9B9E5_frac = 0x83300002, E5B9G9R9_frac = 0x83300004,
 		R32G32_int = 0x84200001, R32G32_sint = 0x84200002, R32G32_frac = 0x84200003,
 		R16G16B16A16_norm = 0x84400001, R16G16B16A16_snorm = 0x84400002, R16G16B16A16_int = 0x84400003, R16G16B16A16_sint = 0x84400004, R16G16B16A16_frac = 0x84400005,
 		R32G32B32A32_int = 0x85400001, R32G32B32A32_sint = 0x85400002, R32G32B32A32_frac = 0x85400003,
-		D16_norm = 0x42100001, D32_frac = 0x43100001, D24S8_norm = 0x43200001, D32S8_frac = 0x44200001
+		D16_norm = 0x42100001, D24_norm = 0x42100002, D32_frac = 0x43100001, D16S8_norm = 0x42200001, D24S8_norm = 0x43200001, D32S8_frac = 0x44200001
 	}
 	enumeratio formatus_indecis hereditat nint32 { I16_int = 0, I32_int = 1 }
 	enumeratio filtrum_exceptandi hereditat nint32 { punctum = 0, linitum = 1, anisotropus = 2 }
@@ -55,7 +61,7 @@ spatium graphicum {
 	enumeratio modus_implendi hereditat nint32 { solidus = 0, corporatura = 1 }
 	enumeratio modus_decerpendi hereditat nint32 { nulle = 0, princeps = 1, dorsualis = 2 }
 	enumeratio classis_auxilii hereditat nint32 { series = 0, textura = 1 }
-	enumeratio classis_memoriae hereditat nint32 { defalta = 0, immuta = 1 }
+	enumeratio classis_memoriae hereditat nint32 { defalta = 0, immuta = 1, communalis = 2 }
 	enumeratio classis_texturae hereditat nint32 {
 		singularis_una_dimensio = 0, ordo_una_dimensio = 1,
 		singularis_duo_dimensiones = 2, ordo_duo_dimensiones = 3,
@@ -97,7 +103,17 @@ spatium graphicum {
 		constatus modi_texturarum	=	habilita_operandum_functionis | habilita_operandum_processoris | habilita_operandum_visificum |
 										habilita_reddendum_coloris | habilita_reddendum_altitudinis;
 	}
+	spatium modus_fundi_fenestrae {
+		constatus alpha_nulla				= nint(0x01000000);
+		constatus alpha_recta				= nint(0x02000000);
+		constatus alpha_praemultiplicata	= nint(0x04000000);
+		constatus dorsum_colorum_extentum	= nint(0x08000000);
+	}
 
+	genus manubrium_auxilii hereditat objectum {
+		nint64 indentitas_machinationis { adipisce virtualis pura; }
+		!dordo_datorum data { adipisce virtualis pura; }
+	}
 	genus functio_machinationis hereditat objectum_dynamicum {
 		linea nomen { adipisce iacit virtualis pura; }
 		classis_functionis genu { adipisce virtualis pura; }
@@ -130,6 +146,7 @@ spatium graphicum {
 		functio logicum cressa(int lat, int alt) virtualis pura;
 		!textura textura { adipisce virtualis pura; }
 		logicum culicare_ultimum { adipisce virtualis pura; loca iacit virtualis pura; }
+		nint modus { adipisce virtualis pura; }
 	}
 
 	structura descriptio_exceptandi {
@@ -217,7 +234,7 @@ spatium graphicum {
 	structura prospectus_destinati_coloris {
 		@textura textura;
 		modus_onerandi modus_onerandi;
-		[[non_polire]] ordo [4] frac color_depurandi;
+		ordo [4] frac color_depurandi;
 	}
 	structura prospectus_destinati_altitudinis {
 		@textura textura;
@@ -229,7 +246,7 @@ spatium graphicum {
 
 	genus contextus_machinationis hereditat objectum_dynamicum {
 		functio logicum exordi_reddendum(int num_dest, @prospectus_destinati_coloris dc, @prospectus_destinati_altitudinis da) virtualis pura;
-		functio logicum exordi_reddendum_planum(@textura dest) virtualis pura;
+		functio logicum exordi_reddendum_planum(~prospectus_destinati_coloris dc) virtualis pura;
 		functio logicum exordi_regimen_memoriae() virtualis pura;
 		functio logicum ende() virtualis pura;
 		functio nihil annoda() virtualis pura;
@@ -258,13 +275,20 @@ spatium graphicum {
 		functio nihil exscribe_data(@auxilium_machinationis ad, (int, int) ad_sing, (int, int, int) ad_basis, @auxilium_machinationis ex, (int, int) ex_sing, (int, int, int) ex_basis, (int, int, int) magnitudines) virtualis pura;
 		functio nihil loca_data(@auxilium_machinationis ad, (int, int) ad_sing, (int, int, int) ad_basis, (int, int, int) magnitudines, ~descriptio_datorum ex) virtualis pura;
 		functio nihil quere_data(~descriptio_datorum ad, @auxilium_machinationis ex, (int, int) ex_sing, (int, int, int) ex_basis, (int, int, int) magnitudines) virtualis pura;
+
+		functio logicum acquire_auxilium_communale(@auxilium_machinationis aux) virtualis pura;
+		functio logicum acquire_auxilium_communale(@auxilium_machinationis aux, nint32 tmp) virtualis pura;
+		functio logicum remitte_auxilium_communale(@auxilium_machinationis aux) virtualis pura;
 	}
 	genus machinatio hereditat objectum {
 		linea nomen { adipisce iacit virtualis pura; }
 		nint64 indentitas { adipisce virtualis pura; }
 		logicum valida { adipisce virtualis pura; }
+		classis_machinationis genu { adipisce virtualis pura; }
+		nint64 memoria { adipisce virtualis pura; }
 		@contextus_machinationis contextus { adipisce virtualis pura; }
-		functio nihil para_implantationem(@linea tech, @nint versio) virtualis pura;
+		functio nihil para_implantationem(@linea tech, @(nint, nint) versio) virtualis pura;
+		functio logicum modum_formati_implanto(formatus_puncti fmt, modus_formati_puncti md) virtualis pura;
 		functio !liber_functionum onera_functiones(@flumen fl) virtualis pura;
 		functio !liber_functionum compila_functiones(@flumen fl) iacit virtualis pura;
 		functio !status_oleiductus crea_statum_oleiductus(~descriptio_oleiductus desc) virtualis pura;
@@ -274,12 +298,15 @@ spatium graphicum {
 		functio !textura crea_texturam(~descriptio_texturae desc) virtualis pura;
 		functio !textura crea_texturam(~descriptio_texturae desc, @descriptio_datorum data) virtualis pura;
 		functio !textura crea_destinatum(@textura ex, nint subtilitas, nint dimensio) virtualis pura;
+		functio !auxilium_machinationis importa_auxilium(@manubrium_auxilii mnbr) virtualis pura;
 		functio !fundus_fenestrae crea_fundum_fenestrae(@objectum_visificum fenestra, ~descriptio_fundi_fenestrae desc) virtualis pura;
 	}
 	genus fabricatio_machinationis hereditat objectum {
 		!ordo (nint64, linea) machinationes { adipisce iacit virtualis pura; }
 		functio !machinatio crea_machinationem() iacit virtualis pura;
 		functio !machinatio crea_machinationem(nint64 indent) iacit virtualis pura;
+		functio !manubrium_auxilii extrahe_manubrium(@auxilium_machinationis aux) iacit virtualis pura;
+		functio !manubrium_auxilii onera_manubrium(@dordo_datorum data) iacit virtualis pura;
 	}
 
 	[[importa] im_crfm] functio !fabricatio_machinationis crea_fabricationem_machinationis();

@@ -299,9 +299,7 @@ namespace Engine
 						_preprint = _callback._device->CreateTexture(desc);
 					}
 					auto rtv = CreateRenderTargetView(_preprint, Math::Vector4f(0.0f, 0.0f, 0.0f, 0.0f));
-					ctx->BeginRenderingPass(1, &rtv, 0);
-					ctx->EndCurrentPass();
-					ctx->Begin2DRenderingPass(_preprint);
+					ctx->Begin2DRenderingPass(rtv);
 					for (int i = line_from; i < line_to; i++) if (!_lines[i].dirty) {
 						for (int j = 0; j < _lines[i].ranges.Length(); j++) {
 							auto & r = _lines[i].ranges[j];
@@ -336,7 +334,9 @@ namespace Engine
 					ctx->SetRenderingPipelineState(_foreground_state);
 					ctx->DrawPrimitives(6, 0);
 					ctx->EndCurrentPass();
-					ctx->Begin2DRenderingPass(_callback._primary_surface);
+					rtv.Texture = _callback._primary_surface;
+					rtv.LoadAction = TextureLoadAction::Load;
+					ctx->Begin2DRenderingPass(rtv);
 					if (GetFocus() != this) return;
 					auto style = _callback._console->GetCaretStyle();
 					auto blinks = _callback._console->GetCaretBlinks();
@@ -611,14 +611,12 @@ namespace Engine
 				RenderTargetViewDesc rtvd;
 				auto clr = _console->GetWindowColor();
 				rtvd.LoadAction = TextureLoadAction::Clear;
+				rtvd.ClearValue[0] = float(clr.r) / 255.0f;
+				rtvd.ClearValue[1] = float(clr.g) / 255.0f;
+				rtvd.ClearValue[2] = float(clr.b) / 255.0f;
 				rtvd.ClearValue[3] = float(clr.a) / 255.0f;
-				rtvd.ClearValue[0] = float(clr.r) / 255.0f * rtvd.ClearValue[3];
-				rtvd.ClearValue[1] = float(clr.g) / 255.0f * rtvd.ClearValue[3];
-				rtvd.ClearValue[2] = float(clr.b) / 255.0f * rtvd.ClearValue[3];
 				rtvd.Texture = _primary_surface;
-				context->BeginRenderingPass(1, &rtvd, 0);
-				context->EndCurrentPass();
-				context->Begin2DRenderingPass(_primary_surface);
+				context->Begin2DRenderingPass(rtvd);
 				auto context_2d = context->Get2DContext();
 				context_2d->SetAnimationTime(GetTimerValue());
 				if (!_background_brush) {
@@ -813,7 +811,7 @@ namespace Engine
 			if (desc.fullscreen) callback->MarkAsFullscreen();
 			wd.MinimalConstraints = GetWindowSystem()->ConvertClientToWindow(min_size, wd.Flags);
 			wd.Position = at;
-			auto window = CreateWindow(wd, DeviceClass::Null);
+			auto window = CreateWindow(wd, Windows::DeviceClass::Null);
 			if (state->GetWindowIcon()) GetWindowSystem()->SetApplicationIcon(state->GetWindowIcon());
 			_application_callback.SetWindowBeingHosted(window);
 			window->Show(true);
@@ -855,7 +853,7 @@ namespace Engine
 			wd.Position.Top -= size.y / 2;
 			wd.Position.Right = wd.Position.Left + size.x;
 			wd.Position.Bottom = wd.Position.Top + size.y;
-			auto window = CreateWindow(wd, DeviceClass::Null);
+			auto window = CreateWindow(wd, Windows::DeviceClass::Null);
 			if (state->GetWindowIcon()) GetWindowSystem()->SetApplicationIcon(state->GetWindowIcon());
 			_application_callback.SetWindowBeingHosted(window);
 			window->Show(true);
