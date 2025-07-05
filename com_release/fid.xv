@@ -1,0 +1,62 @@
+﻿importa consolatorium;
+importa limae;
+importa collectiones;
+importa lxx;
+
+var ~ consolatorium con = consolatorium.currens()^;
+
+functio nihil index(~linea radix, ~ordo semita limae) iacit {
+	var l = semita(radix).limae("*.xo;*.xwo;*.xx;*.xex");
+	per (var i : l^) limae << semita(l^[i]);
+}
+functio nihil subscribe() introitus iacit {
+	proba {
+		var arg = para_argumenta();
+		si (arg^.longitudo < 3) iace errores.argumentum_falsum;
+		semita subscriptor = arg^[1], indentitas;
+		ordo semita limae;
+		linea clavis;
+		per (int i = 2; i < arg^.longitudo; i++) index(arg^[i], limae);
+		con << "Semita indentitatis: ";
+		con >> clavis;
+		indentitas = clavis;
+		con << "Clavis indentitatis: ";
+		con >> clavis;
+		per (var i : [0, limae.longitudo]) {
+			con.depura_lineam();
+			con << "MODULOS SUBSCRIBO [";
+			si (i < limae.longitudo) {
+				con.color_primus = consolatorium.color.flavus;
+				con << " " << linea(i * 100 / limae.longitudo) << "% ";
+				con.color_primus = consolatorium.color.defalta;
+				con << "]";
+				ordo linea argumenta;
+				argumenta << limae[i];
+				argumenta << "-Sfpo";
+				argumenta << "s";
+				argumenta << indentitas;
+				argumenta << clavis;
+				argumenta << limae[i];
+				xx.descriptio_processi proc(subscriptor, argumenta);
+				si (!proc.impone(xx.modus_creandi_processi.imperatum).exequi()) iace errores.argumentum_falsum;
+				proc.processus^.opperire();
+				si (proc.processus^.numerus_exitus) iace errores.habitus_falsus;
+			} alioqui {
+				con.color_primus = consolatorium.color.viridis;
+				con << " BONE ";
+				con.color_primus = consolatorium.color.defalta;
+				con << "]\n";
+			}
+		}
+	} cape (nintadl e, nintadl se) {
+		linea de, dse;
+		errores.descriptio(e, se, de, dse);
+		con.scribe_lineam();
+		con.color_primus = consolatorium.color.ruber;
+		con << "ERROR SUBSCRIBENDI: ";
+		si (dse.longitudo) con << de << " - " << dse << "\n";
+		alioqui con << de << "\n";
+		con.color_primus = consolatorium.color.defalta;
+		iace e;
+	}
+}

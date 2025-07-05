@@ -203,8 +203,7 @@ void ListCertificates(const string & at)
 bool CreateSecurityData(Stream * dest, XE::Security::IIdentity * identity) noexcept
 {
 	try {
-		dest->Seek(0, Begin);
-		SafePointer<DataBlock> data = dest->ReadAll();
+		SafePointer<DataBlock> data = XI::ReadConsistencyData(dest);
 		SafePointer<DataBlock> hash = Cryptography::CreateHash(Cryptography::HashAlgorithm::SHA512, data);
 		if (!hash) return false;
 		SafePointer<XE::Security::IContainer> addendum = identity ? XE::Security::CreateSignatureData(hash, identity) : XE::Security::CreateIntegrityData(hash);
