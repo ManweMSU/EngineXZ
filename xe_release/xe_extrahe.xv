@@ -1,0 +1,152 @@
+﻿importa formati;
+importa lxx;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Fontes Libri XE";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2025";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium data ("DAT", 1) = "xe.ecsa";
+
+constatus lima_gitignore	= ".gitignore";
+constatus lima_scaenarii	= "xe.ertbs";
+constatus lima_signalis		= ".xe.creatus";
+constatus lima_sui			= "xe_extrahe.xx";
+constatus collectorium_xo	= "objecta";
+
+var ~ consolatorium con = consolatorium.currens()^;
+var logicum silens = non;
+
+genus compilator hereditat contextus.labos {
+	semita ex;
+	semita ad;
+	!contextus.semaphorum sync;
+
+	structor () {}
+	functio nihil exeque(@objectum ctx) redefini { proba {
+		logicum radix = ex.nomen_purus == "canonicalis";
+		logicum bene = non;
+		ordo linea arg;
+		arg << ex;
+		si (radix) arg << "-PSVlo";
+		alioqui arg << "-SVlo";
+		arg << semita(collectorium_xo);
+		arg << ad;
+		var proc = xx.descriptio_processi("xv", arg);
+		si (proc.impone(xx.modus_creandi_processi.imperatum).exequi()) {
+			proc.processus^.opperire();
+			si (!proc.processus^.numerus_exitus) bene = sic;
+		}
+		si (!silens) {
+			sync^.opperire();
+			si (bene) {
+				con << "Modulus \"";
+				con.color_primus = consolatorium.color.lazulinus;
+				con << ex.nomen_purus;
+				con.color_primus = consolatorium.color.defalta;
+				con << "\" ";
+				con.color_primus = consolatorium.color.viridis;
+				con << "compilatus bene est!";
+				con.color_primus = consolatorium.color.defalta;
+				con << "\n";
+			} alioqui {
+				con << "Modulus \"";
+				con.color_primus = consolatorium.color.lazulinus;
+				con << ex.nomen_purus;
+				con.color_primus = consolatorium.color.defalta;
+				con << "\" ";
+				con.color_primus = consolatorium.color.ruber;
+				con << "non compilatus est.";
+				con.color_primus = consolatorium.color.defalta;
+				con << "\n";
+			}
+			sync^.aperi();
+		}
+	} }
+}
+functio nihil compila(~ordo linea xv) iacit {
+	var obj = semita(collectorium_xo);
+	var flumenes = contextus.crea_caudam_filorum();
+	var sync = contextus.crea_semaphorum(1);
+	obj.crea_arborem_collectoriorum();
+	per (var i : xv) {
+		var com = crea(compilator);
+		com^.ex = xv[i];
+		com^.ad = semita(obj, com^.ex.nomen_purus + ".xo");
+		com^.sync = sync;
+		si (com^.ex.extensio == "ecs") dura;
+		flumenes^.adde(com);
+	}
+	flumenes^.opperire();
+}
+functio nihil extrahe(~ordo linea cxx, ~ordo linea xv) iacit {
+	var fons = formati.archivum.onera(para_auxilium(modulus(), "DAT", 1), non);
+	per (var f : fons^) {
+		var lima = fons^[f];
+		var nomen = lima^.nomen;
+		var lingua = lima^.moderatoris;
+		var data = lima^.data;
+		si (lingua == 1) cxx << nomen;
+		alioqui si (lingua == 2) xv << nomen;
+		var s = semita(nomen);
+		s.parens.crea_arborem_collectoriorum();
+		data^.exscribe(s.crea_limam(modus_limae.scribere, modus_creatoris.crea_semper));
+	}
+}
+functio nihil extrahe() introitus iacit {
+	proba {
+		var arg = para_argumenta();
+		si (arg^.longitudo > 1) {
+			si (arg^[1] == "--extrahe" && arg^.longitudo == 3) {
+				semita(arg^[2]).crea_arborem_collectoriorum();
+				semita(arg^[2]).loca_currentem();
+				ordo linea cxx, xv;
+				extrahe(cxx, xv);
+				compila(xv);
+				var cdx_s = scriptio.codifica(semita(lima_scaenarii).crea_limam(modus_limae.scribere, modus_creatoris.crea_semper), linea.codex.utf8);
+				var cdx_n = scriptio.codifica(semita(lima_gitignore).crea_limam(modus_limae.scribere, modus_creatoris.crea_semper), linea.codex.utf8);
+				cdx_s^.scribe_lineam("xx " + lima_sui + " --ini");
+				cdx_s^.scribe("compile");
+				per (var i : cxx) si (cxx[i].reperi_primum(".h") < 0) {
+					cdx_s^.scribe(" ");
+					cdx_s^.scribe(cxx[i]);
+				}
+				cdx_s^.scribe_lineam();
+				cdx_n^.scribe_lineam("*");
+				cdx_n^.scribe_lineam("!" + lima_sui);
+				cdx_n^.scribe_lineam("!" + lima_scaenarii);
+				cdx_n^.scribe_lineam("!" + lima_gitignore);
+				semita.modulus_primus().exscribe(lima_sui, modus_exscribendi.rescribe_ultime);
+				semita(lima_signalis).crea_limam(modus_limae.modus_nullus, modus_creatoris.crea_semper);
+			} alioqui si (arg^[1] == "--ini" && arg^.longitudo == 2) {
+				silens = sic;
+				semita.modulus_primus().parens.loca_currentem();
+				si (semita(lima_signalis).lima_est) responde;
+				ordo linea cxx, xv;
+				extrahe(cxx, xv);
+				compila(xv);
+				semita(lima_signalis).crea_limam(modus_limae.modus_nullus, modus_creatoris.crea_semper);
+			} alioqui iace errores.argumentum_falsum;
+		} alioqui {
+			con << "Extractor fontum libri XE\n";
+			con << "Imperata:\n";
+			con << "  xx xe_extrahe.xx --extrahe <semitam>  (1)\n";
+			con << "  xx xe_extrahe.xx --ini                (2)\n";
+			con << "\n";
+			con << "(1) - fontes et scaenaria struendi in <semitam> creat,\n";
+			con << "(2) - per GIT repositoribus dependentes recreat (imperatum internum).\n";
+		}
+	} cape (nintadl e, nintadl se) {
+		si (silens) iace e, se;
+		linea de, dse;
+		errores.descriptio(e, se, de, dse);
+		con.color_primus = consolatorium.color.ruber;
+		si (dse.longitudo) {
+			con << "ERROR: " << de << ": " << dse << "\n";
+		} alioqui {
+			con << "ERROR: " << de << "\n";
+		}
+		con.color_primus = consolatorium.color.defalta;
+		iace e, se;
+	}
+}

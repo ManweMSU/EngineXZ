@@ -1,0 +1,46 @@
+﻿importa consolatorium;
+importa limae;
+importa formati;
+
+enumeratio lingua { cxx = 1, v = 2 }
+
+var ~ consolatorium con = consolatorium.currens()^;
+
+functio nihil adde(~ordo (semita, lingua) limae, lingua ln, ~semita radix, ~linea sine) iacit {
+	linea f;
+	si (ln == lingua.cxx) f = "*.c;*.cc;*.cpp;*.cxx;*.c++;*.h;*.hpp";
+	alioqui si (ln == lingua.v) f = "*.v;*.xv;*.vvv;*.ecs";
+	var in = radix.limae(f);
+	var sine_fract = sine.scinde(';');
+	per (var i : in^) {
+		var ~ s = in^[i];
+		per (var j : sine_fract^) si (sine_fract^[j].longitudo && s.reperi_primum(sine_fract^[j]) >= 0) dura 1;
+		limae << (semita(s), ln);
+	}
+}
+functio nihil forma() introitus iacit {
+	ordo (semita, lingua) limae;
+	semita.modulus_primus().parens.parens.loca_currentem();
+	adde(limae, lingua.cxx, "xasm", "compiler;dasm");
+	adde(limae, lingua.cxx, "ximg", "build");
+	adde(limae, lingua.cxx, "xenv", "tpgrph");
+	adde(limae, lingua.cxx, "xenv_sec", "");
+	adde(limae, lingua.cxx, "xexec", "xx_com;xx_machine");
+	adde(limae, lingua.v, "xv_lib", "lxx.xv;typographica.xv");
+	var fl = semita(semita.modulus_primus().parens, "xe.ecsa").crea_limam(modus_limae.scribere_et_legere, modus_creatoris.crea_semper);
+	formati.archivum_novum.descriptio desc;
+	desc.numerus_limarum = limae.longitudo;
+	desc.formatus = formati.archivum_novum.formatus.ecsa_antica | formati.archivum_novum.formatus.ecsa_meta_nulla;
+	var arc = formati.archivum_novum.alloca(fl, desc);
+	var praev = semita.currens().longitudo + 1;
+	per (var i : limae) {
+		var fll = limae[i].primus.crea_limam(modus_limae.legere, modus_creatoris.aperi_praesens);
+		formati.archivum_novum.lima desc;
+		desc.indumentum = formati.archivum_novum.indumenta_limae.flumen_datorum | formati.archivum_novum.indumenta_limae.nomen | formati.archivum_novum.indumenta_limae.moderatoris;
+		desc.nomen = limae[i].primus.fragmentum(praev, -1);
+		desc.moderatoris = int(limae[i].secundus);
+		desc.flumen_datorum = fll;
+		arc^.scribe_limam(i + 1, desc);
+	}
+	arc^.ende();
+}
