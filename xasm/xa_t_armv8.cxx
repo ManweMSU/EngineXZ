@@ -2438,9 +2438,15 @@ namespace Engine
 						encode_emulate_lea(Reg::X8, Reg::FP, _retval.fp_offset);
 						encode_load_element(8, VReg::V0, Reg::X8);
 					} else {
-						encode_load(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
-						if (_retval.reg_max != Reg::NO && _retval.reg_max != _retval.reg_min) {
-							encode_load(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_max, Reg::FP, _retval.fp_offset + 8);
+						auto size = _size_eval(_src.retval.size);
+						if (size) {
+							if (size == 1) encode_load(1, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
+							else if (size == 2) encode_load(2, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
+							else if (size == 4) encode_load(4, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
+							else encode_load(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
+							if (_retval.reg_max != Reg::NO && _retval.reg_max != _retval.reg_min) {
+								encode_load(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_max, Reg::FP, _retval.fp_offset + 8);
+							}
 						}
 					}
 					encode_mov(Reg::SP, Reg::FP);
