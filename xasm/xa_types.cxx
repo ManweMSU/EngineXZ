@@ -116,8 +116,8 @@ namespace Engine
 			void DecodeLongData(Streaming::Stream * stream, Array<uint32> & data)
 			{
 				int length;
-				if (length > 0x1FFFFFFF) throw InvalidFormatException();
 				stream->Read(&length, 4);
+				if (length > 0x1FFFFFFF) throw InvalidFormatException();
 				data.SetLength(length);
 				stream->Read(data.GetBuffer(), length * 4);
 			}

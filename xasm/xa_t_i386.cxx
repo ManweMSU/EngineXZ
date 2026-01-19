@@ -70,6 +70,7 @@ namespace Engine
 					encode_preserve(Reg32::ECX, reg_in_use, 0, true);
 					encode_preserve(Reg32::EDX, reg_in_use, 0, true);
 					for (auto & l : scope.locals) if (l.finalizer.final.ref_class != ReferenceNull) {
+						auto effective_frame_size = _allocated_frame_size;
 						bool skip = false;
 						for (auto & i : _init_locals) if (i.bp_offset == l.bp_offset) { skip = true; break; }
 						if (skip) continue;
@@ -89,12 +90,13 @@ namespace Engine
 						}
 						encode_put_addr_of(Reg32::EAX, l.finalizer.final);
 						encode_call(Reg32::EAX, false);
-						if (stack_growth) encode_add(Reg32::ESP, stack_growth);
+						if (stack_growth) encode_stack_dealloc(stack_growth);
+						_allocated_frame_size = effective_frame_size;
 					}
 					encode_restore(Reg32::EDX, reg_in_use, 0, true);
 					encode_restore(Reg32::ECX, reg_in_use, 0, true);
 					encode_restore(Reg32::EAX, reg_in_use, 0, true);
-					if (scope.shift_sp) encode_add(Reg32::ESP, scope.frame_size);
+					if (scope.shift_sp) encode_stack_dealloc(scope.frame_size);
 				}
 				void _encode_arithmetics_shift(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{
@@ -699,7 +701,7 @@ namespace Engine
 								encode_push(Reg32::EBX);
 								encode_emulate_div_64();
 								encode_pop(Reg32::EBX);
-								encode_add(Reg32::ESP, 16);
+								encode_stack_dealloc(16);
 								encode_emulate_set_signum(Reg32::EAX, Reg32::EDX, Reg32::EBX);
 							} else if (opcode == TransformIntegerUMod) {
 								encode_emulate_div_64();
@@ -948,7 +950,7 @@ namespace Engine
 						if (info.indirect) stack_usage += 4; else stack_usage += _word_align(spec->size);
 						num_args_by_stack++;
 					}
-					if (stack_usage && !idle) encode_add(Reg32::ESP, -int(stack_usage));
+					if (stack_usage && !idle) encode_stack_alloc(stack_usage);
 					argument_homes.SetLength(node.inputs.Length() - first_arg);
 					argument_layout_index.SetLength(node.inputs.Length() - first_arg);
 					uint current_stack_index = 0;
@@ -1031,7 +1033,8 @@ namespace Engine
 						else encode_put_addr_of(Reg32::EAX, node.self);
 						encode_call(Reg32::EAX, false);
 						if (_osenv != Environment::Windows && retval_byref) stack_usage -= 4;
-						if (stack_usage && conv == ABI::CDECL) encode_add(Reg32::ESP, int(stack_usage));
+						if (stack_usage && conv == ABI::CDECL) encode_stack_dealloc(stack_usage);
+						else _allocated_frame_size -= stack_usage;
 					}
 					int quant = _word_align(node.retval_spec.size);
 					if (!retval_byref && (node.retval_spec.semantics == ArgumentSemantics::FloatingPoint || quant > 4 || retval_final)) {
@@ -1544,49 +1547,59 @@ namespace Engine
 									} else if (node.inputs[1].self.ref_class != ReferenceLiteral && (node.inputs.Length() == 2 || node.inputs[2].self.ref_class == ReferenceLiteral)) {
 										uint scale = 1;
 										if (node.inputs.Length() == 3) scale = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;
+										uint scale_lb = logarithm(scale);
 										encode_preserve(Reg32::EAX, reg_in_use, 0, !idle);
-										encode_preserve(Reg32::EDX, reg_in_use, 0, !idle);
-										encode_preserve(Reg32::ECX, reg_in_use, 0, !idle && scale > 1);
+										encode_preserve(Reg32::EDX, reg_in_use, 0, !idle && scale > 1 && scale_lb == InvalidLogarithm);
+										encode_preserve(Reg32::ECX, reg_in_use, 0, !idle && scale > 1 && scale_lb == InvalidLogarithm);
 										if (scale) {
 											InternalDisposition offset;
 											offset.flags = DispositionRegister;
 											offset.reg = Reg32::EAX;
 											offset.size = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
 											if (offset.size != 4) throw InvalidArgumentException();
-											_encode_tree_node(node.inputs[1], idle, mem_load, &offset, reg_in_use | uint(Reg32::ESI) | uint(Reg32::EAX) | uint(Reg32::EDX) | uint(Reg32::ECX));
+											_encode_tree_node(node.inputs[1], idle, mem_load, &offset, reg_in_use | uint(Reg32::ESI) | uint(Reg32::EAX));
 											if (!idle) {
 												if (scale > 1) {
-													encode_mov_reg_const(4, Reg32::ECX, scale);
-													encode_mul_div(4, mdOp::MUL, Reg32::ECX);
+													if (scale_lb != InvalidLogarithm) {
+														encode_shl(Reg32::EAX, scale_lb);
+													} else {
+														encode_mov_reg_const(4, Reg32::ECX, scale);
+														encode_mul_div(4, mdOp::MUL, Reg32::ECX);
+													}
 												}
 												encode_operation(4, arOp::ADD, Reg32::ESI, Reg32::EAX);
 											}
 										}
-										encode_restore(Reg32::ECX, reg_in_use, 0, !idle && scale > 1);
-										encode_restore(Reg32::EDX, reg_in_use, 0, !idle);
+										encode_restore(Reg32::ECX, reg_in_use, 0, !idle && scale > 1 && scale_lb == InvalidLogarithm);
+										encode_restore(Reg32::EDX, reg_in_use, 0, !idle && scale > 1 && scale_lb == InvalidLogarithm);
 										encode_restore(Reg32::EAX, reg_in_use, 0, !idle);
 									} else if (node.inputs.Length() == 3 && node.inputs[1].self.ref_class == ReferenceLiteral && node.inputs[2].self.ref_class != ReferenceLiteral) {
 										uint scale = node.input_specs[1].size.num_bytes + WordSize * node.input_specs[1].size.num_words;
+										uint scale_lb = logarithm(scale);
 										encode_preserve(Reg32::EAX, reg_in_use, 0, !idle);
-										encode_preserve(Reg32::EDX, reg_in_use, 0, !idle);
-										encode_preserve(Reg32::ECX, reg_in_use, 0, !idle && scale > 1);
+										encode_preserve(Reg32::EDX, reg_in_use, 0, !idle && scale > 1 && scale_lb == InvalidLogarithm);
+										encode_preserve(Reg32::ECX, reg_in_use, 0, !idle && scale > 1 && scale_lb == InvalidLogarithm);
 										if (scale) {
 											InternalDisposition offset;
 											offset.flags = DispositionRegister;
 											offset.reg = Reg32::EAX;
 											offset.size = node.input_specs[2].size.num_bytes + WordSize * node.input_specs[2].size.num_words;
 											if (offset.size != 4) throw InvalidArgumentException();
-											_encode_tree_node(node.inputs[2], idle, mem_load, &offset, reg_in_use | uint(Reg32::ESI) | uint(Reg32::EAX) | uint(Reg32::EDX) | uint(Reg32::ECX));
+											_encode_tree_node(node.inputs[2], idle, mem_load, &offset, reg_in_use | uint(Reg32::ESI) | uint(Reg32::EAX));
 											if (!idle) {
 												if (scale > 1) {
-													encode_mov_reg_const(4, Reg32::ECX, scale);
-													encode_mul_div(4, mdOp::MUL, Reg32::ECX);
+													if (scale_lb != InvalidLogarithm) {
+														encode_shl(Reg32::EAX, scale_lb);
+													} else {
+														encode_mov_reg_const(4, Reg32::ECX, scale);
+														encode_mul_div(4, mdOp::MUL, Reg32::ECX);
+													}
 												}
 												encode_operation(4, arOp::ADD, Reg32::ESI, Reg32::EAX);
 											}
 										}
-										encode_restore(Reg32::ECX, reg_in_use, 0, !idle && scale > 1);
-										encode_restore(Reg32::EDX, reg_in_use, 0, !idle);
+										encode_restore(Reg32::ECX, reg_in_use, 0, !idle && scale > 1 && scale_lb == InvalidLogarithm);
+										encode_restore(Reg32::EDX, reg_in_use, 0, !idle && scale > 1 && scale_lb == InvalidLogarithm);
 										encode_restore(Reg32::EAX, reg_in_use, 0, !idle);
 									} else {
 										encode_preserve(Reg32::EAX, reg_in_use, 0, !idle);
@@ -1699,6 +1712,7 @@ namespace Engine
 									encode_preserve(ld.reg, reg_in_use, 0, !idle);
 									_encode_tree_node(node.inputs[1], idle, mem_load, &ld, reg_in_use | uint(ld.reg));
 									if (!idle) {
+										auto effective_frame_size = _allocated_frame_size;
 										encode_test(min(ld.size, 4), ld.reg, 0xFFFFFFFF);
 										_dest.code << 0x0F; _dest.code << 0x84; // JZ
 										_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
@@ -1716,6 +1730,7 @@ namespace Engine
 										rs.xasm_offset_jump_to = _current_instruction + 1 + int(node.input_specs[2].size.num_bytes);
 										_jump_reloc << rs;
 										*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
+										_allocated_frame_size = effective_frame_size;
 									}
 									encode_restore(ld.reg, reg_in_use, 0, !idle);
 								} else if (node.self.index == TransformSplit) {
@@ -1894,7 +1909,7 @@ namespace Engine
 						_scope_frame_base -= size;
 						_unroll_base -= size;
 						_retval.bp_offset = _scope_frame_base;
-						if (size) encode_add(Reg32::ESP, -size);
+						if (size) encode_stack_alloc(size);
 					}
 					int arg_offs = 2 * WordSize;
 					for (int i = 0; i < api->Length(); i++) {
@@ -2033,6 +2048,7 @@ namespace Engine
 							new_var.finalizer = inst.attachment_final;
 							scope.locals << new_var;
 						} else if (inst.opcode == OpcodeUnconditionalJump) {
+							auto effective_frame_size = _allocated_frame_size;
 							encode_scope_unroll(i, i + 1 + int(inst.attachment.num_bytes));
 							_dest.code << 0xE9; // JMP
 							_dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00; _dest.code << 0x00;
@@ -2041,7 +2057,9 @@ namespace Engine
 							rs.machine_offset_relative_to = _dest.code.Length();
 							rs.xasm_offset_jump_to = i + 1 + int(inst.attachment.num_bytes);
 							_jump_reloc << rs;
+							_allocated_frame_size = effective_frame_size;
 						} else if (inst.opcode == OpcodeConditionalJump) {
+							auto effective_frame_size = _allocated_frame_size;
 							_encode_expression_evaluation(inst.tree, Reg32::ECX);
 							encode_test(1, Reg32::ECX, 0xFF);
 							_dest.code << 0x0F; _dest.code << 0x84; // JZ
@@ -2056,10 +2074,13 @@ namespace Engine
 							rs.machine_offset_relative_to = _dest.code.Length();
 							rs.xasm_offset_jump_to = i + 1 + int(inst.attachment.num_bytes);
 							_jump_reloc << rs;
+							_allocated_frame_size = effective_frame_size;
 						} else if (inst.opcode == OpcodeControlReturn) {
+							auto effective_frame_size = _allocated_frame_size;
 							_encode_expression_evaluation(inst.tree, Reg32::NO);
 							for (auto & scp : _scopes.InversedElements()) encode_finalize_scope(scp);
 							encode_function_epilogue();
+							_allocated_frame_size = effective_frame_size;
 						} else InvalidArgumentException();
 					}
 				}

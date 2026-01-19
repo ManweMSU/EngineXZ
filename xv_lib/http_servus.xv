@@ -80,8 +80,8 @@ spatium http {
 									responde;
 								}
 								var r = p^[0].scinde(' ');
-								si (r^[2] != "HTTP/1.1") { responde_fatale(505, sic); responde; }
 								si (r^.longitudo != 3 || !r^[1].longitudo) { responde_fatale(400, sic); responde; }
+								si (r^[2] != "HTTP/1.1") { responde_fatale(505, sic); responde; }
 								cr.semita_auxilii = r^[1];
 								var ~ m = r^[0];
 								si (m == "CONNECT") cr.methodus = methodus.adnecte;

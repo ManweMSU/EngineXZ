@@ -10,9 +10,19 @@ namespace Engine
 			EncoderContext::EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src, bool x64) : _osenv(osenv), _dest(dest), _src(src), _org_inst_offsets(1), _jump_reloc(0x100), _inputs(1), _x64_mode(x64)
 			{
 				_current_instruction = -1;
-				_stack_oddity = 0;
+				_stack_oddity = _allocated_frame_size = 0;
 				_inputs.SetLength(src.inputs.Length());
 				_org_inst_offsets.SetLength(src.instset.Length());
+			}
+			uint32 EncoderContext::logarithm(uint32 value) noexcept
+			{
+				if (!value) return InvalidLogarithm;
+				uint32 r = 0;
+				while (value != 1) {
+					if (value & 1) return InvalidLogarithm;
+					value >>= 1; r++;
+				}
+				return r;
 			}
 			uint8 EncoderContext::regular_register_code(uint reg)
 			{
@@ -132,7 +142,7 @@ namespace Engine
 					}
 				} else {
 					if (cond_if && (reg_in_use & reg) && !(reg_unmask & reg)) {
-						encode_add(Reg64::RSP, -16);
+						encode_stack_alloc(16);
 						encode_mov_mem_xmm(16, Reg64::RSP, 0, reg);
 						_stack_oddity += 16;
 					}
@@ -148,7 +158,7 @@ namespace Engine
 				} else {
 					if (cond_if && (reg_in_use & reg) && !(reg_unmask & reg)) {
 						encode_mov_xmm_mem(16, reg, Reg64::RSP, 0);
-						encode_add(Reg64::RSP, 16);
+						encode_stack_dealloc(16);
 						_stack_oddity -= 16;
 					}
 				}
@@ -169,7 +179,7 @@ namespace Engine
 				ls.shift_sp = of_size && !enf_base;
 				ls.temporary = temporary;
 				_scopes.Push(ls);
-				if (ls.shift_sp) encode_add(Reg64::RSP, -of_size);
+				if (ls.shift_sp) encode_stack_alloc(of_size);
 			}
 			void EncoderContext::encode_close_scope(uint reg_in_use)
 			{
@@ -714,6 +724,8 @@ namespace Engine
 				uint8 rex = make_rex(false, false, false, rc & 0x08);
 				if (rex & 0x0F) _dest.code << rex;
 				_dest.code << (0x50 + (rc & 0x07));
+				if (_x64_mode) _allocated_frame_size += 8;
+				else _allocated_frame_size += 4;
 			}
 			void EncoderContext::encode_pop(Reg reg)
 			{
@@ -721,6 +733,40 @@ namespace Engine
 				uint8 rex = make_rex(false, false, false, rc & 0x08);
 				if (rex & 0x0F) _dest.code << rex;
 				_dest.code << (0x58 + (rc & 0x07));
+				if (_x64_mode) _allocated_frame_size -= 8;
+				else _allocated_frame_size -= 4;
+				if (_allocated_frame_size < 0) throw InvalidStateException();
+			}
+			void EncoderContext::encode_stack_alloc(uint size)
+			{
+				if (_osenv == Environment::Windows) {
+					while (size) {
+						if ((_allocated_frame_size + size) / VirtualMemoryPageSize != _allocated_frame_size / VirtualMemoryPageSize) {
+							auto paragraph = _x64_mode ? 8 : 4;
+							auto prox_page_align = (_allocated_frame_size / VirtualMemoryPageSize + 1) * VirtualMemoryPageSize;
+							auto allocate = prox_page_align - _allocated_frame_size;
+							if (allocate < paragraph) throw InvalidStateException();
+							auto shift = allocate - paragraph;
+							size -= allocate;
+							if (shift) encode_add(Reg64::RSP, -shift);
+							encode_push(Reg64::RBP);
+							_allocated_frame_size = prox_page_align;
+						} else {
+							encode_add(Reg64::RSP, -size);
+							_allocated_frame_size += size;
+							size = 0;
+						}
+					}
+				} else {
+					encode_add(Reg64::RSP, -size);
+					_allocated_frame_size += size;
+				}
+			}
+			void EncoderContext::encode_stack_dealloc(uint size)
+			{
+				encode_add(Reg64::RSP, size);
+				_allocated_frame_size -= size;
+				if (_allocated_frame_size < 0) throw InvalidStateException();
 			}
 			void EncoderContext::encode_add(Reg reg, int literal)
 			{

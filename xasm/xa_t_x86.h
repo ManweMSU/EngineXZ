@@ -8,6 +8,8 @@ namespace Engine
 	{
 		namespace X86
 		{
+			constexpr int VirtualMemoryPageSize = 0x1000;
+			constexpr uint InvalidLogarithm = 0xFFFFFFFF;
 			typedef uint Reg;
 			namespace Reg32
 			{
@@ -98,11 +100,12 @@ namespace Engine
 				Array<JumpRelocStruct> _jump_reloc;
 				ArgumentStorageSpec _retval;
 				Array<ArgumentStorageSpec> _inputs;
-				int _scope_frame_base, _unroll_base, _current_instruction, _stack_oddity, _stack_clear_size;
+				int _scope_frame_base, _unroll_base, _current_instruction, _stack_oddity, _stack_clear_size, _allocated_frame_size;
 				Volumes::Stack<LocalScope> _scopes;
 				Volumes::Stack<LocalDisposition> _init_locals;
 			protected:
 				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src, bool x64);
+				static uint32 logarithm(uint32 value) noexcept;
 				static uint8 regular_register_code(uint reg);
 				static uint8 xmm_register_code(uint reg);
 				static uint8 make_rex(bool size64_W, bool reg_ext_R, bool index_ext_X, bool opt_ext_B);
@@ -144,6 +147,8 @@ namespace Engine
 				void encode_lea(Reg dest, Reg src_ptr, int src_offset);
 				void encode_push(Reg reg);
 				void encode_pop(Reg reg);
+				void encode_stack_alloc(uint size);
+				void encode_stack_dealloc(uint size);
 				void encode_add(Reg reg, int literal);
 				void encode_and(Reg reg, int literal);
 				void encode_xor(Reg reg, int literal);

@@ -76,10 +76,24 @@ BETA-7:
  + Minor optimization for the language server
 
 BETA-8:
- - GUI and CUI libraries
- - XU framework: XV extension for UI
+ - GUI legacy library
+ + Added stack probes while on Windows, fixed ARMv8 ADD/SUB with large immediate error, scaled offset optimization
+ + Some HTTP Server bug fix
+ - XVC crashed on invalid prototype control sequences
+ - Ctrl+C/Ctrl+V in raw console mode
+ - Error with embeded modules
+ - Console auto-launch (?)
+ - IPv4 in HTTP client
+ - CSV escape sequences
+ - Crashes using HTTP services
+ - XA extensions: long arithmetics
+ - XA extensions: cryptography
+ - RSA acceleration via XA
 
 EXTRA RELEASES:
+ - GUI and CUI libraries
+ - XU framework: XV extension for UI
  - XB framework: XX to native bundle wrapper
+ - UDP support
  - Excel/Numbers interop extension
  - Debugger
