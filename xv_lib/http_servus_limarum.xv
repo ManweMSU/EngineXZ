@@ -4,7 +4,7 @@ importa limae;
 
 auxilium attributum (meta.attributum_nomen_moduli) = "Liber Servorum Limarum HTTP";
 auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
-auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2025";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2026";
 auxilium attributum (meta.attributum_versio) = "1.0.0.1";
 
 auxilium versio 0;

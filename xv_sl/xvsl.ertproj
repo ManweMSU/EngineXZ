@@ -68,7 +68,7 @@ VersionInformation {
 	ApplicationName = "Engine XV Servus Linguae"
 	CompanyIdentifier = "EngineSoftware"
 	CompanyName = "Engine Software"
-	Copyright = "© Engine Software. 2025"
+	Copyright = "© Engine Software. 2026"
 	InternalName = "xvsl"
 	Version = "1.0.0.1"
 }

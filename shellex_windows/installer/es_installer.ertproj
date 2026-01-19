@@ -6,7 +6,7 @@ VersionInformation {
 	ApplicationName = "XX Conformator Extensionis COM"
 	CompanyIdentifier = "EngineSoftware"
 	CompanyName = "Engine Software"
-	Copyright = "© Engine Software. 2025"
+	Copyright = "© Engine Software. 2026"
 	InternalName = "es_installer"
 	Version = "1.0.0.1"
 }

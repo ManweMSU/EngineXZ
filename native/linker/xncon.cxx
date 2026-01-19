@@ -146,7 +146,7 @@ int Main(void)
 	} catch (...) { return 0x40; }
 	if (!state.nologo && !state.silent) {
 		console << L"XN Contextor" << LineFeedSequence;
-		console << L"(C) Engine Software. 2025" << LineFeedSequence;
+		console << L"(C) Engine Software. 2026" << LineFeedSequence;
 		console << L"Versio " << ENGINE_VI_APPVERSION << L"." << LineFeedSequence << LineFeedSequence;
 	}
 	if (state.input_xx.Length()) {
