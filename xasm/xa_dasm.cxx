@@ -186,6 +186,21 @@ namespace Engine
 						if (ref.ref_flags & ReferenceFlagShort) output << L"_16";
 						else if (ref.ref_flags & ReferenceFlagLong) output << L"_64";
 						else output << L"_32";
+					} else if (ref.index >= 0x200 && ref.index <= 0x2FF) {
+						if (ref.index == TransformLongIntCmpEQ) output << L"L_EQ";
+						else if (ref.index == TransformLongIntCmpNEQ) output << L"L_NEQ";
+						else if (ref.index == TransformLongIntCmpLE) output << L"L_LE";
+						else if (ref.index == TransformLongIntCmpGE) output << L"L_GE";
+						else if (ref.index == TransformLongIntCmpL) output << L"L_L";
+						else if (ref.index == TransformLongIntCmpG) output << L"L_G";
+						else if (ref.index == TransformLongIntAdd) output << L"L_ADD";
+						else if (ref.index == TransformLongIntSubt) output << L"L_SUB";
+						else if (ref.index == TransformLongIntShiftL) output << L"L_SHL";
+						else if (ref.index == TransformLongIntShiftR) output << L"L_SHR";
+						else if (ref.index == TransformLongIntMul) output << L"L_MUL";
+						else if (ref.index == TransformLongIntDivMod) output << L"L_DIV";
+						else if (ref.index == TransformLongIntMod) output << L"L_MOD";
+						else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 					} else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 				} else if (ref.ref_class == ReferenceLiteral) {
 				} else if (ref.index) {

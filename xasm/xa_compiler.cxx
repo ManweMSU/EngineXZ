@@ -329,6 +329,28 @@ namespace Engine
 				else return false;
 				return true;
 			}
+			bool ProcessLongTransform(ObjectReference & ref)
+			{
+				auto & i = _text[_pos].Content;
+				// Long arithmetics - comparison
+				if (i == L"L_EQ") ref.index = TransformLongIntCmpEQ;
+				else if (i == L"L_NEQ") ref.index = TransformLongIntCmpNEQ;
+				else if (i == L"L_LE") ref.index = TransformLongIntCmpLE;
+				else if (i == L"L_GE") ref.index = TransformLongIntCmpGE;
+				else if (i == L"L_L") ref.index = TransformLongIntCmpL;
+				else if (i == L"L_G") ref.index = TransformLongIntCmpG;
+				// Long arithmetics - main
+				else if (i == L"L_ADD") ref.index = TransformLongIntAdd;
+				else if (i == L"L_SUB") ref.index = TransformLongIntSubt;
+				else if (i == L"L_SHL") ref.index = TransformLongIntShiftL;
+				else if (i == L"L_SHR") ref.index = TransformLongIntShiftR;
+				else if (i == L"L_MUL") ref.index = TransformLongIntMul;
+				else if (i == L"L_DIV") ref.index = TransformLongIntDivMod;
+				else if (i == L"L_MOD") ref.index = TransformLongIntMod;
+				// Else there is a failure
+				else return false;
+				return true;
+			}
 			void ProcessReference(ObjectReference & ref, bool allow_literals, bool allow_intrinsic)
 			{
 				if (_text[_pos].Class == TokenClass::Keyword && _text[_pos].Content == L"NULL") {
@@ -357,7 +379,7 @@ namespace Engine
 				_pos++;
 				if (ref.ref_class == ReferenceTransform) {
 					if (_text[_pos].Class != TokenClass::Identifier) throw CompilerException(CompilerStatus::AnotherTokenExpected, _pos);
-					if (!ProcessStandardTransform(ref) && !ProcessFloatingTransform(ref)) throw CompilerException(CompilerStatus::UnknownInrinsic, _pos);
+					if (!ProcessStandardTransform(ref) && !ProcessFloatingTransform(ref) && !ProcessLongTransform(ref)) throw CompilerException(CompilerStatus::UnknownInrinsic, _pos);
 					_pos++;
 				} else {
 					if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"[") {

@@ -140,6 +140,20 @@ namespace Engine
 			TransformBltMaximum		= 0x0113, // destination := max(destination, source)
 			TransformBltMinimum		= 0x0114, // destination := min(destination, source)
 			TransformBltBlend		= 0x0115, // destination := alpha-blend(destination, source, extra)
+			// Long Arithmetics Extension:
+			TransformLongIntCmpEQ	= 0x0200, // 2 arguments - long integer (r); long integer (r); retval - integer
+			TransformLongIntCmpNEQ	= 0x0201, // 2 arguments - long integer (r); long integer (r); retval - integer
+			TransformLongIntCmpL	= 0x0202, // 2 arguments - long integer (r); long integer (r); retval - integer
+			TransformLongIntCmpLE	= 0x0203, // 2 arguments - long integer (r); long integer (r); retval - integer
+			TransformLongIntCmpG	= 0x0204, // 2 arguments - long integer (r); long integer (r); retval - integer
+			TransformLongIntCmpGE	= 0x0205, // 2 arguments - long integer (r); long integer (r); retval - integer
+			TransformLongIntAdd		= 0x0206, // 2 arguments - long integer (r/w); long integer (r); retval - integer (overflow)
+			TransformLongIntSubt	= 0x0207, // 2 arguments - long integer (r/w); long integer (r); retval - integer (overflow)
+			TransformLongIntShiftL	= 0x0208, // 2 arguments - long integer (r/w); shift literal; retval - no type
+			TransformLongIntShiftR	= 0x0209, // 2 arguments - long integer (r/w); shift literal; retval - no type
+			TransformLongIntMul		= 0x020A, // 2 arguments - long integer (r/w); integer; retval - integer (overflow)
+			TransformLongIntDivMod	= 0x020B, // 2 arguments - long integer (r/w); integer; retval - integer (modulus)
+			TransformLongIntMod		= 0x020C, // 2 arguments - long integer (r); integer; retval - integer (modulus)
 		};
 		enum StatementOpcodes : uint32
 		{
