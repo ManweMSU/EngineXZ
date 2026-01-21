@@ -200,6 +200,10 @@ namespace Engine
 						else if (ref.index == TransformLongIntMul) output << L"L_MUL";
 						else if (ref.index == TransformLongIntDivMod) output << L"L_DIV";
 						else if (ref.index == TransformLongIntMod) output << L"L_MOD";
+						else if (ref.index == TransformLongIntCopy) output << L"L_MOV";
+						else if (ref.index == TransformLongIntZero) output << L"L_ZERO";
+						else if (ref.index == TransformLongIntGetBit) output << L"L_BIT";
+						else if (ref.index == TransformLongIntSetBit) output << L"L_SET";
 						else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 					} else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 				} else if (ref.ref_class == ReferenceLiteral) {

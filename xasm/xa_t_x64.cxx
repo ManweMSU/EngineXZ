@@ -1605,6 +1605,396 @@ namespace Engine
 						encode_restore(acc1, reg_in_use, disp->reg, !idle);
 					} else throw InvalidArgumentException();
 				}
+				void _encode_long_arithmetics(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
+				{
+					if (node.self.index == TransformLongIntCmpEQ || node.self.index == TransformLongIntCmpNEQ || node.self.index == TransformLongIntCmpL ||
+						node.self.index == TransformLongIntCmpLE || node.self.index == TransformLongIntCmpG || node.self.index == TransformLongIntCmpGE) {
+						if (node.inputs.Length() != 2 || node.input_specs.Length() != 2) throw InvalidArgumentException();
+						auto in1_size = object_size(node.input_specs[0].size);
+						auto in2_size = object_size(node.input_specs[1].size);
+						auto out_size = object_size(node.retval_spec.size);
+						if (in1_size != in2_size || in1_size == 0) throw InvalidArgumentException();
+						if (out_size != 1 && out_size != 2 && out_size != 4 && out_size != 8) throw InvalidArgumentException();
+						X86::Reg staging = disp->reg;
+						if (staging == Reg64::NO) staging = Reg64::RAX;
+						InternalDisposition c1, c2;
+						c1.reg = staging != Reg64::RDI ? Reg64::RDI : Reg64::RBX;
+						c2.reg = staging != Reg64::RSI ? Reg64::RSI : Reg64::RBX;
+						c1.flags = c2.flags = DispositionPointer;
+						c1.size = c2.size = in1_size;
+						encode_preserve(c1.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &c1, reg_in_use | uint(c1.reg));
+						encode_preserve(c2.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &c2, reg_in_use | uint(c1.reg) | uint(c2.reg));
+						encode_preserve(staging, reg_in_use, uint(disp->reg), !idle);
+						if (!idle) {
+							bool swap_arguments = false;
+							uint result_in_case_of_skip = 0xFF, result_in_case_of_pass = 0xFF;
+							uint final_jcc_opcode = 0, intermediate_jcc_opcode = 0;
+							arOp first_op, further_op;
+							Array<int> skip_addresses(0x100);
+							int pass_address;
+							if (node.self.index == TransformLongIntCmpEQ) {
+								result_in_case_of_skip = 0;
+								result_in_case_of_pass = 1;
+								final_jcc_opcode = intermediate_jcc_opcode = 0x85; // JNE
+								first_op = further_op = arOp::CMP;
+							} else if (node.self.index == TransformLongIntCmpNEQ) {
+								result_in_case_of_skip = 1;
+								result_in_case_of_pass = 0;
+								final_jcc_opcode = intermediate_jcc_opcode = 0x85; // JNE
+								first_op = further_op = arOp::CMP;
+							} else if (node.self.index == TransformLongIntCmpLE) {
+								swap_arguments = true;
+								result_in_case_of_skip = 0;
+								result_in_case_of_pass = 1;
+								final_jcc_opcode = 0x82; // JC
+								intermediate_jcc_opcode = 0; // don't interrupt
+								first_op = arOp::SUB;
+								further_op = arOp::SBB;
+							} else if (node.self.index == TransformLongIntCmpL) {
+								result_in_case_of_skip = 1;
+								result_in_case_of_pass = 0;
+								final_jcc_opcode = 0x82; // JC
+								intermediate_jcc_opcode = 0; // don't interrupt
+								first_op = arOp::SUB;
+								further_op = arOp::SBB;
+							} else if (node.self.index == TransformLongIntCmpGE) {
+								result_in_case_of_skip = 0;
+								result_in_case_of_pass = 1;
+								final_jcc_opcode = 0x82; // JC
+								intermediate_jcc_opcode = 0; // don't interrupt
+								first_op = arOp::SUB;
+								further_op = arOp::SBB;
+							} else if (node.self.index == TransformLongIntCmpG) {
+								swap_arguments = true;
+								result_in_case_of_skip = 1;
+								result_in_case_of_pass = 0;
+								final_jcc_opcode = 0x82; // JC
+								intermediate_jcc_opcode = 0; // don't interrupt
+								first_op = arOp::SUB;
+								further_op = arOp::SBB;
+							}
+							uint remaining = in1_size;
+							while (remaining) {
+								uint offset = in1_size - remaining;
+								uint quant;
+								if (remaining >= 8) quant = 8;
+								else if (remaining >= 4) quant = 4;
+								else if (remaining >= 2) quant = 2;
+								else quant = 1;
+								remaining -= quant;
+								encode_mov_reg_mem(quant, staging, swap_arguments ? c2.reg : c1.reg, offset);
+								encode_operation(quant, offset ? further_op : first_op, staging, swap_arguments ? c1.reg : c2.reg, true, offset);
+								if (remaining) {
+									if (intermediate_jcc_opcode) {
+										_dest.code << 0x0F << uint8(intermediate_jcc_opcode) << 0x00 << 0x00 << 0x00 << 0x00;
+										skip_addresses << _dest.code.Length();
+									}
+								} else {
+									if (final_jcc_opcode) {
+										_dest.code << 0x0F << uint8(final_jcc_opcode) << 0x00 << 0x00 << 0x00 << 0x00;
+										skip_addresses << _dest.code.Length();
+									}
+								}
+							}
+							encode_mov_reg_const(WordSize, staging, result_in_case_of_pass);
+							_dest.code << 0xEB << 0x00; // JMP
+							pass_address = _dest.code.Length();
+							for (auto & addr : skip_addresses) {
+								*reinterpret_cast<int *>(_dest.code.GetBuffer() + addr - 4) = _dest.code.Length() - addr;
+							}
+							encode_mov_reg_const(WordSize, staging, result_in_case_of_skip);
+							_dest.code[pass_address - 1] = _dest.code.Length() - pass_address;
+						}
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							(*mem_load) += _word_align(TH::MakeSize(out_size, 0));
+							if (!idle) {
+								int offs = allocate_temporary(TH::MakeSize(out_size, 0));
+								encode_mov_mem_reg(out_size, Reg64::RBP, offs, disp->reg);
+								encode_lea(disp->reg, Reg64::RBP, offs);
+							}
+							disp->flags = DispositionPointer;
+						}
+						encode_restore(staging, reg_in_use, uint(disp->reg), !idle);
+						encode_restore(c2.reg, reg_in_use, 0, !idle);
+						encode_restore(c1.reg, reg_in_use, 0, !idle);
+					} else if (node.self.index == TransformLongIntAdd || node.self.index == TransformLongIntSubt) {
+						if (node.inputs.Length() != 2 || node.input_specs.Length() != 2) throw InvalidArgumentException();
+						auto in1_size = object_size(node.input_specs[0].size);
+						auto in2_size = object_size(node.input_specs[1].size);
+						auto out_size = object_size(node.retval_spec.size);
+						if (in1_size != in2_size || in1_size == 0) throw InvalidArgumentException();
+						if (out_size != 0 && out_size != 1 && out_size != 2 && out_size != 4 && out_size != 8) throw InvalidArgumentException();
+						X86::Reg staging = disp->reg;
+						if (staging == Reg64::NO) staging = Reg64::RAX;
+						InternalDisposition c1, c2;
+						c1.reg = staging != Reg64::RDI ? Reg64::RDI : Reg64::RBX;
+						c2.reg = staging != Reg64::RSI ? Reg64::RSI : Reg64::RBX;
+						c1.flags = c2.flags = DispositionPointer;
+						c1.size = c2.size = in1_size;
+						encode_preserve(c1.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &c1, reg_in_use | uint(c1.reg));
+						encode_preserve(c2.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &c2, reg_in_use | uint(c1.reg) | uint(c2.reg));
+						encode_preserve(staging, reg_in_use, uint(disp->reg), !idle);
+						if (!idle) {
+							uint remaining = in1_size;
+							while (remaining) {
+								uint offset = in1_size - remaining;
+								uint quant;
+								if (remaining >= 8) quant = 8;
+								else if (remaining >= 4) quant = 4;
+								else if (remaining >= 2) quant = 2;
+								else quant = 1;
+								remaining -= quant;
+								encode_mov_reg_mem(quant, staging, c1.reg, offset);
+								if (node.self.index == TransformLongIntAdd) encode_operation(quant, offset ? arOp::ADC : arOp::ADD, staging, c2.reg, true, offset);
+								else if (node.self.index == TransformLongIntSubt) encode_operation(quant, offset ? arOp::SBB : arOp::SUB, staging, c2.reg, true, offset);
+								encode_mov_mem_reg(quant, c1.reg, offset, staging);
+							}
+							if (out_size && (disp->flags & (DispositionRegister | DispositionPointer))) {
+								_dest.code << 0x72 << 0x00; // JC
+								int jc = _dest.code.Length();
+								encode_mov_reg_const(WordSize, staging, 0);
+								_dest.code << 0xEB << 0x00; // JMP
+								int jmp = _dest.code.Length();
+								_dest.code[jc - 1] = _dest.code.Length() - jc;
+								encode_mov_reg_const(WordSize, staging, 1);
+								_dest.code[jmp - 1] = _dest.code.Length() - jmp;
+							}
+						}
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							(*mem_load) += _word_align(TH::MakeSize(max(out_size, 1U), 0));
+							if (!idle) {
+								int offs = allocate_temporary(TH::MakeSize(max(out_size, 1U), 0));
+								if (out_size) encode_mov_mem_reg(out_size, Reg64::RBP, offs, disp->reg);
+								encode_lea(disp->reg, Reg64::RBP, offs);
+							}
+							disp->flags = DispositionPointer;
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
+						encode_restore(staging, reg_in_use, uint(disp->reg), !idle);
+						encode_restore(c2.reg, reg_in_use, 0, !idle);
+						encode_restore(c1.reg, reg_in_use, 0, !idle);
+					} else if (node.self.index == TransformLongIntShiftL || node.self.index == TransformLongIntShiftR) {
+						if (node.inputs.Length() != 2 || node.input_specs.Length() != 2) throw InvalidArgumentException();
+						if (node.inputs[1].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+						auto in_size = object_size(node.input_specs[0].size);
+						auto shift = object_size(node.input_specs[1].size);
+						auto out_size = object_size(node.retval_spec.size);
+						if (out_size || in_size == 0) throw InvalidArgumentException();
+						uint quant;
+						if ((in_size & 7) == 0) quant = 8;
+						else if ((in_size & 3) == 0) quant = 4;
+						else if ((in_size & 1) == 0) quant = 2;
+						else quant = 1;
+						uint num_quants = in_size / quant;
+						InternalDisposition ld;
+						ld.reg = Reg64::RDI;
+						ld.flags = DispositionPointer;
+						ld.size = in_size;
+						encode_preserve(ld.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | uint(ld.reg));
+						if (shift && !idle) {
+							uint shift_quants = shift / (quant * 8);
+							uint shift_bits = shift % (quant * 8);
+							if (shift_bits == 0) {
+								encode_preserve(Reg64::RAX, reg_in_use, 0, true);
+								uint quant_rem = shift_quants > num_quants ? 0 : num_quants - shift_quants;
+								uint quant_del = num_quants - quant_rem;
+								if (node.self.index == TransformLongIntShiftL) {
+									for (int i = num_quants - 1; i >= quant_del; i--) {
+										encode_mov_reg_mem(quant, Reg64::RAX, ld.reg, quant * (i - quant_del));
+										encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+									}
+									encode_operation(quant, arOp::XOR, Reg64::RAX, Reg64::RAX);
+									for (int i = quant_del - 1; i >= 0; i--) {
+										encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+									}
+								} else if (node.self.index == TransformLongIntShiftR) {
+									for (int i = 0; i < quant_rem; i++) {
+										encode_mov_reg_mem(quant, Reg64::RAX, ld.reg, quant * (i + quant_del));
+										encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+									}
+									encode_operation(quant, arOp::XOR, Reg64::RAX, Reg64::RAX);
+									for (int i = quant_rem; i < num_quants; i++) {
+										encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+									}
+								}
+								encode_restore(Reg64::RAX, reg_in_use, 0, true);
+							} else if (shift == 1) {
+								if (node.self.index == TransformLongIntShiftL) {
+									for (int i = 0; i < num_quants; i++) {
+										encode_shift(quant, i ? shOp::RCL : shOp::SHL, ld.reg, 1, true, quant * i);
+									}
+								} else if (node.self.index == TransformLongIntShiftR) {
+									for (int i = num_quants - 1; i >= 0; i--) {
+										encode_shift(quant, i == num_quants - 1 ? shOp::SHR : shOp::RCR, ld.reg, 1, true, quant * i);
+									}
+								}
+							} else {
+								encode_preserve(Reg64::RAX, reg_in_use, 0, true);
+								encode_preserve(Reg64::RCX, reg_in_use, 0, true);
+								int quant_rem = shift_quants > num_quants ? 0 : num_quants - shift_quants;
+								int quant_del = num_quants - quant_rem;
+								if (node.self.index == TransformLongIntShiftL) {
+									for (int i = num_quants - 1; i >= quant_del; i--) {
+										if (i > quant_del) {
+											encode_mov_reg_mem(quant, Reg64::RAX, ld.reg, quant * (i - quant_del));
+											encode_mov_reg_mem(quant, Reg64::RCX, ld.reg, quant * (i - quant_del - 1));
+											encode_shift(quant, shOp::SHL, Reg64::RAX, shift_bits);
+											encode_shift(quant, shOp::SHR, Reg64::RCX, 8 * quant - shift_bits);
+											encode_operation(quant, arOp::OR, Reg64::RAX, Reg64::RCX);
+											encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+										} else {
+											encode_mov_reg_mem(quant, Reg64::RAX, ld.reg, quant * (i - quant_del));
+											encode_shift(quant, shOp::SHL, Reg64::RAX, shift_bits);
+											encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+										}
+									}
+									if (quant_del) {
+										encode_operation(quant, arOp::XOR, Reg64::RAX, Reg64::RAX);
+										for (int i = quant_del - 1; i >= 0; i--) {
+											encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+										}
+									}
+								} else if (node.self.index == TransformLongIntShiftR) {
+									for (int i = 0; i < quant_rem; i++) {
+										if (i + 1 < quant_rem) {
+											encode_mov_reg_mem(quant, Reg64::RAX, ld.reg, quant * (i + quant_del));
+											encode_mov_reg_mem(quant, Reg64::RCX, ld.reg, quant * (i + quant_del + 1));
+											encode_shift(quant, shOp::SHR, Reg64::RAX, shift_bits);
+											encode_shift(quant, shOp::SHL, Reg64::RCX, 8 * quant - shift_bits);
+											encode_operation(quant, arOp::OR, Reg64::RAX, Reg64::RCX);
+											encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+										} else {
+											encode_mov_reg_mem(quant, Reg64::RAX, ld.reg, quant * (i + quant_del));
+											encode_shift(quant, shOp::SHR, Reg64::RAX, shift_bits);
+											encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+										}
+									}
+									if (quant_del) {
+										encode_operation(quant, arOp::XOR, Reg64::RAX, Reg64::RAX);
+										for (int i = quant_rem; i < num_quants; i++) {
+											encode_mov_mem_reg(quant, ld.reg, quant * i, Reg64::RAX);
+										}
+									}
+								}
+								encode_restore(Reg64::RCX, reg_in_use, 0, true);
+								encode_restore(Reg64::RAX, reg_in_use, 0, true);
+							}
+						}
+						encode_restore(ld.reg, reg_in_use, 0, !idle);
+						if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						} else if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(1, 0));
+							if (!idle) {
+								int offs = allocate_temporary(TH::MakeSize(1, 0));
+								encode_lea(disp->reg, Reg64::RBP, offs);
+							}
+						}
+					} else if (node.self.index == TransformLongIntMul || node.self.index == TransformLongIntDivMod || node.self.index == TransformLongIntMod) {
+						if (node.inputs.Length() != 2 || node.input_specs.Length() != 2) throw InvalidArgumentException();
+						auto io_size = object_size(node.input_specs[0].size);
+						auto quant = object_size(node.input_specs[1].size);
+						auto out_size = object_size(node.retval_spec.size);
+						if (io_size == 0 || io_size % quant) throw InvalidArgumentException();
+						if (quant != 1 && quant != 2 && quant != 4 && quant != 8) throw InvalidArgumentException();
+						if (out_size != 0 && out_size != quant) throw InvalidArgumentException();
+						auto num_words = io_size / quant;
+						InternalDisposition ld, m;
+						ld.reg = Reg64::RDI;
+						ld.size = io_size;
+						ld.flags = DispositionPointer;
+						m.reg = Reg64::RCX;
+						m.size = quant;
+						m.flags = DispositionRegister;
+						Reg staging_low = Reg64::RAX;
+						Reg staging_high = Reg64::RDX;
+						Reg carry = Reg64::RBX;
+						Reg zero = Reg64::RSI;
+						Reg result = Reg64::NO;
+						auto alt_reg_in_use = reg_in_use & ~disp->reg;
+						encode_preserve(ld.reg, reg_in_use, disp->reg, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, alt_reg_in_use | uint(ld.reg));
+						encode_preserve(m.reg, reg_in_use, disp->reg, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &m, alt_reg_in_use | uint(ld.reg) | uint(m.reg));
+						encode_preserve(staging_low, reg_in_use, disp->reg, !idle);
+						encode_preserve(staging_high, reg_in_use, disp->reg, !idle);
+						if (!idle) {
+							if (node.self.index == TransformLongIntMul) {
+								encode_preserve(carry, reg_in_use, disp->reg, true);
+								encode_preserve(zero, reg_in_use, disp->reg, quant != 1);
+								encode_operation(WordSize, arOp::XOR, carry, carry);
+								if (quant != 1) encode_operation(WordSize, arOp::XOR, zero, zero);
+								for (int i = 0; i < num_words; i++) {
+									encode_mov_reg_mem(quant, staging_low, ld.reg, quant * i);
+									encode_mul_div(quant, mdOp::MUL, m.reg);
+									if (quant == 1) {
+										encode_operation(2, arOp::ADD, staging_low, carry);
+										encode_mov_mem_reg(1, ld.reg, i, staging_low);
+										encode_shr(staging_low, 8);
+										encode_mov_reg_reg(1, carry, staging_low);
+									} else {
+										encode_operation(quant, arOp::ADD, staging_low, carry);
+										encode_operation(quant, arOp::ADC, staging_high, zero);
+										encode_mov_reg_reg(quant, carry, staging_high);
+										encode_mov_mem_reg(quant, ld.reg, quant * i, staging_low);
+									}
+								}
+								result = carry;
+								encode_restore(zero, reg_in_use, disp->reg, quant != 1);
+								encode_restore(carry, reg_in_use, disp->reg, true);
+							} else {
+								bool write_back = node.self.index == TransformLongIntDivMod;
+								if (quant == 1) encode_operation(WordSize, arOp::XOR, staging_low, staging_low);
+								else encode_operation(WordSize, arOp::XOR, staging_high, staging_high);
+								for (int i = num_words - 1; i >= 0; i--) {
+									encode_mov_reg_mem(quant, staging_low, ld.reg, quant * i);
+									encode_mul_div(quant, mdOp::DIV, m.reg);
+									if (write_back) encode_mov_mem_reg(quant, ld.reg, quant * i, staging_low);
+								}
+								if (quant == 1) {
+									encode_shr(staging_low, 8);
+									result = staging_low;
+								} else result = staging_high;
+							}
+						}
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+							if (result != disp->reg && !idle) encode_mov_reg_reg(quant, disp->reg, result);
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(max(out_size, 1U), 0));
+							if (!idle) {
+								int offs = allocate_temporary(TH::MakeSize(max(out_size, 1U), 0));
+								if (out_size) encode_mov_mem_reg(out_size, Reg64::RBP, offs, result);
+								encode_lea(disp->reg, Reg64::RBP, offs);
+							}
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
+						encode_restore(staging_high, reg_in_use, disp->reg, !idle);
+						encode_restore(staging_low, reg_in_use, disp->reg, !idle);
+						encode_restore(m.reg, reg_in_use, disp->reg, !idle);
+						encode_restore(ld.reg, reg_in_use, disp->reg, !idle);
+					} else throw InvalidArgumentException();
+
+					// TransformLongIntZero	= 0x0200, // 5 arguments - long integer (w); long integer (r, optional); destination offset literal (optional); source offset literal (optional); copy length literal (optional); retval - no type
+					// TransformLongIntCopy	= 0x0201, // 5 arguments - long integer (w); long integer (r); destination offset literal (optional); source offset literal (optional); copy length literal (optional); retval - no type
+					// TransformLongIntGetBit	= 0x020F, // 2 arguments - long integer (r); integer; retval - integer (0/1)
+					// TransformLongIntSetBit	= 0x0210, // 3 arguments - long integer (r/w); integer; integer (0/1); retval - no type
+				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{
 					if (node.self.ref_flags & ReferenceFlagInvoke) {
@@ -2059,6 +2449,8 @@ namespace Engine
 								// if (!idle) encode_block_transfer(node.self.index, dim, _src.data.GetBuffer() + node.inputs[2].self.index, _src.data.GetBuffer() + node.inputs[4].self.index,
 								// 	node.self.ref_flags & ReferenceFlagShort, sizes.reg, dest.reg, src.reg, bfr, bfs);
 								// for (uint i = 32; i > 0; i--) encode_restore(1 << (i - 1), reg_in_use, 0, !idle);
+							} else if (node.self.index >= 0x200 && node.self.index < 0x2FF) {
+								_encode_long_arithmetics(node, idle, mem_load, disp, reg_in_use);
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);

@@ -332,8 +332,13 @@ namespace Engine
 			bool ProcessLongTransform(ObjectReference & ref)
 			{
 				auto & i = _text[_pos].Content;
+				// Long arithmetics - transfer
+				if (i == L"L_MOV") ref.index = TransformLongIntCopy;
+				else if (i == L"L_ZERO") ref.index = TransformLongIntZero;
+				else if (i == L"L_BIT") ref.index = TransformLongIntGetBit;
+				else if (i == L"L_SET") ref.index = TransformLongIntSetBit;
 				// Long arithmetics - comparison
-				if (i == L"L_EQ") ref.index = TransformLongIntCmpEQ;
+				else if (i == L"L_EQ") ref.index = TransformLongIntCmpEQ;
 				else if (i == L"L_NEQ") ref.index = TransformLongIntCmpNEQ;
 				else if (i == L"L_LE") ref.index = TransformLongIntCmpLE;
 				else if (i == L"L_GE") ref.index = TransformLongIntCmpGE;
