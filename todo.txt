@@ -76,19 +76,29 @@ BETA-7:
  + Minor optimization for the language server
 
 BETA-8:
- - GUI legacy library
+-- XA
  + Added stack probes while on Windows, fixed ARMv8 ADD/SUB with large immediate error, scaled offset optimization
- + Some HTTP Server bug fix
- - XVC crashed on invalid prototype control sequences
+ + XA extensions: long arithmetics
+ - XA extensions: cryptography
+-- XE/XX
  - Ctrl+C/Ctrl+V in raw console mode
+ - Console crashes while freeing graphical device
  - Error with embeded modules
+ - RSA acceleration via XA
+ - Extended security for the 'quarantine' files
  - Console auto-launch (?)
+-- XV
+ - XVC crashed on invalid prototype control sequences
+-- Standard Library
+ + Some HTTP Server bug fix
+ - GUI legacy library
  - IPv4 in HTTP client
  - CSV escape sequences
  - Crashes using HTTP services
- - XA extensions: long arithmetics
- - XA extensions: cryptography
- - RSA acceleration via XA
+ - New process API functions (in lxx)
+ - Ultimate RSA cryptography
+ - Long integers (128 and 256) library
+ - Hardware based cryptography library
 
 EXTRA RELEASES:
  - GUI and CUI libraries

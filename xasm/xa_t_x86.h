@@ -145,6 +145,8 @@ namespace Engine
 				void encode_mov_xmm_mem(uint quant, Reg dest, Reg src, int src_offset);
 				void encode_mov_xmm_mem_hi(uint quant, Reg dest, Reg src, int src_offset);
 				void encode_lea(Reg dest, Reg src_ptr, int src_offset);
+				void encode_mov_sx(uint dest_quant, Reg dest, uint src_quant, Reg src);
+				void encode_mov_zx(uint dest_quant, Reg dest, uint src_quant, Reg src);
 				void encode_push(Reg reg);
 				void encode_pop(Reg reg);
 				void encode_stack_alloc(uint size);
@@ -152,6 +154,7 @@ namespace Engine
 				void encode_add(Reg reg, int literal);
 				void encode_and(Reg reg, int literal);
 				void encode_xor(Reg reg, int literal);
+				void encode_xor_xmm(Reg dest, Reg src);
 				void encode_xadd(uint quant, Reg dest_ptr, Reg src);
 				void encode_xchg(uint quant, Reg dest_ptr, Reg src);
 				void encode_test(uint quant, Reg reg, int literal);

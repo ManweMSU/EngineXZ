@@ -1853,12 +1853,247 @@ namespace Engine
 						encode_restore(staging_low, reg_in_use, disp->reg, !idle);
 						encode_restore(m.reg, reg_in_use, disp->reg, !idle);
 						encode_restore(ld.reg, reg_in_use, disp->reg, !idle);
+					} else if (node.self.index == TransformLongIntZero || node.self.index == TransformLongIntCopy) {
+						if (node.inputs.Length() < 1 || node.inputs.Length() > 5 || node.input_specs.Length() != node.inputs.Length()) throw InvalidArgumentException();
+						uint dest_size, src_size, out_size, dest_offset, src_offset, blt_length;
+						bool zero_blt = node.self.index == TransformLongIntZero;
+						dest_size = object_size(node.input_specs[0].size);
+						out_size = object_size(node.retval_spec.size);
+						if (out_size != 0 || dest_size == 0) throw InvalidArgumentException();
+						if (node.inputs.Length() >= 2) src_size = object_size(node.input_specs[1].size); else src_size = 0;
+						if (node.inputs.Length() >= 3) {
+							if (node.inputs[2].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+							dest_offset = object_size(node.input_specs[2].size);
+							if (dest_offset > dest_size) dest_offset = dest_size;
+						} else dest_offset = 0;
+						if (node.inputs.Length() >= 4) {
+							if (node.inputs[3].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+							src_offset = object_size(node.input_specs[3].size);
+							if (src_offset > src_size) src_offset = src_size;
+						} else src_offset = 0;
+						if (node.inputs.Length() >= 5) {
+							if (node.inputs[4].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+							blt_length = object_size(node.input_specs[4].size);
+						} else blt_length = src_size;
+						if (blt_length > src_size - src_offset) blt_length = src_size - src_offset;
+						if (blt_length > dest_size - dest_offset) blt_length = dest_size - dest_offset;
+						X86::Reg accumulator = Reg32::EAX;
+						InternalDisposition dld, sld;
+						dld.reg = Reg32::EDI;
+						sld.reg = Reg32::ESI;
+						dld.flags = sld.flags = DispositionPointer;
+						dld.size = dest_size;
+						sld.size = src_size;
+						encode_preserve(dld.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &dld, reg_in_use | uint(dld.reg));
+						if (src_size && blt_length) {
+							encode_preserve(sld.reg, reg_in_use, 0, !idle);
+							_encode_tree_node(node.inputs[1], idle, mem_load, &sld, reg_in_use | uint(dld.reg) | uint(sld.reg));
+						}
+						encode_preserve(accumulator, reg_in_use, 0, !idle);
+						if (!idle) {
+							uint pos_1 = dest_offset;
+							uint pos_2 = dest_offset + blt_length;
+							if (pos_1 && zero_blt) {
+								encode_operation(WordSize, arOp::XOR, accumulator, accumulator);
+								uint pos = 0;
+								while (pos < pos_1) {
+									uint rem = pos_1 - pos;
+									uint quant;
+									if ((rem & 3) == 0) quant = 4;
+									else if ((rem & 1) == 0) quant = 2;
+									else quant = 1;
+									encode_mov_mem_reg(quant, dld.reg, pos, accumulator);
+									pos += quant;
+								}
+							}
+							if (pos_2 > pos_1) {
+								uint pos = pos_1;
+								while (pos < pos_2) {
+									uint rem = pos_2 - pos;
+									uint pos_s = pos - dest_offset + src_offset;
+									uint quant;
+									if ((rem & 3) == 0 && (pos & 3) == 0) quant = 4;
+									else if ((rem & 1) == 0 && (pos & 1) == 0) quant = 2;
+									else quant = 1;
+									encode_mov_reg_mem(quant, accumulator, sld.reg, pos_s);
+									encode_mov_mem_reg(quant, dld.reg, pos, accumulator);
+									pos += quant;
+								}
+							}
+							if (dest_size > pos_2 && zero_blt) {
+								if (pos_2 > pos_1 || !pos_1) encode_operation(WordSize, arOp::XOR, accumulator, accumulator);
+								uint pos = pos_2;
+								while (pos < dest_size) {
+									uint rem = dest_size - pos;
+									uint quant;
+									if ((rem & 3) == 0 && (pos & 3) == 0) quant = 4;
+									else if ((rem & 1) == 0 && (pos & 1) == 0) quant = 2;
+									else quant = 1;
+									encode_mov_mem_reg(quant, dld.reg, pos, accumulator);
+									pos += quant;
+								}
+							}
+						}
+						encode_restore(accumulator, reg_in_use, 0, !idle);
+						if (src_size && blt_length) encode_restore(sld.reg, reg_in_use, 0, !idle);
+						encode_restore(dld.reg, reg_in_use, 0, !idle);
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(1, 0));
+							if (!idle) {
+								int offs = allocate_temporary(TH::MakeSize(1, 0));
+								encode_lea(disp->reg, Reg32::EBP, offs);
+							}
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
+					} else if (node.self.index == TransformLongIntGetBit) {
+						if (node.inputs.Length() != 2 || node.input_specs.Length() != 2) throw InvalidArgumentException();
+						auto io_size = object_size(node.input_specs[0].size);
+						auto selector_size = object_size(node.input_specs[1].size);
+						auto out_size = object_size(node.retval_spec.size);
+						if (io_size == 0) throw InvalidArgumentException();
+						if (selector_size != 1 && selector_size != 2 && selector_size != 4 && selector_size != 8) throw InvalidArgumentException();
+						if (out_size != 1 && out_size != 2 && out_size != 4 && out_size != 8) throw InvalidArgumentException();
+						Reg result = Reg32::EAX;
+						InternalDisposition ld, sel;
+						ld.reg = Reg32::EDI;
+						sel.reg = Reg32::ECX;
+						ld.flags = DispositionPointer;
+						ld.size = io_size;
+						if (selector_size == 8) {
+							sel.flags = DispositionPointer;
+							sel.size = 8;
+						} else {
+							sel.flags = DispositionRegister;
+							sel.size = selector_size;
+						}
+						encode_preserve(ld.reg, reg_in_use, disp->reg, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | ld.reg);
+						encode_preserve(sel.reg, reg_in_use, disp->reg, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &sel, reg_in_use | ld.reg | sel.reg);
+						encode_preserve(result, reg_in_use, disp->reg, !idle);
+						if (!idle) {
+							if (selector_size == 8) {
+								encode_mov_reg_mem(4, result, sel.reg, 4);
+								encode_shl(result, 29);
+								encode_operation(4, arOp::ADD, ld.reg, result);
+								encode_mov_reg_mem(4, sel.reg, sel.reg);
+								encode_mov_reg_reg(4, result, sel.reg);
+							} else if (selector_size == 4) {
+								encode_mov_reg_reg(4, result, sel.reg);
+							} else {
+								encode_mov_zx(4, result, selector_size, sel.reg);
+							}
+							encode_shr(result, 3);
+							encode_operation(4, arOp::ADD, ld.reg, result);
+							encode_mov_reg_mem(1, result, ld.reg);
+							encode_and(sel.reg, 0x7);
+							encode_shift(1, shOp::SHR, result);
+							encode_and(result, 1);
+						}
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+							if (!idle && result != disp->reg) encode_mov_reg_reg(4, disp->reg, result);
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(out_size, 0));
+							if (!idle) {
+								int offs = allocate_temporary(TH::MakeSize(out_size, 0));
+								if (out_size == 8) {
+									encode_mov_mem_reg(4, Reg32::EBP, offs, result);
+									encode_operation(4, arOp::XOR, result, result);
+									encode_mov_mem_reg(4, Reg32::EBP, offs + 4, result);
+								} else encode_mov_mem_reg(out_size, Reg32::EBP, offs, result);
+								encode_lea(disp->reg, Reg32::EBP, offs);
+							}
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
+						encode_restore(result, reg_in_use, disp->reg, !idle);
+						encode_restore(sel.reg, reg_in_use, disp->reg, !idle);
+						encode_restore(ld.reg, reg_in_use, disp->reg, !idle);
+					} else if (node.self.index == TransformLongIntSetBit) {
+						if (node.inputs.Length() != 3 || node.input_specs.Length() != 3) throw InvalidArgumentException();
+						auto io_size = object_size(node.input_specs[0].size);
+						auto selector_size = object_size(node.input_specs[1].size);
+						auto bit_size = object_size(node.input_specs[2].size);
+						auto out_size = object_size(node.retval_spec.size);
+						if (io_size == 0 || out_size) throw InvalidArgumentException();
+						if (selector_size != 1 && selector_size != 2 && selector_size != 4 && selector_size != 8) throw InvalidArgumentException();
+						if (bit_size != 1 && bit_size != 2 && bit_size != 4 && bit_size != 8) throw InvalidArgumentException();
+						Reg acc = Reg32::EAX;
+						InternalDisposition ld, sel, bit;
+						ld.reg = Reg32::EDI;
+						sel.reg = Reg32::ECX;
+						bit.reg = Reg32::EDX;
+						ld.flags = DispositionPointer;
+						ld.size = io_size;
+						if (selector_size == 8) {
+							sel.flags = DispositionPointer;
+							sel.size = 8;
+						} else {
+							sel.flags = DispositionRegister;
+							sel.size = selector_size;
+						}
+						if (bit_size == 8) {
+							bit.flags = DispositionPointer;
+							bit.size = 8;
+						} else {
+							bit.flags = DispositionRegister;
+							bit.size = bit_size;
+						}
+						encode_preserve(ld.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | ld.reg);
+						encode_preserve(sel.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &sel, reg_in_use | ld.reg | sel.reg);
+						encode_preserve(bit.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[2], idle, mem_load, &bit, reg_in_use | ld.reg | sel.reg | bit.reg);
+						encode_preserve(acc, reg_in_use, 0, !idle);
+						if (!idle) {
+							if (selector_size == 8) {
+								encode_mov_reg_mem(4, acc, sel.reg, 4);
+								encode_shl(acc, 29);
+								encode_operation(4, arOp::ADD, ld.reg, acc);
+								encode_mov_reg_mem(4, sel.reg, sel.reg);
+								encode_mov_reg_reg(4, acc, sel.reg);
+							} else if (selector_size == 4) {
+								encode_mov_reg_reg(4, acc, sel.reg);
+							} else {
+								encode_mov_zx(4, acc, selector_size, sel.reg);
+							}
+							encode_shr(acc, 3);
+							encode_operation(4, arOp::ADD, ld.reg, acc);
+							encode_mov_reg_mem(1, acc, ld.reg);
+							encode_and(sel.reg, 0x7);
+							encode_shift(1, shOp::ROR, acc);
+							if (bit_size == 8) encode_mov_reg_mem(4, bit.reg, bit.reg);
+							encode_and(bit.reg, 0x01);
+							encode_and(acc, 0xFE);
+							encode_operation(1, arOp::OR, acc, bit.reg);
+							encode_shift(1, shOp::ROL, acc);
+							encode_mov_mem_reg(1, ld.reg, acc);
+						}
+						encode_restore(acc, reg_in_use, 0, !idle);
+						encode_restore(bit.reg, reg_in_use, 0, !idle);
+						encode_restore(sel.reg, reg_in_use, 0, !idle);
+						encode_restore(ld.reg, reg_in_use, 0, !idle);
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(0, 1));
+							if (!idle) {
+								int offs = allocate_temporary(TH::MakeSize(0, 1));
+								encode_lea(disp->reg, Reg32::EBP, offs);
+							}
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
 					} else throw InvalidArgumentException();
-
-					// TransformLongIntZero	= 0x0200, // 5 arguments - long integer (w); long integer (r, optional); destination offset literal (optional); source offset literal (optional); copy length literal (optional); retval - no type
-					// TransformLongIntCopy	= 0x0201, // 5 arguments - long integer (w); long integer (r); destination offset literal (optional); source offset literal (optional); copy length literal (optional); retval - no type
-					// TransformLongIntGetBit	= 0x020F, // 2 arguments - long integer (r); integer; retval - integer (0/1)
-					// TransformLongIntSetBit	= 0x0210, // 3 arguments - long integer (r/w); integer; integer (0/1); retval - no type
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
 				{

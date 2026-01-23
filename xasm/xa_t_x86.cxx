@@ -718,6 +718,67 @@ namespace Engine
 					_dest.code << int8(src_offset >> 24);
 				} else _dest.code << int8(src_offset);
 			}
+			void EncoderContext::encode_mov_sx(uint dest_quant, Reg dest, uint src_quant, Reg src)
+			{
+				auto di = regular_register_code(dest);
+				auto si = regular_register_code(src);
+				if (src_quant == 1) {
+					if (dest_quant == 2) {
+						_dest.code << 0x66;
+						if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xBE << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else if (dest_quant == 4) {
+						if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xBE << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else if (dest_quant == 8 && _x64_mode) {
+						_dest.code << make_rex(true, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xBE << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else throw InvalidStateException();
+				} else if (src_quant == 2) {
+					if (dest_quant == 4) {
+						if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xBF << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else if (dest_quant == 8 && _x64_mode) {
+						_dest.code << make_rex(true, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xBF << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else throw InvalidStateException();
+				} else if (src_quant == 4) {
+					if (dest_quant == 8 && _x64_mode) {
+						_dest.code << make_rex(true, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x63 << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else throw InvalidStateException();
+				} else throw InvalidArgumentException();
+			}
+			void EncoderContext::encode_mov_zx(uint dest_quant, Reg dest, uint src_quant, Reg src)
+			{
+				auto di = regular_register_code(dest);
+				auto si = regular_register_code(src);
+				if (src_quant == 1) {
+					if (dest_quant == 2) {
+						_dest.code << 0x66;
+						if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xB6 << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else if (dest_quant == 4) {
+						if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xB6 << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else if (dest_quant == 8 && _x64_mode) {
+						_dest.code << make_rex(true, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xB6 << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else throw InvalidStateException();
+				} else if (src_quant == 2) {
+					if (dest_quant == 4) {
+						if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xB7 << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else if (dest_quant == 8 && _x64_mode) {
+						_dest.code << make_rex(true, di & 0x08, 0, si & 0x08);
+						_dest.code << 0x0F << 0xB7 << make_mod(di & 0x07, 0x3, si & 0x07);
+					} else throw InvalidStateException();
+				} else if (src_quant == 4) {
+					if (dest_quant == 8 && _x64_mode) {
+						encode_mov_reg_reg(4, dest, src);
+					} else throw InvalidStateException();
+				} else throw InvalidArgumentException();
+			}
 			void EncoderContext::encode_push(Reg reg)
 			{
 				uint rc = regular_register_code(reg);
@@ -813,6 +874,7 @@ namespace Engine
 					_dest.code << int8(literal >> 24);
 				}
 			}
+			void EncoderContext::encode_xor_xmm(Reg dest, Reg src) { _dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(dest), 0x3, xmm_register_code(src)); }
 			void EncoderContext::encode_xadd(uint quant, Reg dest_ptr, Reg src)
 			{
 				if (dest_ptr == Reg64::RSP) return;

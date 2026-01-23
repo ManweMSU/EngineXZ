@@ -1764,12 +1764,237 @@ namespace Engine
 						_encode_restore(uint(result), reg_in_use, uint(disp->reg), !idle);
 						_encode_restore(uint(m.reg), reg_in_use, uint(disp->reg), !idle);
 						_encode_restore(uint(ld.reg), reg_in_use, uint(disp->reg), !idle);
+					} else if (node.self.index == TransformLongIntZero || node.self.index == TransformLongIntCopy) {
+						if (node.inputs.Length() < 1 || node.inputs.Length() > 5 || node.input_specs.Length() != node.inputs.Length()) throw InvalidArgumentException();
+						uint dest_size, src_size, out_size, dest_offset, src_offset, blt_length;
+						bool zero_blt = node.self.index == TransformLongIntZero;
+						dest_size = _size_eval(node.input_specs[0].size);
+						out_size = _size_eval(node.retval_spec.size);
+						if (out_size != 0 || dest_size == 0) throw InvalidArgumentException();
+						if (node.inputs.Length() >= 2) src_size = _size_eval(node.input_specs[1].size); else src_size = 0;
+						if (node.inputs.Length() >= 3) {
+							if (node.inputs[2].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+							dest_offset = _size_eval(node.input_specs[2].size);
+							if (dest_offset > dest_size) dest_offset = dest_size;
+						} else dest_offset = 0;
+						if (node.inputs.Length() >= 4) {
+							if (node.inputs[3].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+							src_offset = _size_eval(node.input_specs[3].size);
+							if (src_offset > src_size) src_offset = src_size;
+						} else src_offset = 0;
+						if (node.inputs.Length() >= 5) {
+							if (node.inputs[4].self.ref_class != ReferenceLiteral) throw InvalidArgumentException();
+							blt_length = _size_eval(node.input_specs[4].size);
+						} else blt_length = src_size;
+						if (blt_length > src_size - src_offset) blt_length = src_size - src_offset;
+						if (blt_length > dest_size - dest_offset) blt_length = dest_size - dest_offset;
+						Reg accumulator = _reg_alloc(reg_in_use, 0);
+						VReg accumulator16 = _vreg_alloc(0, 0);
+						_internal_disposition dld, sld;
+						dld.reg = _reg_alloc(reg_in_use, uint(accumulator));
+						sld.reg = _reg_alloc(reg_in_use, uint(accumulator) | uint(dld.reg));
+						dld.flags = sld.flags = DispositionPointer;
+						dld.size = dest_size;
+						sld.size = src_size;
+						_encode_preserve(uint(dld.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &dld, reg_in_use | uint(dld.reg));
+						if (src_size && blt_length) {
+							_encode_preserve(uint(sld.reg), reg_in_use, 0, !idle);
+							_encode_tree_node(node.inputs[1], idle, mem_load, &sld, reg_in_use | uint(dld.reg) | uint(sld.reg));
+						}
+						_encode_preserve(uint(accumulator), reg_in_use, 0, !idle);
+						if (!idle) {
+							uint pos_1 = dest_offset;
+							uint pos_2 = dest_offset + blt_length;
+							bool rreg_zeroed = false;
+							bool vreg_zeroed = false;
+							if (pos_1 && zero_blt) {
+								uint pos = 0;
+								while (pos < pos_1) {
+									uint rem = pos_1 - pos;
+									uint quant;
+									if ((rem & 0xF) == 0) quant = 16;
+									else if ((rem & 7) == 0) quant = 8;
+									else if ((rem & 3) == 0) quant = 4;
+									else if ((rem & 1) == 0) quant = 2;
+									else quant = 1;
+									if (quant == 16) {
+										if (!vreg_zeroed) {
+											encode_simd_mov_immediate(accumulator16, 0);
+											vreg_zeroed = true;
+										}
+										encode_store_postfix(quant, dld.reg, quant, accumulator16);
+									} else {
+										if (!rreg_zeroed) {
+											encode_mov_z(accumulator, 0, 0);
+											rreg_zeroed = true;
+										}
+										encode_store_postfix(quant, dld.reg, quant, accumulator);
+									}
+									pos += quant;
+								}
+							} else if (pos_1) encode_add(dld.reg, dld.reg, pos_1);
+							if (pos_2 > pos_1) {
+								if (src_offset) encode_add(sld.reg, sld.reg, src_offset);
+								uint pos = pos_1;
+								while (pos < pos_2) {
+									uint rem = pos_2 - pos;
+									uint quant;
+									if ((rem & 0xF) == 0 && (pos & 0xF) == 0) quant = 16;
+									else if ((rem & 7) == 0 && (pos & 7) == 0) quant = 8;
+									else if ((rem & 3) == 0 && (pos & 3) == 0) quant = 4;
+									else if ((rem & 1) == 0 && (pos & 1) == 0) quant = 2;
+									else quant = 1;
+									if (quant == 16) {
+										encode_load_postfix(quant, accumulator16, sld.reg, quant);
+										encode_store_postfix(quant, dld.reg, quant, accumulator16);
+										vreg_zeroed = false;
+									} else {
+										encode_load_postfix(quant, accumulator, sld.reg, quant);
+										encode_store_postfix(quant, dld.reg, quant, accumulator);
+										rreg_zeroed = false;
+									}
+									pos += quant;
+								}
+							}
+							if (dest_size > pos_2 && zero_blt) {
+								uint pos = pos_2;
+								while (pos < dest_size) {
+									uint rem = dest_size - pos;
+									uint quant;
+									if ((rem & 0xF) == 0 && (pos & 0xF) == 0) quant = 16;
+									else if ((rem & 7) == 0 && (pos & 7) == 0) quant = 8;
+									else if ((rem & 3) == 0 && (pos & 3) == 0) quant = 4;
+									else if ((rem & 1) == 0 && (pos & 1) == 0) quant = 2;
+									else quant = 1;
+									if (quant == 16) {
+										if (!vreg_zeroed) {
+											encode_simd_mov_immediate(accumulator16, 0);
+											vreg_zeroed = true;
+										}
+										encode_store_postfix(quant, dld.reg, quant, accumulator16);
+									} else {
+										if (!rreg_zeroed) {
+											encode_mov_z(accumulator, 0, 0);
+											rreg_zeroed = true;
+										}
+										encode_store_postfix(quant, dld.reg, quant, accumulator);
+									}
+									pos += quant;
+								}
+							}
+						}
+						_encode_restore(uint(accumulator), reg_in_use, 0, !idle);
+						if (src_size && blt_length) _encode_restore(uint(sld.reg), reg_in_use, 0, !idle);
+						_encode_restore(uint(dld.reg), reg_in_use, 0, !idle);
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(0, 1));
+							if (!idle) {
+								int offs = _allocate_temporary(TH::MakeSize(0, 1));
+								encode_emulate_lea(disp->reg, Reg::FP, offs);
+							}
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
+					} else if (node.self.index == TransformLongIntGetBit) {
+						if (node.inputs.Length() != 2 || node.input_specs.Length() != 2) throw InvalidArgumentException();
+						auto io_size = _size_eval(node.input_specs[0].size);
+						auto selector_size = _size_eval(node.input_specs[1].size);
+						auto out_size = _size_eval(node.retval_spec.size);
+						if (io_size == 0) throw InvalidArgumentException();
+						if (selector_size != 1 && selector_size != 2 && selector_size != 4 && selector_size != 8) throw InvalidArgumentException();
+						if (out_size != 1 && out_size != 2 && out_size != 4 && out_size != 8) throw InvalidArgumentException();
+						Reg result = disp->reg;
+						if (result == Reg::NO) result = _reg_alloc(reg_in_use, 0);
+						_internal_disposition ld, sel;
+						ld.reg = _reg_alloc(reg_in_use, uint(result));
+						sel.reg = _reg_alloc(reg_in_use, uint(result) | uint(ld.reg));
+						ld.flags = DispositionPointer;
+						sel.flags = DispositionRegister;
+						ld.size = io_size;
+						sel.size = selector_size;
+						_encode_preserve(uint(ld.reg), reg_in_use, uint(disp->reg), !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | uint(ld.reg));
+						_encode_preserve(uint(sel.reg), reg_in_use, uint(disp->reg), !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &sel, reg_in_use | uint(ld.reg) | uint(sel.reg));
+						_encode_preserve(uint(result), reg_in_use, uint(disp->reg), !idle);
+						if (!idle) {
+							encode_bitfield_mov_zx(result, sel.reg, 3, 8 * selector_size - 1);
+							encode_add(ld.reg, ld.reg, result, false);
+							encode_load(1, false, result, ld.reg);
+							encode_bitfield_mov_zx(sel.reg, sel.reg, 0, 2);
+							encode_shr(result, result, sel.reg);
+							encode_bitfield_mov_zx(result, result, 0, 0);
+						}
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(0, 1));
+							if (!idle) _encode_transform_to_pointer(disp->reg, (reg_in_use | uint(disp->reg)) & ~(uint(ld.reg) | uint(sel.reg)));
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
+						_encode_restore(uint(result), reg_in_use, uint(disp->reg), !idle);
+						_encode_restore(uint(sel.reg), reg_in_use, uint(disp->reg), !idle);
+						_encode_restore(uint(ld.reg), reg_in_use, uint(disp->reg), !idle);
+					} else if (node.self.index == TransformLongIntSetBit) {
+						if (node.inputs.Length() != 3 || node.input_specs.Length() != 3) throw InvalidArgumentException();
+						auto io_size = _size_eval(node.input_specs[0].size);
+						auto selector_size = _size_eval(node.input_specs[1].size);
+						auto bit_size = _size_eval(node.input_specs[2].size);
+						auto out_size = _size_eval(node.retval_spec.size);
+						if (io_size == 0 || out_size) throw InvalidArgumentException();
+						if (selector_size != 1 && selector_size != 2 && selector_size != 4 && selector_size != 8) throw InvalidArgumentException();
+						if (bit_size != 1 && bit_size != 2 && bit_size != 4 && bit_size != 8) throw InvalidArgumentException();
+						_internal_disposition ld, sel, bit;
+						ld.reg = _reg_alloc(reg_in_use, 0);
+						sel.reg = _reg_alloc(reg_in_use, uint(ld.reg));
+						bit.reg = _reg_alloc(reg_in_use, uint(ld.reg) | uint(sel.reg));
+						ld.flags = DispositionPointer;
+						sel.flags = bit.flags = DispositionRegister;
+						ld.size = io_size;
+						sel.size = selector_size;
+						bit.size = bit_size;
+						Reg acc = _reg_alloc(reg_in_use, uint(ld.reg) | uint(sel.reg) | uint(bit.reg));
+						_encode_preserve(uint(ld.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | uint(ld.reg));
+						_encode_preserve(uint(sel.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &sel, reg_in_use | uint(ld.reg) | uint(sel.reg));
+						_encode_preserve(uint(bit.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[2], idle, mem_load, &bit, reg_in_use | uint(ld.reg) | uint(sel.reg) | uint(bit.reg));
+						_encode_preserve(uint(acc), reg_in_use, 0, !idle);
+						if (!idle) {
+							encode_bitfield_mov_zx(acc, sel.reg, 3, 8 * selector_size - 1);
+							encode_add(ld.reg, ld.reg, acc, false);
+							encode_bitfield_mov_zx(sel.reg, sel.reg, 0, 2);
+							encode_load(1, false, acc, ld.reg);
+							encode_ror(acc, acc, sel.reg);
+							encode_bitfield_mov(acc, bit.reg, 0, 0);
+							encode_sub(sel.reg, Reg::XZ, sel.reg, false);
+							encode_ror(acc, acc, sel.reg);
+							encode_store(1, ld.reg, 0, acc);
+						}
+						_encode_restore(uint(acc), reg_in_use, 0, !idle);
+						_encode_restore(uint(bit.reg), reg_in_use, 0, !idle);
+						_encode_restore(uint(sel.reg), reg_in_use, 0, !idle);
+						_encode_restore(uint(ld.reg), reg_in_use, 0, !idle);
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(0, 1));
+							if (!idle) {
+								int offs = _allocate_temporary(TH::MakeSize(0, 1));
+								encode_emulate_lea(disp->reg, Reg::FP, offs);
+							}
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
 					} else throw InvalidArgumentException();
-
-					// TransformLongIntZero	= 0x0200, // 5 arguments - long integer (w); long integer (r, optional); destination offset literal (optional); source offset literal (optional); copy length literal (optional); retval - no type
-					// TransformLongIntCopy	= 0x0201, // 5 arguments - long integer (w); long integer (r); destination offset literal (optional); source offset literal (optional); copy length literal (optional); retval - no type
-					// TransformLongIntGetBit	= 0x020F, // 2 arguments - long integer (r); integer; retval - integer (0/1)
-					// TransformLongIntSetBit	= 0x0210, // 3 arguments - long integer (r/w); integer; integer (0/1); retval - no type
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
 				{
@@ -2350,6 +2575,18 @@ namespace Engine
 					} else throw InvalidArgumentException();
 					encode_uint32(opcode);
 				}
+				void encode_load_postfix(uint quant, VReg dest, Reg src_ptr, int offset = 0)
+				{
+					uint opcode;
+					if (quant == 16) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0x3CC00400;
+					} else if (quant == 8) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xFC400400;
+					} else if (quant == 4) {
+						opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xBC400400;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
 				void encode_load_element(uint quant, VReg dest, Reg src_ptr)
 				{
 					uint opcode = _reg_code(dest) | (_reg_code(src_ptr) << 5);
@@ -2431,6 +2668,18 @@ namespace Engine
 						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xFC000000;
 					} else if (quant == 4) {
 						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xBC000000;
+					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_store_postfix(uint quant, Reg dest_ptr, int offset, VReg src)
+				{
+					uint opcode;
+					if (quant == 16) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0x3C800400;
+					} else if (quant == 8) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xFC000400;
+					} else if (quant == 4) {
+						opcode = _reg_code(src) | (_reg_code(dest_ptr) << 5) | ((uint(offset) << 12) & 0x1FF000) | 0xBC000400;
 					} else throw InvalidArgumentException();
 					encode_uint32(opcode);
 				}
@@ -2670,6 +2919,11 @@ namespace Engine
 					uint opcode = _reg_code(dest) | (_reg_code(op1) << 5) | (_reg_code(op2) << 16) | 0x9AC02000;
 					encode_uint32(opcode);
 				}
+				void encode_ror(Reg dest, Reg op1, Reg op2)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(op1) << 5) | (_reg_code(op2) << 16) | 0x9AC02C00;
+					encode_uint32(opcode);
+				}
 				void encode_extend(Reg dest, Reg src, uint valid_bytes, bool sgn)
 				{
 					if (valid_bytes == 8 && dest == src) return;
@@ -2811,6 +3065,11 @@ namespace Engine
 					uint opcode = _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16) | 0x6E20D400;
 					if (quant == 8) opcode |= 0x00400000;
 					else if (quant != 4) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_mov_immediate(VReg dest, uint8 abcdefgh)
+				{
+					uint opcode = 0x6F00E400 | _reg_code(dest) | ((uint32(abcdefgh) & 0x1F) << 5) | ((uint32(abcdefgh) & 0xE0) << 11);
 					encode_uint32(opcode);
 				}
 				void encode_convert_to_integer(uint dest_quant, Reg dest, uint src_quant, VReg src, bool sgn)
