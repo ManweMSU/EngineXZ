@@ -205,6 +205,26 @@ namespace Engine
 						else if (ref.index == TransformLongIntGetBit) output << L"L_BIT";
 						else if (ref.index == TransformLongIntSetBit) output << L"L_SET";
 						else output << L"**" << string(ref.qword, HexadecimalBase, 16);
+					} else if (ref.index >= 0x300 && ref.index <= 0x3FF) {
+						if (ref.index == TransformCryptFeature) output << L"CR_TEST";
+						else if (ref.index == TransformCryptRandom) output << L"CR_RANDOM";
+						else if (ref.index == TransformCryptAesEncECB) output << L"CR_AES_ENC_ECB";
+						else if (ref.index == TransformCryptAesDecECB) output << L"CR_AES_DEC_ECB";
+						else if (ref.index == TransformCryptAesEncCBC) output << L"CR_AES_ENC_CBC";
+						else if (ref.index == TransformCryptAesDecCBC) output << L"CR_AES_DEC_CBC";
+						else if (ref.index == TransformCryptAesEncCFB) output << L"CR_AES_ENC_CFB";
+						else if (ref.index == TransformCryptAesDecCFB) output << L"CR_AES_DEC_CFB";
+						else if (ref.index == TransformCryptAesEncOFB) output << L"CR_AES_ENC_OFB";
+						else if (ref.index == TransformCryptAesDecOFB) output << L"CR_AES_DEC_OFB";
+						else if (ref.index == TransformCryptSha224I) output << L"CR_SHA_224_INIT";
+						else if (ref.index == TransformCryptSha224S) output << L"CR_SHA_224";
+						else if (ref.index == TransformCryptSha256I) output << L"CR_SHA_256_INIT";
+						else if (ref.index == TransformCryptSha256S) output << L"CR_SHA_256";
+						else if (ref.index == TransformCryptSha384I) output << L"CR_SHA_384_INIT";
+						else if (ref.index == TransformCryptSha384S) output << L"CR_SHA_384";
+						else if (ref.index == TransformCryptSha512I) output << L"CR_SHA_512_INIT";
+						else if (ref.index == TransformCryptSha512S) output << L"CR_SHA_512";
+						else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 					} else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 				} else if (ref.ref_class == ReferenceLiteral) {
 				} else if (ref.index) {

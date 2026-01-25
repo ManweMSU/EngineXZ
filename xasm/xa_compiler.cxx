@@ -356,6 +356,34 @@ namespace Engine
 				else return false;
 				return true;
 			}
+			bool ProcessCryptoTransform(ObjectReference & ref)
+			{
+				auto & i = _text[_pos].Content;
+				// Cryptography - general
+				if (i == L"CR_TEST") ref.index = TransformCryptFeature;
+				else if (i == L"CR_RANDOM") ref.index = TransformCryptRandom;
+				// Cryptography - encryption
+				else if (i == L"CR_AES_ENC_ECB") ref.index = TransformCryptAesEncECB;
+				else if (i == L"CR_AES_DEC_ECB") ref.index = TransformCryptAesDecECB;
+				else if (i == L"CR_AES_ENC_CBC") ref.index = TransformCryptAesEncCBC;
+				else if (i == L"CR_AES_DEC_CBC") ref.index = TransformCryptAesDecCBC;
+				else if (i == L"CR_AES_ENC_CFB") ref.index = TransformCryptAesEncCFB;
+				else if (i == L"CR_AES_DEC_CFB") ref.index = TransformCryptAesDecCFB;
+				else if (i == L"CR_AES_ENC_OFB") ref.index = TransformCryptAesEncOFB;
+				else if (i == L"CR_AES_DEC_OFB") ref.index = TransformCryptAesDecOFB;
+				// Cryptography - hash functions
+				else if (i == L"CR_SHA_224_INIT") ref.index = TransformCryptSha224I;
+				else if (i == L"CR_SHA_224") ref.index = TransformCryptSha224S;
+				else if (i == L"CR_SHA_256_INIT") ref.index = TransformCryptSha256I;
+				else if (i == L"CR_SHA_256") ref.index = TransformCryptSha256S;
+				else if (i == L"CR_SHA_384_INIT") ref.index = TransformCryptSha384I;
+				else if (i == L"CR_SHA_384") ref.index = TransformCryptSha384S;
+				else if (i == L"CR_SHA_512_INIT") ref.index = TransformCryptSha512I;
+				else if (i == L"CR_SHA_512") ref.index = TransformCryptSha512S;
+				// Else there is a failure
+				else return false;
+				return true;
+			}
 			void ProcessReference(ObjectReference & ref, bool allow_literals, bool allow_intrinsic)
 			{
 				if (_text[_pos].Class == TokenClass::Keyword && _text[_pos].Content == L"NULL") {
@@ -384,7 +412,7 @@ namespace Engine
 				_pos++;
 				if (ref.ref_class == ReferenceTransform) {
 					if (_text[_pos].Class != TokenClass::Identifier) throw CompilerException(CompilerStatus::AnotherTokenExpected, _pos);
-					if (!ProcessStandardTransform(ref) && !ProcessFloatingTransform(ref) && !ProcessLongTransform(ref)) throw CompilerException(CompilerStatus::UnknownInrinsic, _pos);
+					if (!ProcessStandardTransform(ref) && !ProcessFloatingTransform(ref) && !ProcessLongTransform(ref) && !ProcessCryptoTransform(ref)) throw CompilerException(CompilerStatus::UnknownInrinsic, _pos);
 					_pos++;
 				} else {
 					if (_text[_pos].Class == TokenClass::CharCombo && _text[_pos].Content == L"[") {
