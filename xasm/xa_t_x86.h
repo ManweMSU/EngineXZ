@@ -29,7 +29,9 @@ namespace Engine
 				R8 = 0x0100, R9 = 0x0200, R10 = 0x0400, R11 = 0x0800,
 				R12 = 0x1000, R13 = 0x2000, R14 = 0x4000, R15 = 0x8000,
 				XMM0 = 0x00010000, XMM1 = 0x00020000, XMM2 = 0x00040000, XMM3 = 0x00080000,
-				XMM4 = 0x00100000, XMM5 = 0x00200000, XMM6 = 0x00400000, XMM7 = 0x00800000;
+				XMM4 = 0x00100000, XMM5 = 0x00200000, XMM6 = 0x00400000, XMM7 = 0x00800000,
+				XMM8 = 0x01000000, XMM9 = 0x02000000, XMM10 = 0x04000000, XMM11 = 0x08000000,
+				XMM12 = 0x10000000, XMM13 = 0x20000000, XMM14 = 0x40000000, XMM15 = 0x80000000;
 			};
 
 			enum class ABI { CDECL, THISCALL, WindowsX64, UnixX64 };
@@ -87,6 +89,15 @@ namespace Engine
 				Array<LocalDisposition> locals = Array<LocalDisposition>(0x20);
 				bool shift_sp, temporary;
 			};
+			struct modRM {
+				uint reg_i, rm_i, x_i, x_scale;
+				int offset;
+			};
+
+			modRM make_modRM(uint reg_i, uint rm_i);
+			modRM make_modRM_with_offset(uint reg_i, uint rm_i, int offset);
+			modRM make_modRM_with_indexing(uint reg_i, uint rm_i, uint x_i, uint scale = 1);
+			modRM make_modRM_full(uint reg_i, uint rm_i, int offset, uint x_i, uint scale = 1);
 
 			class EncoderContext
 			{
@@ -120,6 +131,10 @@ namespace Engine
 				void assign_finalizer(int local_index, const FinalizerReference & final);
 				void relocate_code_at(int offset);
 				void relocate_data_at(int offset);
+				void encode_rex(bool rexW, const modRM & m, bool index_lo_8bit = false);
+				void encode_rex(bool rexW, uint reg_i, uint rm_i, bool index_lo_8bit = false);
+				void encode_mod(const modRM & m);
+				void encode_mod(uint reg_i, uint rm_i);
 				void refer_object_at(const string & name, int offset);
 				void encode_preserve(Reg reg, uint reg_in_use, uint reg_unmask, bool cond_if);
 				void encode_restore(Reg reg, uint reg_in_use, uint reg_unmask, bool cond_if);
@@ -134,16 +149,20 @@ namespace Engine
 				void encode_emulate_collect_signum(Reg data, Reg sgn); // pushes abs([data]) onto stack, inverts sgn if [data] is negative. updates [data]. uses ESI and EDI
 				void encode_emulate_set_signum(Reg data_lo, Reg data_hi, Reg sgn); // inverts data_lo:data_hi if sgn != 0. uses ESI and EDI
 				void encode_mov_reg_reg(uint quant, Reg dest, Reg src);
+				void encode_mov_reg_mem(uint quant, const modRM & m);
 				void encode_mov_reg_mem(uint quant, Reg dest, Reg src_ptr);
 				void encode_mov_reg_mem(uint quant, Reg dest, Reg src_ptr, int src_offset);
 				void encode_mov_reg_const(uint quant, Reg dest, uint64 value);
+				void encode_mov_mem_reg(uint quant, const modRM & m);
 				void encode_mov_mem_reg(uint quant, Reg dest_ptr, Reg src);
 				void encode_mov_mem_reg(uint quant, Reg dest_ptr, int dest_offset, Reg src);
+				void encode_mov_xmm_xmm(Reg dest, Reg src);
 				void encode_mov_reg_xmm(uint quant, Reg dest, Reg src);
 				void encode_mov_xmm_reg(uint quant, Reg dest, Reg src);
 				void encode_mov_mem_xmm(uint quant, Reg dest, int dest_offset, Reg src);
 				void encode_mov_xmm_mem(uint quant, Reg dest, Reg src, int src_offset);
 				void encode_mov_xmm_mem_hi(uint quant, Reg dest, Reg src, int src_offset);
+				void encode_lea(const modRM & m);
 				void encode_lea(Reg dest, Reg src_ptr, int src_offset);
 				void encode_mov_sx(uint dest_quant, Reg dest, uint src_quant, Reg src);
 				void encode_mov_zx(uint dest_quant, Reg dest, uint src_quant, Reg src);
@@ -154,7 +173,6 @@ namespace Engine
 				void encode_add(Reg reg, int literal);
 				void encode_and(Reg reg, int literal);
 				void encode_xor(Reg reg, int literal);
-				void encode_xor_xmm(Reg dest, Reg src);
 				void encode_xadd(uint quant, Reg dest_ptr, Reg src);
 				void encode_xchg(uint quant, Reg dest_ptr, Reg src);
 				void encode_test(uint quant, Reg reg, int literal);
@@ -177,6 +195,25 @@ namespace Engine
 				void encode_fabs(void);
 				void encode_fneg(void);
 				void encode_fsqrt(void);
+				void encode_cpuid(void);
+				void encode_simd_xor(Reg xmm_dest, Reg xmm_src);
+				void encode_simd_xor(Reg xmm_dest, Reg src_ptr, int src_offset);
+				void encode_simd_shuffle(uint quant, Reg xmm_dest_src_lo, Reg xmm_src_hi, uint i0, uint i1, uint i2 = 0, uint i3 = 0);
+				void encode_read_random(uint quant, Reg dest);
+				void encode_aes_enc(Reg xmm_dest, Reg xmm_key);
+				void encode_aes_enc(Reg xmm_dest, Reg key_ptr, int key_offset);
+				void encode_aes_enc_last(Reg xmm_dest, Reg xmm_key);
+				void encode_aes_enc_last(Reg xmm_dest, Reg key_ptr, int key_offset);
+				void encode_aes_dec(Reg xmm_dest, Reg xmm_key);
+				void encode_aes_dec(Reg xmm_dest, Reg key_ptr, int key_offset);
+				void encode_aes_dec_last(Reg xmm_dest, Reg xmm_key);
+				void encode_aes_dec_last(Reg xmm_dest, Reg key_ptr, int key_offset);
+				void encode_aes_inversed_mix_columns(Reg xmm_dest, Reg xmm_src);
+				void encode_aes_inversed_mix_columns(Reg xmm_dest, Reg src_ptr, int src_offset);
+				void encode_aes_keygen(Reg xmm_dest, Reg xmm_src, uint rc);
+				void encode_sha256_rounds2(Reg xmm_state_cdgh, Reg xmm_state_abef, Reg xmm_round_words);
+				void encode_sha256_msg_words4_part1(Reg xmm_dest_src1, Reg xmm_src2);
+				void encode_sha256_msg_words4_part2(Reg xmm_dest_im, Reg xmm_src4);
 				void encode_invert(uint quant, Reg reg);
 				void encode_negative(uint quant, Reg reg);
 				void encode_shift(uint quant, shOp op, Reg reg, int by = 0, bool indirect = false, int value_offset = 0);

@@ -363,14 +363,12 @@ namespace Engine
 				if (i == L"CR_TEST") ref.index = TransformCryptFeature;
 				else if (i == L"CR_RANDOM") ref.index = TransformCryptRandom;
 				// Cryptography - encryption
+				else if (i == L"CR_AES_ENC") ref.index = TransformCryptAesEncECB;
+				else if (i == L"CR_AES_DEC") ref.index = TransformCryptAesDecECB;
 				else if (i == L"CR_AES_ENC_ECB") ref.index = TransformCryptAesEncECB;
 				else if (i == L"CR_AES_DEC_ECB") ref.index = TransformCryptAesDecECB;
 				else if (i == L"CR_AES_ENC_CBC") ref.index = TransformCryptAesEncCBC;
 				else if (i == L"CR_AES_DEC_CBC") ref.index = TransformCryptAesDecCBC;
-				else if (i == L"CR_AES_ENC_CFB") ref.index = TransformCryptAesEncCFB;
-				else if (i == L"CR_AES_DEC_CFB") ref.index = TransformCryptAesDecCFB;
-				else if (i == L"CR_AES_ENC_OFB") ref.index = TransformCryptAesEncOFB;
-				else if (i == L"CR_AES_DEC_OFB") ref.index = TransformCryptAesDecOFB;
 				// Cryptography - hash functions
 				else if (i == L"CR_SHA_224_INIT") ref.index = TransformCryptSha224I;
 				else if (i == L"CR_SHA_224") ref.index = TransformCryptSha224S;

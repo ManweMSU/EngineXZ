@@ -2044,7 +2044,7 @@ namespace Engine
 									else quant = 1;
 									if (quant == 16) {
 										if (!xmm_zeroed) {
-											encode_xor_xmm(accumulator16, accumulator16);
+											encode_simd_xor(accumulator16, accumulator16);
 											xmm_zeroed = true;
 										}
 										encode_mov_mem_xmm(quant, dld.reg, pos, accumulator16);
@@ -2093,7 +2093,7 @@ namespace Engine
 									else quant = 1;
 									if (quant == 16) {
 										if (!xmm_zeroed) {
-											encode_xor_xmm(accumulator16, accumulator16);
+											encode_simd_xor(accumulator16, accumulator16);
 											xmm_zeroed = true;
 										}
 										encode_mov_mem_xmm(quant, dld.reg, pos, accumulator16);
@@ -2227,6 +2227,292 @@ namespace Engine
 						} else if (disp->flags & DispositionDiscard) {
 							disp->flags = DispositionDiscard;
 						}
+					} else throw InvalidArgumentException();
+				}
+				void _encode_void_result(bool idle, int * mem_load, InternalDisposition * disp)
+				{
+					if (disp->flags & DispositionRegister) {
+						disp->flags = DispositionRegister;
+					} else if (disp->flags & DispositionPointer) {
+						disp->flags = DispositionPointer;
+						(*mem_load) += _word_align(TH::MakeSize(0, 1));
+						if (!idle) {
+							int offs = allocate_temporary(TH::MakeSize(0, 1));
+							encode_lea(disp->reg, Reg64::RBP, offs);
+						}
+					} else if (disp->flags & DispositionDiscard) {
+						disp->flags = DispositionDiscard;
+					}
+				}
+				void _encode_cryptography(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
+				{
+					if (node.self.index == TransformCryptFeature) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 1 || node.input_specs.Length() != 1) throw InvalidArgumentException();
+						if (node.inputs[0].self.ref_flags & ReferenceFlagInvoke) throw InvalidArgumentException();
+						if (node.inputs[0].self.ref_class != ReferenceTransform) throw InvalidArgumentException();
+						auto opcode = node.inputs[0].self.index;
+						auto retval_size = object_size(node.retval_spec.size);
+						if (retval_size != 1 && retval_size != 2 && retval_size != 4 && retval_size != 8) throw InvalidArgumentException();
+						// ARGUMENT EVALUATION
+						Reg result = Reg64::RAX;
+						encode_preserve(Reg64::RAX, reg_in_use, disp->reg, !idle);
+						encode_preserve(Reg64::RCX, reg_in_use, disp->reg, !idle);
+						encode_preserve(Reg64::RDX, reg_in_use, disp->reg, !idle);
+						encode_preserve(Reg64::RBX, reg_in_use, disp->reg, !idle);
+						// OPERATION
+						if (!idle) {
+							Reg test = Reg64::NO;
+							uint rax_code = 0, rcx_code = 0xFFFFFFFF;
+							uint bit = 0;
+							if (opcode == TransformCryptFeature) {
+								encode_mov_reg_const(8, result, 1);
+							} else if (opcode == TransformCryptRandom) {
+								rax_code = 0x01;
+								bit = 30;
+								test = Reg64::RCX;
+							} else if (opcode == TransformCryptAesEncECB || opcode == TransformCryptAesDecECB || opcode == TransformCryptAesEncCBC || opcode == TransformCryptAesDecCBC) {
+								rax_code = 0x01;
+								bit = 25;
+								test = Reg64::RCX;
+							} else if (opcode == TransformCryptSha224I || opcode == TransformCryptSha224S || opcode == TransformCryptSha256I || opcode == TransformCryptSha256S) {
+								rax_code = 0x07;
+								rcx_code = 0x00;
+								bit = 29;
+								test = Reg64::RBX;
+							} else if (opcode == TransformCryptSha384I || opcode == TransformCryptSha384S || opcode == TransformCryptSha512I || opcode == TransformCryptSha512S) {
+								rax_code = 0x07;
+								rcx_code = 0x01;
+								bit = 0;
+								test = Reg64::RAX;
+							} else {
+								encode_mov_reg_const(8, result, 0);
+							}
+							if (test) {
+								encode_mov_reg_const(8, Reg64::RAX, rax_code);
+								if (rcx_code != 0xFFFFFFFF) encode_mov_reg_const(8, Reg64::RCX, rcx_code);
+								encode_cpuid();
+								encode_test(4, test, 1U << bit);
+								_dest.code << 0x74 << 0x00; // JZ
+								int jz = _dest.code.Length();
+								encode_mov_reg_const(8, result, 1);
+								_dest.code << 0xEB << 0x00; // JMP
+								int jmp = _dest.code.Length();
+								_dest.code[jz - 1] = _dest.code.Length() - jz;
+								encode_mov_reg_const(8, result, 0);
+								_dest.code[jmp - 1] = _dest.code.Length() - jmp;
+							}
+						}
+						// FINALIZATION
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+							if (!idle && result != disp->reg) encode_mov_reg_reg(8, disp->reg, result);
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(0, 1));
+							if (!idle) {
+								int offs = allocate_temporary(TH::MakeSize(0, 1));
+								encode_mov_mem_reg(retval_size, Reg64::RBP, offs, result);
+								encode_lea(disp->reg, Reg64::RBP, offs);
+							}
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
+						encode_restore(Reg64::RBX, reg_in_use, disp->reg, !idle);
+						encode_restore(Reg64::RDX, reg_in_use, disp->reg, !idle);
+						encode_restore(Reg64::RCX, reg_in_use, disp->reg, !idle);
+						encode_restore(Reg64::RAX, reg_in_use, disp->reg, !idle);
+					} else if (node.self.index == TransformCryptRandom) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 2 || node.input_specs.Length() != 2) throw InvalidArgumentException();
+						if (object_size(node.input_specs[0].size) != WordSize || object_size(node.retval_spec.size)) throw InvalidArgumentException();
+						auto length_size = object_size(node.input_specs[1].size);
+						if (length_size != 1 && length_size != 2 && length_size != 4 && length_size != 8) throw InvalidArgumentException();
+						// ARGUMENT EVALUATION
+						Reg acc = Reg64::RAX;
+						InternalDisposition ld, len;
+						ld.reg = Reg64::RDI;
+						len.reg = Reg64::RCX;
+						ld.flags = len.flags = DispositionRegister;
+						ld.size = WordSize;
+						len.size = length_size;
+						encode_preserve(ld.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &ld, reg_in_use | ld.reg);
+						encode_preserve(len.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &len, reg_in_use | ld.reg | len.reg);
+						encode_preserve(acc, reg_in_use, 0, !idle);
+						// OPERATION
+						if (!idle) {
+							if (length_size != 8) encode_mov_zx(8, len.reg, length_size, len.reg);
+							int test = _dest.code.Length();
+							encode_test(8, len.reg, int(0xFFFFFFF8));
+							_dest.code << 0x74 << 0x00; // JZ
+							int jz = _dest.code.Length();
+							encode_read_random(8, acc);
+							_dest.code << 0x73 << 0x00; // JNC
+							_dest.code[_dest.code.Length() - 1] = jz - _dest.code.Length();
+							encode_mov_mem_reg(8, ld.reg, acc);
+							encode_add(ld.reg, 8);
+							encode_add(len.reg, -8);
+							_dest.code << 0xEB << 0x00; // JMP
+							_dest.code[_dest.code.Length() - 1] = test - _dest.code.Length();
+							_dest.code[jz - 1] = _dest.code.Length() - jz;
+						}
+						// FINALIZATION
+						encode_restore(acc, reg_in_use, 0, !idle);
+						encode_restore(len.reg, reg_in_use, 0, !idle);
+						encode_restore(ld.reg, reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
+					} else if (node.self.index == TransformCryptAesEncECB || node.self.index == TransformCryptAesDecECB || node.self.index == TransformCryptAesEncCBC || node.self.index == TransformCryptAesDecCBC) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 4 || node.input_specs.Length() != 4) throw InvalidArgumentException();
+						if (object_size(node.input_specs[0].size) != 16 || object_size(node.input_specs[1].size) != WordSize || object_size(node.retval_spec.size)) throw InvalidArgumentException();
+						auto length_size = object_size(node.input_specs[2].size);
+						auto key_size = object_size(node.input_specs[3].size);
+						if (length_size != 1 && length_size != 2 && length_size != 4 && length_size != 8) throw InvalidArgumentException();
+						if (key_size != 16 && key_size != 24 && key_size != 32) throw InvalidArgumentException();
+						uint rounds;
+						if (key_size == 16) rounds = 10;
+						else if (key_size == 24) rounds = 12;
+						else if (key_size == 32) rounds = 14;
+						bool decrypt = node.self.index == TransformCryptAesDecECB || node.self.index == TransformCryptAesDecCBC;
+						bool chain_cbc = node.self.index == TransformCryptAesEncCBC || node.self.index == TransformCryptAesDecCBC;
+						// ARGUMENT EVALUATION
+						Reg staging, round_keys[15];
+						InternalDisposition state, ld, len, key;
+						staging = Reg64::XMM0;
+						for (uint i = 0; i < rounds + 1; i++) round_keys[i] = Reg64::XMM1 << i;
+						for (uint i = rounds + 1; i < 15; i++) round_keys[i] = Reg64::NO;
+						state.reg = Reg64::RSI;
+						ld.reg = Reg64::RDI;
+						len.reg = Reg64::RCX;
+						key.reg = Reg64::RBX;
+						state.flags = key.flags = DispositionPointer;
+						ld.flags = len.flags = DispositionRegister;
+						state.size = 16;
+						ld.size = WordSize;
+						len.size = length_size;
+						key.size = key_size;
+						encode_preserve(state.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &state, reg_in_use | state.reg);
+						encode_preserve(ld.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &ld, reg_in_use | state.reg | ld.reg);
+						encode_preserve(len.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[2], idle, mem_load, &len, reg_in_use | state.reg | ld.reg | len.reg);
+						encode_preserve(key.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[3], idle, mem_load, &key, reg_in_use | state.reg | ld.reg | len.reg | key.reg);
+						encode_preserve(staging, uint(-1), 0, !idle);
+						for (int i = 0; i < 15; i++) if (round_keys[i]) encode_preserve(round_keys[i], uint(-1), 0, !idle);
+						// OPERATION
+						if (decrypt && chain_cbc) *mem_load += 16;
+						if (!idle) {
+							int auxoffs = (decrypt && chain_cbc) ? allocate_temporary(TH::MakeSize(16, 0)) : 0;
+							encode_mov_xmm_mem(16, round_keys[rounds], key.reg, 0);
+							if (key_size == 24) encode_mov_xmm_mem(8, round_keys[1], key.reg, 16);
+							else if (key_size == 32) encode_mov_xmm_mem(16, round_keys[1], key.reg, 16);
+							uint base_round_words = key_size / 4;
+							uint needs_round_words = (rounds + 1) * 4;
+							for (uint w = base_round_words; w < needs_round_words; w += 2) {
+								auto dest_reg = round_keys[w / 4];
+								auto prev1_reg = round_keys[(w - 1) / 4];
+								auto prev2_reg = round_keys[(w - base_round_words) / 4];
+								if (prev1_reg == round_keys[0]) prev1_reg = round_keys[rounds];
+								if (prev2_reg == round_keys[0]) prev2_reg = round_keys[rounds];
+								if (w % base_round_words == 0 || (w % base_round_words == 4 && base_round_words > 6)) {
+									uint rc_i = w / base_round_words;
+									uint rc, w1;
+									switch (rc_i)
+									{
+										case 1: rc = 0x01; break;
+										case 2: rc = 0x02; break;
+										case 3: rc = 0x04; break;
+										case 4: rc = 0x08; break;
+										case 5: rc = 0x10; break;
+										case 6: rc = 0x20; break;
+										case 7: rc = 0x40; break;
+										case 8: rc = 0x80; break;
+										case 9: rc = 0x1B; break;
+										case 10: rc = 0x36; break;
+										default: rc = 0x00; break;
+									}
+									if (w % base_round_words == 0) w1 = (w + 3) % 4;
+									else w1 = (w + 3) % 4 - 1;
+									encode_aes_keygen(staging, prev1_reg, rc);
+									encode_simd_shuffle(4, staging, staging, w1, w1, w1, w1);
+								} else {
+									auto w1 = (w + 3) % 4;
+									encode_mov_xmm_xmm(staging, prev1_reg);
+									encode_simd_shuffle(4, staging, staging, w1, w1, w1, w1);
+								}
+								uint w11 = (w - base_round_words + 1) % 4;
+								uint w0 = (w - base_round_words) % 4;
+								encode_simd_xor(staging, prev2_reg);
+								encode_mov_xmm_xmm(round_keys[0], prev2_reg);
+								encode_simd_shuffle(4, round_keys[0], round_keys[0], w11, w11, w11, w11);
+								encode_simd_xor(round_keys[0], staging);
+								encode_simd_shuffle(4, staging, round_keys[0], w0, w0, w0, w0);
+								if (w % 4 == 0) {
+									encode_mov_xmm_xmm(dest_reg, staging);
+									encode_simd_shuffle(4, dest_reg, dest_reg, 0, 2, 0, 2);
+								} else encode_simd_shuffle(4, dest_reg, staging, 0, 1, 0, 2);
+							}
+							encode_mov_xmm_mem(16, round_keys[0], key.reg, 0);
+							if (decrypt) for (int i = 0; i < rounds - 1; i++) encode_aes_inversed_mix_columns(round_keys[i + 1], round_keys[i + 1]);
+							if (!decrypt && chain_cbc) encode_mov_xmm_mem(16, staging, state.reg, 0);
+							if (length_size != 8) encode_mov_zx(8, len.reg, length_size, len.reg);
+							int test = _dest.code.Length();
+							encode_test(8, len.reg, int(0xFFFFFFF0));
+							_dest.code << 0x0F << 0x84 << 0x00 << 0x00 << 0x00 << 0x00; // JZ
+							int jz = _dest.code.Length();
+							if (decrypt) {
+								encode_mov_xmm_mem(16, staging, ld.reg, 0);
+								if (chain_cbc) encode_mov_mem_xmm(16, Reg64::RBP, auxoffs, staging);
+								encode_simd_xor(staging, round_keys[rounds]);
+								for (int i = rounds - 1; i > 0; i--) encode_aes_dec(staging, round_keys[i]);
+								encode_aes_dec_last(staging, round_keys[0]);
+								if (chain_cbc) encode_simd_xor(staging, state.reg, 0);
+								encode_mov_mem_xmm(16, ld.reg, 0, staging);
+								if (chain_cbc) {
+									encode_mov_xmm_mem(16, staging, Reg64::RBP, auxoffs);
+									encode_mov_mem_xmm(16, state.reg, 0, staging);
+								}
+							} else {
+								if (chain_cbc) encode_simd_xor(staging, ld.reg, 0);
+								else encode_mov_xmm_mem(16, staging, ld.reg, 0);
+								encode_simd_xor(staging, round_keys[0]);
+								for (int i = 0; i < rounds - 1; i++) encode_aes_enc(staging, round_keys[i + 1]);
+								encode_aes_enc_last(staging, round_keys[rounds]);
+								encode_mov_mem_xmm(16, ld.reg, 0, staging);
+							}
+							encode_add(ld.reg, 16);
+							encode_add(len.reg, -16);
+							_dest.code << 0xE9 << 0x00 << 0x00 << 0x00 << 0x00; // JMP
+							*reinterpret_cast<int *>(_dest.code.GetBuffer() + _dest.code.Length() - 4) = test - _dest.code.Length();
+							*reinterpret_cast<int *>(_dest.code.GetBuffer() + jz - 4) = _dest.code.Length() - jz;
+							if (!decrypt && chain_cbc) encode_mov_mem_xmm(16, state.reg, 0, staging);
+						}
+						// FINALIZATION
+						for (int i = 14; i >= 0; i--) if (round_keys[i]) encode_restore(round_keys[i], uint(-1), 0, !idle);
+						encode_restore(staging, uint(-1), 0, !idle);
+						encode_restore(key.reg, reg_in_use, 0, !idle);
+						encode_restore(len.reg, reg_in_use, 0, !idle);
+						encode_restore(ld.reg, reg_in_use, 0, !idle);
+						encode_restore(state.reg, reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
+					} else if (node.self.index == TransformCryptSha224I || node.self.index == TransformCryptSha256I || node.self.index == TransformCryptSha384I || node.self.index == TransformCryptSha512I) {
+
+						// TransformCryptSha224I	= 0x0310, // 1 argument - a state (w); retval - no type
+						// TransformCryptSha256I	= 0x0312, // 1 argument - a state (w); retval - no type
+						// TransformCryptSha384I	= 0x0314, // 1 argument - a state (w); retval - no type
+						// TransformCryptSha512I	= 0x0316, // 1 argument - a state (w); retval - no type
+
+					} else if (node.self.index == TransformCryptSha224S || node.self.index == TransformCryptSha256S || node.self.index == TransformCryptSha384S || node.self.index == TransformCryptSha512S) {
+
+						// TransformCryptSha224S	= 0x0311, // 3 arguments - a state (r/w); buffer (r); an integer length in 512-bit words; retval - no type
+						// TransformCryptSha256S	= 0x0313, // 3 arguments - a state (r/w); buffer (r); an integer length in 512-bit words; retval - no type
+						// TransformCryptSha384S	= 0x0315, // 3 arguments - a state (r/w); buffer (r); an integer length in 1024-bit words; retval - no type
+						// TransformCryptSha512S	= 0x0317, // 3 arguments - a state (r/w); buffer (r); an integer length in 1024-bit words; retval - no type
+
 					} else throw InvalidArgumentException();
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
@@ -2685,6 +2971,8 @@ namespace Engine
 								// for (uint i = 32; i > 0; i--) encode_restore(1 << (i - 1), reg_in_use, 0, !idle);
 							} else if (node.self.index >= 0x200 && node.self.index < 0x2FF) {
 								_encode_long_arithmetics(node, idle, mem_load, disp, reg_in_use);
+							} else if (node.self.index >= 0x300 && node.self.index < 0x3FF) {
+								_encode_cryptography(node, idle, mem_load, disp, reg_in_use);
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);

@@ -7,6 +7,47 @@ namespace Engine
 	{
 		namespace X86
 		{
+			modRM make_modRM(uint reg_i, uint rm_i)
+			{
+				modRM result;
+				result.reg_i = reg_i;
+				result.rm_i = rm_i;
+				result.x_i = 0;
+				result.offset = 0;
+				result.x_scale = 0;
+				return result;
+			}
+			modRM make_modRM_with_offset(uint reg_i, uint rm_i, int offset)
+			{
+				modRM result;
+				result.reg_i = reg_i;
+				result.rm_i = rm_i;
+				result.x_i = 0;
+				result.offset = offset;
+				result.x_scale = 0;
+				return result;
+			}
+			modRM make_modRM_with_indexing(uint reg_i, uint rm_i, uint x_i, uint scale)
+			{
+				modRM result;
+				result.reg_i = reg_i;
+				result.rm_i = rm_i;
+				result.x_i = x_i;
+				result.offset = 0;
+				result.x_scale = scale;
+				return result;
+			}
+			modRM make_modRM_full(uint reg_i, uint rm_i, int offset, uint x_i, uint scale)
+			{
+				modRM result;
+				result.reg_i = reg_i;
+				result.rm_i = rm_i;
+				result.x_i = x_i;
+				result.offset = offset;
+				result.x_scale = scale;
+				return result;
+			}
+
 			EncoderContext::EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src, bool x64) : _osenv(osenv), _dest(dest), _src(src), _org_inst_offsets(1), _jump_reloc(0x100), _inputs(1), _x64_mode(x64)
 			{
 				_current_instruction = -1;
@@ -54,6 +95,14 @@ namespace Engine
 				else if (reg == Reg64::XMM5) return 5;
 				else if (reg == Reg64::XMM6) return 6;
 				else if (reg == Reg64::XMM7) return 7;
+				else if (reg == Reg64::XMM8) return 8;
+				else if (reg == Reg64::XMM9) return 9;
+				else if (reg == Reg64::XMM10) return 10;
+				else if (reg == Reg64::XMM11) return 11;
+				else if (reg == Reg64::XMM12) return 12;
+				else if (reg == Reg64::XMM13) return 13;
+				else if (reg == Reg64::XMM14) return 14;
+				else if (reg == Reg64::XMM15) return 15;
 				else return 16;
 			}
 			uint8 EncoderContext::make_rex(bool size64_W, bool reg_ext_R, bool index_ext_X, bool opt_ext_B)
@@ -123,6 +172,77 @@ namespace Engine
 			}
 			void EncoderContext::relocate_code_at(int offset) { _dest.code_reloc << offset; }
 			void EncoderContext::relocate_data_at(int offset) { _dest.data_reloc << offset; }
+			void EncoderContext::encode_rex(bool rexW, const modRM & m, bool index_lo_8bit)
+			{
+				bool use_sib = false;
+				if (m.x_scale || (m.rm_i & 0x7) == 0x4) use_sib = true;
+				if (use_sib) {
+					if (m.x_i == 0x4) throw InvalidArgumentException();
+					uint fxx_i = m.x_scale ? m.x_i : 0x4;
+					if (_x64_mode && index_lo_8bit) {
+						if ((m.reg_i & 0xC) || (m.rm_i & 0x8) || (fxx_i & 0x8) || rexW) _dest.code << make_rex(rexW, m.reg_i & 0x8, fxx_i & 0x8, m.rm_i & 0x8);
+					} else {
+						if ((m.reg_i & 0x8) || (m.rm_i & 0x8) || (fxx_i & 0x8) || rexW) _dest.code << make_rex(rexW, m.reg_i & 0x8, fxx_i & 0x8, m.rm_i & 0x8);
+					}
+				} else {
+					if (_x64_mode && index_lo_8bit) {
+						if ((m.reg_i & 0xC) || (m.rm_i & 0x8) || rexW) _dest.code << make_rex(rexW, m.reg_i & 0x8, false, m.rm_i & 0x8);
+					} else {
+						if ((m.reg_i & 0x8) || (m.rm_i & 0x8) || rexW) _dest.code << make_rex(rexW, m.reg_i & 0x8, false, m.rm_i & 0x8);
+					}
+				}
+			}
+			void EncoderContext::encode_rex(bool rexW, uint reg_i, uint rm_i, bool index_lo_8bit)
+			{
+				if (((reg_i & 0x8) || (rm_i & 0x8) || rexW) && !_x64_mode) throw InvalidStateException();
+				if (_x64_mode && index_lo_8bit) {
+					if ((reg_i & 0xC) || (rm_i & 0xC) || rexW) _dest.code << make_rex(rexW, reg_i & 0x8, false, rm_i & 0x8);
+				} else {
+					if ((reg_i & 0x8) || (rm_i & 0x8) || rexW) _dest.code << make_rex(rexW, reg_i & 0x8, false, rm_i & 0x8);
+				}
+			}
+			void EncoderContext::encode_mod(const modRM & m)
+			{
+				bool use_sib = false;
+				if (m.x_scale || (m.rm_i & 0x7) == 0x4) use_sib = true;
+				if (use_sib) {
+					if (m.x_i == 0x4) throw InvalidArgumentException();
+					uint fxx_i = m.x_scale ? m.x_i : 0x4;
+					uint mod, ss;
+					if (m.offset) {
+						if (m.offset >= -128 && m.offset <= 127) mod = 1;
+						else mod = 2;
+					} else mod = 0;
+					if (m.x_scale) {
+						if (m.x_scale == 1) ss = 0;
+						else if (m.x_scale == 2) ss = 1;
+						else if (m.x_scale == 4) ss = 2;
+						else if (m.x_scale == 8) ss = 3;
+						else throw InvalidArgumentException();
+					} else ss = 0;
+					_dest.code << make_mod(m.reg_i & 0x7, mod, 0x4) << make_mod(fxx_i & 0x7, ss, m.rm_i & 0x7);
+					if (mod == 2) {
+						_dest.code << uint8(m.offset);
+						_dest.code << uint8(m.offset >> 8);
+						_dest.code << uint8(m.offset >> 16);
+						_dest.code << uint8(m.offset >> 24);
+					} else if (mod == 1) _dest.code << uint8(m.offset);
+				} else {
+					uint mod;
+					if (m.offset || (m.rm_i & 0x7) == 0x5) {
+						if (m.offset >= -128 && m.offset <= 127) mod = 1;
+						else mod = 2;
+					} else mod = 0;
+					_dest.code << make_mod(m.reg_i & 0x7, mod, m.rm_i & 0x7);
+					if (mod == 2) {
+						_dest.code << uint8(m.offset);
+						_dest.code << uint8(m.offset >> 8);
+						_dest.code << uint8(m.offset >> 16);
+						_dest.code << uint8(m.offset >> 24);
+					} else if (mod == 1) _dest.code << uint8(m.offset);
+				}
+			}
+			void EncoderContext::encode_mod(uint reg_i, uint rm_i) { _dest.code << make_mod(reg_i & 0x7, 0x3, rm_i & 0x7); }
 			void EncoderContext::refer_object_at(const string & name, int offset)
 			{
 				auto ent = _dest.extrefs[name];
@@ -458,265 +578,168 @@ namespace Engine
 			}
 			void EncoderContext::encode_mov_reg_reg(uint quant, Reg dest, Reg src)
 			{
+				if (quant != 8 && quant != 4 && quant != 2 && quant != 1) throw InvalidArgumentException();
 				auto di = regular_register_code(dest);
 				auto si = regular_register_code(src);
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, 0x3, di & 0x07);
-				} else if (quant == 4) {
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, 0x3, di & 0x07);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, 0x3, di & 0x07);
-				} else if (quant == 1) {
-					if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x88 << make_mod(si & 0x07, 0x3, di & 0x07);
-				} else throw InvalidArgumentException();
+				if (quant == 2) _dest.code << 0x66;
+				encode_rex(quant == 8, si, di, quant == 1);
+				_dest.code << (quant == 1 ? 0x88 : 0x89);
+				encode_mod(si, di);
+			}
+			void EncoderContext::encode_mov_reg_mem(uint quant, const modRM & m)
+			{
+				if (quant != 8 && quant != 4 && quant != 2 && quant != 1) throw InvalidArgumentException();
+				if (quant == 2) _dest.code << 0x66;
+				encode_rex(quant == 8, m, quant == 1);
+				_dest.code << (quant == 1 ? 0x8A : 0x8B);
+				encode_mod(m);
 			}
 			void EncoderContext::encode_mov_reg_mem(uint quant, Reg dest, Reg src_ptr)
 			{
-				if (src_ptr == Reg64::RBP || src_ptr == Reg64::RSP) return;
 				auto di = regular_register_code(dest);
 				auto si = regular_register_code(src_ptr);
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8B << make_mod(di & 0x07, 0x0, si & 0x07);
-				} else if (quant == 4) {
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8B << make_mod(di & 0x07, 0x0, si & 0x07);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8B << make_mod(di & 0x07, 0x0, si & 0x07);
-				} else if (quant == 1) {
-					if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8A << make_mod(di & 0x07, 0x0, si & 0x07);
-				} else throw InvalidArgumentException();
+				encode_mov_reg_mem(quant, make_modRM(di, si));
 			}
 			void EncoderContext::encode_mov_reg_mem(uint quant, Reg dest, Reg src_ptr, int src_offset)
 			{
-				if (src_ptr == Reg64::RSP) return;
 				auto di = regular_register_code(dest);
 				auto si = regular_register_code(src_ptr);
-				uint8 mode;
-				if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8B << make_mod(di & 0x07, mode, si & 0x07);
-				} else if (quant == 4) {
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8B << make_mod(di & 0x07, mode, si & 0x07);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8B << make_mod(di & 0x07, mode, si & 0x07);
-				} else if (quant == 1) {
-					if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x8A << make_mod(di & 0x07, mode, si & 0x07);
-				} else throw InvalidArgumentException();
-				if (mode == 0x02) {
-					_dest.code << int8(src_offset);
-					_dest.code << int8(src_offset >> 8);
-					_dest.code << int8(src_offset >> 16);
-					_dest.code << int8(src_offset >> 24);
-				} else _dest.code << int8(src_offset);
+				encode_mov_reg_mem(quant, make_modRM_with_offset(di, si, src_offset));
 			}
 			void EncoderContext::encode_mov_reg_const(uint quant, Reg dest, uint64 value)
 			{
+				if (quant != 8 && quant != 4 && quant != 2 && quant != 1) throw InvalidArgumentException();
 				auto di = regular_register_code(dest);
-				auto di_lo = di & 0x07;
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, 0, 0, di & 0x08);
-					_dest.code << 0xB8 + di_lo;
-				} else if (quant == 4) {
-					if (_x64_mode && (di & 0x08)) _dest.code << make_rex(false, 0, 0, di & 0x08);
-					_dest.code << 0xB8 + di_lo;
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && (di & 0x08)) _dest.code << make_rex(false, 0, 0, di & 0x08);
-					_dest.code << 0xB8 + di_lo;
-				} else if (quant == 1) {
-					if (_x64_mode && (di >= 4)) _dest.code << make_rex(false, 0, 0, di & 0x08);
-					_dest.code << 0xB0 + di_lo;
-				} else throw InvalidArgumentException();
+				auto m = make_modRM(0, di);
+				if (quant == 2) _dest.code << 0x66;
+				encode_rex(quant == 8, m, quant == 1);
+				_dest.code << ((quant == 1 ? 0xB0 : 0xB8) | (di & 0x7));
 				for (uint q = 0; q < quant; q++) { _dest.code << uint8(value); value >>= 8; }
+			}
+			void EncoderContext::encode_mov_mem_reg(uint quant, const modRM & m)
+			{
+				if (quant != 8 && quant != 4 && quant != 2 && quant != 1) throw InvalidArgumentException();
+				if (quant == 2) _dest.code << 0x66;
+				encode_rex(quant == 8, m, quant == 1);
+				_dest.code << (quant == 1 ? 0x88 : 0x89);
+				encode_mod(m);
 			}
 			void EncoderContext::encode_mov_mem_reg(uint quant, Reg dest_ptr, Reg src)
 			{
-				if (dest_ptr == Reg64::RBP || dest_ptr == Reg64::RSP) return;
 				auto di = regular_register_code(dest_ptr);
 				auto si = regular_register_code(src);
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, 0x0, di & 0x07);
-				} else if (quant == 4) {
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, 0x0, di & 0x07);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, 0x0, di & 0x07);
-				} else if (quant == 1) {
-					if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x88 << make_mod(si & 0x07, 0x0, di & 0x07);
-				} else throw InvalidArgumentException();
+				encode_mov_mem_reg(quant, make_modRM(si, di));
 			}
 			void EncoderContext::encode_mov_mem_reg(uint quant, Reg dest_ptr, int dest_offset, Reg src)
 			{
-				if (dest_ptr == Reg64::RSP) return;
 				auto di = regular_register_code(dest_ptr);
 				auto si = regular_register_code(src);
-				uint8 mode;
-				if (dest_offset >= -128 && dest_offset < 128) mode = 0x01; else mode = 0x02;
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, mode, di & 0x07);
-				} else if (quant == 4) {
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, mode, di & 0x07);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && ((si & 0x08) || (di & 0x08))) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x89 << make_mod(si & 0x07, mode, di & 0x07);
-				} else if (quant == 1) {
-					if (_x64_mode && (si >= 4 || di >= 4)) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x88 << make_mod(si & 0x07, mode, di & 0x07);
-				} else throw InvalidArgumentException();
-				if (mode == 0x02) {
-					_dest.code << int8(dest_offset);
-					_dest.code << int8(dest_offset >> 8);
-					_dest.code << int8(dest_offset >> 16);
-					_dest.code << int8(dest_offset >> 24);
-				} else _dest.code << int8(dest_offset);
+				encode_mov_mem_reg(quant, make_modRM_with_offset(si, di, dest_offset));
+			}
+			void EncoderContext::encode_mov_xmm_xmm(Reg dest, Reg src)
+			{
+				auto di = xmm_register_code(dest);
+				auto si = xmm_register_code(src);
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0x28;
+				encode_mod(di, si);
 			}
 			void EncoderContext::encode_mov_reg_xmm(uint quant, Reg dest, Reg src)
 			{
-				if (!_x64_mode) throw InvalidStateException();
+				if (quant != 8 && quant != 4) throw InvalidArgumentException();
 				auto di = regular_register_code(dest);
 				auto si = xmm_register_code(src);
-				if (quant == 8) {
-					_dest.code << 0x66 << make_rex(true, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x0F << 0x7E << make_mod(si & 0x07, 0x3, di & 0x07);
-				} else if (quant == 4) {
-					_dest.code << 0x66;
-					if ((si & 0x08) || (di & 0x08)) _dest.code << make_rex(false, si & 0x08, 0, di & 0x08);
-					_dest.code << 0x0F << 0x7E << make_mod(si & 0x07, 0x3, di & 0x07);
-				} else throw InvalidArgumentException();
+				_dest.code << 0x66;
+				encode_rex(quant == 8, si, di);
+				_dest.code << 0x0F << 0x7E;
+				encode_mod(si, di);
 			}
 			void EncoderContext::encode_mov_xmm_reg(uint quant, Reg dest, Reg src)
 			{
-				if (!_x64_mode) throw InvalidStateException();
+				if (quant != 8 && quant != 4) throw InvalidArgumentException();
 				auto di = xmm_register_code(dest);
 				auto si = regular_register_code(src);
-				if (quant == 8) {
-					_dest.code << 0x66 << make_rex(true, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x0F << 0x6E << make_mod(di & 0x07, 0x3, si & 0x07);
-				} else if (quant == 4) {
-					_dest.code << 0x66;
-					if ((si & 0x08) || (di & 0x08)) _dest.code << make_rex(false, di & 0x08, 0, si & 0x08);
-					_dest.code << 0x0F << 0x6E << make_mod(di & 0x07, 0x3, si & 0x07);
-				} else throw InvalidArgumentException();
+				_dest.code << 0x66;
+				encode_rex(quant == 8, di, si);
+				_dest.code << 0x0F << 0x6E;
+				encode_mod(di, si);
 			}
 			void EncoderContext::encode_mov_mem_xmm(uint quant, Reg dest, int dest_offset, Reg src)
 			{
-				if (!_x64_mode) throw InvalidStateException();
+				if (quant != 16 && quant != 12 && quant != 8 && quant != 4) throw InvalidArgumentException();
 				auto di = regular_register_code(dest);
 				auto si = xmm_register_code(src);
-				uint8 mode;
-				if (dest_offset == 0) mode = 0x00; else if (dest_offset >= -128 && dest_offset < 128) mode = 0x01; else mode = 0x02;
-				if (quant == 16 && dest_offset == 0 && dest == Reg64::RSP) {
-					_dest.code << 0x66 << 0x0F << 0x11;
-					_dest.code << make_mod(si, 0, 4) << make_mod(4, 0, 4);
-				} else if (quant == 16) {
-					_dest.code << 0x66 << 0x0F << 0x11;
-					_dest.code << make_mod(si, mode, di);
+				auto m = make_modRM_with_offset(si, di, dest_offset);
+				if (quant == 16) {
+					_dest.code << 0x66;
+					encode_rex(false, m);
+					_dest.code << 0x0F << 0x11;
+					encode_mod(m);
+				} else if (quant == 8) {
+					_dest.code << 0xF2;
+					encode_rex(false, m);
+					_dest.code << 0x0F << 0x11;
+					encode_mod(m);
+				} else if (quant == 4) {
+					_dest.code << 0xF3;
+					encode_rex(false, m);
+					_dest.code << 0x0F << 0x11;
+					encode_mod(m);
 				} else if (quant == 12) {
 					encode_mov_mem_xmm(8, dest, dest_offset, src);
-					_dest.code << 0x0F << 0xC6 << make_mod(si, 0x03, si) << 0xAA;
+					encode_simd_shuffle(4, src, src, 2, 2, 2, 2);
 					encode_mov_mem_xmm(4, dest, dest_offset + 8, src);
-					return;
-				} else if (quant == 8) {
-					_dest.code << 0xF2 << 0x0F << 0x11;
-					_dest.code << make_mod(si, mode, di);
-				} else if (quant == 4) {
-					_dest.code << 0xF3 << 0x0F << 0x11;
-					_dest.code << make_mod(si, mode, di);
-				} else throw InvalidArgumentException();
-				if (mode == 0x02) {
-					_dest.code << int8(dest_offset);
-					_dest.code << int8(dest_offset >> 8);
-					_dest.code << int8(dest_offset >> 16);
-					_dest.code << int8(dest_offset >> 24);
-				} else if (mode == 0x01) _dest.code << int8(dest_offset);
+				}
 			}
 			void EncoderContext::encode_mov_xmm_mem(uint quant, Reg dest, Reg src, int src_offset)
 			{
-				if (!_x64_mode) throw InvalidStateException();
+				if (quant != 16 && quant != 12 && quant != 8 && quant != 4) throw InvalidArgumentException();
 				auto di = xmm_register_code(dest);
 				auto si = regular_register_code(src);
-				uint8 mode;
-				if (src_offset == 0) mode = 0x00; else if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
-				if (quant == 16 && src_offset == 0 && src == Reg64::RSP) {
-					_dest.code << 0x66 << 0x0F << 0x10;
-					_dest.code << make_mod(di, 0, 4) << make_mod(4, 0, 4);
-				} else if (quant == 16) {
-					_dest.code << 0x66 << 0x0F << 0x10;
-					_dest.code << make_mod(di, mode, si);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				if (quant == 16) {
+					_dest.code << 0x66;
+					encode_rex(false, m);
+					_dest.code << 0x0F << 0x10;
+					encode_mod(m);
+				} else if (quant == 8) {
+					_dest.code << 0xF2;
+					encode_rex(false, m);
+					_dest.code << 0x0F << 0x10;
+					encode_mod(m);
+				} else if (quant == 4) {
+					_dest.code << 0xF3;
+					encode_rex(false, m);
+					_dest.code << 0x0F << 0x10;
+					encode_mod(m);
 				} else if (quant == 12) {
 					encode_mov_xmm_mem(4, dest, src, src_offset + 8);
-					_dest.code << 0x66 << 0x0F << 0x16;
-					_dest.code << make_mod(di, mode, si);
-				} else if (quant == 8) {
-					_dest.code << 0xF2 << 0x0F << 0x10;
-					_dest.code << make_mod(di, mode, si);
-				} else if (quant == 4) {
-					_dest.code << 0xF3 << 0x0F << 0x10;
-					_dest.code << make_mod(di, mode, si);
-				} else throw InvalidArgumentException();
-				if (mode == 0x02) {
-					_dest.code << int8(src_offset);
-					_dest.code << int8(src_offset >> 8);
-					_dest.code << int8(src_offset >> 16);
-					_dest.code << int8(src_offset >> 24);
-				} else if (mode == 0x01) _dest.code << int8(src_offset);
-				if (quant == 12) _dest.code << 0x0F << 0xC6 << make_mod(di, 0x03, di) << 0x4E;
+					encode_mov_xmm_mem_hi(8, dest, src, src_offset);
+					encode_simd_shuffle(4, dest, dest, 2, 3, 0, 1);
+				}
 			}
 			void EncoderContext::encode_mov_xmm_mem_hi(uint quant, Reg dest, Reg src, int src_offset)
 			{
-				if (!_x64_mode) throw InvalidStateException();
+				if (quant != 8) throw InvalidArgumentException();
 				auto di = xmm_register_code(dest);
 				auto si = regular_register_code(src);
-				uint8 mode;
-				if (src_offset == 0) mode = 0x00; else if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
-				if (quant == 8) {
-					_dest.code << 0x66 << 0x0F << 0x16;
-					_dest.code << make_mod(di, mode, si);
-				} else throw InvalidArgumentException();
-				if (mode == 0x02) {
-					_dest.code << int8(src_offset);
-					_dest.code << int8(src_offset >> 8);
-					_dest.code << int8(src_offset >> 16);
-					_dest.code << int8(src_offset >> 24);
-				} else if (mode == 0x01) _dest.code << int8(src_offset);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0x16;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_lea(const modRM & m)
+			{
+				encode_rex(_x64_mode, m);
+				_dest.code << 0x8D;
+				encode_mod(m);
 			}
 			void EncoderContext::encode_lea(Reg dest, Reg src_ptr, int src_offset)
 			{
-				if (src_ptr == Reg64::RSP) return;
 				auto di = regular_register_code(dest);
 				auto si = regular_register_code(src_ptr);
-				uint8 mode;
-				if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02;
-				if (_x64_mode) _dest.code << make_rex(true, di & 0x08, 0, si & 0x08);
-				_dest.code << 0x8D;
-				_dest.code << make_mod(di & 0x07, mode, si & 0x07);
-				if (mode == 0x02) {
-					_dest.code << int8(src_offset);
-					_dest.code << int8(src_offset >> 8);
-					_dest.code << int8(src_offset >> 16);
-					_dest.code << int8(src_offset >> 24);
-				} else _dest.code << int8(src_offset);
+				encode_lea(make_modRM_with_offset(di, si, src_offset));
 			}
 			void EncoderContext::encode_mov_sx(uint dest_quant, Reg dest, uint src_quant, Reg src)
 			{
@@ -874,7 +897,6 @@ namespace Engine
 					_dest.code << int8(literal >> 24);
 				}
 			}
-			void EncoderContext::encode_xor_xmm(Reg dest, Reg src) { _dest.code << 0x0F << 0x57 << make_mod(xmm_register_code(dest), 0x3, xmm_register_code(src)); }
 			void EncoderContext::encode_xadd(uint quant, Reg dest_ptr, Reg src)
 			{
 				if (dest_ptr == Reg64::RSP) return;
@@ -1243,6 +1265,191 @@ namespace Engine
 			{
 				if (_x64_mode) throw InvalidStateException();
 				_dest.code << 0xD9 << 0xFA;
+			}
+			void EncoderContext::encode_cpuid(void) { _dest.code << 0x0F << 0xA2; }
+			void EncoderContext::encode_simd_xor(Reg xmm_dest, Reg xmm_src)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint si = xmm_register_code(xmm_src);
+				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
+				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+				_dest.code << 0x0F << 0x57 << make_mod(di & 0x7, 0x3, si & 0x7);
+			}
+			void EncoderContext::encode_simd_xor(Reg xmm_dest, Reg src_ptr, int src_offset)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint si = regular_register_code(src_ptr);
+				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
+				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+				uint8 mode;
+				if (src_offset) { if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
+				_dest.code << 0x0F << 0x57 << make_mod(di & 0x7, mode, si & 0x7);
+				if (mode == 0x02) {
+					_dest.code << int8(src_offset);
+					_dest.code << int8(src_offset >> 8);
+					_dest.code << int8(src_offset >> 16);
+					_dest.code << int8(src_offset >> 24);
+				} else if (mode == 0x01) _dest.code << int8(src_offset);
+			}
+			void EncoderContext::encode_simd_shuffle(uint quant, Reg xmm_dest_src_lo, Reg xmm_src_hi, uint i0, uint i1, uint i2, uint i3)
+			{
+				uint di = xmm_register_code(xmm_dest_src_lo);
+				uint si = xmm_register_code(xmm_src_hi);
+				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
+				if (quant == 8) {
+					_dest.code << 0x66;
+					if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+					_dest.code << 0x0F << 0xC6 << make_mod(di & 0x7, 0x3, si & 0x7);
+					_dest.code << uint8(i0 | (i1 << 1));
+				} else if (quant == 4) {
+					if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+					_dest.code << 0x0F << 0xC6 << make_mod(di & 0x7, 0x3, si & 0x7);
+					_dest.code << uint8(i0 | (i1 << 2) | (i2 << 4) | (i3 << 6));
+				} else throw InvalidArgumentException();
+			}
+			void EncoderContext::encode_read_random(uint quant, Reg dest)
+			{
+				auto ri = regular_register_code(dest);
+				if (quant == 8 && _x64_mode) {
+					_dest.code << make_rex(true, false, false, ri & 0x8);
+					_dest.code << 0x0F << 0xC7 << make_mod(0x6, 0x3, ri & 0x7);
+				} else if (quant == 4) {
+					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
+					_dest.code << 0x0F << 0xC7 << make_mod(0x6, 0x3, ri & 0x7);
+				} else if (quant == 2) {
+					_dest.code << 0x66;
+					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
+					_dest.code << 0x0F << 0xC7 << make_mod(0x6, 0x3, ri & 0x7);
+				} else throw InvalidArgumentException();
+			}
+			void EncoderContext::encode_aes_enc(Reg xmm_dest, Reg xmm_key)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint ki = xmm_register_code(xmm_key);
+				_dest.code << 0x66;
+				encode_rex(false, di, ki);
+				_dest.code << 0x0F << 0x38 << 0xDC;
+				encode_mod(di, ki);
+			}
+			void EncoderContext::encode_aes_enc(Reg xmm_dest, Reg key_ptr, int key_offset)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint ki = regular_register_code(key_ptr);
+				auto m = make_modRM_with_offset(di, ki, key_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0x38 << 0xDC;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_aes_enc_last(Reg xmm_dest, Reg xmm_key)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint ki = xmm_register_code(xmm_key);
+				_dest.code << 0x66;
+				encode_rex(false, di, ki);
+				_dest.code << 0x0F << 0x38 << 0xDD;
+				encode_mod(di, ki);
+			}
+			void EncoderContext::encode_aes_enc_last(Reg xmm_dest, Reg key_ptr, int key_offset)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint ki = regular_register_code(key_ptr);
+				auto m = make_modRM_with_offset(di, ki, key_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0x38 << 0xDD;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_aes_dec(Reg xmm_dest, Reg xmm_key)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint ki = xmm_register_code(xmm_key);
+				_dest.code << 0x66;
+				encode_rex(false, di, ki);
+				_dest.code << 0x0F << 0x38 << 0xDE;
+				encode_mod(di, ki);
+			}
+			void EncoderContext::encode_aes_dec(Reg xmm_dest, Reg key_ptr, int key_offset)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint ki = regular_register_code(key_ptr);
+				auto m = make_modRM_with_offset(di, ki, key_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0x38 << 0xDE;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_aes_dec_last(Reg xmm_dest, Reg xmm_key)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint ki = xmm_register_code(xmm_key);
+				_dest.code << 0x66;
+				encode_rex(false, di, ki);
+				_dest.code << 0x0F << 0x38 << 0xDF;
+				encode_mod(di, ki);
+			}
+			void EncoderContext::encode_aes_dec_last(Reg xmm_dest, Reg key_ptr, int key_offset)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint ki = regular_register_code(key_ptr);
+				auto m = make_modRM_with_offset(di, ki, key_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0x38 << 0xDF;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_aes_inversed_mix_columns(Reg xmm_dest, Reg xmm_src)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint si = xmm_register_code(xmm_src);
+				_dest.code << 0x66;
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0x38 << 0xDB;
+				encode_mod(di, si);
+			}
+			void EncoderContext::encode_aes_inversed_mix_columns(Reg xmm_dest, Reg src_ptr, int src_offset)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint si = regular_register_code(src_ptr);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0x38 << 0xDB;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_aes_keygen(Reg xmm_dest, Reg xmm_src, uint rc)
+			{
+				uint di = xmm_register_code(xmm_dest);
+				uint si = xmm_register_code(xmm_src);
+				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
+				_dest.code << 0x66;
+				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+				_dest.code << 0x0F << 0x3A << 0xDF << make_mod(di & 0x7, 0x3, si & 0x7) << uint8(rc);
+			}
+			void EncoderContext::encode_sha256_rounds2(Reg xmm_state_cdgh, Reg xmm_state_abef, Reg xmm_round_words)
+			{
+				if (xmm_round_words != Reg64::XMM0) throw InvalidArgumentException();
+				uint di = xmm_register_code(xmm_state_cdgh);
+				uint si = xmm_register_code(xmm_state_abef);
+				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
+				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+				_dest.code << 0x0F << 0x38 << 0xCB << make_mod(di & 0x7, 0x3, si & 0x7);
+			}
+			void EncoderContext::encode_sha256_msg_words4_part1(Reg xmm_dest_src1, Reg xmm_src2)
+			{
+				uint di = xmm_register_code(xmm_dest_src1);
+				uint si = xmm_register_code(xmm_src2);
+				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
+				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+				_dest.code << 0x0F << 0x38 << 0xCC << make_mod(di & 0x7, 0x3, si & 0x7);
+			}
+			void EncoderContext::encode_sha256_msg_words4_part2(Reg xmm_dest_im, Reg xmm_src4)
+			{
+				uint di = xmm_register_code(xmm_dest_im);
+				uint si = xmm_register_code(xmm_src4);
+				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
+				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+				_dest.code << 0x0F << 0x38 << 0xCD << make_mod(di & 0x7, 0x3, si & 0x7);
 			}
 			void EncoderContext::encode_invert(uint quant, Reg reg)
 			{

@@ -212,10 +212,6 @@ namespace Engine
 						else if (ref.index == TransformCryptAesDecECB) output << L"CR_AES_DEC_ECB";
 						else if (ref.index == TransformCryptAesEncCBC) output << L"CR_AES_ENC_CBC";
 						else if (ref.index == TransformCryptAesDecCBC) output << L"CR_AES_DEC_CBC";
-						else if (ref.index == TransformCryptAesEncCFB) output << L"CR_AES_ENC_CFB";
-						else if (ref.index == TransformCryptAesDecCFB) output << L"CR_AES_DEC_CFB";
-						else if (ref.index == TransformCryptAesEncOFB) output << L"CR_AES_ENC_OFB";
-						else if (ref.index == TransformCryptAesDecOFB) output << L"CR_AES_DEC_OFB";
 						else if (ref.index == TransformCryptSha224I) output << L"CR_SHA_224_INIT";
 						else if (ref.index == TransformCryptSha224S) output << L"CR_SHA_224";
 						else if (ref.index == TransformCryptSha256I) output << L"CR_SHA_256_INIT";
