@@ -2257,6 +2257,8 @@ namespace Engine
 						// ARGUMENT EVALUATION
 						Reg staging_1 = Reg64::XMM0;
 						Reg staging_2 = Reg64::XMM1;
+						Reg staging_3 = Reg64::XMM2;
+						Reg round_key_buffer_reg = Reg32::EAX;
 						InternalDisposition state, ld, len, key;
 						state.reg = Reg32::ESI;
 						ld.reg = Reg32::EDI;
@@ -2282,21 +2284,26 @@ namespace Engine
 						_encode_tree_node(node.inputs[2], idle, mem_load, &len, reg_in_use | state.reg | ld.reg | len.reg);
 						encode_preserve(key.reg, reg_in_use, 0, !idle);
 						_encode_tree_node(node.inputs[3], idle, mem_load, &key, reg_in_use | state.reg | ld.reg | len.reg | key.reg);
+						encode_preserve(round_key_buffer_reg, reg_in_use, 0, !idle);
 						// OPERATION
-						*mem_load += 16 * (rounds + 1);
+						uint round_key_buffer_size = 17 * (rounds + 1);
+						*mem_load += round_key_buffer_size;
 						if (!idle) {
-							int round_key_buffer = allocate_temporary(TH::MakeSize(16 * (rounds + 1), 0));
+							int round_key_buffer_offset = allocate_temporary(TH::MakeSize(round_key_buffer_size, 0));
+							encode_lea(round_key_buffer_reg, Reg32::EBP, round_key_buffer_offset);
+							encode_add(round_key_buffer_reg, 0x0000000F);
+							encode_and(round_key_buffer_reg, 0xFFFFFFF0);
 							encode_mov_xmm_mem(16, staging_1, key.reg, 0);
-							encode_mov_mem_xmm(16, Reg32::EBP, round_key_buffer, staging_1);
+							encode_mov_mem_xmm(16, round_key_buffer_reg, 0, staging_1);
 							if (key_size > 16) {
 								if (key_size == 24) encode_mov_xmm_mem(8, staging_1, key.reg, 16);
 								else if (key_size == 32) encode_mov_xmm_mem(16, staging_1, key.reg, 16);
-								encode_mov_mem_xmm(16, Reg32::EBP, round_key_buffer + 16, staging_1);
+								encode_mov_mem_xmm(16, round_key_buffer_reg, 16, staging_1);
 							}
 							uint base_round_words = key_size / 4;
 							uint needs_round_words = (rounds + 1) * 4;
 							for (uint w = base_round_words; w < needs_round_words; w += 2) {
-								int dest_offset = round_key_buffer + w * 4;
+								int dest_offset = w * 4;
 								int prev1_offset = dest_offset - 4;
 								int prev2_offset = dest_offset - base_round_words * 4;
 								if (w % base_round_words == 0 || (w % base_round_words == 4 && base_round_words > 6)) {
@@ -2317,20 +2324,21 @@ namespace Engine
 										default: rc = 0x00; break;
 									}
 									if (w % base_round_words == 0) w1 = 1; else w1 = 0;
-									encode_mov_xmm_mem(8, staging_1, Reg32::EBP, prev1_offset - 4);
+									encode_mov_xmm_mem(8, staging_1, round_key_buffer_reg, prev1_offset - 4);
 									encode_aes_keygen(staging_1, staging_1, rc);
 									if (w1) encode_simd_shuffle(4, staging_1, staging_1, w1, w1, w1, w1);
-								} else encode_mov_xmm_mem(4, staging_1, Reg32::EBP, prev1_offset);
-								encode_simd_xor(staging_1, Reg32::EBP, prev2_offset);
-								encode_mov_xmm_mem(4, staging_2, Reg32::EBP, prev2_offset + 4);
+								} else encode_mov_xmm_mem(4, staging_1, round_key_buffer_reg, prev1_offset);
+								encode_mov_xmm_mem(4, staging_2, round_key_buffer_reg, prev2_offset);
+								encode_simd_xor(staging_1, staging_2);
+								encode_mov_xmm_mem(4, staging_2, round_key_buffer_reg, prev2_offset + 4);
 								encode_simd_xor(staging_2, staging_1);
 								encode_simd_shuffle(4, staging_1, staging_2, 0, 0, 0, 0);
 								encode_simd_shuffle(4, staging_1, staging_1, 0, 2, 0, 2);
-								encode_mov_mem_xmm(8, Reg32::EBP, dest_offset, staging_1);
+								encode_mov_mem_xmm(8, round_key_buffer_reg, dest_offset, staging_1);
 							}
 							if (decrypt) for (int i = 1; i < rounds; i++) {
-								encode_aes_inversed_mix_columns(staging_1, Reg32::EBP, round_key_buffer + 16 * i);
-								encode_mov_mem_xmm(16, Reg32::EBP, round_key_buffer + 16 * i, staging_1);
+								encode_aes_inversed_mix_columns(staging_1, round_key_buffer_reg, 16 * i);
+								encode_mov_mem_xmm(16, round_key_buffer_reg, 16 * i, staging_1);
 							}
 							if (chain_cbc) encode_mov_xmm_mem(16, staging_2, state.reg, 0);
 							if (length_size == 8) encode_mov_reg_mem(4, len.reg, len.reg);
@@ -2341,21 +2349,21 @@ namespace Engine
 							int jz = _dest.code.Length();
 							if (decrypt) {
 								encode_mov_xmm_mem(16, staging_1, ld.reg, 0);
-								if (chain_cbc) encode_mov_mem_xmm(16, state.reg, 0, staging_1);
-								encode_simd_xor(staging_1, Reg32::EBP, round_key_buffer + 16 * rounds);
-								for (int i = rounds - 1; i > 0; i--) encode_aes_dec(staging_1, Reg32::EBP, round_key_buffer + 16 * i);
-								encode_aes_dec_last(staging_1, Reg32::EBP, round_key_buffer);
+								if (chain_cbc) encode_mov_xmm_xmm(staging_3, staging_1);
+								encode_simd_xor(staging_1, round_key_buffer_reg, 16 * rounds);
+								for (int i = rounds - 1; i > 0; i--) encode_aes_dec(staging_1, round_key_buffer_reg, 16 * i);
+								encode_aes_dec_last(staging_1, round_key_buffer_reg, 0);
 								if (chain_cbc) {
 									encode_simd_xor(staging_1, staging_2);
-									encode_mov_xmm_mem(16, staging_2, state.reg, 0);
+									encode_mov_xmm_xmm(staging_2, staging_3);
 								}
 								encode_mov_mem_xmm(16, ld.reg, 0, staging_1);
 							} else {
 								encode_mov_xmm_mem(16, staging_1, ld.reg, 0);
 								if (chain_cbc) encode_simd_xor(staging_1, staging_2);
-								encode_simd_xor(staging_1, Reg32::EBP, round_key_buffer);
-								for (int i = 1; i < rounds; i++) encode_aes_enc(staging_1, Reg32::EBP, round_key_buffer + 16 * i);
-								encode_aes_enc_last(staging_1, Reg32::EBP, round_key_buffer + 16 * rounds);
+								encode_simd_xor(staging_1, round_key_buffer_reg, 0);
+								for (int i = 1; i < rounds; i++) encode_aes_enc(staging_1, round_key_buffer_reg, 16 * i);
+								encode_aes_enc_last(staging_1, round_key_buffer_reg, 16 * rounds);
 								encode_mov_mem_xmm(16, ld.reg, 0, staging_1);
 								encode_mov_xmm_xmm(staging_2, staging_1);
 							}
@@ -2367,6 +2375,7 @@ namespace Engine
 							if (chain_cbc) encode_mov_mem_xmm(16, state.reg, 0, staging_2);
 						}
 						// FINALIZATION
+						encode_restore(round_key_buffer_reg, reg_in_use, 0, !idle);
 						encode_restore(key.reg, reg_in_use, 0, !idle);
 						encode_restore(len.reg, reg_in_use, 0, !idle);
 						encode_restore(ld.reg, reg_in_use, 0, !idle);

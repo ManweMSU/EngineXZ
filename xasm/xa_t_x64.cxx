@@ -2404,9 +2404,9 @@ namespace Engine
 						encode_preserve(staging, uint(-1), 0, !idle);
 						for (int i = 0; i < 15; i++) if (round_keys[i]) encode_preserve(round_keys[i], uint(-1), 0, !idle);
 						// OPERATION
-						if (decrypt && chain_cbc) *mem_load += 16;
+						if (chain_cbc) *mem_load += 16;
 						if (!idle) {
-							int auxoffs = (decrypt && chain_cbc) ? allocate_temporary(TH::MakeSize(16, 0)) : 0;
+							int auxoffs = (chain_cbc) ? allocate_temporary(TH::MakeSize(16, 0)) : 0;
 							encode_mov_xmm_mem(16, round_keys[rounds], key.reg, 0);
 							if (key_size == 24) encode_mov_xmm_mem(8, round_keys[1], key.reg, 16);
 							else if (key_size == 32) encode_mov_xmm_mem(16, round_keys[1], key.reg, 16);
@@ -2458,7 +2458,10 @@ namespace Engine
 							}
 							encode_mov_xmm_mem(16, round_keys[0], key.reg, 0);
 							if (decrypt) for (int i = 0; i < rounds - 1; i++) encode_aes_inversed_mix_columns(round_keys[i + 1], round_keys[i + 1]);
-							if (!decrypt && chain_cbc) encode_mov_xmm_mem(16, staging, state.reg, 0);
+							if (chain_cbc) {
+								encode_mov_xmm_mem(16, staging, state.reg, 0);
+								encode_mov_mem_xmm(16, Reg64::RBP, auxoffs, staging);
+							}
 							if (length_size != 8) encode_mov_zx(8, len.reg, length_size, len.reg);
 							int test = _dest.code.Length();
 							encode_test(8, len.reg, int(0xFFFFFFF0));
@@ -2466,30 +2469,34 @@ namespace Engine
 							int jz = _dest.code.Length();
 							if (decrypt) {
 								encode_mov_xmm_mem(16, staging, ld.reg, 0);
-								if (chain_cbc) encode_mov_mem_xmm(16, Reg64::RBP, auxoffs, staging);
+								if (chain_cbc) encode_mov_mem_xmm(16, state.reg, 0, staging);
 								encode_simd_xor(staging, round_keys[rounds]);
 								for (int i = rounds - 1; i > 0; i--) encode_aes_dec(staging, round_keys[i]);
 								encode_aes_dec_last(staging, round_keys[0]);
-								if (chain_cbc) encode_simd_xor(staging, state.reg, 0);
+								if (chain_cbc) encode_simd_xor(staging, Reg64::RBP, auxoffs);
 								encode_mov_mem_xmm(16, ld.reg, 0, staging);
 								if (chain_cbc) {
-									encode_mov_xmm_mem(16, staging, Reg64::RBP, auxoffs);
-									encode_mov_mem_xmm(16, state.reg, 0, staging);
+									encode_mov_xmm_mem(16, staging, state.reg, 0);
+									encode_mov_mem_xmm(16, Reg64::RBP, auxoffs, staging);
 								}
 							} else {
-								if (chain_cbc) encode_simd_xor(staging, ld.reg, 0);
-								else encode_mov_xmm_mem(16, staging, ld.reg, 0);
+								encode_mov_xmm_mem(16, staging, ld.reg, 0);
+								if (chain_cbc) encode_simd_xor(staging, Reg64::RBP, auxoffs);
 								encode_simd_xor(staging, round_keys[0]);
 								for (int i = 0; i < rounds - 1; i++) encode_aes_enc(staging, round_keys[i + 1]);
 								encode_aes_enc_last(staging, round_keys[rounds]);
 								encode_mov_mem_xmm(16, ld.reg, 0, staging);
+								encode_mov_mem_xmm(16, Reg64::RBP, auxoffs, staging);
 							}
 							encode_add(ld.reg, 16);
 							encode_add(len.reg, -16);
 							_dest.code << 0xE9 << 0x00 << 0x00 << 0x00 << 0x00; // JMP
 							*reinterpret_cast<int *>(_dest.code.GetBuffer() + _dest.code.Length() - 4) = test - _dest.code.Length();
 							*reinterpret_cast<int *>(_dest.code.GetBuffer() + jz - 4) = _dest.code.Length() - jz;
-							if (!decrypt && chain_cbc) encode_mov_mem_xmm(16, state.reg, 0, staging);
+							if (chain_cbc) {
+								encode_mov_xmm_mem(16, staging, Reg64::RBP, auxoffs);
+								encode_mov_mem_xmm(16, state.reg, 0, staging);
+							}
 						}
 						// FINALIZATION
 						for (int i = 14; i >= 0; i--) if (round_keys[i]) encode_restore(round_keys[i], uint(-1), 0, !idle);
