@@ -1,6 +1,7 @@
 ﻿#include "xa_t_i386.h"
 #include "xa_t_x86.h"
 #include "xa_type_helper.h"
+#include "xa_sha2_commons.h"
 
 using namespace Engine::XA::X86;
 
@@ -14,6 +15,8 @@ namespace Engine
 
 			class EncoderContext : public X86::EncoderContext
 			{
+				translator_sha2_state _sha_state;
+			private:
 				static bool _is_fp_register(Reg reg) { return reg == Reg32::ST0; }
 				static bool _is_gp_register(Reg reg) { return uint(reg) & 0xFF; }
 				static bool _is_in_pass_by_reference(const ArgumentSpecification & spec) { return spec.semantics == ArgumentSemantics::Object; }
@@ -2118,6 +2121,7 @@ namespace Engine
 						if (node.inputs[0].self.ref_flags & ReferenceFlagInvoke) throw InvalidArgumentException();
 						if (node.inputs[0].self.ref_class != ReferenceTransform) throw InvalidArgumentException();
 						auto opcode = node.inputs[0].self.index;
+						auto flags = node.inputs[0].self.ref_flags;
 						auto retval_size = object_size(node.retval_spec.size);
 						if (retval_size != 1 && retval_size != 2 && retval_size != 4 && retval_size != 8) throw InvalidArgumentException();
 						// ARGUMENT EVALUATION
@@ -2134,23 +2138,44 @@ namespace Engine
 							if (opcode == TransformCryptFeature) {
 								encode_mov_reg_const(4, result, 1);
 							} else if (opcode == TransformCryptRandom) {
-								eax_code = 0x01;
+								eax_code = 0x01; // RDRAND
 								bit = 30;
 								test = Reg32::ECX;
 							} else if (opcode == TransformCryptAesEncECB || opcode == TransformCryptAesDecECB || opcode == TransformCryptAesEncCBC || opcode == TransformCryptAesDecCBC) {
-								eax_code = 0x01;
+								eax_code = 0x01; // AES-NI
 								bit = 25;
 								test = Reg32::ECX;
-							} else if (opcode == TransformCryptSha224I || opcode == TransformCryptSha224S || opcode == TransformCryptSha256I || opcode == TransformCryptSha256S) {
-								eax_code = 0x07;
-								ecx_code = 0x00;
-								bit = 29;
-								test = Reg32::EBX;
-							} else if (opcode == TransformCryptSha384I || opcode == TransformCryptSha384S || opcode == TransformCryptSha512I || opcode == TransformCryptSha512S) {
-								eax_code = 0x07;
-								ecx_code = 0x01;
+							} else if (opcode == TransformCryptSha224I || opcode == TransformCryptSha256I || opcode == TransformCryptSha384I || opcode == TransformCryptSha512I) {
+								eax_code = 0x01; // SSE3
 								bit = 0;
-								test = Reg32::EAX;
+								test = Reg32::ECX;
+							} else if (opcode == TransformCryptSha224F || opcode == TransformCryptSha256F || opcode == TransformCryptSha384F || opcode == TransformCryptSha512F) {
+								eax_code = 0x01; // SSE3
+								bit = 0;
+								test = Reg32::ECX;
+							} else if (opcode == TransformCryptSha224S || opcode == TransformCryptSha256S) {
+								if (flags & ReferenceFlagLong) {
+									eax_code = 0x01; // SSE3
+									bit = 0;
+									test = Reg32::ECX;
+								} else {
+									eax_code = 0x07; // SHA-NI
+									ecx_code = 0x00;
+									bit = 29;
+									test = Reg32::EBX;
+								}
+							} else if (opcode == TransformCryptSha384S || opcode == TransformCryptSha512S) {
+								if (flags & ReferenceFlagLong) {
+									eax_code = 0x01; // SSE3
+									bit = 0;
+									test = Reg32::ECX;
+								} else {
+									encode_mov_reg_const(4, result, 0); // NOT IMPLEMENTED
+									// eax_code = 0x07; // SHA512
+									// ecx_code = 0x01;
+									// bit = 0;
+									// test = Reg32::EAX;
+								}
 							} else {
 								encode_mov_reg_const(4, result, 0);
 							}
@@ -2382,18 +2407,60 @@ namespace Engine
 						encode_restore(state.reg, reg_in_use, 0, !idle);
 						_encode_void_result(idle, mem_load, disp);
 					} else if (node.self.index == TransformCryptSha224I || node.self.index == TransformCryptSha256I || node.self.index == TransformCryptSha384I || node.self.index == TransformCryptSha512I) {
-
-						// TransformCryptSha224I	= 0x0310, // 1 argument - a state (w); retval - no type
-						// TransformCryptSha256I	= 0x0312, // 1 argument - a state (w); retval - no type
-						// TransformCryptSha384I	= 0x0314, // 1 argument - a state (w); retval - no type
-						// TransformCryptSha512I	= 0x0316, // 1 argument - a state (w); retval - no type
-
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 1 || node.input_specs.Length() != 1) throw InvalidArgumentException();
+						if (object_size(node.retval_spec.size)) throw InvalidArgumentException();
+						auto state_size = object_size(node.input_specs[0].size);
+						uint data_index;
+						if (node.self.index == TransformCryptSha224I) {
+							if (state_size != 32) throw InvalidArgumentException();
+							data_index = translator_sha2_get_sha224_init_state(_sha_state, _dest);
+						} else if (node.self.index == TransformCryptSha256I) {
+							if (state_size != 32) throw InvalidArgumentException();
+							data_index = translator_sha2_get_sha256_init_state(_sha_state, _dest);
+						} else if (node.self.index == TransformCryptSha384I) {
+							if (state_size != 64) throw InvalidArgumentException();
+							data_index = translator_sha2_get_sha384_init_state(_sha_state, _dest);
+						} else if (node.self.index == TransformCryptSha512I) {
+							if (state_size != 64) throw InvalidArgumentException();
+							data_index = translator_sha2_get_sha512_init_state(_sha_state, _dest);
+						}
+						// ARGUMENT EVALUATION
+						Reg staging = Reg32::EAX;
+						Reg src_ptr = Reg32::ESI;
+						InternalDisposition dest;
+						dest.reg = Reg32::EDI;
+						dest.flags = DispositionPointer;
+						dest.size = state_size;
+						encode_preserve(dest.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &dest, reg_in_use | dest.reg);
+						encode_preserve(src_ptr, reg_in_use, 0, !idle);
+						encode_preserve(staging, reg_in_use, 0, !idle);
+						// OPERATION
+						if (!idle) {
+							encode_put_addr_of(src_ptr, TH::MakeRef(ReferenceData, data_index));
+							uint i = 0;
+							while (i < state_size) {
+								encode_mov_xmm_mem(16, staging, src_ptr, i);
+								encode_mov_mem_xmm(16, dest.reg, i, staging);
+								i += 16;
+							}
+						}
+						// FINALIZATION
+						encode_restore(staging, reg_in_use, 0, !idle);
+						encode_restore(src_ptr, reg_in_use, 0, !idle);
+						encode_restore(dest.reg, reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
 					} else if (node.self.index == TransformCryptSha224S || node.self.index == TransformCryptSha256S || node.self.index == TransformCryptSha384S || node.self.index == TransformCryptSha512S) {
 
 						// TransformCryptSha224S	= 0x0311, // 3 arguments - a state (r/w); buffer (r); an integer length in 512-bit words; retval - no type
 						// TransformCryptSha256S	= 0x0313, // 3 arguments - a state (r/w); buffer (r); an integer length in 512-bit words; retval - no type
 						// TransformCryptSha384S	= 0x0315, // 3 arguments - a state (r/w); buffer (r); an integer length in 1024-bit words; retval - no type
 						// TransformCryptSha512S	= 0x0317, // 3 arguments - a state (r/w); buffer (r); an integer length in 1024-bit words; retval - no type
+
+					} else if (node.self.index == TransformCryptSha224F || node.self.index == TransformCryptSha256F || node.self.index == TransformCryptSha384F || node.self.index == TransformCryptSha512F) {
+
+						// TODO: IMPLEMENT
 
 					} else throw InvalidArgumentException();
 				}
@@ -2816,7 +2883,7 @@ namespace Engine
 					encode_close_scope(uint(retval_copy));
 				}
 			public:
-				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(osenv, dest, src, false) { if (osenv != Environment::Windows && osenv != Environment::Linux) throw InvalidArgumentException(); }
+				EncoderContext(Environment osenv, TranslatedFunction & dest, const Function & src) : X86::EncoderContext(osenv, dest, src, false) { if (osenv != Environment::Windows && osenv != Environment::Linux) throw InvalidArgumentException(); translator_sha2_state_init(_sha_state); }
 				virtual void encode_function_prologue(void) override
 				{
 					_stack_clear_size = 0;

@@ -1090,6 +1090,12 @@ namespace Engine
 					_dest.code << int8(value_offset >> 24);
 				} else if (mode == 0x01) _dest.code << int8(value_offset);
 			}
+			void EncoderContext::encode_bswap(uint quant, Reg reg)
+			{
+				auto ri = regular_register_code(reg);
+				encode_rex(quant == 8, 0, ri);
+				_dest.code << 0x0F << (0xC8 + (ri & 0x7));
+			}
 			void EncoderContext::encode_fld(uint quant, Reg src_ptr, int src_offset)
 			{
 				if (_x64_mode) throw InvalidStateException();
@@ -1271,25 +1277,149 @@ namespace Engine
 			{
 				uint di = xmm_register_code(xmm_dest);
 				uint si = xmm_register_code(xmm_src);
-				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
-				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
-				_dest.code << 0x0F << 0x57 << make_mod(di & 0x7, 0x3, si & 0x7);
+				_dest.code << 0x66;
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0xEF;
+				encode_mod(di, si);
 			}
 			void EncoderContext::encode_simd_xor(Reg xmm_dest, Reg src_ptr, int src_offset)
 			{
 				uint di = xmm_register_code(xmm_dest);
 				uint si = regular_register_code(src_ptr);
-				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
-				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
-				uint8 mode;
-				if (src_offset) { if (src_offset >= -128 && src_offset < 128) mode = 0x01; else mode = 0x02; } else mode = 0x00;
-				_dest.code << 0x0F << 0x57 << make_mod(di & 0x7, mode, si & 0x7);
-				if (mode == 0x02) {
-					_dest.code << int8(src_offset);
-					_dest.code << int8(src_offset >> 8);
-					_dest.code << int8(src_offset >> 16);
-					_dest.code << int8(src_offset >> 24);
-				} else if (mode == 0x01) _dest.code << int8(src_offset);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0xEF;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_simd_or(Reg xmm_dest, Reg xmm_src)
+			{
+				auto di = xmm_register_code(xmm_dest);
+				auto si = xmm_register_code(xmm_src);
+				_dest.code << 0x66;
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0xEB;
+				encode_mod(di, si);
+			}
+			void EncoderContext::encode_simd_or(Reg xmm_dest, Reg src_ptr, int src_offset)
+			{
+				auto di = xmm_register_code(xmm_dest);
+				auto si = regular_register_code(src_ptr);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0xEB;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_simd_and(Reg xmm_dest, Reg xmm_src)
+			{
+				auto di = xmm_register_code(xmm_dest);
+				auto si = xmm_register_code(xmm_src);
+				_dest.code << 0x66;
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0xDB;
+				encode_mod(di, si);
+			}
+			void EncoderContext::encode_simd_and(Reg xmm_dest, Reg src_ptr, int src_offset)
+			{
+				auto di = xmm_register_code(xmm_dest);
+				auto si = regular_register_code(src_ptr);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0xDB;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_simd_not_and(Reg xmm_dest, Reg xmm_src)
+			{
+				auto di = xmm_register_code(xmm_dest);
+				auto si = xmm_register_code(xmm_src);
+				_dest.code << 0x66;
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0xDF;
+				encode_mod(di, si);
+			}
+			void EncoderContext::encode_simd_not_and(Reg xmm_dest, Reg src_ptr, int src_offset)
+			{
+				auto di = xmm_register_code(xmm_dest);
+				auto si = regular_register_code(src_ptr);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0xDF;
+				encode_mod(m);
+			}
+			void EncoderContext::encode_simd_int_add(uint quant, Reg xmm_dest, Reg xmm_src)
+			{
+				auto di = xmm_register_code(xmm_dest);
+				auto si = xmm_register_code(xmm_src);
+				_dest.code << 0x66;
+				encode_rex(false, di, si);
+				if (quant == 8) _dest.code << 0x0F << 0xD4;
+				else if (quant == 4) _dest.code << 0x0F << 0xFE;
+				else if (quant == 2) _dest.code << 0x0F << 0xFD;
+				else if (quant == 1) _dest.code << 0x0F << 0xFC;
+				else throw InvalidArgumentException();
+				encode_mod(di, si);
+			}
+			void EncoderContext::encode_simd_int_add(uint quant, Reg xmm_dest, Reg src_ptr, int src_offset)
+			{
+				auto di = xmm_register_code(xmm_dest);
+				auto si = regular_register_code(src_ptr);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				if (quant == 8) _dest.code << 0x0F << 0xD4;
+				else if (quant == 4) _dest.code << 0x0F << 0xFE;
+				else if (quant == 2) _dest.code << 0x0F << 0xFD;
+				else if (quant == 1) _dest.code << 0x0F << 0xFC;
+				else throw InvalidArgumentException();
+				encode_mod(m);
+			}
+			void EncoderContext::encode_simd_extract(Reg xmm_dest_src_hi, Reg xmm_src_lo, uint bytes_rotate)
+			{
+				auto di = xmm_register_code(xmm_dest_src_hi);
+				auto si = xmm_register_code(xmm_src_lo);
+				_dest.code << 0x66;
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0x3A << 0x0F;
+				encode_mod(di, si);
+				_dest.code << uint8(bytes_rotate);
+			}
+			void EncoderContext::encode_simd_extract(Reg xmm_dest_src_hi, Reg src_lo_ptr, int src_offset, uint bytes_rotate)
+			{
+				auto di = xmm_register_code(xmm_dest_src_hi);
+				auto si = regular_register_code(src_lo_ptr);
+				auto m = make_modRM_with_offset(di, si, src_offset);
+				_dest.code << 0x66;
+				encode_rex(false, m);
+				_dest.code << 0x0F << 0x3A << 0x0F;
+				encode_mod(m);
+				_dest.code << uint8(bytes_rotate);
+			}
+			void EncoderContext::encode_simd_shift_left(uint quant, Reg xmm, uint rot)
+			{
+				auto ri = xmm_register_code(xmm);
+				_dest.code << 0x66;
+				encode_rex(false, 0, ri);
+				if (quant == 8) _dest.code << 0x0F << 0x73;
+				else if (quant == 4) _dest.code << 0x0F << 0x72;
+				else if (quant == 2) _dest.code << 0x0F << 0x71;
+				else throw InvalidArgumentException();
+				encode_mod(6, ri);
+				_dest.code << uint8(rot);
+			}
+			void EncoderContext::encode_simd_shift_right(uint quant, Reg xmm, uint rot)
+			{
+				auto ri = xmm_register_code(xmm);
+				_dest.code << 0x66;
+				encode_rex(false, 0, ri);
+				if (quant == 8) _dest.code << 0x0F << 0x73;
+				else if (quant == 4) _dest.code << 0x0F << 0x72;
+				else if (quant == 2) _dest.code << 0x0F << 0x71;
+				else throw InvalidArgumentException();
+				encode_mod(2, ri);
+				_dest.code << uint8(rot);
 			}
 			void EncoderContext::encode_simd_shuffle(uint quant, Reg xmm_dest_src_lo, Reg xmm_src_hi, uint i0, uint i1, uint i2, uint i3)
 			{
@@ -1306,6 +1436,34 @@ namespace Engine
 					_dest.code << 0x0F << 0xC6 << make_mod(di & 0x7, 0x3, si & 0x7);
 					_dest.code << uint8(i0 | (i1 << 2) | (i2 << 4) | (i3 << 6));
 				} else throw InvalidArgumentException();
+			}
+			void EncoderContext::encode_simd_shuffle_dwords(Reg xmm_dest_src_lo, Reg xmm_src_hi, uint i0, uint i1, uint i2, uint i3)
+			{
+				uint di = xmm_register_code(xmm_dest_src_lo);
+				uint si = xmm_register_code(xmm_src_hi);
+				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
+				_dest.code << 0x66;
+				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
+				_dest.code << 0x0F << 0x70 << make_mod(di & 0x7, 0x3, si & 0x7);
+				_dest.code << uint8(i0 | (i1 << 2) | (i2 << 4) | (i3 << 6));
+			}
+			void EncoderContext::encode_simd_xmm_shift_left(Reg xmm, uint rot)
+			{
+				auto ri = xmm_register_code(xmm);
+				_dest.code << 0x66;
+				encode_rex(false, 0, ri);
+				_dest.code << 0x0F << 0x73;
+				encode_mod(7, ri);
+				_dest.code << uint8(rot);
+			}
+			void EncoderContext::encode_simd_xmm_shift_right(Reg xmm, uint rot)
+			{
+				auto ri = xmm_register_code(xmm);
+				_dest.code << 0x66;
+				encode_rex(false, 0, ri);
+				_dest.code << 0x0F << 0x73;
+				encode_mod(3, ri);
+				_dest.code << uint8(rot);
 			}
 			void EncoderContext::encode_read_random(uint quant, Reg dest)
 			{

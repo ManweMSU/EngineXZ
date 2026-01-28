@@ -213,14 +213,19 @@ namespace Engine
 						else if (ref.index == TransformCryptAesEncCBC) output << L"CR_AES_ENC_CBC";
 						else if (ref.index == TransformCryptAesDecCBC) output << L"CR_AES_DEC_CBC";
 						else if (ref.index == TransformCryptSha224I) output << L"CR_SHA_224_INIT";
+						else if (ref.index == TransformCryptSha224F) output << L"CR_SHA_224_END";
 						else if (ref.index == TransformCryptSha224S) output << L"CR_SHA_224";
 						else if (ref.index == TransformCryptSha256I) output << L"CR_SHA_256_INIT";
+						else if (ref.index == TransformCryptSha256F) output << L"CR_SHA_256_END";
 						else if (ref.index == TransformCryptSha256S) output << L"CR_SHA_256";
 						else if (ref.index == TransformCryptSha384I) output << L"CR_SHA_384_INIT";
+						else if (ref.index == TransformCryptSha384F) output << L"CR_SHA_384_END";
 						else if (ref.index == TransformCryptSha384S) output << L"CR_SHA_384";
 						else if (ref.index == TransformCryptSha512I) output << L"CR_SHA_512_INIT";
+						else if (ref.index == TransformCryptSha512F) output << L"CR_SHA_512_END";
 						else if (ref.index == TransformCryptSha512S) output << L"CR_SHA_512";
 						else output << L"**" << string(ref.qword, HexadecimalBase, 16);
+						if (ref.ref_flags & ReferenceFlagLong) output << L"_SW";
 					} else output << L"**" << string(ref.qword, HexadecimalBase, 16);
 				} else if (ref.ref_class == ReferenceLiteral) {
 				} else if (ref.index) {

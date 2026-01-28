@@ -371,13 +371,21 @@ namespace Engine
 				else if (i == L"CR_AES_DEC_CBC") ref.index = TransformCryptAesDecCBC;
 				// Cryptography - hash functions
 				else if (i == L"CR_SHA_224_INIT") ref.index = TransformCryptSha224I;
+				else if (i == L"CR_SHA_224_END") ref.index = TransformCryptSha224F;
 				else if (i == L"CR_SHA_224") ref.index = TransformCryptSha224S;
+				else if (i == L"CR_SHA_224_SW") { ref.index = TransformCryptSha224S; ref.ref_flags |= ReferenceFlagLong; }
 				else if (i == L"CR_SHA_256_INIT") ref.index = TransformCryptSha256I;
+				else if (i == L"CR_SHA_256_END") ref.index = TransformCryptSha256F;
 				else if (i == L"CR_SHA_256") ref.index = TransformCryptSha256S;
+				else if (i == L"CR_SHA_256_SW") { ref.index = TransformCryptSha256S; ref.ref_flags |= ReferenceFlagLong; }
 				else if (i == L"CR_SHA_384_INIT") ref.index = TransformCryptSha384I;
+				else if (i == L"CR_SHA_384_END") ref.index = TransformCryptSha384F;
 				else if (i == L"CR_SHA_384") ref.index = TransformCryptSha384S;
+				else if (i == L"CR_SHA_384_SW") { ref.index = TransformCryptSha384S; ref.ref_flags |= ReferenceFlagLong; }
 				else if (i == L"CR_SHA_512_INIT") ref.index = TransformCryptSha512I;
+				else if (i == L"CR_SHA_512_END") ref.index = TransformCryptSha512F;
 				else if (i == L"CR_SHA_512") ref.index = TransformCryptSha512S;
+				else if (i == L"CR_SHA_512_SW") { ref.index = TransformCryptSha512S; ref.ref_flags |= ReferenceFlagLong; }
 				// Else there is a failure
 				else return false;
 				return true;

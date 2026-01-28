@@ -158,7 +158,7 @@ namespace Engine
 			TransformLongIntMod		= 0x020E, // 2 arguments - long integer (r); integer; retval - integer (modulus)
 			TransformLongIntGetBit	= 0x020F, // 2 arguments - long integer (r); integer; retval - integer (0/1)
 			TransformLongIntSetBit	= 0x0210, // 3 arguments - long integer (r/w); integer; integer (0/1); retval - no type
-			// Hardware Cryptographical Extension:
+			// Hardware Cryptographical Extension, SHA functions may be affected by the LONG flag in order to use the software implementation:
 			TransformCryptFeature	= 0x0300, // 1 argument - a crypto transform reference; retval - integer (0/1)
 			TransformCryptRandom	= 0x0301, // 2 arguments - a buffer (w); an integer length; retval - no type
 			TransformCryptAesEncECB	= 0x0302, // 4 arguments - a state (IV, unused); buffer (r/w); an integer length; a key; retval - no type
@@ -167,12 +167,16 @@ namespace Engine
 			TransformCryptAesDecCBC	= 0x0305, // 4 arguments - a state (IV, r/w); buffer (r/w); an integer length; a key; retval - no type
 			TransformCryptSha224I	= 0x0310, // 1 argument - a state (w); retval - no type
 			TransformCryptSha224S	= 0x0311, // 3 arguments - a state (r/w); buffer (r); an integer length; retval - no type
-			TransformCryptSha256I	= 0x0312, // 1 argument - a state (w); retval - no type
-			TransformCryptSha256S	= 0x0313, // 3 arguments - a state (r/w); buffer (r); an integer length; retval - no type
-			TransformCryptSha384I	= 0x0314, // 1 argument - a state (w); retval - no type
-			TransformCryptSha384S	= 0x0315, // 3 arguments - a state (r/w); buffer (r); an integer length; retval - no type
-			TransformCryptSha512I	= 0x0316, // 1 argument - a state (w); retval - no type
-			TransformCryptSha512S	= 0x0317, // 3 arguments - a state (r/w); buffer (r); an integer length; retval - no type
+			TransformCryptSha224F	= 0x0312, // 1 argument - a state (r/w); retval - no type
+			TransformCryptSha256I	= 0x0313, // 1 argument - a state (w); retval - no type
+			TransformCryptSha256S	= 0x0314, // 3 arguments - a state (r/w); buffer (r); an integer length; retval - no type
+			TransformCryptSha256F	= 0x0315, // 1 argument - a state (r/w); retval - no type
+			TransformCryptSha384I	= 0x0316, // 1 argument - a state (w); retval - no type
+			TransformCryptSha384S	= 0x0317, // 3 arguments - a state (r/w); buffer (r); an integer length; retval - no type
+			TransformCryptSha384F	= 0x0318, // 1 argument - a state (r/w); retval - no type
+			TransformCryptSha512I	= 0x0319, // 1 argument - a state (w); retval - no type
+			TransformCryptSha512S	= 0x031A, // 3 arguments - a state (r/w); buffer (r); an integer length; retval - no type
+			TransformCryptSha512F	= 0x031B, // 1 argument - a state (r/w); retval - no type
 		};
 		enum StatementOpcodes : uint32
 		{
