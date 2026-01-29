@@ -1437,48 +1437,42 @@ namespace Engine
 					_dest.code << uint8(i0 | (i1 << 2) | (i2 << 4) | (i3 << 6));
 				} else throw InvalidArgumentException();
 			}
-			void EncoderContext::encode_simd_shuffle_dwords(Reg xmm_dest_src_lo, Reg xmm_src_hi, uint i0, uint i1, uint i2, uint i3)
+			void EncoderContext::encode_simd_shuffle_dwords(Reg xmm_dest, Reg xmm_src, uint i0, uint i1, uint i2, uint i3)
 			{
-				uint di = xmm_register_code(xmm_dest_src_lo);
-				uint si = xmm_register_code(xmm_src_hi);
+				uint di = xmm_register_code(xmm_dest);
+				uint si = xmm_register_code(xmm_src);
 				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
 				_dest.code << 0x66;
 				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
 				_dest.code << 0x0F << 0x70 << make_mod(di & 0x7, 0x3, si & 0x7);
 				_dest.code << uint8(i0 | (i1 << 2) | (i2 << 4) | (i3 << 6));
 			}
-			void EncoderContext::encode_simd_xmm_shift_left(Reg xmm, uint rot)
+			void EncoderContext::encode_simd_xmm_shift_left(Reg xmm, uint rot_bytes)
 			{
 				auto ri = xmm_register_code(xmm);
 				_dest.code << 0x66;
 				encode_rex(false, 0, ri);
 				_dest.code << 0x0F << 0x73;
 				encode_mod(7, ri);
-				_dest.code << uint8(rot);
+				_dest.code << uint8(rot_bytes);
 			}
-			void EncoderContext::encode_simd_xmm_shift_right(Reg xmm, uint rot)
+			void EncoderContext::encode_simd_xmm_shift_right(Reg xmm, uint rot_bytes)
 			{
 				auto ri = xmm_register_code(xmm);
 				_dest.code << 0x66;
 				encode_rex(false, 0, ri);
 				_dest.code << 0x0F << 0x73;
 				encode_mod(3, ri);
-				_dest.code << uint8(rot);
+				_dest.code << uint8(rot_bytes);
 			}
 			void EncoderContext::encode_read_random(uint quant, Reg dest)
 			{
+				if (quant != 8 && quant != 4 && quant != 2) throw InvalidArgumentException();
 				auto ri = regular_register_code(dest);
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, false, false, ri & 0x8);
-					_dest.code << 0x0F << 0xC7 << make_mod(0x6, 0x3, ri & 0x7);
-				} else if (quant == 4) {
-					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << 0x0F << 0xC7 << make_mod(0x6, 0x3, ri & 0x7);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << 0x0F << 0xC7 << make_mod(0x6, 0x3, ri & 0x7);
-				} else throw InvalidArgumentException();
+				if (quant == 2) _dest.code << 0x66;
+				encode_rex(quant == 8, 0x6, ri);
+				_dest.code << 0x0F << 0xC7;
+				encode_mod(0x6, ri);
 			}
 			void EncoderContext::encode_aes_enc(Reg xmm_dest, Reg xmm_key)
 			{
@@ -1579,74 +1573,58 @@ namespace Engine
 			{
 				uint di = xmm_register_code(xmm_dest);
 				uint si = xmm_register_code(xmm_src);
-				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
 				_dest.code << 0x66;
-				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
-				_dest.code << 0x0F << 0x3A << 0xDF << make_mod(di & 0x7, 0x3, si & 0x7) << uint8(rc);
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0x3A << 0xDF;
+				encode_mod(di, si);
+				_dest.code << uint8(rc);
 			}
 			void EncoderContext::encode_sha256_rounds2(Reg xmm_state_cdgh, Reg xmm_state_abef, Reg xmm_round_words)
 			{
 				if (xmm_round_words != Reg64::XMM0) throw InvalidArgumentException();
 				uint di = xmm_register_code(xmm_state_cdgh);
 				uint si = xmm_register_code(xmm_state_abef);
-				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
-				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
-				_dest.code << 0x0F << 0x38 << 0xCB << make_mod(di & 0x7, 0x3, si & 0x7);
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0x38 << 0xCB;
+				encode_mod(di, si);
 			}
 			void EncoderContext::encode_sha256_msg_words4_part1(Reg xmm_dest_src1, Reg xmm_src2)
 			{
 				uint di = xmm_register_code(xmm_dest_src1);
 				uint si = xmm_register_code(xmm_src2);
-				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
-				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
-				_dest.code << 0x0F << 0x38 << 0xCC << make_mod(di & 0x7, 0x3, si & 0x7);
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0x38 << 0xCC;
+				encode_mod(di, si);
 			}
 			void EncoderContext::encode_sha256_msg_words4_part2(Reg xmm_dest_im, Reg xmm_src4)
 			{
 				uint di = xmm_register_code(xmm_dest_im);
 				uint si = xmm_register_code(xmm_src4);
-				if ((di & 0x8 || si & 0x8) && !_x64_mode) throw InvalidStateException();
-				if (di & 0x8 || si & 0x8) _dest.code << make_rex(false, di & 0x8, false, si & 0x8);
-				_dest.code << 0x0F << 0x38 << 0xCD << make_mod(di & 0x7, 0x3, si & 0x7);
+				encode_rex(false, di, si);
+				_dest.code << 0x0F << 0x38 << 0xCD;
+				encode_mod(di, si);
 			}
 			void EncoderContext::encode_invert(uint quant, Reg reg)
 			{
+				if (quant != 8 && quant != 4 && quant != 2 && quant != 1) throw InvalidArgumentException();
 				auto ri = regular_register_code(reg);
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, false, false, ri & 0x8);
-					_dest.code << 0xF7 << make_mod(0x2, 0x3, ri & 0x7);
-				} else if (quant == 4) {
-					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << 0xF7 << make_mod(0x2, 0x3, ri & 0x7);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << 0xF7 << make_mod(0x2, 0x3, ri & 0x7);
-				} else if (quant == 1) {
-					if (_x64_mode && (ri & 0xC)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << 0xF6 << make_mod(0x2, 0x3, ri & 0x7);
-				} else throw InvalidArgumentException();
+				if (quant == 2) _dest.code << 0x66;
+				encode_rex(quant == 8, 0x2, ri, _x64_mode);
+				_dest.code << (quant == 1 ? 0xF6 : 0xF7);
+				encode_mod(0x2, ri);
 			}
 			void EncoderContext::encode_negative(uint quant, Reg reg)
 			{
+				if (quant != 8 && quant != 4 && quant != 2 && quant != 1) throw InvalidArgumentException();
 				auto ri = regular_register_code(reg);
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, false, false, ri & 0x8);
-					_dest.code << 0xF7 << make_mod(0x3, 0x3, ri & 0x7);
-				} else if (quant == 4) {
-					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << 0xF7 << make_mod(0x3, 0x3, ri & 0x7);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << 0xF7 << make_mod(0x3, 0x3, ri & 0x7);
-				} else if (quant == 1) {
-					if (_x64_mode && (ri & 0xC)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << 0xF6 << make_mod(0x3, 0x3, ri & 0x7);
-				} else throw InvalidArgumentException();
+				if (quant == 2) _dest.code << 0x66;
+				encode_rex(quant == 8, 0x3, ri, _x64_mode);
+				_dest.code << (quant == 1 ? 0xF6 : 0xF7);
+				encode_mod(0x3, ri);
 			}
 			void EncoderContext::encode_shift(uint quant, shOp op, Reg reg, int by, bool indirect, int value_offset)
 			{
+				if (quant != 8 && quant != 4 && quant != 2 && quant != 1) throw InvalidArgumentException();
 				uint8 oc, ocx;
 				auto ri = regular_register_code(reg);
 				if (by) oc = 0xC0; else oc = 0xD2;
@@ -1658,53 +1636,42 @@ namespace Engine
 				else if (op == shOp::SHR) ocx = 0x5;
 				else if (op == shOp::SAL) ocx = 0x4;
 				else if (op == shOp::SAR) ocx = 0x7;
-				uint8 mode;
-				if (indirect) {
-					if (value_offset == 0) mode = 0x00;
-					else if (value_offset >= -128 && value_offset < 128) mode = 0x01;
-					else mode = 0x02;
-				} else mode = 0x03;
-				if (quant == 8 && _x64_mode) {
-					_dest.code << make_rex(true, false, false, ri & 0x8);
-					_dest.code << (oc + 1) << make_mod(ocx, mode, ri & 0x7);
-				} else if (quant == 4) {
-					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << (oc + 1) << make_mod(ocx, mode, ri & 0x7);
-				} else if (quant == 2) {
-					_dest.code << 0x66;
-					if (_x64_mode && (ri & 0x8)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << (oc + 1) << make_mod(ocx, mode, ri & 0x7);
-				} else if (quant == 1) {
-					if (_x64_mode && (ri & 0xC)) _dest.code << make_rex(false, false, false, ri & 0x8);
-					_dest.code << oc << make_mod(ocx, mode, ri & 0x7);
-				} else throw InvalidArgumentException();
-				if (mode == 0x02) {
-					_dest.code << int8(value_offset);
-					_dest.code << int8(value_offset >> 8);
-					_dest.code << int8(value_offset >> 16);
-					_dest.code << int8(value_offset >> 24);
-				} else if (mode == 0x01) _dest.code << int8(value_offset);
+				auto m = make_modRM_with_offset(ocx, ri, value_offset);
+				if (quant == 2) _dest.code << 0x66;
+				if (indirect) encode_rex(quant == 8, m, _x64_mode); else encode_rex(quant == 8, ocx, ri, _x64_mode);
+				_dest.code << (quant == 1 ? oc : oc + 1);
+				if (indirect) encode_mod(m); else encode_mod(ocx, ri);
 				if (by) _dest.code << by;
 			}
 			void EncoderContext::encode_shl(Reg reg, int bits)
 			{
 				uint rc = regular_register_code(reg);
-				if (_x64_mode) _dest.code << make_rex(true, false, false, rc & 0x08);
-				_dest.code << 0xC1 << make_mod(0x4, 0x3, rc & 0x7);
+				encode_rex(_x64_mode, 0x4, rc);
+				_dest.code << 0xC1;
+				encode_mod(0x4, rc);
 				_dest.code << bits;
 			}
 			void EncoderContext::encode_shr(Reg reg, int bits)
 			{
 				uint rc = regular_register_code(reg);
-				if (_x64_mode) _dest.code << make_rex(true, false, false, rc & 0x08);
-				_dest.code << 0xC1 << make_mod(0x5, 0x3, rc & 0x7);
+				encode_rex(_x64_mode, 0x5, rc);
+				_dest.code << 0xC1;
+				encode_mod(0x5, rc);
 				_dest.code << bits;
 			}
 			void EncoderContext::encode_call(Reg func_ptr, bool indirect)
 			{
 				uint rc = regular_register_code(func_ptr);
-				if (_x64_mode && (rc & 0x08)) _dest.code << make_rex(false, false, false, true);
-				_dest.code << 0xFF << make_mod(0x2, indirect ? 0x00 : 0x03, rc & 0x07);
+				if (indirect) {
+					auto m = make_modRM(0x2, rc);
+					encode_rex(false, m);
+					_dest.code << 0xFF;
+					encode_mod(m);
+				} else {
+					encode_rex(false, 0x2, rc);
+					_dest.code << 0xFF;
+					encode_mod(0x2, rc);
+				}
 			}
 			void EncoderContext::encode_put_addr_of(Reg dest, const ObjectReference & value)
 			{
@@ -1750,273 +1717,6 @@ namespace Engine
 			}
 			void EncoderContext::encode_debugger_trap(void) { _dest.code << 0xCC; }
 			void EncoderContext::encode_pure_ret(int bytes_unroll) { if (bytes_unroll) _dest.code << 0xC2 << (bytes_unroll) << (bytes_unroll >> 8); else _dest.code << 0xC3; }
-			// void EncoderContext::encode_block_transfer(int opcode, int dim, const void * df, const void * sf, bool ss, Reg dimptr, Reg ddptr, Reg sdptr, Reg bf, ArgumentSpecification bfs)
-			// {
-			// 	int xloop_org, xloop_jmp, xloop_end;
-			// 	int yloop_org, yloop_jmp, yloop_end;
-			// 	int zloop_org, zloop_jmp, zloop_end;
-			// 	int dest_bpp = TH::GetSampleDescriptionBitLength(df);
-			// 	int src_bpp = TH::GetSampleDescriptionBitLength(sf);
-			// 	if (_x64_mode) {
-			// 		encode_push(Reg64::RBP);
-			// 		encode_mov_reg_reg(8, Reg64::RBP, Reg64::RSP);
-			// 		encode_add(Reg64::RSP, -16);
-			// 		// R12      - destination's current line address
-			// 		// R13      - source's current line address
-			// 		// R14      - linear index X
-			// 		// [RBP-8]  - linear index Y
-			// 		// [RBP-16] - linear index Z
-			// 		if (dim == 3) {
-			// 			encode_operation(8, arOp::XOR, Reg64::R14, Reg64::R14);
-			// 			encode_mov_mem_reg(8, Reg64::RBP, -16, Reg64::R14);
-			// 			zloop_org = _dest.code.Length();
-			// 			encode_operation(8, arOp::CMP, Reg64::R14, dimptr, true, 16);
-			// 			_dest.code << 0x0F << 0x83 << 0x00 << 0x00 << 0x00 << 0x00; // JAE
-			// 			zloop_jmp = _dest.code.Length();
-			// 		}
-			// 		if (dim >= 2) {
-			// 			encode_operation(8, arOp::XOR, Reg64::R14, Reg64::R14);
-			// 			encode_mov_mem_reg(8, Reg64::RBP, -8, Reg64::R14);
-			// 			yloop_org = _dest.code.Length();
-			// 			encode_operation(8, arOp::CMP, Reg64::R14, dimptr, true, 8);
-			// 			_dest.code << 0x0F << 0x83 << 0x00 << 0x00 << 0x00 << 0x00; // JAE
-			// 			yloop_jmp = _dest.code.Length();
-			// 			encode_mov_reg_mem(8, Reg64::R12, ddptr, 0);
-			// 			encode_mul(8, Reg64::R14, ddptr, true, 8);
-			// 			encode_operation(8, arOp::ADD, Reg64::R12, Reg64::R14);
-			// 			if (!ss) {
-			// 				encode_mov_reg_mem(8, Reg64::R13, sdptr, 0);
-			// 				encode_mov_reg_mem(8, Reg64::R14, Reg64::RBP, -8);
-			// 				encode_mul(8, Reg64::R14, sdptr, true, 8);
-			// 				encode_operation(8, arOp::ADD, Reg64::R13, Reg64::R14);
-			// 			} else encode_mov_reg_reg(8, Reg64::R13, sdptr);
-			// 			if (dim == 3) {
-			// 				encode_mov_reg_mem(8, Reg64::R8, Reg64::RBP, -16);
-			// 				if (!ss) encode_mov_reg_reg(8, Reg64::R9, Reg64::R8);
-			// 				encode_mul(8, Reg64::R8, ddptr, true, 16);
-			// 				if (!ss) encode_mul(8, Reg64::R9, sdptr, true, 16);
-			// 				encode_operation(8, arOp::ADD, Reg64::R12, Reg64::R8);
-			// 				if (!ss) encode_operation(8, arOp::ADD, Reg64::R13, Reg64::R9);
-			// 			}
-			// 		} else {
-			// 			encode_mov_reg_mem(8, Reg64::R12, ddptr, 0);
-			// 			if (!ss) encode_mov_reg_mem(8, Reg64::R13, sdptr, 0);
-			// 			else encode_mov_reg_reg(8, Reg64::R13, sdptr);
-			// 		}
-			// 		encode_operation(8, arOp::XOR, Reg64::R14, Reg64::R14);
-			// 		xloop_org = _dest.code.Length();
-			// 		encode_operation(8, arOp::CMP, Reg64::R14, dimptr, true);
-			// 		_dest.code << 0x0F << 0x83 << 0x00 << 0x00 << 0x00 << 0x00; // JAE
-			// 		xloop_jmp = _dest.code.Length();
-			// 		if (dest_bpp >= 8) {
-			// 			if (dest_bpp != 8) encode_mul3(8, Reg64::R8, Reg64::R14, dest_bpp / 8);
-			// 			else encode_mov_reg_reg(8, Reg64::R8, Reg64::R14);
-			// 			encode_operation(8, arOp::ADD, Reg64::R8, Reg64::R12);
-			// 		} else {
-			// 			int lb = -3;
-			// 			while ((1 << (lb + 3)) < dest_bpp) lb++;
-			// 			encode_mov_reg_reg(8, Reg64::R8, Reg64::R14);
-			// 			encode_shr(Reg64::R8, -lb);
-			// 			encode_operation(8, arOp::ADD, Reg64::R8, Reg64::R12);
-			// 		}
-			// 		if (!ss) {
-			// 			if (src_bpp >= 8) {
-			// 				if (src_bpp != 8) encode_mul3(8, Reg64::R9, Reg64::R14, src_bpp / 8);
-			// 				else encode_mov_reg_reg(8, Reg64::R9, Reg64::R14);
-			// 				encode_operation(8, arOp::ADD, Reg64::R9, Reg64::R13);
-			// 			} else {
-			// 				int lb = -3;
-			// 				while ((1 << (lb + 3)) < src_bpp) lb++;
-			// 				encode_mov_reg_reg(8, Reg64::R9, Reg64::R14);
-			// 				encode_shr(Reg64::R9, -lb);
-			// 				encode_operation(8, arOp::ADD, Reg64::R9, Reg64::R13);
-			// 			}
-			// 		} else encode_mov_reg_reg(8, Reg64::R9, Reg64::R13);
-			// 		if (opcode == TransformBltCopy) {
-			// 			if (TH::SampleDescriptionAreSame(df, sf)) {
-			// 				bool full_write = true;
-			// 				Array<bool> wrm(0x200);
-			// 				int ncnl = TH::GetSampleDescriptionNumberOfChannels(df);
-			// 				bool be = TH::GetSampleDescriptionEndianness(df);
-			// 				for (int i = 0; i < ncnl; i++) {
-			// 					int length, format;
-			// 					TH::GetSampleDescriptionChannelByIndex(df, i, 0, &length, &format);
-			// 					if (format & BlockTransferFormatReadOnly) for (int j = 0; j < length; j++) { wrm << false; full_write = false; }
-			// 					else for (int j = 0; j < length; j++) wrm << true;
-			// 				}
-			// 				if (full_write) {
-			// 					if (!ss || dest_bpp >= 8) {
-			// 						int num_bytes = (dest_bpp + 7) / 8;
-			// 						int cp = 0;
-			// 						while (cp < num_bytes) {
-			// 							int quant = num_bytes - cp;
-			// 							if (quant >= 8) quant = 8;
-			// 							else if (quant >= 4) quant = 4;
-			// 							else if (quant >= 2) quant = 2;
-			// 							else quant = 1;
-			// 							encode_mov_reg_mem(quant, Reg64::RAX, Reg64::R9, cp);
-			// 							encode_mov_mem_reg(quant, Reg64::R8, cp, Reg64::RAX);
-			// 							cp += quant;
-			// 						}
-			// 					} else {
-			// 						encode_mov_reg_mem(1, Reg64::RAX, Reg64::R9);
-			// 						if (dest_bpp == 4) {
-			// 							encode_and(Reg64::RAX, 0xF);
-			// 							encode_mov_reg_reg(1, Reg64::RCX, Reg64::RAX);
-			// 							encode_shl(Reg64::RCX, 4);
-			// 							encode_operation(1, arOp::OR, Reg64::RAX, Reg64::RCX);
-			// 						} else if (dest_bpp == 2) {
-			// 							encode_and(Reg64::RAX, 0x3);
-			// 							encode_mov_reg_reg(1, Reg64::RCX, Reg64::RAX);
-			// 							encode_shl(Reg64::RCX, 2);
-			// 							encode_operation(1, arOp::OR, Reg64::RCX, Reg64::RAX);
-			// 							encode_operation(1, arOp::OR, Reg64::RAX, Reg64::RCX);
-			// 							encode_shl(Reg64::RCX, 4);
-			// 							encode_operation(1, arOp::OR, Reg64::RAX, Reg64::RCX);
-			// 						} else if (dest_bpp == 1) {
-			// 							encode_and(Reg64::RAX, 0x1);
-			// 							encode_shift(1, shOp::SHL, Reg64::RAX, 7);
-			// 							encode_shift(1, shOp::SAR, Reg64::RAX, 7);
-			// 						} else throw InvalidArgumentException();
-			// 						encode_mov_mem_reg(1, Reg64::R8, Reg64::RAX);
-			// 					}
-			// 				} else {
-			// 					if (dest_bpp >= 8) {
-			// 						int num_bytes = dest_bpp / 8;
-			// 						if (be) for (int o = 0; o < num_bytes; o++) for (int i = 0; i < 4; i++) wrm.SwapAt(8 * o + i, 8 * o + 7 - i);
-			// 						int cp = 0;
-			// 						while (cp < num_bytes) {
-			// 							int quant = num_bytes - cp;
-			// 							if (quant >= 4) quant = 4;
-			// 							else if (quant >= 2) quant = 2;
-			// 							else quant = 1;
-			// 							uint wrmask = 0, rdmask = 0, commask = 0;
-			// 							for (int i = 0; i < 8 * quant; i++) {
-			// 								uint bit = uint(1) << uint(i);
-			// 								commask |= bit;
-			// 								if (wrm[cp * 8 + i]) wrmask |= bit; else rdmask |= bit;
-			// 							}
-			// 							if (wrmask) {
-			// 								if (wrmask == commask) {
-			// 									encode_mov_reg_mem(quant, Reg64::RAX, Reg64::R9, cp);
-			// 									encode_mov_mem_reg(quant, Reg64::R8, cp, Reg64::RAX);
-			// 								} else {
-			// 									encode_mov_reg_mem(quant, Reg64::RAX, Reg64::R9, cp);
-			// 									encode_mov_reg_mem(quant, Reg64::RCX, Reg64::R8, cp);
-			// 									encode_and(Reg64::RAX, wrmask);
-			// 									encode_and(Reg64::RCX, rdmask);
-			// 									encode_operation(quant, arOp::OR, Reg64::RCX, Reg64::RAX);
-			// 									encode_mov_mem_reg(quant, Reg64::R8, cp, Reg64::RCX);
-			// 								}
-			// 							}
-			// 							cp += quant;
-			// 						}
-			// 					} else {
-			// 						if (be) for (int i = 0; i < wrm.Length() / 2; i++) wrm.SwapAt(i, wrm.Length() - i - 1);
-			// 						uint wrmask = 0, rdmask = 0;
-			// 						for (int i = 0; i < 8; i++) {
-			// 							uint bit = uint(1) << uint(i);
-			// 							if (wrm[i % dest_bpp]) wrmask |= bit; else rdmask |= bit;
-			// 						}
-			// 						if (ss) {
-			// 							encode_mov_reg_mem(1, Reg64::RAX, Reg64::R9);
-			// 							encode_mov_reg_mem(1, Reg64::RCX, Reg64::R8);
-			// 							encode_and(Reg64::RAX, wrmask);
-			// 							encode_and(Reg64::RCX, rdmask);
-			// 							encode_operation(1, arOp::OR, Reg64::RCX, Reg64::RAX);
-			// 							if (dest_bpp == 4) {
-			// 								encode_shl(Reg64::RAX, 4);
-			// 								encode_operation(1, arOp::OR, Reg64::RCX, Reg64::RAX);
-			// 							} else if (dest_bpp == 2) {
-			// 								encode_shl(Reg64::RAX, 2);
-			// 								encode_operation(1, arOp::OR, Reg64::RCX, Reg64::RAX);
-			// 								encode_shl(Reg64::RAX, 2);
-			// 								encode_operation(1, arOp::OR, Reg64::RCX, Reg64::RAX);
-			// 								encode_shl(Reg64::RAX, 2);
-			// 								encode_operation(1, arOp::OR, Reg64::RCX, Reg64::RAX);
-			// 							} else if (dest_bpp == 1) {
-			// 								encode_shift(1, shOp::SHL, Reg64::RCX, 7);
-			// 								encode_shift(1, shOp::SAR, Reg64::RCX, 7);
-			// 							} else throw InvalidArgumentException();
-			// 							encode_mov_mem_reg(1, Reg64::R8, Reg64::RCX);
-			// 						} else {
-			// 							encode_mov_reg_mem(1, Reg64::RAX, Reg64::R9);
-			// 							encode_mov_reg_mem(1, Reg64::RCX, Reg64::R8);
-			// 							encode_and(Reg64::RAX, wrmask);
-			// 							encode_and(Reg64::RCX, rdmask);
-			// 							encode_operation(1, arOp::OR, Reg64::RCX, Reg64::RAX);
-			// 							encode_mov_mem_reg(1, Reg64::R8, Reg64::RCX);
-			// 						}
-			// 					}
-			// 				}
-			// 			} else {
-			// 				int ncnl = TH::GetSampleDescriptionNumberOfChannels(df);
-
-			// 				// auto dam = Codec::AlphaMode::Straight;
-			// 				// auto sam = Codec::AlphaMode::Straight;
-			// 				// auto alpha = Reg64::NO;
-			// 				// if (TH::GetSampleDescriptionChannelByUsage(df, BlockTransferChannelAlphaPremultiplied))
-
-			// 				for (int i = 0; i < ncnl; i++) {
-			// 					int usage = TH::GetSampleDescriptionChannelUsage(df, i);
-			// 					if (usage == BlockTransferChannelAlphaStraight) {
-
-			// 					} else if (usage == BlockTransferChannelAlphaStraight) {
-									
-			// 					}
-			// 				}
-
-			// 				// I. CONVERT ALPHA, LOAD FOR CHANNEL CORRECTION
-			// 				// II. CONVERT OTHERS
-
-			// 				// 
-
-			// 				// 	// TODO: OPERATION
-			// 				// 	// TODO: ALPHA MODE CONVERSION - LOAD ALPHA
-
-			// 				// 	//
-			// 				// 	//TH::Get
-
-			// 				// }
-			// 			}
-			// 		} else if (TH::SampleDescriptionAreSame(df, sf)) {
-
-			// 			// TODO: OPERATION
-			// 			// BASE BYTE OF OPERATION: R8/R9, INDEX R14
-			// 			// TODO: CHECK FORMAT IDENTITY
-
-			// 		} else throw InvalidArgumentException();
-			// 		encode_add(Reg64::R14, 1);
-			// 		xloop_end = _dest.code.Length() + 5;
-			// 		_dest.code << 0xE9 << 0x00 << 0x00 << 0x00 << 0x00; // JMP
-			// 		*reinterpret_cast<int32 *>(_dest.code.GetBuffer() + xloop_jmp - 4) = xloop_end - xloop_jmp;
-			// 		*reinterpret_cast<int32 *>(_dest.code.GetBuffer() + xloop_end - 4) = xloop_org - xloop_end;
-			// 		if (dim >= 2) {
-			// 			encode_mov_reg_mem(8, Reg64::R14, Reg64::RBP, -8);
-			// 			encode_add(Reg64::R14, 1);
-			// 			encode_mov_mem_reg(8, Reg64::RBP, -8, Reg64::R14);
-			// 			yloop_end = _dest.code.Length() + 5;
-			// 			_dest.code << 0xE9 << 0x00 << 0x00 << 0x00 << 0x00; // JMP
-			// 			*reinterpret_cast<int32 *>(_dest.code.GetBuffer() + yloop_jmp - 4) = yloop_end - yloop_jmp;
-			// 			*reinterpret_cast<int32 *>(_dest.code.GetBuffer() + yloop_end - 4) = yloop_org - yloop_end;
-			// 		}
-			// 		if (dim == 3) {
-			// 			encode_mov_reg_mem(8, Reg64::R14, Reg64::RBP, -16);
-			// 			encode_add(Reg64::R14, 1);
-			// 			encode_mov_mem_reg(8, Reg64::RBP, -16, Reg64::R14);
-			// 			zloop_end = _dest.code.Length() + 5;
-			// 			_dest.code << 0xE9 << 0x00 << 0x00 << 0x00 << 0x00; // JMP
-			// 			*reinterpret_cast<int32 *>(_dest.code.GetBuffer() + zloop_jmp - 4) = zloop_end - zloop_jmp;
-			// 			*reinterpret_cast<int32 *>(_dest.code.GetBuffer() + zloop_end - 4) = zloop_org - zloop_end;
-			// 		}
-			// 		encode_mov_reg_reg(8, Reg64::RSP, Reg64::RBP);
-			// 		encode_pop(Reg64::RBP);
-			// 	} else {
-
-			// 		// TODO: IMPLEMENT 32-BIT
-
-			// 	}
-			// }
 		}
 	}
 }

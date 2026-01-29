@@ -2835,8 +2835,6 @@ namespace Engine
 								_encode_floating_point(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x100 && node.self.index < 0x180) {
 								throw InvalidArgumentException();
-								// for (uint i = 0; i < 16; i++) encode_preserve(1 << i, reg_in_use, 0, !idle);
-								// for (uint i = 16; i > 0; i--) encode_restore(1 << (i - 1), reg_in_use, 0, !idle);
 							} else if (node.self.index >= 0x200 && node.self.index < 0x2FF) {
 								_encode_long_arithmetics(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x300 && node.self.index < 0x3FF) {

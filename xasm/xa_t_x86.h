@@ -212,9 +212,9 @@ namespace Engine
 				void encode_simd_shift_left(uint quant, Reg xmm, uint rot);
 				void encode_simd_shift_right(uint quant, Reg xmm, uint rot);
 				void encode_simd_shuffle(uint quant, Reg xmm_dest_src_lo, Reg xmm_src_hi, uint i0, uint i1, uint i2 = 0, uint i3 = 0);
-				void encode_simd_shuffle_dwords(Reg xmm_dest_src_lo, Reg xmm_src_hi, uint i0, uint i1, uint i2, uint i3);
-				void encode_simd_xmm_shift_left(Reg xmm, uint rot);
-				void encode_simd_xmm_shift_right(Reg xmm, uint rot);
+				void encode_simd_shuffle_dwords(Reg xmm_dest, Reg xmm_src, uint i0, uint i1, uint i2, uint i3);
+				void encode_simd_xmm_shift_left(Reg xmm, uint rot_bytes);
+				void encode_simd_xmm_shift_right(Reg xmm, uint rot_bytes);
 				void encode_read_random(uint quant, Reg dest);
 				void encode_aes_enc(Reg xmm_dest, Reg xmm_key);
 				void encode_aes_enc(Reg xmm_dest, Reg key_ptr, int key_offset);
@@ -237,7 +237,6 @@ namespace Engine
 				void encode_shr(Reg reg, int bits);
 				void encode_call(Reg func_ptr, bool indirect);
 				void encode_put_addr_of(Reg dest, const ObjectReference & value);
-				// void encode_block_transfer(int opcode, int dim, const void * df, const void * sf, bool ss, Reg dimptr, Reg ddptr, Reg sdptr, Reg bf, ArgumentSpecification bfs);
 			public:
 				void encode_debugger_trap(void);
 				void encode_pure_ret(int bytes_unroll = 0);

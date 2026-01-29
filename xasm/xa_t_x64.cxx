@@ -3512,49 +3512,6 @@ namespace Engine
 								} else _encode_floating_point_ir(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x100 && node.self.index < 0x180) {
 								throw InvalidArgumentException();
-								// if (node.inputs.Length() < 5 || node.inputs.Length() > 6) throw InvalidArgumentException();
-								// if (node.inputs[2].self.ref_class != ReferenceData) throw InvalidArgumentException();
-								// if (node.inputs[4].self.ref_class != ReferenceData) throw InvalidArgumentException();
-								// if (!TH::ValidateSampleDescription(_src.data.GetBuffer() + node.inputs[2].self.index, _src.data.Length() - node.inputs[2].self.index)) throw InvalidArgumentException();
-								// if (!TH::ValidateSampleDescription(_src.data.GetBuffer() + node.inputs[4].self.index, _src.data.Length() - node.inputs[4].self.index)) throw InvalidArgumentException();
-								// int dimsize = object_size(node.input_specs[0].size);
-								// if (dimsize % WordSize || dimsize < WordSize || dimsize > 3 * WordSize) throw InvalidArgumentException();
-								// int dim = dimsize / WordSize;
-								// for (uint i = 0; i < 32; i++) encode_preserve(1 << i, reg_in_use, 0, !idle);
-								// InternalDisposition sizes, dest, src;
-								// Reg bfr = Reg64::NO;
-								// ArgumentSpecification bfs = TH::MakeSpec();
-								// sizes.reg = Reg64::RBX;
-								// dest.reg = Reg64::RDI;
-								// src.reg = Reg64::RSI;
-								// sizes.size = dimsize;
-								// dest.size = object_size(node.input_specs[1].size);
-								// src.size = object_size(node.input_specs[3].size);
-								// sizes.flags = dest.flags = src.flags = DispositionPointer;
-								// _encode_tree_node(node.inputs[0], idle, mem_load, &sizes, 0);
-								// _encode_tree_node(node.inputs[1], idle, mem_load, &dest, sizes.reg);
-								// _encode_tree_node(node.inputs[3], idle, mem_load, &src, sizes.reg | dest.reg);
-								// if (node.inputs.Length() == 6) {
-								// 	bfs.semantics = node.input_specs[5].semantics;
-								// 	if (node.input_specs[5].semantics == ArgumentSemantics::FloatingPoint) {
-								// 		VectorDisposition bf;
-								// 		bfr = bf.reg_lo = Reg64::XMM0;
-								// 		bf.reg_hi = Reg64::NO;
-								// 		bfs.size.num_bytes = bf.size = object_size(node.input_specs[5].size);
-								// 		bfs.size.num_words = 0;
-								// 		_encode_floating_point(node.inputs[5], idle, mem_load, &bf, sizes.reg | dest.reg | src.reg, bf.reg_lo);
-								// 	} else {
-								// 		InternalDisposition bf;
-								// 		bfr = bf.reg = Reg64::R15;
-								// 		bf.flags = DispositionRegister;
-								// 		bfs.size.num_bytes = bf.size = object_size(node.input_specs[5].size);
-								// 		bfs.size.num_words = 0;
-								// 		_encode_tree_node(node.inputs[5], idle, mem_load, &bf, sizes.reg | dest.reg | src.reg);
-								// 	}
-								// }
-								// if (!idle) encode_block_transfer(node.self.index, dim, _src.data.GetBuffer() + node.inputs[2].self.index, _src.data.GetBuffer() + node.inputs[4].self.index,
-								// 	node.self.ref_flags & ReferenceFlagShort, sizes.reg, dest.reg, src.reg, bfr, bfs);
-								// for (uint i = 32; i > 0; i--) encode_restore(1 << (i - 1), reg_in_use, 0, !idle);
 							} else if (node.self.index >= 0x200 && node.self.index < 0x2FF) {
 								_encode_long_arithmetics(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x300 && node.self.index < 0x3FF) {
