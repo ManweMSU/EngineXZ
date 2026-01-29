@@ -3023,14 +3023,12 @@ namespace Engine
 							sha512 = true;
 						}
 						// ARGUMENT EVALUATION
-						Reg src_ptr = Reg64::RSI;
 						InternalDisposition dest;
 						dest.reg = Reg64::RDI;
 						dest.flags = DispositionPointer;
 						dest.size = state_size;
 						encode_preserve(dest.reg, reg_in_use, 0, !idle);
 						_encode_tree_node(node.inputs[0], idle, mem_load, &dest, reg_in_use | dest.reg);
-						encode_preserve(src_ptr, reg_in_use, 0, !idle);
 						// OPERATION
 						int num_xmm = 0;
 						if (sha512) num_xmm = 5; else num_xmm = 3;
@@ -3096,7 +3094,6 @@ namespace Engine
 						}
 						// FINALIZATION
 						for (int i = num_xmm - 1; i >= 0; i--) encode_restore(0x10000 << i, uint(-1), 0, !idle);
-						encode_restore(src_ptr, reg_in_use, 0, !idle);
 						encode_restore(dest.reg, reg_in_use, 0, !idle);
 						_encode_void_result(idle, mem_load, disp);
 					} else throw InvalidArgumentException();

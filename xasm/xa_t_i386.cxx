@@ -2426,7 +2426,6 @@ namespace Engine
 							data_index = translator_sha2_get_sha512_init_state(_sha_state, _dest);
 						}
 						// ARGUMENT EVALUATION
-						Reg staging = Reg32::EAX;
 						Reg src_ptr = Reg32::ESI;
 						InternalDisposition dest;
 						dest.reg = Reg32::EDI;
@@ -2435,33 +2434,599 @@ namespace Engine
 						encode_preserve(dest.reg, reg_in_use, 0, !idle);
 						_encode_tree_node(node.inputs[0], idle, mem_load, &dest, reg_in_use | dest.reg);
 						encode_preserve(src_ptr, reg_in_use, 0, !idle);
-						encode_preserve(staging, reg_in_use, 0, !idle);
 						// OPERATION
 						if (!idle) {
 							encode_put_addr_of(src_ptr, TH::MakeRef(ReferenceData, data_index));
-							uint i = 0;
-							while (i < state_size) {
-								encode_mov_xmm_mem(16, staging, src_ptr, i);
-								encode_mov_mem_xmm(16, dest.reg, i, staging);
-								i += 16;
+							if (state_size == 32) {
+								Reg staging = Reg32::EAX;
+								encode_preserve(staging, reg_in_use, 0, true); // Intel's canonical order: febahgdc
+								encode_mov_reg_mem(4, staging, src_ptr, 20);
+								encode_mov_mem_reg(4, dest.reg, 0, staging);
+								encode_mov_reg_mem(4, staging, src_ptr, 16);
+								encode_mov_mem_reg(4, dest.reg, 4, staging);
+								encode_mov_reg_mem(4, staging, src_ptr, 4);
+								encode_mov_mem_reg(4, dest.reg, 8, staging);
+								encode_mov_reg_mem(4, staging, src_ptr, 0);
+								encode_mov_mem_reg(4, dest.reg, 12, staging);
+								encode_mov_reg_mem(4, staging, src_ptr, 28);
+								encode_mov_mem_reg(4, dest.reg, 16, staging);
+								encode_mov_reg_mem(4, staging, src_ptr, 24);
+								encode_mov_mem_reg(4, dest.reg, 20, staging);
+								encode_mov_reg_mem(4, staging, src_ptr, 12);
+								encode_mov_mem_reg(4, dest.reg, 24, staging);
+								encode_mov_reg_mem(4, staging, src_ptr, 8);
+								encode_mov_mem_reg(4, dest.reg, 28, staging);
+								encode_restore(staging, reg_in_use, 0, true);
+							} else {
+								Reg staging = Reg64::XMM0;
+								encode_mov_xmm_mem(8, staging, src_ptr, 40);
+								encode_mov_mem_xmm(8, dest.reg, 0, staging);
+								encode_mov_xmm_mem(8, staging, src_ptr, 32);
+								encode_mov_mem_xmm(8, dest.reg, 8, staging);
+								encode_mov_xmm_mem(8, staging, src_ptr, 8);
+								encode_mov_mem_xmm(8, dest.reg, 16, staging);
+								encode_mov_xmm_mem(8, staging, src_ptr, 0);
+								encode_mov_mem_xmm(8, dest.reg, 24, staging);
+								encode_mov_xmm_mem(8, staging, src_ptr, 56);
+								encode_mov_mem_xmm(8, dest.reg, 32, staging);
+								encode_mov_xmm_mem(8, staging, src_ptr, 48);
+								encode_mov_mem_xmm(8, dest.reg, 40, staging);
+								encode_mov_xmm_mem(8, staging, src_ptr, 24);
+								encode_mov_mem_xmm(8, dest.reg, 48, staging);
+								encode_mov_xmm_mem(8, staging, src_ptr, 16);
+								encode_mov_mem_xmm(8, dest.reg, 56, staging);
 							}
 						}
 						// FINALIZATION
-						encode_restore(staging, reg_in_use, 0, !idle);
 						encode_restore(src_ptr, reg_in_use, 0, !idle);
 						encode_restore(dest.reg, reg_in_use, 0, !idle);
 						_encode_void_result(idle, mem_load, disp);
 					} else if (node.self.index == TransformCryptSha224S || node.self.index == TransformCryptSha256S || node.self.index == TransformCryptSha384S || node.self.index == TransformCryptSha512S) {
-
-						// TransformCryptSha224S	= 0x0311, // 3 arguments - a state (r/w); buffer (r); an integer length in 512-bit words; retval - no type
-						// TransformCryptSha256S	= 0x0313, // 3 arguments - a state (r/w); buffer (r); an integer length in 512-bit words; retval - no type
-						// TransformCryptSha384S	= 0x0315, // 3 arguments - a state (r/w); buffer (r); an integer length in 1024-bit words; retval - no type
-						// TransformCryptSha512S	= 0x0317, // 3 arguments - a state (r/w); buffer (r); an integer length in 1024-bit words; retval - no type
-
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 3 || node.input_specs.Length() != 3) throw InvalidArgumentException();
+						if (object_size(node.input_specs[1].size) != WordSize || object_size(node.retval_spec.size)) throw InvalidArgumentException();
+						bool software = (node.self.ref_flags & ReferenceFlagLong) != 0;
+						bool sha512;
+						auto state_size = object_size(node.input_specs[0].size);
+						auto length_size = object_size(node.input_specs[2].size);
+						if (length_size != 1 && length_size != 2 && length_size != 4 && length_size != 8) throw InvalidArgumentException();
+						uint constant_index, block_size;
+						if (node.self.index == TransformCryptSha224S || node.self.index == TransformCryptSha256S) {
+							if (state_size != 32) throw InvalidArgumentException();
+							constant_index = translator_sha2_get_sha256_words(_sha_state, _dest);
+							sha512 = false;
+							block_size = 64;
+						} else if (node.self.index == TransformCryptSha384S || node.self.index == TransformCryptSha512S) {
+							if (state_size != 64) throw InvalidArgumentException();
+							constant_index = translator_sha2_get_sha512_words(_sha_state, _dest);
+							sha512 = true;
+							block_size = 128;
+						}
+						// ARGUMENT EVALUATION
+						InternalDisposition state, ld, len;
+						state.reg = Reg32::ESI;
+						ld.reg = Reg32::EDI;
+						len.reg = Reg32::ECX;
+						state.flags = DispositionPointer;
+						ld.flags = DispositionRegister;
+						state.size = state_size;
+						ld.size = WordSize;
+						if (length_size == 8) {
+							len.flags = DispositionPointer;
+							len.size = 8;
+						} else {
+							len.flags = DispositionRegister;
+							len.size = length_size;
+						}
+						encode_preserve(state.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &state, reg_in_use | state.reg);
+						encode_preserve(ld.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &ld, reg_in_use | state.reg | ld.reg);
+						encode_preserve(len.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[2], idle, mem_load, &len, reg_in_use | state.reg | ld.reg | len.reg);
+						uint swap_space_size = 0;
+						if (software) {
+							if (sha512) swap_space_size = 16 * 8 + 16 + 16; else swap_space_size = 16 * 4 + 16;
+							*mem_load += swap_space_size;
+						}
+						// OPERATION
+						if (!idle) {
+							Reg constant_pointer = Reg32::EBX;
+							Reg swap_space_pointer = Reg32::EDX;
+							encode_preserve(constant_pointer, reg_in_use, 0, true);
+							encode_preserve(swap_space_pointer, reg_in_use, 0, software);
+							if (software) {
+								auto swap_space_offset = allocate_temporary(TH::MakeSize(swap_space_size, 0));
+								encode_lea(swap_space_pointer, Reg32::EBP, swap_space_offset);
+								encode_add(swap_space_pointer, 0x0000000F);
+								encode_and(swap_space_pointer, 0xFFFFFFF0);
+							}
+							encode_put_addr_of(constant_pointer, TH::MakeRef(ReferenceData, constant_index));
+							if (length_size == 8) encode_mov_reg_mem(4, len.reg, len.reg);
+							else if (length_size != 4) encode_mov_zx(4, len.reg, length_size, len.reg);
+							int test = _dest.code.Length();
+							if (sha512) encode_test(4, len.reg, int(0xFFFFFF80));
+							else encode_test(4, len.reg, int(0xFFFFFFC0));
+							_dest.code << 0x0F << 0x84 << 0x00 << 0x00 << 0x00 << 0x00; // JZ
+							int jz = _dest.code.Length();
+							if (sha512) {
+								if (software) {
+									// Loading the state into fe:ba:hg:dc
+									Reg staging_0 = Reg64::XMM0, staging_1 = Reg64::XMM1, staging_2 = Reg64::XMM2, staging_3 = Reg64::XMM3;
+									Reg fe = Reg64::XMM4, ba = Reg64::XMM5, hg = Reg64::XMM6, dc = Reg64::XMM7;
+									encode_mov_xmm_mem(16, fe, state.reg, 0);
+									encode_mov_xmm_mem(16, ba, state.reg, 16);
+									encode_mov_xmm_mem(16, hg, state.reg, 32);
+									encode_mov_xmm_mem(16, dc, state.reg, 48);
+									// Loading the block into [swap_space_pointer] === words; changing the endianess
+									for (int i = 0; i < 8; i++) {
+										encode_mov_xmm_mem(16, staging_1, ld.reg, 16 * i);
+										encode_simd_shuffle_dwords(staging_1, staging_1, 1, 0, 3, 2);
+										encode_mov_xmm_xmm(staging_0, staging_1);
+										encode_simd_shift_left(4, staging_1, 16);
+										encode_simd_shift_right(4, staging_0, 16);
+										encode_simd_or(staging_1, staging_0);
+										encode_mov_xmm_xmm(staging_0, staging_1);
+										encode_simd_shift_left(2, staging_1, 8);
+										encode_simd_shift_right(2, staging_0, 8);
+										encode_simd_or(staging_1, staging_0);
+										encode_mov_mem_xmm(16, swap_space_pointer, i * 16, staging_1);
+									}
+									// Running the rounds
+									for (int r = 0; r < 80; r += 2) {
+										int wri = r / 2, w0o;
+										if (r >= 16) {
+											w0o = (wri % 8) * 16;
+											auto w1o = ((wri + 1) % 8) * 16;
+											auto w4o = ((wri + 4) % 8) * 16;
+											auto w5o = ((wri + 5) % 8) * 16;
+											auto w7o = ((wri + 7) % 8) * 16;
+											encode_mov_mem_xmm(16, swap_space_pointer, 16 * 8, fe); // Unloading fe into the swap to use as the w[r-16]/w[r] register
+											encode_mov_xmm_mem(16, fe, swap_space_pointer, w0o);
+											encode_mov_xmm_mem(16, staging_0, swap_space_pointer, w1o);
+											encode_simd_extract(staging_0, fe, 8); // staging_0 = w[r-15]
+											encode_mov_xmm_xmm(staging_1, staging_0);
+											encode_mov_xmm_xmm(staging_2, staging_0);
+											encode_mov_xmm_xmm(staging_3, staging_0);
+											encode_simd_shift_right(8, staging_1, 1);
+											encode_simd_shift_left(8, staging_2, 63);
+											encode_simd_shift_right(8, staging_3, 7);
+											encode_simd_xor(staging_1, staging_2);
+											encode_simd_xor(staging_1, staging_3);
+											encode_mov_xmm_xmm(staging_2, staging_0);
+											encode_mov_xmm_xmm(staging_3, staging_0);
+											encode_simd_shift_right(8, staging_2, 8);
+											encode_simd_shift_left(8, staging_3, 56);
+											encode_simd_xor(staging_1, staging_2);
+											encode_simd_xor(staging_1, staging_3); // staging_1 = S0(w[r-15])
+											encode_simd_int_add(8, fe, staging_1); // fe = S0(w[r-15]) + w[r-16]
+											encode_mov_xmm_mem(16, staging_0, swap_space_pointer, w5o);
+											encode_simd_extract(staging_0, swap_space_pointer, w4o, 8); // staging_0 = w[r-7]
+											encode_simd_int_add(8, fe, staging_0); // fe = S0(w[r-15]) + w[r-16] + w[r-7]
+											encode_mov_xmm_mem(16, staging_1, swap_space_pointer, w7o);
+											encode_mov_xmm_xmm(staging_2, staging_1);
+											encode_mov_xmm_xmm(staging_3, staging_1);
+											encode_simd_shift_right(8, staging_1, 19);
+											encode_simd_shift_left(8, staging_2, 45);
+											encode_simd_shift_right(8, staging_3, 6);
+											encode_simd_xor(staging_1, staging_2);
+											encode_simd_xor(staging_1, staging_3);
+											encode_mov_xmm_mem(16, staging_2, swap_space_pointer, w7o);
+											encode_mov_xmm_xmm(staging_3, staging_2);
+											encode_simd_shift_right(8, staging_2, 61);
+											encode_simd_shift_left(8, staging_3, 3);
+											encode_simd_xor(staging_1, staging_2);
+											encode_simd_xor(staging_1, staging_3); // staging_1 = S1(w[r-2])
+											encode_simd_int_add(8, fe, staging_1); // fe = S0(w[r-15]) + w[r-16] + w[r-7] + S1(w[r-2])
+											encode_mov_mem_xmm(16, swap_space_pointer, w0o, fe);
+											encode_mov_xmm_mem(16, fe, swap_space_pointer, 16 * 8);
+										} else w0o = wri * 16;
+										for (int i = 0; i < 2; i++) {
+											encode_mov_xmm_xmm(staging_1, fe);
+											encode_mov_xmm_xmm(staging_2, fe);
+											encode_simd_shift_right(8, staging_1, 14);
+											encode_simd_shift_left(8, staging_2, 50);
+											encode_simd_xor(staging_1, staging_2); // staging_1[1] = e >>> 14
+											encode_mov_xmm_xmm(staging_2, fe);
+											encode_mov_xmm_xmm(staging_3, fe);
+											encode_simd_shift_right(8, staging_2, 18);
+											encode_simd_shift_left(8, staging_3, 46);
+											encode_simd_xor(staging_1, staging_2);
+											encode_simd_xor(staging_1, staging_3); // staging_1[1] ^= e >>> 18
+											encode_mov_xmm_xmm(staging_2, fe);
+											encode_mov_xmm_xmm(staging_3, fe);
+											encode_simd_shift_right(8, staging_2, 41);
+											encode_simd_shift_left(8, staging_3, 23);
+											encode_simd_xor(staging_1, staging_2);
+											encode_simd_xor(staging_1, staging_3); // staging_1[1] ^= e >>> 41 === S1
+											encode_simd_shuffle_dwords(staging_2, fe, 0, 1, 0, 1); // staging_2[*] = f
+											encode_simd_and(staging_2, fe); // staging_2[1] = e AND f
+											encode_mov_xmm_xmm(staging_3, fe);
+											encode_simd_not_and(staging_3, hg); // staging_3[1] = NOT e AND g
+											encode_simd_xor(staging_2, staging_3); // staging_2[1] = ch
+											encode_simd_int_add(8, staging_1, staging_2); // staging_1[1] = S1 + ch
+											encode_simd_shuffle_dwords(staging_2, hg, 0, 1, 0, 1); // staging_2[*] = h
+											encode_simd_int_add(8, staging_1, staging_2); // staging_1[1] = S1 + ch + h
+											encode_mov_xmm_mem_hi(8, staging_0, constant_pointer, 8 * (r + i)); // staging_0[1] = k[i]
+											encode_mov_xmm_mem(16, staging_2, swap_space_pointer, w0o);
+											if (i) encode_simd_shuffle_dwords(staging_2, staging_2, 2, 3, 2, 3);
+											else encode_simd_shuffle_dwords(staging_2, staging_2, 0, 1, 0, 1); // staging_2[1] = w[i]
+											encode_simd_int_add(8, staging_0, staging_2);
+											encode_simd_int_add(8, staging_0, staging_1); // staging_0[1] = T1
+											encode_mov_xmm_xmm(staging_1, ba);
+											encode_mov_xmm_xmm(staging_2, ba);
+											encode_simd_shift_right(8, staging_1, 28);
+											encode_simd_shift_left(8, staging_2, 36);
+											encode_simd_xor(staging_1, staging_2); // staging_1[1] = a >>> 28
+											encode_mov_xmm_xmm(staging_2, ba);
+											encode_mov_xmm_xmm(staging_3, ba);
+											encode_simd_shift_right(8, staging_2, 34);
+											encode_simd_shift_left(8, staging_3, 30);
+											encode_simd_xor(staging_1, staging_2);
+											encode_simd_xor(staging_1, staging_3); // staging_1[1] ^= a >>> 34
+											encode_mov_xmm_xmm(staging_2, ba);
+											encode_mov_xmm_xmm(staging_3, ba);
+											encode_simd_shift_right(8, staging_2, 39);
+											encode_simd_shift_left(8, staging_3, 25);
+											encode_simd_xor(staging_1, staging_2);
+											encode_simd_xor(staging_1, staging_3); // staging_1[1] ^= a >>> 39 === S0
+											encode_mov_xmm_xmm(staging_2, ba);
+											encode_simd_extract(staging_2, dc, 8); // staging_2 = cb
+											encode_simd_and(staging_2, ba); // staging_2 = (c AND b)(b AND a)
+											encode_mov_xmm_xmm(staging_3, ba);
+											encode_simd_and(staging_3, dc);
+											encode_simd_xmm_shift_right(staging_3, 8); // staging_3 = (a AND c)0
+											encode_simd_xor(staging_2, staging_3); // staging_2 = ( (c AND b) XOR (a AND c) )(b AND a)
+											encode_simd_shuffle_dwords(staging_3, staging_2, 2, 3, 2, 3);
+											encode_simd_xor(staging_2, staging_3); // staging_2[0] = (c AND b) XOR (a AND c) XOR (b AND a) === med(a, b, c)
+											encode_simd_shuffle_dwords(staging_1, staging_1, 2, 3, 2, 3);
+											encode_simd_int_add(8, staging_1, staging_2); // staging_1[0] = T2
+											encode_simd_shuffle_dwords(staging_0, staging_0, 2, 3, 2, 3); // staging_0[*] = T1
+											encode_simd_int_add(8, staging_1, staging_0); // staging_1[0] = T1 + T2
+											encode_mov_xmm_xmm(staging_2, fe);
+											encode_simd_extract(staging_2, hg, 8);
+											encode_mov_xmm_xmm(hg, staging_2);
+											encode_mov_xmm_xmm(staging_2, dc);
+											encode_simd_extract(staging_2, fe, 8);
+											encode_mov_xmm_xmm(fe, staging_2);
+											encode_mov_xmm_xmm(staging_2, ba);
+											encode_simd_extract(staging_2, dc, 8);
+											encode_mov_xmm_xmm(dc, staging_2);
+											encode_mov_xmm_xmm(staging_2, staging_1);
+											encode_simd_extract(staging_2, ba, 8);
+											encode_mov_xmm_xmm(ba, staging_2); // ?(T1+T2):ab -> (T1+T2)a
+											encode_simd_xmm_shift_left(staging_0, 8);
+											encode_simd_int_add(8, fe, staging_0);
+										}
+									}
+									encode_mov_xmm_mem(16, staging_0, state.reg, 0);
+									encode_mov_xmm_mem(16, staging_1, state.reg, 16);
+									encode_mov_xmm_mem(16, staging_2, state.reg, 32);
+									encode_mov_xmm_mem(16, staging_3, state.reg, 48);
+									encode_simd_int_add(8, fe, staging_0);
+									encode_simd_int_add(8, ba, staging_1);
+									encode_simd_int_add(8, hg, staging_2);
+									encode_simd_int_add(8, dc, staging_3);
+									encode_mov_mem_xmm(16, state.reg, 0, fe);
+									encode_mov_mem_xmm(16, state.reg, 16, ba);
+									encode_mov_mem_xmm(16, state.reg, 32, hg);
+									encode_mov_mem_xmm(16, state.reg, 48, dc);
+								} else {
+									encode_debugger_trap(); // Not implemented by now
+								}
+							} else {
+								if (software) {
+									// Loading the state into feba:hgdc
+									Reg staging_0 = Reg64::XMM0;
+									Reg staging_sw_1 = Reg64::XMM3, staging_sw_2 = Reg64::XMM4, staging_sw_3 = Reg64::XMM5, staging_sw_4 = Reg64::XMM6, staging_sw_5 = Reg64::XMM7;
+									Reg feba = Reg64::XMM1, hgdc = Reg64::XMM2;
+									encode_mov_xmm_mem(16, feba, state.reg, 0);
+									encode_mov_xmm_mem(16, hgdc, state.reg, 16);
+									// Loading the block into [swap_space_pointer] === words; changing the endianess
+									for (int i = 0; i < 4; i++) {
+										encode_mov_xmm_mem(16, staging_sw_1, ld.reg, 16 * i);
+										encode_mov_xmm_xmm(staging_0, staging_sw_1);
+										encode_simd_shift_left(4, staging_sw_1, 16);
+										encode_simd_shift_right(4, staging_0, 16);
+										encode_simd_or(staging_sw_1, staging_0);
+										encode_mov_xmm_xmm(staging_0, staging_sw_1);
+										encode_simd_shift_left(2, staging_sw_1, 8);
+										encode_simd_shift_right(2, staging_0, 8);
+										encode_simd_or(staging_sw_1, staging_0);
+										encode_mov_mem_xmm(16, swap_space_pointer, 16 * i, staging_sw_1);
+									}
+									// Running the rounds
+									for (int r = 0; r < 64; r += 4) {
+										int wri = r / 4, w0o;
+										if (r >= 16) {
+											w0o = (wri % 4) * 16;
+											auto w1o = ((wri + 1) % 4) * 16;
+											auto w2o = ((wri + 2) % 4) * 16;
+											auto w3o = ((wri + 3) % 4) * 16;
+											encode_mov_xmm_mem(16, staging_sw_5, swap_space_pointer, w0o);
+											encode_mov_xmm_mem(16, staging_0, swap_space_pointer, w1o);
+											encode_simd_extract(staging_0, staging_sw_5, 4);
+											encode_mov_xmm_xmm(staging_sw_4, staging_0);
+											encode_mov_xmm_xmm(staging_sw_1, staging_0);
+											encode_mov_xmm_xmm(staging_sw_2, staging_0);
+											encode_mov_xmm_xmm(staging_sw_3, staging_0);
+											encode_simd_shift_right(4, staging_sw_4, 7);
+											encode_simd_shift_left(4, staging_sw_2, 25);
+											encode_simd_shift_right(4, staging_sw_1, 18);
+											encode_simd_shift_left(4, staging_sw_3, 14);
+											encode_simd_shift_right(4, staging_0, 3);
+											encode_simd_xor(staging_0, staging_sw_4);
+											encode_simd_xor(staging_0, staging_sw_1);
+											encode_simd_xor(staging_0, staging_sw_2);
+											encode_simd_xor(staging_0, staging_sw_3);
+											encode_simd_int_add(4, staging_sw_5, staging_0);
+											// staging_sw_5 = S0(w[r-15]) + w[r-16]
+											encode_mov_xmm_mem(16, staging_0, swap_space_pointer, w3o);
+											encode_simd_extract(staging_0, swap_space_pointer, w2o, 4);
+											// staging_0 = w[r-7]
+											encode_simd_int_add(4, staging_sw_5, staging_0);
+											// staging_sw_5 = S0(w[r-15]) + w[r-16] + w[r-7]
+											encode_mov_xmm_mem(16, staging_0, swap_space_pointer, w3o);
+											encode_simd_xmm_shift_right(staging_0, 8);
+											encode_mov_xmm_xmm(staging_sw_4, staging_0);
+											encode_mov_xmm_xmm(staging_sw_1, staging_0);
+											encode_mov_xmm_xmm(staging_sw_2, staging_0);
+											encode_mov_xmm_xmm(staging_sw_3, staging_0);
+											encode_simd_shift_right(4, staging_sw_4, 17);
+											encode_simd_shift_left(4, staging_sw_2, 15);
+											encode_simd_shift_right(4, staging_sw_1, 19);
+											encode_simd_shift_left(4, staging_sw_3, 13);
+											encode_simd_shift_right(4, staging_0, 10);
+											encode_simd_xor(staging_0, staging_sw_4);
+											encode_simd_xor(staging_0, staging_sw_1);
+											encode_simd_xor(staging_0, staging_sw_2);
+											encode_simd_xor(staging_0, staging_sw_3);
+											encode_simd_int_add(4, staging_sw_5, staging_0);
+											encode_mov_xmm_xmm(staging_0, staging_sw_5);
+											encode_simd_xmm_shift_left(staging_0, 8);
+											encode_mov_xmm_xmm(staging_sw_4, staging_0);
+											encode_mov_xmm_xmm(staging_sw_1, staging_0);
+											encode_mov_xmm_xmm(staging_sw_2, staging_0);
+											encode_mov_xmm_xmm(staging_sw_3, staging_0);
+											encode_simd_shift_right(4, staging_sw_4, 17);
+											encode_simd_shift_left(4, staging_sw_2, 15);
+											encode_simd_shift_right(4, staging_sw_1, 19);
+											encode_simd_shift_left(4, staging_sw_3, 13);
+											encode_simd_shift_right(4, staging_0, 10);
+											encode_simd_xor(staging_0, staging_sw_4);
+											encode_simd_xor(staging_0, staging_sw_1);
+											encode_simd_xor(staging_0, staging_sw_2);
+											encode_simd_xor(staging_0, staging_sw_3);
+											encode_simd_int_add(4, staging_sw_5, staging_0);
+											// staging_sw_5 = S0(w[r-15]) + w[r-16] + w[r-7] + S1(w[r-2])
+											encode_mov_mem_xmm(16, swap_space_pointer, w0o, staging_sw_5);
+										} else w0o = wri * 16;
+										encode_mov_xmm_mem(16, staging_0, constant_pointer, 4 * r);
+										encode_simd_int_add(4, staging_0, swap_space_pointer, w0o);
+										// staging_0 = w[r..r+3] + k[r..r+3]
+										for (int i = 0; i < 4; i++) {
+											encode_mov_xmm_xmm(staging_sw_4, feba); // staging_0[1] = e
+											encode_mov_xmm_xmm(staging_sw_1, staging_sw_4);
+											encode_mov_xmm_xmm(staging_sw_2, staging_sw_4);
+											encode_simd_shift_right(4, staging_sw_1, 6);
+											encode_simd_shift_left(4, staging_sw_2, 26);
+											encode_simd_xor(staging_sw_1, staging_sw_2); // staging_sw_1[1] = e >>> 6
+											encode_mov_xmm_xmm(staging_sw_2, staging_sw_4);
+											encode_mov_xmm_xmm(staging_sw_3, staging_sw_4);
+											encode_simd_shift_right(4, staging_sw_2, 11);
+											encode_simd_shift_left(4, staging_sw_3, 21);
+											encode_simd_xor(staging_sw_2, staging_sw_3); // staging_sw_2[1] = e >>> 11
+											encode_simd_xor(staging_sw_1, staging_sw_2);
+											encode_mov_xmm_xmm(staging_sw_2, staging_sw_4);
+											encode_mov_xmm_xmm(staging_sw_3, staging_sw_4);
+											encode_simd_shift_right(4, staging_sw_2, 25);
+											encode_simd_shift_left(4, staging_sw_3, 7);
+											encode_simd_xor(staging_sw_2, staging_sw_3); // staging_sw_2[1] = e >>> 25
+											encode_simd_xor(staging_sw_1, staging_sw_2); // staging_sw_1[1] = S1
+											encode_simd_shuffle_dwords(staging_sw_2, feba, 0, 0, 0, 0);
+											encode_simd_and(staging_sw_2, staging_sw_4);
+											encode_simd_not_and(staging_sw_4, hgdc);
+											encode_simd_xor(staging_sw_2, staging_sw_4); // staging_sw_2[1] = ch
+											encode_simd_int_add(4, staging_sw_1, staging_sw_2);
+											encode_simd_shuffle_dwords(staging_sw_1, staging_sw_1, 1, 1, 1, 1);
+											encode_simd_shuffle_dwords(staging_sw_2, staging_0, 0, 0, 0, 0);
+											encode_simd_shuffle_dwords(staging_sw_3, hgdc, 0, 0, 0, 0);
+											encode_simd_int_add(4, staging_sw_1, staging_sw_2);
+											encode_simd_int_add(4, staging_sw_1, staging_sw_3); // staging_sw_1[*] = T1
+											encode_mov_xmm_xmm(staging_sw_2, feba); // staging_sw_2[3] = a
+											encode_mov_xmm_xmm(staging_sw_3, staging_sw_2);
+											encode_mov_xmm_xmm(staging_sw_4, staging_sw_2);
+											encode_simd_shift_right(4, staging_sw_3, 2);
+											encode_simd_shift_left(4, staging_sw_4, 30);
+											encode_simd_xor(staging_sw_3, staging_sw_4); // staging_sw_3[3] = a >>> 2
+											encode_mov_xmm_xmm(staging_sw_4, staging_sw_2);
+											encode_mov_xmm_xmm(staging_sw_5, staging_sw_2);
+											encode_simd_shift_right(4, staging_sw_4, 13);
+											encode_simd_shift_left(4, staging_sw_5, 19);
+											encode_simd_xor(staging_sw_4, staging_sw_5); // staging_sw_4[3] = a >>> 13
+											encode_simd_xor(staging_sw_3, staging_sw_4);
+											encode_mov_xmm_xmm(staging_sw_4, staging_sw_2);
+											encode_mov_xmm_xmm(staging_sw_5, staging_sw_2);
+											encode_simd_shift_right(4, staging_sw_4, 22);
+											encode_simd_shift_left(4, staging_sw_5, 10);
+											encode_simd_xor(staging_sw_4, staging_sw_5); // staging_sw_4[3] = a >>> 22
+											encode_simd_xor(staging_sw_3, staging_sw_4); // staging_sw_3[3] = S0
+											encode_simd_shuffle_dwords(staging_sw_4, feba, 2, 2, 2, 2);
+											encode_simd_shuffle_dwords(staging_sw_5, feba, 2, 2, 2, 2);
+											encode_simd_and(staging_sw_4, feba);
+											encode_simd_and(staging_sw_5, hgdc);
+											encode_simd_and(staging_sw_2, hgdc);
+											encode_simd_xor(staging_sw_2, staging_sw_4);
+											encode_simd_xor(staging_sw_2, staging_sw_5); // staging_sw_2[3] = med(a, b, c)
+											encode_simd_int_add(4, staging_sw_2, staging_sw_3); // staging_sw_2[3] = T2
+											encode_mov_xmm_xmm(staging_sw_3, feba);
+											encode_simd_shuffle(4, feba, hgdc, 3, 2, 3, 2);
+											encode_simd_shuffle(4, staging_sw_3, hgdc, 1, 0, 1, 0); // feba:staging_sw_3 = abcdefgh
+											encode_simd_extract(staging_sw_3, feba, 12);
+											encode_simd_xmm_shift_left(feba, 4); // feba:staging_sw_3 = 0abcdefg
+											encode_simd_xmm_shift_right(staging_sw_2, 12);
+											encode_simd_xmm_shift_right(staging_sw_1, 12);
+											encode_simd_int_add(4, feba, staging_sw_1);
+											encode_simd_int_add(4, feba, staging_sw_2);
+											encode_simd_int_add(4, staging_sw_3, staging_sw_1); // feba:staging_sw_3 = abcdefgh (new)
+											encode_mov_xmm_xmm(hgdc, staging_sw_3);
+											encode_simd_shuffle(4, hgdc, feba, 3, 2, 3, 2);
+											encode_simd_shuffle(4, staging_sw_3, feba, 1, 0, 1, 0);
+											encode_mov_xmm_xmm(feba, staging_sw_3);
+											if (i < 3) encode_simd_xmm_shift_right(staging_0, 4);
+										}
+									}
+									encode_mov_xmm_mem(16, staging_sw_1, state.reg, 0);
+									encode_mov_xmm_mem(16, staging_sw_2, state.reg, 16);
+									encode_simd_int_add(4, feba, staging_sw_1);
+									encode_simd_int_add(4, hgdc, staging_sw_2);
+									encode_mov_mem_xmm(16, state.reg, 0, feba);
+									encode_mov_mem_xmm(16, state.reg, 16, hgdc);
+								} else {
+									// Loading the state into feba:hgdc
+									Reg staging_0 = Reg64::XMM0;
+									Reg feba = Reg64::XMM1, hgdc = Reg64::XMM2;
+									Reg words[4] = { Reg64::XMM3, Reg64::XMM4, Reg64::XMM5, Reg64::XMM6 };
+									encode_mov_xmm_mem(16, feba, state.reg, 0);
+									encode_mov_xmm_mem(16, hgdc, state.reg, 16);
+									// Loading the block into XMM3:XMM4:XMM5:XMM6 === words; changing the endianess
+									for (int i = 0; i < 4; i++) {
+										auto w = words[i];
+										encode_mov_xmm_mem(16, w, ld.reg, 16 * i);
+										encode_mov_xmm_xmm(staging_0, w);
+										encode_simd_shift_left(4, w, 16);
+										encode_simd_shift_right(4, staging_0, 16);
+										encode_simd_or(w, staging_0);
+										encode_mov_xmm_xmm(staging_0, w);
+										encode_simd_shift_left(2, w, 8);
+										encode_simd_shift_right(2, staging_0, 8);
+										encode_simd_or(w, staging_0);
+									}
+									// Running the rounds
+									for (int r = 0; r < 64; r += 4) {
+										int wri = r / 4;
+										Reg w;
+										if (r >= 16) {
+											w = words[wri % 4];
+											Reg w1 = words[(wri + 1) % 4];
+											Reg w2 = words[(wri + 2) % 4];
+											Reg w3 = words[(wri + 3) % 4];
+											encode_sha256_msg_words4_part1(w, w1);
+											encode_mov_xmm_xmm(staging_0, w3);
+											encode_simd_extract(staging_0, w2, 4);
+											encode_simd_int_add(4, w, staging_0);
+											encode_sha256_msg_words4_part2(w, w3);
+										} else w = words[wri];
+										encode_mov_xmm_mem(16, staging_0, constant_pointer, 4 * r);
+										encode_simd_int_add(4, staging_0, w);
+										encode_sha256_rounds2(hgdc, feba, staging_0);
+										encode_simd_xmm_shift_right(staging_0, 8);
+										encode_sha256_rounds2(feba, hgdc, staging_0);
+									}
+									encode_mov_xmm_mem(16, words[0], state.reg, 0);
+									encode_mov_xmm_mem(16, words[1], state.reg, 16);
+									encode_simd_int_add(4, feba, words[0]);
+									encode_simd_int_add(4, hgdc, words[1]);
+									encode_mov_mem_xmm(16, state.reg, 0, feba);
+									encode_mov_mem_xmm(16, state.reg, 16, hgdc);
+								}
+							}
+							encode_add(ld.reg, block_size);
+							encode_add(len.reg, -int(block_size));
+							_dest.code << 0xE9 << 0x00 << 0x00 << 0x00 << 0x00; // JMP
+							*reinterpret_cast<int *>(_dest.code.GetBuffer() + _dest.code.Length() - 4) = test - _dest.code.Length();
+							*reinterpret_cast<int *>(_dest.code.GetBuffer() + jz - 4) = _dest.code.Length() - jz;
+							encode_restore(swap_space_pointer, reg_in_use, 0, software);
+							encode_restore(constant_pointer, reg_in_use, 0, true);
+						}
+						// FINALIZATION
+						encode_restore(len.reg, reg_in_use, 0, !idle);
+						encode_restore(ld.reg, reg_in_use, 0, !idle);
+						encode_restore(state.reg, reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
 					} else if (node.self.index == TransformCryptSha224F || node.self.index == TransformCryptSha256F || node.self.index == TransformCryptSha384F || node.self.index == TransformCryptSha512F) {
-
-						// TODO: IMPLEMENT
-
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 1 || node.input_specs.Length() != 1) throw InvalidArgumentException();
+						if (object_size(node.retval_spec.size)) throw InvalidArgumentException();
+						auto state_size = object_size(node.input_specs[0].size);
+						bool sha512;
+						if (node.self.index == TransformCryptSha224F || node.self.index == TransformCryptSha256F) {
+							if (state_size != 32) throw InvalidArgumentException();
+							sha512 = false;
+						} else if (node.self.index == TransformCryptSha384F || node.self.index == TransformCryptSha512F) {
+							if (state_size != 64) throw InvalidArgumentException();
+							sha512 = true;
+						}
+						// ARGUMENT EVALUATION
+						InternalDisposition dest;
+						dest.reg = Reg32::EDI;
+						dest.flags = DispositionPointer;
+						dest.size = state_size;
+						encode_preserve(dest.reg, reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &dest, reg_in_use | dest.reg);
+						// OPERATION
+						if (!idle) {
+							if (state_size == 32) {
+								Reg feba = Reg64::XMM0, hgdc = Reg64::XMM1;
+								Reg staging = Reg64::XMM2;
+								// Loading and ordering the words
+								encode_mov_xmm_mem(16, feba, dest.reg, 0);
+								encode_mov_xmm_mem(16, hgdc, dest.reg, 16);
+								encode_mov_xmm_xmm(staging, feba);
+								encode_simd_shuffle(4, staging, hgdc, 3, 2, 3, 2);	// staging	= abcd
+								encode_simd_shuffle(4, feba, hgdc, 1, 0, 1, 0);		// feba		= efgh
+								// Byte order swap on staging
+								encode_mov_xmm_xmm(hgdc, staging);
+								encode_simd_shift_left(4, hgdc, 16);
+								encode_simd_shift_right(4, staging, 16);
+								encode_simd_or(staging, hgdc);
+								encode_mov_xmm_xmm(hgdc, staging);
+								encode_simd_shift_left(2, hgdc, 8);
+								encode_simd_shift_right(2, staging, 8);
+								encode_simd_or(staging, hgdc);
+								// Byte order swap on feba
+								encode_mov_xmm_xmm(hgdc, feba);
+								encode_simd_shift_left(4, hgdc, 16);
+								encode_simd_shift_right(4, feba, 16);
+								encode_simd_or(feba, hgdc);
+								encode_mov_xmm_xmm(hgdc, feba);
+								encode_simd_shift_left(2, hgdc, 8);
+								encode_simd_shift_right(2, feba, 8);
+								encode_simd_or(feba, hgdc);
+								// Saving the hash
+								encode_mov_mem_xmm(16, dest.reg, 0, staging);
+								encode_mov_mem_xmm(16, dest.reg, 16, feba);
+							} else {
+								Reg words[4] = { Reg64::XMM0, Reg64::XMM1, Reg64::XMM2, Reg64::XMM3 }; // fe ba hg dc
+								Reg staging = Reg64::XMM4;
+								// Loading the words
+								for (int i = 0; i < 4; i++) encode_mov_xmm_mem(16, words[i], dest.reg, 16 * i);
+								for (int i = 0; i < 4; i++) {
+									// Selecting the word pair
+									Reg inw;
+									if (i == 0) inw = words[1];
+									else if (i == 1) inw = words[3];
+									else if (i == 2) inw = words[0];
+									else inw = words[2];
+									// Inverting word order and 32-bit word suborder
+									encode_simd_shuffle_dwords(inw, inw, 3, 2, 1, 0);
+									// Inverting byte order
+									encode_mov_xmm_xmm(staging, inw);
+									encode_simd_shift_left(4, staging, 16);
+									encode_simd_shift_right(4, inw, 16);
+									encode_simd_or(inw, staging);
+									encode_mov_xmm_xmm(staging, inw);
+									encode_simd_shift_left(2, staging, 8);
+									encode_simd_shift_right(2, inw, 8);
+									encode_simd_or(inw, staging);
+									// Saving the hash
+									encode_mov_mem_xmm(16, dest.reg, 16 * i, inw);
+								}
+							}
+						}
+						// FINALIZATION
+						encode_restore(dest.reg, reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
 					} else throw InvalidArgumentException();
 				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, InternalDisposition * disp, uint reg_in_use)
