@@ -27,6 +27,8 @@ spatium systema {
 		macos	= 0x02,
 		linux	= 0x03
 	}
+	enumeratio functio_processoris hereditat nint { CPUID = 0, RNG = 1, AES = 2, SHA256 = 3, SHA256SW = 4, SHA512 = 5, SHA512SW = 6 }
+	enumeratio status_functionis hereditat nint { afuit = 0, praesens = 1, ignotus = 2 }
 
 	structura informatio {
 		int64 frequentia_processoris;
@@ -166,6 +168,31 @@ spatium systema {
 			alioqui si (sysinf.arch == nint16(0)) responde arch == architectura.i386;
 			alioqui responde non;
 		} alioqui responde arch == architectura.i386;
+	}
+	functio status_functionis proba_functionem_systemae(functio_processoris func)
+	{
+		nint32 func_id;
+		var arch = __architectura();
+		si (arch == architectura.arm_t32 || arch == architectura.arm_a64) {
+			si (func == functio_processoris.CPUID) responde status_functionis.afuit;
+			alioqui si (func == functio_processoris.RNG) responde status_functionis.afuit;
+			alioqui si (func == functio_processoris.AES) func_id = 30; // PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE
+			alioqui si (func == functio_processoris.SHA256) func_id = 30; // PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE
+			alioqui si (func == functio_processoris.SHA256SW) responde status_functionis.praesens;
+			alioqui si (func == functio_processoris.SHA512) func_id = 65; // PF_ARM_SHA512_INSTRUCTIONS_AVAILABLE
+			alioqui si (func == functio_processoris.SHA512SW) responde status_functionis.praesens;
+			alioqui responde status_functionis.afuit;
+		} alioqui si (arch == architectura.i386 || arch == architectura.x64) {
+			si (func == functio_processoris.CPUID) responde status_functionis.praesens;
+			alioqui si (func == functio_processoris.RNG) responde status_functionis.ignotus;
+			alioqui si (func == functio_processoris.AES) responde status_functionis.ignotus;
+			alioqui si (func == functio_processoris.SHA256) responde status_functionis.ignotus;
+			alioqui si (func == functio_processoris.SHA256SW) func_id = 13; // PF_SSE3_INSTRUCTIONS_AVAILABLE
+			alioqui si (func == functio_processoris.SHA512) responde status_functionis.ignotus;
+			alioqui si (func == functio_processoris.SHA512SW) func_id = 13; // PF_SSE3_INSTRUCTIONS_AVAILABLE
+			alioqui responde status_functionis.afuit;
+		} alioqui responde status_functionis.ignotus;
+		responde winapi.IsProcessorFeaturePresent(func_id) ? status_functionis.praesens : status_functionis.afuit;
 	}
 }
 genus meta hereditat objectum {

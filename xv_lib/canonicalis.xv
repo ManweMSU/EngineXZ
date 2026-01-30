@@ -2603,6 +2603,8 @@ spatium systema {
 		macos	= 0x02,
 		linux	= 0x03
 	}
+	enumeratio functio_processoris hereditat nint { CPUID = 0, RNG = 1, AES = 2, SHA256 = 3, SHA256SW = 4, SHA512 = 5, SHA512SW = 6 }
+	enumeratio status_functionis hereditat nint { afuit = 0, praesens = 1, ignotus = 2 }
 
 	structura informatio {
 		int64 frequentia_processoris;
@@ -2620,6 +2622,7 @@ spatium systema {
 	[[importa] sys_info]	functio nihil para_informationem(~informatio inf);
 	[[importa] sys_temp]	functio nint32 para_tempum_systemae();
 	[[importa] sys_arch]	functio logicum proba_architecturam(architectura arch);
+	[[importa] sys_func]	functio status_functionis proba_functionem_systemae(functio_processoris func);
 }
 enumeratio tactus {
 	back		= 0x08,

@@ -729,12 +729,12 @@ namespace Engine
 					m.variables.Append(l.key, var);
 				}
 				m.literals.Clear();
-				data_mem_load += m.data->Length();
+				data_mem_load += Align(m.data->Length(), 16);
 			}
 			symbols_referenced.Clear();
 			for (auto & c : codes) {
 				code_mem_load += c.value.func.code.Length();
-				data_mem_load += c.value.func.data.Length();
+				data_mem_load += Align(c.value.func.data.Length(), 16);
 			}
 			uint32 rva_base = input.base_rva;
 			output.cs_rva = rva_base;
@@ -763,7 +763,7 @@ namespace Engine
 				}
 				if (m.data) {
 					MemoryCopy(output.ds->GetBuffer() + data_mem_load, m.data->GetBuffer(), m.data->Length());
-					data_mem_load += m.data->Length();
+					data_mem_load += Align(m.data->Length(), 16);
 				}
 			}
 			for (auto & c : codes) {
@@ -775,7 +775,7 @@ namespace Engine
 				c.value.data_rva = output.ds_rva + data_mem_load;
 				c.value.cs_offset = code_mem_load;
 				code_mem_load += c.value.func.code.Length();
-				data_mem_load += c.value.func.data.Length();
+				data_mem_load += Align(c.value.func.data.Length(), 16);
 			}
 			for (auto & c : codes) {
 				auto & func = c.value.func;

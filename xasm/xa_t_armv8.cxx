@@ -2388,6 +2388,9 @@ namespace Engine
 								// _encode_restore(reg_in_use, reg_in_use, 0, !idle);
 							} else if (node.self.index >= 0x200 && node.self.index < 0x2FF) {
 								_encode_long_arithmetics(node, idle, mem_load, disp, reg_in_use);
+							} else if (node.self.index >= 0x300 && node.self.index < 0x3FF) {
+
+
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);

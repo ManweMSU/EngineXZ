@@ -362,22 +362,26 @@ namespace Engine
 						}
 					}
 				} else {
-					if (string::Compare(routine_name, L"scribe_in_filo") < 0) {
-						if (string::Compare(routine_name, L"realloca_memoriam") < 0) {
-							if (string::Compare(routine_name, L"lege_in_filo") == 0) return reinterpret_cast<const void *>(&Engine::GetThreadLocal);
-						} else {
-							if (string::Compare(routine_name, L"relabe_memoriam") < 0) {
-								if (string::Compare(routine_name, L"realloca_memoriam") == 0) return reinterpret_cast<const void *>(&_mem_realloc);
+					if (string::Compare(routine_name, L"sys_arch") < 0) {
+						if (string::Compare(routine_name, L"relabe_memoriam") < 0) {
+							if (string::Compare(routine_name, L"realloca_memoriam") < 0) {
+								if (string::Compare(routine_name, L"lege_in_filo") == 0) return reinterpret_cast<const void *>(&Engine::GetThreadLocal);
 							} else {
+								if (string::Compare(routine_name, L"realloca_memoriam") == 0) return reinterpret_cast<const void *>(&_mem_realloc);
+							}
+						} else {
+							if (string::Compare(routine_name, L"scribe_in_filo") < 0) {
 								if (string::Compare(routine_name, L"relabe_memoriam") == 0) return reinterpret_cast<const void *>(&Engine::ZeroMemory);
+							} else {
+								if (string::Compare(routine_name, L"scribe_in_filo") == 0) return reinterpret_cast<const void *>(&Engine::SetThreadLocal);
 							}
 						}
 					} else {
 						if (string::Compare(routine_name, L"sys_info") < 0) {
-							if (string::Compare(routine_name, L"sys_arch") < 0) {
-								if (string::Compare(routine_name, L"scribe_in_filo") == 0) return reinterpret_cast<const void *>(&Engine::SetThreadLocal);
-							} else {
+							if (string::Compare(routine_name, L"sys_func") < 0) {
 								if (string::Compare(routine_name, L"sys_arch") == 0) return reinterpret_cast<const void *>(&_check_arch);
+							} else {
+								if (string::Compare(routine_name, L"sys_func") == 0) return reinterpret_cast<const void *>(&Engine::XA::CheckThisMachineCPUFeature);
 							}
 						} else {
 							if (string::Compare(routine_name, L"sys_temp") < 0) {
@@ -387,7 +391,7 @@ namespace Engine
 							}
 						}
 					}
-				}				
+				}
 				return 0;
 			}
 			virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }

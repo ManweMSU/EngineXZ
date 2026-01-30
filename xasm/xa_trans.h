@@ -44,5 +44,9 @@ namespace Engine
 		Environment GetApplicationEnvironment(void);
 		IExecutableLinker * CreateLinker(void);
 		IMemoryAllocator * CreateMemoryAllocator(void);
+
+		enum class CPUFeatureStatus : uint { Unavailable = 0, Present = 1, Unknown = 2 };
+		enum class CPUFeature : uint { CPUID = 0, RNG = 1, AES = 2, SHA256 = 3, SHA256SW = 4, SHA512 = 5, SHA512SW = 6 };
+		CPUFeatureStatus CheckThisMachineCPUFeature(CPUFeature feature);
 	}
 }

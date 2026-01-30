@@ -6,6 +6,7 @@
 #ifdef ENGINE_MACOSX
 #include <libkern/OSCacheControl.h>
 #include <sys/mman.h>
+#include <sys/sysctl.h>
 #include <pthread.h>
 #endif
 #ifdef ENGINE_LINUX
@@ -27,6 +28,30 @@ namespace Engine
 			virtual void ExecutableFree(void * block) noexcept override { if (!block) return; HeapFree(_heap, 0, block); }
 			virtual void FlushExecutionCache(const void * block, uintptr length) noexcept override { FlushInstructionCache(GetCurrentProcess(), block, length); }
 		};
+		CPUFeatureStatus CheckThisMachineCPUFeature(CPUFeature feature)
+		{
+			DWORD query;
+			#ifdef ENGINE_ARM
+				if (feature == CPUFeature::CPUID) return CPUFeatureStatus::Unavailable;
+				else if (feature == CPUFeature::RNG) return CPUFeatureStatus::Unavailable;
+				else if (feature == CPUFeature::AES) query = PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE;
+				else if (feature == CPUFeature::SHA256) query = PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE;
+				else if (feature == CPUFeature::SHA256SW) return CPUFeatureStatus::Present;
+				else if (feature == CPUFeature::SHA512) query = 65;
+				else if (feature == CPUFeature::SHA512SW) return CPUFeatureStatus::Present;
+				else return CPUFeatureStatus::Unavailable;
+			#else
+				if (feature == CPUFeature::CPUID) return CPUFeatureStatus::Present;
+				else if (feature == CPUFeature::RNG) return CPUFeatureStatus::Unknown;
+				else if (feature == CPUFeature::AES) return CPUFeatureStatus::Unknown;
+				else if (feature == CPUFeature::SHA256) return CPUFeatureStatus::Unknown;
+				else if (feature == CPUFeature::SHA256SW) query = PF_SSE3_INSTRUCTIONS_AVAILABLE;
+				else if (feature == CPUFeature::SHA512) return CPUFeatureStatus::Unknown;
+				else if (feature == CPUFeature::SHA512SW) query = PF_SSE3_INSTRUCTIONS_AVAILABLE;
+				else return CPUFeatureStatus::Unavailable;
+			#endif
+			return IsProcessorFeaturePresent(query) ? CPUFeatureStatus::Present : CPUFeatureStatus::Unavailable;
+		}
 		#endif
 		#ifdef ENGINE_MACOSX
 		class SystemAllocator : public IMemoryAllocator
@@ -56,6 +81,32 @@ namespace Engine
 				sys_icache_invalidate(const_cast<void *>(block), length);
 			}
 		};
+		CPUFeatureStatus CheckThisMachineCPUFeature(CPUFeature feature)
+		{
+			const char * query;
+			#ifdef ENGINE_ARM
+				if (feature == CPUFeature::CPUID) return CPUFeatureStatus::Unavailable;
+				else if (feature == CPUFeature::RNG) return CPUFeatureStatus::Unavailable;
+				else if (feature == CPUFeature::AES) query = "hw.optional.arm.FEAT_AES";
+				else if (feature == CPUFeature::SHA256) query = "hw.optional.arm.FEAT_SHA256";
+				else if (feature == CPUFeature::SHA256SW) return CPUFeatureStatus::Present;
+				else if (feature == CPUFeature::SHA512) query = "hw.optional.arm.FEAT_SHA512";
+				else if (feature == CPUFeature::SHA512SW) return CPUFeatureStatus::Present;
+				else return CPUFeatureStatus::Unavailable;
+			#else
+				if (feature == CPUFeature::CPUID) return CPUFeatureStatus::Present;
+				else if (feature == CPUFeature::RNG) query = "hw.optional.rdrand";
+				else if (feature == CPUFeature::AES) query = "hw.optional.aes";
+				else if (feature == CPUFeature::SHA256) query = "hw.optional.sha256";
+				else if (feature == CPUFeature::SHA256SW) query = "hw.optional.sse3";
+				else if (feature == CPUFeature::SHA512) query = "hw.optional.sha512";
+				else if (feature == CPUFeature::SHA512SW) query = "hw.optional.sse3";
+				else return CPUFeatureStatus::Unavailable;
+			#endif
+			int value;
+			size_t value_size = sizeof(value);
+			if (sysctlbyname(query, &value, &value_size, 0, 0) == 0 && (value & 0xF)) return CPUFeatureStatus::Present; else return CPUFeatureStatus::Unavailable;
+		}
 		#endif
 		#ifdef ENGINE_LINUX
 		class SystemAllocator : public IMemoryAllocator
@@ -84,6 +135,11 @@ namespace Engine
 				__builtin___clear_cache(base, base + length);
 			}
 		};
+		CPUFeatureStatus CheckThisMachineCPUFeature(CPUFeature feature)
+		{
+			// TODO: IMPLEMENT
+			return CPUFeatureStatus::Unknown;
+		}
 		#endif
 
 		class Executable : public IExecutable
@@ -103,6 +159,8 @@ namespace Engine
 		class ExecutableLinker : public IExecutableLinker
 		{
 			SafePointer<IMemoryAllocator> _alloc;
+		private:
+			static uint _size_align_16(uint size) { return (size + 0xFU) & 0xFFFFFFF0U; }
 		public:
 			ExecutableLinker(void) { _alloc = new SystemAllocator; }
 			virtual ~ExecutableLinker(void) override {}
@@ -116,7 +174,7 @@ namespace Engine
 					for (auto & f : functions) if (f.value) {
 						exec->_func_table.Append(f.key, reinterpret_cast<void *>(common_code));
 						common_code += f.value->code.Length();
-						common_data += f.value->data.Length();
+						common_data += _size_align_16(f.value->data.Length());
 					}
 					exec->_data = malloc(common_data);
 					exec->_code = _alloc->ExecutableAllocate(common_code);
@@ -134,7 +192,9 @@ namespace Engine
 						auto code_base_ptr = reinterpret_cast<uint8 *>(fe.value);
 						MemoryCopy(code_base_ptr, fs->code.GetBuffer(), fs->code.Length());
 						MemoryCopy(data_base_ptr, fs->data.GetBuffer(), fs->data.Length());
-						data_base += fs->data.Length();
+						auto data_size_aligned = _size_align_16(fs->data.Length());
+						if (data_size_aligned != fs->data.Length()) ZeroMemory(data_base_ptr + fs->data.Length(), data_size_aligned - fs->data.Length());
+						data_base += data_size_aligned;
 						for (auto & cr : fs->code_reloc) {
 							*reinterpret_cast<uintptr *>(code_base_ptr + cr) += reinterpret_cast<uintptr>(code_base_ptr);
 						}

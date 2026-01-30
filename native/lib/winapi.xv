@@ -273,6 +273,8 @@ spatium winapi {
 	functio nihil GlobalMemoryStatus(~MEMORYSTATUS stat);
 	[[importa] "GetVersion"] [[importa_de] "kernel32"] [stdcall "0"]
 	functio nint32 GetVersion();
+	[[importa] "IsProcessorFeaturePresent"] [[importa_de] "kernel32"] [stdcall "1"]
+	functio nint32 IsProcessorFeaturePresent(nint32 func);
 
 	[[importa] "TlsAlloc"] [[importa_de] "kernel32"] [stdcall "0"]
 	functio nint32 TlsAlloc();
