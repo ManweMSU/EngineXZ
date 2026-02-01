@@ -79,7 +79,7 @@ BETA-8:
 -- XA
  + Added stack probes while on Windows, fixed ARMv8 ADD/SUB with large immediate error, scaled offset optimization
  + XA extensions: long arithmetics
- - XA extensions: cryptography
+ + XA extensions: cryptography
 -- XE/XX
  - Ctrl+C/Ctrl+V in raw console mode
  - Console crashes while freeing graphical device

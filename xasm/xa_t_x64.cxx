@@ -17,7 +17,7 @@ namespace Engine
 			{
 				translator_sha2_state _sha_state;
 			private:
-				static bool _is_xmm_register(Reg reg) { return uint(reg) & 0x00FF0000; }
+				static bool _is_xmm_register(Reg reg) { return uint(reg) & 0xFFFF0000U; }
 				static bool _is_pass_by_reference(const ArgumentSpecification & spec) { return _word_align(spec.size) > 8 || spec.semantics == ArgumentSemantics::Object; }
 				static bool _needs_stack_storage(const ArgumentSpecification & spec) { if (_word_align(spec.size) > WordSize) return true; return false; }
 				static uint32 _word_align(const ObjectSize & size) { uint full_size = size.num_bytes + WordSize * size.num_words; return (uint64(full_size) + 7) / 8 * 8; }
@@ -2511,7 +2511,7 @@ namespace Engine
 								for (int i = 0; i < rounds - 1; i++) encode_aes_enc(staging, round_keys[i + 1]);
 								encode_aes_enc_last(staging, round_keys[rounds]);
 								encode_mov_mem_xmm(16, ld.reg, 0, staging);
-								encode_mov_mem_xmm(16, Reg64::RBP, auxoffs, staging);
+								if (chain_cbc) encode_mov_mem_xmm(16, Reg64::RBP, auxoffs, staging);
 							}
 							encode_add(ld.reg, 16);
 							encode_add(len.reg, -16);

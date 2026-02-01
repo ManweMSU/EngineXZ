@@ -2390,7 +2390,7 @@ namespace Engine
 								for (int i = 1; i < rounds; i++) encode_aes_enc(staging_1, round_key_buffer_reg, 16 * i);
 								encode_aes_enc_last(staging_1, round_key_buffer_reg, 16 * rounds);
 								encode_mov_mem_xmm(16, ld.reg, 0, staging_1);
-								encode_mov_xmm_xmm(staging_2, staging_1);
+								if (chain_cbc) encode_mov_xmm_xmm(staging_2, staging_1);
 							}
 							encode_add(ld.reg, 16);
 							encode_add(len.reg, -16);

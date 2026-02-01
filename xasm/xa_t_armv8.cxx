@@ -1,5 +1,6 @@
 ﻿#include "xa_t_armv8.h"
 #include "xa_type_helper.h"
+#include "xa_sha2_commons.h"
 
 namespace Engine
 {
@@ -117,6 +118,7 @@ namespace Engine
 				Volumes::Stack<_local_scope> _scopes;
 				Volumes::Stack<_local_disposition> _init_locals;
 				Array<_arm_global_reference> _global_refs;
+				translator_sha2_state _sha_state;
 
 				static uint32 logarithm(uint32 value) noexcept
 				{
@@ -1996,6 +1998,643 @@ namespace Engine
 						}
 					} else throw InvalidArgumentException();
 				}
+				void _encode_void_result(bool idle, int * mem_load, _internal_disposition * disp)
+				{
+					if (disp->flags & DispositionRegister) {
+						disp->flags = DispositionRegister;
+					} else if (disp->flags & DispositionPointer) {
+						disp->flags = DispositionPointer;
+						(*mem_load) += _word_align(TH::MakeSize(0, 1));
+						if (!idle) {
+							int offs = _allocate_temporary(TH::MakeSize(0, 1));
+							encode_emulate_lea(disp->reg, Reg::FP, offs);
+						}
+					} else if (disp->flags & DispositionDiscard) {
+						disp->flags = DispositionDiscard;
+					}
+				}
+				void _encode_cryptography(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
+				{
+					if (node.self.index == TransformCryptFeature) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 1 || node.input_specs.Length() != 1) throw InvalidArgumentException();
+						if (node.inputs[0].self.ref_flags & ReferenceFlagInvoke) throw InvalidArgumentException();
+						if (node.inputs[0].self.ref_class != ReferenceTransform) throw InvalidArgumentException();
+						auto opcode = node.inputs[0].self.index;
+						auto flags = node.inputs[0].self.ref_flags;
+						auto retval_size = _size_eval(node.retval_spec.size);
+						if (retval_size != 1 && retval_size != 2 && retval_size != 4 && retval_size != 8) throw InvalidArgumentException();
+						// OPERATION
+						if (!idle && disp->reg != Reg::NO) encode_mov_z(disp->reg, 0, 0);
+						// FINALIZATION
+						if (disp->flags & DispositionRegister) {
+							disp->flags = DispositionRegister;
+						} else if (disp->flags & DispositionPointer) {
+							disp->flags = DispositionPointer;
+							(*mem_load) += _word_align(TH::MakeSize(0, 1));
+							if (!idle) _encode_transform_to_pointer(disp->reg, reg_in_use | uint(disp->reg));
+						} else if (disp->flags & DispositionDiscard) {
+							disp->flags = DispositionDiscard;
+						}
+					} else if (node.self.index == TransformCryptRandom) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 2 || node.input_specs.Length() != 2) throw InvalidArgumentException();
+						if (_size_eval(node.input_specs[0].size) != WordSize || _size_eval(node.retval_spec.size)) throw InvalidArgumentException();
+						auto length_size = _size_eval(node.input_specs[1].size);
+						if (length_size != 1 && length_size != 2 && length_size != 4 && length_size != 8) throw InvalidArgumentException();
+						// OPERATION
+						if (!idle) encode_debugger_trap();
+						_encode_void_result(idle, mem_load, disp);
+					} else if (node.self.index == TransformCryptAesEncECB || node.self.index == TransformCryptAesDecECB || node.self.index == TransformCryptAesEncCBC || node.self.index == TransformCryptAesDecCBC) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 4 || node.input_specs.Length() != 4) throw InvalidArgumentException();
+						if (_size_eval(node.input_specs[0].size) != 16 || _size_eval(node.input_specs[1].size) != WordSize || _size_eval(node.retval_spec.size)) throw InvalidArgumentException();
+						auto length_size = _size_eval(node.input_specs[2].size);
+						auto key_size = _size_eval(node.input_specs[3].size);
+						if (length_size != 1 && length_size != 2 && length_size != 4 && length_size != 8) throw InvalidArgumentException();
+						if (key_size != 16 && key_size != 24 && key_size != 32) throw InvalidArgumentException();
+						uint rounds;
+						if (key_size == 16) rounds = 10;
+						else if (key_size == 24) rounds = 12;
+						else if (key_size == 32) rounds = 14;
+						bool decrypt = node.self.index == TransformCryptAesDecECB || node.self.index == TransformCryptAesDecCBC;
+						bool chain_cbc = node.self.index == TransformCryptAesEncCBC || node.self.index == TransformCryptAesDecCBC;
+						// ARGUMENT EVALUATION
+						uint vreg_in_use = 0;
+						VReg round_keys[15];
+						VReg staging, state, state_new;
+						for (uint i = 0; i < rounds + 1; i++) {
+							round_keys[i] = _vreg_alloc(vreg_in_use, vreg_in_use);
+							vreg_in_use |= uint(round_keys[i]);
+						}
+						for (uint i = rounds + 1; i < 15; i++) round_keys[i] = VReg::NO;
+						staging = _vreg_alloc(vreg_in_use, vreg_in_use);
+						if (chain_cbc) {
+							state = _vreg_alloc(vreg_in_use, vreg_in_use | uint(staging));
+							if (decrypt) state_new = _vreg_alloc(vreg_in_use, vreg_in_use | uint(staging) | uint(state));
+							else state_new = VReg::NO;
+						} else state = state_new = VReg::NO;
+						_internal_disposition sd, ld, len, key;
+						sd.reg = _reg_alloc(reg_in_use, 0);
+						ld.reg = _reg_alloc(reg_in_use, uint(sd.reg));
+						len.reg = _reg_alloc(reg_in_use, uint(sd.reg) | uint(ld.reg));
+						key.reg = _reg_alloc(reg_in_use, uint(sd.reg) | uint(ld.reg) | uint(len.reg));
+						sd.flags = key.flags = DispositionPointer;
+						ld.flags = len.flags = DispositionRegister;
+						sd.size = 16;
+						ld.size = WordSize;
+						len.size = length_size;
+						key.size = key_size;
+						Reg aux = _reg_alloc(reg_in_use, uint(sd.reg) | uint(ld.reg) | uint(len.reg) | uint(key.reg));
+						_encode_preserve(uint(sd.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &sd, reg_in_use | uint(sd.reg));
+						_encode_preserve(uint(ld.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &ld, reg_in_use | uint(sd.reg) | uint(ld.reg));
+						_encode_preserve(uint(len.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[2], idle, mem_load, &len, reg_in_use | uint(sd.reg) | uint(ld.reg) | uint(len.reg));
+						_encode_preserve(uint(key.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[3], idle, mem_load, &key, reg_in_use | uint(sd.reg) | uint(ld.reg) | uint(len.reg) | uint(key.reg));
+						_encode_preserve(uint(aux), reg_in_use, 0, !idle);
+						// OPERATION
+						if (!idle) {
+							encode_load(16, round_keys[rounds], key.reg, 0);
+							if (key_size == 24) encode_load(8, round_keys[1], key.reg, 16);
+							else if (key_size == 32) encode_load(16, round_keys[1], key.reg, 16);
+							uint base_round_words = key_size / 4;
+							uint needs_round_words = (rounds + 1) * 4;
+							for (uint w = base_round_words; w < needs_round_words; w += 2) {
+								auto dest_reg = round_keys[w / 4];
+								auto prev1_reg = round_keys[(w - 1) / 4];
+								auto prev2_reg = round_keys[(w - base_round_words) / 4];
+								if (prev1_reg == round_keys[0]) prev1_reg = round_keys[rounds];
+								if (prev2_reg == round_keys[0]) prev2_reg = round_keys[rounds];
+								if (w % base_round_words == 0 || (w % base_round_words == 4 && base_round_words > 6)) {
+									uint rc_i = w / base_round_words;
+									uint rc;
+									switch (rc_i)
+									{
+										case 1: rc = 0x01; break;
+										case 2: rc = 0x02; break;
+										case 3: rc = 0x04; break;
+										case 4: rc = 0x08; break;
+										case 5: rc = 0x10; break;
+										case 6: rc = 0x20; break;
+										case 7: rc = 0x40; break;
+										case 8: rc = 0x80; break;
+										case 9: rc = 0x1B; break;
+										case 10: rc = 0x36; break;
+										default: rc = 0x00; break;
+									}
+									encode_simd_mov_immediate(staging, 0);
+									encode_replicate_element(4, round_keys[0], prev1_reg, (w - 1) % 4);
+									encode_aes_encrypt(staging, round_keys[0]); // staging[*] = SubWords(W[i-1])
+									if (w % base_round_words == 0) {
+										encode_simd_shift_right(4, round_keys[0], staging, 8, false);
+										encode_simd_shift_left(4, staging, staging, 24);
+										encode_simd_xor(staging, staging, round_keys[0]); // staging[*] = SubWords(RotWords(W[i-1]))
+										encode_mov_z(aux, rc, 0);
+										encode_replicate_element(4, round_keys[0], aux);
+										encode_simd_xor(staging, staging, round_keys[0]); // staging[*] = SubWords(RotWords(W[i-1])) xor rc
+									}
+								} else encode_replicate_element(4, staging, prev1_reg, (w - 1) % 4); // staging[*] = W[i-1]
+								encode_simd_xor(staging, staging, prev2_reg);
+								encode_replicate_element(4, staging, staging, (w - base_round_words) % 4); // staging[*] = W[i]
+								encode_mov_element(4, dest_reg, w % 4, staging, 0);
+								encode_simd_xor(staging, staging, prev2_reg); // staging[(w - base_round_words + 1) % 4] = W[i+1]
+								encode_mov_element(4, dest_reg, (w + 1) % 4, staging, (w - base_round_words + 1) % 4);
+							}
+							encode_load(16, round_keys[0], key.reg, 0);
+							if (decrypt) for (int i = 0; i < rounds - 1; i++) encode_aes_inversed_mix_columns(round_keys[i + 1], round_keys[i + 1]);
+							if (chain_cbc) encode_load(16, state, sd.reg, 0);
+							if (length_size != 8) encode_extend(len.reg, len.reg, length_size, false);
+							encode_mov_z(aux, 0xF0, 0);
+							encode_extend(aux, aux, 1, true);
+							_arm_reference jz, jmp;
+							uint jmp_addr = _dest.code.Length();
+							encode_and(Reg::XZ, len.reg, aux, true);
+							encode_branch_jcc(Cond::Z, jz);
+							if (decrypt) {
+								encode_load(16, staging, ld.reg, 0);
+								if (chain_cbc) encode_mov(16, state_new, staging);
+								for (int i = rounds; i > 1; i--) {
+									encode_aes_decrypt(staging, round_keys[i]);
+									encode_aes_inversed_mix_columns(staging, staging);
+								}
+								encode_aes_decrypt(staging, round_keys[1]);
+								encode_simd_xor(staging, staging, round_keys[0]);
+								if (chain_cbc) {
+									encode_simd_xor(staging, staging, state);
+									encode_mov(16, state, state_new);
+								}
+								encode_store(16, ld.reg, 0, staging);
+							} else {
+								encode_load(16, staging, ld.reg, 0);
+								if (chain_cbc) encode_simd_xor(staging, staging, state);
+								for (int i = 0; i < rounds - 1; i++) {
+									encode_aes_encrypt(staging, round_keys[i]);
+									encode_aes_mix_columns(staging, staging);
+								}
+								encode_aes_encrypt(staging, round_keys[rounds - 1]);
+								encode_simd_xor(staging, staging, round_keys[rounds]);
+								encode_store(16, ld.reg, 0, staging);
+								if (chain_cbc) encode_mov(16, state, staging);
+							}
+							encode_add(ld.reg, ld.reg, 16);
+							encode_sub(len.reg, len.reg, 16);
+							encode_branch_jmp(jmp);
+							_encode_resolve_reference(jz, _dest.code.Length());
+							_encode_resolve_reference(jmp, jmp_addr);
+							if (chain_cbc) encode_store(16, sd.reg, 0, state);
+						}
+						// FINALIZATION
+						_encode_restore(uint(aux), reg_in_use, 0, !idle);
+						_encode_restore(uint(key.reg), reg_in_use, 0, !idle);
+						_encode_restore(uint(len.reg), reg_in_use, 0, !idle);
+						_encode_restore(uint(ld.reg), reg_in_use, 0, !idle);
+						_encode_restore(uint(sd.reg), reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
+					} else if (node.self.index == TransformCryptSha224I || node.self.index == TransformCryptSha256I || node.self.index == TransformCryptSha384I || node.self.index == TransformCryptSha512I) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 1 || node.input_specs.Length() != 1) throw InvalidArgumentException();
+						if (_size_eval(node.retval_spec.size)) throw InvalidArgumentException();
+						auto state_size = _size_eval(node.input_specs[0].size);
+						uint data_index;
+						if (node.self.index == TransformCryptSha224I) {
+							if (state_size != 32) throw InvalidArgumentException();
+							data_index = translator_sha2_get_sha224_init_state(_sha_state, _dest);
+						} else if (node.self.index == TransformCryptSha256I) {
+							if (state_size != 32) throw InvalidArgumentException();
+							data_index = translator_sha2_get_sha256_init_state(_sha_state, _dest);
+						} else if (node.self.index == TransformCryptSha384I) {
+							if (state_size != 64) throw InvalidArgumentException();
+							data_index = translator_sha2_get_sha384_init_state(_sha_state, _dest);
+						} else if (node.self.index == TransformCryptSha512I) {
+							if (state_size != 64) throw InvalidArgumentException();
+							data_index = translator_sha2_get_sha512_init_state(_sha_state, _dest);
+						}
+						// ARGUMENT EVALUATION
+						Reg src_ptr = _reg_alloc(reg_in_use, 0);
+						_internal_disposition dest;
+						dest.reg = _reg_alloc(reg_in_use, uint(src_ptr));
+						dest.flags = DispositionPointer;
+						dest.size = state_size;
+						_encode_preserve(uint(dest.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &dest, reg_in_use | uint(dest.reg));
+						_encode_preserve(uint(src_ptr), reg_in_use, 0, !idle);
+						// OPERATION
+						if (!idle) {
+							encode_put_addr_of(src_ptr, TH::MakeRef(ReferenceData, data_index));
+							VReg staging = _vreg_alloc(0, 0); // ARM's canonical order: abcdefgh
+							if (state_size == 32) {
+								encode_load(16, staging, src_ptr, 0);
+								encode_store(16, dest.reg, 0, staging);
+								encode_load(16, staging, src_ptr, 16);
+								encode_store(16, dest.reg, 16, staging);
+							} else {
+								encode_load(16, staging, src_ptr, 0);
+								encode_store(16, dest.reg, 0, staging);
+								encode_load(16, staging, src_ptr, 16);
+								encode_store(16, dest.reg, 16, staging);
+								encode_load(16, staging, src_ptr, 32);
+								encode_store(16, dest.reg, 32, staging);
+								encode_load(16, staging, src_ptr, 48);
+								encode_store(16, dest.reg, 48, staging);
+							}
+						}
+						// FINALIZATION
+						_encode_restore(uint(src_ptr), reg_in_use, 0, !idle);
+						_encode_restore(uint(dest.reg), reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
+					} else if (node.self.index == TransformCryptSha224S || node.self.index == TransformCryptSha256S || node.self.index == TransformCryptSha384S || node.self.index == TransformCryptSha512S) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 3 || node.input_specs.Length() != 3) throw InvalidArgumentException();
+						if (_size_eval(node.input_specs[1].size) != WordSize || _size_eval(node.retval_spec.size)) throw InvalidArgumentException();
+						bool software = (node.self.ref_flags & ReferenceFlagLong) != 0;
+						bool sha512;
+						auto state_size = _size_eval(node.input_specs[0].size);
+						auto length_size = _size_eval(node.input_specs[2].size);
+						if (length_size != 1 && length_size != 2 && length_size != 4 && length_size != 8) throw InvalidArgumentException();
+						uint constant_index, block_size;
+						if (node.self.index == TransformCryptSha224S || node.self.index == TransformCryptSha256S) {
+							if (state_size != 32) throw InvalidArgumentException();
+							constant_index = translator_sha2_get_sha256_words(_sha_state, _dest);
+							sha512 = false;
+							block_size = 64;
+						} else if (node.self.index == TransformCryptSha384S || node.self.index == TransformCryptSha512S) {
+							if (state_size != 64) throw InvalidArgumentException();
+							constant_index = translator_sha2_get_sha512_words(_sha_state, _dest);
+							sha512 = true;
+							block_size = 128;
+						}
+						// ARGUMENT EVALUATION
+						_internal_disposition sd, ld, len;
+						sd.reg = _reg_alloc(reg_in_use, 0);
+						ld.reg = _reg_alloc(reg_in_use, uint(sd.reg));
+						len.reg = _reg_alloc(reg_in_use, uint(sd.reg) | uint(ld.reg));
+						sd.flags = DispositionPointer;
+						ld.flags = len.flags = DispositionRegister;
+						sd.size = state_size;
+						ld.size = WordSize;
+						len.size = length_size;
+						Reg aux = _reg_alloc(reg_in_use, uint(sd.reg) | uint(ld.reg) | uint(len.reg));
+						Reg constant_pointer = _reg_alloc(reg_in_use, uint(sd.reg) | uint(ld.reg) | uint(len.reg) | uint(aux));
+						Reg constant_pointer_fx = _reg_alloc(reg_in_use, uint(sd.reg) | uint(ld.reg) | uint(len.reg) | uint(aux) | uint(constant_pointer));
+						_encode_preserve(uint(sd.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &sd, reg_in_use | uint(sd.reg));
+						_encode_preserve(uint(ld.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[1], idle, mem_load, &ld, reg_in_use | uint(sd.reg) | uint(ld.reg));
+						_encode_preserve(uint(len.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[2], idle, mem_load, &len, reg_in_use | uint(sd.reg) | uint(ld.reg) | uint(len.reg));
+						_encode_preserve(uint(aux) | uint(constant_pointer), reg_in_use, 0, !idle);
+						_encode_preserve(uint(constant_pointer_fx), reg_in_use, 0, !idle && sha512);
+						// OPERATION
+						if (!idle) {
+							uint vreg_in_use = 0;
+							VReg state[4];
+							for (int i = 0; i < 4; i++) {
+								state[i] = _vreg_alloc(vreg_in_use, vreg_in_use);
+								vreg_in_use |= uint(state[i]);
+							}
+							encode_load(16, state[0], sd.reg, 0);
+							encode_load(16, state[1], sd.reg, 16);
+							if (sha512) {
+								encode_load(16, state[2], sd.reg, 32);
+								encode_load(16, state[3], sd.reg, 48);
+							}
+							encode_put_addr_of(constant_pointer, TH::MakeRef(ReferenceData, constant_index));
+							if (length_size != 8) encode_extend(len.reg, len.reg, length_size, false);
+							encode_mov_z(aux, sha512 ? 0x80 : 0xC0, 0);
+							encode_extend(aux, aux, 1, true);
+							_arm_reference jz, jmp;
+							uint jmp_addr = _dest.code.Length();
+							encode_and(Reg::XZ, len.reg, aux, true);
+							encode_branch_jcc(Cond::Z, jz);
+							if (sha512) {
+								VReg ab, cd, ef, gh, words[8], aux[4];
+								ab = _vreg_alloc(vreg_in_use, vreg_in_use);
+								cd = _vreg_alloc(vreg_in_use, vreg_in_use | uint(ab));
+								ef = _vreg_alloc(vreg_in_use, vreg_in_use | uint(ab) | uint(cd));
+								gh = _vreg_alloc(vreg_in_use, vreg_in_use | uint(ab) | uint(cd) | uint(ef));
+								vreg_in_use |= uint(ab) | uint(cd) | uint(ef) | uint(gh);
+								for (int i = 0; i < 8; i++) {
+									words[i] = _vreg_alloc(vreg_in_use, vreg_in_use);
+									vreg_in_use |= uint(words[i]);
+								}
+								for (int i = 0; i < 4; i++) {
+									aux[i] = _vreg_alloc(vreg_in_use, vreg_in_use);
+									vreg_in_use |= uint(aux[i]);
+								}
+								// Loading the state into ab:cd:ef:gh
+								encode_mov(16, ab, state[0]);
+								encode_mov(16, cd, state[1]);
+								encode_mov(16, ef, state[2]);
+								encode_mov(16, gh, state[3]);
+								// Loading the block into words; changing the endianess
+								for (int i = 0; i < 8; i++) {
+									auto w = words[i];
+									encode_load(16, w, ld.reg, 16 * i);
+									encode_simd_reverse_elements(8, 1, w, w);
+								}
+								// Running the rounds
+								for (int r = 0; r < 80; r += 2) {
+									int wri = r / 2;
+									VReg w;
+									if (r >= 16) {
+										w = words[wri % 8];
+										VReg w1 = words[(wri + 1) % 8];
+										VReg w4 = words[(wri + 4) % 8];
+										VReg w5 = words[(wri + 5) % 8];
+										VReg w7 = words[(wri + 7) % 8];
+										if (software) {
+											encode_simd_extract(aux[0], w, w1, 8); // aux[0] = w[r-15]
+											encode_simd_shift_left(8, aux[1], aux[0], 63);
+											encode_simd_shift_right(8, aux[1], aux[0], 1, true);
+											encode_simd_shift_left(8, aux[2], aux[0], 56);
+											encode_simd_shift_right(8, aux[2], aux[0], 8, true);
+											encode_simd_shift_right(8, aux[0], aux[0], 7, false);
+											encode_simd_xor(aux[0], aux[0], aux[1]);
+											encode_simd_xor(aux[0], aux[0], aux[2]); // aux[0] = S0(w[r-15])
+											encode_simd_int_add(8, w, w, aux[0]);
+										} else encode_sha512_schedule_update0(w, w1);
+										encode_simd_extract(aux[0], w4, w5, 8);
+										if (software) {
+											encode_simd_int_add(8, w, w, aux[0]); // w = S0(w[r-15]) + w[r-16] + w[r-7]
+											encode_simd_shift_left(8, aux[1], w7, 45);
+											encode_simd_shift_right(8, aux[1], w7, 19, true);
+											encode_simd_shift_left(8, aux[2], w7, 3);
+											encode_simd_shift_right(8, aux[2], w7, 61, true);
+											encode_simd_shift_right(8, aux[0], w7, 6, false);
+											encode_simd_xor(aux[0], aux[0], aux[1]);
+											encode_simd_xor(aux[0], aux[0], aux[2]); // aux[0] = S1(w[r-2])
+											encode_simd_int_add(8, w, w, aux[0]);
+										} else encode_sha512_schedule_update1(w, w7, aux[0]);
+									} else w = words[wri];
+									if (software) {
+										for (int i = 0; i < 2; i++) {
+											encode_simd_shift_left(8, aux[0], ef, 50);
+											encode_simd_shift_right(8, aux[0], ef, 14, true);
+											encode_simd_shift_left(8, aux[1], ef, 46);
+											encode_simd_shift_right(8, aux[1], ef, 18, true);
+											encode_simd_shift_left(8, aux[2], ef, 23);
+											encode_simd_shift_right(8, aux[2], ef, 41, true);
+											encode_simd_xor(aux[0], aux[0], aux[1]);
+											encode_simd_xor(aux[0], aux[0], aux[2]); // aux[0][0] = S1
+											encode_mov_element(8, aux[1], 0, ef, 1);
+											encode_simd_and(aux[1], aux[1], ef);
+											encode_simd_and_not(aux[2], gh, ef);
+											encode_simd_xor(aux[1], aux[1], aux[2]); // aux[1][0] = ch
+											encode_mov_element(8, aux[2], 0, gh, 1);
+											encode_simd_int_add(8, aux[0], aux[0], aux[1]);
+											encode_simd_int_add(8, aux[0], aux[0], aux[2]); // aux[0][0] = S1 + ch + h
+											encode_add(constant_pointer_fx, constant_pointer, 8 * (r + i));
+											encode_load(8, aux[1], constant_pointer_fx, 0);
+											encode_mov_element(8, aux[2], 0, w, i);
+											encode_simd_int_add(8, aux[0], aux[0], aux[1]);
+											encode_simd_int_add(8, aux[0], aux[0], aux[2]); // aux[0][0] = T1
+											encode_simd_shift_left(8, aux[1], ab, 36);
+											encode_simd_shift_right(8, aux[1], ab, 28, true);
+											encode_simd_shift_left(8, aux[2], ab, 30);
+											encode_simd_shift_right(8, aux[2], ab, 34, true);
+											encode_simd_xor(aux[1], aux[1], aux[2]);
+											encode_simd_shift_left(8, aux[2], ab, 25);
+											encode_simd_shift_right(8, aux[2], ab, 39, true);
+											encode_simd_xor(aux[1], aux[1], aux[2]); // aux[1][0] = S0
+											encode_simd_extract(aux[2], ab, cd, 8);
+											encode_simd_and(aux[2], aux[2], ab);
+											encode_simd_mov_immediate(aux[3], 0);
+											encode_mov_element(8, aux[3], 0, cd, 0);
+											encode_simd_and(aux[3], ab, aux[3]);
+											encode_simd_xor(aux[2], aux[2], aux[3]); // aux[2] = (a AND b XOR a AND c)(b AND c)
+											encode_mov_element(8, aux[3], 0, aux[2], 1);
+											encode_simd_xor(aux[2], aux[2], aux[3]); // aux[2][0] = med(a, b, c)
+											encode_simd_int_add(8, aux[1], aux[1], aux[2]);  // aux[1][0] = T2
+											encode_simd_extract(aux[2], aux[3], aux[0], 8); // aux[2] = 0(T1)
+											encode_mov_element(8, gh, 1, aux[1], 0);
+											encode_simd_int_add(8, gh, gh, aux[2]);
+											encode_simd_int_add(8, cd, cd, aux[2]);
+											encode_mov(16, aux[0], gh);
+											encode_simd_extract(gh, ef, gh, 8);
+											encode_simd_extract(ef, cd, ef, 8);
+											encode_simd_extract(cd, ab, cd, 8);
+											encode_simd_extract(ab, aux[0], ab, 8);
+										}
+									} else {
+										encode_add(constant_pointer_fx, constant_pointer, 8 * r);
+										encode_load(16, aux[0], constant_pointer_fx, 0);
+										encode_simd_int_add(8, aux[0], aux[0], w);
+										encode_simd_extract(aux[0], aux[0], aux[0], 8);
+										encode_simd_extract(aux[1], ef, gh, 8); // aux[1] = fg
+										encode_simd_extract(aux[2], cd, ef, 8); // aux[2] = de
+										encode_simd_int_add(8, aux[0], aux[0], gh);
+										encode_sha512_update_t1(aux[0], aux[1], aux[2]); // aux[0] = T1, reversed
+										encode_mov(16, gh, ef);
+										encode_simd_int_add(8, ef, cd, aux[0]);
+										encode_sha512_update_ab(aux[0], cd, ab);
+										encode_mov(16, cd, ab);
+										encode_mov(16, ab, aux[0]);
+									}
+								}
+								encode_simd_int_add(8, state[0], state[0], ab);
+								encode_simd_int_add(8, state[1], state[1], cd);
+								encode_simd_int_add(8, state[2], state[2], ef);
+								encode_simd_int_add(8, state[3], state[3], gh);
+							} else {
+								VReg abcd, efgh, words[4], aux0 = state[2], aux1 = state[3], aux_sw[3];
+								for (int i = 0; i < 4; i++) {
+									words[i] = _vreg_alloc(vreg_in_use, vreg_in_use);
+									vreg_in_use |= uint(words[i]);
+								}
+								if (software) for (int i = 0; i < 3; i++) {
+									aux_sw[i] = _vreg_alloc(vreg_in_use, vreg_in_use);
+									vreg_in_use |= uint(aux_sw[i]);
+								}
+								abcd = _vreg_alloc(vreg_in_use, vreg_in_use);
+								efgh = _vreg_alloc(vreg_in_use, vreg_in_use | uint(abcd));
+								// Loading the state into abcd:efgh
+								encode_mov(16, abcd, state[0]);
+								encode_mov(16, efgh, state[1]);
+								// Loading the block into words; changing the endianess
+								for (int i = 0; i < 4; i++) {
+									auto w = words[i];
+									encode_load(16, w, ld.reg, 16 * i);
+									encode_simd_reverse_elements(4, 1, w, w);
+								}
+								// Running the rounds
+								for (int r = 0; r < 64; r += 4) {
+									int wri = r / 4;
+									VReg w;
+									if (r >= 16) {
+										w = words[wri % 4];
+										VReg w1 = words[(wri + 1) % 4];
+										VReg w2 = words[(wri + 2) % 4];
+										VReg w3 = words[(wri + 3) % 4];
+										if (software) {
+											encode_simd_extract(aux0, w, w1, 4);
+											encode_simd_shift_left(4, aux1, aux0, 25);
+											encode_simd_shift_right(4, aux1, aux0, 7, true);
+											encode_simd_shift_left(4, aux_sw[0], aux0, 14);
+											encode_simd_shift_right(4, aux_sw[0], aux0, 18, true);
+											encode_simd_shift_right(4, aux0, aux0, 3, false);
+											encode_simd_xor(aux0, aux0, aux1);
+											encode_simd_xor(aux0, aux0, aux_sw[0]);
+											encode_simd_int_add(4, w, w, aux0);
+										} else encode_sha256_schedule_update0(w, w1);
+										// w = S0(w[r-15]) + w[r-16]
+										if (software) {
+											encode_simd_extract(aux0, w2, w3, 4);
+											encode_simd_int_add(4, w, w, aux0);
+											// w = S0(w[r-15]) + w[r-16] + w[r-7]
+											encode_simd_mov_immediate(aux_sw[1], 0);
+											encode_simd_shift_left(4, aux0, w3, 15);
+											encode_simd_shift_right(4, aux0, w3, 17, true);
+											encode_simd_shift_left(4, aux1, w3, 13);
+											encode_simd_shift_right(4, aux1, w3, 19, true);
+											encode_simd_shift_right(4, aux_sw[0], w3, 10, false);
+											encode_simd_xor(aux0, aux0, aux1);
+											encode_simd_xor(aux0, aux0, aux_sw[0]);
+											encode_simd_extract(aux0, aux0, aux_sw[1], 8);
+											encode_simd_int_add(4, w, w, aux0);
+											encode_simd_shift_left(4, aux0, w, 15);
+											encode_simd_shift_right(4, aux0, w, 17, true);
+											encode_simd_shift_left(4, aux1, w, 13);
+											encode_simd_shift_right(4, aux1, w, 19, true);
+											encode_simd_shift_right(4, aux_sw[0], w, 10, false);
+											encode_simd_xor(aux0, aux0, aux1);
+											encode_simd_xor(aux0, aux0, aux_sw[0]);
+											encode_simd_extract(aux0, aux_sw[1], aux0, 8);
+											encode_simd_int_add(4, w, w, aux0);
+										} else encode_sha256_schedule_update1(w, w2, w3);
+										// w = S0(w[r-15]) + w[r-16] + w[r-7] + S1(w[r-2])
+									} else w = words[wri];
+									encode_load(16, aux0, constant_pointer, 4 * r);
+									encode_simd_int_add(4, aux0, aux0, w); // aux0 = w[r..r+3] + k[r..r+3]
+									if (software) {
+										for (int i = 0; i < 4; i++) {
+											encode_simd_shift_left(4, aux1, efgh, 26);
+											encode_simd_shift_right(4, aux1, efgh, 6, true);
+											encode_simd_shift_left(4, aux_sw[0], efgh, 21);
+											encode_simd_shift_right(4, aux_sw[0], efgh, 11, true);
+											encode_simd_shift_left(4, aux_sw[1], efgh, 7);
+											encode_simd_shift_right(4, aux_sw[1], efgh, 25, true);
+											encode_simd_xor(aux1, aux1, aux_sw[0]);
+											encode_simd_xor(aux1, aux1, aux_sw[1]); // aux1[0] = S1
+											encode_mov_element(4, aux_sw[0], 0, efgh, 1);
+											encode_mov_element(4, aux_sw[1], 0, efgh, 2);
+											encode_simd_and(aux_sw[0], aux_sw[0], efgh);
+											encode_simd_and_not(aux_sw[1], aux_sw[1], efgh);
+											encode_simd_xor(aux_sw[0], aux_sw[0], aux_sw[1]); // aux_sw[0][0] = ch
+											encode_mov_element(4, aux_sw[1], 0, efgh, 3);
+											encode_simd_int_add(4, aux1, aux1, aux0);
+											encode_simd_int_add(4, aux_sw[0], aux_sw[0], aux_sw[1]);
+											encode_simd_int_add(4, aux1, aux1, aux_sw[0]); // aux1[0] = T1
+											encode_simd_shift_left(4, aux_sw[0], abcd, 30);
+											encode_simd_shift_right(4, aux_sw[0], abcd, 2, true);
+											encode_simd_shift_left(4, aux_sw[1], abcd, 19);
+											encode_simd_shift_right(4, aux_sw[1], abcd, 13, true);
+											encode_simd_xor(aux_sw[0], aux_sw[0], aux_sw[1]);
+											encode_simd_shift_left(4, aux_sw[1], abcd, 10);
+											encode_simd_shift_right(4, aux_sw[1], abcd, 22, true);
+											encode_simd_xor(aux_sw[0], aux_sw[0], aux_sw[1]); // aux_sw[0][0] = S0
+											encode_simd_mov_immediate(aux_sw[2], 0);
+											encode_simd_extract(aux_sw[1], abcd, aux_sw[2], 4); // aux_sw[1] = bcd0
+											encode_mov_element(4, aux_sw[1], 2, abcd, 0); // aux_sw[1] = bca0
+											encode_simd_and(aux_sw[1], aux_sw[1], abcd); // aux_sw[1] = (a AND b)(b AND c)(c AND a)0
+											encode_mov_element(4, aux_sw[2], 0, aux_sw[1], 2);
+											encode_simd_xor(aux_sw[1], aux_sw[1], aux_sw[2]); // aux_sw[1] = (a AND b XOR c AND a)(b AND c)(c AND a)0
+											encode_mov_element(4, aux_sw[2], 0, aux_sw[1], 1); // aux_sw[2] = *000
+											encode_simd_xor(aux_sw[1], aux_sw[1], aux_sw[2]); // aux_sw[1][0] = med(a, b, c)
+											encode_simd_int_add(4, aux_sw[0], aux_sw[0], aux_sw[1]); // aux_sw[0][0] = T2
+											encode_mov_element(4, aux_sw[2], 0, aux1, 0); // aux_sw[2][0] = T1
+											encode_simd_extract(aux_sw[2], aux_sw[2], aux_sw[2], 4); // aux_sw[2] = 000(T1)
+											encode_mov_element(4, efgh, 3, aux_sw[0], 0);
+											encode_simd_int_add(4, abcd, abcd, aux_sw[2]);
+											encode_simd_int_add(4, efgh, efgh, aux_sw[2]);
+											encode_mov(16, aux1, abcd);
+											encode_simd_extract(abcd, efgh, abcd, 12);
+											encode_simd_extract(efgh, aux1, efgh, 12);
+											if (i < 3) encode_simd_extract(aux0, aux0, aux0, 4);
+										}
+									} else {
+										encode_mov(16, aux1, abcd);
+										encode_sha256_update_abcd(abcd, efgh, aux0);
+										encode_sha256_update_efgh(efgh, aux1, aux0);
+									}
+								}
+								encode_simd_int_add(4, state[0], state[0], abcd);
+								encode_simd_int_add(4, state[1], state[1], efgh);
+							}
+							encode_add(ld.reg, ld.reg, block_size);
+							encode_sub(len.reg, len.reg, block_size);
+							encode_branch_jmp(jmp);
+							_encode_resolve_reference(jz, _dest.code.Length());
+							_encode_resolve_reference(jmp, jmp_addr);
+							encode_store(16, sd.reg, 0, state[0]);
+							encode_store(16, sd.reg, 16, state[1]);
+							if (sha512) {
+								encode_store(16, sd.reg, 32, state[2]);
+								encode_store(16, sd.reg, 48, state[3]);
+							}
+						}
+						// FINALIZATION
+						_encode_restore(uint(constant_pointer_fx), reg_in_use, 0, !idle && sha512);
+						_encode_restore(uint(aux) | uint(constant_pointer), reg_in_use, 0, !idle);
+						_encode_restore(uint(len.reg), reg_in_use, 0, !idle);
+						_encode_restore(uint(ld.reg), reg_in_use, 0, !idle);
+						_encode_restore(uint(sd.reg), reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
+					} else if (node.self.index == TransformCryptSha224F || node.self.index == TransformCryptSha256F || node.self.index == TransformCryptSha384F || node.self.index == TransformCryptSha512F) {
+						// ARGUMENT VALIDATION
+						if (node.inputs.Length() != 1 || node.input_specs.Length() != 1) throw InvalidArgumentException();
+						if (_size_eval(node.retval_spec.size)) throw InvalidArgumentException();
+						auto state_size = _size_eval(node.input_specs[0].size);
+						bool sha512;
+						if (node.self.index == TransformCryptSha224F || node.self.index == TransformCryptSha256F) {
+							if (state_size != 32) throw InvalidArgumentException();
+							sha512 = false;
+						} else if (node.self.index == TransformCryptSha384F || node.self.index == TransformCryptSha512F) {
+							if (state_size != 64) throw InvalidArgumentException();
+							sha512 = true;
+						}
+						// ARGUMENT EVALUATION
+						_internal_disposition dest;
+						dest.reg = _reg_alloc(reg_in_use, 0);
+						dest.flags = DispositionPointer;
+						dest.size = state_size;
+						_encode_preserve(uint(dest.reg), reg_in_use, 0, !idle);
+						_encode_tree_node(node.inputs[0], idle, mem_load, &dest, reg_in_use | uint(dest.reg));
+						// OPERATION
+						if (!idle) {
+							if (state_size == 32) {
+								VReg staging = _vreg_alloc(0, 0);
+								// Performing byte order swap
+								encode_load(16, staging, dest.reg, 0);
+								encode_simd_reverse_elements(4, 1, staging, staging);
+								encode_store(16, dest.reg, 0, staging);
+								encode_load(16, staging, dest.reg, 16);
+								encode_simd_reverse_elements(4, 1, staging, staging);
+								encode_store(16, dest.reg, 16, staging);
+							} else {
+								VReg staging = _vreg_alloc(0, 0);
+								// Performing byte order swap
+								encode_load(16, staging, dest.reg, 0);
+								encode_simd_reverse_elements(8, 1, staging, staging);
+								encode_store(16, dest.reg, 0, staging);
+								encode_load(16, staging, dest.reg, 16);
+								encode_simd_reverse_elements(8, 1, staging, staging);
+								encode_store(16, dest.reg, 16, staging);
+								encode_load(16, staging, dest.reg, 32);
+								encode_simd_reverse_elements(8, 1, staging, staging);
+								encode_store(16, dest.reg, 32, staging);
+								encode_load(16, staging, dest.reg, 48);
+								encode_simd_reverse_elements(8, 1, staging, staging);
+								encode_store(16, dest.reg, 48, staging);
+							}
+						}
+						// FINALIZATION
+						_encode_restore(uint(dest.reg), reg_in_use, 0, !idle);
+						_encode_void_result(idle, mem_load, disp);
+					} else throw InvalidArgumentException();
+				}
 				void _encode_tree_node(const ExpressionTree & node, bool idle, int * mem_load, _internal_disposition * disp, uint reg_in_use)
 				{
 					if (node.self.ref_flags & ReferenceFlagInvoke) {
@@ -2384,13 +3023,10 @@ namespace Engine
 								} else _encode_floating_point_ir(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x100 && node.self.index < 0x180) {
 								throw InvalidArgumentException();
-								// _encode_preserve(reg_in_use, reg_in_use, 0, !idle);
-								// _encode_restore(reg_in_use, reg_in_use, 0, !idle);
 							} else if (node.self.index >= 0x200 && node.self.index < 0x2FF) {
 								_encode_long_arithmetics(node, idle, mem_load, disp, reg_in_use);
 							} else if (node.self.index >= 0x300 && node.self.index < 0x3FF) {
-
-
+								_encode_cryptography(node, idle, mem_load, disp, reg_in_use);
 							} else throw InvalidArgumentException();
 						} else {
 							_encode_general_call(node, idle, mem_load, disp, reg_in_use);
@@ -2439,6 +3075,7 @@ namespace Engine
 					_org_inst_offsets.SetLength(_src.instset.Length());
 					_inputs.SetLength(_src.inputs.Length());
 					_current_instruction = _allocated_frame_size = 0;
+					translator_sha2_state_init(_sha_state);
 				}
 				void encode_uint32(uint32 word) { _dest.code << word; _dest.code << (word >> 8); _dest.code << (word >> 16); _dest.code << (word >> 24); }
 				void encode_uint64(uint64 word) { encode_uint32(word); encode_uint32(word >> 32); }
@@ -2783,6 +3420,22 @@ namespace Engine
 					opcode |= (di << 16) | (si << 11);
 					encode_uint32(opcode);
 				}
+				void encode_mov_element(uint quant, VReg dest, uint dest_index, Reg src)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x4E001C00;
+					uint di;
+					if (quant == 8) {
+						di = ((dest_index & 0x1) << 4) | 0x8;
+					} else if (quant == 4) {
+						di = ((dest_index & 0x3) << 3) | 0x4;
+					} else if (quant == 2) {
+						di = ((dest_index & 0x7) << 2) | 0x2;
+					} else if (quant == 1) {
+						di = ((dest_index & 0xF) << 1) | 0x1;
+					} else throw InvalidArgumentException();
+					opcode |= (di << 16);
+					encode_uint32(opcode);
+				}
 				void encode_mov(uint quant, VReg dest, Reg src)
 				{
 					uint opcode;
@@ -2801,6 +3454,34 @@ namespace Engine
 					} else if (quant == 4) {
 						opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x1E260000;
 					} else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_replicate_element(uint quant, VReg dest, VReg src, uint src_index)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x4E000400;
+					uint si;
+					if (quant == 8) {
+						si = ((src_index & 0x1) << 4) | 0x8;
+					} else if (quant == 4) {
+						si = ((src_index & 0x3) << 3) | 0x4;
+					} else if (quant == 2) {
+						si = ((src_index & 0x7) << 2) | 0x2;
+					} else if (quant == 1) {
+						si = ((src_index & 0xF) << 1) | 0x1;
+					} else throw InvalidArgumentException();
+					opcode |= (si << 16);
+					encode_uint32(opcode);
+				}
+				void encode_replicate_element(uint quant, VReg dest, Reg src)
+				{
+					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x4E000C00;
+					uint si;
+					if (quant == 8) si = 0x8;
+					else if (quant == 4) si = 0x4;
+					else if (quant == 2) si = 0x2;
+					else if (quant == 1) si = 0x1;
+					else throw InvalidArgumentException();
+					opcode |= (si << 16);
 					encode_uint32(opcode);
 				}
 				void encode_branch_call(Reg routine) { encode_uint32((_reg_code(routine) << 5) | 0xD63F0000); }
@@ -2979,6 +3660,31 @@ namespace Engine
 					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x6E205800;
 					encode_uint32(opcode);
 				}
+				void encode_simd_and(VReg dest, VReg a, VReg b)
+				{
+					uint opcode = 0x4E201C00 | _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16);
+					encode_uint32(opcode);
+				}
+				void encode_simd_and_not(VReg dest, VReg a, VReg b)
+				{
+					uint opcode = 0x4E601C00 | _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16);
+					encode_uint32(opcode);
+				}
+				void encode_simd_xor(VReg dest, VReg a, VReg b)
+				{
+					uint opcode = 0x6E201C00 | _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16);
+					encode_uint32(opcode);
+				}
+				void encode_simd_or(VReg dest, VReg a, VReg b)
+				{
+					uint opcode = 0x4EA01C00 | _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16);
+					encode_uint32(opcode);
+				}
+				void encode_simd_or_not(VReg dest, VReg a, VReg b)
+				{
+					uint opcode = 0x4EE01C00 | _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16);
+					encode_uint32(opcode);
+				}
 				void encode_simd_shr(uint quant, VReg dest, VReg src)
 				{
 					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x6F010400;
@@ -3075,6 +3781,63 @@ namespace Engine
 					uint opcode = 0x6F00E400 | _reg_code(dest) | ((uint32(abcdefgh) & 0x1F) << 5) | ((uint32(abcdefgh) & 0xE0) << 11);
 					encode_uint32(opcode);
 				}
+				void encode_simd_int_add(uint quant, VReg dest, VReg a, VReg b)
+				{
+					uint opcode = 0x4E208400 | _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16);
+					if (quant == 8) opcode |= 0x00C00000;
+					else if (quant == 4) opcode |= 0x00800000;
+					else if (quant == 2) opcode |= 0x00400000;
+					else if (quant != 1) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_int_sub(uint quant, VReg dest, VReg a, VReg b)
+				{
+					uint opcode = 0x6E208400 | _reg_code(dest) | (_reg_code(a) << 5) | (_reg_code(b) << 16);
+					if (quant == 8) opcode |= 0x00C00000;
+					else if (quant == 4) opcode |= 0x00800000;
+					else if (quant == 2) opcode |= 0x00400000;
+					else if (quant != 1) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_shift_right(uint quant, VReg dest, VReg src, uint rot, bool accumulate)
+				{
+					uint opcode = 0x6F000400 | _reg_code(dest) | (_reg_code(src) << 5);
+					if (quant == 1) opcode |= (((8 - rot) & 0x07) | 0x08) << 16;
+					else if (quant == 2) opcode |= (((16 - rot) & 0x0F) | 0x10) << 16;
+					else if (quant == 4) opcode |= (((32 - rot) & 0x1F) | 0x20) << 16;
+					else if (quant == 8) opcode |= (((64 - rot) & 0x3F) | 0x40) << 16;
+					else throw InvalidArgumentException();
+					if (accumulate) opcode |= 0x1000;
+					encode_uint32(opcode);
+				}
+				void encode_simd_shift_left(uint quant, VReg dest, VReg src, uint rot)
+				{
+					uint opcode = 0x4F005400 | _reg_code(dest) | (_reg_code(src) << 5);
+					if (quant == 1) opcode |= ((rot & 0x07) | 0x08) << 16;
+					else if (quant == 2) opcode |= ((rot & 0x0F) | 0x10) << 16;
+					else if (quant == 4) opcode |= ((rot & 0x1F) | 0x20) << 16;
+					else if (quant == 8) opcode |= ((rot & 0x3F) | 0x40) << 16;
+					else throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_reverse_elements(uint block_quant, uint element_quant, VReg dest, VReg src)
+				{
+					uint opcode = 0x4E200800 | _reg_code(dest) | (_reg_code(src) << 5);
+					if (block_quant == 2) opcode |= 0x00001000;
+					else if (block_quant == 4) opcode |= 0x20000000;
+					else if (block_quant != 8) throw InvalidArgumentException();
+					if (element_quant >= block_quant) throw InvalidArgumentException();
+					if (element_quant == 4) opcode |= 0x00800000;
+					else if (element_quant == 2) opcode |= 0x00400000;
+					else if (element_quant != 1) throw InvalidArgumentException();
+					encode_uint32(opcode);
+				}
+				void encode_simd_extract(VReg dest, VReg src_lo, VReg src_hi, uint byte_offset)
+				{
+					uint opcode = 0x6E000000 | _reg_code(dest) | (_reg_code(src_lo) << 5) | (_reg_code(src_hi) << 16);
+					opcode |= (byte_offset & 0xF) << 11;
+					encode_uint32(opcode);
+				}
 				void encode_convert_to_integer(uint dest_quant, Reg dest, uint src_quant, VReg src, bool sgn)
 				{
 					uint opcode = _reg_code(dest) | (_reg_code(src) << 5) | 0x1E380000;
@@ -3106,6 +3869,34 @@ namespace Engine
 					else throw InvalidArgumentException();
 					encode_uint32(opcode);
 				}
+				void encode_aes_encrypt(VReg dest, VReg src)
+				{
+					uint opcode = 0x4E284800 | _reg_code(dest) | (_reg_code(src) << 5);
+					encode_uint32(opcode);
+				}
+				void encode_aes_decrypt(VReg dest, VReg src)
+				{
+					uint opcode = 0x4E285800 | _reg_code(dest) | (_reg_code(src) << 5);
+					encode_uint32(opcode);
+				}
+				void encode_aes_mix_columns(VReg dest, VReg src)
+				{
+					uint opcode = 0x4E286800 | _reg_code(dest) | (_reg_code(src) << 5);
+					encode_uint32(opcode);
+				}
+				void encode_aes_inversed_mix_columns(VReg dest, VReg src)
+				{
+					uint opcode = 0x4E287800 | _reg_code(dest) | (_reg_code(src) << 5);
+					encode_uint32(opcode);
+				}
+				void encode_sha256_schedule_update0(VReg dest_src_w0, VReg src_w1) { encode_uint32(0x5E282800 | _reg_code(dest_src_w0) | (_reg_code(src_w1) << 5)); }
+				void encode_sha256_schedule_update1(VReg dest_acc, VReg src_w2, VReg src_w3) { encode_uint32(0x5E006000 | _reg_code(dest_acc) | (_reg_code(src_w2) << 5) | (_reg_code(src_w3) << 16)); }
+				void encode_sha256_update_abcd(VReg dest_src_abcd, VReg src_efgh, VReg src_wk) { encode_uint32(0x5E004000 | _reg_code(dest_src_abcd) | (_reg_code(src_efgh) << 5) | (_reg_code(src_wk) << 16)); }
+				void encode_sha256_update_efgh(VReg dest_src_efgh, VReg src_abcd, VReg src_wk) { encode_uint32(0x5E005000 | _reg_code(dest_src_efgh) | (_reg_code(src_abcd) << 5) | (_reg_code(src_wk) << 16)); }
+				void encode_sha512_schedule_update0(VReg dest_src_w0, VReg src_w1) { encode_uint32(0xCEC08000 | _reg_code(dest_src_w0) | (_reg_code(src_w1) << 5)); }
+				void encode_sha512_schedule_update1(VReg dest_acc, VReg src_w7, VReg src_w4w5) { encode_uint32(0xCE608800 | _reg_code(dest_acc) | (_reg_code(src_w7) << 5) | (_reg_code(src_w4w5) << 16)); }
+				void encode_sha512_update_t1(VReg dest_src_wk_reversed_gh, VReg src_fg, VReg src_de) { encode_uint32(0xCE608000 | _reg_code(dest_src_wk_reversed_gh) | (_reg_code(src_fg) << 5) | (_reg_code(src_de) << 16)); }
+				void encode_sha512_update_ab(VReg dest_src_t1_reversed, VReg src_cd, VReg src_ab) { encode_uint32(0xCE608400 | _reg_code(dest_src_t1_reversed) | (_reg_code(src_cd) << 5) | (_reg_code(src_ab) << 16)); }
 				void encode_put_global_address(Reg dest, const ObjectReference & value)
 				{
 					_arm_global_reference ref;
