@@ -378,12 +378,13 @@ namespace Engine
 			for (auto & m : _modules) if (m.key == name) { auto ref = m.value.Inner(); _sync->Open(); return ref; }
 			if (!_callback) { _sync->Open(); return 0; }
 			ILoaderCallback * callback = _callback;
-			SafePointer<Streaming::Stream> input = callback->OpenModule(name);
+			uintptr module_stream_context;
+			SafePointer<Streaming::Stream> input = callback->OpenModule(name, module_stream_context);
 			if (!input) callback->HandleModuleLoadError(name, L"", ModuleLoadError::NoSuchModule);
 			_sync->Open();
-			return LoadModule(name, input);
+			return LoadModule(name, input, module_stream_context);
 		}
-		const Module * ExecutionContext::LoadModule(const string & name, Streaming::Stream * input) noexcept
+		const Module * ExecutionContext::LoadModule(const string & name, Streaming::Stream * input, uintptr module_stream_context) noexcept
 		{
 			if (!input) return 0;
 			_sync->Wait();
@@ -391,7 +392,7 @@ namespace Engine
 			_sync->Open();
 			SafePointer<XI::Module> data;
 			SafePointer<Module> result;
-			auto trust = callback->EvaluateTrust(input);
+			auto trust = callback->EvaluateTrust(input, module_stream_context);
 			if (trust != ModuleLoadError::Success) {
 				_sync->Wait();
 				callback->HandleModuleLoadError(name, L"", trust);
@@ -429,7 +430,7 @@ namespace Engine
 					XI::ReadResourceID(rsrc.key, type, id);
 					auto mpn = result->_name + L":" + type + L":" + string(id);
 					SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(rsrc.value->GetBuffer(), rsrc.value->Length());
-					if (!LoadModule(mpn, stream)) return 0;
+					if (!LoadModule(mpn, stream, module_stream_context)) return 0;
 				} catch (...) {
 					_sync->Wait();
 					callback->HandleModuleLoadError(name, L"", ModuleLoadError::AllocationFailure);

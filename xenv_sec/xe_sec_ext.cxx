@@ -1,6 +1,8 @@
 ﻿#include "xe_sec_ext.h"
 #include "xe_sec_arithm.h"
 #include "xe_sec_rsa.h"
+#include "xe_sec_xaa.h"
+#include "xe_sec_quarantine.h"
 #include "../xenv/xe_interfaces.h"
 
 namespace Engine
@@ -128,16 +130,24 @@ namespace Engine
 
 			class SecurityExtension : public ISecurityExtension
 			{
+				SafePointer<ICryptographyAcceleration> _accel;
 				SafePointer<ITrustProvider> _trust;
-				bool _needs_trusted_chain;
+				SecurityLevel _security_level;
 			public:
-				SecurityExtension(ITrustProvider * trust, bool needs_trusted_chain) : _needs_trusted_chain(needs_trusted_chain) { _trust.SetRetain(trust); }
-				virtual ~SecurityExtension(void) override {}
-				virtual ModuleLoadError EvaluateTrust(const void * module_data, int module_length, Streaming::Stream * residual) noexcept override
+				SecurityExtension(ITrustProvider * trust, SecurityLevel security_level) : _security_level(security_level)
 				{
-					SafePointer<IContainer> signature = LoadContainer(residual);
+					_trust.SetRetain(trust);
+					SafePointer<XA::IAssemblyTranslator> trs = XA::CreatePlatformTranslator();
+					SafePointer<XA::IExecutableLinker> lnk = XA::CreateLinker();
+					if (trs && lnk) _accel = XA::Security::CreateSyntheticCryptographyAcceleration(trs, lnk);
+				}
+				virtual ~SecurityExtension(void) override {}
+				virtual ModuleLoadError EvaluateTrust(const void * module_data, int module_length, uintptr module_stream_context, Streaming::Stream * residual) noexcept override
+				{
+					bool needs_trusted_chain = _security_level == SecurityLevel::ValidateAll || (_security_level == SecurityLevel::ValidateQuarantine && module_stream_context);
+					SafePointer<IContainer> signature = LoadContainer(residual, _accel);
 					if (!signature) {
-						if (_needs_trusted_chain) return ModuleLoadError::ModuleTrustCompromised;
+						if (needs_trusted_chain) return ModuleLoadError::ModuleTrustCompromised;
 						else return ModuleLoadError::Success;
 					}
 					SafePointer<DataBlock> hash;
@@ -145,10 +155,17 @@ namespace Engine
 					if (!hash) return ModuleLoadError::AllocationFailure;
 					IntegrityValidationDesc desc;
 					auto trust = EvaluateIntegrity(hash, signature, Time::GetCurrentTime(), _trust, &desc);
-					if (trust == TrustStatus::Untrusted || (trust == TrustStatus::Undefined & _needs_trusted_chain)) {
+					if (trust == TrustStatus::Untrusted || (trust == TrustStatus::Undefined && needs_trusted_chain)) {
 						if (desc.object == IntegrityStatus::DataCorruption) return ModuleLoadError::ModuleConsistencyCompromised;
 						else return ModuleLoadError::ModuleTrustCompromised;
 					} else return ModuleLoadError::Success;
+				}
+				virtual uintptr EvaluateTrustContext(const string & file) noexcept override
+				{
+					try {
+						if (_security_level == SecurityLevel::ValidateQuarantine) return IsFileOnQuarantine(file) ? 1 : 0;
+						else return 0;
+					} catch (...) { return 1; }
 				}
 			};
 			class SecurityAPI : public IAPIExtension
@@ -323,7 +340,7 @@ namespace Engine
 				}
 				virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }
 			};
-			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, bool needs_trusted_chain) noexcept { try { return new SecurityExtension(trust, needs_trusted_chain); } catch (...) { return 0; } }
+			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, SecurityLevel security_level) noexcept { try { return new SecurityExtension(trust, security_level); } catch (...) { return 0; } }
 			void ActivateSecurityAPI(StandardLoader & ldr)
 			{
 				SafePointer<IAPIExtension> ext = new SecurityAPI;

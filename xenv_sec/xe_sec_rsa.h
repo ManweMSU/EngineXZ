@@ -8,8 +8,8 @@ namespace Engine
 	{
 		namespace Security
 		{
-			IKey * LoadKeyRSA(const DataBlock * representation) noexcept;
-			bool CreateKeyRSA(const void * pdata, int plength, const void * qdata, int qlength, uint64 pexp, IKey ** key_prvt) noexcept;
+			IKey * LoadKeyRSA(const DataBlock * representation, ICryptographyAcceleration * acceleration = 0) noexcept;
+			bool CreateKeyRSA(const void * pdata, int plength, const void * qdata, int qlength, uint64 pexp, IKey ** key_prvt, ICryptographyAcceleration * acceleration = 0) noexcept;
 		}
 	}
 }

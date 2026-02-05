@@ -72,6 +72,7 @@ resource string SettingsTitle		[ _ ru ] { "XX security settings" "Настрой
 resource string SettingsTrusted		[ _ ru ] { "Trusted certificate folder:" "Каталог доверенных сертификатов:" }
 resource string SettingsUntrusted	[ _ ru ] { "Untrusted certificate folder:" "Каталог недоверенных сертификатов:" }
 resource string SettingsValidate	[ _ ru ] { "Validate trust to modules being loaded" "Проверять доверие загружаемым модулям" }
+resource string SettingsValidateQr	[ _ ru ] { "Validate trust to quarantined modules" "Проверять доверие модулям в карантине" }
 resource string SettingsApply		[ _ ru ] { "Apply" "Применить" }
 resource string SettingsCancel		[ _ ru ] { "Cancel" "Отмена" }
 resource string SettingsView		[ _ ru ] { "View" "Показать" }
@@ -99,9 +100,9 @@ dialog Intro { DialogFrame {
 } }
 dialog CreateCert { DialogFrame {
 	Captioned Title CreateTitle Sizeble CloseButton MinimizeButton
-	MinimalWidth z 400 MinimalHeight z 300 MaximalWidth z 600 MaximalHeight z 600
-	position { 0, 0, z 600, z 440 }
-	BookmarkView { position { z 5, z 5, w 1 z -5, w 1 z -38 } ID 100
+	MinimalWidth z 400 MinimalHeight z 300 MaximalWidth z 610 MaximalHeight z 610
+	position { 0, 0, z 610, z 450 }
+	BookmarkView { position { z 10, z 10, w 1 z -10, w 1 z -43 } ID 100
 		Bookmark {
 			position { 0, 0, z 100, 0 } Text CreateTabCert
 			ScrollBox { position parent VerticalLine z 33
@@ -155,15 +156,15 @@ dialog CreateCert { DialogFrame {
 			}
 		}
 	}
-	ControlGroup { position { z 5, z 5, w 1 z -5, w 1 z -38 } style WaffleFrame ID 1000 Invisible
+	ControlGroup { position { z 10, z 10, w 1 z -10, w 1 z -43 } style WaffleFrame ID 1000 Invisible
 		RichEdit { position { z 5, z 5, w 1 z -5, w 1 z -5 } ID 1001 ReadOnly DontCopyAttributes }
 	}
 	Button {
-		position { z 5, w 1 z -33, z 105, w 1 z -5 }
+		position { z 10, w 1 z -38, z 110, w 1 z -10 }
 		Text CreateButtonCancel ID 2
 	}
 	Button {
-		position { w 1 z -105, w 1 z -33, w 1 z -5, w 1 z -5 }
+		position { w 1 z -110, w 1 z -38, w 1 z -10, w 1 z -10 }
 		Text CreateButtonCreate ID 1
 	}
 } }
@@ -171,7 +172,7 @@ dialog ViewStore { DialogFrame {
 	Captioned Title ViewTitle Sizeble CloseButton MinimizeButton MaximizeButton
 	MinimalWidth z 400 MinimalHeight z 300
 	position { 0, 0, w 0.6, w 0.6 }
-	HorizontalSplitBox { position { z 5, z 5, w 1 z -5, w 1 z -5 }
+	HorizontalSplitBox { position { z 10, z 10, w 1 z -10, w 1 z -10 }
 		SplitBoxPart { position { 0, 0, z 200, 0 } MinimalSize z 150 TreeView { position parent ID 101 } }
 		SplitBoxPart { position { 0, 0, z 200, 0 } MinimalSize z 150 Stretch ControlGroup { position parent style WaffleFrame
 			RichEdit { position { z 5, z 5, w 1 z -5, w 1 z -5 } ID 102 ReadOnly DontCopyAttributes DefaultFontFace "@serif mono" }
@@ -179,39 +180,40 @@ dialog ViewStore { DialogFrame {
 	}
 } }
 dialog PasswordInput { DialogFrame {
-	Captioned CloseButton position { 0, 0, z 350, z 114 }
-	ControlGroup { position { z 5, z 5, w 1 z -5, z 76 } style WaffleFrame
+	Captioned CloseButton position { 0, 0, z 360, z 124 }
+	ControlGroup { position { z 10, z 10, w 1 z -10, z 81 } style WaffleFrame
 		Static { position { z 5, z 5, w 1 z -5, z 33 } Text PasswordTitle }
 		Edit { position { z 5, z 38, w 1 z -5, z 66 } ID 101 Password }
 	}
 	Button {
-		position { z 5, w 1 z -33, z 105, w 1 z -5 }
+		position { z 10, w 1 z -38, z 110, w 1 z -10 }
 		Text PasswordCancel ID 2
 	}
 	Button {
-		position { w 1 z -105, w 1 z -33, w 1 z -5, w 1 z -5 }
+		position { w 1 z -110, w 1 z -38, w 1 z -10, w 1 z -10 }
 		Text PasswordEnter ID 1
 	}
 } }
 dialog Settings { DialogFrame {
 	Captioned Title SettingsTitle Sizeble CloseButton MinimizeButton
 	MinimalWidth z 500 MinimalHeight z 147 MaximalWidth z 1200 MaximalHeight z 147
-	position { 0, 0, z 600, z 147 }
-	ControlGroup { position { z 5, z 5, w 1 z -5, z 109 } style WaffleFrame
+	position { 0, 0, z 610, z 190 }
+	ControlGroup { position { z 10, z 10, w 1 z -10, z 147 } style WaffleFrame
 		CheckBox { position { z 5, z 5, w 1 z -5, z 33 } Text SettingsValidate ID 101 }
-		Static { position { z 5, z 38, z 305, z 66 } Text SettingsTrusted }
-		Edit { position { z 305, z 38, w 1 z -110, z 66 } ID 102 }
-		Button { position { w 1 z -105, z 38, w 1 z -5, z 66 } ID 202 Text SettingsView }
-		Static { position { z 5, z 71, z 305, z 99 } Text SettingsUntrusted }
-		Edit { position { z 305, z 71, w 1 z -110, z 99 } ID 103 }
-		Button { position { w 1 z -105, z 71, w 1 z -5, z 99 } ID 203 Text SettingsView }
+		CheckBox { position { z 5, z 38, w 1 z -5, z 66 } Text SettingsValidateQr ID 104 }
+		Static { position { z 5, z 71, z 305, z 99 } Text SettingsTrusted }
+		Edit { position { z 305, z 71, w 1 z -110, z 99 } ID 102 }
+		Button { position { w 1 z -105, z 71, w 1 z -5, z 99 } ID 202 Text SettingsView }
+		Static { position { z 5, z 104, z 305, z 132 } Text SettingsUntrusted }
+		Edit { position { z 305, z 104, w 1 z -110, z 132 } ID 103 }
+		Button { position { w 1 z -105, z 104, w 1 z -5, z 132 } ID 203 Text SettingsView }
 	}
 	Button {
-		position { z 5, z 114, z 105, z 142 }
+		position { z 10, z 152, z 110, z 180 }
 		Text SettingsCancel ID 2
 	}
 	Button {
-		position { w 1 z -105, z 114, w 1 z -5, z 142 }
+		position { w 1 z -110, z 152, w 1 z -10, z 180 }
 		Text SettingsApply ID 1
 	}
 } }

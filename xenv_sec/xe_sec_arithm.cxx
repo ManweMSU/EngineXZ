@@ -36,6 +36,17 @@ namespace Engine
 					MemoryCopy(_data, data, size);
 				} else { _num_dwords = 0; _data = 0; }
 			}
+			LargeInteger::LargeInteger(const void * data, uint data_size, uint allocate_size)
+			{
+				if (allocate_size) {
+					_num_dwords = allocate_size / 4;
+					if (allocate_size % 4) _num_dwords++;
+					_data = new (std::nothrow) uint32[_num_dwords];
+					if (!_data) throw OutOfMemoryException();
+					ZeroMemory(_data, _num_dwords * 4);
+					MemoryCopy(_data, data, data_size);
+				} else { _num_dwords = 0; _data = 0; }
+			}
 			LargeInteger::LargeInteger(Storage::RegistryNode * reg, const widechar * value)
 			{
 				uint size = reg->GetValueBinarySize(value);

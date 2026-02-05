@@ -745,6 +745,7 @@ namespace Engine
 				int argc;
 			};
 		private:
+			XE::StandardLoader & _ldr;
 			EnvironmentConfiguration & _ec;
 			LaunchConfiguration & _lc;
 		private:
@@ -825,14 +826,16 @@ namespace Engine
 					bool is_xe, is_command;
 					self._check_image(image, false, is_xe, is_command);
 					if (is_xe && (flags & 0xB)) {
+						auto & secext = self._ldr.GetSecurityExtensions();
 						SafePointer<Streaming::Stream> stream = new Streaming::FileStream(path, Streaming::AccessRead, Streaming::OpenExisting);
+						uintptr stream_context = secext.Length() ? secext[0].EvaluateTrustContext(IO::ExpandPath(path)) : 0;
 						if (flags & 1) {
 							SafePointer<XE::ExecutionContext> subctx = new XE::ExecutionContext(self._lc.primary_context->GetLoaderCallback());
 							subctx->AllowEmbeddedModules(self._lc.primary_context->EmbeddedModulesAllowed());
-							auto mdl = subctx->LoadModule(path, stream);
+							auto mdl = subctx->LoadModule(path, stream, stream_context);
 							return new _xx_xe_dynamic_library(subctx, 1, mdl);
 						} else if (flags & 2) {
-							auto mdl = self._lc.primary_context->LoadModule(path, stream);
+							auto mdl = self._lc.primary_context->LoadModule(path, stream, stream_context);
 							return new _xx_xe_dynamic_library(self._lc.primary_context, 2, mdl);
 						} else {
 							SafePointer<XE::Module> mdl = self._lc.primary_context->LoadModuleResources(stream);
@@ -861,7 +864,7 @@ namespace Engine
 				}
 			}
 		public:
-			LauncherServices(EnvironmentConfiguration & ec, LaunchConfiguration & lc) : _ec(ec), _lc(lc) {}
+			LauncherServices(EnvironmentConfiguration & ec, LaunchConfiguration & lc, XE::StandardLoader & loader) : _ec(ec), _lc(lc), _ldr(loader) {}
 			virtual ~LauncherServices(void) override {}
 			virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 			{
@@ -892,15 +895,20 @@ namespace Engine
 			} catch (...) {}
 		}
 		#endif
-		Streaming::Stream * GetImageStream(EnvironmentConfiguration & conf)
+		Streaming::Stream * GetImageStream(XE::StandardLoader & loader, EnvironmentConfiguration & conf, uintptr & module_stream_context)
 		{
 			if (conf.direct_mode_channel_name.Length()) {
 				SafePointer<XC::IChannel> channel = XC::ConnectChannel(conf.direct_mode_channel_name);
 				XC::Request req;
 				if (!channel->ReadRequest(req)) throw InvalidStateException();
 				if (req.verb != 0x10EE || !req.data) throw InvalidStateException();
+				module_stream_context = 0;
 				return new Streaming::MemoryStream(req.data->GetBuffer(), req.data->Length());
-			} else return new Streaming::FileStream(conf.xi_executable, Streaming::AccessRead, Streaming::OpenExisting);
+			} else {
+				auto & secext = loader.GetSecurityExtensions();
+				module_stream_context = secext.Length() ? secext[0].EvaluateTrustContext(conf.xi_executable) : 0;
+				return new Streaming::FileStream(conf.xi_executable, Streaming::AccessRead, Streaming::OpenExisting);
+			}
 		}
 		void LoadLaunchConfiguration(Streaming::Stream * stream, const string & module, LaunchConfiguration & conf)
 		{
@@ -1008,12 +1016,12 @@ namespace Engine
 				try { if (environment_configuration.xe_config.Length()) {
 					XX::SecuritySettings sec;
 					IncludeComponent(*loader, environment_configuration.xe_config, &sec);
-					if (sec.ValidateTrust) {
+					if (sec.ValidateTrust || sec.ValidateTrustForQuarantine) {
 						SafePointer<XE::Security::ITrustProvider> trust = XE::Security::CreateTrustProvider();
 						if (!trust) throw Exception();
 						if (!trust->AddTrustDirectory(IO::ExpandPath(IO::Path::GetDirectory(environment_configuration.xe_config) + L"/" + sec.TrustedCertificates), true)) throw Exception();
 						if (!trust->AddTrustDirectory(IO::ExpandPath(IO::Path::GetDirectory(environment_configuration.xe_config) + L"/" + sec.UntrustedCertificates), false)) throw Exception();
-						SafePointer<XE::ISecurityExtension> sec_ext = XE::Security::CreateStandardSecurityExtension(trust, true);
+						SafePointer<XE::ISecurityExtension> sec_ext = XE::Security::CreateStandardSecurityExtension(trust, sec.ValidateTrust ? XE::Security::SecurityLevel::ValidateAll : XE::Security::SecurityLevel::ValidateQuarantine);
 						if (!sec_ext) throw Exception();
 						if (!loader->RegisterSecurityExtension(sec_ext)) throw Exception();
 					}
@@ -1031,7 +1039,8 @@ namespace Engine
 				else logger = new NullLogger;
 				XE::SetLoggerSink(*xctx, logger);
 				SafePointer<Streaming::Stream> module_stream;
-				try { module_stream = GetImageStream(environment_configuration); } catch (IO::FileAccessException & e) {
+				uintptr module_stream_context;
+				try { module_stream = GetImageStream(*loader, environment_configuration, module_stream_context); } catch (IO::FileAccessException & e) {
 					XE::ErrorContext ectx;
 					ectx.error_code = 6;
 					ectx.error_subcode = e.code;
@@ -1044,7 +1053,7 @@ namespace Engine
 					return 6;
 				}
 				LoadLaunchConfiguration(module_stream, environment_configuration.xi_executable, launch_configuration);
-				SafePointer<LauncherServices> launcher_services = new LauncherServices(environment_configuration, launch_configuration);
+				SafePointer<LauncherServices> launcher_services = new LauncherServices(environment_configuration, launch_configuration, *loader);
 				SafePointer<ConsoleAllocator> console_allocator = new ConsoleAllocator(environment_configuration, launch_configuration);
 				SafePointer<XE::IConsoleDevice> console;
 				bool windows_enabled = false;
@@ -1103,7 +1112,7 @@ namespace Engine
 				loader->AddModuleSearchPath(IO::Path::GetDirectory(environment_configuration.xi_executable));
 				loader->AddDynamicLibrarySearchPath(IO::Path::GetDirectory(environment_configuration.xi_executable));
 				module_stream->Seek(0, Streaming::Begin);
-				auto main_module = xctx->LoadModule(environment_configuration.xi_executable, module_stream);
+				auto main_module = xctx->LoadModule(environment_configuration.xi_executable, module_stream, module_stream_context);
 				module_stream.SetReference(0);
 				if (!loader->IsAlive()) {
 					XE::ErrorContext ectx;

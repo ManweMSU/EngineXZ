@@ -33,13 +33,13 @@ namespace Engine
 		class ILoaderCallback
 		{
 		public:
-			virtual Streaming::Stream * OpenModule(const string & module_name) noexcept = 0;
+			virtual Streaming::Stream * OpenModule(const string & module_name, uintptr & module_stream_context) noexcept = 0;
 			virtual void * GetRoutineAddress(const string & routine_name) noexcept = 0;
 			virtual handle LoadDynamicLibrary(const string & library_name) noexcept = 0;
 			virtual void HandleModuleLoadError(const string & module_name, const string & subject, ModuleLoadError error) noexcept = 0;
 			virtual Object * ExposeObject(void) noexcept = 0;
 			virtual void * ExposeInterface(const string & interface) noexcept = 0;
-			virtual ModuleLoadError EvaluateTrust(Streaming::Stream * module_stream) noexcept = 0;
+			virtual ModuleLoadError EvaluateTrust(Streaming::Stream * module_stream, uintptr module_stream_context) noexcept = 0;
 		};
 
 		class Module : public Object
@@ -99,7 +99,7 @@ namespace Engine
 			const SymbolObject * GetEntryPoint(void) const noexcept;
 
 			const Module * LoadModule(const string & name) noexcept;
-			const Module * LoadModule(const string & name, Streaming::Stream * stream) noexcept;
+			const Module * LoadModule(const string & name, Streaming::Stream * stream, uintptr module_stream_context = 0) noexcept;
 			Module * LoadModuleResources(Streaming::Stream * stream) const noexcept;
 		};
 

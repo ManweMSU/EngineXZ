@@ -10,32 +10,42 @@ namespace Engine
 			constexpr const char * RSA_PublicKey_Stamp = "XE-RSA-E";
 			constexpr const char * RSA_PrivateKey_Stamp = "XE-RSA-I";
 
-			DataBlock * MakeExternalRepresentation(const char * signature, int argc, const LargeInteger ** argv)
+			uint MakeAlignment(uint input, uint mask) noexcept { return (input + mask) & (~mask); }
+			DataBlock * MakeExternalRepresentation(const char * signature, int argc, const LargeInteger ** argv) noexcept
 			{
 				try {
 					SafePointer<DataBlock> result = new DataBlock(1);
+					Array<uint> sizes(1);
+					sizes.SetLength(argc);
 					uint size = 8;
-					for (int i = 0; i < argc; i++) size += (argv[i]->DWordLength() + 1) * 4;
+					for (int i = 0; i < argc; i++) {
+						sizes[i] = MakeAlignment(argv[i]->EffectiveBitLength() + 1, 0x1F) / 8;
+						size += sizes[i] + 4;
+					}
 					result->SetLength(size);
 					MemoryCopy(result->GetBuffer(), signature, 8);
 					int pos = 8;
 					for (int i = 0; i < argc; i++) {
-						auto length = argv[i]->DWordLength() * 4;
-						*reinterpret_cast<uint32 *>(result->GetBuffer() + pos) = length;
+						auto encode_length = sizes[i];
+						auto input_length = argv[i]->DWordLength() * 4;
+						*reinterpret_cast<uint32 *>(result->GetBuffer() + pos) = encode_length;
 						pos += 4;
-						MemoryCopy(result->GetBuffer() + pos, argv[i]->Data(), length);
-						pos += length;
+						if (encode_length > input_length) {
+							MemoryCopy(result->GetBuffer() + pos, argv[i]->Data(), input_length);
+							ZeroMemory(result->GetBuffer() + pos + input_length, encode_length - input_length);
+						} else if (encode_length <= input_length) MemoryCopy(result->GetBuffer() + pos, argv[i]->Data(), encode_length);
+						pos += encode_length;
 					}
 					result->Retain();
 					return result;
 				} catch (...) { return 0; }
 			}
-			bool CheckExternalRepresentation(const DataBlock * input, const char * signature)
+			bool CheckExternalRepresentation(const DataBlock * input, const char * signature) noexcept
 			{
 				if (input->Length() < 8) return false;
 				return MemoryCompare(input->GetBuffer(), signature, 8) == 0;
 			}
-			bool ReadExternalRepresentation(const DataBlock * input, const char * signature, int argc, LargeInteger ** argv)
+			bool ReadExternalRepresentation(const DataBlock * input, const char * signature, int argc, LargeInteger ** argv, int * size_ref_alignment)
 			{
 				if (input->Length() < 8) return false;
 				if (MemoryCompare(input->GetBuffer(), signature, 8) != 0) return false;
@@ -44,8 +54,11 @@ namespace Engine
 					if (pos + 4 > input->Length()) return false;
 					uint length = *reinterpret_cast<const uint32 *>(input->GetBuffer() + pos);
 					pos += 4;
-					if (length < 0 || length > input->Length() - pos) return false;
-					*argv[i] = LargeInteger(input->GetBuffer() + pos, length);
+					uint length_allocate;
+					if (size_ref_alignment[i] >= 0) length_allocate = MakeAlignment(length, size_ref_alignment[i]);
+					else length_allocate = argv[-size_ref_alignment[i] - 1]->DWordLength() * 4;
+					if (length < 0 || length > input->Length() - pos || length_allocate < length) return false;
+					*argv[i] = LargeInteger(input->GetBuffer() + pos, length, length_allocate);
 					pos += length;
 				}
 				return true;
@@ -53,14 +66,24 @@ namespace Engine
 
 			class RSA_PublicKey : public IKey
 			{
+				SafePointer<ICryptographyAcceleration> accel;
+				SafePointer<Object> accel_retainer;
 				LargeInteger modulus;
 				LargeInteger e;
+				RSAAccelerationPowerFunction accel_func;
 			public:
-				RSA_PublicKey(const LargeInteger & mdl, const LargeInteger & exp) : modulus(mdl), e(exp) {}
-				RSA_PublicKey(const DataBlock * data)
+				RSA_PublicKey(const LargeInteger & mdl, const LargeInteger & exp, ICryptographyAcceleration * acceleration) : modulus(mdl), e(exp)
 				{
+					accel.SetRetain(acceleration);
+					if (accel) accel->CreateRSAAcceleration(modulus.BitLength(), e.BitLength(), &accel_func, accel_retainer.InnerRef()); else accel_func = 0;
+				}
+				RSA_PublicKey(const DataBlock * data, ICryptographyAcceleration * acceleration)
+				{
+					accel.SetRetain(acceleration);
 					LargeInteger * argv[2] = { &modulus, &e };
-					if (!ReadExternalRepresentation(data, RSA_PublicKey_Stamp, 2, argv)) throw InvalidFormatException();
+					int size_ref_alignment[2] = { 16, 0 };
+					if (!ReadExternalRepresentation(data, RSA_PublicKey_Stamp, 2, argv, size_ref_alignment)) throw InvalidFormatException();
+					if (accel) accel->CreateRSAAcceleration(modulus.BitLength(), e.BitLength(), &accel_func, accel_retainer.InnerRef()); else accel_func = 0;
 				}
 				virtual ~RSA_PublicKey(void) override { modulus.InitWithZero(); e.InitWithZero(); }
 				virtual KeyClass GetKeyClass(void) noexcept override { return KeyClass::RSA_Public; }
@@ -68,9 +91,13 @@ namespace Engine
 				virtual DataBlock * Encrypt(DataBlock * in) noexcept override
 				{
 					try {
-						LargeInteger input(in->GetBuffer(), in->Length()), output(modulus.BitLength());
+						if (in->Length() > modulus.DWordLength() * 4) return 0;
+						LargeInteger input(in->GetBuffer(), in->Length(), modulus.DWordLength() * 4), output(modulus.BitLength());
 						if (LongCompare(input, modulus) >= 0) return 0;
-						LongPower(output, input, e, modulus);
+						if (accel_func) {
+							LargeInteger aux(modulus.BitLength());
+							accel_func(output.Data(), input.Data(), e.Data(), modulus.Data(), aux.Data());
+						} else LongPower(output, input, e, modulus);
 						SafePointer<DataBlock> result = new DataBlock(1);
 						result->SetLength(4 * output.DWordLength());
 						MemoryCopy(result->GetBuffer(), output.Data(), 4 * output.DWordLength());
@@ -83,9 +110,13 @@ namespace Engine
 				virtual bool Validate(DataBlock * hash, DataBlock * signature) noexcept override
 				{
 					try {
-						LargeInteger input(signature->GetBuffer(), signature->Length()), output(modulus.BitLength());
+						if (signature->Length() > modulus.DWordLength() * 4) return 0;
+						LargeInteger input(signature->GetBuffer(), signature->Length(), modulus.DWordLength() * 4), output(modulus.BitLength());
 						if (LongCompare(input, modulus) >= 0) return 0;
-						LongPower(output, input, e, modulus);
+						if (accel_func) {
+							LargeInteger aux(modulus.BitLength());
+							accel_func(output.Data(), input.Data(), e.Data(), modulus.Data(), aux.Data());
+						} else LongPower(output, input, e, modulus);
 						uint data_bit_length = output.EffectiveBitLength();
 						uint hash_bit_length = hash->Length() * 8;
 						if (hash_bit_length != output.Data()[0]) return false;
@@ -120,12 +151,16 @@ namespace Engine
 			};
 			class RSA_PrivateKey : public IKey
 			{
+				SafePointer<ICryptographyAcceleration> accel;
+				SafePointer<Object> accel_retainer;
 				LargeInteger modulus;
 				LargeInteger p, q;
 				LargeInteger e, d;
+				RSAAccelerationPowerFunction accel_func;
 			public:
-				RSA_PrivateKey(const void * pdata, int plength, const void * qdata, int qlength, uint64 pexp) : p(pdata, plength), q(qdata, qlength), e(&pexp, 8)
+				RSA_PrivateKey(const void * pdata, int plength, const void * qdata, int qlength, uint64 pexp, ICryptographyAcceleration * acceleration) : p(pdata, plength), q(qdata, qlength), e(&pexp, 8)
 				{
+					accel.SetRetain(acceleration);
 					modulus = LargeInteger(p.EffectiveBitLength() + q.EffectiveBitLength() + 1);
 					LongMultiply(modulus, p, q);
 					LargeInteger phi(modulus.BitLength());
@@ -135,18 +170,23 @@ namespace Engine
 					LongSubtract(q1, 1);
 					LongMultiply(phi, p1, q1);
 					LongInverse(d, e, phi);
+					modulus = modulus.Resize(MakeAlignment(modulus.EffectiveBitLength(), 0x7F));
+					if (accel) accel->CreateRSAAcceleration(modulus.BitLength(), d.BitLength(), &accel_func, accel_retainer.InnerRef()); else accel_func = 0;
 				}
-				RSA_PrivateKey(const DataBlock * data)
+				RSA_PrivateKey(const DataBlock * data, ICryptographyAcceleration * acceleration)
 				{
+					accel.SetRetain(acceleration);
 					LargeInteger * argv[5] = { &modulus, &p, &q, &e, &d };
-					if (!ReadExternalRepresentation(data, RSA_PrivateKey_Stamp, 5, argv)) throw InvalidFormatException();
+					int size_ref_alignment[5] = { 16, 0, 0, 0, 0 };
+					if (!ReadExternalRepresentation(data, RSA_PrivateKey_Stamp, 5, argv, size_ref_alignment)) throw InvalidFormatException();
+					if (accel) accel->CreateRSAAcceleration(modulus.BitLength(), d.BitLength(), &accel_func, accel_retainer.InnerRef()); else accel_func = 0;
 				}
 				virtual ~RSA_PrivateKey(void) override { modulus.InitWithZero(); p.InitWithZero(); q.InitWithZero(); e.InitWithZero(); d.InitWithZero(); }
 				virtual KeyClass GetKeyClass(void) noexcept override { return KeyClass::RSA_Private; }
 				virtual IKey * ExtractPublicKey(void) noexcept override
 				{
 					try {
-						SafePointer<RSA_PublicKey> key = new RSA_PublicKey(modulus, e);
+						SafePointer<RSA_PublicKey> key = new RSA_PublicKey(modulus, e, accel);
 						key->Retain();
 						return key;
 					} catch (...) { return 0; }
@@ -154,9 +194,13 @@ namespace Engine
 				virtual DataBlock * Encrypt(DataBlock * in) noexcept override
 				{
 					try {
-						LargeInteger input(in->GetBuffer(), in->Length()), output(modulus.BitLength());
+						if (in->Length() > modulus.DWordLength() * 4) return 0;
+						LargeInteger input(in->GetBuffer(), in->Length(), modulus.DWordLength() * 4), output(modulus.BitLength());
 						if (LongCompare(input, modulus) >= 0) return 0;
-						LongPower(output, input, d, modulus);
+						if (accel_func) {
+							LargeInteger aux(modulus.BitLength());
+							accel_func(output.Data(), input.Data(), d.Data(), modulus.Data(), aux.Data());
+						} else LongPower(output, input, d, modulus);
 						SafePointer<DataBlock> result = new DataBlock(1);
 						result->SetLength(4 * output.DWordLength());
 						MemoryCopy(result->GetBuffer(), output.Data(), 4 * output.DWordLength());
@@ -181,7 +225,10 @@ namespace Engine
 							if (input.Data()[j - 1] == 0) input.Data()[j - 1] = 1;
 							break;
 						}
-						LongPower(output, input, d, modulus);
+						if (accel_func) {
+							LargeInteger aux(modulus.BitLength());
+							accel_func(output.Data(), input.Data(), d.Data(), modulus.Data(), aux.Data());
+						} else LongPower(output, input, d, modulus);
 						SafePointer<DataBlock> result = new DataBlock(1);
 						result->SetLength(4 * output.DWordLength());
 						MemoryCopy(result->GetBuffer(), output.Data(), 4 * output.DWordLength());
@@ -228,20 +275,20 @@ namespace Engine
 				}
 			};
 
-			IKey * LoadKeyRSA(const DataBlock * representation) noexcept
+			IKey * LoadKeyRSA(const DataBlock * representation, ICryptographyAcceleration * acceleration) noexcept
 			{
 				try {
 					if (CheckExternalRepresentation(representation, RSA_PublicKey_Stamp)) {
-						return new RSA_PublicKey(representation);
+						return new RSA_PublicKey(representation, acceleration);
 					} else if (CheckExternalRepresentation(representation, RSA_PrivateKey_Stamp)) {
-						return new RSA_PrivateKey(representation);
+						return new RSA_PrivateKey(representation, acceleration);
 					} else return 0;
 				} catch (...) { return 0; }
 			}
-			bool CreateKeyRSA(const void * pdata, int plength, const void * qdata, int qlength, uint64 pexp, IKey ** key_prvt) noexcept
+			bool CreateKeyRSA(const void * pdata, int plength, const void * qdata, int qlength, uint64 pexp, IKey ** key_prvt, ICryptographyAcceleration * acceleration) noexcept
 			{
 				try {
-					SafePointer<RSA_PrivateKey> prvt = new (std::nothrow) RSA_PrivateKey(pdata, plength, qdata, qlength, pexp);
+					SafePointer<RSA_PrivateKey> prvt = new (std::nothrow) RSA_PrivateKey(pdata, plength, qdata, qlength, pexp, acceleration);
 					if (!prvt) throw OutOfMemoryException();
 					prvt->Retain();
 					(*key_prvt) = prvt;

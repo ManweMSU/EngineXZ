@@ -55,6 +55,7 @@ namespace Engine
 			settings.TrustedCertificates = xe->GetValueString(L"CertificatiFisi");
 			settings.UntrustedCertificates = xe->GetValueString(L"CertificatiInfisi");
 			settings.ValidateTrust = xe->GetValueBoolean(L"ConvalidaConfisionem");
+			settings.ValidateTrustForQuarantine = xe->GetValueBoolean(L"ConvalidaConfisionemPerQuarentina");
 		}
 		void LoadSecuritySettings(SecuritySettings & settings, const string & xe_conf)
 		{
@@ -68,13 +69,16 @@ namespace Engine
 				xe->RemoveValue(L"CertificatiFisi");
 				xe->RemoveValue(L"CertificatiInfisi");
 				xe->RemoveValue(L"ConvalidaConfisionem");
+				xe->RemoveValue(L"ConvalidaConfisionemPerQuarentina");
 			} catch (...) {}
 			xe->CreateValue(L"CertificatiFisi", Storage::RegistryValueType::String);
 			xe->CreateValue(L"CertificatiInfisi", Storage::RegistryValueType::String);
 			xe->CreateValue(L"ConvalidaConfisionem", Storage::RegistryValueType::Boolean);
+			xe->CreateValue(L"ConvalidaConfisionemPerQuarentina", Storage::RegistryValueType::Boolean);
 			xe->SetValue(L"CertificatiFisi", settings.TrustedCertificates);
 			xe->SetValue(L"CertificatiInfisi", settings.UntrustedCertificates);
 			xe->SetValue(L"ConvalidaConfisionem", settings.ValidateTrust);
+			xe->SetValue(L"ConvalidaConfisionemPerQuarentina", settings.ValidateTrustForQuarantine);
 			SafePointer<Streaming::Stream> stream;
 			IO::MoveFile(xe_conf, xe_conf + L".tmp");
 			try {

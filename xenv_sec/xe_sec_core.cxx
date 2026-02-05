@@ -12,8 +12,9 @@ namespace Engine
 				CertificateDesc _desc;
 				SafePointer<DataBlock> _key_data;
 				SafePointer<DataBlock> _data;
+				SafePointer<ICryptographyAcceleration> _accel;
 			public:
-				XCertificate(DataBlock * data)
+				XCertificate(DataBlock * data, ICryptographyAcceleration * accel)
 				{
 					_data.SetRetain(data);
 					Streaming::MemoryStream stream(data->GetBuffer(), data->Length());
@@ -31,11 +32,12 @@ namespace Engine
 					_key_data = new DataBlock(1);
 					_key_data->SetLength(reg->GetValueBinarySize(L"Clavis"));
 					reg->GetValueBinary(L"Clavis", _key_data->GetBuffer());
+					_accel.SetRetain(accel);
 				}
-				XCertificate(const CertificateDesc & desc, IKey * key) : _desc(desc) { _key_data = key->LoadRepresentation(); if (!_key_data) throw OutOfMemoryException(); }
+				XCertificate(const CertificateDesc & desc, IKey * key, ICryptographyAcceleration * accel) : _desc(desc) { _key_data = key->LoadRepresentation(); if (!_key_data) throw OutOfMemoryException(); _accel.SetRetain(accel); }
 				virtual ~XCertificate(void) override {}
 				virtual const CertificateDesc & GetDescription(void) noexcept override { return _desc; }
-				virtual IKey * LoadPublicKey(void) noexcept override { return LoadKeyRSA(_key_data); }
+				virtual IKey * LoadPublicKey(void) noexcept override { return LoadKeyRSA(_key_data, _accel); }
 				virtual DataBlock * LoadRepresentation(void) noexcept override
 				{
 					if (_data) {
@@ -115,21 +117,24 @@ namespace Engine
 			class XContainer : public IContainer
 			{
 				SafePointer<Storage::Registry> _storage;
+				SafePointer<ICryptographyAcceleration> _accel;
 			public:
-				XContainer(ContainerClass cls)
+				XContainer(ContainerClass cls, ICryptographyAcceleration * accel)
 				{
 					_storage = Storage::CreateRegistry();
 					if (!_storage) throw OutOfMemoryException();
 					_storage->CreateValue(L"Classis", Storage::RegistryValueType::Integer);
 					_storage->SetValue(L"Classis", int(cls));
+					_accel.SetRetain(accel);
 				}
-				XContainer(Streaming::Stream * stream)
+				XContainer(Streaming::Stream * stream, ICryptographyAcceleration * accel)
 				{
 					uint64 org = stream->Seek(0, Streaming::Current);
 					uint64 length = stream->Length();
 					SafePointer<Streaming::Stream> window = new Streaming::FragmentStream(stream, org, length - org);
 					_storage = Storage::LoadRegistry(window);
 					if (!_storage) throw OutOfMemoryException();
+					_accel.SetRetain(accel);
 				}
 				virtual ~XContainer(void) override {}
 				virtual uint GetCertificateChainLength(void) noexcept override { try { return _storage->GetValueInteger(L"NumerusCertificatorum"); } catch (...) { return 0; } }
@@ -142,7 +147,7 @@ namespace Engine
 						SafePointer<DataBlock> init = new DataBlock(1);
 						init->SetLength(node->GetValueBinarySize(L"Data"));
 						node->GetValueBinary(L"Data", init->GetBuffer());
-						return new XCertificate(init);
+						return new XCertificate(init, _accel);
 					} catch (...) { return 0; }
 				}
 				virtual DataBlock * LoadCertificateSignature(uint index) noexcept override
@@ -183,7 +188,7 @@ namespace Engine
 							if (!data_dec) return 0;
 							data = data_dec;
 						}
-						SafePointer<IKey> result = LoadKeyRSA(data);
+						SafePointer<IKey> result = LoadKeyRSA(data, _accel);
 						ZeroMemory(data->GetBuffer(), data->Length());
 						if (!result) return 0;
 						result->Retain();
@@ -284,14 +289,14 @@ namespace Engine
 				}
 			};
 
-			ICertificate * LoadCertificate(DataBlock * data) noexcept { try { return new XCertificate(data); } catch (...) { return 0; } }
+			ICertificate * LoadCertificate(DataBlock * data, ICryptographyAcceleration * acceleration) noexcept { try { return new XCertificate(data, acceleration); } catch (...) { return 0; } }
 			IIdentity * LoadIdentity(IContainer * input0, IContainer * input1, const string & password) noexcept { try { return new XIdentity(input0, input1, password); } catch (...) { return 0; } }
-			IContainer * LoadContainer(Streaming::Stream * input) noexcept { try { return new XContainer(input); } catch (...) { return 0; } }
+			IContainer * LoadContainer(Streaming::Stream * input, ICryptographyAcceleration * acceleration) noexcept { try { return new XContainer(input, acceleration); } catch (...) { return 0; } }
 			IContainer * CreateCertificate(const CertificateDesc & cert_desc, IKey * public_key) noexcept
 			{
 				try {
-					SafePointer<XContainer> result = new XContainer(ContainerClass::UnsignedCertificate);
-					SafePointer<XCertificate> cert = new XCertificate(cert_desc, public_key);
+					SafePointer<XContainer> result = new XContainer(ContainerClass::UnsignedCertificate, 0);
+					SafePointer<XCertificate> cert = new XCertificate(cert_desc, public_key, 0);
 					result->init_add_certificate(cert);
 					result->Retain();
 					return result;
@@ -315,7 +320,7 @@ namespace Engine
 					if (!hash) return 0;
 					SafePointer<DataBlock> signed_hash = private_key->Sign(hash);
 					if (!signed_hash) return 0;
-					SafePointer<XContainer> result = new XContainer(ContainerClass::Certificate);
+					SafePointer<XContainer> result = new XContainer(ContainerClass::Certificate, 0);
 					result->init_add_certificate(cert_data, signed_hash);
 					result->Retain();
 					return result;
@@ -333,7 +338,7 @@ namespace Engine
 					if (!private_key) return 0;
 					SafePointer<DataBlock> signed_hash = private_key->Sign(hash);
 					if (!signed_hash) return 0;
-					SafePointer<XContainer> result = new XContainer(ContainerClass::Certificate);
+					SafePointer<XContainer> result = new XContainer(ContainerClass::Certificate, 0);
 					result->init_add_certificate(cert_data, signed_hash);
 					for (uint i = 0; i < identity->GetCertificateChainLength(); i++) {
 						SafePointer<ICertificate> cert = identity->LoadCertificate(i);
@@ -350,7 +355,7 @@ namespace Engine
 			IContainer * CreatePrivateKeyStorage(IKey * private_key, const string & password) noexcept
 			{
 				try {
-					SafePointer<XContainer> result = new XContainer(ContainerClass::PrivateKey);
+					SafePointer<XContainer> result = new XContainer(ContainerClass::PrivateKey, 0);
 					result->init_add_private_key(private_key, password);
 					result->Retain();
 					return result;
@@ -360,7 +365,7 @@ namespace Engine
 			{
 				try {
 					if (!identity) return 0;
-					SafePointer<XContainer> result = new XContainer(ContainerClass::Identity);
+					SafePointer<XContainer> result = new XContainer(ContainerClass::Identity, 0);
 					for (uint i = 0; i < identity->GetCertificateChainLength(); i++) {
 						SafePointer<ICertificate> cert = identity->LoadCertificate(i);
 						if (!cert) return 0;
@@ -380,7 +385,7 @@ namespace Engine
 			{
 				try {
 					if (!source) return 0;
-					SafePointer<XContainer> result = new XContainer(ContainerClass::Certificate);
+					SafePointer<XContainer> result = new XContainer(ContainerClass::Certificate, 0);
 					for (uint i = 0; i < source->GetCertificateChainLength(); i++) {
 						SafePointer<ICertificate> cert = source->LoadCertificate(i);
 						if (!cert) return 0;
@@ -397,7 +402,7 @@ namespace Engine
 			{
 				try {
 					if (!hash) return 0;
-					SafePointer<XContainer> result = new XContainer(ContainerClass::IntegrityData);
+					SafePointer<XContainer> result = new XContainer(ContainerClass::IntegrityData, 0);
 					result->init_add_hash(hash);
 					result->Retain();
 					return result;
@@ -407,7 +412,7 @@ namespace Engine
 			{
 				try {
 					if (!hash || !identity) return 0;
-					SafePointer<XContainer> result = new XContainer(ContainerClass::Signature);
+					SafePointer<XContainer> result = new XContainer(ContainerClass::Signature, 0);
 					SafePointer<IKey> private_key = identity->LoadPrivateKey();
 					if (!private_key) return 0;
 					SafePointer<DataBlock> signed_hash = private_key->Sign(hash);
@@ -430,9 +435,18 @@ namespace Engine
 			class StandardTrustProvider : public ITrustProvider
 			{
 				Volumes::Dictionary<string, TrustStatus> _trust;
+				bool _allow_cacheing;
 			public:
-				StandardTrustProvider(void) {}
+				StandardTrustProvider(void) : _allow_cacheing(true) {}
 				virtual ~StandardTrustProvider(void) override {}
+				virtual bool AddUnconditionalTrust(DataBlock * cert_hash) noexcept override
+				{
+					try {
+						if (!cert_hash || !_allow_cacheing) return false;
+						_trust.Update(StringFromDataBlock(cert_hash, 0, false), TrustStatus::TrustedUnconditionally);
+						return true;
+					} catch (...) { return false; }
+				}
 				virtual bool AddTrust(DataBlock * cert_hash, bool trusted) noexcept override
 				{
 					try {
@@ -477,6 +491,9 @@ namespace Engine
 						return true;
 					} catch (...) { return false; }
 				}
+				virtual void SetCacheControl(bool allow_trust_cacheing) noexcept override { _allow_cacheing = allow_trust_cacheing; }
+				virtual bool GetCacheControl(void) const noexcept override { return _allow_cacheing; }
+				virtual void ResetTrustCache(void) noexcept override { for (auto & t : _trust) if (t.value == TrustStatus::TrustedUnconditionally) t.value = TrustStatus::Trusted; }
 				virtual TrustStatus ProvideTrust(const DataBlock * cert_hash) const noexcept override
 				{
 					try {
@@ -487,7 +504,7 @@ namespace Engine
 				}
 			};
 			ITrustProvider * CreateTrustProvider(void) noexcept { try { return new StandardTrustProvider(); } catch (...) { return 0; } }
-			TrustStatus EvaluateIntegrity(DataBlock * hash, IContainer * idata, const Time & timestamp, const ITrustProvider * trust, IntegrityValidationDesc * desc) noexcept
+			TrustStatus EvaluateIntegrity(DataBlock * hash, IContainer * idata, const Time & timestamp, ITrustProvider * trust, IntegrityValidationDesc * desc) noexcept
 			{
 				if (!hash || !idata) return TrustStatus::Untrusted;
 				try {
@@ -529,18 +546,17 @@ namespace Engine
 						if (!cert.Length()) { if (desc) desc->object = IntegrityStatus::NoTrustInChain; return TrustStatus::Untrusted; }
 						if (!keys[0].Validate(hash, root_sign)) { if (desc) desc->object = IntegrityStatus::DataSurrogation; return TrustStatus::Untrusted; }
 						for (int i = 0; i < keys.Length(); i++) {
+							auto t = trust->ProvideTrust(&hashes[i]);
+							if (t == TrustStatus::Trusted) trusted_chain = true;
+							else if (t == TrustStatus::TrustedUnconditionally) { trusted_chain = true; break; }
+							else if (t == TrustStatus::Untrusted) { if (desc) desc->chain[i] = IntegrityStatus::Compromised; return TrustStatus::Untrusted; }
 							IKey * key = i < keys.Length() - 1 ? &keys[i + 1] : &keys[i];
 							if (!key->Validate(&hashes[i], &signs[i])) { if (desc) desc->chain[i] = IntegrityStatus::DataSurrogation; return TrustStatus::Untrusted; }
-						}
-						for (int i = 0; i < keys.Length(); i++) {
 							auto & cdesc = cert[i].GetDescription();
 							if (timestamp > cdesc.ValidUntil) { if (desc) desc->chain[i] = IntegrityStatus::Expired; return TrustStatus::Untrusted; }
 							if (timestamp < cdesc.ValidSince) { if (desc) desc->chain[i] = IntegrityStatus::NotIntroduced; return TrustStatus::Untrusted; }
 							if (i) { if (!(cdesc.CertificateUsage & CertificateUsageAuthority)) { if (desc) desc->chain[i] = IntegrityStatus::InvalidUsage; return TrustStatus::Untrusted; } }
 							else { if (!(cdesc.CertificateUsage & CertificateUsageSignature)) { if (desc) desc->chain[i] = IntegrityStatus::InvalidUsage; return TrustStatus::Untrusted; } }
-							auto t = trust->ProvideTrust(&hashes[i]);
-							if (t == TrustStatus::Trusted) trusted_chain = true;
-							else if (t == TrustStatus::Untrusted) { if (desc) desc->chain[i] = IntegrityStatus::Compromised; return TrustStatus::Untrusted; }
 						}
 						for (int i = 0; i < keys.Length() - 1; i++) {
 							auto & cdesc0 = cert[i].GetDescription();
@@ -549,6 +565,7 @@ namespace Engine
 							if ((cdesc0.CertificateDerivation & cdesc1.CertificateDerivation) != cdesc0.CertificateDerivation) { if (desc) desc->chain[i] = IntegrityStatus::InvalidDerivation; return TrustStatus::Untrusted; }
 						}
 						if (!trusted_chain) { if (desc) desc->object = IntegrityStatus::NoTrustInChain; return TrustStatus::Undefined; }
+						for (auto & h : hashes) trust->AddUnconditionalTrust(&h);
 						return TrustStatus::Trusted;
 					} else return TrustStatus::Undefined;
 				} catch (...) { return TrustStatus::Untrusted; }

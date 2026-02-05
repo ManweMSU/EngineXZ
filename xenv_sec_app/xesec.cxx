@@ -726,6 +726,7 @@ private:
 	void _read(XX::SecuritySettings & sec, IWindow * window)
 	{
 		sec.ValidateTrust = FindControl(window, 101)->As<Controls::CheckBox>()->IsChecked();
+		sec.ValidateTrustForQuarantine = FindControl(window, 104)->As<Controls::CheckBox>()->IsChecked();
 		sec.TrustedCertificates = FindControl(window, 102)->GetText();
 		sec.UntrustedCertificates = FindControl(window, 103)->GetText();
 	}
@@ -742,6 +743,7 @@ public:
 			security.TrustedCertificates = security.UntrustedCertificates = L"";
 		}
 		FindControl(window, 101)->As<Controls::CheckBox>()->Check(security.ValidateTrust);
+		FindControl(window, 104)->As<Controls::CheckBox>()->Check(security.ValidateTrustForQuarantine);
 		FindControl(window, 102)->SetText(security.TrustedCertificates);
 		FindControl(window, 103)->SetText(security.UntrustedCertificates);
 	}
@@ -761,10 +763,10 @@ public:
 			WindowClose(window);
 		} else if (ID == 2) {
 			WindowClose(window);
-		} else if (ID == 101) {
+		} else if (ID == 101 || ID == 104) {
 			XX::SecuritySettings security;
 			_read(security, window);
-			if (security.ValidateTrust && !security.TrustedCertificates.Length() && !security.UntrustedCertificates.Length()) {
+			if ((security.ValidateTrust || security.ValidateTrustForQuarantine) && !security.TrustedCertificates.Length() && !security.UntrustedCertificates.Length()) {
 				auto task = CreateStructuredTask<MessageBoxResult>([this, w = window](MessageBoxResult result) {
 					if (result == MessageBoxResult::Yes) {
 						FindControl(w, 102)->SetText(L"fidelitas");

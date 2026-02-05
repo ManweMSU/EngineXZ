@@ -4,6 +4,7 @@
 #include "../ximg/xi_pret.h"
 #include "../xexec/xx_com.h"
 #include "../xenv_sec/xe_sec_core.h"
+#include "../xenv_sec/xe_sec_xaa.h"
 
 using namespace Engine;
 using namespace Engine::IO;
@@ -23,6 +24,7 @@ constexpr uint InspectVersions		= 0x040;
 
 struct {
 	SafePointer<StringTable> localization;
+	SafePointer<XE::Security::ICryptographyAcceleration> crypt_accel;
 	string store_integration;
 	XX::SecuritySettings security;
 	bool silent = false;
@@ -233,6 +235,16 @@ int IntegrityStatusToColor(XE::Security::IntegrityStatus status)
 	else if (status == XE::Security::IntegrityStatus::NoTrustInChain) return 14;
 	else return 12;
 }
+XE::Security::ICryptographyAcceleration * GetCryptographyAcceleration(void)
+{
+	if (!state.crypt_accel) {
+		SafePointer<XA::IAssemblyTranslator> trs = XA::CreatePlatformTranslator();
+		SafePointer<XA::IExecutableLinker> lnk = XA::CreateLinker();
+		if (!trs || !lnk) return 0;
+		state.crypt_accel = XA::Security::CreateSyntheticCryptographyAcceleration(trs, lnk);
+	}
+	return state.crypt_accel;
+}
 
 int Main(void)
 {
@@ -272,7 +284,7 @@ int Main(void)
 			state.security.TrustedCertificates = ExpandPath(Path::GetDirectory(xe) + L"/" + state.security.TrustedCertificates);
 			state.security.UntrustedCertificates = ExpandPath(Path::GetDirectory(xe) + L"/" + state.security.UntrustedCertificates);
 		} catch (...) {
-			state.security.ValidateTrust = false;
+			state.security.ValidateTrust = state.security.ValidateTrustForQuarantine = false;
 			state.security.TrustedCertificates = state.security.UntrustedCertificates = L"";
 		}
 	}
@@ -280,6 +292,10 @@ int Main(void)
 		if (state.security.ValidateTrust) {
 			console.SetTextColor(10);
 			console.WriteLine(Localized(501));
+			console.SetTextColor(-1);
+		} else if (state.security.ValidateTrustForQuarantine) {
+			console.SetTextColor(10);
+			console.WriteLine(Localized(500));
 			console.SetTextColor(-1);
 		} else {
 			console.SetTextColor(14);
@@ -313,7 +329,7 @@ int Main(void)
 			}
 			try {
 				SafePointer<Stream> data = new FileStream(state.identity_file, AccessRead, OpenExisting);
-				SafePointer<XE::Security::IContainer> store = XE::Security::LoadContainer(data);
+				SafePointer<XE::Security::IContainer> store = XE::Security::LoadContainer(data, GetCryptographyAcceleration());
 				if (!store || store->GetContainerClass() != XE::Security::ContainerClass::Identity) throw InvalidFormatException();
 				identity = XE::Security::LoadIdentity(store, 0, state.identity_password);
 				if (!identity) throw InvalidFormatException();
@@ -332,7 +348,7 @@ int Main(void)
 					module = new XI::Module(stream);
 					if (state.validate_security) {
 						module_data = XI::ReadConsistencyData(stream);
-						module_signature = XE::Security::LoadContainer(stream);
+						module_signature = XE::Security::LoadContainer(stream, GetCryptographyAcceleration());
 					}
 				} catch (...) {
 					if (!state.silent) console << TextColor(12) << Localized(302) << TextColorDefault() << LineFeed();
@@ -451,6 +467,7 @@ int Main(void)
 					if (!trust) throw OutOfMemoryException();
 					if (!trust->AddTrustDirectory(state.security.TrustedCertificates, true)) throw InvalidStateException();
 					if (!trust->AddTrustDirectory(state.security.UntrustedCertificates, false)) throw InvalidStateException();
+					trust->SetCacheControl(false);
 				} catch (...) {
 					if (!state.silent) console << TextColor(12) << Localized(508) << TextColorDefault() << LineFeed();
 					return 1;

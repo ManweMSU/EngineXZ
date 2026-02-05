@@ -18,6 +18,7 @@ namespace Engine
 				LargeInteger(const LargeInteger & src);
 				LargeInteger(LargeInteger && src);
 				LargeInteger(const void * data, uint size);
+				LargeInteger(const void * data, uint data_size, uint allocate_size);
 				LargeInteger(Storage::RegistryNode * reg, const widechar * value);
 				~LargeInteger(void);
 

@@ -9,6 +9,7 @@ namespace Engine
 		struct SecuritySettings
 		{
 			bool ValidateTrust;
+			bool ValidateTrustForQuarantine;
 			string TrustedCertificates;
 			string UntrustedCertificates;
 		};

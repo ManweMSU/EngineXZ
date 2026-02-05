@@ -30,19 +30,33 @@ namespace Engine
 			ObjectArray<ISecurityExtension> _sec;
 			ModuleLoadError _error;
 			string _module, _subject;
+		private:
+			bool _open_module_stream(const string & module_path, Streaming::Stream ** stream, uintptr & module_stream_context) noexcept
+			{
+				try {
+					SafePointer<Streaming::Stream> result = new Streaming::FileStream(module_path, Streaming::AccessRead, Streaming::OpenExisting);
+					uintptr context = 0;
+					if (_sec.Length()) context = _sec[0].EvaluateTrustContext(module_path);
+					*stream = result.Inner();
+					module_stream_context = context;
+					result->Retain();
+					return true;
+				} catch (...) { return false; }
+			}
 		public:
 			EStandardLoader(void) : _xi_paths(0x10), _dl_paths(0x10), _apis(0x10), _mdl(0x10), _sec(0x10), _error(ModuleLoadError::Success) {}
 			virtual ~EStandardLoader(void) override {}
-			virtual Streaming::Stream * OpenModule(const string & module_name) noexcept override
+			virtual Streaming::Stream * OpenModule(const string & module_name, uintptr & module_stream_context) noexcept override
 			{
 				for (auto & e : _mdl) {
-					auto stream = e.OpenModule(module_name);
+					auto stream = e.OpenModule(module_name, module_stream_context);
 					if (stream) return stream;
 				}
 				for (auto & p : _xi_paths) {
-					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionLibrary), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
-					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionExecutable), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
-					try { return new Streaming::FileStream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionExecutable2), Streaming::AccessRead, Streaming::OpenExisting); } catch (...) {}
+					SafePointer<Streaming::Stream> stream;
+					if (_open_module_stream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionLibrary), stream.InnerRef(), module_stream_context)) { stream->Retain(); return stream; }
+					if (_open_module_stream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionExecutable), stream.InnerRef(), module_stream_context)) { stream->Retain(); return stream; }
+					if (_open_module_stream(IO::ExpandPath(p + L"/" + module_name + L"." + XI::FileExtensionExecutable2), stream.InnerRef(), module_stream_context)) { stream->Retain(); return stream; }
 				}
 				return 0;
 			}
@@ -81,12 +95,12 @@ namespace Engine
 				}
 				return 0;
 			}
-			virtual ModuleLoadError EvaluateTrust(Streaming::Stream * module_stream) noexcept override
+			virtual ModuleLoadError EvaluateTrust(Streaming::Stream * module_stream, uintptr module_stream_context) noexcept override
 			{
 				if (!_sec.Length()) return ModuleLoadError::Success;
 				try {
 					SafePointer<DataBlock> mdata = XI::ReadConsistencyData(module_stream);
-					return _sec[0].EvaluateTrust(mdata->GetBuffer(), mdata->Length(), module_stream);
+					return _sec[0].EvaluateTrust(mdata->GetBuffer(), mdata->Length(), module_stream_context, module_stream);
 				} catch (...) { return ModuleLoadError::AllocationFailure; }
 			}
 			virtual bool AddModuleSearchPath(const string & path) noexcept override

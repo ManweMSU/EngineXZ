@@ -9,7 +9,9 @@ namespace Engine
 	{
 		namespace Security
 		{
-			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, bool needs_trusted_chain) noexcept;
+			enum class SecurityLevel : uint { None = 0, ValidateQuarantine = 1, ValidateAll = 2 };
+
+			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, SecurityLevel security_level) noexcept;
 			void ActivateSecurityAPI(StandardLoader & ldr);
 		}
 	}

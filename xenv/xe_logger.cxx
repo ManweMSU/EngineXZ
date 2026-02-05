@@ -125,7 +125,8 @@ namespace Engine
 		{
 			auto callback = xctx.GetLoaderCallback();
 			if (!callback) return;
-			SafePointer<Streaming::Stream> stream = callback->OpenModule(name);
+			uintptr scontext;
+			SafePointer<Streaming::Stream> stream = callback->OpenModule(name, scontext);
 			if (!stream) throw Exception();
 			SafePointer< Volumes::Dictionary<string, string> > dict = LoadLocalizationTable(stream);
 			SetErrorLocalization(xctx, dict);

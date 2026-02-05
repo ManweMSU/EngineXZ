@@ -29,12 +29,13 @@ namespace Engine
 		class IModuleExtension : public IExtension
 		{
 		public:
-			virtual Streaming::Stream * OpenModule(const string & module_name) noexcept = 0;
+			virtual Streaming::Stream * OpenModule(const string & module_name, uintptr & module_stream_context) noexcept = 0;
 		};
 		class ISecurityExtension : public IExtension
 		{
 		public:
-			virtual ModuleLoadError EvaluateTrust(const void * module_data, int module_length, Streaming::Stream * residual) noexcept = 0;
+			virtual ModuleLoadError EvaluateTrust(const void * module_data, int module_length, uintptr module_stream_context, Streaming::Stream * residual) noexcept = 0;
+			virtual uintptr EvaluateTrustContext(const string & file) noexcept = 0;
 		};
 
 		class StandardLoader : public Object, public ILoaderCallback

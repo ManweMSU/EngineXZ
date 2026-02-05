@@ -43,7 +43,13 @@ namespace Engine
 				Time ValidSince, ValidUntil;
 				Volumes::Dictionary<string, string> Attributes;
 			};
+			typedef void (* RSAAccelerationPowerFunction)(void * dest_buffer, void * base_buffer, void * power_buffer, void * modulus_buffer, void * auxillary_buffer);
 
+			class ICryptographyAcceleration : public Object
+			{
+			public:
+				virtual void CreateRSAAcceleration(uint operative_bit_length, uint public_exponent_bit_length, RSAAccelerationPowerFunction * func, Object ** retainer) noexcept = 0;
+			};
 			class IKey : public Object
 			{
 			public:
@@ -94,10 +100,10 @@ namespace Engine
 				virtual DataBlock * LoadContainerRepresentation(void) noexcept = 0;
 			};
 
-			ICertificate * LoadCertificate(DataBlock * data) noexcept;
+			ICertificate * LoadCertificate(DataBlock * data, ICryptographyAcceleration * acceleration = 0) noexcept;
 			IIdentity * LoadIdentity(IContainer * input0, IContainer * input1, const string & password) noexcept;
 
-			IContainer * LoadContainer(Streaming::Stream * input) noexcept;
+			IContainer * LoadContainer(Streaming::Stream * input, ICryptographyAcceleration * acceleration = 0) noexcept;
 			IContainer * CreateCertificate(const CertificateDesc & cert_desc, IKey * public_key) noexcept; // UnsignedCertificate
 			IContainer * ValidateCertificate(ICertificate * unsigned_cert, IKey * private_key) noexcept; // Certificate, for root ones
 			IContainer * ValidateCertificate(ICertificate * unsigned_cert, IIdentity * identity) noexcept; // Certificate, for non-root ones
@@ -107,7 +113,7 @@ namespace Engine
 			IContainer * CreateIntegrityData(DataBlock * hash) noexcept; // IntegrityData
 			IContainer * CreateSignatureData(DataBlock * hash, IIdentity * identity) noexcept; // Signature
 
-			enum class TrustStatus { Untrusted = 0, Undefined = 1, Trusted = 2 };
+			enum class TrustStatus { Untrusted = 0, Undefined = 1, Trusted = 2, TrustedUnconditionally = 3 };
 			enum class IntegrityStatus {
 				OK					= 0x00,
 				DataCorruption		= 0x01,
@@ -123,11 +129,15 @@ namespace Engine
 			class ITrustProvider : public Object
 			{
 			public:
+				virtual bool AddUnconditionalTrust(DataBlock * cert_hash) noexcept = 0;
 				virtual bool AddTrust(DataBlock * cert_hash, bool trusted) noexcept = 0;
 				virtual bool AddTrust(ICertificate * cert, bool trusted) noexcept = 0;
 				virtual bool AddTrust(Streaming::Stream * cert_stream, bool trusted) noexcept = 0;
 				virtual bool AddTrust(const string & cert_file, bool trusted) noexcept = 0;
 				virtual bool AddTrustDirectory(const string & folder, bool trusted) noexcept = 0;
+				virtual void SetCacheControl(bool allow_trust_cacheing) noexcept = 0;
+				virtual bool GetCacheControl(void) const noexcept = 0;
+				virtual void ResetTrustCache(void) noexcept = 0;
 				virtual TrustStatus ProvideTrust(const DataBlock * cert_hash) const noexcept = 0;
 			};
 			struct IntegrityValidationDesc {
@@ -135,7 +145,7 @@ namespace Engine
 				Array<IntegrityStatus> chain;
 			};
 			ITrustProvider * CreateTrustProvider(void) noexcept;
-			TrustStatus EvaluateIntegrity(DataBlock * hash, IContainer * idata, const Time & timestamp, const ITrustProvider * trust, IntegrityValidationDesc * desc) noexcept;
+			TrustStatus EvaluateIntegrity(DataBlock * hash, IContainer * idata, const Time & timestamp, ITrustProvider * trust, IntegrityValidationDesc * desc) noexcept;
 		}
 	}
 }

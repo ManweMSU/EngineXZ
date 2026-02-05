@@ -84,9 +84,8 @@ BETA-8:
  - Ctrl+C/Ctrl+V in raw console mode
  - Console crashes while freeing graphical device
  - Error with embeded modules
- - RSA acceleration via XA
- - Extended security for the 'quarantine' files
- - Console auto-launch (?)
+ + RSA acceleration via XA and trust cacheing
+ + Extended security for the 'quarantine' files
 -- XV
  - XVC crashed on invalid prototype control sequences
 -- Standard Library
