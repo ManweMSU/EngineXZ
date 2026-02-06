@@ -17,6 +17,7 @@
 #include "../xenv/xe_commem.h"
 #include "../xenv/xe_mm.h"
 #include "../xenv_sec/xe_sec_ext.h"
+#include "../xenv_sec/xe_sec_xaa.h"
 
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
@@ -895,6 +896,12 @@ namespace Engine
 			} catch (...) {}
 		}
 		#endif
+		XE::Security::ICryptographyAcceleration * CreateCryptographyAcceleration(void) noexcept
+		{
+			SafePointer<XA::IAssemblyTranslator> trs = XA::CreatePlatformTranslator();
+			SafePointer<XA::IExecutableLinker> lnk = XA::CreateLinker();
+			if (trs && lnk) return XA::Security::CreateSyntheticCryptographyAcceleration(trs, lnk); else return 0;
+		}
 		Streaming::Stream * GetImageStream(XE::StandardLoader & loader, EnvironmentConfiguration & conf, uintptr & module_stream_context)
 		{
 			if (conf.direct_mode_channel_name.Length()) {
@@ -1012,16 +1019,18 @@ namespace Engine
 				#endif
 				SafePointer< Array<string> > args = GetCommandLine();
 				SafePointer<XE::StandardLoader> loader = XE::CreateStandardLoader(XE::UseStandard);
+				SafePointer<XE::Security::ICryptographyAcceleration> crypt_accel = CreateCryptographyAcceleration();
+				SafePointer<XE::Security::ITrustProvider> crypt_trust;
 				LoadEnvironmentConfiguration(desc, environment_configuration);
 				try { if (environment_configuration.xe_config.Length()) {
 					XX::SecuritySettings sec;
 					IncludeComponent(*loader, environment_configuration.xe_config, &sec);
 					if (sec.ValidateTrust || sec.ValidateTrustForQuarantine) {
-						SafePointer<XE::Security::ITrustProvider> trust = XE::Security::CreateTrustProvider();
-						if (!trust) throw Exception();
-						if (!trust->AddTrustDirectory(IO::ExpandPath(IO::Path::GetDirectory(environment_configuration.xe_config) + L"/" + sec.TrustedCertificates), true)) throw Exception();
-						if (!trust->AddTrustDirectory(IO::ExpandPath(IO::Path::GetDirectory(environment_configuration.xe_config) + L"/" + sec.UntrustedCertificates), false)) throw Exception();
-						SafePointer<XE::ISecurityExtension> sec_ext = XE::Security::CreateStandardSecurityExtension(trust, sec.ValidateTrust ? XE::Security::SecurityLevel::ValidateAll : XE::Security::SecurityLevel::ValidateQuarantine);
+						crypt_trust = XE::Security::CreateTrustProvider();
+						if (!crypt_trust) throw Exception();
+						if (!crypt_trust->AddTrustDirectory(IO::ExpandPath(IO::Path::GetDirectory(environment_configuration.xe_config) + L"/" + sec.TrustedCertificates), true)) throw Exception();
+						if (!crypt_trust->AddTrustDirectory(IO::ExpandPath(IO::Path::GetDirectory(environment_configuration.xe_config) + L"/" + sec.UntrustedCertificates), false)) throw Exception();
+						SafePointer<XE::ISecurityExtension> sec_ext = XE::Security::CreateStandardSecurityExtension(crypt_trust, sec.ValidateTrust ? XE::Security::SecurityLevel::ValidateAll : XE::Security::SecurityLevel::ValidateQuarantine, crypt_accel);
 						if (!sec_ext) throw Exception();
 						if (!loader->RegisterSecurityExtension(sec_ext)) throw Exception();
 					}
@@ -1103,7 +1112,7 @@ namespace Engine
 				XE::ActivateCryptography(*loader);
 				XE::ActivateSharedMemory(*loader);
 				XE::ActivateMultimedia(*loader);
-				XE::Security::ActivateSecurityAPI(*loader);
+				XE::Security::ActivateSecurityAPI(*loader, crypt_accel, crypt_trust);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;
 				if (environment_configuration.locale_override.Length()) Assembly::CurrentLocale = environment_configuration.locale_override;
@@ -1120,10 +1129,10 @@ namespace Engine
 					ectx.error_subcode = int(loader->GetLastError());
 					string er, ser;
 					XE::GetErrorDescription(ectx, *xctx, er, ser);
-					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.\n%3", loader->GetLastErrorModule(),
-						er, ser, loader->GetLastErrorSubject()));
+					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.\n%3", loader->GetLastErrorModule(), er, ser, loader->GetLastErrorSubject()));
 					return 7;
 				}
+				if (crypt_trust) { crypt_trust->SetCacheControl(false); crypt_trust->ResetTrustCache(); }
 				if (windows_enabled) XE::ControlWindowsIO(*loader, main_module);
 				auto main = xctx->GetEntryPoint();
 				if (!main) {

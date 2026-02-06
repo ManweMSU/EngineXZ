@@ -34,6 +34,10 @@ namespace Engine
 					if (!key) return 0;
 					return new (std::nothrow) EKey(key);
 				}
+				virtual SafePointer<DataBlock> Encrypt(DataBlock * in) noexcept { return _key->Encrypt(in); }
+				virtual SafePointer<DataBlock> Decrypt(DataBlock * in) noexcept { return _key->Decrypt(in); }
+				virtual SafePointer<DataBlock> Sign(DataBlock * hash) noexcept { return _key->Sign(hash); }
+				virtual bool Validate(DataBlock * hash, DataBlock * signature) noexcept { return _key->Validate(hash, signature); }
 				IKey * GetObject(void) noexcept { return _key; }
 			};
 			class ECertificate : public Object
@@ -125,6 +129,9 @@ namespace Engine
 					} catch (...) { return false; }
 				}
 				virtual int GetTrust(const DataBlock * hash) noexcept { return int(_trust->ProvideTrust(hash)); }
+				virtual bool GetCacheControl(void) noexcept { return _trust->GetCacheControl(); }
+				virtual void SetCacheControl(const bool & value) noexcept { _trust->SetCacheControl(value); }
+				virtual void ResetCache(void) noexcept { _trust->ResetTrustCache(); }
 				ITrustProvider * GetObject(void) noexcept { return _trust; }
 			};
 
@@ -134,13 +141,7 @@ namespace Engine
 				SafePointer<ITrustProvider> _trust;
 				SecurityLevel _security_level;
 			public:
-				SecurityExtension(ITrustProvider * trust, SecurityLevel security_level) : _security_level(security_level)
-				{
-					_trust.SetRetain(trust);
-					SafePointer<XA::IAssemblyTranslator> trs = XA::CreatePlatformTranslator();
-					SafePointer<XA::IExecutableLinker> lnk = XA::CreateLinker();
-					if (trs && lnk) _accel = XA::Security::CreateSyntheticCryptographyAcceleration(trs, lnk);
-				}
+				SecurityExtension(ITrustProvider * trust, SecurityLevel security_level, ICryptographyAcceleration * accel) : _security_level(security_level) { _trust.SetRetain(trust); _accel.SetRetain(accel); }
 				virtual ~SecurityExtension(void) override {}
 				virtual ModuleLoadError EvaluateTrust(const void * module_data, int module_length, uintptr module_stream_context, Streaming::Stream * residual) noexcept override
 				{
@@ -170,14 +171,19 @@ namespace Engine
 			};
 			class SecurityAPI : public IAPIExtension
 			{
-				static SafePointer<EKey> _rsa_load(const DataBlock * data) noexcept
+				SafePointer<ICryptographyAcceleration> _accel;
+				SafePointer<ITrustProvider> _trust;
+			private:
+				static SafePointer<EKey> _rsa_load(const DataBlock * data, const Module & mdl) noexcept
 				{
-					SafePointer<IKey> key = LoadKeyRSA(data);
+					auto self = static_cast<SecurityAPI *>(reinterpret_cast<IAPIExtension *>(mdl.GetExecutionContext().GetLoaderCallback()->ExposeInterface(L"xesec")));
+					SafePointer<IKey> key = LoadKeyRSA(data, self->_accel);
 					if (!key) return 0;
 					return new (std::nothrow) EKey(key);
 				}
-				static SafePointer<EKey> _rsa_create(int modulus_length, int exponent) noexcept
+				static SafePointer<EKey> _rsa_create(int modulus_length, int exponent, const Module & mdl) noexcept
 				{
+					auto self = static_cast<SecurityAPI *>(reinterpret_cast<IAPIExtension *>(mdl.GetExecutionContext().GetLoaderCallback()->ExposeInterface(L"xesec")));
 					try {
 						int prime_length = modulus_length / 2;
 						LargeInteger p(prime_length);
@@ -185,15 +191,16 @@ namespace Engine
 						if (!p.InitWithRandomPrime(prime_length, 128, 2000)) return 0;
 						if (!q.InitWithRandomPrime(prime_length, 128, 2000)) return 0;
 						SafePointer<IKey> key;
-						if (!CreateKeyRSA(p.Data(), p.DWordLength() * 4, q.Data(), q.DWordLength() * 4, exponent, key.InnerRef())) return 0;
+						if (!CreateKeyRSA(p.Data(), p.DWordLength() * 4, q.Data(), q.DWordLength() * 4, exponent, key.InnerRef(), self->_accel)) return 0;
 						return new (std::nothrow) EKey(key);
 					} catch (...) { return 0; }
 				}
-				static SafePointer<EData> _data_load(XStream * xstream) noexcept
+				static SafePointer<EData> _data_load(XStream * xstream, const Module & mdl) noexcept
 				{
+					auto self = static_cast<SecurityAPI *>(reinterpret_cast<IAPIExtension *>(mdl.GetExecutionContext().GetLoaderCallback()->ExposeInterface(L"xesec")));
 					try {
 						SafePointer<Streaming::Stream> stream = WrapFromXStream(xstream);
-						SafePointer<IContainer> data = LoadContainer(stream);
+						SafePointer<IContainer> data = LoadContainer(stream, self->_accel);
 						if (!data) return 0;
 						return new (std::nothrow) EData(data);
 					} catch (...) { return 0; }
@@ -269,6 +276,12 @@ namespace Engine
 					if (!trust) return 0;
 					return new (std::nothrow) ETrust(trust);
 				}
+				static SafePointer<ETrust> _trust_system(const Module & mdl) noexcept
+				{
+					auto self = static_cast<SecurityAPI *>(reinterpret_cast<IAPIExtension *>(mdl.GetExecutionContext().GetLoaderCallback()->ExposeInterface(L"xesec")));
+					if (self->_trust) return new (std::nothrow) ETrust(self->_trust);
+					else return 0;
+				}
 				static int _evaluate_trust(DataBlock * hash, EData * data, const Time & time, ETrust * trust, Array<int> * status) noexcept
 				{
 					IntegrityValidationDesc vdesc;
@@ -281,6 +294,7 @@ namespace Engine
 					return int(result);
 				}
 			public:
+				SecurityAPI(ICryptographyAcceleration * accel, ITrustProvider * system_trust) { _accel.SetRetain(accel); _trust.SetRetain(system_trust); }
 				virtual const void * ExposeRoutine(const string & routine_name) noexcept override
 				{
 					if (string::Compare(routine_name, L"xesec_dscc") < 0) {
@@ -310,20 +324,24 @@ namespace Engine
 							}
 						}
 					} else {
-						if (string::Compare(routine_name, L"xesec_ffal") < 0) {
-							if (string::Compare(routine_name, L"xesec_dsci") < 0) {
-								if (string::Compare(routine_name, L"xesec_dscc") == 0) return reinterpret_cast<const void *>(&_data_subs_root_cert);
-							} else {
-								if (string::Compare(routine_name, L"xesec_dsub") < 0) {
-									if (string::Compare(routine_name, L"xesec_dsci") == 0) return reinterpret_cast<const void *>(&_data_subs_cert);
+						if (string::Compare(routine_name, L"xesec_ffss") < 0) {
+							if (string::Compare(routine_name, L"xesec_dsub") < 0) {
+								if (string::Compare(routine_name, L"xesec_dsci") < 0) {
+									if (string::Compare(routine_name, L"xesec_dscc") == 0) return reinterpret_cast<const void *>(&_data_subs_root_cert);
 								} else {
+									if (string::Compare(routine_name, L"xesec_dsci") == 0) return reinterpret_cast<const void *>(&_data_subs_cert);
+								}
+							} else {
+								if (string::Compare(routine_name, L"xesec_ffal") < 0) {
 									if (string::Compare(routine_name, L"xesec_dsub") == 0) return reinterpret_cast<const void *>(&_data_create_signature);
+								} else {
+									if (string::Compare(routine_name, L"xesec_ffal") == 0) return reinterpret_cast<const void *>(&_trust_alloc);
 								}
 							}
 						} else {
 							if (string::Compare(routine_name, L"xesec_rsac") < 0) {
 								if (string::Compare(routine_name, L"xesec_inda") < 0) {
-									if (string::Compare(routine_name, L"xesec_ffal") == 0) return reinterpret_cast<const void *>(&_trust_alloc);
+									if (string::Compare(routine_name, L"xesec_ffss") == 0) return reinterpret_cast<const void *>(&_trust_system);
 								} else {
 									if (string::Compare(routine_name, L"xesec_inda") == 0) return reinterpret_cast<const void *>(&_identity_alloc);
 								}
@@ -338,12 +356,12 @@ namespace Engine
 					}
 					return 0;					
 				}
-				virtual const void * ExposeInterface(const string & interface) noexcept override { return 0; }
+				virtual const void * ExposeInterface(const string & interface) noexcept override { if (interface == L"xesec") return static_cast<IAPIExtension *>(this); return 0; }
 			};
-			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, SecurityLevel security_level) noexcept { try { return new SecurityExtension(trust, security_level); } catch (...) { return 0; } }
-			void ActivateSecurityAPI(StandardLoader & ldr)
+			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, SecurityLevel security_level, ICryptographyAcceleration * acceleration) noexcept { try { return new SecurityExtension(trust, security_level, acceleration); } catch (...) { return 0; } }
+			void ActivateSecurityAPI(StandardLoader & ldr, ICryptographyAcceleration * acceleration, ITrustProvider * system_trust)
 			{
-				SafePointer<IAPIExtension> ext = new SecurityAPI;
+				SafePointer<IAPIExtension> ext = new SecurityAPI(acceleration, system_trust);
 				if (!ldr.RegisterAPIExtension(ext)) throw InvalidStateException();
 			}
 		}

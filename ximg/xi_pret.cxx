@@ -43,7 +43,7 @@ namespace Engine
 			auto resxdl = MakeResourceID(L"XDL", 0);
 			for (auto & f : subject.functions) PretranslateFunction(f.value, sys_list, sys_list_length);
 			for (auto & c : subject.classes) for (auto & f : c.value.methods) PretranslateFunction(f.value, sys_list, sys_list_length);
-			for (auto & r : subject.resources) if (r.key & 0xFFFFFFFF == resxdl) {
+			for (auto & r : subject.resources) if ((r.key & 0xFFFFFFFF) == resxdl) {
 				SafePointer<Streaming::Stream> stream = new Streaming::MemoryStream(r.value->GetBuffer(), r.value->Length());
 				Module submodule(stream);
 				PretranslateModule(submodule, sys_list, sys_list_length);

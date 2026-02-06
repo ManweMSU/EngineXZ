@@ -423,7 +423,7 @@ namespace Engine
 				return 0;
 			}
 			auto typexdl = XI::MakeResourceID(L"XDL", 0);
-			if (EmbeddedModulesAllowed()) for (auto & rsrc : data->resources) if (rsrc.key & 0xFFFFFFFF == typexdl) {
+			if (EmbeddedModulesAllowed()) for (auto & rsrc : data->resources) if ((rsrc.key & 0xFFFFFFFF) == typexdl) {
 				try {
 					string type;
 					int id;

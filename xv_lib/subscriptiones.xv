@@ -41,9 +41,15 @@ spatium subscriptio {
 	genus clavis hereditat objectum {
 		genus_clavis genu { adipisce virtualis pura; }
 		!clavis clavis_publica { adipisce virtualis pura; }
+		functio !dordo_datorum sifra(@dordo_datorum data) virtualis pura;
+		functio !dordo_datorum desifra(@dordo_datorum data) virtualis pura;
+		functio !dordo_datorum subscribe(@dordo_datorum digestum) virtualis pura;
+		functio logicum convalida(@dordo_datorum digestum, @dordo_datorum subscriptio) virtualis pura;
 
-		[[importa] xesec_rsao] classis functio !clavis onera_rsa(@dordo_datorum dta);
-		[[importa] xesec_rsac] classis functio !clavis crea_rsa(int longitudo_moduli, int pexp);
+		[[importa] xesec_rsao] classis functio !clavis __onera_rsa(@dordo_datorum dta, @nihil mdl);
+		[[importa] xesec_rsac] classis functio !clavis __crea_rsa(int longitudo_moduli, int pexp, @nihil mdl);
+		classis functio !clavis onera_rsa(@dordo_datorum dta) { responde __onera_rsa(dta, modulus()); }
+		classis functio !clavis crea_rsa(int longitudo_moduli, int pexp) { responde __crea_rsa(longitudo_moduli, pexp, modulus()); }
 	}
 	genus certificatus hereditat objectum {
 		linea organizatio { adipisce virtualis pura; }
@@ -70,7 +76,7 @@ spatium subscriptio {
 		!dordo_datorum subscriptio { adipisce virtualis pura; }
 		functio !dordo_datorum codifica() virtualis pura;
 
-		[[importa] xesec_done] classis functio !data onera(@flumen fl);
+		[[importa] xesec_done] classis functio !data __onera(@flumen fl, @nihil mdl);
 		[[importa] xesec_dccn] classis functio !data crea_certificatum(~descriptio_certificati desc, ~ordo (linea, linea) attributa, @clavis publica);
 		[[importa] xesec_dccd] classis functio !data crea_certificatum(@data dta);
 		[[importa] xesec_dscc] classis functio !data subscribe_certificatum(@.subscriptio.certificatus cert, @clavis privata);
@@ -79,6 +85,7 @@ spatium subscriptio {
 		[[importa] xesec_dcin] classis functio !data crea_indentitatem(@indentitas ind, ~linea clavis_externa);
 		[[importa] xesec_ddig] classis functio !data crea_digestum(@dordo_datorum digestum);
 		[[importa] xesec_dsub] classis functio !data crea_subscriptionem(@dordo_datorum digestum, @indentitas ind);
+		classis functio !data onera(@flumen fl) { responde __onera(fl, modulus()); }
 	}
 	dura indentitas {
 		[[importa] xesec_inda] classis functio !indentitas alloca(@data d0, @data d1, ~linea clavis_externa);
@@ -87,8 +94,12 @@ spatium subscriptio {
 		functio logicum fide(@certificatus cert, logicum fidelis) virtualis pura;
 		functio logicum fide(@flumen fl, logicum fidelis) virtualis pura;
 		functio status_fidelitatis operator () (@dordo_datorum digestum) virtualis pura;
+		logicum coactare { adipisce virtualis pura; loca virtualis pura; }
+		functio nihil depura_coactarium() virtualis pura;
 
 		[[importa] xesec_ffal] classis functio !functio_fidelitatis alloca();
+		[[importa] xesec_ffss] classis functio !functio_fidelitatis __systemae(@nihil mdl);
+		classis functio !functio_fidelitatis systemae() { responde __systemae(modulus()); }
 	}
 	[[importa] xesec_conv] functio status_fidelitatis convalida(@dordo_datorum digestum, @data sdata, ~tempus tmp, @functio_fidelitatis ff, @ordo status_integritatis sint);
 }

@@ -11,8 +11,8 @@ namespace Engine
 		{
 			enum class SecurityLevel : uint { None = 0, ValidateQuarantine = 1, ValidateAll = 2 };
 
-			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, SecurityLevel security_level) noexcept;
-			void ActivateSecurityAPI(StandardLoader & ldr);
+			ISecurityExtension * CreateStandardSecurityExtension(ITrustProvider * trust, SecurityLevel security_level, ICryptographyAcceleration * acceleration) noexcept;
+			void ActivateSecurityAPI(StandardLoader & ldr, ICryptographyAcceleration * acceleration, ITrustProvider * system_trust);
 		}
 	}
 }

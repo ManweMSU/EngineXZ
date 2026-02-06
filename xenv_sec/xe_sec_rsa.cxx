@@ -99,8 +99,8 @@ namespace Engine
 							accel_func(output.Data(), input.Data(), e.Data(), modulus.Data(), aux.Data());
 						} else LongPower(output, input, e, modulus);
 						SafePointer<DataBlock> result = new DataBlock(1);
-						result->SetLength(4 * output.DWordLength());
-						MemoryCopy(result->GetBuffer(), output.Data(), 4 * output.DWordLength());
+						result->SetLength(MakeAlignment(modulus.EffectiveBitLength(), 0x7) / 8);
+						MemoryCopy(result->GetBuffer(), output.Data(), result->Length());
 						result->Retain();
 						return result;
 					} catch (...) { return 0; }
@@ -170,7 +170,7 @@ namespace Engine
 					LongSubtract(q1, 1);
 					LongMultiply(phi, p1, q1);
 					LongInverse(d, e, phi);
-					modulus = modulus.Resize(MakeAlignment(modulus.EffectiveBitLength(), 0x7F));
+					modulus = modulus.Resize(MakeAlignment(modulus.EffectiveBitLength() + 1, 0x7F));
 					if (accel) accel->CreateRSAAcceleration(modulus.BitLength(), d.BitLength(), &accel_func, accel_retainer.InnerRef()); else accel_func = 0;
 				}
 				RSA_PrivateKey(const DataBlock * data, ICryptographyAcceleration * acceleration)
@@ -202,8 +202,8 @@ namespace Engine
 							accel_func(output.Data(), input.Data(), d.Data(), modulus.Data(), aux.Data());
 						} else LongPower(output, input, d, modulus);
 						SafePointer<DataBlock> result = new DataBlock(1);
-						result->SetLength(4 * output.DWordLength());
-						MemoryCopy(result->GetBuffer(), output.Data(), 4 * output.DWordLength());
+						result->SetLength(MakeAlignment(modulus.EffectiveBitLength(), 0x7) / 8);
+						MemoryCopy(result->GetBuffer(), output.Data(), result->Length());
 						result->Retain();
 						return result;
 					} catch (...) { return 0; }
@@ -230,8 +230,8 @@ namespace Engine
 							accel_func(output.Data(), input.Data(), d.Data(), modulus.Data(), aux.Data());
 						} else LongPower(output, input, d, modulus);
 						SafePointer<DataBlock> result = new DataBlock(1);
-						result->SetLength(4 * output.DWordLength());
-						MemoryCopy(result->GetBuffer(), output.Data(), 4 * output.DWordLength());
+						result->SetLength(MakeAlignment(modulus.EffectiveBitLength(), 0x7) / 8);
+						MemoryCopy(result->GetBuffer(), output.Data(), result->Length());
 						result->Retain();
 						return result;
 					} catch (...) { return 0; }
