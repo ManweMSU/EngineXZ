@@ -94,7 +94,7 @@ BETA-8:
  - IPv4 in HTTP client
  - CSV escape sequences
  - Crashes using HTTP services
- - New process API functions (in lxx)
+ + New process API functions (in lxx)
  + Ultimate RSA cryptography
  - Long integers (128 and 256) library
  - Hardware based cryptography library

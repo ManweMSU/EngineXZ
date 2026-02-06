@@ -681,6 +681,26 @@ namespace Engine
 				virtual void Terminate(void) noexcept { _process->Terminate(); }
 				virtual bool IsActive(void) noexcept { return !_process->Exited(); }
 				virtual int GetExitCode(void) noexcept { return _process->GetExitCode(); }
+				virtual int GetPID(void) noexcept { return _process->GetPID(); }
+				virtual bool IsGUI(void) noexcept { return _process->IsGUI(); }
+				virtual bool Activate(void) noexcept { return _process->Activate(); }
+			};
+			class _xx_running_process : public Object
+			{
+				SafePointer<RunningProcess> _process;
+			public:
+				_xx_running_process(RunningProcess * inner) { _process.SetRetain(inner); }
+				virtual ~_xx_running_process(void) override {}
+				virtual string ToString(void) const override { try { return L"XX Running Process"; } catch (...) { return L""; } }
+				virtual void Terminate(void) noexcept { _process->Terminate(); }
+				virtual bool IsActive(void) noexcept { return !_process->Exited(); }
+				virtual int GetPID(void) noexcept { return _process->GetPID(); }
+				virtual bool IsGUI(void) noexcept { return _process->IsGUI(); }
+				virtual bool Activate(void) noexcept { return _process->Activate(); }
+				virtual uint64 GetCreationTime(void) noexcept { return _process->GetCreationTime().Ticks; }
+				virtual string GetExecutablePath(XE::ErrorContext & ectx) noexcept { XE_TRY_INTRO return _process->GetExecutablePath(); XE_TRY_OUTRO(L"") }
+				virtual string GetBundlePath(XE::ErrorContext & ectx) noexcept { XE_TRY_INTRO return _process->GetBundlePath(); XE_TRY_OUTRO(L"") }
+				virtual string GetBundleIdentifier(XE::ErrorContext & ectx) noexcept { XE_TRY_INTRO return _process->GetBundleIdentifier(); XE_TRY_OUTRO(L"") }
 			};
 			class _xx_library_interface : public Object
 			{
@@ -864,6 +884,16 @@ namespace Engine
 					ev[1] = ENGINE_RUNTIME_VERSION_MINOR;
 				}
 			}
+			static SafePointer<_xx_running_process> _open_process(int pid) noexcept
+			{
+				try {
+					SafePointer<RunningProcess> proc = OpenProcess(pid);
+					if (!proc) return 0;
+					return new _xx_running_process(proc);
+				} catch (...) { return 0; }
+			}
+			static SafePointer< Array<int> > _list_processes(void) noexcept { return EnumerateProcesses(); }
+			static SafePointer< Array<int> > _list_processes_by_bundle(const string & bid) noexcept { return EnumerateProcesses(bid); }
 		public:
 			LauncherServices(EnvironmentConfiguration & ec, LaunchConfiguration & lc, XE::StandardLoader & loader) : _ec(ec), _lc(lc), _ldr(loader) {}
 			virtual ~LauncherServices(void) override {}
@@ -873,6 +903,10 @@ namespace Engine
 				else if (routine_name == L"xx_onmd") return reinterpret_cast<const void *>(_load_library);
 				else if (routine_name == L"xx_pxxv") return reinterpret_cast<const void *>(_get_xversion);
 				else if (routine_name == L"xx_adms") return reinterpret_cast<const void *>(IsProcessElevated);
+				else if (routine_name == L"xx_lnpm") return reinterpret_cast<const void *>(GetThisProcessPID);
+				else if (routine_name == L"xx_lpop") return reinterpret_cast<const void *>(_open_process);
+				else if (routine_name == L"xx_lnpo") return reinterpret_cast<const void *>(_list_processes);
+				else if (routine_name == L"xx_lpps") return reinterpret_cast<const void *>(_list_processes_by_bundle);
 				else return 0;
 			}
 			virtual const void * ExposeInterface(const string & interface) noexcept override { if (interface == L"xx") return this; else return 0; }

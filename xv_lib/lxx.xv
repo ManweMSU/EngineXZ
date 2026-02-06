@@ -132,6 +132,21 @@ spatium xx {
 		functio nihil siste() virtualis pura;
 		logicum activus { adipisce virtualis pura; }
 		int numerus_exitus { adipisce virtualis pura; }
+		int numerus_processi { adipisce virtualis pura; }
+		logicum fenestrosus_est { adipisce virtualis pura; }
+		functio logicum expone() virtualis pura;
+	}
+	genus processus_operans hereditat objectum {
+		structor () {}
+		functio nihil siste() virtualis pura;
+		logicum activus { adipisce virtualis pura; }
+		int numerus_processi { adipisce virtualis pura; }
+		logicum fenestrosus_est { adipisce virtualis pura; }
+		functio logicum expone() virtualis pura;
+		tempus tempus_creationis { adipisce virtualis pura; }
+		semita semita_moduli_primi { adipisce iacit virtualis pura; }
+		semita semita_sarcinae { adipisce iacit virtualis pura; }
+		semita indentitas_sarcinae { adipisce iacit virtualis pura; }
 	}
 	genus modulus_dynamicus hereditat objectum {
 		structor () {}
@@ -161,6 +176,11 @@ spatium xx {
 	[[importa] xx_onmd] functio adl[modulus_dynamicus] _onera_modulum_dynamicum(@nihil xx, ~semita imago, nint modus);
 	[[importa] xx_pxxv] functio nihil para_versionem(@(int, int, int, int) xxv, @(int, int) iv);
 	[[importa] xx_adms] functio logicum administrans_sum();
+
+	[[importa] xx_lnpm] functio int lege_numerum_processi_mei();
+	[[importa] xx_lpop] functio !processus_operans lege_processum_operantem(int numerus);
+	[[importa] xx_lnpo] functio !ordo int lege_processos_omnes();
+	[[importa] xx_lpps] functio !ordo int lege_processos_per_sarcina(~linea indentitas);
 
 	functio logicum crea_processum(~descriptio_processi desc) { responde _crea_processum(protocollum(xx), desc); }
 	functio adl[modulus_dynamicus] onera_modulum_dynamicum(~semita imago, nint modus) { responde _onera_modulum_dynamicum(protocollum(xx), imago, modus); }
