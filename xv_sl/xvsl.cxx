@@ -910,7 +910,11 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 					if (page) {
 						inf.documentation.value = ExtractContents(page, XV::ManualSectionClass::Summary);
 					}
-					int index = 0;
+					int index = 0, index_bias = 0;
+					if (page && (page->GetTraits() & XV::ManualPageTraits::ManualPageConstructor)) {
+						auto first = o.args.GetFirst();
+						if (first && first->GetValue().tag == XV::CodeRangeTag::IdentifierType && first->GetValue().type == L"") index_bias = 1;
+					}
 					for (auto & a : o.args) {
 						if (index) inf.label += L", "; index++;
 						RPC::ParameterInformation pi;
@@ -918,7 +922,7 @@ void HandleMessage(IOChannel * channel, const RPC::RequestMessage & base, const 
 						pi.label[0] = inf.label.GetEncodedLength(Encoding::UTF16);
 						inf.label += ArgumentInfoToString(a);
 						if (page) {
-							for (auto & s : page->GetSections()) if (s.GetSubjectIndex() == index - 1 && s.GetClass() == XV::ManualSectionClass::ArgumentSection) {
+							for (auto & s : page->GetSections()) if (s.GetSubjectIndex() == index - index_bias - 1 && s.GetClass() == XV::ManualSectionClass::ArgumentSection) {
 								inf.label += L" " + s.GetSubjectName();
 								pi.documentation.value = L"**" + ArgumentInfoToString(a) + L" " + MarkdownEscape(s.GetSubjectName()) + L"**: " + ExtractContents(&s);
 								break;

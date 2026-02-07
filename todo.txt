@@ -89,6 +89,7 @@ BETA-8:
  + Extended security for the 'quarantine' files
 -- XV
  + Fixed the XVC crash on empty/invalid source expression in the replication prototype's control sequence
+ + Fixed a biased argument description error for constructor invocations 
 -- Standard Library
  + Some HTTP Server bug fix
  - GUI legacy library

@@ -136,7 +136,8 @@ spatium http {
 						var ~ s = _sessiones[i];
 						var d = hodie.momentum - s.secundus.momentum;
 						si (d < tmp) tmp = d;
-						si (d > _desc.tempus_sessionis && s.primus^.numerus_requisitorum == 0) { s.primus^.clode(); _sessiones.remove(i); i--; }
+						var status = s.primus^.status;
+						si ((d > _desc.tempus_sessionis && s.primus^.numerus_requisitorum == 0) || status == status_sessionis.closa || status == status_sessionis.falsa) { s.primus^.clode(); _sessiones.remove(i); i--; }
 					}
 					_sync^.aperi();
 					contextus.dormi(tmp);
@@ -162,8 +163,11 @@ spatium http {
 				req^.auxilium_requisitum = dec.nomen;
 				var praev = dec.schema + dec.dominatus;
 				per (var i : _sessiones) si (_sessiones[i].primus^.praeverbium == praev) {
-					s = _sessiones[i].primus;
-					_sessiones[i].secundus = tempus.currens();
+					var status = _sessiones[i].primus^.status;
+					si (status == status_sessionis.creabatur || status == status_sessionis.activa) {
+						s = _sessiones[i].primus;
+						_sessiones[i].secundus = tempus.currens();
+					}
 				}
 				si (!s) {
 					descriptio_sessionis desc;
