@@ -22,6 +22,7 @@ namespace Engine
 			{
 				if (handler == WindowHandler::Copy) return true;
 				else if (handler == WindowHandler::Paste) return true;
+				else if (handler == WindowHandler::Export) return true;
 				else return false;
 			}
 			virtual bool Terminate(void) override
@@ -446,6 +447,12 @@ namespace Engine
 					if (key_code == KeyCodes::C && flags == IO::ConsoleKeyFlagControl && _callback._selection.Left >= 0) {
 						_callback.HandleWindowEvent(_callback._window, WindowHandler::Copy);
 						return true;
+					} else if (key_code == KeyCodes::V && flags == IO::ConsoleKeyFlagControl) {
+						_callback.HandleWindowEvent(_callback._window, WindowHandler::Paste);
+						return true;
+					} else if (key_code == KeyCodes::S && flags == (IO::ConsoleKeyFlagControl | IO::ConsoleKeyFlagAlternative)) {
+						_callback.HandleWindowEvent(_callback._window, WindowHandler::Export);
+						return true;
 					} else return _callback._console->HandleKey(key_code, flags);
 				}
 				virtual void CharDown(uint32 ucs_code) override { _callback._console->HandleChar(ucs_code); }
@@ -721,6 +728,8 @@ namespace Engine
 					return _selection.Left >= 0;
 				} else if (handler == WindowHandler::Paste) {
 					return Clipboard::IsFormatAvailable(Clipboard::Format::Text);
+				} else if (handler == WindowHandler::Export) {
+					return true;
 				} else return false;
 			}
 			virtual void HandleWindowEvent(IWindow * window, WindowHandler handler) override
@@ -747,7 +756,38 @@ namespace Engine
 						} catch (...) {}
 					}
 				} else if (handler == WindowHandler::Paste) {
-					_console->HandleKey(KeyCodes::V, IO::ConsoleKeyFlagControl);
+					if (Clipboard::IsFormatAvailable(Clipboard::Format::Text)) {
+						string data;
+						if (Clipboard::GetData(data) && data.Length()) {
+							Array<uint> ucs(1);
+							ucs.SetLength(data.GetEncodedLength(Encoding::UTF32));
+							data.Encode(ucs.GetBuffer(), Encoding::UTF32, false);
+							for (auto & c : ucs) {
+								if (c >= 32) _console->HandleChar(c);
+								else if (c == L'\n') _console->HandleKey(KeyCodes::Return, 0);
+							}
+						}
+					}
+				} else if (handler == WindowHandler::Export) {
+					try {
+						DynamicString data;
+						int height = _console->GetBufferHeight();
+						for (int y = 0; y < height; y++) {
+							const Cell * cells;
+							int length;
+							_console->ReadLine(y, &cells, &length);
+							for (int x = 0; x < length; x++) {
+								if (cells[x].ucs <= 32U) data << L' ';
+								else data << string(cells + x, 1, Encoding::UTF32);
+							}
+							while (data.Length() && data[data.Length() - 1] == L' ') data.RemoveRange(data.Length() - 1, 1);
+							if (y + 1 != height) data << IO::LineFeedSequence;
+						}
+						Array<string> args(4);
+						args << L"--titulus" << window->GetText();
+						args << L"--exporta" << data.ToString();
+						SafePointer<Process> self = CreateProcess(IO::GetExecutablePath(), &args);
+					} catch (...) {}
 				}
 			}
 			virtual void HandleControlEvent(Windows::IWindow * window, int ID, ControlEvent event, Control * sender) override

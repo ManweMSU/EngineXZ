@@ -101,7 +101,7 @@ namespace Engine
 				try {
 					SafePointer<DataBlock> mdata = XI::ReadConsistencyData(module_stream);
 					return _sec[0].EvaluateTrust(mdata->GetBuffer(), mdata->Length(), module_stream_context, module_stream);
-				} catch (...) { return ModuleLoadError::AllocationFailure; }
+				} catch (...) { return ModuleLoadError::InvalidImageFormat; }
 			}
 			virtual bool AddModuleSearchPath(const string & path) noexcept override
 			{

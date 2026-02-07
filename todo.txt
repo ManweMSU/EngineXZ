@@ -81,19 +81,21 @@ BETA-8:
  + XA extensions: long arithmetics
  + XA extensions: cryptography
 -- XE/XX
- - Ctrl+C/Ctrl+V in raw console mode
- - Console crashes while freeing graphical device
+ + Ctrl+C/Ctrl+V in raw console mode
+ + Fixed a console crash on simultaneous client input and shutdown
+ + Added content export function
  + Error with embeded modules
  + RSA acceleration via XA and trust cacheing
  + Extended security for the 'quarantine' files
 -- XV
- - XVC crashed on invalid prototype control sequences
+ + Fixed the XVC crash on empty/invalid source expression in the replication prototype's control sequence
 -- Standard Library
  + Some HTTP Server bug fix
  - GUI legacy library
- - IPv4 in HTTP client
- - CSV escape sequences
- - Crashes using HTTP services
+ + Fixed an error in the HTTP client while accessing an IPv4 server via IPv6 in a network without IPv6 support
+ + Added CSV support for escape sequences
+ + Fixed a crashes in expired session termination while using the HTTP session manager
+ + Added a client support for the 'Expect: 100-continue' header
  + New process API functions (in lxx)
  + Ultimate RSA cryptography
  - Long integers (128 and 256) library

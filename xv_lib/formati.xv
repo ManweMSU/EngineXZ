@@ -225,7 +225,30 @@ spatium formati {
 				var ln = dex^.lege_lineam();
 				si (ln.longitudo > 0) {
 					resp^._altitudo++;
-					var dec = ln.scinde(resp^._desc.limitans);
+					!ordo linea dec;
+					si (ln.reperi_primum("\"") >= 0) {
+						ordo nint32 ucs;
+						dec = crea(ordo linea);
+						ucs.longitudo = ln.longitudo_codicis(linea.codex.utf32) + 1;
+						ln.codifica(ucs.data, linea.codex.utf32, sic);
+						logicum protectum = non;
+						int s = 0;
+						per (var i : ucs) {
+							var ~ u = ucs[i];
+							si (u == '\"') {
+								protectum = !protectum;
+							} alioqui si (u == 0 || (!protectum && u == resp^._desc.limitans)) {
+								si (ucs[s] == '\"') {
+									var subln = linea(@ucs[s], i - s, linea.codex.utf32).fragmentum(1, i - s - 2).surroga("\"\"", "\"");
+									dec^ << subln;
+								} alioqui {
+									var subln = linea(@ucs[s], i - s, linea.codex.utf32);
+									dec^ << subln;
+								}
+								s = i + 1;
+							}
+						}
+					} alioqui dec = ln.scinde(resp^._desc.limitans);
 					si (dec^.longitudo > resp^._latitudo) resp^._latitudo = dec^.longitudo;
 					resp^._cellulae << dec^;
 				}
@@ -256,10 +279,13 @@ spatium formati {
 		{
 			var cdx = scriptio.codifica(fl, _desc.codex);
 			cdx^.scribe_subscriptionem();
+			var del = linea(_desc.limitans, 1);
 			per (var y : [0, _altitudo - 1]) {
 				per (var x : [0, _latitudo - 1]) {
 					si (x > 0) cdx^.scribe(linea(_desc.limitans, 1));
-					cdx^.scribe(lege(x, y));
+					var ln = lege(x, y);
+					logicum protege = ln.reperi_primum("\"") >= 0 || ln.reperi_primum(del) >= 0;
+					cdx^.scribe(protege ? "\"" + ln.surroga("\"", "\"\"") + "\"" : ln);
 				}
 				cdx^.scribe_lineam();
 			}

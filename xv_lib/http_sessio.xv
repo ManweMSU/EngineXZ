@@ -136,7 +136,7 @@ spatium http {
 						var ~ s = _sessiones[i];
 						var d = hodie.momentum - s.secundus.momentum;
 						si (d < tmp) tmp = d;
-						si (d > _desc.tempus_sessionis && s.primus^.numerus_requisitorum == 0) { s.primus^.clode(); _sessiones.remove(i); }
+						si (d > _desc.tempus_sessionis && s.primus^.numerus_requisitorum == 0) { s.primus^.clode(); _sessiones.remove(i); i--; }
 					}
 					_sync^.aperi();
 					contextus.dormi(tmp);

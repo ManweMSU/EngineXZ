@@ -1087,6 +1087,7 @@ namespace Engine
 					XE::ErrorContext ectx;
 					ectx.error_code = 6;
 					ectx.error_subcode = e.code;
+					xctx->LoadModule(L"canonicalis");
 					string er, ser;
 					XE::GetErrorDescription(ectx, *xctx, er, ser);
 					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.", environment_configuration.xi_executable, er, ser));
@@ -1161,6 +1162,7 @@ namespace Engine
 					XE::ErrorContext ectx;
 					ectx.error_code = 7;
 					ectx.error_subcode = int(loader->GetLastError());
+					xctx->LoadModule(L"canonicalis");
 					string er, ser;
 					XE::GetErrorDescription(ectx, *xctx, er, ser);
 					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.\n%3", loader->GetLastErrorModule(), er, ser, loader->GetLastErrorSubject()));

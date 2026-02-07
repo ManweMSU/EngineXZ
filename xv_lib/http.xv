@@ -99,9 +99,11 @@ spatium http {
 				a^.portus = portus;
 				adloq.contine(a);
 			} cape {
-				var adla = communicatio.lege_adloquia(nomen, portus, communicatio.adloquium_ipv6);
-				si (!adla^.longitudo) iace errores.rete_defectum, errores.rete_adloquium_nullum;
-				adloq = adla^[0];
+				var adla4 = communicatio.lege_adloquia(nomen, portus, communicatio.adloquium_ipv4);
+				var adla6 = !adla4^.longitudo ? communicatio.lege_adloquia(nomen, portus, communicatio.adloquium_ipv6) : genus(adla4)();
+				si (adla4^.longitudo) adloq = adla4^[0];
+				alioqui si (adla6^.longitudo) adloq = adla6^[0];
+				alioqui iace errores.rete_defectum, errores.rete_adloquium_nullum;
 			}
 			si (desc.secura) {
 				communicatio.securitas sec = desc.securitas;
@@ -206,7 +208,7 @@ spatium http {
 		!sessio _sessio;
 		!requisitum _req;
 		// 0 - sending header, 1 - sending data (high part - substate),
-		// 2 - receiving line (high part - substate), 3 - receiving data (high part - substate)
+		// 2 - receiving line (high part - substate), 3 - receiving data (high part - substate), 4 - transitional state waiting for the code 100
 		int _phasa;
 		int _status;
 		int64 _longitudo;
@@ -286,6 +288,7 @@ spatium http {
 					per (var t : _req^.tituli) {
 						var ~ v = t.valor^.valor;
 						si (nomen_malus(v.primus)) iace errores.argumentum_falsum;
+						si (v.primus # "Expect" == 0 && v.secundus # "100-continue" == 0) _phasa = 0x004;
 						_ie_data^.adde(linea(v.primus + ": " + v.secundus + "\r\n").codifica(linea.codex.ascii, non)^);
 					}
 					_ie_data^.adde(linea("\r\n").codifica(linea.codex.ascii, non)^);
@@ -317,21 +320,27 @@ spatium http {
 					}
 				}
 				alioqui si (p == 2) {
-					// 2-th digit: 0 - read status, 1 - read header, 2 - read chunked length, 3 - read chunked end
+					// 2-th digit: 0 - read status, 1 - read header, 2 - read chunked length, 3 - read chunked end, 4 - read status assuming code 100
 					_ie_error.modera();
 					si (!_ie_data_recv^.longitudo) iace errores.efformatio_falsa;
 					_ie_data^.adde(_ie_data_recv^);
 					var l = _ie_data^.longitudo;
 					si (l >= 2 && _ie_data^[l - 2] == '\r' && _ie_data^[l - 1] == '\n') {
 						var ln = linea(_ie_data^.data, l - 2, linea.codex.ascii);
-						si (_phasa & 0xF00 == 0x000) {
+						si (_phasa & 0xF00 == 0x000 || _phasa & 0xF00 == 0x400) {
 							var lns = ln.scinde(' ');
 							si (lns^.longitudo < 2) iace errores.efformatio_falsa;
 							si (lns^[0] != "HTTP/1.1") iace errores.efformatio_falsa;
 							_status = lns^[1].ad_int32();
-							_phasa = 0x102;
-							_ie_data = crea(dordo_datorum);
-							_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+							si (_status == 100 && _phasa & 0xF00 == 0x400) {
+								_phasa = _longitudo >= 0 ? 0x001 : 0x101;
+								exeque(ctx);
+							} alioqui {
+								_req^.data_in.depura();
+								_phasa = 0x102;
+								_ie_data = crea(dordo_datorum);
+								_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+							}
 						} alioqui si (_phasa & 0xF00 == 0x100) {
 							si (ln.longitudo) {
 								var del = ln.reperi_primum(": ");
@@ -411,7 +420,15 @@ spatium http {
 						} alioqui errores.habitus_falsus;
 					}
 				}
-			} cape (nintadl e, nintadl se) {
+				alioqui si (p == 4) {
+					_ie_error.modera();
+					_phasa = 0x402;
+					_ie_data = crea(dordo_datorum);
+					_req^.tituli.depura();
+					_sessio^._canale^.admitte(1, @_ie_error, @_ie_data_recv, ego);
+				}
+			}
+			cape (nintadl e, nintadl se) {
 				_req^.data_in.depura();
 				_req^.data_ex.depura();
 				si (_sessio^._cauda) proba muta_contextum(_sessio^._cauda) {

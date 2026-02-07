@@ -558,20 +558,6 @@ namespace Engine
 						_current_state._caret_index = _current_state._buffer.Length();
 						_canonical_update_caret();
 						return true;
-					} else if (code == KeyCodes::V && flags == IO::ConsoleKeyFlagControl) {
-						if (Clipboard::IsFormatAvailable(Clipboard::Format::Text)) {
-							string data;
-							if (Clipboard::GetData(data) && data.Length()) {
-								Array<uint> ucs(1);
-								ucs.SetLength(data.GetEncodedLength(Encoding::UTF32));
-								data.Encode(ucs.GetBuffer(), Encoding::UTF32, false);
-								for (auto & c : ucs) {
-									if (c >= 32) OutputText(c);
-									else if (c == L'\n') OutputKey(KeyCodes::Return, 0);
-								}
-							}
-						}
-						return true;
 					}
 				}
 				return false;

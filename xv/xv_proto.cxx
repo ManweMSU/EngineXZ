@@ -165,7 +165,7 @@ namespace Engine
 						string ident = current.contents;
 						if (!from->ReadToken(current)) throw Exception();
 						SafePointer<XL::LObject> enm = ctx.ProcessLanguageExpression(from, current, pc.vns, pc.num_vns);
-						if (current.type != TokenType::PrototypeCommand) throw Exception();
+						if (!enm || current.type != TokenType::PrototypeCommand) throw Exception();
 						if (!from->ReadToken(current)) throw Exception();
 						SafePointer<DataBlock> defer = new DataBlock(0x1000);
 						_stream_block(defer, from, current, ctx, pc, false); defer->Append(0);
