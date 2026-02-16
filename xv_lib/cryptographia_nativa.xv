@@ -1,0 +1,288 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Cryptographiae Nativae";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2026";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium versio 0;
+
+[[systema] librosa]
+
+spatium cryptographia {
+	enumeratio status_implantationis { implantatio_nulla = 0, implantatio_programmatica = 1, implantatio_nativa = 2 }
+	structura stati_implantationum {
+		status_implantationis caecus;
+		status_implantationis aes;
+		status_implantationis sha_224_256;
+		status_implantationis sha_384_512;
+	}
+	var stati_implantationum _stati_implantationum;
+
+	constatus longitudo_clavis_aes128	= 16;
+	constatus longitudo_clavis_aes192	= 24;
+	constatus longitudo_clavis_aes256	= 32;
+	constatus longitudo_stati_aes		= 16;
+
+	constatus longitudo_digesti_sha224	= 28;
+	constatus longitudo_digesti_sha256	= 32;
+	constatus longitudo_digesti_sha384	= 48;
+	constatus longitudo_digesti_sha512	= 64;
+
+	[[xa]] [[inline]] functio logicum _status_nativus_caecorum() {
+		INTERFACE => 1
+		CODE { RET { @BLT: 1 1=>1(R, @CR_TEST:0=>1(@CR_RANDOM)) } }
+	}
+	[[xa]] [[inline]] functio logicum _status_nativus_aes() {
+		INTERFACE => 1
+		CODE { RET { @BLT: 1 1=>1(R, @CR_TEST:0=>1(@CR_AES_ENC)) } }
+	}
+	[[xa]] [[inline]] functio logicum _status_nativus_sha256() {
+		INTERFACE => 1
+		CODE { RET { @BLT: 1 1=>1(R, @CR_TEST:0=>1(@CR_SHA_256)) } }
+	}
+	[[xa]] [[inline]] functio logicum _status_nativus_sha256_p() {
+		INTERFACE => 1
+		CODE { RET { @BLT: 1 1=>1(R, @CR_TEST:0=>1(@CR_SHA_256_SW)) } }
+	}
+	[[xa]] [[inline]] functio logicum _status_nativus_sha512() {
+		INTERFACE => 1
+		CODE { RET { @BLT: 1 1=>1(R, @CR_TEST:0=>1(@CR_SHA_512)) } }
+	}
+	[[xa]] [[inline]] functio logicum _status_nativus_sha512_p() {
+		INTERFACE => 1
+		CODE { RET { @BLT: 1 1=>1(R, @CR_TEST:0=>1(@CR_SHA_256_SW)) } }
+	}
+	[[initium]] functio nihil _para_statos_implantationum() {
+		si (systema.proba_functionem_systemae(systema.functio_processoris.CPUID) == systema.status_functionis.praesens) {
+			_stati_implantationum.caecus = _status_nativus_caecorum() ? status_implantationis.implantatio_nativa : status_implantationis.implantatio_nulla;
+			_stati_implantationum.aes = _status_nativus_aes() ? status_implantationis.implantatio_nativa : status_implantationis.implantatio_nulla;
+			_stati_implantationum.sha_224_256 = _status_nativus_sha256() ? status_implantationis.implantatio_nativa : (_status_nativus_sha256_p() ? status_implantationis.implantatio_programmatica : status_implantationis.implantatio_nulla);
+			_stati_implantationum.sha_384_512 = _status_nativus_sha512() ? status_implantationis.implantatio_nativa : (_status_nativus_sha512_p() ? status_implantationis.implantatio_programmatica : status_implantationis.implantatio_nulla);
+		} alioqui {
+			_stati_implantationum.caecus = systema.proba_functionem_systemae(systema.functio_processoris.RNG) == systema.status_functionis.praesens ? status_implantationis.implantatio_nativa : status_implantationis.implantatio_nulla;
+			_stati_implantationum.aes = systema.proba_functionem_systemae(systema.functio_processoris.AES) == systema.status_functionis.praesens ? status_implantationis.implantatio_nativa : status_implantationis.implantatio_nulla;
+			_stati_implantationum.sha_224_256 = systema.proba_functionem_systemae(systema.functio_processoris.SHA256) == systema.status_functionis.praesens ? status_implantationis.implantatio_nativa :
+				(systema.proba_functionem_systemae(systema.functio_processoris.SHA256SW) == systema.status_functionis.praesens ? status_implantationis.implantatio_programmatica : status_implantationis.implantatio_nulla);
+			_stati_implantationum.sha_384_512 = systema.proba_functionem_systemae(systema.functio_processoris.SHA512) == systema.status_functionis.praesens ? status_implantationis.implantatio_nativa :
+				(systema.proba_functionem_systemae(systema.functio_processoris.SHA512SW) == systema.status_functionis.praesens ? status_implantationis.implantatio_programmatica : status_implantationis.implantatio_nulla);
+		}
+	}
+	functio stati_implantationum para_statos_implantationum() { responde _stati_implantationum; }
+
+	nomen_alternum _functio_aes			= functio (nihil) (@nihil, @nihil, @nihil, int); // clavis-status-data
+	nomen_alternum _functio_sha_ini		= functio (nihil) (@nihil); // status
+	nomen_alternum _functio_sha_procede	= functio (nihil) (@nihil, @nihil, int); // status-data
+	nomen_alternum _functio_sha_fini	= functio (nihil) (@nihil); // status
+
+	[[xa]] functio nihil _crea_caeca(@nihil dest, int longitudo) { INTERFACE W 1 : - 4 : SINT => 0 CODE { RET { @CR_RANDOM:W 1 4=>0(A[0], A[1]) } } }
+	[[xa]] functio nihil _sifra_aes_ecb_128(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_ENC_ECB:16:- W 1 4 16=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>16(A[0])) } } }
+	[[xa]] functio nihil _sifra_aes_cbc_128(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_ENC_CBC:16:- W 1 4 16=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>16(A[0])) } } }
+	[[xa]] functio nihil _desifra_aes_ecb_128(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_DEC_ECB:16:- W 1 4 16=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>16(A[0])) } } }
+	[[xa]] functio nihil _desifra_aes_cbc_128(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_DEC_CBC:16:- W 1 4 16=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>16(A[0])) } } }
+	[[xa]] functio nihil _sifra_aes_ecb_192(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_ENC_ECB:16:- W 1 4 24=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>24(A[0])) } } }
+	[[xa]] functio nihil _sifra_aes_cbc_192(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_ENC_CBC:16:- W 1 4 24=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>24(A[0])) } } }
+	[[xa]] functio nihil _desifra_aes_ecb_192(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_DEC_ECB:16:- W 1 4 24=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>24(A[0])) } } }
+	[[xa]] functio nihil _desifra_aes_cbc_192(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_DEC_CBC:16:- W 1 4 24=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>24(A[0])) } } }
+	[[xa]] functio nihil _sifra_aes_ecb_256(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_ENC_ECB:16:- W 1 4 32=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>32(A[0])) } } }
+	[[xa]] functio nihil _sifra_aes_cbc_256(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_ENC_CBC:16:- W 1 4 32=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>32(A[0])) } } }
+	[[xa]] functio nihil _desifra_aes_ecb_256(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_DEC_ECB:16:- W 1 4 32=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>32(A[0])) } } }
+	[[xa]] functio nihil _desifra_aes_cbc_256(@nihil clavis, @nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_AES_DEC_CBC:16:- W 1 4 32=>0(@PTR_FOLLOW:W 1=>16(A[1]), A[2], A[3], @PTR_FOLLOW:W 1=>32(A[0])) } } }
+
+	[[xa]] functio nihil _sha_224_ini(@nihil status) { INTERFACE W 1 : - => 0 CODE { RET { @CR_SHA_224_INIT:32=>0(@PTR_FOLLOW:W 1=>32(A[0])) } } }
+	[[xa]] functio nihil _sha_256_ini(@nihil status) { INTERFACE W 1 : - => 0 CODE { RET { @CR_SHA_256_INIT:32=>0(@PTR_FOLLOW:W 1=>32(A[0])) } } }
+	[[xa]] functio nihil _sha_384_ini(@nihil status) { INTERFACE W 1 : - => 0 CODE { RET { @CR_SHA_384_INIT:64=>0(@PTR_FOLLOW:W 1=>64(A[0])) } } }
+	[[xa]] functio nihil _sha_512_ini(@nihil status) { INTERFACE W 1 : - => 0 CODE { RET { @CR_SHA_512_INIT:64=>0(@PTR_FOLLOW:W 1=>64(A[0])) } } }
+	[[xa]] functio nihil _sha_224_fini(@nihil status) { INTERFACE W 1 : - => 0 CODE { RET { @CR_SHA_224_END:32=>0(@PTR_FOLLOW:W 1=>32(A[0])) } } }
+	[[xa]] functio nihil _sha_256_fini(@nihil status) { INTERFACE W 1 : - => 0 CODE { RET { @CR_SHA_256_END:32=>0(@PTR_FOLLOW:W 1=>32(A[0])) } } }
+	[[xa]] functio nihil _sha_384_fini(@nihil status) { INTERFACE W 1 : - => 0 CODE { RET { @CR_SHA_384_END:64=>0(@PTR_FOLLOW:W 1=>64(A[0])) } } }
+	[[xa]] functio nihil _sha_512_fini(@nihil status) { INTERFACE W 1 : - => 0 CODE { RET { @CR_SHA_512_END:64=>0(@PTR_FOLLOW:W 1=>64(A[0])) } } }
+	[[xa]] functio nihil _sha_256_procede_n(@nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_SHA_256:32:- W 1 4=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1], A[2]) } } }
+	[[xa]] functio nihil _sha_256_procede_p(@nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_SHA_256_SW:32:- W 1 4=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1], A[2]) } } }
+	[[xa]] functio nihil _sha_512_procede_n(@nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_SHA_512:64:- W 1 4=>0(@PTR_FOLLOW:W 1=>64(A[0]), A[1], A[2]) } } }
+	[[xa]] functio nihil _sha_512_procede_p(@nihil status, @nihil data, int longitudo) { INTERFACE W 1 : - W 1 : - 4 : SINT => 0 CODE { RET { @CR_SHA_512_SW:64:- W 1 4=>0(@PTR_FOLLOW:W 1=>64(A[0]), A[1], A[2]) } } }
+
+	functio nihil _sifra_aes(@flumen ad, @flumen ex, @nihil clavis, @nihil status_initialis, logicum polire, _functio_aes func) iacit {
+		int longitudo_pristina = -1;
+		ordo nint8 data;
+		data.longitudo = 0x100000;
+		fac {
+			int lege = 0x100000 - 0x10;
+			int lecta = ex^.lege(data.data, lege);
+			longitudo_pristina = lecta;
+			si (lege != lecta) {
+				longitudo_pristina = 0;
+				si (lecta & 0xF && !polire) iace errores.efformatio_falsa;
+				si (polire) {
+					int A = 0x10 - lecta & 0xF;
+					per (var i : [1, A]) data[lecta + i - 1] = A;
+					lecta += A;
+				}
+			}
+			si (lecta) {
+				func(clavis, status_initialis, data.data, lecta);
+				ad^.scribe(data.data, lecta);
+			}
+		} dum (longitudo_pristina);
+	}
+	functio nihil _desifra_aes(@flumen ad, @flumen ex, @nihil clavis, @nihil status_initialis, logicum depolire, _functio_aes func) iacit {
+		int reserva = 0;
+		ordo nint8 data;
+		data.longitudo = 0x100000;
+		dum (sic) {
+			int lege = 0x100000 - reserva;
+			int lecta = ex^.lege(@data[reserva], lege);
+			si (lecta & 0xF) iace errores.efformatio_falsa;
+			si (lecta) func(clavis, status_initialis, @data[reserva], lecta);
+			si (lecta != lege) {
+				lecta += reserva;
+				si (depolire) {
+					si (!lecta) iace errores.efformatio_falsa;
+					int A = data[lecta - 1];
+					si (!A || A > 0x10) iace errores.efformatio_falsa;
+					per (var i : [1, A]) si (data[lecta - A] != A) iace errores.efformatio_falsa;
+					lecta -= A;
+				}
+				si (lecta) ad^.scribe(data.data, lecta);
+				exi;
+			} alioqui {
+				lecta += reserva;
+				reserva = 0x10;
+				ad^.scribe(data.data, lecta - reserva);
+				memoria.exscribe(data.data, @data[lecta - reserva], reserva);
+			}
+		}
+	}
+	functio nihil procede_caeca(@flumen ad, nint64 longitudo) iacit {
+		si (_stati_implantationum.caecus != status_implantationis.implantatio_nativa) iace errores.implantatio_nulla;
+		si (ad == nullus) iace errores.argumentum_falsum;
+		nint64 L = longitudo;
+		ordo nint8 data;
+		data.longitudo = 0x10000;
+		dum (L) {
+			nint64 l = L > data.longitudo ? data.longitudo : L;
+			nint64 lx = (l + 0x7) & 0xFFFFFFFFFFFFFFF8;
+			_crea_caeca(data.data, lx);
+			ad^.scribe(data.data, l);
+			L -= l;
+		}
+	}
+	functio nihil sifra(@flumen ad, @flumen ex, @nihil clavis, int longitudo_clavis, logicum polire) iacit {
+		si (_stati_implantationum.aes != status_implantationis.implantatio_nativa) iace errores.implantatio_nulla;
+		si (ad == nullus || ex == nullus || clavis == nullus) iace errores.argumentum_falsum;
+		si (longitudo_clavis == longitudo_clavis_aes128) _sifra_aes(ad, ex, clavis, nullus, polire, _sifra_aes_ecb_128);
+		alioqui si (longitudo_clavis == longitudo_clavis_aes192) _sifra_aes(ad, ex, clavis, nullus, polire, _sifra_aes_ecb_192);
+		alioqui si (longitudo_clavis == longitudo_clavis_aes256) _sifra_aes(ad, ex, clavis, nullus, polire, _sifra_aes_ecb_256);
+		alioqui iace errores.argumentum_falsum;
+	}
+	functio nihil sifra(@flumen ad, @flumen ex, @nihil clavis, int longitudo_clavis, @nihil status_initialis, logicum polire) iacit {
+		si (_stati_implantationum.aes != status_implantationis.implantatio_nativa) iace errores.implantatio_nulla;
+		si (ad == nullus || ex == nullus || clavis == nullus || status_initialis == nullus) iace errores.argumentum_falsum;
+		si (longitudo_clavis == longitudo_clavis_aes128) _sifra_aes(ad, ex, clavis, status_initialis, polire, _sifra_aes_cbc_128);
+		alioqui si (longitudo_clavis == longitudo_clavis_aes192) _sifra_aes(ad, ex, clavis, status_initialis, polire, _sifra_aes_cbc_192);
+		alioqui si (longitudo_clavis == longitudo_clavis_aes256) _sifra_aes(ad, ex, clavis, status_initialis, polire, _sifra_aes_cbc_256);
+		alioqui iace errores.argumentum_falsum;
+	}
+	functio nihil desifra(@flumen ad, @flumen ex, @nihil clavis, int longitudo_clavis, logicum depolire) iacit {
+		si (_stati_implantationum.aes != status_implantationis.implantatio_nativa) iace errores.implantatio_nulla;
+		si (ad == nullus || ex == nullus || clavis == nullus) iace errores.argumentum_falsum;
+		si (longitudo_clavis == longitudo_clavis_aes128) _desifra_aes(ad, ex, clavis, nullus, depolire, _desifra_aes_ecb_128);
+		alioqui si (longitudo_clavis == longitudo_clavis_aes192) _desifra_aes(ad, ex, clavis, nullus, depolire, _desifra_aes_ecb_192);
+		alioqui si (longitudo_clavis == longitudo_clavis_aes256) _desifra_aes(ad, ex, clavis, nullus, depolire, _desifra_aes_ecb_256);
+		alioqui iace errores.argumentum_falsum;
+	}
+	functio nihil desifra(@flumen ad, @flumen ex, @nihil clavis, int longitudo_clavis, @nihil status_initialis, logicum depolire) iacit {
+		si (_stati_implantationum.aes != status_implantationis.implantatio_nativa) iace errores.implantatio_nulla;
+		si (ad == nullus || ex == nullus || clavis == nullus || status_initialis == nullus) iace errores.argumentum_falsum;
+		si (longitudo_clavis == longitudo_clavis_aes128) _desifra_aes(ad, ex, clavis, status_initialis, depolire, _desifra_aes_cbc_128);
+		alioqui si (longitudo_clavis == longitudo_clavis_aes192) _desifra_aes(ad, ex, clavis, status_initialis, depolire, _desifra_aes_cbc_192);
+		alioqui si (longitudo_clavis == longitudo_clavis_aes256) _desifra_aes(ad, ex, clavis, status_initialis, depolire, _desifra_aes_cbc_256);
+		alioqui iace errores.argumentum_falsum;
+	}
+	functio !dordo_datorum procede_digestum(@flumen ex, int longitudo_digesti) iacit {
+		si (ex == nullus) iace errores.argumentum_falsum;
+		_functio_sha_ini sha_ini;
+		_functio_sha_procede sha_procede;
+		_functio_sha_fini sha_fini;
+		int talea, longitudo_stati;
+		si (longitudo_digesti == longitudo_digesti_sha224) {
+			talea = 64;
+			longitudo_stati = 32;
+			sha_ini = _sha_224_ini;
+			sha_fini = _sha_224_fini;
+			si (_stati_implantationum.sha_224_256 == status_implantationis.implantatio_nativa) {
+				sha_procede = _sha_256_procede_n;
+			} alioqui si (_stati_implantationum.sha_224_256 == status_implantationis.implantatio_programmatica) {
+				sha_procede = _sha_256_procede_p;
+			} alioqui iace errores.implantatio_nulla;
+		} alioqui si (longitudo_digesti == longitudo_digesti_sha256) {
+			talea = 64;
+			longitudo_stati = 32;
+			sha_ini = _sha_256_ini;
+			sha_fini = _sha_256_fini;
+			si (_stati_implantationum.sha_224_256 == status_implantationis.implantatio_nativa) {
+				sha_procede = _sha_256_procede_n;
+			} alioqui si (_stati_implantationum.sha_224_256 == status_implantationis.implantatio_programmatica) {
+				sha_procede = _sha_256_procede_p;
+			} alioqui iace errores.implantatio_nulla;
+		} alioqui si (longitudo_digesti == longitudo_digesti_sha384) {
+			talea = 128;
+			longitudo_stati = 64;
+			sha_ini = _sha_384_ini;
+			sha_fini = _sha_384_fini;
+			si (_stati_implantationum.sha_384_512 == status_implantationis.implantatio_nativa) {
+				sha_procede = _sha_512_procede_n;
+			} alioqui si (_stati_implantationum.sha_384_512 == status_implantationis.implantatio_programmatica) {
+				sha_procede = _sha_512_procede_p;
+			} alioqui iace errores.implantatio_nulla;
+		} alioqui si (longitudo_digesti == longitudo_digesti_sha512) {
+			talea = 128;
+			longitudo_stati = 64;
+			sha_ini = _sha_512_ini;
+			sha_fini = _sha_512_fini;
+			si (_stati_implantationum.sha_384_512 == status_implantationis.implantatio_nativa) {
+				sha_procede = _sha_512_procede_n;
+			} alioqui si (_stati_implantationum.sha_384_512 == status_implantationis.implantatio_programmatica) {
+				sha_procede = _sha_512_procede_p;
+			} alioqui iace errores.implantatio_nulla;
+		} alioqui iace errores.argumentum_falsum;
+		var status = crea(dordo_datorum, longitudo_stati);
+		status^.longitudo = longitudo_stati;
+		sha_ini(status^.data);
+		nint64 longitudo_datorum = 0;
+		ordo nint8 data;
+		data.longitudo = 0x100000;
+		dum (sic) {
+			int lege = 0x100000 - talea;
+			int lecta = ex^.lege(data.data, lege);
+			longitudo_datorum += lecta;
+			si (longitudo_datorum >= 0x1000000000000000) iace errores.efformatio_falsa;
+			si (lege == lecta) {
+				sha_procede(status^.data, data.data, lecta);
+			} alioqui {
+				data.data[lecta] = 0x80; lecta++;
+				si (talea == 64) {
+					dum ((lecta + 8) % talea) { data.data[lecta] = 0; lecta++; }
+				} alioqui {
+					dum ((lecta + 16) % talea) { data.data[lecta] = 0; lecta++; }
+					per (var i : [1, 8]) { data.data[lecta] = 0; lecta++; }
+				}
+				longitudo_datorum *= 8;
+				data.data[lecta] = nint8(longitudo_datorum >> 56);
+				data.data[lecta + 1] = nint8(longitudo_datorum >> 48);
+				data.data[lecta + 2] = nint8(longitudo_datorum >> 40);
+				data.data[lecta + 3] = nint8(longitudo_datorum >> 32);
+				data.data[lecta + 4] = nint8(longitudo_datorum >> 24);
+				data.data[lecta + 5] = nint8(longitudo_datorum >> 16);
+				data.data[lecta + 6] = nint8(longitudo_datorum >> 8);
+				data.data[lecta + 7] = nint8(longitudo_datorum);
+				lecta += 8;
+				sha_procede(status^.data, data.data, lecta);
+				exi;
+			}
+		}
+		sha_fini(status^.data);
+		status^.longitudo = longitudo_digesti;
+		responde status;
+	}
+}

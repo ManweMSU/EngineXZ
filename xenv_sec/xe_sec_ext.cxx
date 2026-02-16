@@ -132,6 +132,7 @@ namespace Engine
 				virtual bool GetCacheControl(void) noexcept { return _trust->GetCacheControl(); }
 				virtual void SetCacheControl(const bool & value) noexcept { _trust->SetCacheControl(value); }
 				virtual void ResetCache(void) noexcept { _trust->ResetTrustCache(); }
+				virtual void ResetTrust(void) noexcept { _trust->ResetTrust(); }
 				ITrustProvider * GetObject(void) noexcept { return _trust; }
 			};
 

@@ -96,6 +96,7 @@ spatium subscriptio {
 		functio status_fidelitatis operator () (@dordo_datorum digestum) virtualis pura;
 		logicum coactare { adipisce virtualis pura; loca virtualis pura; }
 		functio nihil depura_coactarium() virtualis pura;
+		functio nihil depura() virtualis pura;
 
 		[[importa] xesec_ffal] classis functio !functio_fidelitatis alloca();
 		[[importa] xesec_ffss] classis functio !functio_fidelitatis __systemae(@nihil mdl);

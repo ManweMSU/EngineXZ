@@ -1,0 +1,1876 @@
+﻿importa canonicalis;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Integrorum Largorum";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2026";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium versio 0;
+
+[[systema] librosa]
+
+[[magnitudo] "16"] genus int128 {
+	[serializa_semper] [nomen_serializandi data] [[positus] "0"] ordo [4] nint32 _data;
+	[[xa]] structor () {
+		INTERFACE W 1 : THIS => 0
+		CODE { RET }
+	}
+	[[xa]] structor (int128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => 0
+		CODE { RET { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] functio int128 operator - () {
+		INTERFACE W 1 : THIS => 16 : OBJECT
+		CODE { EVAL { @L_ZERO:16=>0(R) } RET { @L_SUB:16 16=>0(R, @PTR_FOLLOW:W 1=>16(A[0])) } }
+	}
+	functio int128 operator ~ () {
+		int128 r;
+		r._data[0] = ~_data[0]; r._data[1] = ~_data[1]; r._data[2] = ~_data[2]; r._data[3] = ~_data[3];
+		responde r;
+	}
+	functio logicum operator ! () {
+		responde _data[0] == 0 && _data[1] == 0 && _data[2] == 0 && _data[3] == 0;
+	}
+	[[xa]] functio ~int128 operator = (int128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		CODE { EVAL { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~int128 operator += (int128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		CODE { EVAL { @L_ADD:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~int128 operator -= (int128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		CODE { EVAL { @L_SUB:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~int128 operator *= (int128 org) { ego^ = ego^ * org; responde ego^; }
+	functio ~int128 operator /= (int128 org) { ego^ = ego^ / org; responde ego^; }
+	functio ~int128 operator %= (int128 org) { ego^ = ego^ % org; responde ego^; }
+	functio ~int128 operator |= (int128 org) {
+		_data[0] |= org._data[0];
+		_data[1] |= org._data[1];
+		_data[2] |= org._data[2];
+		_data[3] |= org._data[3];
+		responde ego^;
+	}
+	functio ~int128 operator &= (int128 org) {
+		_data[0] &= org._data[0];
+		_data[1] &= org._data[1];
+		_data[2] &= org._data[2];
+		_data[3] &= org._data[3];
+		responde ego^;
+	}
+	functio ~int128 operator #= (int128 org) {
+		_data[0] #= org._data[0];
+		_data[1] #= org._data[1];
+		_data[2] #= org._data[2];
+		_data[3] #= org._data[3];
+		responde ego^;
+	}
+	[[xa]] functio ~int128 operator <<= (int128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		DATA {
+			QWORD 0x7F QWORD 0 ; MAXIMAL ROTATION
+			DWORD 1
+		}
+		CODE {
+			; ZERO ON LARGE SHIFT
+			JUMPIF { @L_LE:16 16=>1(A[1], D[0]) } @ 2
+			EVAL { @L_ZERO:16=>0(@PTR_FOLLOW:W 1=>16(A[0])) }
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+			; INIT COUNTER
+			ENTER
+			NEW { @BLT:4 4=>4(I, A[1]) } @ 4
+			; LOOP WHILE COUNTER > 0
+			JUMPIF { @ZERO:4=>4(L[0]) } @ 3
+			EVAL { @L_SHL:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), -) }
+			EVAL { @BLT:4 4=>4(L[0], @SUB:4 4=>4(L[0], D[16])) }
+			JUMP @ -4
+			LEAVE
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+		}
+	}
+	[[xa]] functio ~int128 operator >>= (int128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		DATA {
+			QWORD 0x7F QWORD 0 ; MAXIMAL ROTATION
+			DWORD 1
+		}
+		CODE {
+			; INIT COUNTER
+			ENTER
+			NEW { @BLT:4 4=>4(I, A[1]) } @ 4
+			; CLAMP COUNTER TO MAXIMAL SHIFT
+			JUMPIF { @L_LE:16 16=>1(A[1], D[0]) } @ 1
+			EVAL { @BLT:4 4=>4(L[0], D[0]) }
+			; INPUT BACKUP FOR SIGN REPLICATION
+			NEW { @L_MOV:16 16=>0(I, @PTR_FOLLOW:W 1=>16(A[0])) } @ 16
+			; LOOP WHILE COUNTER > 0
+			JUMPIF { @ZERO:4=>4(L[0]) } @ 4
+			EVAL { @L_SHR:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), -) }
+			EVAL { @L_SET:16 4 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), D[0], @L_BIT:16 4=>1(L[1], D[0])) }
+			EVAL { @BLT:4 4=>4(L[0], @SUB:4 4=>4(L[0], D[16])) }
+			JUMP @ -5
+			LEAVE
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+		}
+	}
+	[[xa]] functio ~int128 operator ++ () {
+		INTERFACE W 1 : THIS => W 1
+		DATA { QWORD 1 QWORD 0 }
+		CODE { EVAL { @L_ADD:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), D[0]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~int128 operator -- () {
+		INTERFACE W 1 : THIS => W 1
+		DATA { QWORD 1 QWORD 0 }
+		CODE { EVAL { @L_SUB:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), D[0]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] classis functio int128 operator + (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE { EVAL { @L_MOV:16 16=>0(R, A[0]) } RET { @L_ADD:16 16=>0(R, A[1]) } }
+	}
+	[[xa]] classis functio int128 operator - (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE { EVAL { @L_MOV:16 16=>0(R, A[0]) } RET { @L_SUB:16 16=>0(R, A[1]) } }
+	}
+	[[xa]] classis functio int128 operator * (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE {
+			ENTER
+			EVAL { @L_MOV:16 16=>0(R, A[0]) }
+			EVAL { @L_MUL:16 4=>4(R, A[1]) }
+			NEW { @L_ZERO:16 16 4=>0(I, A[0], -) } @ 16
+			EVAL { @L_MUL:16 4=>4(L[0], @OFFSET:16 4=>4(A[1], -)) }
+			EVAL { @L_ADD:16 16=>0(R, L[0]) }
+			EVAL { @L_ZERO:16 16 8=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:16 4=>4(L[0], @OFFSET:16 8=>4(A[1], -)) }
+			EVAL { @L_ADD:16 16=>0(R, L[0]) }
+			EVAL { @L_ZERO:16 16 12=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:16 4=>4(L[0], @OFFSET:16 12=>4(A[1], -)) }
+			RET { @L_ADD:16 16=>0(R, L[0]) }
+			LEAVE
+		}
+	}
+	classis functio int128 operator / (int128 a, int128 b) {
+		int128 div = a, d = b;
+		logicum sdiv = non;
+		si (d._data[3] & 0x80000000) { div = -div; d = -d; }
+		si (div._data[3] & 0x80000000) { div = -div; sdiv = sic; }
+		(@nint128)(@div)^._div_mod((@nint128)(@d)^);
+		si (sdiv) responde -div; alioqui responde div;
+	}
+	classis functio int128 operator % (int128 a, int128 b) {
+		int128 div = a, d = b;
+		logicum smod = non;
+		si (d._data[3] & 0x80000000) { div = -div; d = -d; smod = sic; }
+		si (div._data[3] & 0x80000000) { div = -div; smod = !smod; }
+		nint128 mod = (@nint128)(@div)^._div_mod((@nint128)(@d)^);
+		si (smod) mod = -mod;
+		responde (@int128)(@mod)^;
+	}
+	[[xa]] classis functio int128 operator | (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @OR:8 8=>8(A[0], A[1])) }
+			RET { @BLT:8 8=>8(@OFFSET:16 8=>8(R, -), @OR:8 8=>8(@OFFSET:16 8=>8(A[0], -), @OFFSET:16 8=>8(A[1], -))) }
+		}
+	}
+	[[xa]] classis functio int128 operator & (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @AND:8 8=>8(A[0], A[1])) }
+			RET { @BLT:8 8=>8(@OFFSET:16 8=>8(R, -), @AND:8 8=>8(@OFFSET:16 8=>8(A[0], -), @OFFSET:16 8=>8(A[1], -))) }
+		}
+	}
+	[[xa]] classis functio int128 operator # (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @XOR:8 8=>8(A[0], A[1])) }
+			RET { @BLT:8 8=>8(@OFFSET:16 8=>8(R, -), @XOR:8 8=>8(@OFFSET:16 8=>8(A[0], -), @OFFSET:16 8=>8(A[1], -))) }
+		}
+	}
+	classis functio int128 operator << (int128 a, int128 b) { var r = a; responde r <<= b; }
+	classis functio int128 operator >> (int128 a, int128 b) { var r = a; responde r >>= b; }
+	[[xa]] classis functio logicum operator == (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_EQ:16 16=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator != (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_NEQ:16 16=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator < (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		DATA { QWORD 0 QWORD 0x8000000000000000 }
+		CODE {
+			ENTER
+			NEW { @L_MOV:16 16=>0(I, A[0]) } @ 16
+			NEW { @L_MOV:16 16=>0(I, A[1]) } @ 16
+			EVAL { @L_ADD:16 16=>0(L[0], D[0]) }
+			EVAL { @L_ADD:16 16=>0(L[1], D[0]) }
+			RET { @BLT:1 1=>1(R, @L_L:16 16=>1(L[0], L[1])) }
+			LEAVE
+		}
+	}
+	[[xa]] classis functio logicum operator > (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		DATA { QWORD 0 QWORD 0x8000000000000000 }
+		CODE {
+			ENTER
+			NEW { @L_MOV:16 16=>0(I, A[0]) } @ 16
+			NEW { @L_MOV:16 16=>0(I, A[1]) } @ 16
+			EVAL { @L_ADD:16 16=>0(L[0], D[0]) }
+			EVAL { @L_ADD:16 16=>0(L[1], D[0]) }
+			RET { @BLT:1 1=>1(R, @L_G:16 16=>1(L[0], L[1])) }
+			LEAVE
+		}
+	}
+	[[xa]] classis functio logicum operator <= (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		DATA { QWORD 0 QWORD 0x8000000000000000 }
+		CODE {
+			ENTER
+			NEW { @L_MOV:16 16=>0(I, A[0]) } @ 16
+			NEW { @L_MOV:16 16=>0(I, A[1]) } @ 16
+			EVAL { @L_ADD:16 16=>0(L[0], D[0]) }
+			EVAL { @L_ADD:16 16=>0(L[1], D[0]) }
+			RET { @BLT:1 1=>1(R, @L_LE:16 16=>1(L[0], L[1])) }
+			LEAVE
+		}
+	}
+	[[xa]] classis functio logicum operator >= (int128 a, int128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		DATA { QWORD 0 QWORD 0x8000000000000000 }
+		CODE {
+			ENTER
+			NEW { @L_MOV:16 16=>0(I, A[0]) } @ 16
+			NEW { @L_MOV:16 16=>0(I, A[1]) } @ 16
+			EVAL { @L_ADD:16 16=>0(L[0], D[0]) }
+			EVAL { @L_ADD:16 16=>0(L[1], D[0]) }
+			RET { @BLT:1 1=>1(R, @L_GE:16 16=>1(L[0], L[1])) }
+			LEAVE
+		}
+	}
+}
+[[magnitudo] "16"] genus nint128 {
+	[serializa_semper] [nomen_serializandi data] [[positus] "0"] ordo [4] nint32 _data;
+	[[xa]] structor () {
+		INTERFACE W 1 : THIS => 0
+		CODE { RET }
+	}
+	[[xa]] structor (nint128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => 0
+		CODE { RET { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] functio nint128 operator - () {
+		INTERFACE W 1 : THIS => 16 : OBJECT
+		CODE { EVAL { @L_ZERO:16=>0(R) } RET { @L_SUB:16 16=>0(R, @PTR_FOLLOW:W 1=>16(A[0])) } }
+	}
+	functio nint128 operator ~ () {
+		nint128 r;
+		r._data[0] = ~_data[0]; r._data[1] = ~_data[1]; r._data[2] = ~_data[2]; r._data[3] = ~_data[3];
+		responde r;
+	}
+	functio logicum operator ! () {
+		responde _data[0] == 0 && _data[1] == 0 && _data[2] == 0 && _data[3] == 0;
+	}
+	[[xa]] functio ~nint128 operator = (nint128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		CODE { EVAL { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~nint128 operator += (nint128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		CODE { EVAL { @L_ADD:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~nint128 operator -= (nint128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		CODE { EVAL { @L_SUB:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~nint128 operator *= (nint128 org) { ego^ = ego^ * org; responde ego^; }
+	functio ~nint128 operator /= (nint128 org) { ego^ = ego^ / org; responde ego^; }
+	functio ~nint128 operator %= (nint128 org) { ego^ = ego^ % org; responde ego^; }
+	functio ~nint128 operator |= (nint128 org) {
+		_data[0] |= org._data[0];
+		_data[1] |= org._data[1];
+		_data[2] |= org._data[2];
+		_data[3] |= org._data[3];
+		responde ego^;
+	}
+	functio ~nint128 operator &= (nint128 org) {
+		_data[0] &= org._data[0];
+		_data[1] &= org._data[1];
+		_data[2] &= org._data[2];
+		_data[3] &= org._data[3];
+		responde ego^;
+	}
+	functio ~nint128 operator #= (nint128 org) {
+		_data[0] #= org._data[0];
+		_data[1] #= org._data[1];
+		_data[2] #= org._data[2];
+		_data[3] #= org._data[3];
+		responde ego^;
+	}
+	[[xa]] functio ~nint128 operator <<= (nint128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		DATA {
+			QWORD 0x7F QWORD 0 ; MAXIMAL ROTATION
+			DWORD 1
+		}
+		CODE {
+			; ZERO ON LARGE SHIFT
+			JUMPIF { @L_LE:16 16=>1(A[1], D[0]) } @ 2
+			EVAL { @L_ZERO:16=>0(@PTR_FOLLOW:W 1=>16(A[0])) }
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+			; INIT COUNTER
+			ENTER
+			NEW { @BLT:4 4=>4(I, A[1]) } @ 4
+			; LOOP WHILE COUNTER > 0
+			JUMPIF { @ZERO:4=>4(L[0]) } @ 3
+			EVAL { @L_SHL:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), -) }
+			EVAL { @BLT:4 4=>4(L[0], @SUB:4 4=>4(L[0], D[16])) }
+			JUMP @ -4
+			LEAVE
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+		}
+	}
+	[[xa]] functio ~nint128 operator >>= (nint128 org) {
+		INTERFACE W 1 : THIS 16 : OBJECT => W 1
+		DATA {
+			QWORD 0x7F QWORD 0 ; MAXIMAL ROTATION
+			DWORD 1
+		}
+		CODE {
+			; ZERO ON LARGE SHIFT
+			JUMPIF { @L_LE:16 16=>1(A[1], D[0]) } @ 2
+			EVAL { @L_ZERO:16=>0(@PTR_FOLLOW:W 1=>16(A[0])) }
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+			; INIT COUNTER
+			ENTER
+			NEW { @BLT:4 4=>4(I, A[1]) } @ 4
+			; LOOP WHILE COUNTER > 0
+			JUMPIF { @ZERO:4=>4(L[0]) } @ 3
+			EVAL { @L_SHR:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), -) }
+			EVAL { @BLT:4 4=>4(L[0], @SUB:4 4=>4(L[0], D[16])) }
+			JUMP @ -4
+			LEAVE
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+		}
+	}
+	[[xa]] functio ~nint128 operator ++ () {
+		INTERFACE W 1 : THIS => W 1
+		DATA { QWORD 1 QWORD 0 }
+		CODE { EVAL { @L_ADD:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), D[0]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~nint128 operator -- () {
+		INTERFACE W 1 : THIS => W 1
+		DATA { QWORD 1 QWORD 0 }
+		CODE { EVAL { @L_SUB:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), D[0]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] classis functio nint128 operator + (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE { EVAL { @L_MOV:16 16=>0(R, A[0]) } RET { @L_ADD:16 16=>0(R, A[1]) } }
+	}
+	[[xa]] classis functio nint128 operator - (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE { EVAL { @L_MOV:16 16=>0(R, A[0]) } RET { @L_SUB:16 16=>0(R, A[1]) } }
+	}
+	[[xa]] classis functio nint128 operator * (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE {
+			ENTER
+			EVAL { @L_MOV:16 16=>0(R, A[0]) }
+			EVAL { @L_MUL:16 4=>4(R, A[1]) }
+			NEW { @L_ZERO:16 16 4=>0(I, A[0], -) } @ 16
+			EVAL { @L_MUL:16 4=>4(L[0], @OFFSET:16 4=>4(A[1], -)) }
+			EVAL { @L_ADD:16 16=>0(R, L[0]) }
+			EVAL { @L_ZERO:16 16 8=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:16 4=>4(L[0], @OFFSET:16 8=>4(A[1], -)) }
+			EVAL { @L_ADD:16 16=>0(R, L[0]) }
+			EVAL { @L_ZERO:16 16 12=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:16 4=>4(L[0], @OFFSET:16 12=>4(A[1], -)) }
+			RET { @L_ADD:16 16=>0(R, L[0]) }
+			LEAVE
+		}
+	}
+	classis functio nint128 operator / (nint128 a, nint128 b) {
+		nint128 div = a;
+		div._div_mod(b);
+		responde div;
+	}
+	classis functio nint128 operator % (nint128 a, nint128 b) {
+		nint128 div = a;
+		responde div._div_mod(b);
+	}
+	[[xa]] classis functio nint128 operator | (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @OR:8 8=>8(A[0], A[1])) }
+			RET { @BLT:8 8=>8(@OFFSET:16 8=>8(R, -), @OR:8 8=>8(@OFFSET:16 8=>8(A[0], -), @OFFSET:16 8=>8(A[1], -))) }
+		}
+	}
+	[[xa]] classis functio nint128 operator & (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @AND:8 8=>8(A[0], A[1])) }
+			RET { @BLT:8 8=>8(@OFFSET:16 8=>8(R, -), @AND:8 8=>8(@OFFSET:16 8=>8(A[0], -), @OFFSET:16 8=>8(A[1], -))) }
+		}
+	}
+	[[xa]] classis functio nint128 operator # (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 16 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @XOR:8 8=>8(A[0], A[1])) }
+			RET { @BLT:8 8=>8(@OFFSET:16 8=>8(R, -), @XOR:8 8=>8(@OFFSET:16 8=>8(A[0], -), @OFFSET:16 8=>8(A[1], -))) }
+		}
+	}
+	classis functio nint128 operator << (nint128 a, nint128 b) { var r = a; responde r <<= b; }
+	classis functio nint128 operator >> (nint128 a, nint128 b) { var r = a; responde r >>= b; }
+	[[xa]] classis functio logicum operator == (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_EQ:16 16=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator != (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_NEQ:16 16=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator < (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_L:16 16=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator > (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_G:16 16=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator <= (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_LE:16 16=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator >= (nint128 a, nint128 b) {
+		INTERFACE 16 : OBJECT 16 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_GE:16 16=>1(A[0], A[1])) } }
+	}
+	[[xa]] functio nint32 _adde(nint128 b) {
+		INTERFACE W 1 : THIS 16 : OBJECT => 4 : UINT
+		CODE { RET { @BLT:4 4=>4(R, @L_ADD:16 16=>4(@PTR_FOLLOW:W 1=>16(A[0]), A[1])) } }
+	}
+	[[xa]] functio nint32 _mul(nint32 b) {
+		INTERFACE W 1 : THIS 4 : UINT => 4 : UINT
+		CODE { RET { @BLT:4 4=>4(R, @L_MUL:16 4=>4(@PTR_FOLLOW:W 1=>16(A[0]), A[1])) } }
+	}
+	[[xa]] functio nint32 _div_mod(nint32 b) {
+		INTERFACE W 1 : THIS 4 : UINT => 4 : UINT
+		CODE { RET { @BLT:4 4=>4(R, @L_DIV:16 4=>4(@PTR_FOLLOW:W 1=>16(A[0]), A[1])) } }
+	}
+	[[xa]] functio nint128 _div_mod(nint128 b) {
+		INTERFACE W 1 : THIS 16 : OBJECT => 16 : OBJECT
+		DATA { QWORD 0 QWORD 0 DWORD 127 DWORD 1 }
+		CODE {
+			ENTER
+			; R <- A[0], L[0] <- A[1]
+			EVAL { @L_MOV:16 16=>0(R, @PTR_FOLLOW:W 1=>16(A[0])) }
+			NEW { @L_MOV:16 16=>0(I, A[1]) } @ 16
+			NEW { @L_ZERO:4=>0(I) } @ 4
+			; CHECK DIVISION BY ZERO
+			JUMPIF { @L_NEQ:16 16=>1(L[0], D[0]) } @ 1
+			TRAP
+			; L[0] <- L[0] << N: BIT(L[0], 127) == 1; L[1] <- N
+			JUMPIF { @L_BIT:16 4=>1(L[0], D[16]) } @ 3
+			EVAL { @L_SHL:16 1=>0(L[0], -) }
+			EVAL { @BLT:4 4=>4(L[1], @ADD:4 4=>4(L[1], D[20])) }
+			JUMP @ -4
+			; CLEAR A[0]
+			EVAL { @L_ZERO:16=>0(@PTR_FOLLOW:W 1=>16(A[0])) }
+			; LOOP WHILE R >= A[1]
+			JUMPIF { @L_L:16 16=>1(R, A[1]) } @ 6
+			; IF L[0] <= R THE SET THE Nth BIT IN A[0], R <- R - L[0]
+			JUMPIF { @L_L:16 16=>1(R, L[0]) } @ 2
+			EVAL { @L_SUB:16 16=>0(R, L[0]) }
+			EVAL { @L_SET:16 4 4=>0(@PTR_FOLLOW:W 1=>16(A[0]), L[1], D[20]) }
+			; L[0] <- L[0] >> 1; N--
+			EVAL { @L_SHR:16 1=>0(L[0], -) }
+			EVAL { @BLT:4 4=>4(L[1], @SUB:4 4=>4(L[1], D[20])) }
+			; LOOP BACK
+			JUMP @ -7
+			RET
+			LEAVE
+		}
+	}
+}
+[[magnitudo] "32"] genus int256 {
+	[serializa_semper] [nomen_serializandi data] [[positus] "0"] ordo [8] nint32 _data;
+	[[xa]] structor () {
+		INTERFACE W 1 : THIS => 0
+		CODE { RET }
+	}
+	[[xa]] structor (int256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => 0
+		CODE { RET { @L_MOV:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] functio int256 operator - () {
+		INTERFACE W 1 : THIS => 32 : OBJECT
+		CODE { EVAL { @L_ZERO:32=>0(R) } RET { @L_SUB:32 32=>0(R, @PTR_FOLLOW:W 1=>32(A[0])) } }
+	}
+	functio int256 operator ~ () {
+		int256 r;
+		r._data[0] = ~_data[0]; r._data[1] = ~_data[1]; r._data[2] = ~_data[2]; r._data[3] = ~_data[3];
+		r._data[4] = ~_data[4]; r._data[5] = ~_data[5]; r._data[6] = ~_data[6]; r._data[7] = ~_data[7];
+		responde r;
+	}
+	functio logicum operator ! () {
+		responde _data[0] == 0 && _data[1] == 0 && _data[2] == 0 && _data[3] == 0 && _data[4] == 0 && _data[5] == 0 && _data[6] == 0 && _data[7] == 0;
+	}
+	[[xa]] functio ~int256 operator = (int256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		CODE { EVAL { @L_MOV:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~int256 operator += (int256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		CODE { EVAL { @L_ADD:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~int256 operator -= (int256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		CODE { EVAL { @L_SUB:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~int256 operator *= (int256 org) { ego^ = ego^ * org; responde ego^; }
+	functio ~int256 operator /= (int256 org) { ego^ = ego^ / org; responde ego^; }
+	functio ~int256 operator %= (int256 org) { ego^ = ego^ % org; responde ego^; }
+	functio ~int256 operator |= (int256 org) {
+		_data[0] |= org._data[0];
+		_data[1] |= org._data[1];
+		_data[2] |= org._data[2];
+		_data[3] |= org._data[3];
+		_data[4] |= org._data[4];
+		_data[5] |= org._data[5];
+		_data[6] |= org._data[6];
+		_data[7] |= org._data[7];
+		responde ego^;
+	}
+	functio ~int256 operator &= (int256 org) {
+		_data[0] &= org._data[0];
+		_data[1] &= org._data[1];
+		_data[2] &= org._data[2];
+		_data[3] &= org._data[3];
+		_data[4] &= org._data[4];
+		_data[5] &= org._data[5];
+		_data[6] &= org._data[6];
+		_data[7] &= org._data[7];
+		responde ego^;
+	}
+	functio ~int256 operator #= (int256 org) {
+		_data[0] #= org._data[0];
+		_data[1] #= org._data[1];
+		_data[2] #= org._data[2];
+		_data[3] #= org._data[3];
+		_data[4] #= org._data[4];
+		_data[5] #= org._data[5];
+		_data[6] #= org._data[6];
+		_data[7] #= org._data[7];
+		responde ego^;
+	}
+	[[xa]] functio ~int256 operator <<= (int256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		DATA {
+			QWORD 0xFF QWORD 0 QWORD 0 QWORD 0 ; MAXIMAL ROTATION
+			DWORD 1
+		}
+		CODE {
+			; ZERO ON LARGE SHIFT
+			JUMPIF { @L_LE:32 32=>1(A[1], D[0]) } @ 2
+			EVAL { @L_ZERO:32=>0(@PTR_FOLLOW:W 1=>32(A[0])) }
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+			; INIT COUNTER
+			ENTER
+			NEW { @BLT:4 4=>4(I, A[1]) } @ 4
+			; LOOP WHILE COUNTER > 0
+			JUMPIF { @ZERO:4=>4(L[0]) } @ 3
+			EVAL { @L_SHL:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), -) }
+			EVAL { @BLT:4 4=>4(L[0], @SUB:4 4=>4(L[0], D[32])) }
+			JUMP @ -4
+			LEAVE
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+		}
+	}
+	[[xa]] functio ~int256 operator >>= (int256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		DATA {
+			QWORD 0xFF QWORD 0 QWORD 0 QWORD 0 ; MAXIMAL ROTATION
+			DWORD 1
+		}
+		CODE {
+			; INIT COUNTER
+			ENTER
+			NEW { @BLT:4 4=>4(I, A[1]) } @ 4
+			; CLAMP COUNTER TO MAXIMAL SHIFT
+			JUMPIF { @L_LE:32 32=>1(A[1], D[0]) } @ 1
+			EVAL { @BLT:4 4=>4(L[0], D[0]) }
+			; INPUT BACKUP FOR SIGN REPLICATION
+			NEW { @L_MOV:32 32=>0(I, @PTR_FOLLOW:W 1=>32(A[0])) } @ 32
+			; LOOP WHILE COUNTER > 0
+			JUMPIF { @ZERO:4=>4(L[0]) } @ 4
+			EVAL { @L_SHR:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), -) }
+			EVAL { @L_SET:32 4 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), D[0], @L_BIT:32 4=>1(L[1], D[0])) }
+			EVAL { @BLT:4 4=>4(L[0], @SUB:4 4=>4(L[0], D[32])) }
+			JUMP @ -5
+			LEAVE
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+		}
+	}
+	[[xa]] functio ~int256 operator ++ () {
+		INTERFACE W 1 : THIS => W 1
+		DATA { QWORD 1 QWORD 0 QWORD 0 QWORD 0 }
+		CODE { EVAL { @L_ADD:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), D[0]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~int256 operator -- () {
+		INTERFACE W 1 : THIS => W 1
+		DATA { QWORD 1 QWORD 0 QWORD 0 QWORD 0 }
+		CODE { EVAL { @L_SUB:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), D[0]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] classis functio int256 operator + (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE { EVAL { @L_MOV:32 32=>0(R, A[0]) } RET { @L_ADD:32 32=>0(R, A[1]) } }
+	}
+	[[xa]] classis functio int256 operator - (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE { EVAL { @L_MOV:32 32=>0(R, A[0]) } RET { @L_SUB:32 32=>0(R, A[1]) } }
+	}
+	[[xa]] classis functio int256 operator * (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE {
+			ENTER
+			EVAL { @L_MOV:32 32=>0(R, A[0]) }
+			EVAL { @L_MUL:32 4=>4(R, A[1]) }
+			NEW { @L_ZERO:32 32 4=>0(I, A[0], -) } @ 32
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 4=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 8=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 8=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 12=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 12=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 16=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 16=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 20=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 20=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 24=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 24=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 28=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 28=>4(A[1], -)) }
+			RET { @L_ADD:32 32=>0(R, L[0]) }
+			LEAVE
+		}
+	}
+	classis functio int256 operator / (int256 a, int256 b) {
+		int256 div = a, d = b;
+		logicum sdiv = non;
+		si (d._data[7] & 0x80000000) { div = -div; d = -d; }
+		si (div._data[7] & 0x80000000) { div = -div; sdiv = sic; }
+		(@nint256)(@div)^._div_mod((@nint256)(@d)^);
+		si (sdiv) responde -div; alioqui responde div;
+	}
+	classis functio int256 operator % (int256 a, int256 b) {
+		int256 div = a, d = b;
+		logicum smod = non;
+		si (d._data[7] & 0x80000000) { div = -div; d = -d; smod = sic; }
+		si (div._data[7] & 0x80000000) { div = -div; smod = !smod; }
+		nint256 mod = (@nint256)(@div)^._div_mod((@nint256)(@d)^);
+		si (smod) mod = -mod;
+		responde (@int256)(@mod)^;
+	}
+	[[xa]] classis functio int256 operator | (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @OR:8 8=>8(A[0], A[1])) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 8=>8(R, -), @OR:8 8=>8(@OFFSET:32 8=>8(A[0], -), @OFFSET:32 8=>8(A[1], -))) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 16=>8(R, -), @OR:8 8=>8(@OFFSET:32 16=>8(A[0], -), @OFFSET:32 16=>8(A[1], -))) }
+			RET { @BLT:8 8=>8(@OFFSET:32 24=>8(R, -), @OR:8 8=>8(@OFFSET:32 24=>8(A[0], -), @OFFSET:32 24=>8(A[1], -))) }
+		}
+	}
+	[[xa]] classis functio int256 operator & (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @AND:8 8=>8(A[0], A[1])) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 8=>8(R, -), @AND:8 8=>8(@OFFSET:32 8=>8(A[0], -), @OFFSET:32 8=>8(A[1], -))) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 16=>8(R, -), @AND:8 8=>8(@OFFSET:32 16=>8(A[0], -), @OFFSET:32 16=>8(A[1], -))) }
+			RET { @BLT:8 8=>8(@OFFSET:32 24=>8(R, -), @AND:8 8=>8(@OFFSET:32 24=>8(A[0], -), @OFFSET:32 24=>8(A[1], -))) }
+		}
+	}
+	[[xa]] classis functio int256 operator # (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @XOR:8 8=>8(A[0], A[1])) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 8=>8(R, -), @XOR:8 8=>8(@OFFSET:32 8=>8(A[0], -), @OFFSET:32 8=>8(A[1], -))) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 16=>8(R, -), @XOR:8 8=>8(@OFFSET:32 16=>8(A[0], -), @OFFSET:32 16=>8(A[1], -))) }
+			RET { @BLT:8 8=>8(@OFFSET:32 24=>8(R, -), @XOR:8 8=>8(@OFFSET:32 24=>8(A[0], -), @OFFSET:32 24=>8(A[1], -))) }
+		}
+	}
+	classis functio int256 operator << (int256 a, int256 b) { var r = a; responde r <<= b; }
+	classis functio int256 operator >> (int256 a, int256 b) { var r = a; responde r >>= b; }
+	[[xa]] classis functio logicum operator == (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_EQ:32 32=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator != (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_NEQ:32 32=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator < (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		DATA { QWORD 0 QWORD 0 QWORD 0 QWORD 0x8000000000000000 }
+		CODE {
+			ENTER
+			NEW { @L_MOV:32 32=>0(I, A[0]) } @ 32
+			NEW { @L_MOV:32 32=>0(I, A[1]) } @ 32
+			EVAL { @L_ADD:32 32=>0(L[0], D[0]) }
+			EVAL { @L_ADD:32 32=>0(L[1], D[0]) }
+			RET { @BLT:1 1=>1(R, @L_L:32 32=>1(L[0], L[1])) }
+			LEAVE
+		}
+	}
+	[[xa]] classis functio logicum operator > (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		DATA { QWORD 0 QWORD 0 QWORD 0 QWORD 0x8000000000000000 }
+		CODE {
+			ENTER
+			NEW { @L_MOV:32 32=>0(I, A[0]) } @ 32
+			NEW { @L_MOV:32 32=>0(I, A[1]) } @ 32
+			EVAL { @L_ADD:32 32=>0(L[0], D[0]) }
+			EVAL { @L_ADD:32 32=>0(L[1], D[0]) }
+			RET { @BLT:1 1=>1(R, @L_G:32 32=>1(L[0], L[1])) }
+			LEAVE
+		}
+	}
+	[[xa]] classis functio logicum operator <= (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		DATA { QWORD 0 QWORD 0 QWORD 0 QWORD 0x8000000000000000 }
+		CODE {
+			ENTER
+			NEW { @L_MOV:32 32=>0(I, A[0]) } @ 32
+			NEW { @L_MOV:32 32=>0(I, A[1]) } @ 32
+			EVAL { @L_ADD:32 32=>0(L[0], D[0]) }
+			EVAL { @L_ADD:32 32=>0(L[1], D[0]) }
+			RET { @BLT:1 1=>1(R, @L_LE:32 32=>1(L[0], L[1])) }
+			LEAVE
+		}
+	}
+	[[xa]] classis functio logicum operator >= (int256 a, int256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		DATA { QWORD 0 QWORD 0 QWORD 0 QWORD 0x8000000000000000 }
+		CODE {
+			ENTER
+			NEW { @L_MOV:32 32=>0(I, A[0]) } @ 32
+			NEW { @L_MOV:32 32=>0(I, A[1]) } @ 32
+			EVAL { @L_ADD:32 32=>0(L[0], D[0]) }
+			EVAL { @L_ADD:32 32=>0(L[1], D[0]) }
+			RET { @BLT:1 1=>1(R, @L_GE:32 32=>1(L[0], L[1])) }
+			LEAVE
+		}
+	}
+}
+[[magnitudo] "32"] genus nint256 {
+	[serializa_semper] [nomen_serializandi data] [[positus] "0"] ordo [8] nint32 _data;
+	[[xa]] structor () {
+		INTERFACE W 1 : THIS => 0
+		CODE { RET }
+	}
+	[[xa]] structor (nint256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => 0
+		CODE { RET { @L_MOV:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] functio nint256 operator - () {
+		INTERFACE W 1 : THIS => 32 : OBJECT
+		CODE { EVAL { @L_ZERO:32=>0(R) } RET { @L_SUB:32 32=>0(R, @PTR_FOLLOW:W 1=>32(A[0])) } }
+	}
+	functio nint256 operator ~ () {
+		nint256 r;
+		r._data[0] = ~_data[0]; r._data[1] = ~_data[1]; r._data[2] = ~_data[2]; r._data[3] = ~_data[3];
+		r._data[4] = ~_data[4]; r._data[5] = ~_data[5]; r._data[6] = ~_data[6]; r._data[7] = ~_data[7];
+		responde r;
+	}
+	functio logicum operator ! () {
+		responde _data[0] == 0 && _data[1] == 0 && _data[2] == 0 && _data[3] == 0 && _data[4] == 0 && _data[5] == 0 && _data[6] == 0 && _data[7] == 0;
+	}
+	[[xa]] functio ~nint256 operator = (nint256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		CODE { EVAL { @L_MOV:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~nint256 operator += (nint256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		CODE { EVAL { @L_ADD:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~nint256 operator -= (nint256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		CODE { EVAL { @L_SUB:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	functio ~nint256 operator *= (nint256 org) { ego^ = ego^ * org; responde ego^; }
+	functio ~nint256 operator /= (nint256 org) { ego^ = ego^ / org; responde ego^; }
+	functio ~nint256 operator %= (nint256 org) { ego^ = ego^ % org; responde ego^; }
+	functio ~nint256 operator |= (nint256 org) {
+		_data[0] |= org._data[0];
+		_data[1] |= org._data[1];
+		_data[2] |= org._data[2];
+		_data[3] |= org._data[3];
+		_data[4] |= org._data[4];
+		_data[5] |= org._data[5];
+		_data[6] |= org._data[6];
+		_data[7] |= org._data[7];
+		responde ego^;
+	}
+	functio ~nint256 operator &= (nint256 org) {
+		_data[0] &= org._data[0];
+		_data[1] &= org._data[1];
+		_data[2] &= org._data[2];
+		_data[3] &= org._data[3];
+		_data[4] &= org._data[4];
+		_data[5] &= org._data[5];
+		_data[6] &= org._data[6];
+		_data[7] &= org._data[7];
+		responde ego^;
+	}
+	functio ~nint256 operator #= (nint256 org) {
+		_data[0] #= org._data[0];
+		_data[1] #= org._data[1];
+		_data[2] #= org._data[2];
+		_data[3] #= org._data[3];
+		_data[4] #= org._data[4];
+		_data[5] #= org._data[5];
+		_data[6] #= org._data[6];
+		_data[7] #= org._data[7];
+		responde ego^;
+	}
+	[[xa]] functio ~nint256 operator <<= (nint256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		DATA {
+			QWORD 0xFF QWORD 0 QWORD 0 QWORD 0 ; MAXIMAL ROTATION
+			DWORD 1
+		}
+		CODE {
+			; ZERO ON LARGE SHIFT
+			JUMPIF { @L_LE:32 32=>1(A[1], D[0]) } @ 2
+			EVAL { @L_ZERO:32=>0(@PTR_FOLLOW:W 1=>32(A[0])) }
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+			; INIT COUNTER
+			ENTER
+			NEW { @BLT:4 4=>4(I, A[1]) } @ 4
+			; LOOP WHILE COUNTER > 0
+			JUMPIF { @ZERO:4=>4(L[0]) } @ 3
+			EVAL { @L_SHL:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), -) }
+			EVAL { @BLT:4 4=>4(L[0], @SUB:4 4=>4(L[0], D[32])) }
+			JUMP @ -4
+			LEAVE
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+		}
+	}
+	[[xa]] functio ~nint256 operator >>= (nint256 org) {
+		INTERFACE W 1 : THIS 32 : OBJECT => W 1
+		DATA {
+			QWORD 0xFF QWORD 0 QWORD 0 QWORD 0 ; MAXIMAL ROTATION
+			DWORD 1
+		}
+		CODE {
+			; ZERO ON LARGE SHIFT
+			JUMPIF { @L_LE:32 32=>1(A[1], D[0]) } @ 2
+			EVAL { @L_ZERO:32=>0(@PTR_FOLLOW:W 1=>32(A[0])) }
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+			; INIT COUNTER
+			ENTER
+			NEW { @BLT:4 4=>4(I, A[1]) } @ 4
+			; LOOP WHILE COUNTER > 0
+			JUMPIF { @ZERO:4=>4(L[0]) } @ 3
+			EVAL { @L_SHR:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), -) }
+			EVAL { @BLT:4 4=>4(L[0], @SUB:4 4=>4(L[0], D[32])) }
+			JUMP @ -4
+			LEAVE
+			RET { @BLT:W 1 W 1=>W 1(R, A[0]) }
+		}
+	}
+	[[xa]] functio ~nint256 operator ++ () {
+		INTERFACE W 1 : THIS => W 1
+		DATA { QWORD 1 QWORD 0 QWORD 0 QWORD 0 }
+		CODE { EVAL { @L_ADD:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), D[0]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] functio ~nint256 operator -- () {
+		INTERFACE W 1 : THIS => W 1
+		DATA { QWORD 1 QWORD 0 QWORD 0 QWORD 0 }
+		CODE { EVAL { @L_SUB:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), D[0]) } RET { @BLT:W 1 W 1=>W 1(R, A[0]) } }
+	}
+	[[xa]] classis functio nint256 operator + (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE { EVAL { @L_MOV:32 32=>0(R, A[0]) } RET { @L_ADD:32 32=>0(R, A[1]) } }
+	}
+	[[xa]] classis functio nint256 operator - (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE { EVAL { @L_MOV:32 32=>0(R, A[0]) } RET { @L_SUB:32 32=>0(R, A[1]) } }
+	}
+	[[xa]] classis functio nint256 operator * (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE {
+			ENTER
+			EVAL { @L_MOV:32 32=>0(R, A[0]) }
+			EVAL { @L_MUL:32 4=>4(R, A[1]) }
+			NEW { @L_ZERO:32 32 4=>0(I, A[0], -) } @ 32
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 4=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 8=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 8=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 12=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 12=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 16=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 16=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 20=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 20=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 24=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 24=>4(A[1], -)) }
+			EVAL { @L_ADD:32 32=>0(R, L[0]) }
+			EVAL { @L_ZERO:32 32 28=>0(L[0], A[0], -) }
+			EVAL { @L_MUL:32 4=>4(L[0], @OFFSET:32 28=>4(A[1], -)) }
+			RET { @L_ADD:32 32=>0(R, L[0]) }
+			LEAVE
+		}
+	}
+	classis functio nint256 operator / (nint256 a, nint256 b) {
+		nint256 div = a;
+		div._div_mod(b);
+		responde div;
+	}
+	classis functio nint256 operator % (nint256 a, nint256 b) {
+		nint256 div = a;
+		responde div._div_mod(b);
+	}
+	[[xa]] classis functio nint256 operator | (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @OR:8 8=>8(A[0], A[1])) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 8=>8(R, -), @OR:8 8=>8(@OFFSET:32 8=>8(A[0], -), @OFFSET:32 8=>8(A[1], -))) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 16=>8(R, -), @OR:8 8=>8(@OFFSET:32 16=>8(A[0], -), @OFFSET:32 16=>8(A[1], -))) }
+			RET { @BLT:8 8=>8(@OFFSET:32 24=>8(R, -), @OR:8 8=>8(@OFFSET:32 24=>8(A[0], -), @OFFSET:32 24=>8(A[1], -))) }
+		}
+	}
+	[[xa]] classis functio nint256 operator & (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @AND:8 8=>8(A[0], A[1])) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 8=>8(R, -), @AND:8 8=>8(@OFFSET:32 8=>8(A[0], -), @OFFSET:32 8=>8(A[1], -))) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 16=>8(R, -), @AND:8 8=>8(@OFFSET:32 16=>8(A[0], -), @OFFSET:32 16=>8(A[1], -))) }
+			RET { @BLT:8 8=>8(@OFFSET:32 24=>8(R, -), @AND:8 8=>8(@OFFSET:32 24=>8(A[0], -), @OFFSET:32 24=>8(A[1], -))) }
+		}
+	}
+	[[xa]] classis functio nint256 operator # (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 32 : OBJECT
+		CODE {
+			EVAL { @BLT:8 8=>8(R, @XOR:8 8=>8(A[0], A[1])) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 8=>8(R, -), @XOR:8 8=>8(@OFFSET:32 8=>8(A[0], -), @OFFSET:32 8=>8(A[1], -))) }
+			EVAL { @BLT:8 8=>8(@OFFSET:32 16=>8(R, -), @XOR:8 8=>8(@OFFSET:32 16=>8(A[0], -), @OFFSET:32 16=>8(A[1], -))) }
+			RET { @BLT:8 8=>8(@OFFSET:32 24=>8(R, -), @XOR:8 8=>8(@OFFSET:32 24=>8(A[0], -), @OFFSET:32 24=>8(A[1], -))) }
+		}
+	}
+	classis functio nint256 operator << (nint256 a, nint256 b) { var r = a; responde r <<= b; }
+	classis functio nint256 operator >> (nint256 a, nint256 b) { var r = a; responde r >>= b; }
+	[[xa]] classis functio logicum operator == (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_EQ:32 32=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator != (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_NEQ:32 32=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator < (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_L:32 32=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator > (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_G:32 32=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator <= (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_LE:32 32=>1(A[0], A[1])) } }
+	}
+	[[xa]] classis functio logicum operator >= (nint256 a, nint256 b) {
+		INTERFACE 32 : OBJECT 32 : OBJECT => 1
+		CODE { RET { @BLT:1 1=>1(R, @L_GE:32 32=>1(A[0], A[1])) } }
+	}
+	[[xa]] functio nint32 _adde(nint256 b) {
+		INTERFACE W 1 : THIS 32 : OBJECT => 4 : UINT
+		CODE { RET { @BLT:4 4=>4(R, @L_ADD:32 32=>4(@PTR_FOLLOW:W 1=>32(A[0]), A[1])) } }
+	}
+	[[xa]] functio nint32 _mul(nint32 b) {
+		INTERFACE W 1 : THIS 4 : UINT => 4 : UINT
+		CODE { RET { @BLT:4 4=>4(R, @L_MUL:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), A[1])) } }
+	}
+	[[xa]] functio nint32 _div_mod(nint32 b) {
+		INTERFACE W 1 : THIS 4 : UINT => 4 : UINT
+		CODE { RET { @BLT:4 4=>4(R, @L_DIV:32 4=>4(@PTR_FOLLOW:W 1=>32(A[0]), A[1])) } }
+	}
+	[[xa]] functio nint256 _div_mod(nint256 b) {
+		INTERFACE W 1 : THIS 32 : OBJECT => 32 : OBJECT
+		DATA { QWORD 0 QWORD 0 QWORD 0 QWORD 0 DWORD 255 DWORD 1 }
+		CODE {
+			ENTER
+			; R <- A[0], L[0] <- A[1]
+			EVAL { @L_MOV:32 32=>0(R, @PTR_FOLLOW:W 1=>32(A[0])) }
+			NEW { @L_MOV:32 32=>0(I, A[1]) } @ 32
+			NEW { @L_ZERO:4=>0(I) } @ 4
+			; CHECK DIVISION BY ZERO
+			JUMPIF { @L_NEQ:32 32=>1(L[0], D[0]) } @ 1
+			TRAP
+			; L[0] <- L[0] << N: BIT(L[0], 255) == 1; L[1] <- N
+			JUMPIF { @L_BIT:32 4=>1(L[0], D[32]) } @ 3
+			EVAL { @L_SHL:32 1=>0(L[0], -) }
+			EVAL { @BLT:4 4=>4(L[1], @ADD:4 4=>4(L[1], D[36])) }
+			JUMP @ -4
+			; CLEAR A[0]
+			EVAL { @L_ZERO:32=>0(@PTR_FOLLOW:W 1=>32(A[0])) }
+			; LOOP WHILE R >= A[1]
+			JUMPIF { @L_L:32 32=>1(R, A[1]) } @ 6
+			; IF L[0] <= R THE SET THE Nth BIT IN A[0], R <- R - L[0]
+			JUMPIF { @L_L:32 32=>1(R, L[0]) } @ 2
+			EVAL { @L_SUB:32 32=>0(R, L[0]) }
+			EVAL { @L_SET:32 4 4=>0(@PTR_FOLLOW:W 1=>32(A[0]), L[1], D[36]) }
+			; L[0] <- L[0] >> 1; N--
+			EVAL { @L_SHR:32 1=>0(L[0], -) }
+			EVAL { @BLT:4 4=>4(L[1], @SUB:4 4=>4(L[1], D[36])) }
+			; LOOP BACK
+			JUMP @ -7
+			RET
+			LEAVE
+		}
+	}
+}
+
+dura int128 {
+	[[xa]] [[convertor] "extendens"] structor (logicum org)
+	{
+		INTERFACE W 1 : THIS 1 : UINT => 0
+		CODE { RET { @L_ZERO:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int8 org)
+	{
+		EXTERNAL "S:int128.>>=:F(RCint128)(Cint128)" DATA DWORD 120
+		INTERFACE W 1 : THIS 1 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:16 1 15=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:16 4=>0(I, D[0]) } @ 16
+			RET { E[0]:W 1:THIS 16:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint8 org)
+	{
+		INTERFACE W 1 : THIS 1 : UINT => 0
+		CODE { RET { @L_ZERO:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int16 org)
+	{
+		EXTERNAL "S:int128.>>=:F(RCint128)(Cint128)" DATA DWORD 112
+		INTERFACE W 1 : THIS 2 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:16 2 14=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:16 4=>0(I, D[0]) } @ 16
+			RET { E[0]:W 1:THIS 16:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint16 org)
+	{
+		INTERFACE W 1 : THIS 2 : UINT => 0
+		CODE { RET { @L_ZERO:16 2=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int32 org)
+	{
+		EXTERNAL "S:int128.>>=:F(RCint128)(Cint128)" DATA DWORD 96
+		INTERFACE W 1 : THIS 4 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:16 4 12=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:16 4=>0(I, D[0]) } @ 16
+			RET { E[0]:W 1:THIS 16:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint32 org)
+	{
+		INTERFACE W 1 : THIS 4 : UINT => 0
+		CODE { RET { @L_ZERO:16 4=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int64 org)
+	{
+		EXTERNAL "S:int128.>>=:F(RCint128)(Cint128)" DATA DWORD 64
+		INTERFACE W 1 : THIS 8 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:16 8 8=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:16 4=>0(I, D[0]) } @ 16
+			RET { E[0]:W 1:THIS 16:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint64 org)
+	{
+		INTERFACE W 1 : THIS 8 : UINT => 0
+		CODE { RET { @L_ZERO:16 8=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (intadl org)
+	{
+		EXTERNAL "S:int128.>>=:F(RCint128)(Cint128)" DATA DWORD 64
+		INTERFACE W 1 : THIS W 1 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:16 8 8=>0(@PTR_FOLLOW:W 1=>16(A[0]), @S_RESIZE:W 1=>8(A[1]), -) }
+			ENTER
+			NEW { @L_ZERO:16 4=>0(I, D[0]) } @ 16
+			RET { E[0]:W 1:THIS 16:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nintadl org)
+	{
+		INTERFACE W 1 : THIS W 1 : UINT => 0
+		CODE { RET { @L_ZERO:16:- W 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "conformis"] structor (nint128 org)
+	{
+		INTERFACE W 1 : THIS 16 : OBJECT => 0
+		CODE { RET { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "angustans"] structor (int256 org)
+	{
+		INTERFACE W 1 : THIS 32 : OBJECT => 0
+		CODE { RET { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "angustans"] structor (nint256 org)
+	{
+		INTERFACE W 1 : THIS 32 : OBJECT => 0
+		CODE { RET { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[convertor] "pretiosus"] structor (frac org)
+	{
+		var S = (@nint32)(@org)^ >> 31;
+		var E = ((@nint32)(@org)^ >> 23) & 0xFF;
+		var V = (@nint32)(@org)^ & 0x7FFFFF;
+		si (E) V |= 0x800000; alioqui E++;
+		int R = E - 0x7F - 23;
+		si (E == 0xFF || R >= 104) {
+			ego^ = int128(0x80) << 120;
+			si (!S) ego^--;
+		} alioqui {
+			si (R >= 0) ego^ = int128(V) << R; alioqui ego^ = int128(V) >> -R;
+			si (S) ego^ = -ego^;
+		}
+	}
+	[[convertor] "pretiosus"] structor (dfrac org)
+	{
+		var S = (@nint64)(@org)^ >> 63;
+		var E = ((@nint64)(@org)^ >> 52) & 0x7FF;
+		var V = (@nint64)(@org)^ & 0x000FFFFFFFFFFFFF;
+		si (E) V |= 0x0010000000000000; alioqui E++;
+		int R = E - 0x3FF - 52;
+		si (E == 0x7FF || R >= 75) {
+			ego^ = int128(0x80) << 120;
+			si (!S) ego^--;
+		} alioqui {
+			si (R >= 0) ego^ = int128(V) << R; alioqui ego^ = int128(V) >> -R;
+			si (S) ego^ = -ego^;
+		}
+	}
+
+	functio nihil _ini_ex_linea(~linea data, ~linea radix, logicum sensitivus) iacit
+	{
+		si (data[0] == '-') {
+			(@nint128)(ego)^._ini_ex_linea(data.fragmentum(1, -1), radix, sensitivus);
+			ego^ = -ego^;
+			si (ego^ > int128(0)) iace errores.efformatio_falsa;
+		} alioqui si (data[0] == '+') {
+			(@nint128)(ego)^._ini_ex_linea(data.fragmentum(1, -1), radix, sensitivus);
+			si (ego^ < int128(0)) iace errores.efformatio_falsa;
+		} alioqui {
+			(@nint128)(ego)^._ini_ex_linea(data, radix, sensitivus);
+			si (ego^ < int128(0)) iace errores.efformatio_falsa;
+		}
+	}
+	[[convertor] "angustans"] structor (~linea data) iacit { _ini_ex_linea(data, linea.radix_decima, sic); }
+	structor (~linea data, ~linea radix) iacit { _ini_ex_linea(data, radix, non); }
+	structor (~linea data, ~linea radix, logicum sensitivus) iacit { _ini_ex_linea(data, radix, sensitivus); }
+
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () { INTERFACE W 1 : THIS => 1 : UINT DATA { QWORD 0 QWORD 0 } CODE { RET { @BLT:1 1=>1(R, @L_NEQ:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), D[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int8) () { INTERFACE W 1 : THIS => 1 : SINT CODE { RET{ @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () { INTERFACE W 1 : THIS => 1 : UINT CODE { RET{ @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int16) () { INTERFACE W 1 : THIS => 2 : SINT CODE { RET{ @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () { INTERFACE W 1 : THIS => 2 : UINT CODE { RET{ @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int32) () { INTERFACE W 1 : THIS => 4 : SINT CODE { RET{ @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint32) () { INTERFACE W 1 : THIS => 4 : UINT CODE { RET{ @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int64) () { INTERFACE W 1 : THIS => 8 : SINT CODE { RET{ @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint64) () { INTERFACE W 1 : THIS => 8 : UINT CODE { RET{ @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (intadl) () { INTERFACE W 1 : THIS => W 1 : SINT CODE { RET{ @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nintadl) () { INTERFACE W 1 : THIS => W 1 : UINT CODE { RET{ @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } } }
+	convertor (frac) () {
+		nint32 r = 0;
+		var V = ego^;
+		var S = V < 0;
+		si (S) V = -V;
+		si (V) {
+			int E = 0;
+			genus(ego^) MX = 0x1000000, MN = 0x800000;
+			dum (V >= MX) { V >>= 1; E++; }
+			dum (V < MN) { V <<= 1; E--; }
+			si (E + 0x7F + 23 >= 0xFF) r = 0x7F800000; alioqui {
+				r = genus(r)(V) & 0x7FFFFF;
+				r |= (genus(r)(E + 0x7F + 23) & 0xFF) << 23;
+			}
+			si (S) r |= 0x80000000;
+		}
+		responde (@frac)(@r)^;
+	}
+	convertor (dfrac) () {
+		nint64 r = 0;
+		var V = ego^;
+		var S = V < 0;
+		si (S) V = -V;
+		si (V) {
+			int E = 0;
+			genus(ego^) MX = 0x0020000000000000, MN = 0x0010000000000000;
+			dum (V >= MX) { V >>= 1; E++; }
+			dum (V < MN) { V <<= 1; E--; }
+			si (E + 0x3FF + 52 >= 0x7FF) r = 0x7FF0000000000000; alioqui {
+				r = genus(r)(V) & 0x000FFFFFFFFFFFFF;
+				r |= (genus(r)(E + 0x3FF + 52) & 0x7FF) << 52;
+			}
+			si (S) r |= 0x8000000000000000;
+		}
+		responde (@dfrac)(@r)^;
+	}
+
+	[[inline]] [[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde ad_lineam(linea.radix_decima, 0); }
+	[[inline]] functio linea ad_lineam() iacit { responde ad_lineam(linea.radix_decima, 0); }
+	[[inline]] functio linea ad_lineam(~linea radix) iacit { responde ad_lineam(radix, 0); }
+	functio linea ad_lineam(~linea radix, int long_min) iacit
+	{
+		si (ego^ < int128(0)) responde "-" + nint128(-ego^).ad_lineam(radix, long_min);
+		alioqui responde nint128(ego^).ad_lineam(radix, long_min);
+	}
+}
+dura nint128 {
+	[[xa]] [[convertor] "extendens"] structor (logicum org)
+	{
+		INTERFACE W 1 : THIS 1 : UINT => 0
+		CODE { RET { @L_ZERO:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int8 org)
+	{
+		INTERFACE W 1 : THIS 1 : SINT => 0
+		CODE { RET { @L_ZERO:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint8 org)
+	{
+		INTERFACE W 1 : THIS 1 : UINT => 0
+		CODE { RET { @L_ZERO:16 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int16 org)
+	{
+		INTERFACE W 1 : THIS 2 : SINT => 0
+		CODE { RET { @L_ZERO:16 2=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint16 org)
+	{
+		INTERFACE W 1 : THIS 2 : UINT => 0
+		CODE { RET { @L_ZERO:16 2=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int32 org)
+	{
+		INTERFACE W 1 : THIS 4 : SINT => 0
+		CODE { RET { @L_ZERO:16 4=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint32 org)
+	{
+		INTERFACE W 1 : THIS 4 : UINT => 0
+		CODE { RET { @L_ZERO:16 4=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int64 org)
+	{
+		INTERFACE W 1 : THIS 8 : SINT => 0
+		CODE { RET { @L_ZERO:16 8=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint64 org)
+	{
+		INTERFACE W 1 : THIS 8 : UINT => 0
+		CODE { RET { @L_ZERO:16 8=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (intadl org)
+	{
+		INTERFACE W 1 : THIS W 1 : SINT => 0
+		CODE { RET { @L_ZERO:16:- W 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nintadl org)
+	{
+		INTERFACE W 1 : THIS W 1 : UINT => 0
+		CODE { RET { @L_ZERO:16:- W 1=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "conformis"] structor (int128 org)
+	{
+		INTERFACE W 1 : THIS 16 : OBJECT => 0
+		CODE { RET { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "angustans"] structor (int256 org)
+	{
+		INTERFACE W 1 : THIS 32 : OBJECT => 0
+		CODE { RET { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "angustans"] structor (nint256 org)
+	{
+		INTERFACE W 1 : THIS 32 : OBJECT => 0
+		CODE { RET { @L_MOV:16 16=>0(@PTR_FOLLOW:W 1=>16(A[0]), A[1]) } }
+	}
+	[[convertor] "pretiosus"] structor (frac org)
+	{
+		var S = (@nint32)(@org)^ >> 31;
+		var E = ((@nint32)(@org)^ >> 23) & 0xFF;
+		var V = (@nint32)(@org)^ & 0x7FFFFF;
+		si (E) V |= 0x800000; alioqui E++;
+		int R = E - 0x7F - 23;
+		si (E == 0xFF || R >= 105) {
+			ego^ = nint128(0);
+			si (!S) ego^--;
+		} alioqui {
+			si (R >= 0) ego^ = nint128(V) << R; alioqui ego^ = nint128(V) >> -R;
+			si (S) ego^ = nint128(0);
+		}
+	}
+	[[convertor] "pretiosus"] structor (dfrac org)
+	{
+		var S = (@nint64)(@org)^ >> 63;
+		var E = ((@nint64)(@org)^ >> 52) & 0x7FF;
+		var V = (@nint64)(@org)^ & 0x000FFFFFFFFFFFFF;
+		si (E) V |= 0x0010000000000000; alioqui E++;
+		int R = E - 0x3FF - 52;
+		si (E == 0x7FF || R >= 76) {
+			ego^ = nint128(0);
+			si (!S) ego^--;
+		} alioqui {
+			si (R >= 0) ego^ = nint128(V) << R; alioqui ego^ = nint128(V) >> -R;
+			si (S) ego^ = nint128(0);
+		}
+	}
+
+	functio nihil _ini_ex_linea(~linea data, ~linea radix, logicum sensitivus) iacit
+	{
+		memoria.relabe(@_data, magnitudo(_data));
+		ordo char data32, radix32;
+		si (sensitivus) {
+			data32.longitudo = data.longitudo_codicis(linea.codex.utf32);
+			radix32.longitudo = radix.longitudo_codicis(linea.codex.utf32);
+			data.codifica(data32.data, linea.codex.utf32, non);
+			radix.codifica(radix32.data, linea.codex.utf32, non);
+		} alioqui {
+			var data_inf = data.inferna;
+			var radix_inf = radix.inferna;
+			data32.longitudo = data_inf.longitudo_codicis(linea.codex.utf32);
+			radix32.longitudo = radix_inf.longitudo_codicis(linea.codex.utf32);
+			data_inf.codifica(data32.data, linea.codex.utf32, non);
+			radix_inf.codifica(radix32.data, linea.codex.utf32, non);
+		}
+		var R = radix32.longitudo;
+		si (R < 2) iace errores.argumentum_falsum;
+		var ~ n = ego^ = 0;
+		per (var i : data32) {
+			nint j = 0;
+			dum (j < R && radix32[j] != data32[i]) j++;
+			si (j == R) iace errores.efformatio_falsa;
+			si (n._mul(R) || n._adde(j)) iace errores.efformatio_falsa;
+		}
+	}
+	[[convertor] "angustans"] structor (~linea data) iacit { _ini_ex_linea(data, linea.radix_decima, sic); }
+	structor (~linea data, ~linea radix) iacit { _ini_ex_linea(data, radix, non); }
+	structor (~linea data, ~linea radix, logicum sensitivus) iacit { _ini_ex_linea(data, radix, sensitivus); }
+
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () { INTERFACE W 1 : THIS => 1 : UINT DATA { QWORD 0 QWORD 0 } CODE { RET { @BLT:1 1=>1(R, @L_NEQ:16 16=>1(@PTR_FOLLOW:W 1=>16(A[0]), D[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int8) () { INTERFACE W 1 : THIS => 1 : SINT CODE { RET{ @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () { INTERFACE W 1 : THIS => 1 : UINT CODE { RET{ @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int16) () { INTERFACE W 1 : THIS => 2 : SINT CODE { RET{ @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () { INTERFACE W 1 : THIS => 2 : UINT CODE { RET{ @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int32) () { INTERFACE W 1 : THIS => 4 : SINT CODE { RET{ @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint32) () { INTERFACE W 1 : THIS => 4 : UINT CODE { RET{ @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int64) () { INTERFACE W 1 : THIS => 8 : SINT CODE { RET{ @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint64) () { INTERFACE W 1 : THIS => 8 : UINT CODE { RET{ @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (intadl) () { INTERFACE W 1 : THIS => W 1 : SINT CODE { RET{ @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nintadl) () { INTERFACE W 1 : THIS => W 1 : UINT CODE { RET{ @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } } }
+	convertor (frac) () {
+		nint32 r = 0;
+		var V = ego^;
+		si (V) {
+			int E = 0;
+			genus(ego^) MX = 0x1000000, MN = 0x800000;
+			dum (V >= MX) { V >>= 1; E++; }
+			dum (V < MN) { V <<= 1; E--; }
+			si (E + 0x7F + 23 >= 0xFF) r = 0x7F800000; alioqui {
+				r = genus(r)(V) & 0x7FFFFF;
+				r |= (genus(r)(E + 0x7F + 23) & 0xFF) << 23;
+			}
+		}
+		responde (@frac)(@r)^;
+	}
+	convertor (dfrac) () {
+		nint64 r = 0;
+		var V = ego^;
+		si (V) {
+			int E = 0;
+			genus(ego^) MX = 0x0020000000000000, MN = 0x0010000000000000;
+			dum (V >= MX) { V >>= 1; E++; }
+			dum (V < MN) { V <<= 1; E--; }
+			si (E + 0x3FF + 52 >= 0x7FF) r = 0x7FF0000000000000; alioqui {
+				r = genus(r)(V) & 0x000FFFFFFFFFFFFF;
+				r |= (genus(r)(E + 0x3FF + 52) & 0x7FF) << 52;
+			}
+		}
+		responde (@dfrac)(@r)^;
+	}
+
+	[[inline]] [[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde ad_lineam(linea.radix_decima, 0); }
+	[[inline]] functio linea ad_lineam() iacit { responde ad_lineam(linea.radix_decima, 0); }
+	[[inline]] functio linea ad_lineam(~linea radix) iacit { responde ad_lineam(radix, 0); }
+	functio linea ad_lineam(~linea radix, int long_min) iacit
+	{
+		ordo char rdx, dest;
+		rdx.longitudo = radix.longitudo_codicis(linea.codex.utf32);
+		radix.codifica(rdx.data, linea.codex.utf32, non);
+		int l = long_min;
+		var R = rdx.longitudo;
+		si (l <= 0) l = 1;
+		si (rdx.longitudo < 2) iace errores.argumentum_falsum;
+		nint128 n(ego^);
+		dum (n) { var r = n._div_mod(R); dest.adde(rdx[r]); }
+		dum (dest.longitudo < l) dest.adde(rdx[0]);
+		R = dest.longitudo - 1;
+		l = dest.longitudo / 2 - 1;
+		per (var i : [0, l]) dest.permuta(i, R - i);
+		responde linea(dest.data, dest.longitudo, linea.codex.utf32);
+	}
+}
+dura int256 {
+	[[xa]] [[convertor] "extendens"] structor (logicum org)
+	{
+		INTERFACE W 1 : THIS 1 : UINT => 0
+		CODE { RET { @L_ZERO:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int8 org)
+	{
+		EXTERNAL "S:int256.>>=:F(RCint256)(Cint256)" DATA DWORD 248
+		INTERFACE W 1 : THIS 1 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:32 1 31=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:32 4=>0(I, D[0]) } @ 32
+			RET { E[0]:W 1:THIS 32:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint8 org)
+	{
+		INTERFACE W 1 : THIS 1 : UINT => 0
+		CODE { RET { @L_ZERO:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int16 org)
+	{
+		EXTERNAL "S:int256.>>=:F(RCint256)(Cint256)" DATA DWORD 240
+		INTERFACE W 1 : THIS 2 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:32 2 30=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:32 4=>0(I, D[0]) } @ 32
+			RET { E[0]:W 1:THIS 32:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint16 org)
+	{
+		INTERFACE W 1 : THIS 2 : UINT => 0
+		CODE { RET { @L_ZERO:32 2=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int32 org)
+	{
+		EXTERNAL "S:int256.>>=:F(RCint256)(Cint256)" DATA DWORD 224
+		INTERFACE W 1 : THIS 4 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:32 4 28=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:32 4=>0(I, D[0]) } @ 32
+			RET { E[0]:W 1:THIS 32:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint32 org)
+	{
+		INTERFACE W 1 : THIS 4 : UINT => 0
+		CODE { RET { @L_ZERO:32 4=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int64 org)
+	{
+		EXTERNAL "S:int256.>>=:F(RCint256)(Cint256)" DATA DWORD 192
+		INTERFACE W 1 : THIS 8 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:32 8 24=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:32 4=>0(I, D[0]) } @ 32
+			RET { E[0]:W 1:THIS 32:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint64 org)
+	{
+		INTERFACE W 1 : THIS 8 : UINT => 0
+		CODE { RET { @L_ZERO:32 8=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (intadl org)
+	{
+		EXTERNAL "S:int256.>>=:F(RCint256)(Cint256)" DATA DWORD 192
+		INTERFACE W 1 : THIS W 1 : SINT => 0
+		CODE {
+			EVAL { @L_ZERO:32 8 24=>0(@PTR_FOLLOW:W 1=>32(A[0]), @S_RESIZE:W 1=>8(A[1]), -) }
+			ENTER
+			NEW { @L_ZERO:32 4=>0(I, D[0]) } @ 32
+			RET { E[0]:W 1:THIS 32:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nintadl org)
+	{
+		INTERFACE W 1 : THIS W 1 : UINT => 0
+		CODE { RET { @L_ZERO:32:- W 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int128 org)
+	{
+		EXTERNAL "S:int256.>>=:F(RCint256)(Cint256)" DATA DWORD 128
+		INTERFACE W 1 : THIS 16 : OBJECT => 0
+		CODE {
+			EVAL { @L_ZERO:32 16 16=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1], -) }
+			ENTER
+			NEW { @L_ZERO:32 4=>0(I, D[0]) } @ 32
+			RET { E[0]:W 1:THIS 32:OBJECT=>W 1(A[0], L[0]) }
+			LEAVE
+		}
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint128 org)
+	{
+		INTERFACE W 1 : THIS 16 : OBJECT => 0
+		CODE { RET { @L_ZERO:32 16=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "conformis"] structor (nint256 org)
+	{
+		INTERFACE W 1 : THIS 32 : OBJECT => 0
+		CODE { RET { @L_MOV:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[convertor] "pretiosus"] structor (frac org)
+	{
+		var S = (@nint32)(@org)^ >> 31;
+		var E = ((@nint32)(@org)^ >> 23) & 0xFF;
+		var V = (@nint32)(@org)^ & 0x7FFFFF;
+		si (E) V |= 0x800000; alioqui E++;
+		int R = E - 0x7F - 23;
+		si (E == 0xFF || R >= 232) {
+			ego^ = int256(0x80) << 120;
+			si (!S) ego^--;
+		} alioqui {
+			si (R >= 0) ego^ = int256(V) << R; alioqui ego^ = int256(V) >> -R;
+			si (S) ego^ = -ego^;
+		}
+	}
+	[[convertor] "pretiosus"] structor (dfrac org)
+	{
+		var S = (@nint64)(@org)^ >> 63;
+		var E = ((@nint64)(@org)^ >> 52) & 0x7FF;
+		var V = (@nint64)(@org)^ & 0x000FFFFFFFFFFFFF;
+		si (E) V |= 0x0010000000000000; alioqui E++;
+		int R = E - 0x3FF - 52;
+		si (E == 0x7FF || R >= 203) {
+			ego^ = int256(0x80) << 120;
+			si (!S) ego^--;
+		} alioqui {
+			si (R >= 0) ego^ = int256(V) << R; alioqui ego^ = int256(V) >> -R;
+			si (S) ego^ = -ego^;
+		}
+	}
+
+	functio nihil _ini_ex_linea(~linea data, ~linea radix, logicum sensitivus) iacit
+	{
+		si (data[0] == '-') {
+			(@nint256)(ego)^._ini_ex_linea(data.fragmentum(1, -1), radix, sensitivus);
+			ego^ = -ego^;
+			si (ego^ > int256(0)) iace errores.efformatio_falsa;
+		} alioqui si (data[0] == '+') {
+			(@nint256)(ego)^._ini_ex_linea(data.fragmentum(1, -1), radix, sensitivus);
+			si (ego^ < int256(0)) iace errores.efformatio_falsa;
+		} alioqui {
+			(@nint256)(ego)^._ini_ex_linea(data, radix, sensitivus);
+			si (ego^ < int256(0)) iace errores.efformatio_falsa;
+		}
+	}
+	[[convertor] "angustans"] structor (~linea data) iacit { _ini_ex_linea(data, linea.radix_decima, sic); }
+	structor (~linea data, ~linea radix) iacit { _ini_ex_linea(data, radix, non); }
+	structor (~linea data, ~linea radix, logicum sensitivus) iacit { _ini_ex_linea(data, radix, sensitivus); }
+
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () { INTERFACE W 1 : THIS => 1 : UINT DATA { QWORD 0 QWORD 0 QWORD 0 QWORD 0 } CODE { RET { @BLT:1 1=>1(R, @L_NEQ:32 32=>1(@PTR_FOLLOW:W 1=>32(A[0]), D[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int8) () { INTERFACE W 1 : THIS => 1 : SINT CODE { RET{ @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () { INTERFACE W 1 : THIS => 1 : UINT CODE { RET{ @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int16) () { INTERFACE W 1 : THIS => 2 : SINT CODE { RET{ @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () { INTERFACE W 1 : THIS => 2 : UINT CODE { RET{ @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int32) () { INTERFACE W 1 : THIS => 4 : SINT CODE { RET{ @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint32) () { INTERFACE W 1 : THIS => 4 : UINT CODE { RET{ @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int64) () { INTERFACE W 1 : THIS => 8 : SINT CODE { RET{ @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint64) () { INTERFACE W 1 : THIS => 8 : UINT CODE { RET{ @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (intadl) () { INTERFACE W 1 : THIS => W 1 : SINT CODE { RET{ @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nintadl) () { INTERFACE W 1 : THIS => W 1 : UINT CODE { RET{ @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } } }
+	convertor (frac) () {
+		nint32 r = 0;
+		var V = ego^;
+		var S = V < 0;
+		si (S) V = -V;
+		si (V) {
+			int E = 0;
+			genus(ego^) MX = 0x1000000, MN = 0x800000;
+			dum (V >= MX) { V >>= 1; E++; }
+			dum (V < MN) { V <<= 1; E--; }
+			si (E + 0x7F + 23 >= 0xFF) r = 0x7F800000; alioqui {
+				r = genus(r)(V) & 0x7FFFFF;
+				r |= (genus(r)(E + 0x7F + 23) & 0xFF) << 23;
+			}
+			si (S) r |= 0x80000000;
+		}
+		responde (@frac)(@r)^;
+	}
+	convertor (dfrac) () {
+		nint64 r = 0;
+		var V = ego^;
+		var S = V < 0;
+		si (S) V = -V;
+		si (V) {
+			int E = 0;
+			genus(ego^) MX = 0x0020000000000000, MN = 0x0010000000000000;
+			dum (V >= MX) { V >>= 1; E++; }
+			dum (V < MN) { V <<= 1; E--; }
+			si (E + 0x3FF + 52 >= 0x7FF) r = 0x7FF0000000000000; alioqui {
+				r = genus(r)(V) & 0x000FFFFFFFFFFFFF;
+				r |= (genus(r)(E + 0x3FF + 52) & 0x7FF) << 52;
+			}
+			si (S) r |= 0x8000000000000000;
+		}
+		responde (@dfrac)(@r)^;
+	}
+
+	[[inline]] [[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde ad_lineam(linea.radix_decima, 0); }
+	[[inline]] functio linea ad_lineam() iacit { responde ad_lineam(linea.radix_decima, 0); }
+	[[inline]] functio linea ad_lineam(~linea radix) iacit { responde ad_lineam(radix, 0); }
+	functio linea ad_lineam(~linea radix, int long_min) iacit
+	{
+		si (ego^ < int256(0)) responde "-" + nint256(-ego^).ad_lineam(radix, long_min);
+		alioqui responde nint256(ego^).ad_lineam(radix, long_min);
+	}
+}
+dura nint256 {
+	[[xa]] [[convertor] "extendens"] structor (logicum org)
+	{
+		INTERFACE W 1 : THIS 1 : UINT => 0
+		CODE { RET { @L_ZERO:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int8 org)
+	{
+		INTERFACE W 1 : THIS 1 : SINT => 0
+		CODE { RET { @L_ZERO:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint8 org)
+	{
+		INTERFACE W 1 : THIS 1 : UINT => 0
+		CODE { RET { @L_ZERO:32 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int16 org)
+	{
+		INTERFACE W 1 : THIS 2 : SINT => 0
+		CODE { RET { @L_ZERO:32 2=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint16 org)
+	{
+		INTERFACE W 1 : THIS 2 : UINT => 0
+		CODE { RET { @L_ZERO:32 2=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int32 org)
+	{
+		INTERFACE W 1 : THIS 4 : SINT => 0
+		CODE { RET { @L_ZERO:32 4=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint32 org)
+	{
+		INTERFACE W 1 : THIS 4 : UINT => 0
+		CODE { RET { @L_ZERO:32 4=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int64 org)
+	{
+		INTERFACE W 1 : THIS 8 : SINT => 0
+		CODE { RET { @L_ZERO:32 8=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint64 org)
+	{
+		INTERFACE W 1 : THIS 8 : UINT => 0
+		CODE { RET { @L_ZERO:32 8=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (intadl org)
+	{
+		INTERFACE W 1 : THIS W 1 : SINT => 0
+		CODE { RET { @L_ZERO:32:- W 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nintadl org)
+	{
+		INTERFACE W 1 : THIS W 1 : UINT => 0
+		CODE { RET { @L_ZERO:32:- W 1=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (int128 org)
+	{
+		INTERFACE W 1 : THIS 16 : OBJECT => 0
+		CODE { RET { @L_ZERO:32 16=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "extendens"] structor (nint128 org)
+	{
+		INTERFACE W 1 : THIS 16 : OBJECT => 0
+		CODE { RET { @L_ZERO:32 16=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[xa]] [[convertor] "conformis"] structor (int256 org)
+	{
+		INTERFACE W 1 : THIS 32 : OBJECT => 0
+		CODE { RET { @L_MOV:32 32=>0(@PTR_FOLLOW:W 1=>32(A[0]), A[1]) } }
+	}
+	[[convertor] "pretiosus"] structor (frac org)
+	{
+		var S = (@nint32)(@org)^ >> 31;
+		var E = ((@nint32)(@org)^ >> 23) & 0xFF;
+		var V = (@nint32)(@org)^ & 0x7FFFFF;
+		si (E) V |= 0x800000; alioqui E++;
+		int R = E - 0x7F - 23;
+		si (E == 0xFF || R >= 233) {
+			ego^ = nint256(0);
+			si (!S) ego^--;
+		} alioqui {
+			si (R >= 0) ego^ = nint256(V) << R; alioqui ego^ = nint256(V) >> -R;
+			si (S) ego^ = nint256(0);
+		}
+	}
+	[[convertor] "pretiosus"] structor (dfrac org)
+	{
+		var S = (@nint64)(@org)^ >> 63;
+		var E = ((@nint64)(@org)^ >> 52) & 0x7FF;
+		var V = (@nint64)(@org)^ & 0x000FFFFFFFFFFFFF;
+		si (E) V |= 0x0010000000000000; alioqui E++;
+		int R = E - 0x3FF - 52;
+		si (E == 0x7FF || R >= 204) {
+			ego^ = nint256(0);
+			si (!S) ego^--;
+		} alioqui {
+			si (R >= 0) ego^ = nint256(V) << R; alioqui ego^ = nint256(V) >> -R;
+			si (S) ego^ = nint256(0);
+		}
+	}
+
+	functio nihil _ini_ex_linea(~linea data, ~linea radix, logicum sensitivus) iacit
+	{
+		memoria.relabe(@_data, magnitudo(_data));
+		ordo char data32, radix32;
+		si (sensitivus) {
+			data32.longitudo = data.longitudo_codicis(linea.codex.utf32);
+			radix32.longitudo = radix.longitudo_codicis(linea.codex.utf32);
+			data.codifica(data32.data, linea.codex.utf32, non);
+			radix.codifica(radix32.data, linea.codex.utf32, non);
+		} alioqui {
+			var data_inf = data.inferna;
+			var radix_inf = radix.inferna;
+			data32.longitudo = data_inf.longitudo_codicis(linea.codex.utf32);
+			radix32.longitudo = radix_inf.longitudo_codicis(linea.codex.utf32);
+			data_inf.codifica(data32.data, linea.codex.utf32, non);
+			radix_inf.codifica(radix32.data, linea.codex.utf32, non);
+		}
+		var R = radix32.longitudo;
+		si (R < 2) iace errores.argumentum_falsum;
+		var ~ n = ego^ = 0;
+		per (var i : data32) {
+			nint j = 0;
+			dum (j < R && radix32[j] != data32[i]) j++;
+			si (j == R) iace errores.efformatio_falsa;
+			si (n._mul(R) || n._adde(j)) iace errores.efformatio_falsa;
+		}
+	}
+	[[convertor] "angustans"] structor (~linea data) iacit { _ini_ex_linea(data, linea.radix_decima, sic); }
+	structor (~linea data, ~linea radix) iacit { _ini_ex_linea(data, radix, non); }
+	structor (~linea data, ~linea radix, logicum sensitivus) iacit { _ini_ex_linea(data, radix, sensitivus); }
+
+	[[xa]] [[convertor] "angustans"] convertor (logicum) () { INTERFACE W 1 : THIS => 1 : UINT DATA { QWORD 0 QWORD 0 QWORD 0 QWORD 0 } CODE { RET { @BLT:1 1=>1(R, @L_NEQ:32 32=>1(@PTR_FOLLOW:W 1=>32(A[0]), D[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int8) () { INTERFACE W 1 : THIS => 1 : SINT CODE { RET{ @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint8) () { INTERFACE W 1 : THIS => 1 : UINT CODE { RET{ @BLT:1 1=>1(R, @PTR_FOLLOW:W 1=>1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int16) () { INTERFACE W 1 : THIS => 2 : SINT CODE { RET{ @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint16) () { INTERFACE W 1 : THIS => 2 : UINT CODE { RET{ @BLT:2 2=>2(R, @PTR_FOLLOW:W 1=>2(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int32) () { INTERFACE W 1 : THIS => 4 : SINT CODE { RET{ @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint32) () { INTERFACE W 1 : THIS => 4 : UINT CODE { RET{ @BLT:4 4=>4(R, @PTR_FOLLOW:W 1=>4(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (int64) () { INTERFACE W 1 : THIS => 8 : SINT CODE { RET{ @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nint64) () { INTERFACE W 1 : THIS => 8 : UINT CODE { RET{ @BLT:8 8=>8(R, @PTR_FOLLOW:W 1=>8(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (intadl) () { INTERFACE W 1 : THIS => W 1 : SINT CODE { RET{ @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } } }
+	[[xa]] [[convertor] "angustans"] convertor (nintadl) () { INTERFACE W 1 : THIS => W 1 : UINT CODE { RET{ @BLT:W 1 W 1=>W 1(R, @PTR_FOLLOW:W 1=>W 1(A[0])) } } }
+	convertor (frac) () {
+		nint32 r = 0;
+		var V = ego^;
+		si (V) {
+			int E = 0;
+			genus(ego^) MX = 0x1000000, MN = 0x800000;
+			dum (V >= MX) { V >>= 1; E++; }
+			dum (V < MN) { V <<= 1; E--; }
+			si (E + 0x7F + 23 >= 0xFF) r = 0x7F800000; alioqui {
+				r = genus(r)(V) & 0x7FFFFF;
+				r |= (genus(r)(E + 0x7F + 23) & 0xFF) << 23;
+			}
+		}
+		responde (@frac)(@r)^;
+	}
+	convertor (dfrac) () {
+		nint64 r = 0;
+		var V = ego^;
+		si (V) {
+			int E = 0;
+			genus(ego^) MX = 0x0020000000000000, MN = 0x0010000000000000;
+			dum (V >= MX) { V >>= 1; E++; }
+			dum (V < MN) { V <<= 1; E--; }
+			si (E + 0x3FF + 52 >= 0x7FF) r = 0x7FF0000000000000; alioqui {
+				r = genus(r)(V) & 0x000FFFFFFFFFFFFF;
+				r |= (genus(r)(E + 0x3FF + 52) & 0x7FF) << 52;
+			}
+		}
+		responde (@dfrac)(@r)^;
+	}
+
+	[[inline]] [[convertor] "extendens:pretiosus"] convertor (linea) () iacit { responde ad_lineam(linea.radix_decima, 0); }
+	[[inline]] functio linea ad_lineam() iacit { responde ad_lineam(linea.radix_decima, 0); }
+	[[inline]] functio linea ad_lineam(~linea radix) iacit { responde ad_lineam(radix, 0); }
+	functio linea ad_lineam(~linea radix, int long_min) iacit
+	{
+		ordo char rdx, dest;
+		rdx.longitudo = radix.longitudo_codicis(linea.codex.utf32);
+		radix.codifica(rdx.data, linea.codex.utf32, non);
+		int l = long_min;
+		var R = rdx.longitudo;
+		si (l <= 0) l = 1;
+		si (rdx.longitudo < 2) iace errores.argumentum_falsum;
+		nint256 n(ego^);
+		dum (n) { var r = n._div_mod(R); dest.adde(rdx[r]); }
+		dum (dest.longitudo < l) dest.adde(rdx[0]);
+		R = dest.longitudo - 1;
+		l = dest.longitudo / 2 - 1;
+		per (var i : [0, l]) dest.permuta(i, R - i);
+		responde linea(dest.data, dest.longitudo, linea.codex.utf32);
+	}
+}
+
+spatium math {
+	functio int128 abs(int128 valor) { responde valor < 0 ? -valor : valor; }
+	functio int256 abs(int256 valor) { responde valor < 0 ? -valor : valor; }
+	functio int128 sgn(int128 valor) { responde valor < 0 ? -1 : valor > 0 ? 1 : 0; }
+	functio int256 sgn(int256 valor) { responde valor < 0 ? -1 : valor > 0 ? 1 : 0; }
+}

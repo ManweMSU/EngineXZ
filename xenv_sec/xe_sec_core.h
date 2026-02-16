@@ -138,6 +138,7 @@ namespace Engine
 				virtual void SetCacheControl(bool allow_trust_cacheing) noexcept = 0;
 				virtual bool GetCacheControl(void) const noexcept = 0;
 				virtual void ResetTrustCache(void) noexcept = 0;
+				virtual void ResetTrust(void) noexcept = 0;
 				virtual TrustStatus ProvideTrust(const DataBlock * cert_hash) const noexcept = 0;
 			};
 			struct IntegrityValidationDesc {

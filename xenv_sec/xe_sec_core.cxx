@@ -494,6 +494,7 @@ namespace Engine
 				virtual void SetCacheControl(bool allow_trust_cacheing) noexcept override { _allow_cacheing = allow_trust_cacheing; }
 				virtual bool GetCacheControl(void) const noexcept override { return _allow_cacheing; }
 				virtual void ResetTrustCache(void) noexcept override { for (auto & t : _trust) if (t.value == TrustStatus::TrustedUnconditionally) t.value = TrustStatus::Trusted; }
+				virtual void ResetTrust(void) noexcept override { _trust.Clear(); }
 				virtual TrustStatus ProvideTrust(const DataBlock * cert_hash) const noexcept override
 				{
 					try {
