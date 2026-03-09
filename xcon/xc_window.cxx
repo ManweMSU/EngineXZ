@@ -161,10 +161,9 @@ namespace Engine
 				Point _cell_coord_from_mouse(Point mouse)
 				{
 					if (!_callback._cell.x || !_callback._cell.y) return Point(-1, -1);
-					auto marg = int(CurrentScaleFactor * _callback._console->GetMargin());
 					auto scroll_delta = _callback._console->GetBufferOffset();
-					int x = (mouse.x - marg) / _callback._cell.x;
-					int y = (mouse.y - marg) / _callback._cell.y + scroll_delta;
+					int x = mouse.x / _callback._cell.x;
+					int y = mouse.y / _callback._cell.y + scroll_delta;
 					if (x >= 0 && x < _callback._console->GetBufferWidth() && y >= 0 && y < _callback._console->GetBufferHeight()) return Point(x, y);
 					else return Point(-1, -1);
 				}
