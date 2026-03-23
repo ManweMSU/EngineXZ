@@ -2,6 +2,9 @@
 Languages = "en,ru"
 Subsystem = "gui"
 UseVersionDefines = true
+"-macosx" {
+	ApplicationIcon = "../artworks/xe_sec_icon_macos.eiwv"
+}
 "-macosx-debug" {
 	Attachments {
 		AAAAAA {
