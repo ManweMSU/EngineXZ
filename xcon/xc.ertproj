@@ -4,6 +4,9 @@ NoDockIcon = true
 Subsystem = "gui"
 UsesWindowEffects = true
 UseVersionDefines = true
+"-macosx" {
+	ApplicationIcon = "../artworks/xc_icon_macos.eiwv"
+}
 Attachments {
 	AAAAAA {
 		From = "xc.ini"
