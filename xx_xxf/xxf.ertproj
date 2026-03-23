@@ -4,6 +4,9 @@ NoDockIcon = true
 Subsystem = "gui"
 UsesWindowEffects = true
 UseVersionDefines = true
+"-macosx" {
+	ApplicationIcon = "../artworks/xx_icon_macos.eiwv"
+}
 AccessRequirements {
 	Camera = "Video recording."
 	Microphone = "Audio recording."
