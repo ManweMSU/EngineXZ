@@ -669,6 +669,7 @@ namespace Engine
 		class X2DContext : public DynamicObject
 		{
 			SafePointer<Graphics::I2DDeviceContext> _context;
+			SafePointer<XDevice> _external_device;
 			DynamicObject * _supercontext;
 		protected:
 			X2DContext(void) {}
@@ -676,6 +677,7 @@ namespace Engine
 		public:
 			X2DContext(Graphics::I2DDeviceContext * context) { _context.SetRetain(context); }
 			X2DContext(Graphics::I2DDeviceContext * context, DynamicObject * super) : _supercontext(super) { _context.SetRetain(context); }
+			X2DContext(Graphics::I2DDeviceContext * context, Graphics::IDevice * device) { _context.SetRetain(context); _external_device = new XDevice(device); _supercontext = _external_device->GetContext(); }
 			virtual ~X2DContext(void) override {}
 			virtual void * DynamicCast(const ClassSymbol * cls, ErrorContext & ectx) noexcept override
 			{
@@ -751,6 +753,7 @@ namespace Engine
 			virtual void SetCaretBlinkPeriod(const uint & value) noexcept { _context->SetCaretBlinkPeriod(value); }
 			virtual bool IsCaretVisible(void) noexcept { return _context->IsCaretVisible(); }
 			virtual string ToString(void) const override { try { return _context->ToString(); } catch (...) { return L""; } }
+			Graphics::I2DDeviceContext * GetContext(void) const noexcept { return _context; }
 		};
 		class XBitmapContext : public X2DContext
 		{
@@ -1259,9 +1262,15 @@ namespace Engine
 		Codec::Image * ExtractImageFromXImage(handle ximage) { return reinterpret_cast<XImage *>(ximage)->ExposeImage(); }
 		Object * CreateXFrame(Codec::Frame * frame) { return new XFrame(frame); }
 		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync) { return new XDirectContext(data, width, height, stride, owner, sync); }
+		Object * CreateXBitmap(Graphics::IBitmap * bitmap) { return new XBitmap(bitmap); }
+		Object * CreateXFont(Graphics::IFont * font) { font->Retain(); return font; }
 		DynamicObject * CreateWindowContext(Windows::I2DPresentationEngine * pres) { return new XWindowContext(pres); }
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context) { return new X2DContext(context); }
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context, DynamicObject * supercontext) { return new X2DContext(context, supercontext); }
+		DynamicObject * WrapExternalContext(Graphics::I2DDeviceContext * context) { auto device = context->GetParentDevice(); if (device) return new X2DContext(context, device); else return new X2DContext(context); }
 		Graphics::IDevice * GetWrappedDevice(Object * wrapper) { return static_cast<XDevice *>(wrapper)->GetDevice(); }
+		Graphics::I2DDeviceContext * GetWrappedDeviceContext(DynamicObject * wrapper) { return static_cast<X2DContext *>(wrapper)->GetContext(); }
+		Graphics::IBitmap * GetWrappedBitmap(Object * wrapper) { return static_cast<XBitmap *>(wrapper)->ExposeBitmap(); }
+		Graphics::IFont * GetWrappedFont(Object * wrapper) { return static_cast<Graphics::IFont *>(wrapper); }
 	}
 }

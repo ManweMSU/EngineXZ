@@ -370,6 +370,9 @@ spatium fenestrae {
 
 		functio nihil age_servum_communicationis(~linea nomen_app, ~linea nomen_crt) iacit virtualis pura;
 		functio adl[communicatio] junge_ad_servum_communicationis(~linea nomen_app, ~linea nomen_crt) iacit virtualis pura;
+
+		functio nihil status_tactus(tactus tactus, ~logicum pressatus, ~logicum selectus) iacit virtualis pura;
+		functio nihil contationes_tactarii(~nint primi_repli, ~nint proximorum_replorum) iacit virtualis pura;
 	}
 	protocollum responsor_applicationis {
 		functio logicum applicatio_eventum_servabile_est(eventum_applicationis eve) iacit virtualis { responde non; }

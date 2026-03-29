@@ -13,6 +13,8 @@ namespace Engine
 			VisualObjectInterfaceTexture	= 0x10002,
 			VisualObjectInterfaceScreen		= 0x20001,
 			VisualObjectInterfaceWindow		= 0x20002,
+			VisualObjectInterfaceConSys		= 0x30001,
+			VisualObjectInterfaceDevCtl		= 0x30002,
 		};
 		class VisualObject : public DynamicObject
 		{
@@ -33,9 +35,15 @@ namespace Engine
 		Codec::Image * ExtractImageFromXImage(handle ximage);
 		Object * CreateXFrame(Codec::Frame * frame);
 		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync);
+		Object * CreateXBitmap(Graphics::IBitmap * bitmap);
+		Object * CreateXFont(Graphics::IFont * font);
 		DynamicObject * CreateWindowContext(Windows::I2DPresentationEngine * pres);
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context);
 		DynamicObject * WrapContext(Graphics::I2DDeviceContext * context, DynamicObject * supercontext);
+		DynamicObject * WrapExternalContext(Graphics::I2DDeviceContext * context);
 		Graphics::IDevice * GetWrappedDevice(Object * wrapper);
+		Graphics::I2DDeviceContext * GetWrappedDeviceContext(DynamicObject * wrapper);
+		Graphics::IBitmap * GetWrappedBitmap(Object * wrapper);
+		Graphics::IFont * GetWrappedFont(Object * wrapper);
 	}
 }

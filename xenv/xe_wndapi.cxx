@@ -19,18 +19,10 @@ namespace Engine
 {
 	namespace XE
 	{
-		struct XPosition
-		{
-			int x, y;
-			XPosition(void) {}
-			~XPosition(void) {}
-		};
-		struct XRectangle
-		{
-			int left, top, right, bottom;
-			XRectangle(void) {}
-			~XRectangle(void) {}
-		};
+		XPosition::XPosition(void) {}
+		XPosition::~XPosition(void) {}
+		XRectangle::XRectangle(void) {}
+		XRectangle::~XRectangle(void) {}
 
 		class IVisualTheme : public Object
 		{
@@ -585,12 +577,16 @@ namespace Engine
 			IMenuItemCallback * _callback;
 			SafePointer<Windows::IMenuItem> _item;
 			SafePointer<IMenu> _submenu;
+			bool _dynamic;
+		protected:
+			void _dynamic_load_submenu(void);
 		public:
-			IMenuItem(Windows::IWindowSystem & system) : _callback(0) { _item = system.CreateMenuItem(); if (!_item) throw OutOfMemoryException(); }
+			IMenuItem(Windows::IWindowSystem & system) : _callback(0), _dynamic(false) { _item = system.CreateMenuItem(); if (!_item) throw OutOfMemoryException(); }
+			IMenuItem(Windows::IMenuItem * item) : _callback(0), _dynamic(true) { _item.SetRetain(item); }
 			virtual ~IMenuItem(void) override {}
 			virtual IMenuItemCallback * GetCallback(void) noexcept { return _callback; }
 			virtual void SetCallback(IMenuItemCallback ** callback) noexcept = 0;
-			virtual SafePointer<IMenu> GetSubmenu(void) noexcept { return _submenu; }
+			virtual SafePointer<IMenu> GetSubmenu(void) noexcept { if (_dynamic) try { _dynamic_load_submenu(); } catch (...) {} return _submenu; }
 			virtual void SetSubmenu(const SafePointer<IMenu> & menu) noexcept = 0;
 			virtual handle GetUserData(void) noexcept { return _item->GetUserData(); }
 			virtual void SetUserData(const handle & data) noexcept { _item->SetUserData(data); }
@@ -612,12 +608,17 @@ namespace Engine
 		{
 			SafePointer<Windows::IMenu> _menu;
 			ObjectArray<IMenuItem> _items;
+			bool _dynamic;
+		private:
+			void _dynamic_load_items(void);
 		public:
-			IMenu(Windows::IWindowSystem & system) : _items(0x10) { _menu = system.CreateMenu(); if (!_menu) throw OutOfMemoryException(); }
+			IMenu(Windows::IWindowSystem & system) : _items(0x10), _dynamic(false) { _menu = system.CreateMenu(); if (!_menu) throw OutOfMemoryException(); }
+			IMenu(Windows::IMenu * menu) : _items(0x10), _dynamic(true) { _menu.SetRetain(menu); }
 			virtual ~IMenu(void) override {}
 			virtual void AddItem(IMenuItem * item, ErrorContext & ectx) noexcept
 			{
 				XE_TRY_INTRO
+				if (_dynamic) _dynamic_load_items();
 				_items.Append(item);
 				_menu->AppendMenuItem(item->Expose());
 				XE_TRY_OUTRO()
@@ -625,6 +626,7 @@ namespace Engine
 			virtual void InsertItem(IMenuItem * item, int at, ErrorContext & ectx) noexcept
 			{
 				XE_TRY_INTRO
+				if (_dynamic) _dynamic_load_items();
 				if (at < 0 || at > _items.Length()) throw InvalidArgumentException();
 				_items.Insert(item, at);
 				_menu->InsertMenuItem(item->Expose(), at);
@@ -632,13 +634,15 @@ namespace Engine
 			}
 			virtual void RemoveItem(int at) noexcept
 			{
+				if (_dynamic) try { _dynamic_load_items(); } catch (...) {}
 				if (at < 0 || at >= _items.Length()) return;
 				_items.Remove(at);
 				_menu->RemoveMenuItem(at);
 			}
-			virtual int GetLength(void) noexcept { return _items.Length(); }
+			virtual int GetLength(void) noexcept { if (_dynamic) try { _dynamic_load_items(); } catch (...) {} return _items.Length(); }
 			virtual SafePointer<IMenuItem> GetItem(int at) noexcept
 			{
+				if (_dynamic) try { _dynamic_load_items(); } catch (...) {}
 				if (at < 0 || at >= _items.Length()) return 0;
 				SafePointer<IMenuItem> result;
 				result.SetRetain(_items.ElementAt(at));
@@ -646,6 +650,7 @@ namespace Engine
 			}
 			virtual SafePointer<IMenuItem> FindItem(int id) noexcept
 			{
+				if (_dynamic) try { _dynamic_load_items(); } catch (...) {}
 				for (auto & i : _items) {
 					SafePointer<IMenuItem> result;
 					if (i.GetID() == id) { result.SetRetain(&i); return result; }
@@ -662,6 +667,7 @@ namespace Engine
 			SafePointer<DynamicObject> _context;
 		public:
 			MenuItem(Windows::IWindowSystem & system) : IMenuItem(system) {}
+			MenuItem(Windows::IMenuItem * item) : IMenuItem(item) {}
 			virtual ~MenuItem(void) override
 			{
 				if (_callback) {
@@ -708,6 +714,17 @@ namespace Engine
 			}
 			virtual void MenuItemDisposed(Windows::IMenuItem * item) override {}
 		};
+		void IMenuItem::_dynamic_load_submenu(void) { if (_item->GetSubmenu() && !_submenu) _submenu = new IMenu(_item->GetSubmenu()); }
+		void IMenu::_dynamic_load_items(void)
+		{
+			if (_items.Length() != _menu->Length()) {
+				_items.Clear();
+				for (int i = 0; i < _menu->Length(); i++) {
+					SafePointer<MenuItem> item = new MenuItem(_menu->ElementAt(i));
+					_items.Append(item);
+				}
+			}
+		}
 
 		class IStatusIcon;
 		class IStatusIconCallback
@@ -1112,6 +1129,8 @@ namespace Engine
 				return new ICommunication(*_system, app, auth);
 				XE_TRY_OUTRO(0)
 			}
+			virtual void GetKeyboardStatus(uint key_code, bool & is_pressed, bool & is_toggled, ErrorContext & ectx) noexcept { XE_TRY_INTRO is_pressed = Keyboard::IsKeyPressed(key_code); is_toggled = Keyboard::IsKeyToggled(key_code); XE_TRY_OUTRO() }
+			virtual void GetKeyboardDelays(uint & primary_delay, uint & secondary_delay, ErrorContext & ectx) noexcept { XE_TRY_INTRO primary_delay = Keyboard::GetKeyboardDelay(); secondary_delay = Keyboard::GetKeyboardSpeed(); XE_TRY_OUTRO() }
 			void RegisterWindow(IWindow * window) noexcept { try { _windows.AddElement(window); _update_tile(); } catch (...) {} }
 			void UnregisterWindow(IWindow * window) noexcept
 			{
@@ -1393,5 +1412,264 @@ namespace Engine
 			auto factory = reinterpret_cast<IWindowSystemFactory *>(ldr.ExposeInterface(L"sysfen"));
 			if (factory) factory->Initialize(module);
 		}
+
+		// Extensions for Engine UI
+		class IWindowCallbackEUI
+		{
+		public:
+			virtual void WindowCreated(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowDestroyed(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowVisibilityChanged(IWindow * window, bool visible, ErrorContext & ectx) noexcept = 0;
+			virtual void RenderRequest(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowClosed(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowMinimized(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowMaximized(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowRestored(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowHelpRequested(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowActivated(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowDeactivated(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowMoved(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowResized(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowTimerEvent(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowMenuCancelled(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowHandleInternalEvent(IWindow * window, uint id, uint origin, SafePointer<UI::Control> & sender, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowThemeChanged(IWindow * window, ErrorContext & ectx) noexcept = 0;
+			virtual bool WindowEventAvailable(IWindow * window, uint event, ErrorContext & ectx) noexcept = 0;
+			virtual void WindowHandleGlobalEvent(IWindow * window, uint event, ErrorContext & ectx) noexcept = 0;
+		};
+		class WindowEUI : public IWindow, public UI::IEventCallback, IDeviceControl
+		{
+			SafePointer<DynamicObject> _cs_device;
+		private:
+			void _cs_device_update(void) noexcept
+			{
+				try {
+					auto cs = UI::GetControlSystem(_window);
+					_cs_device.SetReference(0);
+					auto device = cs->GetRenderingDevice();
+					if (device) _cs_device = WrapExternalContext(device);
+				} catch (...) {}
+			}
+		public:
+			WindowEUI(const WindowDesc & desc, Windows::DeviceClass device, IWindowSystem * system, bool modal)
+			{
+				Windows::CreateWindowDesc desc2;
+				_modal = modal;
+				_callback = desc.callback;
+				_window = 0;
+				_system = system;
+				_parent = desc.parent;
+				_top_level = _parent == 0;
+				_cursor_reset = false;
+				desc2.Flags = desc.flags;
+				desc2.Title = desc.title;
+				desc2.Position = WrapWObject(desc.position);
+				desc2.MinimalConstraints = WrapWObject(desc.minimal_size);
+				desc2.MaximalConstraints = WrapWObject(desc.maximal_size);
+				desc2.FrameMargins = WrapWObject(desc.margins);
+				desc2.Opacity = desc.opacity;
+				desc2.BlurFactor = desc.blur_factor;
+				desc2.Theme = desc.dark_theme ? Windows::ThemeClass::Dark : Windows::ThemeClass::Light;
+				desc2.BackgroundColor.Value = desc.background.value;
+				desc2.Callback = this;
+				desc2.ParentWindow = _parent ? _parent->Expose() : 0;
+				desc2.Screen = desc.screen ? desc.screen->Expose() : 0;
+				if (modal) UI::CreateModalWindow(desc2, device);
+				else UI::CreateWindow(desc2, device);
+			}
+			WindowEUI(UI::Template::ControlTemplate * base, void * callback, const UI::Rectangle & outer, VisualObject * parent, UI::IControlFactory * factory, Windows::DeviceClass device, IWindowSystem * system, bool modal)
+			{
+				_modal = modal;
+				_callback = reinterpret_cast<XE::IWindowCallback *>(callback);
+				_window = 0;
+				_system = system;
+				_parent = static_cast<XE::IWindow *>(parent);
+				_top_level = _parent == 0;
+				_cursor_reset = false;
+				Windows::IWindow * parent_window;
+				if (parent) parent_window = _parent->Expose(); else parent_window = 0;
+				if (modal) UI::CreateModalWindow(base, this, outer, parent_window, factory, device);
+				else UI::CreateWindow(base, this, outer, parent_window, factory, device);
+			}
+			virtual ~WindowEUI(void) override {}
+			virtual void ExposeInterface(uint intid, void * data, ErrorContext & ectx) noexcept override
+			{
+				if (!data) { ectx.error_code = 3; return; }
+				if (intid == VisualObjectInterfaceWindow) *reinterpret_cast<Windows::IWindow **>(data) = _window;
+				else if (intid == VisualObjectInterfaceConSys) *reinterpret_cast<UI::ControlSystem **>(data) = UI::GetControlSystem(_window);
+				else if (intid == VisualObjectInterfaceDevCtl) *reinterpret_cast<IDeviceControl **>(data) = static_cast<IDeviceControl *>(this);
+				else ectx.error_code = 1;
+			}
+			virtual DynamicObject * ControlSystemGetDevice(void) noexcept override { return _cs_device; }
+			virtual void ControlSystemSetDevice(DynamicObject * dev) noexcept override
+			{
+				auto cs = UI::GetControlSystem(_window);
+				if (cs->GetPrefferedDevice() != Windows::DeviceClass::Null) return;
+				if (dev) {
+					_cs_device.SetRetain(dev);
+					cs->SetRenderingDevice(GetWrappedDeviceContext(dev));
+				} else {
+					_cs_device.SetReference(0);
+					cs->SetRenderingDevice(0);
+				}
+			}
+			virtual Windows::DeviceClass ControlSystemGetDeviceClass(void) noexcept override { return UI::GetControlSystem(_window)->GetPrefferedDevice(); }
+			virtual void ControlSystemSetDeviceClass(Windows::DeviceClass devcls) noexcept override
+			{
+				try {
+					auto cs = UI::GetControlSystem(_window);
+					cs->SetPrefferedDevice(devcls);
+					_cs_device_update();
+				} catch (...) {}
+			}
+			virtual void * ControlSystemGetCallback(void) noexcept override { return _callback; }
+			virtual void ControlSystemSetCallback(void * callback) noexcept override { _callback = reinterpret_cast<XE::IWindowCallback *>(callback); }
+			virtual void Created(Windows::IWindow * window) override
+			{
+				_window = window;
+				if (_parent) _parent->_children.Append(this); else _system->RegisterWindow(this);
+				_cs_device_update();
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowCreated(this, ectx);
+			}
+			virtual void Destroyed(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowDestroyed(this, ectx);
+				for (auto & c : _children) c->_parent = 0;
+				if (_parent) {
+					for (int i = 0; i < _parent->_children.Length(); i++) if (_parent->_children[i] == static_cast<IWindow *>(this)) {
+						_parent->_children.Remove(i);
+						break;
+					}
+				} else if (_top_level) _system->UnregisterWindow(this);
+				Release();
+			}
+			virtual void Shown(Windows::IWindow * window, bool show) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowVisibilityChanged(this, show, ectx);
+			}
+			virtual void RenderWindow(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->RenderRequest(this, ectx);
+			}
+			virtual void WindowClose(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowClosed(this, ectx);
+			}
+			virtual void WindowMaximize(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowMaximized(this, ectx);
+			}
+			virtual void WindowMinimize(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowMinimized(this, ectx);
+			}
+			virtual void WindowRestore(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowRestored(this, ectx);
+			}
+			virtual void WindowHelp(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowHelpRequested(this, ectx);
+			}
+			virtual void WindowActivate(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowActivated(this, ectx);
+			}
+			virtual void WindowDeactivate(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowDeactivated(this, ectx);
+			}
+			virtual void WindowMove(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowMoved(this, ectx);
+			}
+			virtual void WindowSize(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowResized(this, ectx);
+			}
+			virtual void ThemeChanged(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowThemeChanged(this, ectx);
+			}
+			virtual bool IsWindowEventEnabled(Windows::IWindow * window, Windows::WindowHandler handler) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) {
+					auto result = reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowEventAvailable(this, WrapWObject(handler), ectx);
+					if (ectx.error_code) return false;
+					return result;
+				} else return false;
+			}
+			virtual void HandleWindowEvent(Windows::IWindow * window, Windows::WindowHandler handler) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowHandleGlobalEvent(this, WrapWObject(handler), ectx);
+			}
+			virtual void Timer(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowTimerEvent(this, ectx);
+			}
+			virtual void PopupMenuCancelled(Windows::IWindow * window) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowMenuCancelled(this, ectx);
+			}
+			virtual void HandleControlEvent(Windows::IWindow * window, int ID, UI::ControlEvent event, UI::Control * sender) override
+			{
+				ErrorContext ectx; ectx.error_code = ectx.error_subcode = 0;
+				SafePointer<UI::Control> ctl;
+				ctl.SetRetain(sender);
+				if (_callback) reinterpret_cast<IWindowCallbackEUI *>(_callback)->WindowHandleInternalEvent(this, ID, uint(event), ctl, ectx);
+			}
+		};
+		VisualObject * GetControlSystemWindow(UI::ControlSystem * cs) noexcept { return static_cast<WindowEUI *>(cs->GetCallback()); }
+		VisualObject * CreateWWindow(handle winsys, const void * desc, Windows::DeviceClass device, ErrorContext & ectx) noexcept
+		{
+			XE_TRY_INTRO
+			return new WindowEUI(*reinterpret_cast<const WindowDesc *>(desc), device, reinterpret_cast<IWindowSystem *>(winsys), false);
+			XE_TRY_OUTRO(0)
+		}
+		VisualObject * CreateWWindow(handle winsys, UI::Template::ControlTemplate * base, void * callback, const UI::Rectangle & outer, VisualObject * parent, UI::IControlFactory * factory, Windows::DeviceClass device, ErrorContext & ectx) noexcept
+		{
+			XE_TRY_INTRO
+			return new WindowEUI(base, callback, outer, parent, factory, device, reinterpret_cast<IWindowSystem *>(winsys), false);
+			XE_TRY_OUTRO(0)
+		}
+		VisualObject * CreateModalWWindow(handle winsys, const void * desc, Windows::DeviceClass device, ErrorContext & ectx) noexcept
+		{
+			XE_TRY_INTRO
+			return new WindowEUI(*reinterpret_cast<const WindowDesc *>(desc), device, reinterpret_cast<IWindowSystem *>(winsys), true);
+			XE_TRY_OUTRO(0)
+		}
+		VisualObject * CreateModalWWindow(handle winsys, UI::Template::ControlTemplate * base, void * callback, const UI::Rectangle & outer, VisualObject * parent, UI::IControlFactory * factory, Windows::DeviceClass device, ErrorContext & ectx) noexcept
+		{
+			XE_TRY_INTRO
+			return new WindowEUI(base, callback, outer, parent, factory, device, reinterpret_cast<IWindowSystem *>(winsys), true);
+			XE_TRY_OUTRO(0)
+		}
+		Object * WrapWMenu(Windows::IMenu * menu) { return new IMenu(menu); }
+		Object * CreateWMenu(UI::Template::ControlTemplate * base, ErrorContext & ectx) noexcept
+		{
+			XE_TRY_INTRO
+			SafePointer<Windows::IMenu> menu = UI::CreateMenu(base);
+			return WrapWMenu(menu);
+			XE_TRY_OUTRO(0)
+		}
+		Windows::IMenu * UnwrapWMenu(Object * menu) noexcept { return menu ? static_cast<IMenu *>(menu)->Expose() : 0; }
 	}
 }
