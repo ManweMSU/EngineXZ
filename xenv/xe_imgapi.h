@@ -34,6 +34,7 @@ namespace Engine
 		Codec::Frame * ExtractFrameFromXFrame(handle xframe);
 		Codec::Image * ExtractImageFromXImage(handle ximage);
 		Object * CreateXFrame(Codec::Frame * frame);
+		Object * CreateXImage(Codec::Image * image);
 		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync);
 		Object * CreateXBitmap(Graphics::IBitmap * bitmap);
 		Object * CreateXFont(Graphics::IFont * font);

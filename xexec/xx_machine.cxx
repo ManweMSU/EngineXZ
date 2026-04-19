@@ -11,6 +11,7 @@
 #include "../xenv/xe_powerapi.h"
 #include "../xenv/xe_reflapi.h"
 #include "../xenv/xe_wndapi.h"
+#include "../xenv/xe_engine_ui.h"
 #include "../xenv/xe_tpgrph.h"
 #include "../xenv/xe_netapi.h"
 #include "../xenv/xe_crypto.h"
@@ -1147,6 +1148,7 @@ namespace Engine
 				XE::ActivateCryptography(*loader);
 				XE::ActivateSharedMemory(*loader);
 				XE::ActivateMultimedia(*loader);
+				XE::ActivateEngineUI(*loader);
 				XE::Security::ActivateSecurityAPI(*loader, crypt_accel, crypt_trust);
 				loader->RegisterAPIExtension(launcher_services);
 				launch_configuration.primary_context = xctx;

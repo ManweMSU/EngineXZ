@@ -1261,6 +1261,7 @@ namespace Engine
 		Codec::Frame * ExtractFrameFromXFrame(handle xframe) { return reinterpret_cast<XFrame *>(xframe)->ExposeFrame(); }
 		Codec::Image * ExtractImageFromXImage(handle ximage) { return reinterpret_cast<XImage *>(ximage)->ExposeImage(); }
 		Object * CreateXFrame(Codec::Frame * frame) { return new XFrame(frame); }
+		Object * CreateXImage(Codec::Image * image) { return new XImage(image); }
 		Object * CreateDirectContext(void * data, int width, int height, int stride, Object * owner, SynchronizeRoutine sync) { return new XDirectContext(data, width, height, stride, owner, sync); }
 		Object * CreateXBitmap(Graphics::IBitmap * bitmap) { return new XBitmap(bitmap); }
 		Object * CreateXFont(Graphics::IFont * font) { font->Retain(); return font; }

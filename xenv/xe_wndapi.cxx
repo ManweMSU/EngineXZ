@@ -1663,6 +1663,7 @@ namespace Engine
 			XE_TRY_OUTRO(0)
 		}
 		Object * WrapWMenu(Windows::IMenu * menu) { return new IMenu(menu); }
+		Object * WrapWMenuItem(Windows::IMenuItem * item) { return new MenuItem(item); }
 		Object * CreateWMenu(UI::Template::ControlTemplate * base, ErrorContext & ectx) noexcept
 		{
 			XE_TRY_INTRO
@@ -1671,5 +1672,6 @@ namespace Engine
 			XE_TRY_OUTRO(0)
 		}
 		Windows::IMenu * UnwrapWMenu(Object * menu) noexcept { return menu ? static_cast<IMenu *>(menu)->Expose() : 0; }
+		Windows::IMenuItem * UnwrapWMenuItem(Object * item) noexcept { return item ? static_cast<IMenuItem *>(item)->Expose() : 0; }
 	}
 }

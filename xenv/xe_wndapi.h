@@ -48,7 +48,9 @@ namespace Engine
 		VisualObject * CreateModalWWindow(handle winsys, const void * desc, Windows::DeviceClass device, ErrorContext & ectx) noexcept;
 		VisualObject * CreateModalWWindow(handle winsys, UI::Template::ControlTemplate * base, void * callback, const UI::Rectangle & outer, VisualObject * parent, UI::IControlFactory * factory, Windows::DeviceClass device, ErrorContext & ectx) noexcept;
 		Object * WrapWMenu(Windows::IMenu * menu);
+		Object * WrapWMenuItem(Windows::IMenuItem * item);
 		Object * CreateWMenu(UI::Template::ControlTemplate * base, ErrorContext & ectx) noexcept;
 		Windows::IMenu * UnwrapWMenu(Object * menu) noexcept;
+		Windows::IMenuItem * UnwrapWMenuItem(Object * item) noexcept;
 	}
 }
