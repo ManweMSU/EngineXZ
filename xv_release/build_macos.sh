@@ -76,6 +76,8 @@ cp xv_lib/potentia.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/video.xv               	-NVol xv_release/_build/com/video.xo               	xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/integri_largi.xv        -NVol xv_release/_build/com/integri_largi.xo        xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/cryptographia_nativa.xv -NVol xv_release/_build/com/cryptographia_nativa.xo xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/ingenium_iu.xv 			-NVol xv_release/_build/com/ingenium_iu.xo 			xv_release/_build/com
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/ingenium_iu_ext.xv 		-NVol xv_release/_build/com/ingenium_iu_ext.xo 		xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xw_lib/canonicalis.xw         	-NVolm xv_release/_build/comw/canonicalis.xwo      	xv_release/_build/comw	xw_lib/canonicalis.xvm
 cp xv_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl
 cp xw_lib/*.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xwcl

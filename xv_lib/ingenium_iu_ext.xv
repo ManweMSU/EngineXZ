@@ -1,0 +1,1551 @@
+﻿importa ingenium_iu;
+importa repulsus;
+importa collectiones;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Extensiones pro Libro Intercommunicationis cum Usore";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2026";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium versio 0;
+
+[[systema] librosa]
+
+spatium ingenium {
+	spatium iu {
+		spatium extensiones {
+			constatus attributum_classis_elementi = "ingenium.iu.extensiones.attributum_classis_elementi";
+			constatus attributum_expone_classem = "ingenium.iu.extensiones.attributum_expone_classem";
+			constatus attributum_adnecte = "ingenium.iu.extensiones.attributum_adnecte";
+
+			functio nihil adnecte_cum_genere(@fenestrae.fenestra fen, @nihil obj, @nihil gens) iacit {
+				var adl = obj;
+				var g = repulsus.expone_symbolum(modulus(), gens);
+				dum (g) {
+					var valores = g^.valores_siti(attributum_adnecte);
+					per (var i : valores^) {
+						var ~ valor = valores^[i]^;
+						var el_genus = valor.genu;
+						si (!el_genus^.classis_est) {
+							actuarius.scribe("ELIU: Genus classis non est (NCG = \'" + el_genus^.ad_lineam() + "\', VALOR = " + valor.nomen + ").");
+							iace errores.habitus_falsus;
+						}
+						var el_genus_smbl = el_genus^.symbolum;
+						linea classis_elementi_de_genere;
+						si (el_genus_smbl^.manubrium != elementum) {
+							proba classis_elementi_de_genere = el_genus_smbl^.attributa^[attributum_classis_elementi]; cape {
+								actuarius.scribe("ELIU: Classis elementi nulla (GENUS = " + el_genus_smbl^.nomen + ", VALOR = " + valor.nomen + ").");
+								iace errores.habitus_falsus;
+							}
+						}
+						linea indentitas_reperi = valor.attributa^[attributum_adnecte];
+						elementum adsigna;
+						si (indentitas_reperi.longitudo) {
+							proba adsigna = elementum_fenestrae(fen, indentitas_reperi.ad_int32());
+						} alioqui adsigna = elementum_radicalis_fenestrae(fen);
+						si (adsigna.nullum_est) {
+							actuarius.scribe("ELIU: Elementum nullum (ID = " + indentitas_reperi + ", VALOR = " + valor.nomen + ").");
+							iace errores.habitus_falsus;
+						}
+						si (el_genus_smbl^.manubrium != elementum) {
+							linea classis_elementi_vera = adsigna.nomen_classis;
+							si (classis_elementi_de_genere != classis_elementi_vera) {
+								actuarius.scribe("ELIU: Classis elementi falsa (VERA = " + classis_elementi_vera + ", REQUISITA = " + classis_elementi_de_genere + ", VALOR = " + valor.nomen + ").");
+								iace errores.habitus_falsus;
+							}
+						}
+						var el_adl = (@elementum)(valor.adloquium(adl));
+						el_adl^._mnbr = adsigna._mnbr;
+					}
+					proba {
+						var gp = g^.parens;
+						adl = g^.converte_ad(gp, adl);
+						g = gp;
+					} cape g.depura();
+				}
+			}
+			praeforma functio adnecte(C) { \cense C genus(_1)\ functio nihil $_(@fenestrae.fenestra fen, ~$C obj) iacit { adnecte_cum_genere(fen, @obj, genus(obj)); } }
+			genus fabricator_reflexus hereditat objectum : fabricator {
+				collectiones.dictionarium[linea, !repulsus.fabricatio_objectorum] _structores;
+				structor () iacit {
+					var generes = repulsus.para_symbola(modulus(), repulsus.symbola.generis, attributum_expone_classem);
+					per (var i : generes^) {
+						var sg = generes^[i] acsi (repulsus.symbolum_generis);
+						linea nomen;
+						!repulsus.fabricatio_objectorum fabricatio;
+						proba nomen = sg^.attributa^[attributum_expone_classem]; cape {
+							actuarius.scribe("ELIU: Attributa generis falsa (GENUS = " + sg^.nomen + ").");
+							iace errores.habitus_falsus;
+						}
+						proba fabricatio = crea(repulsus.fabricatio_objectorum, sg); cape {
+							actuarius.scribe("ELIU: Error creandi fabricatorem generis (GENUS = " + sg^.nomen + ").");
+							iace errores.habitus_falsus;
+						}
+						si (!_structores.adde(nomen, fabricatio)) {
+							actuarius.scribe("ELIU: Nomen duplum (GENUS = " + sg^.nomen + ", NOMEN = " + nomen + ").");
+							iace errores.habitus_falsus;
+						}
+					}
+				}
+				functio !praeforma_elementi crea_praeformam_elementi(~linea nomen_generis) iacit redefini {
+					var fab = _structores[nomen_generis];
+					si (fab != nullus) {
+						var obj = fab^^.crea_exemplar();
+						!praeforma_elementi r;
+						r.contine((@praeforma_elementi)(obj.valor()));
+						responde r;
+					} alioqui iace errores.implantatio_nulla;
+				}
+			}
+		}
+		spatium elementa {
+			[(extensiones.attributum_classis_elementi) "RootControl"] structura radix hereditat elementum {
+				int numerus_acceleratorum { adipisce iacit {
+					int r;
+					configura_elementum(selectores.radix_numerus_acceleratorum, modus_ie.lege, 0, @r, int);
+					responde r;
+				} }
+				functio nihil adde_acceleratorem(~accelerator acc) iacit { configura_elementum(selectores.radix_acceleratores, modus_ie.adde, -1, @acc, accelerator); }
+				functio nihil adde_acceleratores_normativos() iacit { configura_elementum(selectores.radix_adde_acceleratores_normativos, modus_ie.adde, 0, nullus, nullus); }
+				functio nihil insere_acceleratorem(~accelerator acc, int pos) iacit { configura_elementum(selectores.radix_acceleratores, modus_ie.adde, pos, @acc, accelerator); }
+				functio nihil remove_acceleratorem(int pos) iacit { configura_elementum(selectores.radix_acceleratores, modus_ie.remove, pos, nullus, nullus); }
+				functio nihil rescribe_acceleratorem(~accelerator acc, int pos) iacit { configura_elementum(selectores.radix_acceleratores, modus_ie.scribe, pos, @acc, accelerator); }
+				functio accelerator lege_acceleratorem(int pos) iacit {
+					accelerator r;
+					configura_elementum(selectores.radix_acceleratores, modus_ie.lege, pos, @r, accelerator);
+					responde r;
+				}
+				!visualis_incompletus fundus {
+					adipisce iacit {
+						!visualis_incompletus r;
+						configura_elementum(selectores.radix_fundus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.radix_fundus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "Static"] structura staticum hereditat elementum {
+				!graphicum.pictura imago {
+					adipisce iacit {
+						!graphicum.pictura r;
+						configura_elementum(selectores.staticum_imago, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.staticum_imago, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "ProgressBar"] structura progressio hereditat elementum {
+				dfrac valor {
+					adipisce iacit {
+						dfrac r;
+						configura_elementum(selectores.progressio_valor, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.progressio_valor, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "ColorView"] structura color hereditat elementum {
+				imago.color valor {
+					adipisce iacit {
+						imago.color r;
+						configura_elementum(selectores.color_valor, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.color_valor, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "ComplexView"] structura complex hereditat elementum {
+				int integer {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int integer2 {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 1, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				dfrac fractus {
+					adipisce iacit {
+						dfrac r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				dfrac fractus2 {
+					adipisce iacit {
+						dfrac r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 1, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				imago.color color {
+					adipisce iacit {
+						imago.color r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				imago.color color2 {
+					adipisce iacit {
+						imago.color r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 1, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				linea textum {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				linea textum2 {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 1, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				!graphicum.pictura textura {
+					adipisce iacit {
+						!graphicum.pictura r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				!graphicum.pictura textura2 {
+					adipisce iacit {
+						!graphicum.pictura r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 1, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				!graphicum.typographica fons {
+					adipisce iacit {
+						!graphicum.typographica r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				!graphicum.typographica fons2 {
+					adipisce iacit {
+						!graphicum.typographica r;
+						configura_elementum(selectores.complex_valor, modus_ie.lege, 1, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.complex_valor, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "ControlGroup"] structura grupus hereditat elementum {
+				functio nihil pone_filios(~!objectum_dynamicum basis) iacit { configura_elementum(selectores.grupus_pone_filios, modus_ie.adde, 0, @basis, genus(basis)); }
+				functio nihil depura_filios() iacit { configura_elementum(selectores.grupus_pone_filios, modus_ie.remove, 0, nullus, nullus); }
+			}
+			[(extensiones.attributum_classis_elementi) "RadioButtonGroup"] structura grupus_radiatorum hereditat elementum {
+				elementum elementum_designatum {
+					adipisce iacit {
+						elementum r;
+						configura_elementum(selectores.grupus_radiatorum_designatum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.grupus_radiatorum_designatum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int indentitas_designata {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.grupus_radiatorum_designatum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.grupus_radiatorum_designatum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "ScrollBox"] structura grupus_rotabilis hereditat elementum {
+				elementum hospes { adipisce iacit {
+					elementum r;
+					configura_elementum(selectores.grupus_rotabilis_hospes, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+			}
+			[(extensiones.attributum_classis_elementi) "SplitBoxPart"] structura grupus_scalabilis hereditat elementum {
+				int amplitudo {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.grupus_scalabilis_magnitudo, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.grupus_scalabilis_magnitudo, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "BookmarkView"] structura grupus_paginarum hereditat elementum {
+				functio nihil adde_paginam() iacit { configura_elementum(selectores.grupus_paginarum_paginae, modus_ie.adde, 0, nullus, nullus); }
+				functio nihil adde_paginam(~!objectum_dynamicum basis) iacit { configura_elementum(selectores.grupus_paginarum_paginae, modus_ie.adde, 0, @basis, genus(basis)); }
+				functio nihil remove_paginam(int index) iacit { configura_elementum(selectores.grupus_paginarum_paginae, modus_ie.remove, index, nullus, nullus); }
+				int numerus_paginarum { adipisce iacit {
+					int r;
+					configura_elementum(selectores.grupus_paginarum_numerus_paginarum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				int pagina_currens {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.grupus_paginarum_pagina_currens, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.grupus_paginarum_pagina_currens, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil move_paginam(int index, int index_nova) iacit { configura_elementum(selectores.grupus_paginarum_move_paginam, modus_ie.scribe, index, @index_nova, genus(index_nova)); }
+				functio int reperi_paginam(int indentitas) iacit {
+					int r;
+					configura_elementum(selectores.grupus_paginarum_reperi_paginam, modus_ie.lege, indentitas, @r, genus(r));
+					responde r;
+				}
+				functio int lege_indentitatem_paginae(int index) iacit {
+					int r;
+					configura_elementum(selectores.grupus_paginarum_indentitas_paginae, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_indentitatem_paginae(int index, int indentitas) iacit { configura_elementum(selectores.grupus_paginarum_indentitas_paginae, modus_ie.scribe, index, @indentitas, genus(indentitas)); }
+				functio linea lege_supscriptionem_paginae(int index) iacit {
+					linea r;
+					configura_elementum(selectores.grupus_paginarum_supscriptio_paginae, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_supscriptionem_paginae(int index, ~linea titulus) iacit { configura_elementum(selectores.grupus_paginarum_supscriptio_paginae, modus_ie.scribe, index, @titulus, genus(titulus)); }
+				functio int lege_magnitudinem_tituli_paginae(int index) iacit {
+					int r;
+					configura_elementum(selectores.grupus_paginarum_magnitudo_paginae, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_magnitudinem_tituli_paginae(int index, int magn) iacit { configura_elementum(selectores.grupus_paginarum_magnitudo_paginae, modus_ie.scribe, index, @magn, genus(magn)); }
+				functio elementum lege_hospitem_paginae(int index) iacit {
+					elementum r;
+					configura_elementum(selectores.grupus_paginarum_hospes_paginae, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "Button"] structura tactus hereditat elementum {
+				!graphicum.pictura imago_normativa {
+					adipisce iacit {
+						!graphicum.pictura r;
+						configura_elementum(selectores.tactus_imago_normativa, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_imago_normativa, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				!graphicum.pictura imago_inabilis {
+					adipisce iacit {
+						!graphicum.pictura r;
+						configura_elementum(selectores.tactus_imago_inabilis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_imago_inabilis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "CheckBox"] structura tactus_designabilis hereditat elementum {
+				logicum designatus_est {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.tactus_designabilis_designatus_est, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_designabilis_designatus_est, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "RadioButton"] structura tactus_radiatus hereditat elementum {
+				logicum designatus_est {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.tactus_radiatus_designatus_est, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_radiatus_designatus_est, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "ToolButtonPart"] structura tactus_auxilius hereditat elementum {
+				logicum designatus_est {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.tactus_auxilius_designatus_est, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_auxilius_designatus_est, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				!graphicum.pictura imago_normativa {
+					adipisce iacit {
+						!graphicum.pictura r;
+						configura_elementum(selectores.tactus_auxilius_imago_normativa, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_auxilius_imago_normativa, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				!graphicum.pictura imago_inabilis {
+					adipisce iacit {
+						!graphicum.pictura r;
+						configura_elementum(selectores.tactus_auxilius_imago_inabilis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_auxilius_imago_inabilis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				!fenestrae.minutus minutus {
+					adipisce iacit {
+						!fenestrae.minutus r;
+						configura_elementum(selectores.tactus_auxilius_minutus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_auxilius_minutus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum modus_extensionis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.tactus_auxilius_modus_extensionis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tactus_auxilius_modus_extensionis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				fenestrae.positus positus_pristinus { adipisce iacit {
+					fenestrae.positus r;
+					configura_elementum(selectores.tactus_auxilius_extensio_positus, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil extensio_closa_est() iacit { configura_elementum(selectores.tactus_auxilius_extensio_closa_est, modus_ie.scribe, 0, nullus, nullus); }
+			}
+			[(extensiones.attributum_classis_elementi) "Edit"] structura inpositor hereditat elementum {
+				functio nihil cancella() iacit { configura_elementum(selectores.inpositor_cancella, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil decancella() iacit { configura_elementum(selectores.inpositor_decancella, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil seca() iacit { configura_elementum(selectores.inpositor_seca, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil exscribe() iacit { configura_elementum(selectores.inpositor_exscribe, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil insere() iacit { configura_elementum(selectores.inpositor_insere, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil dele() iacit { configura_elementum(selectores.inpositor_dele, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil rota() iacit { configura_elementum(selectores.inpositor_rota, modus_ie.scribe, 0, nullus, nullus); }
+				linea textum_selectum { adipisce iacit {
+					linea r;
+					configura_elementum(selectores.inpositor_textum_selectum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil move_selectionem(int ab, int ad) iacit { configura_elementum(selectores.inpositor_move_selectionem, modus_ie.scribe, 0, @(ab, ad), (int, int)); }
+				linea textum_defaltum {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.inpositor_textum_defaltum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_textum_defaltum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				!fenestrae.minutus minutus {
+					adipisce iacit {
+						!fenestrae.minutus r;
+						configura_elementum(selectores.inpositor_minutus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_minutus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum configura_minutum {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_configura_minutum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_configura_minutum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum legere_sole {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_legere_sole, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_legere_sole, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum converte_ad_superis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_converte_ad_superis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_converte_ad_superis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum converte_ad_infernis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_converte_ad_infernis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_converte_ad_infernis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				linea filtrum {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.inpositor_filtrum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_filtrum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum occulta_characteres {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_occulta_characteres, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_occulta_characteres, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				char character_occultandi {
+					adipisce iacit {
+						char r;
+						configura_elementum(selectores.inpositor_character_occultandi, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_character_occultandi, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio linea limita(~linea in) iacit {
+					linea r = in;
+					configura_elementum(selectores.inpositor_limita, modus_ie.scribe, 0, @r, genus(r));
+					responde r;
+				}
+				functio nihil imprime(~linea in) iacit { configura_elementum(selectores.inpositor_imprime, modus_ie.scribe, 0, @in, genus(in)); }
+			}
+			[(extensiones.attributum_classis_elementi) "MultiLineEdit"] structura inpositor_multilinearis hereditat elementum {
+				functio nihil cancella() iacit { configura_elementum(selectores.inpositor_multilinearis_cancella, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil decancella() iacit { configura_elementum(selectores.inpositor_multilinearis_decancella, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil seca() iacit { configura_elementum(selectores.inpositor_multilinearis_seca, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil exscribe() iacit { configura_elementum(selectores.inpositor_multilinearis_exscribe, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil insere() iacit { configura_elementum(selectores.inpositor_multilinearis_insere, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil dele() iacit { configura_elementum(selectores.inpositor_multilinearis_dele, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil rota() iacit { configura_elementum(selectores.inpositor_multilinearis_rota, modus_ie.scribe, 0, nullus, nullus); }
+				linea textum_selectum { adipisce iacit {
+					linea r;
+					configura_elementum(selectores.inpositor_multilinearis_textum_selectum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				(fenestrae.positus, fenestrae.positus) selectio {
+					adipisce iacit {
+						(fenestrae.positus, fenestrae.positus) r;
+						configura_elementum(selectores.inpositor_multilinearis_selectio, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_multilinearis_selectio, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil move_selectionem(~fenestrae.positus ab, ~fenestrae.positus ad) iacit { selectio = (ab, ad); }
+				!fenestrae.minutus minutus {
+					adipisce iacit {
+						!fenestrae.minutus r;
+						configura_elementum(selectores.inpositor_multilinearis_minutus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_multilinearis_minutus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum configura_minutum {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_multilinearis_configura_minutum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_multilinearis_configura_minutum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum legere_sole {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_multilinearis_legere_sole, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_multilinearis_legere_sole, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum converte_ad_superis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_multilinearis_converte_ad_superis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_multilinearis_converte_ad_superis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum converte_ad_infernis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_multilinearis_converte_ad_infernis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_multilinearis_converte_ad_infernis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				linea filtrum {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.inpositor_multilinearis_filtrum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_multilinearis_filtrum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio linea limita(~linea in) iacit {
+					linea r = in;
+					configura_elementum(selectores.inpositor_multilinearis_limita, modus_ie.scribe, 0, @r, genus(r));
+					responde r;
+				}
+				functio nihil imprime(~linea in) iacit { configura_elementum(selectores.inpositor_multilinearis_imprime, modus_ie.scribe, 0, @in, genus(in)); }
+			}
+			[(extensiones.attributum_classis_elementi) "RichEdit"] structura inpositor_extentus hereditat elementum {
+				enumeratio positus_horizontalis { sinister = 0, centrum = 1, dexter = 2, satura = 3 }
+				enumeratio positus_verticalis { superus = 0, centrum = 1, infernus = 2 }
+				functio nihil cancella() iacit { configura_elementum(selectores.inpositor_extentus_cancella, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil decancella() iacit { configura_elementum(selectores.inpositor_extentus_decancella, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil seca() iacit { configura_elementum(selectores.inpositor_extentus_seca, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil exscribe() iacit { configura_elementum(selectores.inpositor_extentus_exscribe, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil insere() iacit { configura_elementum(selectores.inpositor_extentus_insere, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil dele() iacit { configura_elementum(selectores.inpositor_extentus_dele, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil rota() iacit { configura_elementum(selectores.inpositor_extentus_rota, modus_ie.scribe, 0, nullus, nullus); }
+				linea textum_extentum {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.inpositor_extentus_textum_extentum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_textum_extentum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				linea textum_selectum { adipisce iacit {
+					linea r;
+					configura_elementum(selectores.inpositor_extentus_textum_selectum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				linea textum_selectum_extentum { adipisce iacit {
+					linea r;
+					configura_elementum(selectores.inpositor_extentus_textum_selectum_extentum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				!fenestrae.minutus minutus {
+					adipisce iacit {
+						!fenestrae.minutus r;
+						configura_elementum(selectores.inpositor_extentus_minutus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_minutus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum configura_minutum {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_extentus_configura_minutum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_configura_minutum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum procede_imperata {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_extentus_procede_imperata, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_procede_imperata, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum procede_motionem_cursoris {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_extentus_procede_motionem_cursoris, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_procede_motionem_cursoris, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				linea imperatum_pristinum { adipisce iacit {
+					linea r;
+					configura_elementum(selectores.inpositor_extentus_imperatum_pristinum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				logicum legere_sole {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_extentus_legere_sole, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_legere_sole, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum exscribe_attributa {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.inpositor_extentus_exscribe_attributa, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_exscribe_attributa, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil imprime(~linea in) iacit { configura_elementum(selectores.inpositor_extentus_imprime, modus_ie.scribe, 0, @in, genus(in)); }
+				functio nihil imprime_extente(~linea in) iacit { configura_elementum(selectores.inpositor_extentus_imprime_extente, modus_ie.scribe, 0, @in, genus(in)); }
+				int numerus_fontium { adipisce iacit {
+					int r;
+					configura_elementum(selectores.inpositor_extentus_numerus_fontium, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil praeonera_fontem(~linea nomen) iacit { configura_elementum(selectores.inpositor_extentus_fons, modus_ie.adde, 0, @nomen, genus(nomen)); }
+				functio linea lege_fontem(int index) iacit {
+					linea r;
+					configura_elementum(selectores.inpositor_extentus_fons, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				logicum nihil_selectum { adipisce iacit {
+					logicum r;
+					configura_elementum(selectores.inpositor_extentus_nihil_selectum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				logicum stylus_selectionis_latus {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.inpositor_extentus_stylus_selectionis, modus_ie.lege, 0, @r, genus(r));
+						responde r & 1;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_stylus_selectionis, modus_ie.scribe, 1, @(valor ? 1 : 0), int); }
+				}
+				logicum stylus_selectionis_italicus {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.inpositor_extentus_stylus_selectionis, modus_ie.lege, 0, @r, genus(r));
+						responde r & 2;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_stylus_selectionis, modus_ie.scribe, 2, @(valor ? 2 : 0), int); }
+				}
+				logicum stylus_selectionis_sublinitus {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.inpositor_extentus_stylus_selectionis, modus_ie.lege, 0, @r, genus(r));
+						responde r & 4;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_stylus_selectionis, modus_ie.scribe, 4, @(valor ? 4 : 0), int); }
+				}
+				logicum stylus_selectionis_exlinitus {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.inpositor_extentus_stylus_selectionis, modus_ie.lege, 0, @r, genus(r));
+						responde r & 8;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_stylus_selectionis, modus_ie.scribe, 8, @(valor ? 8 : 0), int); }
+				}
+				linea fons_selectionis {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.inpositor_extentus_fons_selectionis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_fons_selectionis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int altitudo_selectionis {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.inpositor_extentus_altitudo_selectionis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_altitudo_selectionis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				.imago.color color_selectionis {
+					adipisce iacit {
+						.imago.color r;
+						configura_elementum(selectores.inpositor_extentus_color_selectionis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_color_selectionis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				positus_horizontalis positus_paragraphi {
+					adipisce iacit {
+						positus_horizontalis r;
+						configura_elementum(selectores.inpositor_extentus_positus_paragraphi, modus_ie.lege, 0, @r, int);
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_positus_paragraphi, modus_ie.scribe, 0, @valor, int); }
+				}
+				logicum imago_selectum { adipisce iacit {
+					logicum r;
+					configura_elementum(selectores.inpositor_extentus_imago_selectum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				logicum imperatum_selectum { adipisce iacit {
+					logicum r;
+					configura_elementum(selectores.inpositor_extentus_imperatum_selectum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				logicum tabularium_selectum { adipisce iacit {
+					logicum r;
+					configura_elementum(selectores.inpositor_extentus_tabularium_selectum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				logicum addere_imperatum_potuit { adipisce iacit {
+					logicum r;
+					configura_elementum(selectores.inpositor_extentus_addere_imperatum_potuit, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				logicum addere_tabularium_potuit { adipisce iacit {
+					logicum r;
+					configura_elementum(selectores.inpositor_extentus_addere_tabularium_potuit, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil insere_imaginem(@.imago.collectus im) iacit {
+					!.imago.collectus im0;
+					im0.contine(im);
+					configura_elementum(selectores.inpositor_extentus_imago, modus_ie.adde, 0, @im0, genus(im0));
+				}
+				!.imago.collectus imago {
+					adipisce iacit {
+						!.imago.collectus r;
+						configura_elementum(selectores.inpositor_extentus_imago, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_imago, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				fenestrae.positus magnitudines_imaginis {
+					adipisce iacit {
+						fenestrae.positus r;
+						configura_elementum(selectores.inpositor_extentus_magnitudines_imaginis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_magnitudines_imaginis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil compone_imperatum(~linea imp) iacit { configura_elementum(selectores.inpositor_extentus_imperatum, modus_ie.adde, 0, @imp, genus(imp)); }
+				functio nihil decompone_imperatum() iacit { configura_elementum(selectores.inpositor_extentus_imperatum, modus_ie.remove, 0, nullus, nullus); }
+				linea imperatum {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.inpositor_extentus_imperatum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_imperatum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil insere_tabularium(int lat, int alt) iacit { configura_elementum(selectores.inpositor_extentus_tabularium, modus_ie.adde, 0, @(lat, alt), (int, int)); }
+				fenestrae.positus positus_in_tabulario { adipisce iacit {
+					fenestrae.positus r;
+					configura_elementum(selectores.inpositor_extentus_positus_in_tabulario, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				fenestrae.positus magnitudines_tabularii { adipisce iacit {
+					fenestrae.positus r;
+					configura_elementum(selectores.inpositor_extentus_magnitudines_tabularii, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil insere_columnam_in_tabularium(int index) iacit { configura_elementum(selectores.inpositor_extentus_columna, modus_ie.adde, index, nullus, nullus); }
+				functio nihil insere_lineam_in_tabularium(int index) iacit { configura_elementum(selectores.inpositor_extentus_linea, modus_ie.adde, index, nullus, nullus); }
+				functio nihil remove_columnam_de_tabulario(int index) iacit { configura_elementum(selectores.inpositor_extentus_columna, modus_ie.remove, index, nullus, nullus); }
+				functio nihil remove_lineam_de_tabulario(int index) iacit { configura_elementum(selectores.inpositor_extentus_linea, modus_ie.remove, index, nullus, nullus); }
+				functio int lege_latitudinem_columnae(int index) iacit {
+					int r;
+					configura_elementum(selectores.inpositor_extentus_latitudo_columnae, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_latitudinem_columnae(int index, int lat) iacit { configura_elementum(selectores.inpositor_extentus_latitudo_columnae, modus_ie.scribe, index, @lat, genus(lat)); }
+				functio nihil adapta_latitudinem_columnae(int index) iacit { configura_elementum(selectores.inpositor_extentus_latitudo_columnae, modus_ie.scribe, index, @0, int); }
+				.imago.color color_limbi {
+					adipisce iacit {
+						.imago.color r;
+						configura_elementum(selectores.inpositor_extentus_color_limbi, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_color_limbi, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio .imago.color lege_colorem_fundi_celulae(int x, int y) iacit {
+					.imago.color r;
+					configura_elementum(selectores.inpositor_extentus_fundus_celulae, modus_ie.lege, x | (y << 16), @r, genus(r));
+					responde r;
+				}
+				.imago.color color_fundi_celulae_currentis {
+					adipisce iacit { var cur = positus_in_tabulario; responde lege_colorem_fundi_celulae(cur.x, cur.y); }
+					loca iacit { configura_elementum(selectores.inpositor_extentus_fundus_celulae, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio positus_verticalis lege_positum_verticalis(int x, int y) iacit {
+					positus_verticalis r;
+					configura_elementum(selectores.inpositor_extentus_positum_verticalis, modus_ie.lege, x | (y << 16), @r, int);
+					responde r;
+				}
+				positus_verticalis positus_verticalis_celulae_currentis {
+					adipisce iacit { var cur = positus_in_tabulario; responde lege_positum_verticalis(cur.x, cur.y); }
+					loca iacit { configura_elementum(selectores.inpositor_extentus_positum_verticalis, modus_ie.scribe, 0, @valor, int); }
+				}
+				int magnitudo_limbi_externi {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.inpositor_extentus_magnitudo_limbi, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_magnitudo_limbi, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int magnitudo_limbi_verticalis {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.inpositor_extentus_magnitudo_limbi, modus_ie.lege, 1, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_magnitudo_limbi, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int magnitudo_limbi_horizontalis {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.inpositor_extentus_magnitudo_limbi, modus_ie.lege, 2, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.inpositor_extentus_magnitudo_limbi, modus_ie.scribe, 2, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "ListBox"] structura ordo_linearum hereditat elementum {
+				functio nihil adde_in_ordinem(~linea supscr) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.adde, -1, @supscr, genus(supscr)); }
+				functio nihil adde_in_ordinem(@argumentor arg) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.adde, -1, arg, genus(arg^)); }
+				functio nihil adde_in_ordinem(@nihil data, @nihil gens) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.adde, -1, data, gens); }
+				functio nihil insere_in_ordinem(int index, ~linea supscr) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.adde, index, @supscr, genus(supscr)); }
+				functio nihil insere_in_ordinem(int index, @argumentor arg) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.adde, index, arg, genus(arg^)); }
+				functio nihil insere_in_ordinem(int index, @nihil data, @nihil gens) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.adde, index, data, gens); }
+				functio nihil rescribe_elementum_ordinis(int index, ~linea supscr) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.scribe, index, @supscr, genus(supscr)); }
+				functio nihil rescribe_elementum_ordinis(int index, @argumentor arg) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.scribe, index, arg, genus(arg^)); }
+				functio nihil rescribe_elementum_ordinis(int index, @nihil data, @nihil gens) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.scribe, index, data, gens); }
+				functio nihil remove_elementum_ordinis(int index) iacit { configura_elementum(selectores.ordo_linearum_elementum, modus_ie.remove, index, nullus, nullus); }
+				int numerus_elementorum { adipisce iacit {
+					int r;
+					configura_elementum(selectores.ordo_linearum_numerus_elementorum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil permuta_elementa(int i, int j) iacit { configura_elementum(selectores.ordo_linearum_permuta_elementa, modus_ie.scribe, i, @j, genus(j)); }
+				functio nihil depura_elementa() iacit { configura_elementum(selectores.ordo_linearum_depura_elementa, modus_ie.scribe, 0, nullus, nullus); }
+				int index_elementi_selecti {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.ordo_linearum_index_elementi_selecti, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.ordo_linearum_index_elementi_selecti, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil selege_elementum_et_rota(int index) iacit { configura_elementum(selectores.ordo_linearum_index_elementi_selecti, modus_ie.adde, 0, @index, genus(index)); }
+				functio nintadl lege_data_extensa(int index) iacit {
+					nintadl r;
+					configura_elementum(selectores.ordo_linearum_extensio_elementi, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_data_extensa(int index, nintadl data) iacit { configura_elementum(selectores.ordo_linearum_extensio_elementi, modus_ie.scribe, index, @data, genus(data)); }
+				functio logicum elementum_selectum_est(int index) iacit {
+					logicum r;
+					configura_elementum(selectores.ordo_linearum_elementum_selectum, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_statum_elementi(int index, logicum selectum) iacit { configura_elementum(selectores.ordo_linearum_elementum_selectum, modus_ie.scribe, index, @selectum, genus(selectum)); }
+				logicum multiplicabilis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.ordo_linearum_multiplicabilis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.ordo_linearum_multiplicabilis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int positus_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.ordo_linearum_positus_rotoris, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.ordo_linearum_positus_rotoris, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil crea_elementum_internum(@objectum_dynamicum basis, ~quadrum qd) iacit {
+					(!objectum_dynamicum, ingenium.iu.quadrum) r;
+					r.primus.contine(basis);
+					r.secundus = qd;
+					configura_elementum(selectores.ordo_linearum_elementum_internum, modus_ie.adde, 0, @r, genus(r));
+				}
+				functio nihil remove_elementum_internum() iacit { configura_elementum(selectores.ordo_linearum_elementum_internum, modus_ie.remove, 0, nullus, nullus); }
+				elementum elementum_internum { adipisce iacit {
+					elementum r;
+					configura_elementum(selectores.ordo_linearum_elementum_internum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+			}
+			[(extensiones.attributum_classis_elementi) "ComboBox"] structura coordo_linearum hereditat elementum {
+				functio nihil adde_in_ordinem(~linea supscr) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.adde, -1, @supscr, genus(supscr)); }
+				functio nihil adde_in_ordinem(@argumentor arg) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.adde, -1, arg, genus(arg^)); }
+				functio nihil adde_in_ordinem(@nihil data, @nihil gens) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.adde, -1, data, gens); }
+				functio nihil insere_in_ordinem(int index, ~linea supscr) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.adde, index, @supscr, genus(supscr)); }
+				functio nihil insere_in_ordinem(int index, @argumentor arg) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.adde, index, arg, genus(arg^)); }
+				functio nihil insere_in_ordinem(int index, @nihil data, @nihil gens) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.adde, index, data, gens); }
+				functio nihil rescribe_elementum_ordinis(int index, ~linea supscr) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.scribe, index, @supscr, genus(supscr)); }
+				functio nihil rescribe_elementum_ordinis(int index, @argumentor arg) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.scribe, index, arg, genus(arg^)); }
+				functio nihil rescribe_elementum_ordinis(int index, @nihil data, @nihil gens) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.scribe, index, data, gens); }
+				functio nihil remove_elementum_ordinis(int index) iacit { configura_elementum(selectores.coordo_linearum_elementum, modus_ie.remove, index, nullus, nullus); }
+				int numerus_elementorum { adipisce iacit {
+					int r;
+					configura_elementum(selectores.coordo_linearum_numerus_elementorum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil permuta_elementa(int i, int j) iacit { configura_elementum(selectores.coordo_linearum_permuta_elementa, modus_ie.scribe, i, @j, genus(j)); }
+				functio nihil depura_elementa() iacit { configura_elementum(selectores.coordo_linearum_depura_elementa, modus_ie.scribe, 0, nullus, nullus); }
+				int index_elementi_selecti {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.coordo_linearum_index_elementi_selecti, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.coordo_linearum_index_elementi_selecti, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nintadl lege_data_extensa(int index) iacit {
+					nintadl r;
+					configura_elementum(selectores.coordo_linearum_extensio_elementi, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_data_extensa(int index, nintadl data) iacit { configura_elementum(selectores.coordo_linearum_extensio_elementi, modus_ie.scribe, index, @data, genus(data)); }
+			}
+			[(extensiones.attributum_classis_elementi) "TextComboBox"] structura coordo_textorum hereditat elementum {
+				functio nihil adde_in_ordinem(~linea supscr) iacit { configura_elementum(selectores.coordo_textorum_elementum, modus_ie.adde, -1, @supscr, genus(supscr)); }
+				functio nihil insere_in_ordinem(int index, ~linea supscr) iacit { configura_elementum(selectores.coordo_textorum_elementum, modus_ie.adde, index, @supscr, genus(supscr)); }
+				functio nihil rescribe_elementum_ordinis(int index, ~linea supscr) iacit { configura_elementum(selectores.coordo_textorum_elementum, modus_ie.scribe, index, @supscr, genus(supscr)); }
+				functio nihil remove_elementum_ordinis(int index) iacit { configura_elementum(selectores.coordo_textorum_elementum, modus_ie.remove, index, nullus, nullus); }
+				functio linea lege_elementum_ordinis(int index) iacit { linea r; configura_elementum(selectores.coordo_textorum_elementum, modus_ie.lege, index, @r, genus(r)); responde r; }
+				int numerus_elementorum { adipisce iacit {
+					int r;
+					configura_elementum(selectores.coordo_textorum_numerus_elementorum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil permuta_elementa(int i, int j) iacit { configura_elementum(selectores.coordo_textorum_permuta_elementa, modus_ie.scribe, i, @j, genus(j)); }
+				functio nihil depura_elementa() iacit { configura_elementum(selectores.coordo_textorum_depura_elementa, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil cancella() iacit { configura_elementum(selectores.coordo_textorum_cancella, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil decancella() iacit { configura_elementum(selectores.coordo_textorum_decancella, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil seca() iacit { configura_elementum(selectores.coordo_textorum_seca, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil exscribe() iacit { configura_elementum(selectores.coordo_textorum_exscribe, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil insere() iacit { configura_elementum(selectores.coordo_textorum_insere, modus_ie.scribe, 0, nullus, nullus); }
+				functio nihil dele() iacit { configura_elementum(selectores.coordo_textorum_dele, modus_ie.scribe, 0, nullus, nullus); }
+				linea textum_selectum { adipisce iacit {
+					linea r;
+					configura_elementum(selectores.coordo_textorum_textum_selectum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil move_selectionem(int ab, int ad) iacit { configura_elementum(selectores.coordo_textorum_move_selectionem, modus_ie.scribe, 0, @(ab, ad), (int, int)); }
+				linea textum_defaltum {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.coordo_textorum_textum_defaltum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.coordo_textorum_textum_defaltum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				!fenestrae.minutus minutus {
+					adipisce iacit {
+						!fenestrae.minutus r;
+						configura_elementum(selectores.coordo_textorum_minutus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.coordo_textorum_minutus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum converte_ad_superis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.coordo_textorum_converte_ad_superis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.coordo_textorum_converte_ad_superis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				logicum converte_ad_infernis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.coordo_textorum_converte_ad_infernis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.coordo_textorum_converte_ad_infernis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				linea filtrum {
+					adipisce iacit {
+						linea r;
+						configura_elementum(selectores.coordo_textorum_filtrum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.coordo_textorum_filtrum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio linea limita(~linea in) iacit {
+					linea r = in;
+					configura_elementum(selectores.coordo_textorum_limita, modus_ie.scribe, 0, @r, genus(r));
+					responde r;
+				}
+				functio nihil imprime(~linea in) iacit { configura_elementum(selectores.coordo_textorum_imprime, modus_ie.scribe, 0, @in, genus(in)); }
+			}
+			[(extensiones.attributum_classis_elementi) "TreeView"] structura ordo_arboris hereditat elementum {
+				structura elementum_arboris {
+					elementum _arbor;
+					intadl _index;
+					functio nihil adde(~linea supscr) iacit { _arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.adde, _index, @supscr, genus(supscr)); }
+					functio nihil adde(~linea supscr, @graphicum.pictura imn, @graphicum.pictura imi) iacit {
+						(linea, !graphicum.pictura, !graphicum.pictura) e;
+						e.primus = supscr;
+						e.secundus.contine(imn);
+						e.tertius.contine(imi);
+						_arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.adde, _index, @e, genus(e));
+					}
+					functio nihil adde(@argumentor arg) iacit { _arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.adde, _index, arg, genus(arg^)); }
+					functio nihil adde(@nihil data, @nihil gens) iacit { _arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.adde, _index, data, gens); }
+					functio nihil renova(~linea supscr) iacit { _arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.scribe, _index, @supscr, genus(supscr)); }
+					functio nihil renova(~linea supscr, @graphicum.pictura imn, @graphicum.pictura imi) iacit {
+						(linea, !graphicum.pictura, !graphicum.pictura) e;
+						e.primus = supscr;
+						e.secundus.contine(imn);
+						e.tertius.contine(imi);
+						_arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.scribe, _index, @e, genus(e));
+					}
+					functio nihil renova(@argumentor arg) iacit { _arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.scribe, _index, arg, genus(arg^)); }
+					functio nihil renova(@nihil data, @nihil gens) iacit { _arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.scribe, _index, data, gens); }
+					functio nihil remove() iacit { _arbor.configura_elementum(selectores.ordo_arboris_elementum, modus_ie.remove, _index, nullus, nullus); }
+					int numerus_filiorum { adipisce iacit {
+						int r;
+						_arbor.configura_elementum(selectores.ordo_arboris_numerus_filiorum, modus_ie.lege, _index, @r, genus(r));
+						responde r;
+					} }
+					nintadl data_extensa {
+						adipisce iacit {
+							nintadl r;
+							_arbor.configura_elementum(selectores.ordo_arboris_extensio_elementi, modus_ie.lege, _index, @r, genus(r));
+							responde r;
+						}
+						loca iacit { _arbor.configura_elementum(selectores.ordo_arboris_extensio_elementi, modus_ie.scribe, _index, @valor, genus(valor)); }
+					}
+					functio elementum_arboris filium(int index) iacit {
+						elementum_arboris r;
+						r._arbor = _arbor;
+						r._index = index;
+						_arbor.configura_elementum(selectores.ordo_arboris_index_filii, modus_ie.lege, _index, @r._index, genus(r._index));
+						responde r;
+					}
+					elementum_arboris parens { adipisce iacit {
+						elementum_arboris r;
+						r._arbor = _arbor;
+						_arbor.configura_elementum(selectores.ordo_arboris_index_parentis, modus_ie.lege, _index, @r._index, genus(r._index));
+						si (!r._index) iace errores.habitus_falsus;
+						responde r;
+					} }
+					int index_in_parente { adipisce iacit {
+						int r;
+						_arbor.configura_elementum(selectores.ordo_arboris_index_in_parente, modus_ie.lege, _index, @r, genus(r));
+						si (r < 0) iace errores.habitus_falsus;
+						responde r;
+					} }
+					logicum expansum {
+						adipisce iacit {
+							logicum r;
+							_arbor.configura_elementum(selectores.ordo_arboris_elementum_expansum, modus_ie.lege, _index, @r, genus(r));
+							responde r;
+						}
+						loca iacit { _arbor.configura_elementum(selectores.ordo_arboris_elementum_expansum, modus_ie.scribe, _index, @valor, genus(valor)); }
+					}
+					logicum accessibile_est { adipisce iacit {
+						logicum r;
+						_arbor.configura_elementum(selectores.ordo_arboris_elementum_accessibile_est, modus_ie.lege, _index, @r, genus(r));
+						responde r;
+					} }
+					logicum parens_est { adipisce iacit {
+						logicum r;
+						_arbor.configura_elementum(selectores.ordo_arboris_elementum_parens_est, modus_ie.lege, _index, @r, genus(r));
+						responde r;
+					} }
+					fenestrae.quadrum quadrum { adipisce iacit {
+						fenestrae.quadrum r;
+						_arbor.configura_elementum(selectores.ordo_arboris_quadrum_elementi, modus_ie.lege, _index, @r, genus(r));
+						responde r;
+					} }
+				}
+				functio nihil permuta_elementa(~elementum_arboris i, ~elementum_arboris j) iacit { configura_elementum(selectores.ordo_arboris_permuta_filios, modus_ie.scribe, i._index, @j._index, genus(j._index)); }
+				functio nihil depura_elementa() iacit { configura_elementum(selectores.ordo_arboris_depura_elementa, modus_ie.scribe, 0, nullus, nullus); }
+				elementum_arboris elementum_radicalis {
+					adipisce iacit {
+						elementum_arboris r;
+						r._arbor = ego^;
+						configura_elementum(selectores.ordo_arboris_index_radicis, modus_ie.lege, 0, @r._index, genus(r._index));
+						responde r;
+					}
+				}
+				elementum_arboris elementum_selectum {
+					adipisce iacit {
+						elementum_arboris r;
+						r._arbor = ego^;
+						configura_elementum(selectores.ordo_arboris_index_elementi_selecti, modus_ie.lege, 0, @r._index, genus(r._index));
+						responde r;
+					}
+					loca iacit { valor._arbor.configura_elementum(selectores.ordo_arboris_index_elementi_selecti, modus_ie.scribe, 0, @valor._index, genus(valor._index)); }
+				}
+				functio nihil selege_elementum_et_rota(~elementum_arboris valor) iacit { valor._arbor.configura_elementum(selectores.ordo_arboris_index_elementi_selecti, modus_ie.adde, 0, @valor._index, genus(valor._index)); }
+				int positus_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.ordo_arboris_positus_rotoris, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.ordo_arboris_positus_rotoris, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil crea_elementum_internum(@objectum_dynamicum basis, ~quadrum qd) iacit {
+					(!objectum_dynamicum, ingenium.iu.quadrum) r;
+					r.primus.contine(basis);
+					r.secundus = qd;
+					configura_elementum(selectores.ordo_arboris_elementum_internum, modus_ie.adde, 0, @r, genus(r));
+				}
+				functio nihil remove_elementum_internum() iacit { configura_elementum(selectores.ordo_arboris_elementum_internum, modus_ie.remove, 0, nullus, nullus); }
+				elementum elementum_internum { adipisce iacit {
+					elementum r;
+					configura_elementum(selectores.ordo_arboris_elementum_internum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+			}
+			[(extensiones.attributum_classis_elementi) "ListView"] structura tabularium hereditat elementum {
+				functio nihil adde_columnam(int ind, @visualis_incompletus visn, @visualis_incompletus visi) iacit {
+					(!visualis_incompletus, !visualis_incompletus) c;
+					c.primus.contine(visn);
+					c.secundus.contine(visi);
+					configura_elementum(selectores.tabularium_columna, modus_ie.adde, ind, @c, genus(c));
+				}
+				functio nihil remove_columnam(int ind) iacit { configura_elementum(selectores.tabularium_columna, modus_ie.remove, ind, nullus, nullus); }
+				functio nihil depura_columnas() iacit { configura_elementum(selectores.tabularium_depura, modus_ie.scribe, 0, nullus, nullus); }
+				functio int lege_positum_columnae(int colind) iacit {
+					int r;
+					configura_elementum(selectores.tabularium_positus_columnae, modus_ie.lege, colind, @r, genus(r));
+					responde r;
+				}
+				functio nihil move_columnam(int colind, int pos) iacit { configura_elementum(selectores.tabularium_positus_columnae, modus_ie.scribe, colind, @pos, genus(pos)); }
+				int numerus_columnarum { adipisce iacit {
+					int r;
+					configura_elementum(selectores.tabularium_numerus_columnarum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio int lege_indentitatem_columnae(int pos) iacit {
+					int r;
+					configura_elementum(selectores.tabularium_indentitas_columnae, modus_ie.lege, pos, @r, genus(r));
+					responde r;
+				}
+				functio int lege_latitudinem_columnae(int colind) iacit {
+					int r;
+					configura_elementum(selectores.tabularium_latitudo_columnae, modus_ie.lege, colind, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_latitudinem_columnae(int colind, int lat) iacit { configura_elementum(selectores.tabularium_latitudo_columnae, modus_ie.scribe, colind, @lat, genus(lat)); }
+				functio int lege_latitudinem_minimam_columnae(int colind) iacit {
+					int r;
+					configura_elementum(selectores.tabularium_latitudo_minima_columnae, modus_ie.lege, colind, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_latitudinem_minimam_columnae(int colind, int lat) iacit { configura_elementum(selectores.tabularium_latitudo_minima_columnae, modus_ie.scribe, colind, @lat, genus(lat)); }
+				functio linea lege_titulum_columnae(int colind) iacit {
+					linea r;
+					configura_elementum(selectores.tabularium_titulus_columnae, modus_ie.lege, colind, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_titulum_columnae(int colind, linea titulus) iacit { configura_elementum(selectores.tabularium_titulus_columnae, modus_ie.scribe, colind, @titulus, genus(titulus)); }
+				functio nihil renomina_columnam(int colind, int colind_nova) iacit { configura_elementum(selectores.tabularium_renomina_columnam, modus_ie.scribe, colind, @colind_nova, genus(colind_nova)); }
+				functio nihil adde_in_ordinem(@argumentor arg) iacit { configura_elementum(selectores.tabularium_elementum, modus_ie.adde, -1, arg, genus(arg^)); }
+				functio nihil adde_in_ordinem(@nihil data, @nihil gens) iacit { configura_elementum(selectores.tabularium_elementum, modus_ie.adde, -1, data, gens); }
+				functio nihil insere_in_ordinem(int index, @argumentor arg) iacit { configura_elementum(selectores.tabularium_elementum, modus_ie.adde, index, arg, genus(arg^)); }
+				functio nihil insere_in_ordinem(int index, @nihil data, @nihil gens) iacit { configura_elementum(selectores.tabularium_elementum, modus_ie.adde, index, data, gens); }
+				functio nihil rescribe_elementum_ordinis(int index, @argumentor arg) iacit { configura_elementum(selectores.tabularium_elementum, modus_ie.scribe, index, arg, genus(arg^)); }
+				functio nihil rescribe_elementum_ordinis(int index, @nihil data, @nihil gens) iacit { configura_elementum(selectores.tabularium_elementum, modus_ie.scribe, index, data, gens); }
+				functio nihil remove_elementum_ordinis(int index) iacit { configura_elementum(selectores.tabularium_elementum, modus_ie.remove, index, nullus, nullus); }
+				int numerus_elementorum { adipisce iacit {
+					int r;
+					configura_elementum(selectores.tabularium_numerus_elementorum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil permuta_elementa(int i, int j) iacit { configura_elementum(selectores.tabularium_permuta_elementa, modus_ie.scribe, i, @j, genus(j)); }
+				functio nihil depura_elementa() iacit { configura_elementum(selectores.tabularium_depura_elementa, modus_ie.scribe, 0, nullus, nullus); }
+				int index_elementi_selecti {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.tabularium_index_elementi_selecti, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tabularium_index_elementi_selecti, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				functio nihil selege_elementum_et_rota(int index) iacit { configura_elementum(selectores.tabularium_index_elementi_selecti, modus_ie.adde, 0, @index, genus(index)); }
+				functio nintadl lege_data_extensa(int index) iacit {
+					nintadl r;
+					configura_elementum(selectores.tabularium_extensio_elementi, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_data_extensa(int index, nintadl data) iacit { configura_elementum(selectores.tabularium_extensio_elementi, modus_ie.scribe, index, @data, genus(data)); }
+				functio logicum elementum_selectum_est(int index) iacit {
+					logicum r;
+					configura_elementum(selectores.tabularium_elementum_selectum, modus_ie.lege, index, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_statum_elementi(int index, logicum selectum) iacit { configura_elementum(selectores.tabularium_elementum_selectum, modus_ie.scribe, index, @selectum, genus(selectum)); }
+				logicum multiplicabilis {
+					adipisce iacit {
+						logicum r;
+						configura_elementum(selectores.tabularium_multiplicabilis, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tabularium_multiplicabilis, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int positus_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.tabularium_positus_rotoris, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tabularium_positus_rotoris, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int indentitas_columnae_pristinae { adipisce iacit {
+					int r;
+					configura_elementum(selectores.tabularium_indentitas_columnae_pristinae, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil crea_elementum_internum(int cellind, @objectum_dynamicum basis, ~quadrum qd) iacit {
+					(!objectum_dynamicum, ingenium.iu.quadrum) r;
+					r.primus.contine(basis);
+					r.secundus = qd;
+					configura_elementum(selectores.tabularium_elementum_internum, modus_ie.adde, cellind, @r, genus(r));
+				}
+				functio nihil remove_elementum_internum() iacit { configura_elementum(selectores.tabularium_elementum_internum, modus_ie.remove, 0, nullus, nullus); }
+				elementum elementum_internum { adipisce iacit {
+					elementum r;
+					configura_elementum(selectores.tabularium_elementum_internum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+			}
+			[(extensiones.attributum_classis_elementi) "MenuBar"] structura minutus_superus hereditat elementum {
+				functio nihil adde_subminutum() iacit { configura_elementum(selectores.minutus_superus_subminuti, modus_ie.adde, -1, nullus, nullus); }
+				functio nihil insere_subminutum(int index) iacit { configura_elementum(selectores.minutus_superus_subminuti, modus_ie.adde, index, nullus, nullus); }
+				functio nihil remove_subminutum(int index) iacit { configura_elementum(selectores.minutus_superus_subminuti, modus_ie.remove, index, nullus, nullus); }
+				int numerus_minutorum { adipisce iacit {
+					int r;
+					configura_elementum(selectores.minutus_superus_numerus_minutorum, modus_ie.lege, 0, @r, genus(r));
+					responde r;
+				} }
+				functio nihil permuta_minutos(int i, int j) iacit { configura_elementum(selectores.minutus_superus_permuta_minutos, modus_ie.scribe, i, @j, genus(j)); }
+				functio nihil depura_minutos() iacit { configura_elementum(selectores.minutus_superus_depura_minutos, modus_ie.scribe, 0, nullus, nullus); }
+				functio int lege_indentitatem_minuti(int pos) iacit {
+					int r;
+					configura_elementum(selectores.minutus_superus_indentitas_minuti, modus_ie.lege, pos, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_indentitatem_minuti(int pos, int ind) iacit { configura_elementum(selectores.minutus_superus_indentitas_minuti, modus_ie.scribe, pos, @ind, genus(ind)); }
+				functio !fenestrae.minutus lege_objectum_minuti(int pos) iacit {
+					!fenestrae.minutus r;
+					configura_elementum(selectores.minutus_superus_subminutus_minuti, modus_ie.lege, pos, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_objectum_minuti(int pos, @fenestrae.minutus min) iacit {
+					!fenestrae.minutus m;
+					m.contine(min);
+					configura_elementum(selectores.minutus_superus_subminutus_minuti, modus_ie.scribe, pos, @m, genus(m));
+				}
+				functio linea lege_titulum_minuti(int pos) iacit {
+					linea r;
+					configura_elementum(selectores.minutus_superus_titulus_minuti, modus_ie.lege, pos, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_titulum_minuti(int pos, ~linea titulus) iacit { configura_elementum(selectores.minutus_superus_titulus_minuti, modus_ie.scribe, pos, @titulus, genus(titulus)); }
+				functio logicum minutus_abilis_est(int pos) iacit {
+					logicum r;
+					configura_elementum(selectores.minutus_superus_minutus_abilis_est, modus_ie.lege, pos, @r, genus(r));
+					responde r;
+				}
+				functio nihil rescribe_statum_minuti(int pos, logicum abilis) iacit { configura_elementum(selectores.minutus_superus_minutus_abilis_est, modus_ie.scribe, pos, @abilis, genus(abilis)); }
+				functio int positus_minuti(int ind) iacit {
+					int r;
+					configura_elementum(selectores.minutus_superus_reperi_minutum, modus_ie.lege, ind, @r, genus(r));
+					responde r;
+				}
+				functio !fenestrae.celula_minuti reperi_elementum_minuti(int ind) iacit {
+					!fenestrae.celula_minuti r;
+					configura_elementum(selectores.minutus_superus_reperi_elementum_minuti, modus_ie.lege, ind, @r, genus(r));
+					responde r;
+				}
+				functio nihil pone_dextre(int pos, logicum dextre) iacit { configura_elementum(selectores.minutus_superus_pone_dextre, modus_ie.scribe, pos, @dextre, genus(dextre)); }
+			}
+			[(extensiones.attributum_classis_elementi) "VerticalScrollBar"] structura rotor_verticalis hereditat elementum {
+				(int, int) dorsum_rotoris {
+					adipisce iacit {
+						(int, int) r;
+						configura_elementum(selectores.rotor_verticalis_dorsum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_verticalis_dorsum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				(int, int) dorsum_silens_rotoris {
+					adipisce iacit {
+						(int, int) r;
+						configura_elementum(selectores.rotor_verticalis_dorsum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_verticalis_dorsum, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int positus_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_verticalis_positus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_verticalis_positus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int positus_silens_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_verticalis_positus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_verticalis_positus, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int pagina_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_verticalis_pagina, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_verticalis_pagina, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int pagina_silens_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_verticalis_pagina, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_verticalis_pagina, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int linea_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_verticalis_linea, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_verticalis_linea, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "HorizontalScrollBar"] structura rotor_horizontalis hereditat elementum {
+				(int, int) dorsum_rotoris {
+					adipisce iacit {
+						(int, int) r;
+						configura_elementum(selectores.rotor_horizontalis_dorsum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_horizontalis_dorsum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				(int, int) dorsum_silens_rotoris {
+					adipisce iacit {
+						(int, int) r;
+						configura_elementum(selectores.rotor_horizontalis_dorsum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_horizontalis_dorsum, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int positus_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_horizontalis_positus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_horizontalis_positus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int positus_silens_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_horizontalis_positus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_horizontalis_positus, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int pagina_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_horizontalis_pagina, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_horizontalis_pagina, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int pagina_silens_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_horizontalis_pagina, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_horizontalis_pagina, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int linea_rotoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.rotor_horizontalis_linea, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.rotor_horizontalis_linea, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "VerticalTrackBar"] structura tractor_verticalis hereditat elementum {
+				(int, int) dorsum_tractoris {
+					adipisce iacit {
+						(int, int) r;
+						configura_elementum(selectores.tractor_verticalis_dorsum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_verticalis_dorsum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				(int, int) dorsum_silens_tractoris {
+					adipisce iacit {
+						(int, int) r;
+						configura_elementum(selectores.tractor_verticalis_dorsum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_verticalis_dorsum, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int positus_tractoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.tractor_verticalis_positus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_verticalis_positus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int positus_silens_tractoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.tractor_verticalis_positus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_verticalis_positus, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int gradus_tractoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.tractor_verticalis_gradus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_verticalis_gradus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+			[(extensiones.attributum_classis_elementi) "HorizontalTrackBar"] structura tractor_horizontalis hereditat elementum {
+				(int, int) dorsum_tractoris {
+					adipisce iacit {
+						(int, int) r;
+						configura_elementum(selectores.tractor_horizontalis_dorsum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_horizontalis_dorsum, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				(int, int) dorsum_silens_tractoris {
+					adipisce iacit {
+						(int, int) r;
+						configura_elementum(selectores.tractor_horizontalis_dorsum, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_horizontalis_dorsum, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int positus_tractoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.tractor_horizontalis_positus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_horizontalis_positus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+				int positus_silens_tractoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.tractor_horizontalis_positus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_horizontalis_positus, modus_ie.scribe, 1, @valor, genus(valor)); }
+				}
+				int gradus_tractoris {
+					adipisce iacit {
+						int r;
+						configura_elementum(selectores.tractor_horizontalis_gradus, modus_ie.lege, 0, @r, genus(r));
+						responde r;
+					}
+					loca iacit { configura_elementum(selectores.tractor_horizontalis_gradus, modus_ie.scribe, 0, @valor, genus(valor)); }
+				}
+			}
+		}
+	}
+}

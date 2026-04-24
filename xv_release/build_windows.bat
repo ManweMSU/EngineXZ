@@ -69,6 +69,8 @@ copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vs
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\video.xv               	-NVoml  xv_release\_build\com\video.xo               	xv_lib\video.xvm               	xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\integri_largi.xv           -NVoml  xv_release\_build\com\integri_largi.xo          xv_lib\integri_largi.xvm        xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\cryptographia_nativa.xv    -NVoml  xv_release\_build\com\cryptographia_nativa.xo   xv_lib\cryptographia_nativa.xvm xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\ingenium_iu.xv    			-NVoml  xv_release\_build\com\ingenium_iu.xo   			xv_lib\ingenium_iu.xvm 			xv_release\_build\com
+.\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\ingenium_iu_ext.xv		    -NVoml  xv_release\_build\com\ingenium_iu_ext.xo   		xv_lib\ingenium_iu_ext.xvm 		xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xw_lib\canonicalis.xw         	-NPVom  xv_release\_build\comw\canonicalis.xwo       	xw_lib\canonicalis.xvm
 xcopy /BY xv_release\_build\com\* xv_release\_build\windows_%ARCH%\xvcl\
 xcopy /BY xv_release\_build\comw\* xv_release\_build\windows_%ARCH%\xwcl\

@@ -1,0 +1,797 @@
+﻿importa fenestrae;
+importa graphicum;
+
+auxilium attributum (meta.attributum_nomen_moduli) = "Liber Intercommunicationis cum Usore";
+auxilium attributum (meta.attributum_creator_moduli) = "Engine Software";
+auxilium attributum (meta.attributum_iura_exempli) = "© Engine Software. 2026";
+auxilium attributum (meta.attributum_versio) = "1.0.0.1";
+
+auxilium versio 0;
+
+[[systema] librosa]
+
+spatium ingenium {
+	spatium iu {
+		protocollum _pons_iu {
+			[[inline]] classis functio ~_pons_iu communalis() { responde (@_pons_iu)(protocollum("ingenium.pons.iu"))^; }
+
+			functio nintadl planus0(nint32 sel, nintadl a0, nintadl a1, nintadl a2, nintadl a3, nintadl a4) iacit virtualis pura;
+			functio nintadl planus1(@objectum obj, nint32 sel, nintadl a0, nintadl a1, nintadl a2, nintadl a3, nintadl a4) iacit virtualis pura;
+			functio nintadl planus2(@objectum obj, nint32 sel, nintadl a0, nintadl a1, nintadl a2, nintadl a3, nintadl a4) iacit virtualis pura;
+		}
+		[[initium]] functio nihil __ini() iacit {
+			_pons_iu.communalis().planus0(17, (nintadl)(int), (nintadl)(dfrac), (nintadl)(imago.color), (nintadl)(linea), 0);
+			_pons_iu.communalis().planus0(18, (nintadl)(!graphicum.pictura), (nintadl)(!graphicum.typographica), 0, 0, (nintadl)(_pons_iu));
+		}
+
+		structura positus {
+			dfrac relativus;
+			dfrac scalabilis;
+			int absolutus;
+
+			structor (int pabs) { funda absolutus(pabs); funda relativus(0.0); funda scalabilis(0.0); }
+			structor (int pabs, dfrac pscal) { funda absolutus(pabs); funda scalabilis(pscal); funda relativus(0.0); }
+			structor (int pabs, dfrac pscal, dfrac prel) { funda absolutus(pabs); funda scalabilis(pscal); funda relativus(prel); }
+
+			classis functio positus sinister() { responde positus(0, 0.0, 0.0); }
+			classis functio positus dextrus() { responde positus(0, 0.0, 1.0); }
+			classis functio positus invalidus() { responde positus(0, 0.0, math.nn_d()); }
+		}
+		structura quadrum {
+			positus sinister;
+			positus superus;
+			positus dextrus;
+			positus inferus;
+
+			structor (~positus sin, ~positus sup, ~positus dex, ~positus inf) { funda sinister(sin); funda superus(sup); funda dextrus(dex); funda inferus(inf); }
+
+			classis functio quadrum parens() { responde quadrum(0, 0, positus.dextrus(), positus.dextrus()); }
+			classis functio quadrum invalidum() { responde quadrum(positus.invalidus(), positus.invalidus(), positus.invalidus(), positus.invalidus()); }
+		}
+		genus visualis hereditat objectum {
+			functio nihil redde(@graphicum.contextus_machinae ctx, ~fenestrae.quadrum in) virtualis pura;
+			functio nihil depura() virtualis pura;
+			functio !visualis cloniza() iacit virtualis pura;
+		}
+		protocollum argumentor {
+			functio nihil da_valorem_argumenti(~linea nomen, @nihil gens, @nihil adloq) iacit virtualis pura;
+		}
+		genus visualis_incompletus hereditat objectum {
+			functio !visualis crea_exemplum(@argumentor arg) iacit virtualis pura;
+			functio !visualis crea_exemplum() iacit { responde crea_exemplum(nullus); }
+		}
+		structura elementum {
+			!objectum _mnbr;
+		}
+		structura systema_elementorum {
+			!objectum _mnbr;
+		}
+		nomen_alternum ordo_filiorum = ordo !objectum_dynamicum;
+		genus praeforma_elementi hereditat objectum_dynamicum {
+			structor () {}
+			functio elementum crea_exemplum(~quadrum quadrum, ~ordo !objectum_dynamicum filii) iacit virtualis pura;
+		}
+		protocollum fabricator {
+			functio !praeforma_elementi crea_praeformam_elementi(~linea nomen_generis) iacit virtualis pura;
+		}
+		genus praeformae hereditat objectum {
+			functio ~linea onera_lineam(~linea nomen) iacit virtualis pura;
+			functio imago.color onera_colorem(~linea nomen) iacit virtualis pura;
+			functio !graphicum.pictura onera_picturam(~linea nomen) iacit virtualis pura;
+			functio !graphicum.typographica onera_typographicam(~linea nomen) iacit virtualis pura;
+			functio !visualis_incompletus onera_visualem(~linea nomen) iacit virtualis pura;
+			functio !objectum_dynamicum onera_elementum(~linea nomen) iacit virtualis pura;
+
+			classis functio !praeformae onera(@flumen fl) iacit { responde (!praeformae)((@praeformae)(_pons_iu.communalis().planus0(0, (nintadl)(fl), 0, 0, 0, 0))); }
+			classis functio !praeformae onera(@flumen fl, @fabricator fab) iacit { responde (!praeformae)((@praeformae)(_pons_iu.communalis().planus0(0, (nintadl)(fl), (nintadl)(fab), 0, 0, 0))); }
+		}
+
+		enumeratio origo_eventi { imperatum = 0, accelerator = 1, minutus = 2, tactus_duplus = 3, tactus_dextrus = 4, valor_alternatus = 5, depositum = 6 }
+		enumeratio ordo_elementi { move_in_primo = 0, move_in_ultimo = 1, move_proxime = 2, move_pristine = 3 }
+		enumeratio animatio_elementi { nulla = 0, per_cursore = 1, cinematica = 2 }
+		enumeratio modus_animationis { polita = 0, non_polita = 1 }
+		enumeratio actio_animationis { nulla = 0, monstra = 1, occulta = 2, occulta_positum_retine = 3 }
+		enumeratio directio_animationis { sinistra = 0, supera = 1, dextra = 2, inferna = 3 }
+		enumeratio modus_ie hereditat nint32 { lege = 0, scribe = 1, adde = 2, remove = 3 }
+
+		protocollum responsor_elementi {
+			functio nihil elementum_creatum_est(~elementum el) iacit virtualis {}
+			functio nihil elementum_perditum_est() iacit virtualis {}
+
+			functio nihil elementum_redde(~elementum el, @graphicum.contextus_machinae ctx, ~fenestrae.quadrum qd) iacit virtualis {}
+			functio nihil elementum_depura_data_temporale(~elementum el) iacit virtualis {}
+			functio nihil elementum_repone_filios(~elementum el) iacit virtualis {}
+			functio nihil elementum_motum_est(~elementum el, ~fenestrae.quadrum qd) iacit virtualis {}
+
+			functio logicum elementum_activum_lege(~elementum el) iacit virtualis { responde sic; }
+			functio logicum elementum_visibile_lege(~elementum el) iacit virtualis { responde sic; }
+			functio int elementum_indentitas_lege(~elementum el) iacit virtualis { responde 0; }
+			functio quadrum elementum_positus_lege(~elementum el) iacit virtualis { responde quadrum.invalidum(); }
+			functio linea elementum_textum_lege(~elementum el) iacit virtualis { responde ""; }
+
+			functio nihil elementum_activum_scribe(~elementum el, logicum valor) iacit virtualis {}
+			functio nihil elementum_visibile_scribe(~elementum el, logicum valor) iacit virtualis {}
+			functio nihil elementum_indentitas_scribe(~elementum el, int valor) iacit virtualis {}
+			functio nihil elementum_positus_scribe(~elementum el, ~quadrum valor) iacit virtualis {}
+			functio nihil elementum_textum_scribe(~elementum el, ~linea valor) iacit virtualis {}
+
+			functio logicum tabulum_est(~elementum el) iacit virtualis { responde non; }
+			functio elementum reperi_filium(~elementum el, int ind) iacit virtualis { iace errores.argumentum_falsum; }
+			functio nihil procede_eventum(~elementum el, nint indent, origo_eventi org, ~elementum missor) iacit virtualis {}
+
+			functio nihil elementum_tactus_capiebat(~elementum el, logicum cap) iacit virtualis {}
+			functio logicum tactus_pressatus_est(~elementum el, tactus tact) iacit virtualis { responde non; }
+			functio nihil tactus_depressatus_est(~elementum el, tactus tact) iacit virtualis {}
+			functio nihil character_pressatus_est(~elementum el, char chr) iacit virtualis {}
+
+			functio nihil elementum_mures_capiebat(~elementum el, logicum cap) iacit virtualis {}
+			functio nihil mus_mota_est(~elementum el, ~fenestrae.positus pos) iacit virtualis {}
+			functio nihil tactus_sinistrus_pressatus_est(~elementum el, ~fenestrae.positus pos) iacit virtualis {}
+			functio nihil tactus_sinistrus_depressatus_est(~elementum el, ~fenestrae.positus pos) iacit virtualis {}
+			functio nihil tactus_sinistrus_duplicatus_est(~elementum el, ~fenestrae.positus pos) iacit virtualis {}
+			functio nihil tactus_dextrus_pressatus_est(~elementum el, ~fenestrae.positus pos) iacit virtualis {}
+			functio nihil tactus_dextrus_depressatus_est(~elementum el, ~fenestrae.positus pos) iacit virtualis {}
+			functio nihil tactus_dextrus_duplicatus_est(~elementum el, ~fenestrae.positus pos) iacit virtualis {}
+
+			functio nihil rota_elementum_verticaliter(~elementum el, dfrac valor) iacit virtualis {}
+			functio nihil rota_elementum_horizontaliter(~elementum el, dfrac valor) iacit virtualis {}
+
+			functio nihil elementum_modum_exclusivum_perdidit(~elementum el) iacit virtualis {}
+			functio nihil elementum_minutus_cancellatus_est(~elementum el) iacit virtualis {}
+			functio nihil chronometrus_fierit(~elementum el) iacit virtualis {}
+
+			functio logicum eventum_servabile_est(~elementum el, fenestrae.eventum_fenestae_globale eve) iacit virtualis { responde non; }
+			functio nihil procede_eventum(~elementum el, fenestrae.eventum_fenestae_globale eve) iacit virtualis {}
+
+			functio elementum elementum_proba_positum(~elementum el, ~fenestrae.positus pos) iacit virtualis { iace errores.argumentum_falsum; }
+			functio !fenestrae.cursor elementum_imago_muris(~elementum el, ~fenestrae.positus pos) iacit virtualis { responde el.systema.lege_cursorem(fenestrae.cursor_systemae.spiculum); }
+			functio animatio_elementi elementum_modus_animationis(~elementum el) iacit virtualis { responde animatio_elementi.nulla; }
+
+			functio nihil elementum_configura(~elementum el, nint32 sel, modus_ie mod, intadl index, @nihil valor, @nihil genus_valoris) iacit virtualis {}
+		}
+		dura elementum {
+			functio nihil redde(~fenestrae.quadrum qd) iacit { _pons_iu.communalis().planus2(_mnbr, 0x208, (nintadl)(@qd), 0, 0, 0, 0); }
+			functio nihil depura_data_temporale() iacit { _pons_iu.communalis().planus2(_mnbr, 0x209, 0, 0, 0, 0, 0); }
+			functio nihil repone_filios() iacit { _pons_iu.communalis().planus2(_mnbr, 0x20A, 0, 0, 0, 0, 0); }
+			logicum activum { adipisce iacit {
+				responde _pons_iu.communalis().planus2(_mnbr, 0x100, 0, 0, 0, 0, 0);
+			} loca iacit {
+				_pons_iu.communalis().planus2(_mnbr, 0x000, valor, 0, 0, 0, 0);
+			} }
+			logicum visibile { adipisce iacit {
+				responde _pons_iu.communalis().planus2(_mnbr, 0x101, 0, 0, 0, 0, 0);
+			} loca iacit {
+				_pons_iu.communalis().planus2(_mnbr, 0x001, valor, 0, 0, 0, 0);
+			} }
+			int indentitas { adipisce iacit {
+				responde _pons_iu.communalis().planus2(_mnbr, 0x102, 0, 0, 0, 0, 0);
+			} loca iacit {
+				_pons_iu.communalis().planus2(_mnbr, 0x002, valor, 0, 0, 0, 0);
+			} }
+			fenestrae.quadrum positus_purus { adipisce iacit {
+				fenestrae.quadrum r;
+				_pons_iu.communalis().planus2(_mnbr, 0x103, (nintadl)(@r), 0, 0, 0, 0);
+				responde r;
+			} loca iacit {
+				_pons_iu.communalis().planus2(_mnbr, 0x003, (nintadl)(@valor), 0, 0, 0, 0);
+			} }
+			quadrum positus { adipisce iacit {
+				quadrum r;
+				_pons_iu.communalis().planus2(_mnbr, 0x104, (nintadl)(@r), 0, 0, 0, 0);
+				responde r;
+			} loca iacit {
+				_pons_iu.communalis().planus2(_mnbr, 0x004, (nintadl)(@valor), 0, 0, 0, 0);
+			} }
+			linea textum { adipisce iacit {
+				linea r;
+				_pons_iu.communalis().planus2(_mnbr, 0x105, (nintadl)(@r), 0, 0, 0, 0);
+				responde r;
+			} loca iacit {
+				_pons_iu.communalis().planus2(_mnbr, 0x005, (nintadl)(@valor), 0, 0, 0, 0);
+			} }
+			logicum tabulum_est { adipisce iacit {
+				responde _pons_iu.communalis().planus2(_mnbr, 0x10E, 0, 0, 0, 0, 0);
+			} }
+			logicum nullum_est { adipisce iacit { responde !_mnbr; } }
+			linea nomen_classis { adipisce iacit {
+				linea r;
+				_pons_iu.communalis().planus2(_mnbr, 0x10F, (nintadl)(@r), 0, 0, 0, 0);
+				responde r;
+			} }
+			functio elementum reperi_filium(int ind) iacit { elementum r; r._mnbr = (@objectum)(_pons_iu.communalis().planus2(_mnbr, 0x20B, ind, 0, 0, 0, 0)); responde r; }
+			functio nihil mitte_eventum(nint indent, origo_eventi org, ~elementum missor) iacit { _pons_iu.communalis().planus2(_mnbr, 0x20C, indent, (int)(org), (nintadl)(missor._mnbr.valor()), 0, 0); }
+			functio nihil mitte_eventum_deposite(nint indent) iacit { _pons_iu.communalis().planus2(_mnbr, 0x20D, indent, 0, 0, 0, 0); }
+
+			elementum parens { adipisce iacit {
+				elementum r;
+				r._mnbr = (@objectum)(_pons_iu.communalis().planus2(_mnbr, 0x106, 0, 0, 0, 0, 0));
+				responde r;
+			} }
+			systema_elementorum systema { adipisce iacit {
+				systema_elementorum r;
+				r._mnbr = (@objectum)(_pons_iu.communalis().planus2(_mnbr, 0x107, 0, 0, 0, 0, 0));
+				responde r;
+			} }
+			@fenestrae.fenestra fenestra { adipisce iacit {
+				responde (@fenestrae.fenestra)(_pons_iu.communalis().planus2(_mnbr, 0x108, 0, 0, 0, 0, 0));
+			} }
+			!ordo elementum filii { adipisce iacit {
+				var r = crea(ordo elementum);
+				_pons_iu.communalis().planus2(_mnbr, 0x109, (nintadl)(r.valor()), 0, 0, 0, 0);
+				responde r;
+			} }
+
+			functio nihil ordina(ordo_elementi ord) iacit { _pons_iu.communalis().planus2(_mnbr, 0x200, (int)(ord), 0, 0, 0, 0); }
+			functio nihil adde_filium(~elementum filius) iacit { _pons_iu.communalis().planus2(_mnbr, 0x201, (nintadl)(filius._mnbr.valor()), 0, 0, 0, 0); }
+			functio nihil remove_filium(~elementum filius) iacit { _pons_iu.communalis().planus2(_mnbr, 0x202, (nintadl)(filius._mnbr.valor()), 0, 0, 0, 0); }
+			functio nihil remove_filium(int numerus) iacit { _pons_iu.communalis().planus2(_mnbr, 0x203, numerus, 0, 0, 0, 0); }
+			functio nihil remove_ex_parente() iacit { _pons_iu.communalis().planus2(_mnbr, 0x204, 0, 0, 0, 0, 0); }
+			functio nihil remove_ex_parente_deposite() iacit { _pons_iu.communalis().planus2(_mnbr, 0x205, 0, 0, 0, 0, 0); }
+			functio int numerus_filii(~elementum filius) iacit { responde _pons_iu.communalis().planus2(_mnbr, 0x206, (nintadl)(filius._mnbr.valor()), 0, 0, 0, 0); }
+			int numerus_in_parente { adipisce iacit {
+				responde _pons_iu.communalis().planus2(_mnbr, 0x10A, 0, 0, 0, 0, 0);
+			} }
+
+			fenestrae.quadrum positus_absolutus { adipisce iacit {
+				fenestrae.quadrum r;
+				_pons_iu.communalis().planus2(_mnbr, 0x10B, (nintadl)(@r), 0, 0, 0, 0);
+				responde r;
+			} }
+			functio logicum parens_elementi_est(~elementum el) iacit { responde _pons_iu.communalis().planus2(_mnbr, 0x207, (nintadl)(el._mnbr.valor()), 0, 0, 0, 0); }
+			logicum accessibile { adipisce iacit {
+				responde _pons_iu.communalis().planus2(_mnbr, 0x10C, 0, 0, 0, 0, 0);
+			} }
+			logicum sub_mure { adipisce iacit {
+				responde _pons_iu.communalis().planus2(_mnbr, 0x10D, 0, 0, 0, 0, 0);
+			} }
+
+			functio nihil move_cum_animatione(~quadrum ad, nint32 tempus, modus_animationis im, modus_animationis fm, actio_animationis act) iacit { _pons_iu.communalis().planus2(_mnbr, 0x20E, (nintadl)(@ad), tempus, (int)(im), (int)(fm), (int)(act)); }
+			functio nihil move_cum_animatione(~fenestrae.quadrum ad, nint32 tempus, modus_animationis im, modus_animationis fm, actio_animationis act) iacit { _pons_iu.communalis().planus2(_mnbr, 0x20F, (nintadl)(@ad), tempus, (int)(im), (int)(fm), (int)(act)); }
+			functio nihil monstra_cum_animatione(directio_animationis dir, nint32 tempus, modus_animationis im, modus_animationis fm) iacit { _pons_iu.communalis().planus2(_mnbr, 0x210, (int)(dir), tempus, (int)(im), (int)(fm), 0); }
+			functio nihil occulta_cum_animatione(directio_animationis dir, nint32 tempus, modus_animationis im, modus_animationis fm) iacit { _pons_iu.communalis().planus2(_mnbr, 0x211, (int)(dir), tempus, (int)(im), (int)(fm), 0); }
+
+			elementum tabulum_proximum { adipisce iacit {
+				elementum r;
+				r._mnbr = (@objectum)(_pons_iu.communalis().planus2(_mnbr, 0x110, 0, 0, 0, 0, 0));
+				responde r;
+			} }
+			elementum tabulum_pristinum { adipisce iacit {
+				elementum r;
+				r._mnbr = (@objectum)(_pons_iu.communalis().planus2(_mnbr, 0x111, 0, 0, 0, 0, 0));
+				responde r;
+			} }
+
+			functio nihil configura_elementum(nint32 sel, modus_ie mod, intadl index, @nihil valor, @nihil genus_valoris) iacit { _pons_iu.communalis().planus2(_mnbr, 0x300, sel, (nint)(mod), index, (nintadl)(valor), (nintadl)(genus_valoris)); }
+		}
+
+		protocollum responsor_fenestrae {
+			functio nihil fenestra_creata_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_deleta_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_revelata_est(@fenestrae.fenestra fen, logicum visibilis) iacit virtualis {}
+	
+			functio nihil expone_fenestram(@fenestrae.fenestra fen) iacit virtualis {}
+	
+			functio nihil fenestra_closa_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_minima_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_maxima_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_normativa_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_suppetia(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_activa_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_inactiva_est(@fenestrae.fenestra fen) iacit virtualis {}
+	
+			functio nihil fenestra_mota_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil fenestra_cressata_est(@fenestrae.fenestra fen) iacit virtualis {}
+	
+			functio nihil chronometrus_fierit(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil minutus_cancelatus_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio nihil procede_eventum_internum(@fenestrae.fenestra fen, nint indent, origo_eventi org, ~elementum missor) iacit virtualis {}
+
+			functio nihil thema_mutata_est(@fenestrae.fenestra fen) iacit virtualis {}
+			functio logicum eventum_servabile_est(@fenestrae.fenestra fen, fenestrae.eventum_fenestae_globale eve) iacit virtualis { responde non; }
+			functio nihil procede_eventum_globale(@fenestrae.fenestra fen, fenestrae.eventum_fenestae_globale eve) iacit virtualis {}
+		}
+		structura crea_fenestram_desc {
+			fenestrae.quadrum positus;
+			fenestrae.positus dimensiones_minimae;
+			fenestrae.positus dimensiones_maximae;
+			fenestrae.quadrum margines_extensi;
+			dfrac opacum;
+			dfrac macula;
+			nint stylus;
+			imago.color fundus;
+			linea titulus;
+			@responsor_fenestrae responsor;
+			@fenestrae.fenestra parens;
+			adl[fenestrae.culicare] culicare;
+			logicum thema_tenebrosa;
+		}
+
+		structura decoratio_systemae_elementorum {
+			int magnitudo_marginis_minuti;
+			int magnitudo_elementi_minuti;
+			int magnitudo_delimitatoris_minuti;
+			!graphicum.typographica typographica_minuti;
+			!visualis_incompletus umbra_minuti;
+			!visualis_incompletus fundus_minuti;
+			!visualis_incompletus spiculum_minuti;
+			!visualis_incompletus delimitator_minuti;
+			!visualis_incompletus elementum_minuti_normativum;
+			!visualis_incompletus elementum_minuti_inabile;
+			!visualis_incompletus elementum_minuti_selectum;
+			!visualis_incompletus elementum_minuti_normativum_designatum;
+			!visualis_incompletus elementum_minuti_inabile_designatum;
+			!visualis_incompletus elementum_minuti_selectum_designatum;
+		}
+		dura systema_elementorum {
+			int magnitudo_cursoris { adipisce iacit {
+				responde _pons_iu.communalis().planus1(_mnbr, 0x100, 0, 0, 0, 0, 0);
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x000, (intadl)(valor), 0, 0, 0, 0);
+			} }
+			animatio_elementi modus_reddendi { adipisce iacit {
+				responde int(_pons_iu.communalis().planus1(_mnbr, 0x101, 0, 0, 0, 0, 0));
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x001, (int)(valor), 0, 0, 0, 0);
+			} }
+			@graphicum.contextus_machinae machinatio_reddendi { adipisce iacit {
+				responde (@graphicum.contextus_machinae)(_pons_iu.communalis().planus1(_mnbr, 0x102, 0, 0, 0, 0, 0));
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x002, (nintadl)(valor), 0, 0, 0, 0);
+			} }
+			fenestrae.classis_machinationis genus_machinationis_reddendi { adipisce iacit {
+				responde nint(_pons_iu.communalis().planus1(_mnbr, 0x103, 0, 0, 0, 0, 0));
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x003, (nint)(valor), 0, 0, 0, 0);
+			} }
+			fenestrae.positus resolutio_virtualis { adipisce iacit {
+				fenestrae.positus r;
+				_pons_iu.communalis().planus1(_mnbr, 0x104, (nintadl)(@r), 0, 0, 0, 0);
+				responde r;
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x004, (nintadl)(@valor), 0, 0, 0, 0);
+			} }
+			logicum synchroniza_resolutionem { adipisce iacit {
+				responde _pons_iu.communalis().planus1(_mnbr, 0x105, 0, 0, 0, 0, 0);
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x005, valor, 0, 0, 0, 0);
+			} }
+			logicum rudere { adipisce iacit {
+				responde _pons_iu.communalis().planus1(_mnbr, 0x106, 0, 0, 0, 0, 0);
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x006, valor, 0, 0, 0, 0);
+			} }
+			fenestrae.positus positus_cursoris_virtualis { adipisce iacit {
+				fenestrae.positus r;
+				_pons_iu.communalis().planus1(_mnbr, 0x107, (nintadl)(@r), 0, 0, 0, 0);
+				responde r;
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x007, (nintadl)(@valor), 0, 0, 0, 0);
+			} }
+			@responsor_fenestrae responsor { adipisce iacit {
+				responde (@responsor_fenestrae)(_pons_iu.communalis().planus1(_mnbr, 0x108, 0, 0, 0, 0, 0));
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x008, (nintadl)(valor), 0, 0, 0, 0);
+			} }
+			elementum radix { adipisce iacit {
+				elementum e;
+				e._mnbr = (@objectum)(_pons_iu.communalis().planus1(_mnbr, 0x109, 0, 0, 0, 0, 0));
+				responde e;
+			} }
+			@fenestrae.fenestra fenestra { adipisce iacit {
+				responde (@fenestrae.fenestra)(_pons_iu.communalis().planus1(_mnbr, 0x10A, 0, 0, 0, 0, 0));
+			} }
+			elementum elementum_tactarium_capit { adipisce iacit {
+				elementum e;
+				e._mnbr = (@objectum)(_pons_iu.communalis().planus1(_mnbr, 0x10B, 0, 0, 0, 0, 0));
+				responde e;
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x00B, (nintadl)(valor._mnbr.valor()), 0, 0, 0, 0);
+			} }
+			elementum elementum_murem_capit { adipisce iacit {
+				elementum e;
+				e._mnbr = (@objectum)(_pons_iu.communalis().planus1(_mnbr, 0x10C, 0, 0, 0, 0, 0));
+				responde e;
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x00C, (nintadl)(valor._mnbr.valor()), 0, 0, 0, 0);
+			} }
+			elementum elementum_exclusivum { adipisce iacit {
+				elementum e;
+				e._mnbr = (@objectum)(_pons_iu.communalis().planus1(_mnbr, 0x10D, 0, 0, 0, 0, 0));
+				responde e;
+			} loca iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x00D, (nintadl)(valor._mnbr.valor()), 0, 0, 0, 0);
+			} }
+
+			functio nihil rescribe_decorationem_systemae_elementorum(~decoratio_systemae_elementorum dec) iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x200, (nintadl)(@dec), 0, 0, 0, 0);
+			}
+			functio !fenestrae.cursor lege_cursorem(fenestrae.cursor_systemae gens) iacit {
+				responde (@fenestrae.cursor)(_pons_iu.communalis().planus1(_mnbr, 0x201, (nint)(gens), 0, 0, 0, 0));
+			}
+			functio nihil rescribe_cursorem(fenestrae.cursor_systemae gens, @fenestrae.cursor cursor) iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x202, (nint)(gens), (nintadl)(cursor), 0, 0, 0);
+			}
+			functio elementum proba_positum(~fenestrae.positus vcoord) iacit {
+				elementum e;
+				e._mnbr = (@objectum)(_pons_iu.communalis().planus1(_mnbr, 0x203, (nintadl)(@vcoord), 0, 0, 0, 0));
+				responde e;
+			}
+			functio elementum proba_positum(~fenestrae.positus vcoord, @fenestrae.positus lcoord) iacit {
+				elementum e;
+				e._mnbr = (@objectum)(_pons_iu.communalis().planus1(_mnbr, 0x203, (nintadl)(@vcoord), (nintadl)(lcoord), 0, 0, 0));
+				responde e;
+			}
+			functio elementum proba_positum_accessibilem(~fenestrae.positus vcoord) iacit {
+				elementum e;
+				e._mnbr = (@objectum)(_pons_iu.communalis().planus1(_mnbr, 0x204, (nintadl)(@vcoord), 0, 0, 0, 0));
+				responde e;
+			}
+			functio fenestrae.positus converte_positum_in_elemento_ad_fenestroso_virtuale(~elementum el, ~fenestrae.positus pos) iacit {
+				fenestrae.positus p;
+				_pons_iu.communalis().planus1(_mnbr, 0x205, (nintadl)(@p), (nintadl)(el._mnbr.valor()), (nintadl)(@pos), 0, 0);
+				responde p;
+			}
+			functio fenestrae.positus converte_positum_virtualem_in_fenestra_ad_elementoso(~elementum el, ~fenestrae.positus pos) iacit {
+				fenestrae.positus p;
+				_pons_iu.communalis().planus1(_mnbr, 0x206, (nintadl)(@p), (nintadl)(el._mnbr.valor()), (nintadl)(@pos), 0, 0);
+				responde p;
+			}
+			functio fenestrae.positus converte_positum_virtualem_ad_globale(~fenestrae.positus pos) iacit {
+				fenestrae.positus p;
+				_pons_iu.communalis().planus1(_mnbr, 0x207, (nintadl)(@p), 0, (nintadl)(@pos), 0, 0);
+				responde p;
+			}
+			functio fenestrae.positus converte_positum_globalem_ad_virtuale(~fenestrae.positus pos) iacit {
+				fenestrae.positus p;
+				_pons_iu.communalis().planus1(_mnbr, 0x208, (nintadl)(@p), 0, (nintadl)(@pos), 0, 0);
+				responde p;
+			}
+			functio nihil move_cum_animatione(~fenestrae.quadrum ad, nint32 tempus, modus_animationis im, modus_animationis fm) iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x209, (nintadl)(@ad), tempus, int(im), int(fm), 0);
+			}
+			functio nihil monstra_cum_animatione(nint32 tempus) iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x20A, 0, tempus, 0, 0, 0);
+			}
+			functio nihil occulta_cum_animatione(nint32 tempus) iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x20B, 0, tempus, 0, 0, 0);
+			}
+			functio nihil erige_chronometrum(~elementum el, nint tempus) iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x20C, (nintadl)(el._mnbr.valor()), tempus, 0, 0, 0);
+			}
+			functio nihil redde() iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x20D, 0, 0, 0, 0, 0);
+			}
+			functio nihil invalida() iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x20E, 0, 0, 0, 0, 0);
+			}
+			functio nihil rude() iacit {
+				_pons_iu.communalis().planus1(_mnbr, 0x20F, 0, 0, 0, 0, 0);
+			}
+		}
+
+		functio @fenestrae.fenestra crea_fenestram(~crea_fenestram_desc desc, fenestrae.classis_machinationis cls) iacit {
+			var ~ sysfen = fenestrae.systema_fenestrarum.currens();
+			_pons_iu.communalis().planus0(19, (nintadl)(@sysfen), 0, 0, 0, 0);
+			responde (@fenestrae.fenestra)(_pons_iu.communalis().planus0(1, (nintadl)(@desc), 0, 0, 0, nint(cls)));
+		}
+		functio @fenestrae.fenestra crea_fenestram(@objectum_dynamicum radix, @responsor_fenestrae resp, ~quadrum ext, @fenestrae.fenestra parens, fenestrae.classis_machinationis cls) iacit {
+			var ~ sysfen = fenestrae.systema_fenestrarum.currens();
+			_pons_iu.communalis().planus0(19, (nintadl)(@sysfen), 0, 0, 0, 0);
+			responde (@fenestrae.fenestra)(_pons_iu.communalis().planus0(1, (nintadl)(radix), (nintadl)(resp), (nintadl)(@ext), (nintadl)(parens), nint(cls)));
+		}
+		functio @fenestrae.fenestra crea_fenestram_modalem(~crea_fenestram_desc desc, fenestrae.classis_machinationis cls) iacit {
+			var ~ sysfen = fenestrae.systema_fenestrarum.currens();
+			_pons_iu.communalis().planus0(19, (nintadl)(@sysfen), 0, 0, 0, 0);
+			responde (@fenestrae.fenestra)(_pons_iu.communalis().planus0(2, (nintadl)(@desc), 0, 0, 0, nint(cls)));
+		}
+		functio @fenestrae.fenestra crea_fenestram_modalem(@objectum_dynamicum radix, @responsor_fenestrae resp, ~quadrum ext, @fenestrae.fenestra parens, fenestrae.classis_machinationis cls) iacit {
+			var ~ sysfen = fenestrae.systema_fenestrarum.currens();
+			_pons_iu.communalis().planus0(19, (nintadl)(@sysfen), 0, 0, 0, 0);
+			responde (@fenestrae.fenestra)(_pons_iu.communalis().planus0(2, (nintadl)(radix), (nintadl)(resp), (nintadl)(@ext), (nintadl)(parens), nint(cls)));
+		}
+		functio !fenestrae.minutus crea_minutum(@objectum_dynamicum radix) iacit {
+			var ~ sysfen = fenestrae.systema_fenestrarum.currens();
+			_pons_iu.communalis().planus0(19, (nintadl)(@sysfen), 0, 0, 0, 0);
+			responde (!fenestrae.minutus)((@fenestrae.minutus)(_pons_iu.communalis().planus0(3, (nintadl)(radix), 0, 0, 0, 0)));
+		}
+		functio elementum crea_elementum(@responsor_elementi resp) iacit {
+			elementum e;
+			e._mnbr = (@objectum)(_pons_iu.communalis().planus0(4, (nintadl)(resp), 0, 0, 0, 0));
+			responde e;
+		}
+		functio elementum crea_elementum(@objectum_dynamicum radix) iacit {
+			elementum e;
+			e._mnbr = (@objectum)(_pons_iu.communalis().planus0(5, (nintadl)(radix), 0, 0, 0, 0));
+			responde e;
+		}
+		functio nihil crea_filios(~elementum in, ~ordo !objectum_dynamicum filii) iacit {
+			_pons_iu.communalis().planus0(6, (nintadl)(in._mnbr.valor()), (nintadl)(@filii), 0, 0, 0);
+		}
+
+		functio nihil exeque_minutum(@fenestrae.minutus min, ~elementum el, ~fenestrae.positus pos) iacit {
+			_pons_iu.communalis().planus0(7, (nintadl)(min), (nintadl)(el._mnbr.valor()), (nintadl)(@pos), 0, 0);
+		}
+		functio systema_elementorum systema_elementorum_fenestrae(@fenestrae.fenestra fen) iacit {
+			systema_elementorum s;
+			s._mnbr = (@objectum)(_pons_iu.communalis().planus0(12, (nintadl)(fen), 0, 0, 0, 0));
+			responde s;
+		}
+		functio elementum elementum_fenestrae(@fenestrae.fenestra fen, int ind) iacit {
+			elementum e;
+			e._mnbr = (@objectum)(_pons_iu.communalis().planus0(13, (nintadl)(fen), ind, 0, 0, 0));
+			responde e;
+		}
+		functio elementum elementum_radicalis_fenestrae(@fenestrae.fenestra fen) iacit {
+			elementum e;
+			e._mnbr = (@objectum)(_pons_iu.communalis().planus0(14, (nintadl)(fen), 0, 0, 0, 0));
+			responde e;
+		}
+
+		functio dfrac lege_scalam() iacit { dfrac r; _pons_iu.communalis().planus0(15, (nintadl)(@r), 0, 0, 0, 0); responde r; }
+		functio nihil defini_scalam(dfrac s) iacit { _pons_iu.communalis().planus0(16, (nintadl)(@s), 0, 0, 0, 0); }
+		functio nihil selege_scalam(dfrac s, @dfrac so, int n) iacit { _pons_iu.communalis().planus0(16, (nintadl)(@s), (nintadl)(so), n, 0, 0); }
+
+		enumeratio imperata_acceleratorum_systemae { clode_fenestram = 0, suppetia = 1, elementum_proximum = 2, elementum_pristinum = 3 }
+		structura accelerator {
+			int imperatum;
+			tactus tactus;
+			logicum shift;
+			logicum control;
+			logicum alternative;
+			logicum imperata_systemae_est;
+
+			structor () {}
+			structor (.tactus tc, logicum sft, logicum ctrl, logicum alt, int imp, logicum sys) { funda tactus(tc); funda shift(sft); funda control(ctrl); funda alternative(alt); funda imperatum(imp); funda imperata_systemae_est(sys); }
+		}
+
+		spatium selectores {
+			// radix elementum
+			constatus radix_acceleratores							= nint32(0x00100); // *, accelerator
+			constatus radix_numerus_acceleratorum					= nint32(0x00101); // lege, int
+			constatus radix_adde_acceleratores_normativos			= nint32(0x00102); // adde, nullus
+			constatus radix_fundus									= nint32(0x00103); // lege/scribe, !ingenium.iu.visualis_incompletus
+
+			// staticum elementum
+			constatus staticum_imago								= nint32(0x00200); // lege/scribe, !graphicum.pictura
+			// progressio elementum
+			constatus progressio_valor								= nint32(0x00300); // lege/scribe, dfrac
+			// color elementum
+			constatus color_valor									= nint32(0x00400); // lege/scribe, imago.color
+			// complex elementum
+			constatus complex_valor									= nint32(0x00500); // lege/scribe, int/dfrac/imago.color/linea/!graphicum.pictura/!graphicum.typographica
+
+			// grupus elementorum
+			constatus grupus_pone_filios							= nint32(0x00600); // adde/remove, !objectum_dynamicum/nullus
+			// grupus elementorum radiatorum
+			constatus grupus_radiatorum_designatum					= nint32(0x00700); // lege/scribe, ingenium.iu.elementum/int
+			// grupus elementorum rotabilis
+			constatus grupus_rotabilis_hospes						= nint32(0x00800); // lege, ingenium.iu.elementum
+			// grupus elementorum scalabilis
+			constatus grupus_scalabilis_magnitudo					= nint32(0x00900); // lege/scribe, int
+			// grupus paginarum
+			constatus grupus_paginarum_paginae						= nint32(0x00A00); // adde/remove, nullus/!objectum_dynamicum
+			constatus grupus_paginarum_numerus_paginarum			= nint32(0x00A01); // lege, int
+			constatus grupus_paginarum_pagina_currens				= nint32(0x00A02); // lege/scribe, int
+			constatus grupus_paginarum_move_paginam					= nint32(0x00A03); // scribe, int
+			constatus grupus_paginarum_reperi_paginam				= nint32(0x00A04); // lege, int
+			constatus grupus_paginarum_indentitas_paginae			= nint32(0x00A05); // lege/scribe, int
+			constatus grupus_paginarum_supscriptio_paginae			= nint32(0x00A06); // lege/scribe, linea
+			constatus grupus_paginarum_magnitudo_paginae			= nint32(0x00A07); // lege/scribe, int
+			constatus grupus_paginarum_hospes_paginae				= nint32(0x00A08); // lege, ingenium.iu.elementum
+
+			// tactus
+			constatus tactus_imago_normativa						= nint32(0x00B00); // lege/scribe, !graphicum.pictura
+			constatus tactus_imago_inabilis							= nint32(0x00B01); // lege/scribe, !graphicum.pictura
+			// tactus designabilis
+			constatus tactus_designabilis_designatus_est			= nint32(0x00C00); // lege/scribe, logicum
+			// tactus radiatus
+			constatus tactus_radiatus_designatus_est				= nint32(0x00D00); // lege/scribe, logicum
+			// tactus auxilius
+			constatus tactus_auxilius_designatus_est				= nint32(0x00E00); // lege/scribe, logicum
+			constatus tactus_auxilius_imago_normativa				= nint32(0x00E01); // lege/scribe, !graphicum.pictura
+			constatus tactus_auxilius_imago_inabilis				= nint32(0x00E02); // lege/scribe, !graphicum.pictura
+			constatus tactus_auxilius_minutus						= nint32(0x00E03); // lege/scribe, !fenestrae.minutus
+			constatus tactus_auxilius_modus_extensionis				= nint32(0x00E04); // lege/scribe, logicum
+			constatus tactus_auxilius_extensio_positus				= nint32(0x00E05); // lege, fenestrae.positus
+			constatus tactus_auxilius_extensio_closa_est			= nint32(0x00E06); // scribe, nullus
+
+			// inpositor
+			constatus inpositor_cancella							= nint32(0x00F00); // scribe, nullus
+			constatus inpositor_decancella							= nint32(0x00F01); // scribe, nullus
+			constatus inpositor_seca								= nint32(0x00F02); // scribe, nullus
+			constatus inpositor_exscribe							= nint32(0x00F03); // scribe, nullus
+			constatus inpositor_insere								= nint32(0x00F04); // scribe, nullus
+			constatus inpositor_dele								= nint32(0x00F05); // scribe, nullus
+			constatus inpositor_rota								= nint32(0x00F06); // scribe, nullus
+			constatus inpositor_textum_selectum						= nint32(0x00F07); // lege, linea
+			constatus inpositor_move_selectionem					= nint32(0x00F08); // scribe, (int, int)
+			constatus inpositor_textum_defaltum						= nint32(0x00F09); // lege/scribe, linea
+			constatus inpositor_minutus								= nint32(0x00F0A); // lege/scribe, !fenestrae.minutus
+			constatus inpositor_legere_sole							= nint32(0x00F0B); // lege/scribe, logicum
+			constatus inpositor_converte_ad_superis					= nint32(0x00F0C); // lege/scribe, logicum
+			constatus inpositor_converte_ad_infernis				= nint32(0x00F0D); // lege/scribe, logicum
+			constatus inpositor_filtrum								= nint32(0x00F0E); // lege/scribe, linea
+			constatus inpositor_occulta_characteres					= nint32(0x00F0F); // lege/scribe, logicum
+			constatus inpositor_character_occultandi				= nint32(0x00F10); // lege/scribe, nint32
+			constatus inpositor_limita								= nint32(0x00F11); // scribe, linea
+			constatus inpositor_imprime								= nint32(0x00F12); // scribe, linea
+			constatus inpositor_configura_minutum					= nint32(0x00F13); // lege/scribe, logicum
+			// inpositor multilinearis
+			constatus inpositor_multilinearis_cancella				= nint32(0x01000); // scribe, nullus
+			constatus inpositor_multilinearis_decancella			= nint32(0x01001); // scribe, nullus
+			constatus inpositor_multilinearis_seca					= nint32(0x01002); // scribe, nullus
+			constatus inpositor_multilinearis_exscribe				= nint32(0x01003); // scribe, nullus
+			constatus inpositor_multilinearis_insere				= nint32(0x01004); // scribe, nullus
+			constatus inpositor_multilinearis_dele					= nint32(0x01005); // scribe, nullus
+			constatus inpositor_multilinearis_rota					= nint32(0x01006); // scribe, nullus
+			constatus inpositor_multilinearis_textum_selectum		= nint32(0x01007); // lege, linea
+			constatus inpositor_multilinearis_selectio				= nint32(0x01008); // lege/scribe, (fenestrae.positus, fenestrae.positus)
+			constatus inpositor_multilinearis_minutus				= nint32(0x01009); // lege/scribe, !fenestrae.minutus
+			constatus inpositor_multilinearis_legere_sole			= nint32(0x0100A); // lege/scribe, logicum
+			constatus inpositor_multilinearis_converte_ad_superis	= nint32(0x0100B); // lege/scribe, logicum
+			constatus inpositor_multilinearis_converte_ad_infernis	= nint32(0x0100C); // lege/scribe, logicum
+			constatus inpositor_multilinearis_filtrum				= nint32(0x0100D); // lege/scribe, linea
+			constatus inpositor_multilinearis_limita				= nint32(0x0100E); // scribe, linea
+			constatus inpositor_multilinearis_imprime				= nint32(0x0100F); // scribe, linea
+			constatus inpositor_multilinearis_configura_minutum		= nint32(0x01010); // lege/scribe, logicum
+			// inpositor extentus
+			constatus inpositor_extentus_cancella					= nint32(0x01100); // scribe, nullus
+			constatus inpositor_extentus_decancella					= nint32(0x01101); // scribe, nullus
+			constatus inpositor_extentus_seca						= nint32(0x01102); // scribe, nullus
+			constatus inpositor_extentus_exscribe					= nint32(0x01103); // scribe, nullus
+			constatus inpositor_extentus_insere						= nint32(0x01104); // scribe, nullus
+			constatus inpositor_extentus_dele						= nint32(0x01105); // scribe, nullus
+			constatus inpositor_extentus_rota						= nint32(0x01106); // scribe, nullus
+			constatus inpositor_extentus_textum_extentum			= nint32(0x01107); // lege/scribe, linea
+			constatus inpositor_extentus_textum_selectum			= nint32(0x01108); // lege, linea
+			constatus inpositor_extentus_textum_selectum_extentum	= nint32(0x01109); // lege, linea
+			constatus inpositor_extentus_minutus					= nint32(0x0110A); // lege/scribe, !fenestrae.minutus
+			constatus inpositor_extentus_legere_sole				= nint32(0x0110B); // lege/scribe, logicum
+			constatus inpositor_extentus_exscribe_attributa			= nint32(0x0110C); // lege/scribe, logicum
+			constatus inpositor_extentus_imprime					= nint32(0x0110D); // scribe, linea
+			constatus inpositor_extentus_imprime_extente			= nint32(0x0110E); // scribe, linea
+			constatus inpositor_extentus_configura_minutum			= nint32(0x0110F); // lege/scribe, logicum
+			constatus inpositor_extentus_procede_imperata			= nint32(0x01110); // lege/scribe, logicum
+			constatus inpositor_extentus_procede_motionem_cursoris	= nint32(0x01111); // lege/scribe, logicum
+			constatus inpositor_extentus_imperatum_pristinum		= nint32(0x01112); // lege, linea
+			constatus inpositor_extentus_numerus_fontium			= nint32(0x01113); // lege, int
+			constatus inpositor_extentus_fons						= nint32(0x01114); // lege/adde, linea
+			constatus inpositor_extentus_nihil_selectum				= nint32(0x01115); // lege, logicum
+			constatus inpositor_extentus_stylus_selectionis			= nint32(0x01116); // lege/scribe, int#
+			constatus inpositor_extentus_fons_selectionis			= nint32(0x01117); // lege/scribe, linea
+			constatus inpositor_extentus_altitudo_selectionis		= nint32(0x01118); // lege/scribe, int
+			constatus inpositor_extentus_color_selectionis			= nint32(0x01119); // lege/scribe, imago.color
+			constatus inpositor_extentus_positus_paragraphi			= nint32(0x0111A); // lege/scribe, int
+			constatus inpositor_extentus_imago_selectum				= nint32(0x0111B); // lege, logicum
+			constatus inpositor_extentus_imperatum_selectum			= nint32(0x0111C); // lege, logicum
+			constatus inpositor_extentus_tabularium_selectum		= nint32(0x0111D); // lege, logicum
+			constatus inpositor_extentus_addere_imperatum_potuit	= nint32(0x0111E); // lege, logicum
+			constatus inpositor_extentus_addere_tabularium_potuit	= nint32(0x0111F); // lege, logicum
+			constatus inpositor_extentus_imago						= nint32(0x01120); // lege/scribe/adde, !imago.collectus
+			constatus inpositor_extentus_magnitudines_imaginis		= nint32(0x01121); // lege/scribe, fenestrae.positus
+			constatus inpositor_extentus_imperatum					= nint32(0x01122); // *, linea
+			constatus inpositor_extentus_tabularium					= nint32(0x01123); // adde, fenestrae.positus
+			constatus inpositor_extentus_positus_in_tabulario		= nint32(0x01124); // lege, fenestrae.positus
+			constatus inpositor_extentus_magnitudines_tabularii		= nint32(0x01125); // lege, fenestrae.positus
+			constatus inpositor_extentus_columna					= nint32(0x01126); // adde/remove, nullus
+			constatus inpositor_extentus_linea						= nint32(0x01127); // adde/remove, nullus
+			constatus inpositor_extentus_latitudo_columnae			= nint32(0x01128); // lege/scribe, int
+			constatus inpositor_extentus_color_limbi				= nint32(0x01129); // lege/scribe, imago.color
+			constatus inpositor_extentus_fundus_celulae				= nint32(0x0112A); // lege/scribe, imago.color
+			constatus inpositor_extentus_positum_verticalis			= nint32(0x0112B); // lege/scribe, int
+			constatus inpositor_extentus_magnitudo_limbi			= nint32(0x0112C); // lege/scribe, int
+
+			// ordo linearum
+			constatus ordo_linearum_elementum						= nint32(0x01200); // adde/remove/scribe, linea/argumentor/*
+			constatus ordo_linearum_numerus_elementorum				= nint32(0x01201); // lege, int
+			constatus ordo_linearum_permuta_elementa				= nint32(0x01202); // scribe, int
+			constatus ordo_linearum_depura_elementa					= nint32(0x01203); // scribe, nullus
+			constatus ordo_linearum_index_elementi_selecti			= nint32(0x01204); // lege/adde/scribe, int
+			constatus ordo_linearum_extensio_elementi				= nint32(0x01205); // lege/scribe, nintadl
+			constatus ordo_linearum_elementum_selectum				= nint32(0x01206); // lege/scribe, logicum
+			constatus ordo_linearum_multiplicabilis					= nint32(0x01207); // lege/scribe, logicum
+			constatus ordo_linearum_positus_rotoris					= nint32(0x01208); // lege/scribe, int
+			constatus ordo_linearum_elementum_internum				= nint32(0x01209); // adde/lege/remove, (!objectum_dynamicum, ingenium.iu.quadrum)/ingenium.iu.elementum/nullus
+			// coordo linearum
+			constatus coordo_linearum_elementum						= nint32(0x01300); // adde/remove/scribe, linea/argumentor/*
+			constatus coordo_linearum_numerus_elementorum			= nint32(0x01301); // lege, int
+			constatus coordo_linearum_permuta_elementa				= nint32(0x01302); // scribe, int
+			constatus coordo_linearum_depura_elementa				= nint32(0x01303); // scribe, nullus
+			constatus coordo_linearum_index_elementi_selecti		= nint32(0x01304); // lege/scribe, int
+			constatus coordo_linearum_extensio_elementi				= nint32(0x01305); // lege/scribe, nintadl
+			// coordo textorum
+			constatus coordo_textorum_elementum						= nint32(0x01400); // *, linea
+			constatus coordo_textorum_numerus_elementorum			= nint32(0x01401); // lege, int
+			constatus coordo_textorum_permuta_elementa				= nint32(0x01402); // scribe, int
+			constatus coordo_textorum_depura_elementa				= nint32(0x01403); // scribe, nullus
+			constatus coordo_textorum_cancella						= nint32(0x01404); // scribe, nullus
+			constatus coordo_textorum_decancella					= nint32(0x01405); // scribe, nullus
+			constatus coordo_textorum_seca							= nint32(0x01406); // scribe, nullus
+			constatus coordo_textorum_exscribe						= nint32(0x01407); // scribe, nullus
+			constatus coordo_textorum_insere						= nint32(0x01408); // scribe, nullus
+			constatus coordo_textorum_dele							= nint32(0x01409); // scribe, nullus
+			constatus coordo_textorum_textum_selectum				= nint32(0x0140A); // lege, linea
+			constatus coordo_textorum_move_selectionem				= nint32(0x0140B); // scribe, (int, int)
+			constatus coordo_textorum_textum_defaltum				= nint32(0x0140C); // lege/scribe, linea
+			constatus coordo_textorum_minutus						= nint32(0x0140D); // lege/scribe, !fenestrae.minutus
+			constatus coordo_textorum_converte_ad_superis			= nint32(0x0140E); // lege/scribe, logicum
+			constatus coordo_textorum_converte_ad_infernis			= nint32(0x0140F); // lege/scribe, logicum
+			constatus coordo_textorum_filtrum						= nint32(0x01410); // lege/scribe, linea
+			constatus coordo_textorum_limita						= nint32(0x01411); // scribe, linea
+			constatus coordo_textorum_imprime						= nint32(0x01412); // scribe, linea
+			// ordo arboris
+			constatus ordo_arboris_index_radicis					= nint32(0x01500); // lege, intadl
+			constatus ordo_arboris_index_elementi_selecti			= nint32(0x01501); // lege/adde/scribe, intadl
+			constatus ordo_arboris_depura_elementa					= nint32(0x01502); // scribe, nullus
+			constatus ordo_arboris_elementum						= nint32(0x01503); // adde/remove/scribe, linea/(linea, !graphicum.pictura, !graphicum.pictura)/argumentor/*
+			constatus ordo_arboris_numerus_filiorum					= nint32(0x01504); // lege, int
+			constatus ordo_arboris_permuta_filios					= nint32(0x01505); // scribe, intadl
+			constatus ordo_arboris_index_filii						= nint32(0x01506); // lege, intadl
+			constatus ordo_arboris_index_parentis					= nint32(0x01507); // lege, intadl
+			constatus ordo_arboris_index_in_parente					= nint32(0x01508); // lege, int
+			constatus ordo_arboris_extensio_elementi				= nint32(0x01509); // lege/scribe, nintadl
+			constatus ordo_arboris_elementum_expansum				= nint32(0x0150A); // lege/scribe, logicum
+			constatus ordo_arboris_quadrum_elementi					= nint32(0x0150B); // lege, fenestrae.quadrum
+			constatus ordo_arboris_elementum_accessibile_est		= nint32(0x0150C); // lege, logicum
+			constatus ordo_arboris_elementum_parens_est				= nint32(0x0150D); // lege, logicum
+			constatus ordo_arboris_positus_rotoris					= nint32(0x0150E); // lege/scribe, int
+			constatus ordo_arboris_elementum_internum				= nint32(0x0150F); // adde/lege/remove, (!objectum_dynamicum, ingenium.iu.quadrum)/ingenium.iu.elementum/nullus
+			// tabularium
+			constatus tabularium_columna							= nint32(0x01600); // adde/remove, (!ingenium.iu.visualis_incompletus, !ingenium.iu.visualis_incompletus)/nullus
+			constatus tabularium_depura								= nint32(0x01601); // scribe, nullus
+			constatus tabularium_positus_columnae					= nint32(0x01602); // lege/scribe, int
+			constatus tabularium_numerus_columnarum					= nint32(0x01603); // lege, int
+			constatus tabularium_indentitas_columnae				= nint32(0x01604); // lege, int
+			constatus tabularium_latitudo_columnae					= nint32(0x01605); // lege/scribe, int
+			constatus tabularium_latitudo_minima_columnae			= nint32(0x01606); // lege/scribe, int
+			constatus tabularium_titulus_columnae					= nint32(0x01607); // lege/scribe, linea
+			constatus tabularium_renomina_columnam					= nint32(0x01608); // scribe, int
+			constatus tabularium_elementum							= nint32(0x01609); // adde/remove/scribe, argumentor/*
+			constatus tabularium_numerus_elementorum				= nint32(0x0160A); // lege, int
+			constatus tabularium_permuta_elementa					= nint32(0x0160B); // scribe, int
+			constatus tabularium_depura_elementa					= nint32(0x0160C); // scribe, nullus
+			constatus tabularium_index_elementi_selecti				= nint32(0x0160D); // lege/adde/scribe, int
+			constatus tabularium_extensio_elementi					= nint32(0x0160E); // lege/scribe, nintadl
+			constatus tabularium_elementum_selectum					= nint32(0x0160F); // lege/scribe, logicum
+			constatus tabularium_multiplicabilis					= nint32(0x01610); // lege/scribe, logicum
+			constatus tabularium_indentitas_columnae_pristinae		= nint32(0x01611); // lege, int
+			constatus tabularium_positus_rotoris					= nint32(0x01612); // lege/scribe, int
+			constatus tabularium_elementum_internum					= nint32(0x01613); // adde/lege/remove, (!objectum_dynamicum, ingenium.iu.quadrum)/ingenium.iu.elementum/nullus
+
+			// minutus primus
+			constatus minutus_superus_subminuti						= nint32(0x01700); // adde/remove, nullus
+			constatus minutus_superus_numerus_minutorum				= nint32(0x01701); // lege, int
+			constatus minutus_superus_permuta_minutos				= nint32(0x01702); // scribe, int
+			constatus minutus_superus_depura_minutos				= nint32(0x01703); // scribe, nullus
+			constatus minutus_superus_indentitas_minuti				= nint32(0x01704); // lege/scribe, int
+			constatus minutus_superus_subminutus_minuti				= nint32(0x01705); // lege/scribe, !fenestrae.minutus
+			constatus minutus_superus_titulus_minuti				= nint32(0x01706); // lege/scribe, linea
+			constatus minutus_superus_minutus_abilis_est			= nint32(0x01707); // lege/scribe, logicum
+			constatus minutus_superus_reperi_minutum				= nint32(0x01708); // lege, int
+			constatus minutus_superus_reperi_elementum_minuti		= nint32(0x01709); // lege, !fenestrae.celula_minuti
+			constatus minutus_superus_pone_dextre					= nint32(0x0170A); // scribe, logicum
+
+			// rotor verticalis
+			constatus rotor_verticalis_dorsum						= nint32(0x01800); // lege/scribe, (int, int)
+			constatus rotor_verticalis_positus						= nint32(0x01801); // lege/scribe, int
+			constatus rotor_verticalis_pagina						= nint32(0x01802); // lege/scribe, int
+			constatus rotor_verticalis_linea						= nint32(0x01803); // lege/scribe, int
+			// rotor horizontalis
+			constatus rotor_horizontalis_dorsum						= nint32(0x01900); // lege/scribe, (int, int)
+			constatus rotor_horizontalis_positus					= nint32(0x01901); // lege/scribe, int
+			constatus rotor_horizontalis_pagina						= nint32(0x01902); // lege/scribe, int
+			constatus rotor_horizontalis_linea						= nint32(0x01903); // lege/scribe, int
+			// tractor verticalis
+			constatus tractor_verticalis_dorsum						= nint32(0x01A00); // lege/scribe, (int, int)
+			constatus tractor_verticalis_positus					= nint32(0x01A01); // lege/scribe, int
+			constatus tractor_verticalis_gradus						= nint32(0x01A02); // lege/scribe, int
+			// tractor horizontalis
+			constatus tractor_horizontalis_dorsum					= nint32(0x01B00); // lege/scribe, (int, int)
+			constatus tractor_horizontalis_positus					= nint32(0x01B01); // lege/scribe, int
+			constatus tractor_horizontalis_gradus					= nint32(0x01B02); // lege/scribe, int
+
+			// pro extensione
+			constatus index_prima_extensionis						= nint32(0x10000); // *, *
+		}
+	}
+}

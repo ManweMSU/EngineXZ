@@ -72,6 +72,8 @@ cp -r shellex_macos/_build/macosx_${ARCH}_release/xxspex.mdimporter xx_release/_
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/video.xo                -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/video.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/integri_largi.xo        -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/integri_largi.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/cryptographia_nativa.xo -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/cryptographia_nativa.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/ingenium_iu.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/ingenium_iu.xo
+./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xv_release/_build/com/ingenium_iu_ext.xo      -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/ingenium_iu_ext.xo
 
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.ru.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/errores.ru.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi xx_release/_build/com/errores.en.xo          -Nto mac-${ARCH} xx_release/_build/macosx_${ARCH}/XX.app/xxcl/errores.en.xo

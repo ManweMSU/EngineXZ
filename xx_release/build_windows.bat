@@ -71,6 +71,8 @@ xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\audio.xo          
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\video.xo                -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\video.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\integri_largi.xo        -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\integri_largi.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\cryptographia_nativa.xo -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\cryptographia_nativa.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\ingenium_iu.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\ingenium_iu.xo
+xv_release\_build\windows_%XVC_ARCH%\xi xv_release\_build\com\ingenium_iu_ext.xo      -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\ingenium_iu_ext.xo
 
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.ru.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.ru.xo
 xv_release\_build\windows_%XVC_ARCH%\xi xx_release\_build\com\errores.en.xo          -Nto win-%ARCH% xx_release\_build\windows_%ARCH%\xxcl\errores.en.xo

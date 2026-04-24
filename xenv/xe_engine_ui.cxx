@@ -1267,7 +1267,11 @@ namespace Engine
 						else throw Exception();
 					} else if (ss == 0x08) {
 						auto data = reinterpret_cast<int *>(data_ptr);
-						if (io_mode == io_mode_write) c->SetSelection(Point(data[0], data[1]), Point(data[2], data[3]));
+						if (io_mode == io_mode_read) {
+							auto sp = c->GetSelectionPosition();
+							auto cp = c->GetCaretPosition();
+							data[0] = sp.x; data[1] = sp.y; data[2] = cp.x; data[3] = cp.y;
+						} else if (io_mode == io_mode_write) c->SetSelection(Point(data[0], data[1]), Point(data[2], data[3]));
 						else throw Exception();
 					} else if (ss == 0x09) {
 						auto & data = *reinterpret_cast< SafePointer<Object> * >(data_ptr);
