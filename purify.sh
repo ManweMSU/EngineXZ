@@ -1,5 +1,6 @@
 cd ~/Documents/GitHub/EngineXZ
 rm -rf xcon/_build
+rm -rf x_uicc/_build
 rm -rf xv_mm/_build
 rm -rf xv_sl/_build
 rm -rf xx_xx/_build

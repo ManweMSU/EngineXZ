@@ -1,0 +1,3 @@
+mkdir $EXROOT$/xuicc.loc
+estrtab locale/en.txt -Sfo bin $EXROOT$/xuicc.loc/en.ecst
+estrtab locale/ru.txt -Sfo bin $EXROOT$/xuicc.loc/ru.ecst

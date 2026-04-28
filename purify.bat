@@ -1,5 +1,6 @@
 @echo off
 rmdir /S /Q xcon\_build
+rmdir /S /Q x_uicc\_build
 rmdir /S /Q xv_mm\_build
 rmdir /S /Q xv_sl\_build
 rmdir /S /Q xx_xx\_build

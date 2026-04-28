@@ -1,0 +1,30 @@
+﻿UseVersionDefines = true
+"-Debug" {
+	Attachments {
+		A {
+			From = "xuicc.ini"
+			To = "xuicc.ini"
+		}
+		B {
+			From = "store_d.ecs"
+			To = "store.ecs"
+		}
+	}
+	CompileList {
+		D = "debug.ertbs"
+	}
+}
+CompileList {
+	A = "xuicc.cxx"
+	B = "uiml.cxx"
+	C = "../xexec/xx_com.cxx"
+}
+VersionInformation {
+	ApplicationIdentifier = "XIUCC"
+	ApplicationName = "Engine X UIML Compilator"
+	CompanyIdentifier = "EngineSoftware"
+	CompanyName = "Engine Software"
+	Copyright = "© Engine Software. 2026"
+	InternalName = "xuicc"
+	Version = "1.1.0.32"
+}

@@ -6,6 +6,7 @@ ertbuild xv_sl\xvsl.ertproj -Nar %ARCH%
 ertbuild xv_mm\xvm.ertproj -Nar %ARCH%
 ertbuild xi_tool\xi.ertproj -Nar %ARCH%
 ertbuild xi_dasm\xda.ertproj -Nar %ARCH%
+ertbuild x_uicc\xuicc.ertproj -Nar %ARCH%
 mkdir xv_release\_build
 del /S /Q xv_release\_build\windows_%ARCH%\*
 mkdir xv_release\_build\windows_%ARCH%
@@ -14,22 +15,26 @@ mkdir xv_release\_build\comw
 copy /B xv_mm\_build\windows_%ARCH%_release\xvm.exe xv_release\_build\windows_%ARCH%\xvm.exe
 mkdir xv_release\_build\windows_%ARCH%\xvcl
 mkdir xv_release\_build\windows_%ARCH%\xwcl
+mkdir xv_release\_build\windows_%ARCH%\xuil
 mkdir xv_release\_build\windows_%ARCH%\vscx
 mkdir xv_release\_build\windows_%ARCH%\xv.loc
 mkdir xv_release\_build\windows_%ARCH%\xw.loc
 mkdir xv_release\_build\windows_%ARCH%\xi.loc
 mkdir xv_release\_build\windows_%ARCH%\xda.loc
+mkdir xv_release\_build\windows_%ARCH%\xuicc.loc
 copy /B xv_com\xv.ini xv_release\_build\windows_%ARCH%\xv.ini
 copy /B xv_com\xe.ini xv_release\_build\windows_%ARCH%\xe.ini
 copy /B xw_dec\xw.ini xv_release\_build\windows_%ARCH%\xw.ini
 copy /B xi_tool\xi.ini xv_release\_build\windows_%ARCH%\xi.ini
 copy /B xi_dasm\xda.ini xv_release\_build\windows_%ARCH%\xda.ini
+copy /B x_uicc\xuicc.ini xv_release\_build\windows_%ARCH%\xuicc.ini
 copy /B xv_com\_build\windows_%ARCH%_release\xv.exe xv_release\_build\windows_%ARCH%\xv.exe
 copy /B xw_dec\_build\windows_%ARCH%_release\xw.exe xv_release\_build\windows_%ARCH%\xw.exe
 copy /B xw_pc\_build\windows_%ARCH%_release\xwpc.exe xv_release\_build\windows_%ARCH%\xwpc.exe
 copy /B xv_sl\_build\windows_%ARCH%_release\xvsl.exe xv_release\_build\windows_%ARCH%\xvsl.exe
 copy /B xi_tool\_build\windows_%ARCH%_release\xi.exe xv_release\_build\windows_%ARCH%\xi.exe
 copy /B xi_dasm\_build\windows_%ARCH%_release\xda.exe xv_release\_build\windows_%ARCH%\xda.exe
+copy /B x_uicc\_build\windows_%ARCH%_release\xuicc.exe xv_release\_build\windows_%ARCH%\xuicc.exe
 copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vscx\xv-vscx.vsix
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\canonicalis.xv         	-NPVom  xv_release\_build\com\canonicalis.xo         	xv_lib\canonicalis.xvm
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\limae.xv               	-NVoml  xv_release\_build\com\limae.xo               	xv_lib\limae.xvm               	xv_release\_build\com
@@ -84,3 +89,5 @@ estrtab xi_tool\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xi.loc\r
 estrtab xi_tool\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xi.loc\en.ecst
 estrtab xi_dasm\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xda.loc\ru.ecst
 estrtab xi_dasm\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xda.loc\en.ecst
+estrtab x_uicc\locale\ru.txt -Nfo bin xv_release\_build\windows_%ARCH%\xuicc.loc\ru.ecst
+estrtab x_uicc\locale\en.txt -Nfo bin xv_release\_build\windows_%ARCH%\xuicc.loc\en.ecst
