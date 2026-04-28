@@ -18,9 +18,8 @@ CompileList {
 	AAAAAB = "common/xc_channel.cxx"
 	AAAAAC = "xc_buffer.cxx"
 	AAAAAD = "xc_io.cxx"
-	AAAAAE = "xc_window.cxx"
-	AAAAAF = "xc_window.egsl"
-	AAAAAG = "xc.cxx"
+	AAAAAE = "xc_window.ertbs"
+	AAAAAF = "xc.cxx"
 }
 Resources {
 	COM = "@com_la.ecst"

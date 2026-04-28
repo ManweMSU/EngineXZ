@@ -1,4 +1,5 @@
 ﻿#include "xc_window.h"
+#include "_build/shaders/xc_window.h"
 
 using namespace Engine::Windows;
 using namespace Engine::Graphics;
@@ -139,13 +140,6 @@ namespace Engine
 				_line_info(void) : ranges(8), offsets(8), dirty(true) {}
 				void Invalidate(void) noexcept { dirty = true; }
 			};
-			struct _render_state
-			{
-				int vp_width, vp_height;
-				int rect_left, rect_top, rect_right, rect_bottom;
-				int sel_left, sel_top, sel_right, sel_bottom;
-				int cell_x, cell_y;
-			};
 			class _view_control : public Control
 			{
 				friend class WindowCallback;
@@ -187,9 +181,9 @@ namespace Engine
 					auto device = _callback._device.Inner();
 					SafePointer<Streaming::Stream> stream = Assembly::QueryResource(L"SL");
 					SafePointer<IShaderLibrary> library = device->LoadShaderLibrary(stream);
-					SafePointer<IShader> common = library->CreateShader(L"vertex_singulus");
-					SafePointer<IShader> foreground = library->CreateShader(L"punctum_primum");
-					SafePointer<IShader> background = library->CreateShader(L"punctum_secundum");
+					SafePointer<IShader> common = library->CreateShader(vertex_singulus::name);
+					SafePointer<IShader> foreground = library->CreateShader(punctum_primum::name);
+					SafePointer<IShader> background = library->CreateShader(punctum_secundum::name);
 					PipelineStateDesc desc = DefaultPipelineStateDesc(common, foreground, PixelFormat::B8G8R8A8_unorm);
 					desc.RenderTarget[0].Flags = RenderTargetFlagBlendingEnabled;
 					desc.RenderTarget[0].BaseFactorAlpha = BlendingFactor::InvertedOverAlpha;
@@ -310,7 +304,7 @@ namespace Engine
 					ctx->EndCurrentPass();
 					rtv = CreateRenderTargetView(_callback._primary_surface, TextureLoadAction::Load);
 					ctx->BeginRenderingPass(1, &rtv, 0);
-					_render_state rs;
+					State rs;
 					rs.vp_width = _callback._primary_surface->GetWidth();
 					rs.vp_height = _callback._primary_surface->GetHeight();
 					rs.rect_left = at.Left;
@@ -324,13 +318,13 @@ namespace Engine
 					rs.cell_x = _callback._cell.x;
 					rs.cell_y = _callback._cell.y;
 					ctx->SetViewport(0.0f, 0.0f, _callback._primary_surface->GetWidth(), _callback._primary_surface->GetHeight(), 0.0f, 1.0f);
-					ctx->SetVertexShaderConstant(0, &rs, sizeof(rs));
-					ctx->SetPixelShaderConstant(0, &rs, sizeof(rs));
-					ctx->SetPixelShaderResource(0, _background);
+					ctx->SetVertexShaderConstant(vertex_singulus::selector_state, &rs, sizeof(rs));
+					ctx->SetPixelShaderConstant(punctum_secundum::selector_state, &rs, sizeof(rs));
+					ctx->SetPixelShaderResource(punctum_secundum::selector_map, _background);
 					ctx->SetRenderingPipelineState(_background_state);
 					ctx->DrawPrimitives(6, 0);
-					ctx->SetPixelShaderResource(0, _foreground);
-					ctx->SetPixelShaderResource(1, _preprint);
+					ctx->SetPixelShaderResource(punctum_primum::selector_map, _foreground);
+					ctx->SetPixelShaderResource(punctum_primum::selector_text, _preprint);
 					ctx->SetRenderingPipelineState(_foreground_state);
 					ctx->DrawPrimitives(6, 0);
 					ctx->EndCurrentPass();

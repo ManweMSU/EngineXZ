@@ -1,0 +1,6 @@
+mkdir $PROJROOT$/_build/shaders
+xv $PROJROOT$/xc_window.xw -NVo $PROJROOT$/_build/shaders/xc_window.xwo
+xw $PROJROOT$/_build/shaders/xc_window.xwo -NO $PROJROOT$/_build/shaders/xc_window -chh c:humane g:compacte -ls egsu maxime
+xwpc $PROJROOT$/_build/shaders/xc_window.egsu -Noa $OBJROOT$/xc_window.egso $OBJROOT$/xc_window.egso.log
+RESOURCE $OBJROOT$/xc_window.egso SL
+COMPILE $PROJROOT$/xc_window.cxx

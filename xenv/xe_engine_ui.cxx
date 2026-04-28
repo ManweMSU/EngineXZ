@@ -895,8 +895,8 @@ namespace Engine
 							if (index < 0) act.Append(WrapWObject(accel));
 							else act.Insert(WrapWObject(accel), index);
 						} else if (io_mode == io_mode_remove) act.Remove(index);
-						else if (io_mode == io_mode_read) accel = WrapWObject(act[index]);
-						else if (io_mode == io_mode_write) act[index] = WrapWObject(accel);
+						else if (io_mode == io_mode_read) accel = WrapWObject(act[int(index)]);
+						else if (io_mode == io_mode_write) act[int(index)] = WrapWObject(accel);
 						else throw Exception();
 					} else if (ss == 1) {
 						auto & act = c->GetAcceleratorTable();
@@ -1901,7 +1901,7 @@ namespace Engine
 						if (io_mode == io_mode_read) *reinterpret_cast<int *>(data_ptr) = c->GetColumns().Length();
 						else throw Exception();
 					} else if (ss == 0x04) {
-						if (io_mode == io_mode_read) *reinterpret_cast<int *>(data_ptr) = c->GetColumns()[index];
+						if (io_mode == io_mode_read) *reinterpret_cast<int *>(data_ptr) = c->GetColumns()[int(index)];
 						else throw Exception();
 					} else if (ss == 0x05) {
 						auto & data = *reinterpret_cast<int *>(data_ptr);

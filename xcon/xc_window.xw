@@ -1,0 +1,47 @@
+﻿structura State {
+	int vp_width;
+	int vp_height;
+	int rect_left;
+	int rect_top;
+	int rect_right;
+	int rect_bottom;
+	int sel_left;
+	int sel_top;
+	int sel_right;
+	int sel_bottom;
+	int cell_x;
+	int cell_y;
+}
+
+functio vertex vertex_singulus(nint id : vertex, State state : constati, ~frac2 vert : interpolire_lineariter[0], ~frac4 position : positus) {
+	si (id == 0) vert = frac2(state.rect_left, state.rect_top);
+	alioqui si (id == 1 || id == 3) vert = frac2(state.rect_right, state.rect_top);
+	alioqui si (id == 2 || id == 4) vert = frac2(state.rect_left, state.rect_bottom);
+	alioqui vert = frac2(state.rect_right, state.rect_bottom);
+	position.x = (2.0 * vert.x - state.vp_width) / frac(state.vp_width);
+	position.y = -(2.0 * vert.y - state.vp_height) / frac(state.vp_height);
+	position.z = 0.0;
+	position.w = 1.0;
+}
+functio punctum punctum_primum(frac2 vert : interpolire_lineariter[0], State state : constati[0], textura[frac] map : textura[0], textura[frac] text : textura, ~frac4 color : color) {
+	int2 idx = int2((vert.x - state.rect_left) / state.cell_x, (vert.y - state.rect_top) / state.cell_y);
+	logicum selected = idx.x >= state.sel_left && idx.x < state.sel_right && idx.y >= state.sel_top && idx.y < state.sel_bottom;
+	frac4 clr = map[idx, 0];
+	frac4 mask = text[int2(vert.x - state.rect_left, vert.y - state.rect_top), 0];
+	color = clr * mask;
+	color.rgb *= clr.a;
+	si (selected) {
+		int dist_l = (vert.x - state.rect_left) - state.sel_left * state.cell_x;
+		int dist_r = state.sel_right * state.cell_x - (vert.x - state.rect_left);
+		int dist_t = (vert.y - state.rect_top) - state.sel_top * state.cell_y;
+		int dist_b = state.sel_bottom * state.cell_y - (vert.y - state.rect_top);
+		int dist = math.min(math.min(dist_l, dist_r), math.min(dist_t, dist_b));
+		si (dist == 0 || dist == 2 || dist == 4) color = frac4(1.0, 1.0, 1.0, 1.0);
+		alioqui si (dist == 1 || dist == 3 || dist == 5) color = frac4(0.0, 0.0, 0.0, 1.0);
+	}
+}
+functio punctum punctum_secundum(frac2 vert : interpolire_lineariter[0], State state : constati[0], textura[frac] map : textura[0], ~frac4 color : color) {
+	int2 idx = int2((vert.x - state.rect_left) / state.cell_x, (vert.y - state.rect_top) / state.cell_y);
+	color = map[idx, 0];
+	color.rgb *= color.a;
+}
