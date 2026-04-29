@@ -2324,6 +2324,7 @@ namespace Engine
 					} else throw Exception();
 				} else throw Exception();
 				XE_TRY_OUTRO(0)
+				return 0;
 			}
 			virtual uintptr api_level_1(Object * obj, uint32 sel, uintptr a0, uintptr a1, uintptr a2, uintptr a3, uintptr a4, ErrorContext & ectx) noexcept override
 			{
@@ -2493,6 +2494,7 @@ namespace Engine
 					} else throw Exception();
 				} else throw Exception();
 				XE_TRY_OUTRO(0)
+				return 0;
 			}
 			virtual uintptr api_level_2(Object * obj, uint32 sel, uintptr a0, uintptr a1, uintptr a2, uintptr a3, uintptr a4, ErrorContext & ectx) noexcept override
 			{
@@ -2656,6 +2658,7 @@ namespace Engine
 					return 0;
 				} else throw Exception();
 				XE_TRY_OUTRO(0)
+				return 0;
 			}
 			virtual bool RunDropDown(UI::Controls::ToolButtonPart * sender, Point top_left) override
 			{

@@ -222,6 +222,7 @@ namespace Engine
 				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
 				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
 				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				return 0;
 			}
 			virtual string ReadLine(ErrorContext & ectx) noexcept override
 			{
@@ -232,6 +233,7 @@ namespace Engine
 				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
 				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
 				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				return L"";
 			}
 			virtual string ReadAll(ErrorContext & ectx) noexcept override
 			{
@@ -242,6 +244,7 @@ namespace Engine
 				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
 				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
 				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				return L"";
 			}
 			virtual bool IsAtEOS(void) noexcept override { return _rdr->EofReached(); }
 			virtual int GetEncoding(void) noexcept override { return int(_rdr->GetEncoding()); }

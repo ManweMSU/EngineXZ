@@ -1254,6 +1254,7 @@ namespace Engine
 				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
 				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
 				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				return 0;
 			}
 			static SafePointer<DataBlock> _stream_read_0(XStream * from, ErrorContext & ectx)
 			{
@@ -1266,6 +1267,7 @@ namespace Engine
 				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
 				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
 				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				return 0;
 			}
 			static void _stream_write(XStream * to, const DataBlock * data, ErrorContext & ectx)
 			{

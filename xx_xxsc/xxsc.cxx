@@ -10,6 +10,9 @@ constexpr const widechar * xx_path = L"\\xx\\xxf.exe";
 #ifdef ENGINE_MACOSX
 constexpr const widechar * xx_path = L"/../../XX.app/Contents/MacOS/xxf";
 #endif
+#ifdef ENGINE_LINUX
+constexpr const widechar * xx_path = L"/xx/xxf";
+#endif
 
 class Callback : public IApplicationCallback
 {
