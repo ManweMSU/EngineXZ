@@ -40,6 +40,11 @@ catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; }
 #define REQUEST_ATTRIBUTE_RECEIVE	(REQUEST_ATTRIBUTE_RECEIVE_BIT	| REQUEST_ATTRIBUTE_POLL_READ)
 #define REQUEST_ATTRIBUTE_SEND		(REQUEST_ATTRIBUTE_SEND_BIT		| REQUEST_ATTRIBUTE_POLL_WRITE)
 
+#ifdef ENGINE_LINUX
+#define EAI_PROTOCOL EAI_AGAIN
+#define EAI_BADHINTS EAI_BADFLAGS
+#endif
+
 namespace Engine
 {
 	namespace XE
@@ -106,7 +111,9 @@ namespace Engine
 					auto & addr = *reinterpret_cast<NetworkAddressLocal *>(address);
 					dest.SetLength(sizeof(sockaddr_un));
 					auto & sa = *reinterpret_cast<sockaddr_un *>(dest.GetBuffer());
+					#ifdef ENGINE_MACOSX
 					sa.sun_len = sizeof(sockaddr_un);
+					#endif
 					sa.sun_family = PF_LOCAL;
 					ZeroMemory(&sa.sun_path, sizeof(sa.sun_path));
 					string path;
@@ -119,7 +126,9 @@ namespace Engine
 					auto & addr = *reinterpret_cast<NetworkAddressIPv4 *>(address);
 					dest.SetLength(sizeof(sockaddr_in));
 					auto & sa = *reinterpret_cast<sockaddr_in *>(dest.GetBuffer());
+					#ifdef ENGINE_MACOSX
 					sa.sin_len = sizeof(sockaddr_in);
+					#endif
 					sa.sin_family = AF_INET;
 					sa.sin_port = Network::InverseEndianess(addr.Port());
 					MemoryCopy(&sa.sin_addr, &addr.IP(), 4);
@@ -128,7 +137,9 @@ namespace Engine
 					auto & addr = *reinterpret_cast<NetworkAddressIPv6 *>(address);
 					dest.SetLength(sizeof(sockaddr_in6));
 					auto & sa = *reinterpret_cast<sockaddr_in6 *>(dest.GetBuffer());
+					#ifdef ENGINE_MACOSX
 					sa.sin6_len = sizeof(sockaddr_in6);
+					#endif
 					sa.sin6_family = AF_INET6;
 					sa.sin6_port = Network::InverseEndianess(addr.Port());
 					sa.sin6_flowinfo = 0;

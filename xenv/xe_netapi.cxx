@@ -5,6 +5,7 @@
 #include "xe_netapi_macosx.h"
 #include "xe_netapi_windows.h"
 #include "xe_netapi_schannel.h"
+#include "xe_netapi_ossl.h"
 
 #define XE_TRY_INTRO try {
 #define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \

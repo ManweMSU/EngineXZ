@@ -787,10 +787,10 @@ namespace Engine
 			{
 				if (ID == 100) {
 					_fullscreen = !_fullscreen;
-					#ifdef ENGINE_WINDOWS
+					#if defined(ENGINE_WINDOWS)
 					_recreate();
 					#endif
-					#ifdef ENGINE_MACOSX
+					#if defined(ENGINE_MACOSX) || defined(ENGINE_LINUX)
 					if (_fullscreen) _layer->SwitchToFullscreen();
 					else _layer->SwitchToWindow();
 					_update_cursor();
