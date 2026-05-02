@@ -31,6 +31,26 @@ namespace Engine
 			else SetXEError(ectx, 0x8, 0x1);
 		}
 
+		class NWKeychain : public Object
+		{
+			SecKeychainRef _keychain;
+		public:
+			NWKeychain(void) : _keychain(0)
+			{
+				char path[80], keychain_password[4];
+				int ordinal = 0;
+				keychain_password[0] = keychain_password[1] = keychain_password[2] = keychain_password[3] = '0';
+				while (true) {
+					sprintf(path, "/tmp/xe_keychain_%i", ordinal++);
+					auto status = SecKeychainCreate(path, 4, keychain_password, 0, 0, &_keychain);
+					if (status == errSecSuccess) return;
+					else if (status == errSecDuplicateKeychain) continue;
+					else throw 0x1;
+				}
+			}
+			virtual ~NWKeychain(void) override { if (_keychain) { SecKeychainDelete(_keychain); CFRelease(_keychain); } }
+			SecKeychainRef GetKeychain(void) const noexcept { return _keychain; }
+		};
 		class NWNetworkChannel : public INetworkChannel
 		{
 			class ConnectDesc : public Object
@@ -120,11 +140,13 @@ namespace Engine
 				ErrorContext * _error;
 				int * _sent;
 				SafePointer<IDispatchTask> _handler;
+				SafePointer<NWKeychain> _keychain;
 			public:
-				SendDesc(nw_connection_t connection, ErrorContext * error, int * sent, IDispatchTask * hdlr) : _connection(connection), _error(error), _sent(sent)
+				SendDesc(nw_connection_t connection, ErrorContext * error, int * sent, IDispatchTask * hdlr, NWKeychain * keychain) : _connection(connection), _error(error), _sent(sent)
 				{
 					nw_retain(_connection);
 					_handler.SetRetain(hdlr);
+					_keychain.SetRetain(keychain);
 				}
 				virtual ~SendDesc(void) override { nw_release(_connection); }
 				void Seal(int sent, ErrorContext error) noexcept
@@ -141,11 +163,13 @@ namespace Engine
 				ErrorContext * _error;
 				SafePointer<DataBlock> * _data;
 				SafePointer<IDispatchTask> _handler;
+				SafePointer<NWKeychain> _keychain;
 			public:
-				ReceiveDesc(nw_connection_t connection, ErrorContext * error, SafePointer<DataBlock> * data, IDispatchTask * hdlr) : _connection(connection), _error(error), _data(data)
+				ReceiveDesc(nw_connection_t connection, ErrorContext * error, SafePointer<DataBlock> * data, IDispatchTask * hdlr, NWKeychain * keychain) : _connection(connection), _error(error), _data(data)
 				{
 					nw_retain(_connection);
 					_handler.SetRetain(hdlr);
+					_keychain.SetRetain(keychain);
 				}
 				virtual ~ReceiveDesc(void) override { nw_release(_connection); }
 				void Seal(DataBlock * data, ErrorContext error) noexcept
@@ -158,9 +182,10 @@ namespace Engine
 			};
 		private:
 			nw_connection_t _connection;
+			SafePointer<NWKeychain> _keychain;
 		public:
 			NWNetworkChannel(void) : _connection(0) {}
-			NWNetworkChannel(nw_connection_t connection) : _connection(connection) { nw_retain(_connection); }
+			NWNetworkChannel(nw_connection_t connection, NWKeychain * keychain) : _connection(connection) { nw_retain(_connection); _keychain.SetRetain(keychain); }
 			virtual ~NWNetworkChannel(void) noexcept
 			{
 				if (_connection) {
@@ -239,7 +264,7 @@ namespace Engine
 					return;
 				}
 				XE_TRY_INTRO
-				SafePointer<SendDesc> desc = new SendDesc(_connection, error, sent, hdlr);
+				SafePointer<SendDesc> desc = new SendDesc(_connection, error, sent, hdlr, _keychain);
 				int volume = data->Length();
 				auto data_ref = dispatch_data_create(data->GetBuffer(), data->Length(), dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), DISPATCH_DATA_DESTRUCTOR_DEFAULT);
 				if (!data_ref) throw OutOfMemoryException();
@@ -268,7 +293,7 @@ namespace Engine
 					if (hdlr) hdlr->DoTask(0);
 					return;
 				}
-				SafePointer<ReceiveDesc> desc = new ReceiveDesc(_connection, error, data, hdlr);
+				SafePointer<ReceiveDesc> desc = new ReceiveDesc(_connection, error, data, hdlr, _keychain);
 				nw_connection_receive(_connection, length, length, ^(dispatch_data_t content, nw_content_context_t context, bool is_complete, nw_error_t error) {
 					ErrorContext ectx;
 					try {
@@ -348,12 +373,13 @@ namespace Engine
 				nw_connection_t _connection;
 				SafePointer<AcceptDesc> _desc;
 				SafePointer<Semaphore> _exec;
+				SafePointer<NWKeychain> _keychain;
 				NetworkAddressFactory & _factory;
 			private:
 				void _create_instances(INetworkChannel ** channel, NetworkAddress ** address, ErrorContext & ectx) noexcept
 				{
 					XE_TRY_INTRO
-					*channel = new NWNetworkChannel(_connection);
+					*channel = new NWNetworkChannel(_connection, _keychain);
 					auto endpoint = nw_connection_copy_endpoint(_connection);
 					if (!endpoint) throw InvalidStateException();
 					auto sa = nw_endpoint_get_address(endpoint);
@@ -364,11 +390,12 @@ namespace Engine
 					XE_TRY_OUTRO()
 				}
 			public:
-				AcceptTask(nw_connection_t connection, AcceptDesc * desc, Semaphore * sync, NetworkAddressFactory & factory) : _connection(connection), _factory(factory)
+				AcceptTask(nw_connection_t connection, AcceptDesc * desc, Semaphore * sync, NWKeychain * keychain, NetworkAddressFactory & factory) : _connection(connection), _factory(factory)
 				{
 					nw_retain(_connection);
 					_desc.SetRetain(desc);
 					_exec.SetRetain(sync);
+					_keychain.SetRetain(keychain);
 				}
 				virtual ~AcceptTask(void) override { nw_release(_connection); }
 				void Seal(void) noexcept
@@ -398,6 +425,7 @@ namespace Engine
 				nw_listener_t _listener;
 				SafePointer<Semaphore> _access_sync;
 				SafePointer<Semaphore> _execute_sync;
+				SafePointer<NWKeychain> _keychain;
 				NetworkAddressFactory & _factory;
 				Volumes::Queue< SafePointer<AcceptDesc> > _queue;
 			private:
@@ -415,11 +443,12 @@ namespace Engine
 					}
 				}
 			public:
-				AcceptQueue(nw_listener_t listener, NetworkAddressFactory & factory) : _listener(listener), _factory(factory)
+				AcceptQueue(nw_listener_t listener, NetworkAddressFactory & factory, NWKeychain * keychain) : _listener(listener), _factory(factory)
 				{
 					_access_sync = CreateSemaphore(1);
 					_execute_sync = CreateSemaphore(1);
 					if (!_access_sync || !_execute_sync) throw OutOfMemoryException();
+					_keychain.SetRetain(keychain);
 				}
 				virtual ~AcceptQueue(void) override
 				{
@@ -455,7 +484,7 @@ namespace Engine
 					_access_sync->Open();
 					if (desc) {
 						SafePointer<AcceptTask> task;
-						try { task = new AcceptTask(connection, desc, _execute_sync, _factory); } catch (...) {
+						try { task = new AcceptTask(connection, desc, _execute_sync, _keychain, _factory); } catch (...) {
 							ErrorContext ectx;
 							SetXEError(ectx, 2, 0);
 							nw_connection_cancel(connection);
@@ -511,8 +540,10 @@ namespace Engine
 			nw_listener_t _listener;
 			NetworkAddressFactory & _factory;
 			SafePointer<AcceptQueue> _queue;
+			SafePointer<NWKeychain> _keychain;
+			typedef const void * chandle;
 		public:
-			NWNetworkListener(NetworkAddressFactory & factory) : _listener(0), _factory(factory) {}
+			NWNetworkListener(NetworkAddressFactory & factory) : _listener(0), _factory(factory), _keychain(0) {}
 			virtual ~NWNetworkListener(void) noexcept
 			{
 				if (_queue) _queue->Detach();
@@ -542,13 +573,14 @@ namespace Engine
 				nw_endpoint_t endpoint = 0;
 				nw_parameters_t params = 0;
 				try {
+					if (!_keychain) _keychain = new NWKeychain;
 					ind_data_ref = CFDataCreateWithBytesNoCopy(0, idesc.Data->GetBuffer(), idesc.Data->Length(), kCFAllocatorNull);
 					if (!ind_data_ref) throw OutOfMemoryException();
 					password_ref = CFStringCreateWithCString(0, reinterpret_cast<char *>(password_utf8->GetBuffer()), kCFStringEncodingUTF8);
 					if (!password_ref) throw OutOfMemoryException();
-					const void * key_0 = kSecImportExportPassphrase;
-					const void * value_0 = password_ref;
-					ind_data_props_ref = CFDictionaryCreate(0, &key_0, &value_0, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+					chandle key_0[2] = { kSecImportExportPassphrase, kSecImportExportKeychain };
+					chandle value_0[2] = { password_ref, _keychain->GetKeychain() };
+					ind_data_props_ref = CFDictionaryCreate(0, key_0, value_0, 2, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 					if (!ind_data_props_ref) throw OutOfMemoryException();
 					auto status = SecPKCS12Import(ind_data_ref, ind_data_props_ref, &ind_array_ref);
 					CFRelease(ind_data_ref);
@@ -589,7 +621,7 @@ namespace Engine
 					nw_release(params);
 					params = 0;
 					if (!_listener) throw OutOfMemoryException();
-					try { queue = new AcceptQueue(_listener, _factory); } catch (...) { nw_release(_listener); throw; }
+					try { queue = new AcceptQueue(_listener, _factory, _keychain); } catch (...) { nw_release(_listener); throw; }
 					nw_listener_set_queue(_listener, dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
 					nw_listener_set_new_connection_handler(_listener, ^(nw_connection_t connection) {
 						queue->Perform(connection);

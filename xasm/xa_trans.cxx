@@ -137,7 +137,36 @@ namespace Engine
 		};
 		CPUFeatureStatus CheckThisMachineCPUFeature(CPUFeature feature)
 		{
-			// TODO: IMPLEMENT
+			const char * query;
+			#ifdef ENGINE_ARM
+				if (feature == CPUFeature::CPUID) return CPUFeatureStatus::Unavailable;
+				else if (feature == CPUFeature::RNG) return CPUFeatureStatus::Unavailable;
+				else if (feature == CPUFeature::AES) query = "aes";
+				else if (feature == CPUFeature::SHA256) query = "sha2";
+				else if (feature == CPUFeature::SHA256SW) return CPUFeatureStatus::Present;
+				else if (feature == CPUFeature::SHA512) query = "sha512";
+				else if (feature == CPUFeature::SHA512SW) return CPUFeatureStatus::Present;
+				else return CPUFeatureStatus::Unavailable;
+			#else
+				if (feature == CPUFeature::CPUID) return CPUFeatureStatus::Present;
+				else if (feature == CPUFeature::RNG) query = "rdrand";
+				else if (feature == CPUFeature::AES) query = "aes";
+				else if (feature == CPUFeature::SHA256) query = "sha256";
+				else if (feature == CPUFeature::SHA256SW) query = "pni";
+				else if (feature == CPUFeature::SHA512) query = "sha512";
+				else if (feature == CPUFeature::SHA512SW) query = "pni";
+				else return CPUFeatureStatus::Unavailable;
+			#endif
+			SafePointer<Streaming::Stream> file = new Streaming::FileStream(L"/proc/cpuinfo", Streaming::AccessRead, Streaming::OpenExisting);
+			SafePointer<Streaming::TextReader> reader = new Streaming::TextReader(file, Encoding::ANSI);
+			while (!reader->EofReached()) {
+				auto line = reader->ReadLine();
+				if (line.Fragment(0, 8) == L"Features") {
+					auto colon = line.FindFirst(L':');
+					line = line.Fragment(colon, -1);
+					return line.FindFirst(query) >= 0 ? CPUFeatureStatus::Present : CPUFeatureStatus::Unavailable;
+				}
+			}
 			return CPUFeatureStatus::Unknown;
 		}
 		#endif

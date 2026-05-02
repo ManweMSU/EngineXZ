@@ -24,22 +24,6 @@ catch (Engine::IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_su
 catch (Engine::Exception &) { ectx.error_code = 1; ectx.error_subcode = 0; return DRV; } \
 catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; }
 
-#define REQUEST_ATTRIBUTE_POLL_READ		0x001
-#define REQUEST_ATTRIBUTE_POLL_WRITE	0x002
-#define REQUEST_ATTRIBUTE_CONNECT_BIT	0x010
-#define REQUEST_ATTRIBUTE_ACCEPT_BIT	0x020
-#define REQUEST_ATTRIBUTE_RECEIVE_BIT	0x040
-#define REQUEST_ATTRIBUTE_SEND_BIT		0x080
-#define REQUEST_ATTRIBUTE_REMOVE		0x100
-
-#define REQUEST_ATTRIBUTE_POLL_MASK		0x00F
-#define REQUEST_ATTRIBUTE_ACTION_MASK	0x0F0
-
-#define REQUEST_ATTRIBUTE_CONNECT	(REQUEST_ATTRIBUTE_CONNECT_BIT	| REQUEST_ATTRIBUTE_POLL_WRITE)
-#define REQUEST_ATTRIBUTE_ACCEPT	(REQUEST_ATTRIBUTE_ACCEPT_BIT	| REQUEST_ATTRIBUTE_POLL_READ)
-#define REQUEST_ATTRIBUTE_RECEIVE	(REQUEST_ATTRIBUTE_RECEIVE_BIT	| REQUEST_ATTRIBUTE_POLL_READ)
-#define REQUEST_ATTRIBUTE_SEND		(REQUEST_ATTRIBUTE_SEND_BIT		| REQUEST_ATTRIBUTE_POLL_WRITE)
-
 #ifdef ENGINE_LINUX
 #define EAI_PROTOCOL EAI_AGAIN
 #define EAI_BADHINTS EAI_BADFLAGS
@@ -181,35 +165,6 @@ namespace Engine
 			} else throw InvalidStateException();
 		}
 
-		struct NetworkRequestInput
-		{
-			uint attributes;
-			int length, pointer; // read length, read/write execution pointer
-			SafePointer<DataBlock> data; // address structure or data to send
-		};
-		struct NetworkRequestOutput
-		{
-			SafePointer<IDispatchTask> handler;
-			ErrorContext * status;
-			int * length;
-			SafePointer<DataBlock> * data;
-			SafePointer<NetworkAddress> * address;
-			SafePointer<INetworkChannel> * channel;
-		};
-		struct NetworkRequest
-		{
-			NetworkRequestInput in;
-			NetworkRequestOutput out;
-		};
-		struct NewNetworkConnection
-		{
-			NetworkAddressFactory * in_factory;
-			int in_socket;
-			void * in_address;
-			int in_address_length;
-			SafePointer<INetworkChannel> out_channel;
-			SafePointer<NetworkAddress> out_address;
-		};
 		class NetworkRequestQueue : public Object
 		{
 			static std::atomic_flag _dispatch_control;
@@ -224,18 +179,46 @@ namespace Engine
 			Volumes::Queue<NetworkRequest> _requests_read;
 			Volumes::Queue<NetworkRequest> _requests_write;
 			NetworkAddressFactory * _factory;
+			#ifdef ENGINE_LINUX
+			SafePointer<IOpenSSLEventHandler> _ossl_hdlr;
+			#endif
 		private:
 			typedef Volumes::Dictionary<SafePointer<NetworkRequestQueue>, uint> QueueList;
 			typedef Volumes::KeyValuePair<SafePointer<NetworkRequestQueue>, uint> QueueItem;
+			static uint _evaluate_poll_attribute(NetworkRequest * rqread, NetworkRequest * rqwrite) noexcept
+			{
+				uint result = 0;
+				#ifdef ENGINE_LINUX
+				if (rqread && (rqread->in.attributes & REQUEST_ATTRIBUTE_PRIORITY)) result |= rqread->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+				else if (rqwrite && (rqwrite->in.attributes & REQUEST_ATTRIBUTE_PRIORITY)) result |= rqwrite->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+				else {
+					if (rqread) result |= rqread->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+					if (rqwrite) result |= rqwrite->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+				}
+				#else
+				if (rqread) result |= rqread->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+				if (rqwrite) result |= rqwrite->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+				#endif
+				return result;
+			}
 			static bool _handle_connection(int pollstat, QueueItem & item, uint attribute, int & remove_list) noexcept
 			{
 				bool revise = false;
 				SafePointer<IDispatchTask> hdlr;
 				item.key->_local_sync->Wait();
 				Volumes::Queue<NetworkRequest> * queue = 0;
+				#ifdef ENGINE_LINUX
+				auto read_req_ptr = item.key->_requests_read.GetFirst();
+				auto write_req_ptr = item.key->_requests_write.GetFirst();
+				Volumes::Queue<NetworkRequest>::Element * req_ptr;
+				if (read_req_ptr && attribute == REQUEST_ATTRIBUTE_POLL_READ && !(read_req_ptr->GetValue().in.attributes & REQUEST_ATTRIBUTE_OPENSSL)) { req_ptr = read_req_ptr; queue = &item.key->_requests_read; }
+				else if (write_req_ptr && attribute == REQUEST_ATTRIBUTE_POLL_WRITE && !(write_req_ptr->GetValue().in.attributes & REQUEST_ATTRIBUTE_OPENSSL)) { req_ptr = write_req_ptr; queue = &item.key->_requests_write; }
+				else req_ptr = 0;
+				#else
 				if (attribute == REQUEST_ATTRIBUTE_POLL_READ) queue = &item.key->_requests_read;
 				else if (attribute == REQUEST_ATTRIBUTE_POLL_WRITE) queue = &item.key->_requests_write;
 				auto req_ptr = queue ? queue->GetFirst() : 0;
+				#endif
 				if (req_ptr) try {
 					auto & req = req_ptr->GetValue();
 					if (req.in.attributes & REQUEST_ATTRIBUTE_CONNECT_BIT) {
@@ -367,15 +350,48 @@ namespace Engine
 					item.key->_local_sync->Open();
 					return false;
 				}
+				#ifdef ENGINE_LINUX
+				else if (item.key->_ossl_hdlr) {
+					auto status = item.key->_ossl_hdlr->ProcessConnection(pollstat,
+						read_req_ptr && (read_req_ptr->GetValue().in.attributes & REQUEST_ATTRIBUTE_OPENSSL) ? &read_req_ptr->GetValue() : 0,
+						write_req_ptr && (write_req_ptr->GetValue().in.attributes & REQUEST_ATTRIBUTE_OPENSSL) ? &write_req_ptr->GetValue() : 0, attribute);
+					if (status == OpenSSLEventStatus::PollRenew) {
+						revise = true;
+					} else if (status == OpenSSLEventStatus::CompleteReadRequest) {
+						hdlr = read_req_ptr->GetValue().out.handler;
+						item.key->_requests_read.RemoveFirst();
+						revise = true;
+					} else if (status == OpenSSLEventStatus::CompleteWriteRequest) {
+						hdlr = write_req_ptr->GetValue().out.handler;
+						item.key->_requests_write.RemoveFirst();
+						revise = true;
+					} else if (status == OpenSSLEventStatus::Failed) {
+						item.key->_local_sync->Open();
+						return false;
+					} else if (status == OpenSSLEventStatus::CloseChannelWrite) {
+						hdlr = write_req_ptr->GetValue().out.handler;
+						ErrorContext ectx;
+						ClearXEError(ectx);
+						item.key->ShutdownRequest(false, ectx);
+						item.key->_requests_write.RemoveFirst();
+						revise = true;
+					} else if (status == OpenSSLEventStatus::CloseChannel) {
+						hdlr = write_req_ptr->GetValue().out.handler;
+						ErrorContext ectx;
+						ClearXEError(ectx);
+						item.key->ShutdownRequest(true, ectx);
+						item.key->_requests_write.RemoveFirst();
+						revise = true;
+					}
+				}
+				#endif
 				item.key->_local_sync->Open();
 				if (hdlr) hdlr->DoTask(0);
 				if (revise) {
 					auto next_rd = item.key->_peek_request(REQUEST_ATTRIBUTE_POLL_READ);
 					auto next_wr = item.key->_peek_request(REQUEST_ATTRIBUTE_POLL_WRITE);
 					if (next_rd || next_wr) {
-						item.value = 0;
-						if (next_rd) item.value |= next_rd->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
-						if (next_wr) item.value |= next_wr->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+						item.value = _evaluate_poll_attribute(next_rd, next_wr);
 					} else {
 						item.value = REQUEST_ATTRIBUTE_REMOVE;
 						remove_list++;
@@ -449,9 +465,7 @@ namespace Engine
 									if (rd_rq || wr_rq) {
 										auto element = clients.FindElement(QueueItem(queue, 0), true, &created);
 										if (created) poll_volume++;
-										element->GetValue().value = 0;
-										if (rd_rq) element->GetValue().value |= rd_rq->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
-										if (wr_rq) element->GetValue().value |= wr_rq->in.attributes & REQUEST_ATTRIBUTE_POLL_MASK;
+										element->GetValue().value = _evaluate_poll_attribute(rd_rq, wr_rq);
 									} else command[0] = 0;
 								}
 								if (!command[0]) {
@@ -696,6 +710,11 @@ namespace Engine
 					}
 				}
 			}
+			int GetSocket(void) noexcept { return _socket; }
+			Semaphore * GetSynchronize(void) noexcept { return _local_sync; }
+			#ifdef ENGINE_LINUX
+			void SetOpenSSLEventHandler(IOpenSSLEventHandler * hdlr) noexcept { _ossl_hdlr.SetRetain(hdlr); }
+			#endif
 		};
 		class UnixNetworkChannel : public INetworkChannel
 		{
@@ -770,6 +789,7 @@ namespace Engine
 				if (!_queue) { SetXEError(ectx, 5, 0); return; }
 				_queue->ShutdownRequest(ultimately, ectx);
 			}
+			NetworkRequestQueue * GetQueue(void) noexcept { return _queue; }
 		};
 		class UnixNetworkListener : public INetworkListener
 		{
@@ -888,6 +908,35 @@ namespace Engine
 			return result;
 			XE_TRY_OUTRO(0)
 		}
+
+		int UnixChannelGetSocket(INetworkChannel * channel) noexcept
+		{
+			auto queue = static_cast<UnixNetworkChannel *>(channel)->GetQueue();
+			return queue ? queue->GetSocket() : -1;
+		}
+		void UnixChannelEnqueueRequest(INetworkChannel * channel, const NetworkRequest & req)
+		{
+			auto queue = static_cast<UnixNetworkChannel *>(channel)->GetQueue();
+			if (!queue) throw InvalidStateException();
+			queue->EnqueueRequest(req);
+		}
+		void UnixChannelEnterCriticalSection(INetworkChannel * channel) noexcept
+		{
+			auto queue = static_cast<UnixNetworkChannel *>(channel)->GetQueue();
+			if (queue) queue->GetSynchronize()->Wait();
+		}
+		void UnixChannelLeaveCriticalSection(INetworkChannel * channel) noexcept
+		{
+			auto queue = static_cast<UnixNetworkChannel *>(channel)->GetQueue();
+			if (queue) queue->GetSynchronize()->Open();
+		}
+		#ifdef ENGINE_LINUX
+		void UnixChannelSetOpenSSLEventHandler(INetworkChannel * channel, IOpenSSLEventHandler * hdlr) noexcept
+		{
+			auto queue = static_cast<UnixNetworkChannel *>(channel)->GetQueue();
+			if (queue) queue->SetOpenSSLEventHandler(hdlr);
+		}
+		#endif
 	}
 }
 #endif

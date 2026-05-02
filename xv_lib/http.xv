@@ -75,8 +75,8 @@ spatium http {
 			_praeverbium = (desc.secura ? "https://" : "http://") + desc.dominatus;
 			_procedens = sic;
 			si (!_applicatio.longitudo) _applicatio = "XE.HTTP";
-			int ip = _dominatus.reperi_ultimum(']');
-			int ic = _dominatus.reperi_ultimum(':');
+			int ip = _dominatus.reperi_ultimum("]");
+			int ic = _dominatus.reperi_ultimum(":");
 			linea nomen;
 			nint64 portus;
 			si (ic >= 0 && ic > ip) {
