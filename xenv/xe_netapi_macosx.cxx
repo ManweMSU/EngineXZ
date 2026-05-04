@@ -40,11 +40,19 @@ namespace Engine
 				char path[80], keychain_password[4];
 				int ordinal = 0;
 				keychain_password[0] = keychain_password[1] = keychain_password[2] = keychain_password[3] = '0';
+				SecKeychainSettings settings;
+				settings.version = SEC_KEYCHAIN_SETTINGS_VERS1;
+				settings.lockInterval = INT_MAX;
+				settings.useLockInterval = false;
+				settings.lockOnSleep = false;
 				while (true) {
 					sprintf(path, "/tmp/xe_keychain_%i", ordinal++);
 					auto status = SecKeychainCreate(path, 4, keychain_password, 0, 0, &_keychain);
-					if (status == errSecSuccess) return;
-					else if (status == errSecDuplicateKeychain) continue;
+					if (status == errSecSuccess) {
+						status = SecKeychainSetSettings(_keychain, &settings);
+						if (status != errSecSuccess) { SecKeychainDelete(_keychain); CFRelease(_keychain); throw 0x1; }
+						return;
+					} else if (status == errSecDuplicateKeychain) continue;
 					else throw 0x1;
 				}
 			}
