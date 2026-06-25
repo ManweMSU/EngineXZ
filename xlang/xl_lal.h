@@ -44,53 +44,53 @@ namespace Engine
 		{
 		public:
 			ObjectHasNoTypeException(LObject * reason);
-			virtual string ToString(void) const override;
+			virtual string ToString(void) const;
 		};
 		class ObjectHasNoSuchMemberException : public LException
 		{
 		public:
 			string member;
 			ObjectHasNoSuchMemberException(LObject * reason, const string & member_name);
-			virtual string ToString(void) const override;
+			virtual string ToString(void) const;
 		};
 		class ObjectMemberRedefinitionException : public LException
 		{
 		public:
 			string member;
 			ObjectMemberRedefinitionException(LObject * reason, const string & member_name);
-			virtual string ToString(void) const override;
+			virtual string ToString(void) const;
 		};
 		class ObjectHasNoSuchOverloadException : public LException
 		{
 		public:
 			ObjectArray<LObject> arguments;
 			ObjectHasNoSuchOverloadException(LObject * reason, int argc, LObject ** argv);
-			virtual string ToString(void) const override;
+			virtual string ToString(void) const;
 		};
 		class ObjectIsNotEvaluatableException : public LException
 		{
 		public:
 			ObjectIsNotEvaluatableException(LObject * reason);
-			virtual string ToString(void) const override;
+			virtual string ToString(void) const;
 		};
 		class ObjectHasNoAttributesException : public LException
 		{
 		public:
 			ObjectHasNoAttributesException(LObject * reason);
-			virtual string ToString(void) const override;
+			virtual string ToString(void) const;
 		};
 		class ObjectMayThrow : public LException
 		{
 		public:
 			ObjectMayThrow(LObject * reason);
-			virtual string ToString(void) const override;
+			virtual string ToString(void) const;
 		};
 		class ObjectHasNoSuitableCast : public LException
 		{
 			SafePointer<LObject> type_from, type_to;
 		public:
 			ObjectHasNoSuitableCast(LObject * reason, LObject * from, LObject * to);
-			virtual string ToString(void) const override;
+			virtual string ToString(void) const;
 		};
 		
 		enum class Class {

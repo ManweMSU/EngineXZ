@@ -1087,7 +1087,9 @@ int Main(void)
 			debug_console.SetReference(0);
 		}
 	} catch (Exception & e) {
+		#ifndef ESSE_VERSIO_CORDIS_MAJOR
 		if (debug_console) debug_console->WriteLine(L"Error: " + e.ToString());
+		#endif
 		return 1;
 	} catch (...) { return 1; }
 	return exit_code;

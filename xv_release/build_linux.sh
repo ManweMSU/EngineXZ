@@ -1,11 +1,11 @@
-ertbuild xv_com/xv.ertproj -Nar ${ARCH}
-ertbuild xw_dec/xw.ertproj -Nar ${ARCH}
-ertbuild xw_pc/xwpc.ertproj -Nar ${ARCH}
-ertbuild xv_sl/xvsl.ertproj -Nar ${ARCH}
-ertbuild xi_tool/xi.ertproj -Nar ${ARCH}
-ertbuild xi_dasm/xda.ertproj -Nar ${ARCH}
-ertbuild x_uicc/xuicc.ertproj -Nar ${ARCH}
-# ertbuild xv_mm/xvm.ertproj -Nar ${ARCH}
+esse xv_com/xv.ertproj -Nar ${ARCH}
+esse xw_dec/xw.ertproj -Nar ${ARCH}
+esse xw_pc/xwpc.ertproj -Nar ${ARCH}
+esse xv_sl/xvsl.ertproj -Nar ${ARCH}
+esse xi_tool/xi.ertproj -Nar ${ARCH}
+esse xi_dasm/xda.ertproj -Nar ${ARCH}
+# esse x_uicc/xuicc.ertproj -Nar ${ARCH}
+# esse xv_mm/xvm.ertproj -Nar ${ARCH}
 mkdir xv_release/_build
 rm -r xv_release/_build/linux_${ARCH}
 mkdir xv_release/_build/linux_${ARCH}
@@ -33,7 +33,7 @@ cp xw_pc/_build/linux_${ARCH}_release/xwpc xv_release/_build/linux_${ARCH}/xwpc
 cp xv_sl/_build/linux_${ARCH}_release/xvsl xv_release/_build/linux_${ARCH}/xvsl
 cp xi_tool/_build/linux_${ARCH}_release/xi xv_release/_build/linux_${ARCH}/xi
 cp xi_dasm/_build/linux_${ARCH}_release/xda xv_release/_build/linux_${ARCH}/xda
-cp x_uicc/_build/linux_${ARCH}_release/xuicc xv_release/_build/linux_${ARCH}/xuicc
+# cp x_uicc/_build/linux_${ARCH}_release/xuicc xv_release/_build/linux_${ARCH}/xuicc
 cp xv_release/engine-xv-vscx-1.0.0.vsix xv_release/_build/linux_${ARCH}/vscx/xv-vscx.vsix
 
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/canonicalis.xv         	-NPVo xv_release/_build/com/canonicalis.xo
@@ -81,13 +81,13 @@ cp xv_lib/*.xvm xv_release/_build/linux_${ARCH}/xvcl
 cp xw_lib/*.xvm xv_release/_build/linux_${ARCH}/xwcl
 cp xv_release/_build/com/*.xo xv_release/_build/linux_${ARCH}/xvcl
 cp xv_release/_build/comw/*.xwo xv_release/_build/linux_${ARCH}/xwcl
-estrtab xv_com/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xv.loc/ru.ecst
-estrtab xv_com/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xv.loc/en.ecst
-estrtab xw_dec/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xw.loc/ru.ecst
-estrtab xw_dec/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xw.loc/en.ecst
-estrtab xi_tool/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xi.loc/ru.ecst
-estrtab xi_tool/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xi.loc/en.ecst
-estrtab xi_dasm/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xda.loc/ru.ecst
-estrtab xi_dasm/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xda.loc/en.ecst
-estrtab x_uicc/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xuicc.loc/ru.ecst
-estrtab x_uicc/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xuicc.loc/en.ecst
+esse-converte lineae xv_com/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xv.loc/ru.ecst
+esse-converte lineae xv_com/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xv.loc/en.ecst
+esse-converte lineae xw_dec/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xw.loc/ru.ecst
+esse-converte lineae xw_dec/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xw.loc/en.ecst
+esse-converte lineae xi_tool/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xi.loc/ru.ecst
+esse-converte lineae xi_tool/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xi.loc/en.ecst
+esse-converte lineae xi_dasm/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xda.loc/ru.ecst
+esse-converte lineae xi_dasm/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xda.loc/en.ecst
+esse-converte lineae x_uicc/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xuicc.loc/ru.ecst
+esse-converte lineae x_uicc/locale/en.txt -Nfo bin xv_release/_build/linux_${ARCH}/xuicc.loc/en.ecst

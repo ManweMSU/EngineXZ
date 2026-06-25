@@ -229,13 +229,21 @@ namespace Engine
 				auto status = bind(_socket, reinterpret_cast<sockaddr *>(&addr), sizeof(addr));
 				if (status < 0) {
 					close(_socket);
+					#ifdef ESSE_VERSIO_CORDIS_MAJOR
+					throw ESSE::InputOutputException(1);
+					#else
 					throw IO::FileAccessException();
+					#endif
 				}
 				status = listen(_socket, SOMAXCONN);
 				if (status < 0) {
 					try { IO::RemoveFile(_path); } catch (...) {}
 					close(_socket);
+					#ifdef ESSE_VERSIO_CORDIS_MAJOR
+					throw ESSE::InputOutputException(1);
+					#else
 					throw IO::FileAccessException();
+					#endif
 				}
 			}
 			virtual ~ChannelServer(void) override { Close(); close(_socket); }
@@ -285,7 +293,14 @@ namespace Engine
 			while (true) {
 				auto result = connect(io, reinterpret_cast<sockaddr *>(&addr), sizeof(addr));
 				if (result == 0) break;
-				else if (errno != EINTR) { close(io); throw IO::FileAccessException(); }
+				else if (errno != EINTR) {
+					close(io);
+					#ifdef ESSE_VERSIO_CORDIS_MAJOR
+					throw ESSE::InputOutputException(1);
+					#else
+					throw IO::FileAccessException();
+					#endif
+				}
 			}
 			try { return new Channel(io); } catch (...) { close(io); throw; }
 		}

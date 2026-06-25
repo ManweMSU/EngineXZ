@@ -3677,7 +3677,11 @@ namespace Engine
 					} catch (...) { dest.Clear(); return false; }
 				}
 				virtual uint GetWordSize(void) noexcept override { return WordSize; }
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				virtual Platform GetPlatform(void) noexcept override { return Platform::X86_32; }
+				#else
 				virtual Platform GetPlatform(void) noexcept override { return Platform::X86; }
+				#endif
 				virtual Environment GetEnvironment(void) noexcept override { return _osenv; }
 				virtual string ToString(void) const override { return L"XA-80386"; }
 			};

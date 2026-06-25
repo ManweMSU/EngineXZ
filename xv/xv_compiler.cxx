@@ -3204,7 +3204,11 @@ namespace Engine
 					return new Streaming::FileStream(path + L"/" + module_name + L"." + _ext, Streaming::AccessRead, Streaming::OpenExisting);
 				} catch (...) {}
 				if (_dropback) return _dropback->QueryModuleFileStream(module_name);
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				throw ESSE::InputOutputException(IO::Error::FileNotFound);
+				#else
 				throw IO::FileAccessException(IO::Error::FileNotFound);
+				#endif
 			}
 			virtual Streaming::Stream * QueryResourceFileStream(const string & resource_file_name) override
 			{
@@ -3212,7 +3216,11 @@ namespace Engine
 					return new Streaming::FileStream(path + L"/" + resource_file_name, Streaming::AccessRead, Streaming::OpenExisting);
 				} catch (...) {}
 				if (_dropback) return _dropback->QueryResourceFileStream(resource_file_name);
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				throw ESSE::InputOutputException(IO::Error::FileNotFound);
+				#else
 				throw IO::FileAccessException(IO::Error::FileNotFound);
+				#endif
 			}
 			virtual void QueryAvailableModules(Volumes::Set<string> & set) override
 			{

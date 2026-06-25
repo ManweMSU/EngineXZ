@@ -2,6 +2,13 @@
 #include "xa_type_helper.h"
 #include "xa_sha2_commons.h"
 
+#ifdef ESSE_VERSIO_CORDIS_MAJOR
+	#define X86 X86_32
+	#define X64 X86_64
+	#define ARM ARMv7_T32
+	#define ARM64 ARMv8_A64
+#endif
+
 namespace Engine
 {
 	namespace XA

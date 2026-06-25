@@ -68,7 +68,11 @@ namespace Engine
 					return new Streaming::FileStream(path + L"/" + module_name + L"." + XI::FileExtensionLibrary, Streaming::AccessRead, Streaming::OpenExisting);
 				} catch (...) {}
 				if (_dropback) return _dropback->QueryXModuleFileStream(module_name);
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				throw ESSE::InputOutputException(IO::Error::FileNotFound);
+				#else
 				throw IO::FileAccessException(IO::Error::FileNotFound);
+				#endif
 			}
 			virtual Streaming::Stream * QueryWModuleFileStream(const string & module_name) override
 			{
@@ -76,7 +80,11 @@ namespace Engine
 					return new Streaming::FileStream(path + L"/" + module_name + L"." + XI::FileExtensionGPLibrary, Streaming::AccessRead, Streaming::OpenExisting);
 				} catch (...) {}
 				if (_dropback) return _dropback->QueryWModuleFileStream(module_name);
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				throw ESSE::InputOutputException(IO::Error::FileNotFound);
+				#else
 				throw IO::FileAccessException(IO::Error::FileNotFound);
+				#endif
 			}
 			virtual string ToString(void) const override { return L"ListDecompilerCallback"; }
 		};
@@ -620,7 +628,7 @@ namespace Engine
 				if (_state->_current->class_size % 4) throw InvalidStateException();
 				if (_state->_current->class_size % align) {
 					int rem = (align - _state->_current->class_size % align) / 4;
-					if (_human_readable) _state->_body << string(L'\t', _state->_num_namespaces + 1);
+					if (_human_readable) _state->_body << string(widechar(L'\t'), _state->_num_namespaces + 1);
 					string fname = L"__politio" + string(_state->_field_counter, HexadecimalBase, 6);
 					_state->_body << L"float " << fname << L"[" << string(rem) << "]" << L";";
 					if (_human_readable) _state->_body << L"\n";
@@ -708,7 +716,7 @@ namespace Engine
 							return true;
 						}
 						for (int i = 0; i < way.Length() - 1; i++) {
-							if (_human_readable && i) _state->_body << string(L'\t', i);
+							if (_human_readable && i) _state->_body << string(widechar(L'\t'), i);
 							_state->_body << L"namespace " << way[i];
 							if (_human_readable) _state->_body << L" ";
 							_state->_body << L"{";
@@ -716,7 +724,7 @@ namespace Engine
 							_state->_current->symbol_refer += L"::" + way[i];
 						}
 						_state->_current->symbol_refer += L"::" + way.LastElement();
-						if (_human_readable && _state->_num_namespaces) _state->_body << string(L'\t', _state->_num_namespaces);
+						if (_human_readable && _state->_num_namespaces) _state->_body << string(widechar(L'\t'), _state->_num_namespaces);
 						_state->_body << L"struct " << way.LastElement();
 					} else {
 						_state->_current->symbol_refer = L"struct" + string(_name_counter, HexadecimalBase, 6);
@@ -754,7 +762,7 @@ namespace Engine
 					int volume = 1;
 					for (auto & v : alvl) volume *= v;
 					_state->_current->class_size += tdata.class_size * volume;
-					if (_human_readable) _state->_body << string(L'\t', _state->_num_namespaces + 1);
+					if (_human_readable) _state->_body << string(widechar(L'\t'), _state->_num_namespaces + 1);
 					string fname;
 					if (_proc_mask == DecompilerFlagProduceCXX) {
 						if (IsCIdentifier(vname)) fname = vname;
@@ -776,11 +784,11 @@ namespace Engine
 				if (_state && _state->_current) {
 					if (!_state->_current->class_alignment) _state->_current->class_alignment = 4;
 					_align_to_boundary(_state->_current->class_alignment);
-					if (_human_readable && _state->_num_namespaces) _state->_body << string(L"\t", _state->_num_namespaces);
+					if (_human_readable && _state->_num_namespaces) _state->_body << string(widechar(L'\t'), _state->_num_namespaces);
 					_state->_body << L"};";
 					if (_human_readable) _state->_body << L"\n";
 					if (_state->_num_namespaces) for (int i = _state->_num_namespaces; i > 0; i--) {
-						if (_human_readable) _state->_body << string(L"\t", i - 1);
+						if (_human_readable) _state->_body << string(widechar(L'\t'), i - 1);
 						_state->_body << L"}";
 						if (_human_readable) _state->_body << L"\n";
 					}
