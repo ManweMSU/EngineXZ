@@ -1,15 +1,7 @@
 ﻿#include "xe_commem.h"
 
 #include "xe_interfaces.h"
-
-#define XE_TRY_INTRO try {
-#define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::InvalidFormatException &) { ectx.error_code = 4; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::InvalidStateException &) { ectx.error_code = 5; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::OutOfMemoryException &) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; return DRV; } \
-catch (Engine::Exception &) { ectx.error_code = 1; ectx.error_subcode = 0; return DRV; } \
-catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; }
+#include "xe_tryblock.h"
 
 namespace Engine
 {

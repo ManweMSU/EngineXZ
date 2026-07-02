@@ -1,18 +1,9 @@
 ﻿#include "xe_filesys.h"
+#include "xe_tryblock.h"
 
 #include "xe_interfaces.h"
 
 #include <PlatformSpecific/UnixFileAccess.h>
-
-#define XE_TRY_INTRO try {
-#define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::InvalidFormatException &) { ectx.error_code = 4; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::InvalidStateException &) { ectx.error_code = 5; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::OutOfMemoryException &) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::IO::DirectoryAlreadyExistsException & e) { ectx.error_code = 6; ectx.error_subcode = Engine::IO::Error::FileExists; return DRV; } \
-catch (Engine::IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; return DRV; } \
-catch (Engine::Exception &) { ectx.error_code = 1; ectx.error_subcode = 0; return DRV; } \
-catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; }
 
 namespace Engine
 {
@@ -27,61 +18,40 @@ namespace Engine
 			virtual string ToString(void) const override { try { return _stream->ToString(); } catch (...) { return L""; } }
 			virtual int Read(void * data, int length, ErrorContext & ectx) noexcept override
 			{
+				XE_TRY_INTRO
 				try { _stream->Read(data, length); return length; }
 				catch (IO::FileReadEndOfFileException & e) { return e.DataRead; }
-				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				XE_TRY_OUTRO(0)
 				return 0;
 			}
 			virtual void Write(const void * data, int length, ErrorContext & ectx) noexcept override
 			{
-				try { _stream->Write(data, length); }
-				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				XE_TRY_INTRO
+				_stream->Write(data, length);
+				XE_TRY_OUTRO()
 			}
 			virtual int64 Seek(int64 to, int origin, ErrorContext & ectx) noexcept override
 			{
-				try {
-					if (origin == 0) return _stream->Seek(to, Streaming::Begin);
-					else if (origin == 1) return _stream->Seek(to, Streaming::Current);
-					else if (origin == 2) return _stream->Seek(to, Streaming::End);
-					else throw InvalidArgumentException();
-				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				XE_TRY_INTRO
+				if (origin == 0) return _stream->Seek(to, Streaming::Begin);
+				else if (origin == 1) return _stream->Seek(to, Streaming::Current);
+				else if (origin == 2) return _stream->Seek(to, Streaming::End);
+				else throw InvalidArgumentException();
+				XE_TRY_OUTRO(0)
 				return 0;
 			}
 			virtual int64 GetLength(ErrorContext & ectx) noexcept override
 			{
-				try { return _stream->Length(); }
-				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				XE_TRY_INTRO
+				return _stream->Length();
+				XE_TRY_OUTRO(0)
 				return 0;
 			}
 			virtual void SetLength(const int64 & length, ErrorContext & ectx) noexcept override
 			{
-				try { _stream->SetLength(length); }
-				catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				XE_TRY_INTRO
+				_stream->SetLength(length);
+				XE_TRY_OUTRO()
 			}
 			virtual void Flush(void) noexcept override { try { _stream->Flush(); } catch (...) {} }
 			virtual bool IsXV(void) noexcept override { return false; }

@@ -1,15 +1,9 @@
 ﻿#include "xe_tpgrph.h"
+#include "xe_tryblock.h"
 
+#ifndef ESSE_VERSIO_CORDIS_MAJOR
 #include <Typography.h>
-
-#define XE_TRY_INTRO try {
-#define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::InvalidFormatException &) { ectx.error_code = 4; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::InvalidStateException &) { ectx.error_code = 5; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::OutOfMemoryException &) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; return DRV; } \
-catch (Engine::Exception &) { ectx.error_code = 1; ectx.error_subcode = 0; return DRV; } \
-catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; }
+#endif
 
 namespace Engine
 {
@@ -37,6 +31,7 @@ namespace Engine
 			~DeviceSize(void) {}
 		};
 		
+		#ifndef ESSE_VERSIO_CORDIS_MAJOR
 		void Fill(Graphics::PrinterModeDesc & dest, const PrinterMode & src, ErrorContext & ectx)
 		{
 			if (src.width == 0) { ectx.error_code = 3; ectx.error_subcode = 0; return; }
@@ -71,7 +66,14 @@ namespace Engine
 			else dest.duplex_mode = 1;
 			dest.collate = src.Collate;
 		}
+		#endif
 
+		#ifdef ESSE_VERSIO_CORDIS_MAJOR
+		typedef Object PrintingContext;
+		typedef Object Printer;
+		typedef Object PrinterFactory;
+		typedef Object DocumentContext;
+		#else
 		class PrintingContext : public Object
 		{
 			SafePointer<Graphics::IPrintingContext> _ctx;
@@ -231,6 +233,7 @@ namespace Engine
 				_done = true;
 			}
 		};
+		#endif
 		class TypographyInterface
 		{
 		public:
@@ -247,24 +250,35 @@ namespace Engine
 			virtual SafePointer<PrinterFactory> CreatePrinterFactory(ErrorContext & ectx) noexcept override
 			{
 				XE_TRY_INTRO
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				throw ESSE::NotImplementedException();
+				#else
 				SafePointer<Graphics::IPrinterFactory> factory = Graphics::CreatePrinterFactory();
 				if (!factory) throw OutOfMemoryException();
 				return new PrinterFactory(factory);
+				#endif
 				XE_TRY_OUTRO(0)
 			}
 			virtual SafePointer<DocumentContext> CreateDocumentContext(XStream * stream, ErrorContext & ectx) noexcept override
 			{
 				XE_TRY_INTRO
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				throw ESSE::NotImplementedException();
+				#else
 				if (!stream) throw InvalidArgumentException();
 				SafePointer<Streaming::Stream> inner = WrapFromXStream(stream);
 				SafePointer<Portable::IEncoderContext> context = Portable::CreateEncoder(inner);
 				if (!context) throw OutOfMemoryException();
 				return new DocumentContext(context);
+				#endif
 				XE_TRY_OUTRO(0)
 			}
 			virtual SafePointer<PrintingContext> CreatePrintingContext(DocumentContext * ctx, const PrinterMode & mode, uint flags, ErrorContext & ectx) noexcept override
 			{
 				XE_TRY_INTRO
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				throw ESSE::NotImplementedException();
+				#else
 				if (!ctx) throw InvalidArgumentException();
 				Graphics::PrinterModeDesc desc;
 				Fill(desc, mode, ectx);
@@ -272,6 +286,7 @@ namespace Engine
 				SafePointer<Graphics::IPrintingContext> context = Portable::CreateStreamPrinter(ctx->GetContext(), desc, flags);
 				if (!context) throw OutOfMemoryException();
 				return new PrintingContext(context);
+				#endif
 				XE_TRY_OUTRO(0)
 			}
 		};

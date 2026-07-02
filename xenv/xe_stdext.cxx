@@ -1,5 +1,6 @@
 ﻿#include "xe_stdext.h"
 
+#include "xe_tryblock.h"
 #include "xe_logger.h"
 #include "xe_interfaces.h"
 #include "../ximg/xi_resources.h"
@@ -285,10 +286,17 @@ namespace Engine
 
 			static int _get_arch(Platform platform)
 			{
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				if (platform == Platform::X86_32) return 0x01;
+				else if (platform == Platform::X86_64) return 0x11;
+				else if (platform == Platform::ARMv7_T32) return 0x02;
+				else if (platform == Platform::ARMv8_A64) return 0x12;
+				#else
 				if (platform == Platform::X86) return 0x01;
 				else if (platform == Platform::X64) return 0x11;
 				else if (platform == Platform::ARM) return 0x02;
 				else if (platform == Platform::ARM64) return 0x12;
+				#endif
 				else return 0;
 			}
 			static void * _mem_alloc(uintptr size) { return malloc(size); }
@@ -326,10 +334,17 @@ namespace Engine
 			#endif
 			static bool _check_arch(int arch)
 			{
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				if (arch == 0x01) return IsPlatformAvailable(Platform::X86_32);
+				else if (arch == 0x11) return IsPlatformAvailable(Platform::X86_64);
+				else if (arch == 0x02) return IsPlatformAvailable(Platform::ARMv7_T32);
+				else if (arch == 0x12) return IsPlatformAvailable(Platform::ARMv8_A64);
+				#else
 				if (arch == 0x01) return IsPlatformAvailable(Platform::X86);
 				else if (arch == 0x11) return IsPlatformAvailable(Platform::X64);
 				else if (arch == 0x02) return IsPlatformAvailable(Platform::ARM);
 				else if (arch == 0x12) return IsPlatformAvailable(Platform::ARM64);
+				#endif
 				else return false;
 			}
 		public:
@@ -1219,67 +1234,40 @@ namespace Engine
 			}
 			static void _stream_copy_to_2(XStream * from, XStream * to, int64 size, ErrorContext & ectx)
 			{
-				try {
+				XE_TRY_INTRO
 					SafePointer<Streaming::Stream> src = WrapFromXStream(from);
 					SafePointer<Streaming::Stream> dest = WrapFromXStream(to);
 					src->CopyTo(dest, size);
-				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				XE_TRY_OUTRO()
 			}
 			static void _stream_copy_to_1(XStream * from, XStream * to, ErrorContext & ectx)
 			{
-				try {
+				XE_TRY_INTRO
 					SafePointer<Streaming::Stream> src = WrapFromXStream(from);
 					SafePointer<Streaming::Stream> dest = WrapFromXStream(to);
 					src->CopyToUntilEof(dest);
-				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				XE_TRY_OUTRO()
 			}
 			static SafePointer<DataBlock> _stream_read_1(XStream * from, int size, ErrorContext & ectx)
 			{
-				try {
+				XE_TRY_INTRO
 					SafePointer<Streaming::Stream> src = WrapFromXStream(from);
 					return src->ReadBlock(size);
-				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
-				return 0;
+				XE_TRY_OUTRO(0)
 			}
 			static SafePointer<DataBlock> _stream_read_0(XStream * from, ErrorContext & ectx)
 			{
-				try {
+				XE_TRY_INTRO
 					SafePointer<Streaming::Stream> src = WrapFromXStream(from);
 					return src->ReadAll();
-				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
-				return 0;
+				XE_TRY_OUTRO(0)
 			}
 			static void _stream_write(XStream * to, const DataBlock * data, ErrorContext & ectx)
 			{
-				try {
+				XE_TRY_INTRO
 					SafePointer<Streaming::Stream> dest = WrapFromXStream(to);
 					dest->WriteArray(data);
-				} catch (IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; }
-				catch (InvalidStateException & e) { ectx.error_code = 5; ectx.error_subcode = 0; }
-				catch (InvalidFormatException & e) { ectx.error_code = 4; ectx.error_subcode = 0; }
-				catch (InvalidArgumentException & e) { ectx.error_code = 3; ectx.error_subcode = 0; }
-				catch (OutOfMemoryException & e) { ectx.error_code = 2; ectx.error_subcode = 0; }
-				catch (...) { ectx.error_code = 6; ectx.error_subcode = 1; }
+				XE_TRY_OUTRO()
 			}
 			static SafePointer<XTextEncoder> _create_writer_1(XStream * stream, ErrorContext & ectx)
 			{

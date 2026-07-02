@@ -17,20 +17,12 @@
 #include "../xenv/xe_crypto.h"
 #include "../xenv/xe_commem.h"
 #include "../xenv/xe_mm.h"
+#include "../xenv/xe_tryblock.h"
 #include "../xenv_sec/xe_sec_ext.h"
 #include "../xenv_sec/xe_sec_xaa.h"
 
 #include "../ximg/xi_module.h"
 #include "../ximg/xi_resources.h"
-
-#define XE_TRY_INTRO try {
-#define XE_TRY_OUTRO(DRV) } catch (Engine::InvalidArgumentException &) { ectx.error_code = 3; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::InvalidFormatException &) { ectx.error_code = 4; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::InvalidStateException &) { ectx.error_code = 5; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::OutOfMemoryException &) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; } \
-catch (Engine::IO::FileAccessException & e) { ectx.error_code = 6; ectx.error_subcode = e.code; return DRV; } \
-catch (Engine::Exception &) { ectx.error_code = 1; ectx.error_subcode = 0; return DRV; } \
-catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; }
 
 namespace Engine
 {
@@ -1084,6 +1076,17 @@ namespace Engine
 				XE::SetLoggerSink(*xctx, logger);
 				SafePointer<Streaming::Stream> module_stream;
 				uintptr module_stream_context;
+				#ifdef ESSE_VERSIO_CORDIS_MAJOR
+				try { module_stream = GetImageStream(*loader, environment_configuration, module_stream_context); } catch (ESSE::Exception & e) {
+					XE::ErrorContext ectx;
+					ectx.error_code = e.GetError().error_code;
+					ectx.error_subcode = e.GetError().error_subcode;
+					xctx->LoadModule(L"canonicalis");
+					string er, ser;
+					XE::GetErrorDescription(ectx, *xctx, er, ser);
+					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.", environment_configuration.xi_executable, er, ser));
+					return ectx.error_code;
+				#else
 				try { module_stream = GetImageStream(*loader, environment_configuration, module_stream_context); } catch (IO::FileAccessException & e) {
 					XE::ErrorContext ectx;
 					ectx.error_code = 6;
@@ -1093,6 +1096,7 @@ namespace Engine
 					XE::GetErrorDescription(ectx, *xctx, er, ser);
 					PlatformErrorReport(FormatString(L"Error onerandi: %0.\n%1: %2.", environment_configuration.xi_executable, er, ser));
 					return 6;
+				#endif
 				} catch (...) {
 					PlatformErrorReport(FormatString(L"Error onerandi ignotus: %0.", environment_configuration.xi_executable));
 					return 6;

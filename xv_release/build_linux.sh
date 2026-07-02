@@ -4,7 +4,7 @@ esse xw_pc/xwpc.ertproj -Nar ${ARCH}
 esse xv_sl/xvsl.ertproj -Nar ${ARCH}
 esse xi_tool/xi.ertproj -Nar ${ARCH}
 esse xi_dasm/xda.ertproj -Nar ${ARCH}
-# esse x_uicc/xuicc.ertproj -Nar ${ARCH}
+esse x_uicc/xuicc.ertproj -Nar ${ARCH}
 # esse xv_mm/xvm.ertproj -Nar ${ARCH}
 mkdir xv_release/_build
 rm -r xv_release/_build/linux_${ARCH}
@@ -33,7 +33,7 @@ cp xw_pc/_build/linux_${ARCH}_release/xwpc xv_release/_build/linux_${ARCH}/xwpc
 cp xv_sl/_build/linux_${ARCH}_release/xvsl xv_release/_build/linux_${ARCH}/xvsl
 cp xi_tool/_build/linux_${ARCH}_release/xi xv_release/_build/linux_${ARCH}/xi
 cp xi_dasm/_build/linux_${ARCH}_release/xda xv_release/_build/linux_${ARCH}/xda
-# cp x_uicc/_build/linux_${ARCH}_release/xuicc xv_release/_build/linux_${ARCH}/xuicc
+cp x_uicc/_build/linux_${ARCH}_release/xuicc xv_release/_build/linux_${ARCH}/xuicc
 cp xv_release/engine-xv-vscx-1.0.0.vsix xv_release/_build/linux_${ARCH}/vscx/xv-vscx.vsix
 
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/canonicalis.xv         	-NPVo xv_release/_build/com/canonicalis.xo
