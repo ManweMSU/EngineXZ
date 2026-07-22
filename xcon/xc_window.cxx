@@ -700,10 +700,10 @@ namespace Engine
 				if (_fullscreen) {
 					_layer->SwitchToWindow();
 					_fullscreen = false;
-					#ifdef ENGINE_WINDOWS
+					#if defined(ENGINE_WINDOWS) || defined(ENGINE_LINUX)
 					_recreate();
 					#endif
-					#ifdef ENGINE_MACOSX
+					#ifdef ENGINE_UNIX
 					_update_cursor();
 					#endif
 				}
@@ -787,10 +787,10 @@ namespace Engine
 			{
 				if (ID == 100) {
 					_fullscreen = !_fullscreen;
-					#if defined(ENGINE_WINDOWS)
+					#if defined(ENGINE_WINDOWS) || defined(ENGINE_LINUX)
 					_recreate();
 					#endif
-					#if defined(ENGINE_MACOSX) || defined(ENGINE_LINUX)
+					#if defined(ENGINE_MACOSX)
 					if (_fullscreen) _layer->SwitchToFullscreen();
 					else _layer->SwitchToWindow();
 					_update_cursor();
@@ -829,7 +829,7 @@ namespace Engine
 			wd.Callback = callback;
 			wd.Screen = primary;
 			wd.ParentWindow = 0;
-			#ifdef ENGINE_WINDOWS
+			#if defined(ENGINE_WINDOWS) || defined(ENGINE_LINUX)
 			if (!desc.fullscreen) {
 			#endif
 				auto blur = state->GetBlurBehind();
@@ -838,7 +838,7 @@ namespace Engine
 					wd.Flags |= WindowFlagBlurBehind | WindowFlagBlurFactor;
 					wd.BlurFactor = blur;
 				}
-			#ifdef ENGINE_WINDOWS
+			#if defined(ENGINE_WINDOWS) || defined(ENGINE_LINUX)
 			}
 			#endif
 			if (desc.fullscreen) callback->MarkAsFullscreen();

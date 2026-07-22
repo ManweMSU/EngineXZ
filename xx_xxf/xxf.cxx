@@ -4,7 +4,7 @@ using namespace Engine::XX;
 
 int Main(void)
 {
-	#ifdef ENGINE_MACOSX
+	#ifdef ENGINE_UNIX
 	Engine::IO::SetStandardOutput(Engine::IO::InvalidHandle);
 	Engine::IO::SetStandardInput(Engine::IO::InvalidHandle);
 	Engine::IO::SetStandardError(Engine::IO::InvalidHandle);

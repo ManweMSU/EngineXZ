@@ -884,6 +884,7 @@ namespace Engine
 		public:
 			IWindowSystem(const Array<string> * files) : XDispatchContext(Windows::GetWindowSystem()), _system(Windows::GetWindowSystem()), _exit_on_last_window(false)
 			{
+				if (!_system) throw InvalidStateException();
 				XX::EnforceApplicationActivation();
 				if (files && files->Length()) _system->SetFilesToOpen(files->GetBuffer() + 1, files->Length() - 1);
 			}
@@ -1142,7 +1143,7 @@ namespace Engine
 				_system->SetCallback(this);
 				_dock_tile_mode = 2;
 				_dock_tile_state = 0;
-				#ifdef ENGINE_WINDOWS
+				#if defined(ENGINE_WINDOWS) || defined(ENGINE_LINUX)
 				_update_icon();
 				#endif
 			}

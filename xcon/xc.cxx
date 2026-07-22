@@ -50,12 +50,12 @@ int ExportRoutine(void)
 int Main(void)
 {
 	try {
-		#ifdef ENGINE_MACOSX
+		#ifdef ENGINE_UNIX
 		Engine::IO::SetStandardOutput(Engine::IO::InvalidHandle);
 		Engine::IO::SetStandardInput(Engine::IO::InvalidHandle);
 		Engine::IO::SetStandardError(Engine::IO::InvalidHandle);
 		#endif
-		Windows::GetWindowSystem();
+		if (!Windows::GetWindowSystem()) return 5;
 		Codec::InitializeDefaultCodecs();
 		state.export_text_mode = false;
 		SafePointer< Array<string> > args = GetCommandLine();
