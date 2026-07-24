@@ -18,6 +18,9 @@ UseVersionDefines = true
 		ShellPath = "Contents/MacOS"
 		StoreLinkFile = "Contents/MacOS"
 	}
+	CompileList {
+		AAAAAL = "xvm.uiml"
+	}
 }
 "-macosx-debug" {
 	Attachments {
@@ -27,10 +30,18 @@ UseVersionDefines = true
 		}
 	}
 }
+"-linux" {
+	CompileList {
+		AAAAAL = "xvm2.ertbs"
+	}
+}
 "-windows" {
 	EngineStore {
 		ShellPath = "."
 		StoreLinkFile = "store.ecs"
+	}
+	CompileList {
+		AAAAAL = "xvm.uiml"
 	}
 }
 "-windows-debug" {
@@ -53,7 +64,6 @@ CompileList {
 	AAAAAI = "xvm_browser.cxx"
 	AAAAAJ = "xvm_editor.cxx"
 	AAAAAK = "xvm.cxx"
-	AAAAAL = "xvm.uiml"
 }
 FileFormats {
 	AAAAAA {

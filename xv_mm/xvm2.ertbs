@@ -1,0 +1,2 @@
+xuicc xvm2.uiml -So $OBJROOT$/xvm2.eui
+resource $OBJROOT$/xvm2.eui UI
