@@ -98,12 +98,15 @@ spatium http {
 				var a = crea(communicatio.adloquium_ipv4, nomen);
 				a^.portus = portus;
 				adloq.contine(a);
-			} cape {
+			} cape proba {
 				var adla4 = communicatio.lege_adloquia(nomen, portus, communicatio.adloquium_ipv4);
-				var adla6 = !adla4^.longitudo ? communicatio.lege_adloquia(nomen, portus, communicatio.adloquium_ipv6) : genus(adla4)();
-				si (adla4^.longitudo) adloq = adla4^[0];
-				alioqui si (adla6^.longitudo) adloq = adla6^[0];
-				alioqui iace errores.rete_defectum, errores.rete_adloquium_nullum;
+				si (!adla4^.longitudo) iace errores.rete_defectum, errores.rete_adloquium_nullum;
+				adloq = adla4^[0];
+			} cape (nintadl e, nintadl se) {
+				si (e != errores.rete_defectum || se != errores.rete_adloquium_nullum) iace e, se;
+				var adla6 = communicatio.lege_adloquia(nomen, portus, communicatio.adloquium_ipv6);
+				si (!adla6^.longitudo) iace errores.rete_defectum, errores.rete_adloquium_nullum;
+				adloq = adla6^[0];
 			}
 			si (desc.secura) {
 				communicatio.securitas sec = desc.securitas;
