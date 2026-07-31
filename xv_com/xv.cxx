@@ -391,7 +391,8 @@ int Main(void)
 					SafePointer<TaskQueue> queue = new TaskQueue;
 					if (!queue->ProcessAsSeparateThread()) throw Exception();
 					queue->SubmitTask(CreateFunctionalTask([srvr, mdl = desc.output_module]() {
-						SafePointer<Stream> stream = mdl->GetOutputModuleData();
+						auto stream = mdl->GetOutputModuleData();
+						stream->Seek(0, Begin);
 						SafePointer<DataBlock> data_send = stream->ReadAll();
 						while (true) {
 							SafePointer<XC::IChannel> cn = srvr->Accept();
