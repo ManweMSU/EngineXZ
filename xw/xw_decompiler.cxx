@@ -822,10 +822,11 @@ namespace Engine
 				static void ReadRegisterID(uint32 key, uint & regcls, uint & regindex) noexcept { regcls = key & 0xFF; regindex = key >> 8; }
 			private:
 				ShaderLanguageFunctionGenerator & _gen;
-				uint _variable_counter, _temp_counter, _local_register;
+				uint _variable_counter, _temp_counter, _local_register, _glsl_selector_linear_alloc;
 				string _return_statement;
 				expression_node _split_node;
 				Volumes::Dictionary<uint32, expression_node> _register_mapping;
+				Array<uint32> _glsl_selector_mapping;
 				DynamicString _output;
 			private:
 				string _get_type_name(DecompilerContext & ctx, const string & tcn)
@@ -1498,8 +1499,21 @@ namespace Engine
 					}
 					return true;
 				}
+				uint _glsl_allocate_selector(FunctionDesignation stage, ArgumentSemantics type, uint index)
+				{
+					uint index_alloc = _glsl_selector_linear_alloc; _glsl_selector_linear_alloc++;
+					if (stage == FunctionDesignation::Pixel) index_alloc = 1 + 2 * index_alloc; else index_alloc = 2 * index_alloc;
+					uint mrec = (index_alloc & 0xFFFFU) | ((index & 0xFFU) << 16U);
+					if (type == ArgumentSemantics::Constant) mrec |= 0x1000000U;
+					else if (type == ArgumentSemantics::Buffer) mrec |= 0x2000000U;
+					else if (type == ArgumentSemantics::Texture) mrec |= 0x3000000U;
+					else if (type == ArgumentSemantics::Sampler) mrec |= 0x4000000U;
+					if (stage == FunctionDesignation::Pixel) mrec |= 0x10000000U;
+					_glsl_selector_mapping.Append(mrec);
+					return index_alloc;
+				}
 			public:
-				FunctionGenerator(ShaderLanguageFunctionGenerator & gen) : _gen(gen), _variable_counter(0), _temp_counter(0), _local_register(0) {}
+				FunctionGenerator(ShaderLanguageFunctionGenerator & gen) : _gen(gen), _variable_counter(0), _temp_counter(0), _local_register(0), _glsl_selector_linear_alloc(0), _glsl_selector_mapping(0x100) {}
 				bool ProcessFunction(DecompilerContext & ctx, const string & vname, FunctionDesc & fdesc, XA::Function & xasm, string & effective_name)
 				{
 					if (!ctx.ValidateSemantics(fdesc)) return false;
@@ -1700,32 +1714,24 @@ namespace Engine
 									predefined = true;
 									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(L"gl_FragStencilRefARB", XI::Module::TypeReference(arg.tcn), 9));
 								} else if (arg.semantics == ArgumentSemantics::Constant) {
-									uint absolute_selector = 0;
-									if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = arg.index + 0;
-									else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = arg.index + 288;
+									uint absolute_selector = _glsl_allocate_selector(fdesc.fdes, arg.semantics, arg.index);
 									_output << L"layout(scalar,column_major,binding=" << string(absolute_selector) << L") uniform XW_UB" << string(arg.index) << L" { " << tname << L" " << aname << L"; };";
 									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
 								} else if (arg.semantics == ArgumentSemantics::Buffer) {
-									uint absolute_selector = 0;
-									if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = arg.index + 32;
-									else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = arg.index + 320;
-									_output << L"layout(scalar,column_major,binding=" << string(absolute_selector) << L") buffer XW_SB" << string(arg.index) << L" { ";
+									uint absolute_selector = _glsl_allocate_selector(fdesc.fdes, arg.semantics, arg.index);
+									_output << L"layout(scalar,column_major,binding=" << string(absolute_selector) << L") readonly buffer XW_SB" << string(arg.index) << L" { ";
 									if (tname.Length() && tname[tname.Length() - 1] == L'*') _output << tname.Fragment(0, tname.Length() - 1) << L" " << aname << L"[]";
 									else _output << tname << L" " << aname;
 									_output << L"; };";
 									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
 								} else if (arg.semantics == ArgumentSemantics::Texture) {
-									uint absolute_selector = 0;
-									if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = arg.index + 160;
-									else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = arg.index + 448;
+									uint absolute_selector = _glsl_allocate_selector(fdesc.fdes, arg.semantics, arg.index);
 									has_texture_input = true;
 									_output << L"layout(binding=" << string(absolute_selector) << L") uniform " << tname << L" " << aname << L";";
 									_register_mapping.Append(_reg(XA::TH::MakeRef(XA::ReferenceArgument, i)), expression_node(aname, XI::Module::TypeReference(arg.tcn), 1));
 								} else if (arg.semantics == ArgumentSemantics::Sampler) {
 									predefined = true;
-									uint absolute_selector = 0;
-									if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = arg.index + 16;
-									else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = arg.index + 304;
+									uint absolute_selector = _glsl_allocate_selector(fdesc.fdes, arg.semantics, arg.index);
 									if (!has_sampler_input) {
 										has_sampler_input = true;
 										aname = L"xw_exceptor_primus";
@@ -1739,11 +1745,14 @@ namespace Engine
 							output2 << L"#extension GL_EXT_scalar_block_layout : enable\n";
 							if (has_stencil_output) output2 << L"#extension GL_ARB_shader_stencil_export : enable\n";
 							if (!has_sampler_input && has_texture_input) {
-								uint absolute_selector = 0;
-								if (fdesc.fdes == FunctionDesignation::Vertex) absolute_selector = 16;
-								else if (fdesc.fdes == FunctionDesignation::Pixel) absolute_selector = 304;
+								uint absolute_selector = _glsl_allocate_selector(fdesc.fdes, ArgumentSemantics::Sampler, 0);
 								output << L"layout(binding=" << string(absolute_selector) << L") uniform sampler xw_exceptor_primus;";
 								if (_hr()) output << L'\n';
+							}
+							if (_glsl_selector_mapping.Length()) {
+								output2 << L"// XWSM";
+								for (auto m : _glsl_selector_mapping) output2 << L":" << string(m, HexadecimalBase, 8);
+								output2 << L"\n";
 							}
 							SafePointer<SymbolArtifact> praeambulum = new SymbolArtifact;
 							praeambulum->symbol_class = 3;
