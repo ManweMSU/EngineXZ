@@ -1,0 +1,4 @@
+xuicc xvm-1.uiml -So $OBJROOT$/xvm-1.eui
+xuicc xvm-2.uiml -So $OBJROOT$/xvm-2.eui
+resource $OBJROOT$/xvm-1.eui UI
+resource $OBJROOT$/xvm-2.eui UI2

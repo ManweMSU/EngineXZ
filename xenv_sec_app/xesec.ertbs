@@ -1,0 +1,4 @@
+xuicc xesec-1.uiml -So $OBJROOT$/xesec-1.eui
+xuicc xesec-2.uiml -So $OBJROOT$/xesec-2.eui
+resource $OBJROOT$/xesec-1.eui UI
+resource $OBJROOT$/xesec-2.eui UI2

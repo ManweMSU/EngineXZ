@@ -19,7 +19,7 @@ CompileList {
 	AAAAAC = "../xenv_sec/xe_sec_rsa.cxx"
 	AAAAAD = "../xexec/xx_com.cxx"
 	AAAAAE = "xesec.cxx"
-	AAAAAF = "xesec.uiml"
+	AAAAAF = "xesec.ertbs"
 }
 EngineStore {
 	StoreLinkFile = "store.ecs"

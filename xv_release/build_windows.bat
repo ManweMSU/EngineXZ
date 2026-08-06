@@ -35,7 +35,9 @@ copy /B xv_sl\_build\windows_%ARCH%_release\xvsl.exe xv_release\_build\windows_%
 copy /B xi_tool\_build\windows_%ARCH%_release\xi.exe xv_release\_build\windows_%ARCH%\xi.exe
 copy /B xi_dasm\_build\windows_%ARCH%_release\xda.exe xv_release\_build\windows_%ARCH%\xda.exe
 copy /B x_uicc\_build\windows_%ARCH%_release\xuicc.exe xv_release\_build\windows_%ARCH%\xuicc.exe
+xcopy /BY xv_release\visuales\*.uiarc xv_release\_build\windows_%ARCH%\xuil\
 copy /B xv_release\engine-xv-vscx-1.0.0.vsix xv_release\_build\windows_%ARCH%\vscx\xv-vscx.vsix
+
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\canonicalis.xv         	-NPVom  xv_release\_build\com\canonicalis.xo         	xv_lib\canonicalis.xvm
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\limae.xv               	-NVoml  xv_release\_build\com\limae.xo               	xv_lib\limae.xvm               	xv_release\_build\com
 .\xv_release\_build\windows_%XVC_ARCH%\xv.exe xv_lib\imago.xv               	-NVoml  xv_release\_build\com\imago.xo               	xv_lib\imago.xvm               	xv_release\_build\com

@@ -34,15 +34,9 @@ cp xv_sl/_build/macosx_${ARCH}_release/xvsl xv_release/_build/macosx_${ARCH}/XV\
 cp xi_tool/_build/macosx_${ARCH}_release/xi xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xi
 cp xi_dasm/_build/macosx_${ARCH}_release/xda xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xda
 cp x_uicc/_build/macosx_${ARCH}_release/xuicc xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xuicc
+cp xv_release/visuales/*.uiarc xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xuil
 cp xv_release/engine-xv-vscx-1.0.0.vsix xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/vscx/xv-vscx.vsix
-cp xv_lib/manualis.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
-cp xv_lib/canonicalis.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
-cp xv_lib/limae.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
-cp xv_lib/imago.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
-cp xv_lib/consolatorium.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
-cp xv_lib/formati.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
-cp xv_lib/lxx.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
-cp xv_lib/potentia.xvm xv_release/_build/macosx_${ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xvcl/
+
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/canonicalis.xv         	-NPVo xv_release/_build/com/canonicalis.xo
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/limae.xv               	-NVol xv_release/_build/com/limae.xo               	xv_release/_build/com
 ./xv_release/_build/macosx_${XVC_ARCH}/XV\ Monstrans\ Manualis.app/Contents/MacOS/xv xv_lib/imago.xv               	-NVol xv_release/_build/com/imago.xo               	xv_release/_build/com

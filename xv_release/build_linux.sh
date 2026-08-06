@@ -34,8 +34,8 @@ cp xv_sl/_build/linux_${ARCH}_release/xvsl xv_release/_build/linux_${ARCH}/xvsl
 cp xi_tool/_build/linux_${ARCH}_release/xi xv_release/_build/linux_${ARCH}/xi
 cp xi_dasm/_build/linux_${ARCH}_release/xda xv_release/_build/linux_${ARCH}/xda
 cp x_uicc/_build/linux_${ARCH}_release/xuicc xv_release/_build/linux_${ARCH}/xuicc
+cp xv_release/visuales/*.uiarc xv_release/_build/linux_${ARCH}/xuil
 cp xv_release/engine-xv-vscx-1.0.0.vsix xv_release/_build/linux_${ARCH}/vscx/xv-vscx.vsix
-cp xv_release/visuales-antiquae.ecsa xv_release/_build/linux_${ARCH}/xuil/antiquus.uiarc
 
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/canonicalis.xv         	-NPVo xv_release/_build/com/canonicalis.xo
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/limae.xv               	-NVol xv_release/_build/com/limae.xo               	xv_release/_build/com

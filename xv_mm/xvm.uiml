@@ -1,96 +1,4 @@
-﻿## resource "UI"
-
-# Waffle
-
-resource font LocalFont { sans_serif height z 16 }
-
-application MenuBarItemNormal {
-	frame {
-		position parent
-		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @Text font @Font left vcenter color { 0, 0, 0 } }
-		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @RightText font @Font right vcenter color { 0, 0, 0 } }
-		texture { position { 1, 1, 1 z 20, 1 z 20 } texture @ImageNormal no_stretch }
-		bar { position { 0, 0, z 25, w 1.0 } color { 243, 247, 251 } }
-		bar { position { z 25, 0, 1 z 25, w 1.0 } color { 207, 219, 235 } }
-		bar { position { 0, 0, w 1.0, w 1.0 } color { 0xFF, 0xFF, 0xFF } }
-	}
-}
-application MenuBarItemHot {
-	frame {
-		position parent
-		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @Text font @Font left vcenter color { 0, 0, 0 } }
-		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @RightText font @Font right vcenter color { 0, 0, 0 } }
-		texture { position { 1, 1, 1 z 20, 1 z 20 } texture @ImageNormal no_stretch }
-		bar { position { 0, 0, w 1.0, 1 } color { 195, 237, 255 } }
-		bar { position { 0, -1 w 1.0, w 1.0, w 1.0 } color { 195, 237, 255 } }
-		bar { position { 0, 0, 1, w 1.0 } color { 195, 237, 255 } }
-		bar { position { -1 w 1.0, 0, w 1.0, w 1.0 } color { 195, 237, 255 } }
-		bar { position { 1, 1, -1 w 1.0, -1 w 1.0 } color { 230, 245, 255 } }
-	}
-}
-application MenuBarItemDisabled {
-	frame {
-		position parent
-		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @Text font @Font left vcenter color { 0x80, 0x80, 0x80 } }
-		text { position { 8 z 25, 0, w 1.0 z -25, w 1.0 } text @RightText font @Font right vcenter color { 0x80, 0x80, 0x80 } }
-		texture { position { 1, 1, 1 z 20, 1 z 20 } texture @ImageGrayed no_stretch }
-		bar { position { 0, 0, z 25, w 1.0 } color { 243, 247, 251 } }
-		bar { position { z 25, 0, 1 z 25, w 1.0 } color { 207, 219, 235 } }
-		bar { position { 0, 0, w 1.0, w 1.0 } color { 0xFF, 0xFF, 0xFF } }
-	}
-}
-application MenuBarSeparator {
-	frame {
-		position parent
-		bar { position { 8 z 25, 1, w 1.0, 2 } color { 207, 219, 235 } }
-		bar { position { 0, 0, z 25, w 1.0 } color { 243, 247, 251 } }
-		bar { position { z 25, 0, 1 z 25, w 1.0 } color { 207, 219, 235 } }
-		bar { position { 0, 0, w 1.0, w 1.0 } color { 0xFF, 0xFF, 0xFF } }
-	}
-}
-
-style MenuBar MenuBar {
-	default
-	Font LocalFont
-	ViewBackground { bar { position parent color { 230, 230, 230 } } }
-	ViewElementNormal { text { position parent text @Text font @Font center vcenter color { 0, 0, 0 } } }
-	ViewElementHot { frame {
-		position parent
-		text { position parent text @Text font @Font center vcenter color { 0, 0, 0 } }
-		bar { position { 0, 0, w 1.0, 1 } color { 195, 237, 255 } }
-		bar { position { 0, -1 w 1.0, w 1.0, w 1.0 } color { 195, 237, 255 } }
-		bar { position { 0, 0, 1, w 1.0 } color { 195, 237, 255 } }
-		bar { position { -1 w 1.0, 0, w 1.0, w 1.0 } color { 195, 237, 255 } }
-		bar { position { 1, 1, -1 w 1.0, -1 w 1.0 } color { 230, 245, 255 } }
-	} }
-	ViewElementPressed { frame {
-		position parent
-		text { position parent text @Text font @Font center vcenter color { 0, 0, 0 } }
-		bar { position { 0, 0, w 1.0, 1 } color { 170, 212, 230 } }
-		bar { position { 0, -1 w 1.0, w 1.0, w 1.0 } color { 170, 212, 230 } }
-		bar { position { 0, 0, 1, w 1.0 } color { 170, 212, 230 } }
-		bar { position { -1 w 1.0, 0, w 1.0, w 1.0 } color { 170, 212, 230 } }
-		bar { position { 1, 1, -1 w 1.0, -1 w 1.0 } color { 215, 230, 240 } }
-	} }
-	ViewElementDisabled { text { position parent text @Text font @Font center vcenter color { 128, 128, 128 } } }
-	SizeLeftSpace z 5 SizeMenuBorder z 2 SizeMenuItem z 24 SizeMenuSeparator 3
-	ViewMenuShadow { bar {
-		position { z 4, z 4, w 1 z 4, w 1 z 4 }
-		color { 0, 0, 0, 40 }
-	} }
-	ViewMenuFrame { frame {
-		position parent
-		bar { position { z 1, z 1, w 1 z -1, w 1 z -1 } color { 255, 255, 255 } }
-		bar { position parent color { 192, 192, 192 } }
-	} }
-	ViewMenuSeparator MenuBarSeparator
-	ViewMenuItemNormal MenuBarItemNormal
-	ViewMenuItemNormalChecked MenuBarItemNormal
-	ViewMenuItemGrayed MenuBarItemDisabled
-	ViewMenuItemGrayedChecked MenuBarItemDisabled
-	ViewMenuItemHot MenuBarItemHot
-	ViewMenuItemHotChecked MenuBarItemHot
-}
+﻿resource font LocalFont { sans_serif height z 16 }
 
 resource texture IconBack		{ & "icons/menu_back.eiwv" }
 resource texture IconForward	{ & "icons/menu_forward.eiwv" }
@@ -209,108 +117,112 @@ resource string ButtonCncl	[ _ ru ] { "Cancel" "Отменить" }
 resource string ButtonRmv	[ _ ru ] { "Remove" "Удалить" }
 resource string TitleModule	[ _ ru ] { "Module's name" "Имя модуля" }
 
+application BrowserBackground Windows { bar { position { 0, 2 * Interval + ElementSize, w 1, w 1 } color ButtonC } }
+application BrowserBackground MacOSX { frame { position parent } }
+application BrowserBackground Linux { bar { position parent color ButtonC } }
+
 dialog AddPage { DialogFrame {
-	position { 0, 0, z 400, z 108 }
+	position { 0, 0, z 400, 6 * Interval + 3 * ElementSize }
 	Captioned CloseButton Title MenuAddPage
 	ControlGroup {
 		style WaffleFrame
-		position { z 4, z 4, w 1 z -4, z 72 }
-		Static { position { z 4, z 4, z 100, z 32 } Text AddClass }
-		ComboBox { position { z 100, z 4, w 1 z -4, z 32 } ID 101 }
-		Static { position { z 4, z 36, z 100, z 64 } Text AddPath }
-		Edit { position { z 100, z 36, w 1 z -4, z 64 } ID 102 Text "." }
+		position { Interval, Interval, w 1 - Interval, 4 * Interval + 2 * ElementSize }
+		Static { position { Interval, Interval, Interval z 100, Interval + ElementSize } Text AddClass }
+		ComboBox { position { Interval z 100, Interval, w 1 - Interval, Interval + ElementSize } ID 101 }
+		Static { position { Interval, 2 * Interval + ElementSize, Interval z 100, 2 * (Interval + ElementSize) } Text AddPath }
+		Edit { position { Interval z 100, 2 * Interval + ElementSize, w 1 - Interval, 2 * (Interval + ElementSize) } ID 102 Text "." }
 	}
 	Button {
-		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		position { w 1 - 2 * Interval z -200, 5 * Interval + 2 * ElementSize, w 1 - 2 * Interval z -100, 5 * Interval + 3 * ElementSize }
 		ID 2 Text ButtonCncl
 	}
 	Button {
-		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		position { w 1 - Interval z -100, 5 * Interval + 2 * ElementSize, w 1 - Interval, 5 * Interval + 3 * ElementSize }
 		ID 1 Text ButtonAdd
 	}
 } }
 dialog AddSect { DialogFrame {
-	position { 0, 0, z 400, z 140 }
+	position { 0, 0, z 400, 7 * Interval + 4 * ElementSize }
 	Captioned CloseButton Title MenuAddSect
 	ControlGroup {
 		style WaffleFrame
-		position { z 4, z 4, w 1 z -4, z 104 }
-		Static { position { z 4, z 4, z 100, z 32 } Text AddClass }
-		ComboBox { position { z 100, z 4, w 1 z -4, z 32 } ID 101 }
-		Static { position { z 4, z 36, z 100, z 64 } Text AddName }
-		Edit { position { z 100, z 36, w 1 z -4, z 64 } ID 102 }
-		Static { position { z 4, z 68, z 100, z 96 } Text AddIndex }
-		Edit { position { z 100, z 68, w 1 z -4, z 96 } ID 103 CharactersEnabled "0123456789" Text "0" }
+		position { Interval, Interval, w 1 - Interval, 5 * Interval + 3 * ElementSize }
+		Static { position { Interval, Interval, Interval z 100, Interval + ElementSize } Text AddClass }
+		ComboBox { position { Interval z 100, Interval, w 1 - Interval, Interval + ElementSize } ID 101 }
+		Static { position { Interval, 2 * Interval + ElementSize, Interval z 100, 2 * (Interval + ElementSize) } Text AddName }
+		Edit { position { Interval z 100, 2 * Interval + ElementSize, w 1 - Interval, 2 * (Interval + ElementSize) } ID 102 }
+		Static { position { Interval, 3 * Interval + 2 * ElementSize, Interval z 100, 3 * (Interval + ElementSize) } Text AddIndex }
+		Edit { position { Interval z 100, 3 * Interval + 2 * ElementSize, w 1 - Interval, 3 * (Interval + ElementSize) } ID 103 CharactersEnabled "0123456789" Text "0" }
 	}
 	Button {
-		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		position { w 1 - 2 * Interval z -200, 6 * Interval + 3 * ElementSize, w 1 - 2 * Interval z -100, 6 * Interval + 4 * ElementSize }
 		ID 2 Text ButtonCncl
 	}
 	Button {
-		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		position { w 1 - Interval z -100, 6 * Interval + 3 * ElementSize, w 1 - Interval, 6 * Interval + 4 * ElementSize }
 		ID 1 Text ButtonAdd
 	}
 } }
 dialog AddLang { DialogFrame {
-	position { 0, 0, z 400, z 76 }
+	position { 0, 0, z 400, 5 * Interval + 2 * ElementSize }
 	Captioned CloseButton Title MenuAddLang
 	ControlGroup {
 		style WaffleFrame
-		position { z 4, z 4, w 1 z -4, z 40 }
-		Static { position { z 4, z 4, z 100, z 32 } Text AddLang }
-		Edit { position { z 100, z 4, w 1 z -4, z 32 } ID 101 }
+		position { Interval, Interval, w 1 - Interval, 3 * Interval + ElementSize }
+		Static { position { Interval, Interval, Interval z 100, Interval + ElementSize } Text AddLang }
+		Edit { position { Interval z 100, Interval, w 1 - Interval, Interval + ElementSize } ID 101 }
 	}
 	Button {
-		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		position { w 1 - 2 * Interval z -200, 4 * Interval + ElementSize, w 1 - 2 * Interval z -100, 4 * Interval + 2 * ElementSize }
 		ID 2 Text ButtonCncl
 	}
 	Button {
-		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		position { w 1 - Interval z -100, 4 * Interval + ElementSize, w 1 - Interval, 4 * Interval + 2 * ElementSize }
 		ID 1 Text ButtonAdd
 	}
 } }
 dialog SetModuleName { DialogFrame {
-	position { 0, 0, z 400, z 76 }
+	position { 0, 0, z 400, 5 * Interval + 2 * ElementSize }
 	Captioned CloseButton Title TitleModule
 	ControlGroup {
 		style WaffleFrame
-		position { z 4, z 4, w 1 z -4, z 40 }
-		Edit { position { z 4, z 4, w 1 z -4, z 32 } ID 101 }
+		position { Interval, Interval, w 1 - Interval, 3 * Interval + ElementSize }
+		Edit { position { Interval, Interval, w 1 - Interval, Interval + ElementSize } ID 101 }
 	}
 	Button {
-		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		position { w 1 - 2 * Interval z -200, 4 * Interval + ElementSize, w 1 - 2 * Interval z -100, 4 * Interval + 2 * ElementSize }
 		ID 2 Text ButtonCncl
 	}
 	Button {
-		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		position { w 1 - Interval z -100, 4 * Interval + ElementSize, w 1 - Interval, 4 * Interval + 2 * ElementSize }
 		ID 1 Text ButtonAccpt
 	}
 } }
 dialog RemoveLang { DialogFrame {
-	position { 0, 0, z 400, z 76 }
+	position { 0, 0, z 400, 5 * Interval + 2 * ElementSize }
 	Captioned CloseButton Title MenuRemLang
 	ControlGroup {
 		style WaffleFrame
-		position { z 4, z 4, w 1 z -4, z 40 }
-		Static { position { z 4, z 4, z 100, z 32 } Text AddLang }
-		Edit { position { z 100, z 4, w 1 z -4, z 32 } ID 101 }
+		position { Interval, Interval, w 1 - Interval, 3 * Interval + ElementSize }
+		Static { position { Interval, Interval, Interval z 100, Interval + ElementSize } Text AddLang }
+		Edit { position { Interval z 100, Interval, w 1 - Interval, Interval + ElementSize } ID 101 }
 	}
 	Button {
-		position { w 1 z -208, w 1 z -32, w 1 z -108, w 1 z -4 }
+		position { w 1 - 2 * Interval z -200, 4 * Interval + ElementSize, w 1 - 2 * Interval z -100, 4 * Interval + 2 * ElementSize }
 		ID 2 Text ButtonCncl
 	}
 	Button {
-		position { w 1 z -104, w 1 z -32, w 1 z -4, w 1 z -4 }
+		position { w 1 - Interval z -100, 4 * Interval + ElementSize, w 1 - Interval, 4 * Interval + 2 * ElementSize }
 		ID 1 Text ButtonRmv
 	}
 } }
 dialog Editor { DialogFrame {
 	position { 0, 0, w 0.7, w 0.7 }
 	Captioned Sizeble CloseButton MaximizeButton MinimizeButton
-	MinimalWidth z 450 MinimalHeight z 300 Background null DefaultBackground
-	FrameExtendedData { MacEffectBackground MacUseLightTheme }
+	MinimalWidth z 450 MinimalHeight z 300
+	FrameExtendedData { THEME_SPEC }
 	MenuBar {
-		position { 0, 0, w 1, z 24 }
+		position { 0, 0, w 1, ToolElementSize }
 		MenuBarElement {
 			Text MenuFile Menu { PopupMenu {
 				MenuItem { SystemAppearance Text MenuNew RightText "Ctrl + Shift + N" ID 101 }
@@ -349,39 +261,36 @@ dialog Editor { DialogFrame {
 		}
 	}
 	HorizontalSplitBox {
-		position { z 4, z 28, w 1 z -4, w 1 z -4 }
+		position { Interval - SplitBoxPadding, ToolElementSize + Interval - SplitBoxPadding, w 1 - (Interval - SplitBoxPadding), w 1 - (Interval - SplitBoxPadding) }
 		SplitBoxPart {
 			position { 0, 0, z 200, 0 }
 			MinimalSize z 150
-			TreeView { position parent ID 1001 }
+			TreeView { position { SplitBoxPadding, SplitBoxPadding, w 1 - SplitBoxPadding, w 1 - SplitBoxPadding } ID 1001 }
 		}
 		SplitBoxPart {
 			position { 0, 0, z 200, 0 }
 			MinimalSize z 150 Stretch
-			Edit { position { 0, 0, w 1, z 28 } ID 1002 Placeholder TextTitle }
-			CheckBox { position { 0, z 32, z 80, z 60 } ID 1010 Text FlagThrows }
-			CheckBox { position { z 80, z 32, z 160, z 60 } ID 1011 Text FlagInst }
-			CheckBox { position { z 160, z 32, z 240, z 60 } ID 1012 Text FlagRead }
-			CheckBox { position { z 240, z 32, z 320, z 60 } ID 1013 Text FlagWrite }
-			CheckBox { position { z 320, z 32, z 400, z 60 } ID 1014 Text FlagVirtual }
-			CheckBox { position { 0, z 64, z 80, z 92 } ID 1015 Text FlagInterf }
-			CheckBox { position { z 80, z 64, z 160, z 92 } ID 1016 Text FlagCtor }
-			CheckBox { position { z 160, z 64, z 240, z 92 } ID 1017 Text FlagOper }
-			CheckBox { position { z 240, z 64, z 320, z 92 } ID 1018 Text FlagCast }
+			Edit { position { SplitBoxPadding, SplitBoxPadding, w 1 - SplitBoxPadding, SplitBoxPadding + ElementSize } ID 1002 Placeholder TextTitle }
+			CheckBox { position { SplitBoxPadding, SplitBoxPadding + ElementSize + Interval, SplitBoxPadding z 90, SplitBoxPadding + 2 * ElementSize + Interval } ID 1010 Text FlagThrows }
+			CheckBox { position { SplitBoxPadding z 90, SplitBoxPadding + ElementSize + Interval, SplitBoxPadding z 180, SplitBoxPadding + 2 * ElementSize + Interval } ID 1011 Text FlagInst }
+			CheckBox { position { SplitBoxPadding z 180, SplitBoxPadding + ElementSize + Interval, SplitBoxPadding z 270, SplitBoxPadding + 2 * ElementSize + Interval } ID 1012 Text FlagRead }
+			CheckBox { position { SplitBoxPadding z 270, SplitBoxPadding + ElementSize + Interval, SplitBoxPadding z 360, SplitBoxPadding + 2 * ElementSize + Interval } ID 1013 Text FlagWrite }
+			CheckBox { position { SplitBoxPadding z 360, SplitBoxPadding + ElementSize + Interval, SplitBoxPadding z 450, SplitBoxPadding + 2 * ElementSize + Interval } ID 1014 Text FlagVirtual }
+			CheckBox { position { SplitBoxPadding, SplitBoxPadding + 2 * ElementSize + Interval, SplitBoxPadding z 90, SplitBoxPadding + 3 * ElementSize + Interval } ID 1015 Text FlagInterf }
+			CheckBox { position { SplitBoxPadding z 90, SplitBoxPadding + 2 * ElementSize + Interval, SplitBoxPadding z 180, SplitBoxPadding + 3 * ElementSize + Interval } ID 1016 Text FlagCtor }
+			CheckBox { position { SplitBoxPadding z 180, SplitBoxPadding + 2 * ElementSize + Interval, SplitBoxPadding z 270, SplitBoxPadding + 3 * ElementSize + Interval } ID 1017 Text FlagOper }
+			CheckBox { position { SplitBoxPadding z 270, SplitBoxPadding + 2 * ElementSize + Interval, SplitBoxPadding z 360, SplitBoxPadding + 3 * ElementSize + Interval } ID 1018 Text FlagCast }
 			HorizontalSplitBox {
-				position { 0, z 96, w 1, w 1 }
+				position { 0, 3 * ElementSize + 2 * Interval, w 1, w 1 }
 				SplitBoxPart {
 					position { 0, 0, z 150, 0 }
 					MinimalSize z 80
-					ListBox { position parent ID 1101 }
+					ListBox { position { SplitBoxPadding, SplitBoxPadding, w 1 - SplitBoxPadding, w 1 - SplitBoxPadding } ID 1101 }
 				}
 				SplitBoxPart {
 					position { 0, 0, z 150, 0 }
 					MinimalSize z 60 Stretch
-					ScrollBox {
-						position parent ID 1201
-						VerticalLine z 30 HorizontalLine z 30
-					}
+					ScrollBox { position { SplitBoxPadding, SplitBoxPadding, w 1 - SplitBoxPadding, w 1 - SplitBoxPadding } ID 1201 }
 				}
 			}
 		}
@@ -392,34 +301,34 @@ dialog BaseStatic { Static {} }
 dialog Browser { DialogFrame {
 	position { 0, 0, w 0.7, w 0.7 }
 	Captioned Sizeble CloseButton MaximizeButton MinimizeButton
-	MinimalWidth z 300 MinimalHeight z 150 Background null DefaultBackground
-	FrameExtendedData { MacEffectBackground MacUseLightTheme }
-	ToolButton { position { z 4, z 4, z 32, z 32 } ToolButtonPart {
-			position parent
-			ImageNormal IconBack ImageGrayed IconBackI ID 101
+	MinimalWidth z 300 MinimalHeight z 150 Background BrowserBackground
+	FrameExtendedData { WindowsTabbedTitle WindowsTopMargin 2 * Interval + ElementSize MacEffectBackground MacEffectBackgroundMaterial "Sidebar" THEME_SPEC MacTransparentTitle }
+	ToolButton { position { Interval, Interval, Interval + ElementSize, Interval + ElementSize } ToolButtonPart {
+		position parent
+		ImageNormal IconBack ImageGrayed IconBackI ID 101
 	} }
-	ToolButton { position { z 36, z 4, z 64, z 32 } ToolButtonPart {
-			position parent
-			ImageNormal IconForward ImageGrayed IconForwardI ID 102
+	ToolButton { position { 2 * Interval + ElementSize, Interval, 2 * Interval + 2 * ElementSize, Interval + ElementSize } ToolButtonPart {
+		position parent
+		ImageNormal IconForward ImageGrayed IconForwardI ID 102
 	} }
 	Edit {
-		position { z 68, z 4, w 1 z - 100, z 32 }
+		position { 3 * Interval + 2 * ElementSize, Interval, w 1 - 4 * Interval - 3 * ElementSize, Interval + ElementSize }
 		ID 103 ReadOnly Placeholder SearchText
 	}
-	ToolButton { position { w 1 z -96, z 4, w 1 z -68, z 32 } ToolButtonPart {
-			position parent
-			ImageNormal IconHome ImageGrayed IconHomeI ID 104
+	ToolButton { position { w 1 - 3 * Interval - 3 * ElementSize, Interval, w 1 - 3 * Interval - 2 * ElementSize, Interval + ElementSize } ToolButtonPart {
+		position parent
+		ImageNormal IconHome ImageGrayed IconHomeI ID 104
 	} }
-	ToolButton { position { w 1 z -64, z 4, w 1 z -36, z 32 } ToolButtonPart {
-			position parent
-			ImageNormal IconIndex ImageGrayed IconIndexI ID 105
+	ToolButton { position { w 1 - 2 * Interval - 2 * ElementSize, Interval, w 1 - 2 * Interval - ElementSize, Interval + ElementSize } ToolButtonPart {
+		position parent
+		ImageNormal IconIndex ImageGrayed IconIndexI ID 105
 	} }
-	ToolButton { position { w 1 z -32, z 4, w 1 z -4, z 32 } ToolButtonPart {
-			position parent
-			ImageNormal IconFind ImageGrayed IconFindI ID 106
+	ToolButton { position { w 1 - Interval - ElementSize, Interval, w 1 - Interval, Interval + ElementSize } ToolButtonPart {
+		position parent
+		ImageNormal IconFind ImageGrayed IconFindI ID 106
 	} }
 	RichEdit {
-		position { z 4, z 36, w 1 z -4, w 1 z -4 }
+		position { Interval, 2 * Interval + ElementSize, w 1 - Interval, w 1 - Interval }
 		DontCopyAttributes ReadOnly ID 201
 	}
 } }

@@ -891,7 +891,8 @@ int Main(void)
 		SafePointer<Stream> com_stream = Assembly::QueryLocalizedResource(L"COM");
 		SafePointer<StringTable> com = new StringTable(com_stream);
 		Assembly::SetLocalizedCommonStrings(com);
-		SafePointer<Stream> ui_stream = Assembly::QueryResource(L"UI");
+		SafePointer<ITheme> theme = GetCurrentTheme();
+		SafePointer<Stream> ui_stream = theme->GetClass() == ThemeClass::Light ? Assembly::QueryResource(L"UI") : Assembly::QueryResource(L"UI2");
 		Loader::LoadUserInterfaceFromBinary(interface, ui_stream);
 	} catch (...) { return 1; }
 	ApplicationCallback callback;

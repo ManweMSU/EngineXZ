@@ -12,6 +12,14 @@ using namespace Engine::Windows;
 
 constexpr int num_elements_per_page = 100;
 
+Engine::ImmutableString ColorGrayBlue;
+Engine::ImmutableString ColorGray;
+Engine::ImmutableString ColorRed;
+Engine::ImmutableString ColorBlue;
+Engine::ImmutableString ColorGreen;
+Engine::ImmutableString ColorCyan;
+Engine::ImmutableString ColorPurple;
+
 class EngineTextFormatter : public XV::IManualTextFormatter
 {
 public:
@@ -34,7 +42,7 @@ public:
 	virtual string UnderlinedText(const string & inner) override { return L"\33u" + inner + L"\33e"; }
 	virtual string LinkedText(const string & inner, const string & to) override { return L"\33l" + to + L"\33" + inner + L"\33e"; }
 	virtual string Paragraph(const string & inner) override { return L"\n\33a1\t" + inner + L"\33e"; }
-	virtual string ListItem(int index, const string & inner) override { return L"\n\33a1\33cFF803030" + string(index) + L".\33e " + inner + L"\33e"; }
+	virtual string ListItem(int index, const string & inner) override { return L"\n\33a1\33cFF" + ColorGrayBlue + string(index) + L".\33e " + inner + L"\33e"; }
 	virtual string Code(const string & inner) override { return L"\33f01" + inner + L"\33e"; }
 };
 class PlainTextFormatter : public XV::IManualTextFormatter
@@ -404,18 +412,18 @@ class BrowserCallback : public IEventCallback, public Controls::RichEdit::IRichE
 				rt << title;
 				rt << L"\n\33e\33e";
 				if (page->GetTraits()) rt << L"\33h0014\33a1";
-				if (page->GetTraits() & XV::ManualPageThrows) rt << L"\33b\33cFF0000FF" << *interface.Strings[L"SymbolThrows"] << L"\33e\33e ";
-				if (page->GetTraits() & XV::ManualPageInstance) rt << L"\33b\33cFF20C000" << *interface.Strings[L"SymbolInstance"] << L"\33e\33e ";
-				if (page->GetTraits() & XV::ManualPagePropRead) rt << L"\33b\33cFFFF8000" << *interface.Strings[L"SymbolRead"] << L"\33e\33e ";
-				if (page->GetTraits() & XV::ManualPagePropWrite) rt << L"\33b\33cFFFF0080" << *interface.Strings[L"SymbolWrite"] << L"\33e\33e ";
-				if (page->GetTraits() & XV::ManualPageVirtual) rt << L"\33b\33cFFFF0000" << *interface.Strings[L"SymbolVirtual"] << L"\33e\33e ";
-				if (page->GetTraits() & XV::ManualPageInterface) rt << L"\33b\33cFFFF0000" << *interface.Strings[L"SymbolInterface"] << L"\33e\33e ";
-				if (page->GetTraits() & XV::ManualPageConstructor) rt << L"\33b\33cFF404040" << *interface.Strings[L"SymbolCtor"] << L"\33e\33e ";
-				if (page->GetTraits() & XV::ManualPageOperator) rt << L"\33b\33cFF404040" << *interface.Strings[L"SymbolOperator"] << L"\33e\33e ";
-				if (page->GetTraits() & XV::ManualPageConvertor) rt << L"\33b\33cFF404040" << *interface.Strings[L"SymbolConvertor"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPageThrows) rt << L"\33b\33cFF" << ColorRed << *interface.Strings[L"SymbolThrows"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPageInstance) rt << L"\33b\33cFF" << ColorGreen << *interface.Strings[L"SymbolInstance"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPagePropRead) rt << L"\33b\33cFF" << ColorCyan << *interface.Strings[L"SymbolRead"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPagePropWrite) rt << L"\33b\33cFF" << ColorPurple << *interface.Strings[L"SymbolWrite"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPageVirtual) rt << L"\33b\33cFF" << ColorBlue << *interface.Strings[L"SymbolVirtual"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPageInterface) rt << L"\33b\33cFF" << ColorBlue << *interface.Strings[L"SymbolInterface"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPageConstructor) rt << L"\33b\33cFF" << ColorGray << *interface.Strings[L"SymbolCtor"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPageOperator) rt << L"\33b\33cFF" << ColorGray << *interface.Strings[L"SymbolOperator"] << L"\33e\33e ";
+				if (page->GetTraits() & XV::ManualPageConvertor) rt << L"\33b\33cFF" << ColorGray << *interface.Strings[L"SymbolConvertor"] << L"\33e\33e ";
 				if (page->GetTraits()) rt << L"\n\33e\33e";
 				if (page->GetModule().Length() && path[0] != L'.') {
-					rt << L"\33h0014\33a1\33cFF404040" << *interface.Strings[L"SymbolModule"] << L": ";
+					rt << L"\33h0014\33a1\33cFF" << ColorGray << *interface.Strings[L"SymbolModule"] << L": ";
 					rt << L"\33l.modulus:" << page->GetModule() << L"\33" << page->GetModule() << L"\33e";
 					rt << L"\n\33e\33e\33e";
 				}

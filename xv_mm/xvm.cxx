@@ -115,7 +115,25 @@ int Main(void)
 		SafePointer<Stream> com_stream = Assembly::QueryLocalizedResource(L"COM");
 		SafePointer<StringTable> com = new StringTable(com_stream);
 		Assembly::SetLocalizedCommonStrings(com);
-		SafePointer<Stream> ui_stream = Assembly::QueryResource(L"UI");
+		SafePointer<ITheme> theme = GetCurrentTheme();
+		SafePointer<Stream> ui_stream = theme->GetClass() == ThemeClass::Light ? Assembly::QueryResource(L"UI") : Assembly::QueryResource(L"UI2");
+		if (theme->GetClass() == ThemeClass::Light) {
+			ColorGrayBlue = L"803030";
+			ColorGray = L"404040";
+			ColorRed = L"0000FF";
+			ColorBlue = L"FF0000";
+			ColorGreen = L"20C000";
+			ColorCyan = L"FF8000";
+			ColorPurple = L"FF0080";
+		} else {
+			ColorGrayBlue = L"FF6060";
+			ColorGray = L"C0C0C0";
+			ColorRed = L"0000FF";
+			ColorBlue = L"FF4040";
+			ColorGreen = L"30FF00";
+			ColorCyan = L"FFC040";
+			ColorPurple = L"FF40C0";
+		}
 		Loader::LoadUserInterfaceFromBinary(interface, ui_stream);
 	} catch (...) { return 1; }
 	ApplicationCallback callback;
