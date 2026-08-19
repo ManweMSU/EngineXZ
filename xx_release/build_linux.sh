@@ -1,31 +1,33 @@
-esse xcon/xc.ertproj -Nac ${ARCH} ${MODE}
 esse xx_xx/xx.ertproj -Nac ${ARCH} ${MODE}
-esse xx_xxf/xxf.ertproj -Nac ${ARCH} ${MODE}
-esse xx_xxsc/xxsc.ertproj -Nac ${ARCH} ${MODE}
+if [[ "$NOGUI" != "1" ]]; then
+    esse xcon/xc.ertproj -Nac ${ARCH} ${MODE}
+    esse xx_xxf/xxf.ertproj -Nac ${ARCH} ${MODE}
+    esse xx_xxsc/xxsc.ertproj -Nac ${ARCH} ${MODE}
+fi
 
 mkdir xx_release/_build
 mkdir xx_release/_build/com
 rm -rf xx_release/_build/linux_${ARCH}
 mkdir xx_release/_build/linux_${ARCH}
-mkdir xx_release/_build/linux_${ARCH}/xc
+if [[ "$NOGUI" != "1" ]]; then
+    mkdir xx_release/_build/linux_${ARCH}/xc
+fi
 mkdir xx_release/_build/linux_${ARCH}/xx
 mkdir xx_release/_build/linux_${ARCH}/xxcl
 mkdir xx_release/_build/linux_${ARCH}/xxi
 mkdir xx_release/_build/linux_${ARCH}/fidelitas
 mkdir xx_release/_build/linux_${ARCH}/infidelitas
 
-cp xcon/_build/linux_${ARCH}_${MODE}/xc xx_release/_build/linux_${ARCH}/xc/xc
-cp xcon/xc.ini xx_release/_build/linux_${ARCH}/xc/xc.ini
 cp xx_xx/_build/linux_${ARCH}_${MODE}/xx xx_release/_build/linux_${ARCH}/xx/xx
 cp xx_xx/xx_lnx.ini xx_release/_build/linux_${ARCH}/xx/xx.ini
 cp xx_xx/xe.ini xx_release/_build/linux_${ARCH}/xe.ini
 cp xx_release/radix.xecert xx_release/_build/linux_${ARCH}/fidelitas/radix.xecert
-cp xx_xxf/_build/linux_${ARCH}_${MODE}/xxf xx_release/_build/linux_${ARCH}/xx/xxf
-cp xx_xxsc/_build/linux_${ARCH}_${MODE}/xxsc xx_release/_build/linux_${ARCH}/xxsc
-# cp xx_xxsc/_build/linux_${ARCH}_${MODE}/xxsc.ico xx_release/_build/linux_${ARCH}/xxsc.ico
-# cp xx_xxsc/_build/linux_${ARCH}_${MODE}/file_format_1.ico xx_release/_build/linux_${ARCH}/file_format_1.ico
-# cp xx_xxsc/_build/linux_${ARCH}_${MODE}/file_format_2.ico xx_release/_build/linux_${ARCH}/file_format_2.ico
-# cp xx_xxsc/_build/linux_${ARCH}_${MODE}/file_format_3.ico xx_release/_build/linux_${ARCH}/file_format_3.ico
+if [[ "$NOGUI" != "1" ]]; then
+    cp xcon/_build/linux_${ARCH}_${MODE}/xc xx_release/_build/linux_${ARCH}/xc/xc
+    cp xcon/xc.ini xx_release/_build/linux_${ARCH}/xc/xc.ini
+    cp xx_xxf/_build/linux_${ARCH}_${MODE}/xxf xx_release/_build/linux_${ARCH}/xx/xxf
+    cp xx_xxsc/_build/linux_${ARCH}_${MODE}/xxsc xx_release/_build/linux_${ARCH}/xxsc
+fi
 
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/errores.ru.xv   -NVo xx_release/_build/com/errores.ru.xo
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/errores.en.xv   -NVo xx_release/_build/com/errores.en.xo

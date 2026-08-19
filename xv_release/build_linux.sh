@@ -1,11 +1,13 @@
 esse xv_com/xv.ertproj -Nar ${ARCH}
 esse xw_dec/xw.ertproj -Nar ${ARCH}
 esse xw_pc/xwpc.ertproj -Nar ${ARCH}
-esse xv_sl/xvsl.ertproj -Nar ${ARCH}
 esse xi_tool/xi.ertproj -Nar ${ARCH}
 esse xi_dasm/xda.ertproj -Nar ${ARCH}
 esse x_uicc/xuicc.ertproj -Nar ${ARCH}
-esse xv_mm/xvm.ertproj -Nar ${ARCH}
+if [[ "$NOGUI" != "1" ]]; then
+    esse xv_sl/xvsl.ertproj -Nar ${ARCH}
+    esse xv_mm/xvm.ertproj -Nar ${ARCH}
+fi
 mkdir xv_release/_build
 rm -r xv_release/_build/linux_${ARCH}
 mkdir xv_release/_build/linux_${ARCH}
@@ -14,7 +16,6 @@ mkdir xv_release/_build/comw
 mkdir xv_release/_build/linux_${ARCH}/xvcl
 mkdir xv_release/_build/linux_${ARCH}/xwcl
 mkdir xv_release/_build/linux_${ARCH}/xuil
-mkdir xv_release/_build/linux_${ARCH}/vscx
 mkdir xv_release/_build/linux_${ARCH}/xv.loc
 mkdir xv_release/_build/linux_${ARCH}/xw.loc
 mkdir xv_release/_build/linux_${ARCH}/xi.loc
@@ -26,16 +27,19 @@ cp xw_dec/xw.ini xv_release/_build/linux_${ARCH}/xw.ini
 cp xi_tool/xi.ini xv_release/_build/linux_${ARCH}/xi.ini
 cp xi_dasm/xda.ini xv_release/_build/linux_${ARCH}/xda.ini
 cp x_uicc/xuicc.ini xv_release/_build/linux_${ARCH}/xuicc.ini
-cp xv_mm/_build/linux_${ARCH}_release/xvm xv_release/_build/linux_${ARCH}/xvm
 cp xv_com/_build/linux_${ARCH}_release/xv xv_release/_build/linux_${ARCH}/xv
 cp xw_dec/_build/linux_${ARCH}_release/xw xv_release/_build/linux_${ARCH}/xw
 cp xw_pc/_build/linux_${ARCH}_release/xwpc xv_release/_build/linux_${ARCH}/xwpc
-cp xv_sl/_build/linux_${ARCH}_release/xvsl xv_release/_build/linux_${ARCH}/xvsl
 cp xi_tool/_build/linux_${ARCH}_release/xi xv_release/_build/linux_${ARCH}/xi
 cp xi_dasm/_build/linux_${ARCH}_release/xda xv_release/_build/linux_${ARCH}/xda
 cp x_uicc/_build/linux_${ARCH}_release/xuicc xv_release/_build/linux_${ARCH}/xuicc
 cp xv_release/visuales/*.uiarc xv_release/_build/linux_${ARCH}/xuil
-cp xv_release/engine-xv-vscx-1.0.0.vsix xv_release/_build/linux_${ARCH}/vscx/xv-vscx.vsix
+if [[ "$NOGUI" != "1" ]]; then
+    mkdir xv_release/_build/linux_${ARCH}/vscx
+    cp xv_sl/_build/linux_${ARCH}_release/xvsl xv_release/_build/linux_${ARCH}/xvsl
+    cp xv_mm/_build/linux_${ARCH}_release/xvm xv_release/_build/linux_${ARCH}/xvm
+    cp xv_release/engine-xv-vscx-1.0.0.vsix xv_release/_build/linux_${ARCH}/vscx/xv-vscx.vsix
+fi
 
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/canonicalis.xv         	-NPVo xv_release/_build/com/canonicalis.xo
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/limae.xv               	-NVol xv_release/_build/com/limae.xo               	xv_release/_build/com
@@ -78,8 +82,10 @@ cp xv_release/engine-xv-vscx-1.0.0.vsix xv_release/_build/linux_${ARCH}/vscx/xv-
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/ingenium_iu.xv 			-NVol xv_release/_build/com/ingenium_iu.xo 			xv_release/_build/com
 ./xv_release/_build/linux_${XVC_ARCH}/xv xv_lib/ingenium_iu_ext.xv 		-NVol xv_release/_build/com/ingenium_iu_ext.xo 		xv_release/_build/com
 ./xv_release/_build/linux_${XVC_ARCH}/xv xw_lib/canonicalis.xw         	-NVolm xv_release/_build/comw/canonicalis.xwo      	xv_release/_build/comw	xw_lib/canonicalis.xvm
-cp xv_lib/*.xvm xv_release/_build/linux_${ARCH}/xvcl
-cp xw_lib/*.xvm xv_release/_build/linux_${ARCH}/xwcl
+if [[ "$NOGUI" != "1" ]]; then
+    cp xv_lib/*.xvm xv_release/_build/linux_${ARCH}/xvcl
+    cp xw_lib/*.xvm xv_release/_build/linux_${ARCH}/xwcl
+fi
 cp xv_release/_build/com/*.xo xv_release/_build/linux_${ARCH}/xvcl
 cp xv_release/_build/comw/*.xwo xv_release/_build/linux_${ARCH}/xwcl
 esse-converte lineae xv_com/locale/ru.txt -Nfo bin xv_release/_build/linux_${ARCH}/xv.loc/ru.ecst
