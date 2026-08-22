@@ -1,0 +1,26 @@
+importa limae;
+importa ecso;
+
+structura InstalledProduct {
+    linea Identifier;
+    linea Version;
+    linea Platform;
+    linea PackageType;
+    linea Path;
+}
+structura InstallationDatabase {
+    ordo InstalledProduct Products;
+}
+
+functio nihil _() introitus iacit {
+    var arg = para_argumenta();
+    si (arg^.longitudo != 3) iace errores.argumentum_falsum;
+    InstallationDatabase db;
+    InstalledProduct xx;
+    xx.Identifier = "xx";
+    xx.Path = arg^[1];
+    db.Products.adde(xx);
+    var fl = semita(arg^[2]).crea_limam(modus_limae.scribere_et_legere, modus_creatoris.crea_nova);
+    serializatio.ecso.serializator stor(fl);
+    serializatio.serializa(db, @stor);
+}

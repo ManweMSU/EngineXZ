@@ -1,0 +1,19 @@
+Compila {
+	A = "xx-lxi.cxx"
+}
+Moduli {
+	A = "cor"
+	B = "imagines"
+	C = "formationes"
+	D = "consolatorium"
+}
+IndentitasApplicationis = "XX.LinuxInstallator"
+IndentitasCreatoris = "EngineSoftware"
+CreaMetaDefinitiones = true
+Meta {
+	NomenApplicationis = "Engine XX Installator pro Linux"
+	CreatorApplicationis = "Engine Software"
+	JuraExempli = "© Engine Software. 2026"
+	NomenInternum = "xx-lxi"
+	VersioApplicationis = "1.0.0.1"
+}

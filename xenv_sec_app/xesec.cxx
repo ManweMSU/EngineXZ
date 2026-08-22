@@ -754,9 +754,24 @@ public:
 		if (ID == 1) {
 			XX::SecuritySettings security;
 			_read(security, window);
+			bool failed = false;
 			try {
 				XX::UpdateSecuritySettings(security, _xe);
-			} catch (...) {
+			#ifdef ENGINE_LINUX
+			} catch (ESSE::Exception & e) {
+				if (e.GetError().error_code == ESSE::Errores::ErrorIO && e.GetError().error_subcode == ESSE::Errores::SuberrorIO::AccessDenied) {
+					Array<string> exec(0x10);
+					exec << L"--renova-securitatem";
+					exec << _xe;
+					exec << security.TrustedCertificates;
+					exec << security.UntrustedCertificates;
+					exec << (security.ValidateTrust ? L"1" : L"0");
+					exec << (security.ValidateTrustForQuarantine ? L"1" : L"0");
+					if (!CreateProcessElevated(IO::GetExecutablePath(), &exec)) failed = true;
+				} else failed = true;
+			#endif
+			} catch (...) { failed = true; }
+			if (failed) {
 				MessageBox(0, *interface.Strings[L"ErrorSecUpdate"], ENGINE_VI_APPNAME, window, MessageBoxButtonSet::Ok, MessageBoxStyle::Warning, 0);
 				return;
 			}
@@ -771,8 +786,20 @@ public:
 					if (result == MessageBoxResult::Yes) {
 						FindControl(w, 102)->SetText(L"fidelitas");
 						FindControl(w, 103)->SetText(L"infidelitas");
-						try { IO::CreateDirectory(IO::Path::GetDirectory(_xe) + L"/fidelitas"); } catch (...) {}
-						try { IO::CreateDirectory(IO::Path::GetDirectory(_xe) + L"/infidelitas"); } catch (...) {}
+						try {
+							IO::CreateDirectory(IO::Path::GetDirectory(_xe) + L"/fidelitas");
+							IO::CreateDirectory(IO::Path::GetDirectory(_xe) + L"/infidelitas");
+						#ifdef ENGINE_LINUX
+						} catch (ESSE::Exception & e) {
+							if (e.GetError().error_code == ESSE::Errores::ErrorIO && e.GetError().error_subcode == ESSE::Errores::SuberrorIO::AccessDenied) {
+								Array<string> exec(0x10);
+								exec << L"--crea-collectoria";
+								exec << IO::ExpandPath(IO::Path::GetDirectory(_xe) + L"/fidelitas");
+								exec << IO::ExpandPath(IO::Path::GetDirectory(_xe) + L"/infidelitas");
+								CreateProcessElevated(IO::GetExecutablePath(), &exec);
+							}
+						#endif
+						} catch (...) {}
 					}
 				});
 				MessageBox(&task->Value1, *interface.Strings[L"MsgCreateTrustPaths"], ENGINE_VI_APPNAME, window, MessageBoxButtonSet::YesNo, MessageBoxStyle::Information, task);
@@ -881,6 +908,24 @@ public:
 
 int Main(void)
 {
+	SafePointer< Array<string> > args = GetCommandLine();
+	if (args->Length() >= 7 && args->ElementAt(1) == L"--renova-securitatem") {
+		try {
+			string xe = args->ElementAt(2);
+			XX::SecuritySettings sec;
+			sec.TrustedCertificates = args->ElementAt(3);
+			sec.UntrustedCertificates = args->ElementAt(4);
+			sec.ValidateTrust = args->ElementAt(5) == L"1";
+			sec.ValidateTrustForQuarantine = args->ElementAt(6) == L"1";
+			XX::UpdateSecuritySettings(sec, xe);
+			return 0;
+		} catch (...) { return 1; }
+	} else if (args->Length() >= 2 && args->ElementAt(1) == L"--crea-collectoria") {
+		try {
+			for (int i = 2; i < args->Length(); i++) IO::CreateDirectoryTree(args->ElementAt(i));
+			return 0;
+		} catch (...) { return 1; }
+	}
 	try {
 		SafePointer<IScreen> screen = GetDefaultScreen();
 		CurrentScaleFactor = screen->GetDpiScale();
@@ -896,7 +941,6 @@ int Main(void)
 		Loader::LoadUserInterfaceFromBinary(interface, ui_stream);
 	} catch (...) { return 1; }
 	ApplicationCallback callback;
-	SafePointer< Array<string> > args = GetCommandLine();
 	GetWindowSystem()->SetFilesToOpen(args->GetBuffer() + 1, args->Length() - 1);
 	GetWindowSystem()->SetCallback(&callback);
 	GetWindowSystem()->RunMainLoop();

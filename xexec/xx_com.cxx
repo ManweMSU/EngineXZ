@@ -1,6 +1,8 @@
 ﻿#include "xx_com.h"
 #include "xx_com_store.h"
 
+#include <PlatformSpecific/UnixFileAccess.h>
+
 namespace Engine
 {
 	namespace XX
@@ -79,10 +81,11 @@ namespace Engine
 			xe->SetValue(L"CertificatiInfisi", settings.UntrustedCertificates);
 			xe->SetValue(L"ConvalidaConfisionem", settings.ValidateTrust);
 			xe->SetValue(L"ConvalidaConfisionemPerQuarentina", settings.ValidateTrustForQuarantine);
-			SafePointer<Streaming::Stream> stream;
+			SafePointer<Streaming::FileStream> stream;
 			IO::MoveFile(xe_conf, xe_conf + L".tmp");
 			try {
 				stream = new Streaming::FileStream(xe_conf, Streaming::AccessReadWrite, Streaming::CreateNew);
+				try { IO::Unix::SetFileAccessRights(stream->Handle(), IO::Unix::AccessRightRegular, IO::Unix::AccessRightRead, IO::Unix::AccessRightRead); } catch (...) {}
 			} catch (...) {
 				IO::MoveFile(xe_conf + L".tmp", xe_conf);
 				throw;
