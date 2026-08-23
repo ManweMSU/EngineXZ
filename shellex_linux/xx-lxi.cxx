@@ -650,8 +650,8 @@ ESSE_MAIN_ROUTINE {
 					SetFilePermissions(setup_log_stream->GetIOHandle(), FileAccess::AccessRead, FileAccess::AccessRead, FileAccess::AccessRead);
 					for (auto & e : extra_uninstall) setup_log->WriteLine(e);
 					if (update_desktop_database) setup_log->WriteLine(U"#");
-					if (update_desktop_database) try { Invoke(U"/", U"update-desktop-database"); } catch (...) {}
 					for (auto & mime_update : mime_update_list) try { Invoke(U"/", U"update-mime-database", mime_update); } catch (...) {}
+					if (update_desktop_database) try { Invoke(U"/", U"update-desktop-database"); } catch (...) {}
 				} catch (Exception & e) {
 					console->WriteLineFormatted(FormatString(U"\033C*ERROR INSTALLATIONIS: %0:%1\033-*", e.GetError().error_code, e.GetError().error_subcode));
 					console->WriteLineFormatted(U"\0334*STADIUM: " + stage + U"\033-*");
