@@ -33,5 +33,5 @@ VersionInformation {
 	CompanyName = "Engine Software"
 	Copyright = "© Engine Software. 2026"
 	InternalName = "xi"
-	Version = "1.0.0.1"
+	Version = "1.0.1.2"
 }

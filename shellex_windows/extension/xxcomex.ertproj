@@ -22,5 +22,5 @@ VersionInformation {
 	Copyright = "© Engine Software. 2026"
 	Description = "XX Extensio COM"
 	InternalName = "xxcomex"
-	Version = "1.0.0.1"
+	Version = "1.0.1.2"
 }

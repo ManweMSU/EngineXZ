@@ -1,7 +1,7 @@
 ﻿auxilium attributum ("NomenModuli") = "Liber Lineae";
 auxilium attributum ("CreatorModuli") = "Engine Software";
 auxilium attributum ("IuraExempli") = "© Engine Software. 2026";
-auxilium attributum ("Versio") = "1.0.0.1";
+auxilium attributum ("Versio") = "1.0.1.2";
 
 importa memoria;
 

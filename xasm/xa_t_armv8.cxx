@@ -316,7 +316,7 @@ namespace Engine
 				void _encode_transform_to_pointer(Reg reg, uint reg_in_use)
 				{
 					int offset = _allocate_temporary(TH::MakeSize(0, 1));
-					if (-offset < 0xFF) {
+					if (offset >= -0xFF && offset <= 0xFF) {
 						encode_store(8, Reg::FP, offset, reg);
 					} else {
 						auto r = _reg_alloc(reg_in_use, uint(reg));
@@ -374,8 +374,14 @@ namespace Engine
 							else if (i == 3) encode_put_addr_of(Reg::X4, arg);
 							else if (i == 4) encode_put_addr_of(Reg::X5, arg);
 							else if (i == 5) encode_put_addr_of(Reg::X6, arg);
-							else if (i == 6) encode_put_addr_of(Reg::X7, arg);
-							else { encode_put_addr_of(Reg::X0, arg); encode_store(8, Reg::SP, (i - 7) * 8, Reg::X0); }
+							else if (i == 6) encode_put_addr_of(Reg::X7, arg); else {
+								uint offset = (i - 7) * 8;
+								encode_put_addr_of(Reg::X0, arg);
+								if (offset <= 0xFF) encode_store(8, Reg::SP, offset, Reg::X0); else {
+									encode_add(Reg::X8, Reg::SP, offset);
+									encode_store(8, Reg::X8, 0, Reg::X0);
+								}
+							}
 						}
 						encode_emulate_lea(Reg::X0, Reg::FP, l.fp_offset);
 						encode_put_addr_of(Reg::X16, l.finalizer.final);
@@ -393,45 +399,75 @@ namespace Engine
 				void _encode_blt(Reg dest_ptr, Reg src, bool src_indirect, int size, uint reg_in_use, bool unaligned)
 				{
 					if (src_indirect) {
-						auto ir = _reg_alloc(reg_in_use, uint(dest_ptr) | uint(src));
-						_encode_preserve(uint(ir), reg_in_use, 0, true);
-						if (unaligned) {
-							uint offs = 0;
-							uint rest = size;
-							while (rest) {
-								encode_load(1, false, ir, src, offs);
-								encode_store(1, dest_ptr, offs, ir);
-								offs++; rest--;
-							}
-						} else {
-							uint offs = 0;
-							uint rest = size;
-							while (rest) {
-								if (rest >= 8) {
-									encode_load(8, false, ir, src, offs);
-									encode_store(8, dest_ptr, offs, ir);
-									offs += 8; rest -= 8;
-								} else if (rest >= 4) {
-									encode_load(4, false, ir, src, offs);
-									encode_store(4, dest_ptr, offs, ir);
-									offs += 4; rest -= 4;
-								} else if (rest >= 2) {
-									encode_load(2, false, ir, src, offs);
-									encode_store(2, dest_ptr, offs, ir);
-									offs += 2; rest -= 2;
-								} else {
+						if (size <= 255) {
+							auto ir = _reg_alloc(reg_in_use, uint(dest_ptr) | uint(src));
+							_encode_preserve(uint(ir), reg_in_use, 0, true);
+							if (unaligned) {
+								uint offs = 0;
+								uint rest = size;
+								while (rest) {
 									encode_load(1, false, ir, src, offs);
 									encode_store(1, dest_ptr, offs, ir);
 									offs++; rest--;
 								}
+							} else {
+								uint offs = 0;
+								uint rest = size;
+								while (rest) {
+									if (rest >= 8) {
+										encode_load(8, false, ir, src, offs);
+										encode_store(8, dest_ptr, offs, ir);
+										offs += 8; rest -= 8;
+									} else if (rest >= 4) {
+										encode_load(4, false, ir, src, offs);
+										encode_store(4, dest_ptr, offs, ir);
+										offs += 4; rest -= 4;
+									} else if (rest >= 2) {
+										encode_load(2, false, ir, src, offs);
+										encode_store(2, dest_ptr, offs, ir);
+										offs += 2; rest -= 2;
+									} else {
+										encode_load(1, false, ir, src, offs);
+										encode_store(1, dest_ptr, offs, ir);
+										offs++; rest--;
+									}
+								}
 							}
+							_encode_restore(uint(ir), reg_in_use, 0, true);
+						} else {
+							auto ir = _reg_alloc(reg_in_use, uint(dest_ptr) | uint(src));
+							auto spr = _reg_alloc(reg_in_use, uint(dest_ptr) | uint(src) | uint(ir));
+							auto dpr = _reg_alloc(reg_in_use, uint(dest_ptr) | uint(src) | uint(ir) | uint(spr));
+							_encode_preserve(uint(ir) | uint(spr) | uint(dpr), reg_in_use, 0, true);
+							encode_mov(dpr, dest_ptr);
+							encode_mov(spr, src);
+							uint rest = size;
+							while (rest) {
+								if (rest >= 8 && !unaligned) {
+									encode_load_postfix(8, ir, src, 8);
+									encode_store_postfix(8, dest_ptr, 8, ir);
+									rest -= 8;
+								} else if (rest >= 4 && !unaligned) {
+									encode_load_postfix(4, ir, src, 4);
+									encode_store_postfix(4, dest_ptr, 4, ir);
+									rest -= 4;
+								} else if (rest >= 2 && !unaligned) {
+									encode_load_postfix(2, ir, src, 2);
+									encode_store_postfix(2, dest_ptr, 2, ir);
+									rest -= 2;
+								} else {
+									encode_load_postfix(1, ir, spr, 1);
+									encode_store_postfix(1, dpr, 1, ir);
+									rest--;
+								}
+							}
+							_encode_restore(uint(ir) | uint(spr) | uint(dpr), reg_in_use, 0, true);
 						}
-						_encode_restore(uint(ir), reg_in_use, 0, true);
 					} else {
 						if (size != 1 && size != 2 && size != 4 && size != 8) unaligned = true;
 						if (unaligned) {
 							uint offs = 0;
-							uint rest = size;
+							uint rest = min(size, 8);
 							while (rest) {
 								encode_store(1, dest_ptr, offs, src);
 								if (rest > 1) encode_ror(src, src, 8);
@@ -744,10 +780,9 @@ namespace Engine
 					retval_byref = _is_pass_by_ref(node.retval_spec);
 					retval_final = node.retval_final.final.ref_class != ReferenceNull;
 					SafePointer< Array<_argument_passage_info> > layout = _make_interface_layout(node.retval_spec, node.input_specs.GetBuffer() + first_arg, arg_no);
-					bool preserve_x19 = false;
+					bool preserve_x19 = false, preserve_x20 = false;
 					if (disp->reg != Reg::X19) for (auto & info : *layout) if (!info.indirect && info.vreg != VReg::NO) { preserve_x19 = true; break; }
 					_encode_preserve(0x3FFFF, reg_in_use, uint(disp->reg), !idle);
-					if (preserve_x19 && !idle) encode_push(Reg::X19);
 					uint stack_usage = 0;
 					for (auto & info : *layout) if (info.stack_offset < 0) {
 						ArgumentSpecification spec;
@@ -755,7 +790,9 @@ namespace Engine
 						else spec = node.retval_spec;
 						uint stack_top = info.stack_offset + _size_eval(spec.size);
 						if (stack_top > stack_usage) stack_usage = stack_top;
-					}
+					} else if (info.stack_offset > 0xFF && disp->reg != Reg::X20) preserve_x20 = true;
+					if (preserve_x19 && !idle) encode_push(Reg::X19);
+					if (preserve_x20 && !idle) encode_push(Reg::X20);
 					stack_usage = _dword_align(stack_usage);
 					if (!idle) encode_stack_alloc(stack_usage);
 					Volumes::Dictionary<Reg, _vector_argument_reload> vec_reload;
@@ -803,7 +840,12 @@ namespace Engine
 								_encode_tree_node(tree, idle, mem_load, &ld, reg_in_use | 0x3FFFF);
 								if (!idle) {
 									if (info.indirect) {
-										if (info.stack_offset >= 0) encode_store(8, Reg::SP, info.stack_offset, ld.reg);
+										if (info.stack_offset >= 0) {
+											if (info.stack_offset > 0xFF) {
+												encode_add(Reg::X20, Reg::SP, info.stack_offset);
+												encode_store(8, Reg::X20, 0, ld.reg);
+											} else encode_store(8, Reg::SP, info.stack_offset, ld.reg);
+										}
 									} else {
 										if (info.vreg != VReg::NO) {
 										} else if (info.reg_min != Reg::NO && info.reg_max != Reg::NO && info.reg_min != info.reg_max) {
@@ -813,7 +855,10 @@ namespace Engine
 											if (ld.flags & DispositionPointer) encode_load(ld.size, spec.semantics == ArgumentSemantics::SignedInteger, info.reg_min, info.reg_min);
 										} else {
 											if (ld.flags & DispositionPointer) encode_load(ld.size, false, Reg::X17, Reg::X17);
-											encode_store(ld.size, Reg::SP, info.stack_offset, Reg::X17);
+											if (info.stack_offset > 0xFF) {
+												encode_add(Reg::X20, Reg::SP, info.stack_offset);
+												encode_store(ld.size, Reg::X20, 0, Reg::X17);
+											} else encode_store(ld.size, Reg::SP, info.stack_offset, Reg::X17);
 										}
 									}
 								}
@@ -884,6 +929,7 @@ namespace Engine
 						disp->flags = DispositionDiscard;
 					}
 					if (rv_mem_index >= 0) _assign_finalizer(rv_mem_index, node.retval_final);
+					if (preserve_x20 && !idle) encode_pop(Reg::X20);
 					if (preserve_x19 && !idle) encode_pop(Reg::X19);
 					_encode_restore(0x3FFFF, reg_in_use, uint(disp->reg), !idle);
 				}
@@ -2848,7 +2894,7 @@ namespace Engine
 										if (!idle) encode_emulate_lea(disp->reg, Reg::FP, offset);
 										disp->flags = DispositionPointer;
 									} else if (disp->flags & DispositionRegister) {
-										if (!idle) encode_load(8, false, disp->reg, Reg::FP, offset);
+										if (!idle) encode_load_fp(8, false, disp->reg, offset);
 										disp->flags = DispositionRegister;
 									} else if (disp->flags & DispositionDiscard) {
 										disp->flags = DispositionDiscard;
@@ -2943,11 +2989,7 @@ namespace Engine
 									} else if (disp->flags & DispositionPointer) {
 										disp->flags = DispositionPointer;
 										*mem_load += _word_align(node.input_specs[0].size);
-										if (!idle) {
-											int offset = _allocate_temporary(node.input_specs[0].size);
-											encode_store(size, Reg::FP, offset, accumulator);
-											encode_emulate_lea(accumulator, Reg::FP, offset);
-										}
+										if (!idle) _encode_transform_to_pointer(accumulator, reg_in_use);
 									} else disp->flags = DispositionDiscard;
 								} else if (node.self.index == TransformAtomicSet) {
 									if (node.inputs.Length() != 2) throw InvalidArgumentException();
@@ -2985,11 +3027,7 @@ namespace Engine
 									} else if (disp->flags & DispositionPointer) {
 										disp->flags = DispositionPointer;
 										*mem_load += _word_align(node.input_specs[0].size);
-										if (!idle) {
-											int offset = _allocate_temporary(node.input_specs[0].size);
-											encode_store(size, Reg::FP, offset, get);
-											encode_emulate_lea(get, Reg::FP, offset);
-										}
+										if (!idle) _encode_transform_to_pointer(get, reg_in_use);
 									} else disp->flags = DispositionDiscard;
 								} else throw InvalidArgumentException();
 							} else if (node.self.index >= 0x010 && node.self.index < 0x013) {
@@ -3264,6 +3302,15 @@ namespace Engine
 						encode_mov_z(dest, literal >> 16, 16);
 					} else encode_mov_z(dest, 0, 0);
 				}
+				void encode_load_fp(uint quant, bool sgn, Reg dest, int offset = 0)
+				{
+					if (-0xFF <= offset && offset <= 0xFF) {
+						encode_load(quant, sgn, dest, Reg::FP, offset);
+					} else {
+						if (offset > 0) encode_add(dest, Reg::FP, offset); else encode_sub(dest, Reg::FP, -offset);
+						encode_load(quant, sgn, dest, dest);
+					}
+				}
 				void encode_store(uint quant, Reg dest_ptr, int offset, Reg src)
 				{
 					uint opcode;
@@ -3350,6 +3397,15 @@ namespace Engine
 						if (index & 2) opcode |= 0x40000000;
 					} else throw InvalidArgumentException();
 					encode_uint32(opcode);
+				}
+				void encode_store_fp(uint quant, int offset, Reg src, Reg aux_reg)
+				{
+					if (-0xFF <= offset && offset <= 0xFF) {
+						encode_store(quant, Reg::FP, offset, src);
+					} else {
+						if (offset > 0) encode_add(aux_reg, Reg::FP, offset); else encode_sub(aux_reg, Reg::FP, -offset);
+						encode_store(quant, aux_reg, 0, src);
+					}
 				}
 				void encode_add(Reg dest, Reg op1, uint op2)
 				{
@@ -3621,14 +3677,14 @@ namespace Engine
 					uint opcode = _reg_code(dest) | (_reg_code(src) << 5);
 					if (sgn) {
 						opcode |= 0x93400000;
-						if (valid_bytes == 8) encode_mov(dest, src);
+						if (valid_bytes == 8) { encode_mov(dest, src); return; }
 						else if (valid_bytes == 4) opcode |= 0x7C00;
 						else if (valid_bytes == 2) opcode |= 0x3C00;
 						else if (valid_bytes == 1) opcode |= 0x1C00;
 						else throw InvalidArgumentException();
 					} else {
 						opcode |= 0xD3400000;
-						if (valid_bytes == 8) encode_mov(dest, src);
+						if (valid_bytes == 8) { encode_mov(dest, src); return; }
 						else if (valid_bytes == 4) opcode |= 0x7C00;
 						else if (valid_bytes == 2) opcode |= 0x3C00;
 						else if (valid_bytes == 1) opcode |= 0x1C00;
@@ -3925,10 +3981,10 @@ namespace Engine
 						encode_put_global_address(dest, value);
 					} else if (value.ref_class == ReferenceArgument) {
 						auto & arg = _inputs[value.index];
-						if (arg.indirect) encode_load(8, false, dest, Reg::FP, arg.fp_offset);
+						if (arg.indirect) encode_load_fp(8, false, dest, arg.fp_offset);
 						else encode_emulate_lea(dest, Reg::FP, arg.fp_offset);
 					} else if (value.ref_class == ReferenceRetVal) {
-						if (_retval.indirect) encode_load(8, false, dest, Reg::FP, _retval.fp_offset);
+						if (_retval.indirect) encode_load_fp(8, false, dest, _retval.fp_offset);
 						else encode_emulate_lea(dest, Reg::FP, _retval.fp_offset);
 					} else if (value.ref_class == ReferenceLocal) {
 						bool found = false;
@@ -3997,32 +4053,32 @@ namespace Engine
 					_allocated_frame_size = -_frame_base;
 					for (auto & a : _inputs) {
 						if (a.reg_min != Reg::NO) {
-							encode_store(8, Reg::FP, a.fp_offset, a.reg_min);
-							if (a.reg_max != Reg::NO && a.reg_max != a.reg_min) encode_store(8, Reg::FP, a.fp_offset + 8, a.reg_max);
+							encode_store_fp(8, a.fp_offset, a.reg_min, Reg::X9);
+							if (a.reg_max != Reg::NO && a.reg_max != a.reg_min) encode_store_fp(8, a.fp_offset + 8, a.reg_max, Reg::X9);
 						}
 						if (a.vreg != VReg::NO) {
 							encode_emulate_lea(Reg::X9, Reg::FP, a.fp_offset);
 							encode_store_element(8, Reg::X9, a.vreg);
 						}
 					}
-					if (rv_reg != Reg::NO) encode_store(8, Reg::FP, _retval.fp_offset, rv_reg);
+					if (rv_reg != Reg::NO) encode_store_fp(8, _retval.fp_offset, rv_reg, Reg::X9);
 				}
 				void encode_function_epilogue(void)
 				{
 					if (_is_pass_by_ref(_src.retval)) {
-						encode_load(8, false, _is_windows ? Reg::X0 : Reg::X8, Reg::FP, _retval.fp_offset);
+						encode_load_fp(8, false, _is_windows ? Reg::X0 : Reg::X8, _retval.fp_offset);
 					} else if (_retval.vreg != VReg::NO) {
 						encode_emulate_lea(Reg::X8, Reg::FP, _retval.fp_offset);
 						encode_load_element(8, VReg::V0, Reg::X8);
 					} else {
 						auto size = _size_eval(_src.retval.size);
 						if (size) {
-							if (size == 1) encode_load(1, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
-							else if (size == 2) encode_load(2, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
-							else if (size == 4) encode_load(4, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
-							else encode_load(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, Reg::FP, _retval.fp_offset);
+							if (size == 1) encode_load_fp(1, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, _retval.fp_offset);
+							else if (size == 2) encode_load_fp(2, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, _retval.fp_offset);
+							else if (size == 4) encode_load_fp(4, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, _retval.fp_offset);
+							else encode_load_fp(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_min, _retval.fp_offset);
 							if (_retval.reg_max != Reg::NO && _retval.reg_max != _retval.reg_min) {
-								encode_load(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_max, Reg::FP, _retval.fp_offset + 8);
+								encode_load_fp(8, _src.retval.semantics == ArgumentSemantics::SignedInteger, _retval.reg_max, _retval.fp_offset + 8);
 							}
 						}
 					}
