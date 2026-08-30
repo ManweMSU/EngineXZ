@@ -448,7 +448,7 @@ class EditorCallback : public IEventCallback
 				current_section->SetContents(l, L"");
 			}
 			int base_id = 10000;
-			Coordinate current(0), label(0, 28.0, 0.0), edit(0, 350.0, 0.0);
+			Coordinate current(0), label(0, 28.0, 0.0), edit(0, 350.0, 0.0), margin(0, 2.0, 0.0);
 			for (auto & v : current_section->GetContents()) {
 				SafePointer<Controls::Static> ctl_label = new Controls::Static(interface.Dialog[L"BaseStatic"]);
 				SafePointer<Controls::MultiLineEdit> ctl_edit = new Controls::MultiLineEdit(interface.Dialog[L"BaseMultiLine"]);
@@ -457,7 +457,7 @@ class EditorCallback : public IEventCallback
 				current += label;
 				ctl_edit->SetID(base_id);
 				ctl_edit->SetText(IsTypeSection(current_section) ? v.value.Replace(L'\33', L'\n') : v.value);
-				ctl_edit->SetRectangle(Rectangle(0, current, Coordinate::Right(), current + edit));
+				ctl_edit->SetRectangle(Rectangle(margin, current + margin, Coordinate::Right() - margin, current + edit - margin));
 				current += edit;
 				lang_map.Append(base_id, v.key); base_id++;
 				view->AddChild(ctl_label);
