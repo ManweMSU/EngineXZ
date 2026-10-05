@@ -3,7 +3,7 @@
 #ifdef ESSE_VERSIO_CORDIS_MAJOR
 #define XE_TRY_INTRO try {
 #define XE_TRY_OUTRO(DRV) } \
-catch (ESSE::Exception & e) { ectx.error_code = e.GetError().error_code; ectx.error_subcode = e.GetError().error_subcode; return DRV; } \
+catch (ESSE::Exception & e) { ectx.error_code = e.GetError().error_code == 0xFFFFFFFF ? 1 : e.GetError().error_code; ectx.error_subcode = e.GetError().error_subcode; return DRV; } \
 catch (...) { ectx.error_code = 2; ectx.error_subcode = 0; return DRV; }
 #else
 #define XE_TRY_INTRO try {
