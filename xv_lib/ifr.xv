@@ -61,11 +61,13 @@ spatium remota {
 				per (var j : methi^) si (methi^[j]^.nomen == "@crea:F(Cnihil)") { meth = methi^[j]; exi; }
 				si (meth) { impl_gen << gen; impl_ctor << meth; }
 			}
-			var inv = repulsus.crea_invocatores(impl_ctor, impl_ctor.longitudo);
-			per (var i : impl_ctor) {
-				var nomen = impl_gen[i]^.attributa^[attributa.exportatum];
-				si (!nomen.longitudo) nomen = impl_gen[i]^.nomen;
-				_exportata.adde(nomen, (impl_gen[i]^.longitudo, inv^[i]));
+			si (impl_ctor.longitudo) {
+				var inv = repulsus.crea_invocatores(impl_ctor, impl_ctor.longitudo);
+				per (var i : impl_ctor) {
+					var nomen = impl_gen[i]^.attributa^[attributa.exportatum];
+					si (!nomen.longitudo) nomen = impl_gen[i]^.nomen;
+					_exportata.adde(nomen, (impl_gen[i]^.longitudo, inv^[i]));
+				}
 			}
 		}
 		functio nihil _procede(@dordo_datorum titulus, @dordo_datorum data) {
@@ -231,9 +233,23 @@ spatium remota {
 						_status_invocationis.suberror = errores.ifr_error_communicationis;
 						_sync_resp^.erige();
 					}
-				}; alioqui iace errores.ifr_defecta, errores.ifr_error_communicationis;
-			} cape iace errores.ifr_defecta, errores.ifr_error_communicationis;
-			_sync_resp^.opperire();
+				}; alioqui {
+					ende_invocationem();
+					iace errores.ifr_defecta, errores.ifr_error_communicationis;
+				}
+			} cape {
+				ende_invocationem();
+				iace errores.ifr_defecta, errores.ifr_error_communicationis;
+			}
+			dum (!_sync_resp^.opperire(5000)) {
+				_sync^.opperire();
+				logicum activus = _canale;
+				_sync^.aperi();
+				si (!activus) {
+					ende_invocationem();
+					iace errores.ifr_defecta, errores.ifr_error_communicationis;
+				}
+			}
 			si (_status_invocationis.error) {
 				ende_invocationem();
 				_status_invocationis.modera();
