@@ -40,8 +40,10 @@ spatium remota {
 		collectiones.dictionarium[linea, (nintadl, !repulsus.invocator)] _exportata;
 		communicatio.status_erroris _status_invocationis;
 		!dordo_datorum _data_invocationis;
+		logicum _procedo;
 
 		structor (@communicatio.canale canale, @contextus.cauda processor) iacit {
+			funda _procedo(non);
 			si (canale == nullus || processor == nullus) iace errores.argumentum_falsum;
 			_canale.contine(canale);
 			_cauda.contine(processor);
@@ -61,11 +63,13 @@ spatium remota {
 				per (var j : methi^) si (methi^[j]^.nomen == "@crea:F(Cnihil)") { meth = methi^[j]; exi; }
 				si (meth) { impl_gen << gen; impl_ctor << meth; }
 			}
-			var inv = repulsus.crea_invocatores(impl_ctor, impl_ctor.longitudo);
-			per (var i : impl_ctor) {
-				var nomen = impl_gen[i]^.attributa^[attributa.exportatum];
-				si (!nomen.longitudo) nomen = impl_gen[i]^.nomen;
-				_exportata.adde(nomen, (impl_gen[i]^.longitudo, inv^[i]));
+			si (impl_ctor.longitudo) {
+				var inv = repulsus.crea_invocatores(impl_ctor, impl_ctor.longitudo);
+				per (var i : impl_ctor) {
+					var nomen = impl_gen[i]^.attributa^[attributa.exportatum];
+					si (!nomen.longitudo) nomen = impl_gen[i]^.nomen;
+					_exportata.adde(nomen, (impl_gen[i]^.longitudo, inv^[i]));
+				}
 			}
 		}
 		functio nihil _procede(@dordo_datorum titulus, @dordo_datorum data) {
@@ -233,7 +237,17 @@ spatium remota {
 					}
 				}; alioqui iace errores.ifr_defecta, errores.ifr_error_communicationis;
 			} cape iace errores.ifr_defecta, errores.ifr_error_communicationis;
-			_sync_resp^.opperire();
+			dum (!_sync_resp^.opperire(1000)) {
+				_sync^.opperire();
+				var status = _procedo;
+				_sync^.aperi();
+				si (!status) {
+					proba clode();
+					_status_invocationis.error = errores.ifr_defecta;
+					_status_invocationis.suberror = errores.ifr_error_communicationis;
+					_sync_resp^.erige();
+				}
+			}
 			si (_status_invocationis.error) {
 				ende_invocationem();
 				_status_invocationis.modera();
@@ -255,6 +269,7 @@ spatium remota {
 		functio nihil exeque() iacit redefini {
 			_sync^.opperire();
 			var con = _canale;
+			_procedo = sic;
 			_sync^.aperi();
 			si (!con) iace errores.ifr_defecta, errores.ifr_error_communicationis;
 			proba communicatio.admitte_data(con, 24) {
@@ -290,12 +305,18 @@ spatium remota {
 					_status_invocationis.suberror = errores.ifr_error_communicationis;
 					_sync_resp^.erige();
 				}
-			}; cape iace errores.ifr_defecta, errores.ifr_error_communicationis;
+			}; cape {
+				_sync^.opperire();
+				_procedo = non;
+				_sync^.aperi();
+				iace errores.ifr_defecta, errores.ifr_error_communicationis;
+			}
 		}
 		functio nihil clode() iacit redefini {
 			_sync^.opperire();
 			var con = _canale;
 			var lab = _labos_closionis;
+			_procedo = non;
 			_canale.depura();
 			_objecta.depura();
 			_labos_closionis.depura();
