@@ -1,8 +1,8 @@
 cd ~/Documents/GitHub/EngineXZ
-./xv_release/build_macos_x64.sh
 ./xv_release/build_macos_arm64.sh
-./xx_release/build_macos_x64.sh
+./xv_release/build_macos_x64.sh
 ./xx_release/build_macos_arm64.sh
+./xx_release/build_macos_x64.sh
 xv com_release/fid.xv -Ndr 'xv_release/_build/macosx_x64/XV Monstrans Manualis.app/Contents/MacOS/xi'\
     'xx_release/_build/macosx_x64/XX.app/xxcl'\
     'xx_release/_build/macosx_x64/XX.app/xxi'\
