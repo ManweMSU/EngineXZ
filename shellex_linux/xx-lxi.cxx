@@ -431,7 +431,7 @@ ESSE_MAIN_ROUTINE {
 				auto & f = files[i];
 				auto index = i + 1;
 				if (f.source_file.GetLength()) console->WriteFormatted(FormatString(U"Addo \"\033B*%0\033-*\"...", f.source_file));
-				console->WriteFormatted(U"Addo \033B*collectorium\033-*...");
+				else console->WriteFormatted(U"Addo \033B*collectorium\033-*...");
 				try {
 					if (f.source_file.GetLength()) {
 						auto source = FileStream::Create(f.source_file, FileAccess::AccessRead, FileCreationMode::OpenExisting);
