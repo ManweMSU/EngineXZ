@@ -37,8 +37,16 @@ spatium http {
 	genus servus hereditat objectum {
 		nomen_alternum _genus_responsorum	= collectiones.dictionarium[linea, @extensio_servi];
 		nomen_alternum _genus_canalium		= collectiones.dictionarium[nintadl, !communicatio.canale];
-		genus _processor hereditat contextus.labos : extensio_servi {
+		structura _contextus_servi hereditat objectum {
 			!contextus.cauda_filorum cauda;
+			!contextus.signale servus_closus_est;
+			!contextus.signale servus_finitus_est;
+			nint labores;
+			functio nihil increma() { incrementum_securum(labores); }
+			functio nihil decrema() { si (!decrementum_securum(labores)) servus_finitus_est^.erige(); }
+		}
+		genus _processor hereditat contextus.labos : extensio_servi {
+			!_contextus_servi sctx;
 			!contextus.semaphorum sync;
 			!communicatio.canale canale;
 			!_genus_responsorum responsores;
@@ -62,17 +70,20 @@ spatium http {
 			!dordo_datorum receptor;
 			int64 longitudo;
 
-			structor () { funda modus(0); funda responsor(nullus); }
+			structor (@_contextus_servi cs) { funda modus(0); funda responsor(nullus); sctx.contine(cs); sctx^.increma(); }
+			destructor () { sctx^.decrema(); }
 			functio nihil exeque(@objectum ctx) virtualis redefini {
 				proba {
+					si (sctx^.servus_closus_est^.opperire(0)) responde;
 					si (modus == 00) {
 						error.modera();
 						si (!accumulator) accumulator = crea(dordo_datorum);
 						si (accumulator^.longitudo > 0x4000) { responde_fatale(400, sic); responde; }
 						si (receptor^.longitudo && receptor^[0] != nint8('\r')) accumulator^.adde(receptor^[0]);
 						int la = accumulator^.longitudo;
+						si (!la) { clode(); responde; }
 						si (!receptor^.longitudo || (la >= 2 && accumulator^[la - 2] == nint8('\n') && accumulator^[la - 1] == nint8('\n'))) {
-							muta_contextum(cauda) { proba {
+							muta_contextum(sctx^.cauda) { proba {
 								si (receptor^.longitudo) la -= 2;
 								var p = linea(accumulator^.data, la, linea.codex.ascii).scinde('\n');
 								si (!p^.longitudo) {
@@ -245,6 +256,7 @@ spatium http {
 				cr.valor = 0;
 			}
 			functio nihil procede() iacit {
+				si (sctx^.servus_closus_est^.opperire(0)) responde;
 				si (modus == 00) {
 					canale^.admitte(1, @error, @receptor, ego);
 				} alioqui si (modus == 01) {
@@ -256,7 +268,7 @@ spatium http {
 				} alioqui si (modus == 03) {
 					canale^.admitte(longitudo + 2, @error, @receptor, ego);
 				} alioqui si (modus == 10) {
-					cauda^.adde(ego);
+					sctx^.cauda^.adde(ego);
 				} alioqui si (modus == 20) {
 					si (cr.data_ex) {
 						proba longitudo = cr.data_ex^.longitudo;
@@ -353,7 +365,7 @@ spatium http {
 			}
 		}
 		genus _acceptor hereditat contextus.labos {
-			!contextus.cauda_filorum cauda;
+			!_contextus_servi sctx;
 			!contextus.semaphorum sync;
 			!_genus_responsorum responsores;
 			!_genus_canalium canalia;
@@ -365,14 +377,16 @@ spatium http {
 
 			int portus;
 
-			structor (int p, @contextus.cauda_filorum c, @contextus.semaphorum s, @_genus_responsorum rr, @_genus_canalium cc, @extensio_servi ee) {
+			structor (int p, @_contextus_servi cs, @contextus.semaphorum s, @_genus_responsorum rr, @_genus_canalium cc, @extensio_servi ee) {
 				funda portus(p);
 				funda error_ext(ee);
-				cauda.contine(c);
+				sctx.contine(cs);
 				sync.contine(s);
 				responsores.contine(rr);
 				canalia.contine(cc);
+				sctx^.increma();
 			}
+			destructor () { sctx^.decrema(); }
 			functio nihil exeque(@objectum ctx) virtualis redefini {
 				si (error.error) {
 					si (error.error == errores.rete_defectum && error.suberror == errores.rete_connectio_demissa) responde;
@@ -384,9 +398,8 @@ spatium http {
 					} responde;
 				}
 				si (canale) proba {
-					var proc = crea(_processor);
+					var proc = crea(_processor, sctx);
 					var ee = error_ext != nullus ? error_ext : proc;
-					proc^.cauda = cauda;
 					proc^.sync = sync;
 					proc^.canale = canale;
 					proc^.canalia = canalia;
@@ -403,7 +416,7 @@ spatium http {
 			}
 		}
 
-		!contextus.cauda_filorum _cdf;
+		!_contextus_servi _sctx;
 		!contextus.semaphorum _sync;
 		!_genus_responsorum _resp;
 		!_genus_canalium _canalia;
@@ -412,9 +425,13 @@ spatium http {
 
 		structor (~ordo (linea, @extensio_servi) extensiones, ~ordo (int, protocollum_servi, communicatio.indentitas) servi, @extensio_servi ee, int fili) iacit {
 			funda _error_ext(ee);
-			_cdf = contextus.crea_caudam_filorum(fili);
+			_sctx = crea(_contextus_servi);
+			_sctx^.cauda = contextus.crea_caudam_filorum(fili);
+			_sctx^.servus_closus_est = contextus.crea_signale();
+			_sctx^.servus_finitus_est = contextus.crea_signale();
+			_sctx^.labores = 0;
 			_sync = contextus.crea_semaphorum(1);
-			si (!_cdf || !_sync) iace errores.memoria_nulla;
+			si (!_sctx^.cauda || !_sctx^.servus_closus_est || !_sctx^.servus_finitus_est || !_sync) iace errores.memoria_nulla;
 			_resp = crea(genus(_resp).genus_objectum);
 			_canalia = crea(genus(_canalia).genus_objectum);
 			per (var i : extensiones) _resp^.adde(extensiones[i].primus, extensiones[i].secundus);
@@ -431,12 +448,13 @@ spatium http {
 				} alioqui si (s.secundus == protocollum_servi.https_ipv6) {
 					att^.adnecte(communicatio.adloquium_ipv6.servus(s.primus), s.tertius);
 				} alioqui iace errores.argumentum_falsum;
-				var acp = crea(_acceptor, s.primus, _cdf, _sync, _resp, _canalia, _error_ext);
+				var acp = crea(_acceptor, s.primus, _sctx, _sync, _resp, _canalia, _error_ext);
 				att^.accipe(-1, @acp^.error, @acp^.canale, @acp^.adloq, acp);
 			} cape (nintadl e, nintadl se) { clode(); iace e, se; }
 		}
 		destructor () { clode(); }
 		functio nihil clode() {
+			si (_sctx) _sctx^.servus_closus_est^.erige();
 			per (var i : _att) proba _att[i]^.clode();
 			_att.depura();
 			si (_sync) {
@@ -447,9 +465,10 @@ spatium http {
 				_sync.depura();
 				_canalia.depura();
 			}
-			si (_cdf) {
-				_cdf^.opperire();
-				_cdf.depura();
+			si (_sctx) {
+				_sctx^.servus_finitus_est^.opperire();
+				_sctx^.cauda^.opperire();
+				_sctx.depura();
 			}
 			_resp.depura();
 		}

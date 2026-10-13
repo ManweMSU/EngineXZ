@@ -9,10 +9,17 @@ namespace Engine
 		namespace Meta
 		{
 			constexpr const widechar * Stamp = L"XV";
-			constexpr uint VersionMajor = 1;
-			constexpr uint VersionMinor = 0;
-			constexpr uint Subversion = 0;
-			constexpr uint BuildNumber = 1;
+			#ifdef ENGINE_VI_VERSIONMAJOR
+				constexpr uint VersionMajor = ENGINE_VI_VERSIONMAJOR;
+				constexpr uint VersionMinor = ENGINE_VI_VERSIONMINOR;
+				constexpr uint Subversion = ENGINE_VI_SUBVERSION;
+				constexpr uint BuildNumber = ENGINE_VI_BUILD;
+			#else
+				constexpr uint VersionMajor = 0;
+				constexpr uint VersionMinor = 0;
+				constexpr uint Subversion = 0;
+				constexpr uint BuildNumber = 0;
+			#endif
 		}
 		namespace Lexic
 		{

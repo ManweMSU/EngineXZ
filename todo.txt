@@ -102,6 +102,13 @@ BETA-8:
  + Hardware based cryptography library
  + GUI legacy library
 
+1.0.3:
+ + Fixed XV version stamp
+ + Liber XX's dynamic module load crashes when module is already loaded
+ + Fixed a '400 BAD REQUEST' for the end-of-stream on the HTTP's server side
+ + Fixed a use-after-close on HTTP's server's extensions
+ + Performance improvements for 'ordo nint8'
+
 EXTRA RELEASES:
  - GUI and CUI libraries
  - XU framework: XV extension for UI

@@ -401,6 +401,9 @@ namespace Engine
 			}
 			try {
 				data = new XI::Module(input, XI::Module::ModuleLoadFlags::LoadExecute);
+				_sync->Wait();
+				for (auto & m : _modules) if (m.key == data->module_import_name) { auto ref = m.value.Inner(); _sync->Open(); return ref; }
+				_sync->Open();
 				result = new Module(*this);
 				if (data->subsystem == XI::Module::ExecutionSubsystem::NoUI) result->_xss = ExecutionSubsystem::NoUI;
 				else if (data->subsystem == XI::Module::ExecutionSubsystem::ConsoleUI) result->_xss = ExecutionSubsystem::ConsoleUI;
