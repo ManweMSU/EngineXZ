@@ -429,7 +429,7 @@ spatium http {
 			_sctx^.cauda = contextus.crea_caudam_filorum(fili);
 			_sctx^.servus_closus_est = contextus.crea_signale();
 			_sctx^.servus_finitus_est = contextus.crea_signale();
-			_sctx^.labores = 0;
+			_sctx^.labores = 1;
 			_sync = contextus.crea_semaphorum(1);
 			si (!_sctx^.cauda || !_sctx^.servus_closus_est || !_sctx^.servus_finitus_est || !_sync) iace errores.memoria_nulla;
 			_resp = crea(genus(_resp).genus_objectum);
@@ -454,7 +454,10 @@ spatium http {
 		}
 		destructor () { clode(); }
 		functio nihil clode() {
-			si (_sctx) _sctx^.servus_closus_est^.erige();
+			si (_sctx) {
+				_sctx^.servus_closus_est^.erige();
+				_sctx^.decrema();
+			}
 			per (var i : _att) proba _att[i]^.clode();
 			_att.depura();
 			si (_sync) {
