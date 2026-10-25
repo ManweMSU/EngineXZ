@@ -675,8 +675,10 @@ namespace Engine
 			}
 			virtual void Close(ErrorContext & ectx) noexcept override
 			{
-				if (!_listener) { SetXEError(ectx, 5, 0); return; }
-				nw_listener_cancel(_listener);
+				if (!_listener || !_queue) { SetXEError(ectx, 5, 0); return; }
+				ErrorContext lectx;
+				SetXEError(lectx, 0x8, 0x8);
+				_queue->Cancel(lectx);
 			}
 		};
 

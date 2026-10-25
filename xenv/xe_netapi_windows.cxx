@@ -1551,7 +1551,7 @@ namespace Engine
 				NetworkEventDispatch::ScheduleRequest(request, ectx);
 				XE_TRY_OUTRO()
 			}
-			virtual void Close(ErrorContext & ectx) noexcept override { shutdown(_interface->Socket(), SD_BOTH); }
+			virtual void Close(ErrorContext & ectx) noexcept override { _interface->Finalize(); }
 		};
 
 		void NetworkEngineInit(void) { NetworkEventDispatch::Initialize(); }

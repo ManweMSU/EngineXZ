@@ -108,6 +108,7 @@ BETA-8:
  + Fixed a '400 BAD REQUEST' for the end-of-stream on the HTTP's server side
  + Fixed a use-after-close on HTTP's server's extensions
  + Performance improvements for 'ordo nint8'
+ + Connection's clode() now cancels accept tasks (as was declared but was not functional) and does not finalize listener
 
 EXTRA RELEASES:
  - GUI and CUI libraries

@@ -450,7 +450,7 @@ namespace Engine
 								}
 								if (!command[1]) break;
 								SafePointer<NetworkRequestQueue> queue = reinterpret_cast<NetworkRequestQueue *>(command[1]);
-								if (command[0]) {
+								if (command[0] == 1) {
 									bool created;
 									auto rd_rq = queue->_peek_request(REQUEST_ATTRIBUTE_POLL_READ);
 									auto wr_rq = queue->_peek_request(REQUEST_ATTRIBUTE_POLL_WRITE);
@@ -459,6 +459,29 @@ namespace Engine
 										if (created) poll_volume++;
 										element->GetValue().value = _evaluate_poll_attribute(rd_rq, wr_rq);
 									} else command[0] = 0;
+								} else if (command[0] == 2) {
+									while (true) {
+										bool cancel_exit = false;
+										ErrorContext * cancel_ectx = 0;
+										SafePointer<IDispatchTask> cancel_hdlr;
+										queue->_local_sync->Wait();
+										if (!queue->_requests_read.IsEmpty()) {
+											auto & rq = queue->_requests_read.GetFirst()->GetValue();
+											cancel_hdlr = rq.out.handler;
+											cancel_ectx = rq.out.status;
+											queue->_requests_read.RemoveFirst();
+										} else if (!queue->_requests_write.IsEmpty()) {
+											auto & rq = queue->_requests_write.GetFirst()->GetValue();
+											cancel_hdlr = rq.out.handler;
+											cancel_ectx = rq.out.status;
+											queue->_requests_write.RemoveFirst();
+										} else cancel_exit = true;
+										queue->_local_sync->Open();
+										if (cancel_exit) break;
+										if (cancel_ectx) SetXEError(*cancel_ectx, 0x08, 0x08);
+										if (cancel_hdlr) cancel_hdlr->DoTask(0);
+									}
+									command[0] = 0;
 								}
 								if (!command[0]) {
 									auto element = clients.FindElementEquivalent(queue);
@@ -674,6 +697,7 @@ namespace Engine
 				}
 				_local_sync->Open();
 			}
+			void CancelRequests(void) noexcept { _control_send(2); }
 			void Shutdown(void) noexcept { _control_send(0); }
 			static void StopDispatch(void) noexcept
 			{
@@ -821,7 +845,7 @@ namespace Engine
 			virtual void Close(ErrorContext & ectx) noexcept override
 			{
 				if (!_queue) { SetXEError(ectx, 5, 0); return; }
-				_queue->ShutdownRequest(true, ectx);
+				_queue->CancelRequests();
 			}
 		};
 
