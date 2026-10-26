@@ -109,6 +109,7 @@ BETA-8:
  + Fixed a use-after-close on HTTP's server's extensions
  + Performance improvements for 'ordo nint8'
  + Connection's clode() now cancels accept tasks (as was declared but was not functional) and does not finalize listener
+ + Restored printing functionality on Linux
 
 EXTRA RELEASES:
  - GUI and CUI libraries
