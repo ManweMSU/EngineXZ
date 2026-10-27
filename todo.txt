@@ -106,9 +106,9 @@ BETA-8:
  + Fixed XV version stamp
  + Liber XX's dynamic module load crashes when module is already loaded
  + Fixed a '400 BAD REQUEST' for the end-of-stream on the HTTP's server side
- + Fixed a use-after-close on HTTP's server's extensions
+ + Fixed a use-after-close on HTTP server's extensions
  + Performance improvements for 'ordo nint8'
- + Connection's clode() now cancels accept tasks (as was declared but was not functional) and does not finalize listener
+ + Listener's clode() now cancels accept tasks (as was declared but was not functional) and does not finalize listener
  + Restored printing functionality on Linux
 
 EXTRA RELEASES:
